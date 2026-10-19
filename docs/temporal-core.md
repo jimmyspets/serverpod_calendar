@@ -1,6 +1,6 @@
 # Temporal core implementation
 
-Status: **UTC query windows and Gregorian date-only/civil values**, 2026-10-19. The pure Dart core exports `UtcWindow`, `CalendarDate` and `CivilDateTime`. Named-zone values, recurrence, calendar/task services and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md) and [0024](adr/0024-civil-date-time-values.md).
+Status: **UTC/date/civil values and bounded named-zone resolution**, 2026-10-19. The pure Dart core exports `UtcWindow`, `CalendarDate`, `CivilDateTime` and `NamedZoneResolver`. Recurrence, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
 
 ## Gregorian date-only values
 
@@ -26,9 +26,24 @@ final civil = CivilDateTime(
 
 Hours are 0–23, minutes/seconds 0–59 and the `microsecond` field is a complete fractional-second count 0–999999 (not Dart's microsecond-within-millisecond field). Seconds/fractions default to zero. Invalid fields, including leap second 60, throw `RangeError`. Comparison orders date/time fields; equality/hashing preserve all fields. Diagnostic text retains fractions without a zone suffix and is not a serializer.
 
-The value retains wall-clock fields without timezone lookup, normalization or instant conversion. It can hold potential gap/fold fields, but does not validate or resolve them. It does not authorize floating event/task values or provide elapsed-time ordering across zones/folds. Named-zone policy remains required before converting a civil value to an instant.
+The value retains wall-clock fields without timezone lookup, normalization or instant conversion. It can hold potential gap/fold fields, but does not validate or resolve them. It does not authorize floating event/task values or provide elapsed-time ordering across zones/folds. Explicit conversion is available through the bounded `NamedZoneResolver` below; a bare civil value still implies no zone or instant.
 
 The maintainer selected native microseconds, future iCalendar export rejection for nonzero fractions and initial leap-second rejection. RFC 5545 supports whole-second syntax and positive leap seconds; these choices define a narrower profile where applicable. The adapter must eventually enforce rejection atomically with diagnostics; the core value alone is not a tested import/export implementation. See [ADR 0024](adr/0024-civil-date-time-values.md).
+
+## Bounded named-zone resolution
+
+```dart
+final resolver = NamedZoneResolver();
+final result = resolver.resolve(civil, zoneId: 'Europe/Stockholm');
+```
+
+Use exact, case-sensitive keys from pinned `timezone` 0.11.2 / IANA 2026e `latest_all` data. Aliases such as `US/Eastern` retain their supplied spelling; no geographical meaning is guessed from a Windows label or abbreviation. Version/profile metadata identifies the calculation rules. See [ADR 0025](adr/0025-bounded-named-zone-resolution.md).
+
+The selected outer envelope is civil years 1900–2037. **Per-zone coverage can be narrower, or unavailable for some tables.** The package overwrites its first transition timestamp with a sentinel and stops recording future transitions around 2038. The resolver rejects unprovable coverage rather than extrapolating: for example, Kathmandu in 1900 and the initial-only Africa/Abidjan table currently fail explicitly. Truly constant known-offset tables such as Etc/UTC work throughout the envelope; unknown-only Factory is not treated as UTC. A listed key does not promise coverage for an arbitrary date. `ZoneCoverageException` means unknown calculation coverage, never free time or an occurrence that may silently be omitted.
+
+Explicit gaps use the pre-gap offset; folds select the first UTC instant. Results retain the requested civil fields and exact zone ID alongside the UTC instant, classification, interpretation/effective offsets, effective local fields and rules version. Gap resolution does not overwrite the original requested start. Non-hour and whole-day transitions are supported by the same offset arithmetic. `resolveRecurrenceCandidate` omits proved gaps only; actual recurrence generation, invalid-date skipping and COUNT semantics remain future work. Unknown/unsupported calculations still fail.
+
+The rules snapshot is immutable and isolated from later timezone registry changes. Loading restores existing host registry/local settings (an uninitialized local setting receives UTC). No network, device timezone or current-time-dependent rules are used by calculations. `VTIMEZONE` matching, durable zone upgrades and wider data coverage remain required before claiming the complete named-zone feature.
 
 ## UTC windows
 
@@ -79,3 +94,18 @@ Commands actually run with pinned Dart 3.13.5 / Serverpod 4.0.4:
 - Relative documentation links/anchors, ADR index consistency, changed-file review and `git diff --check`: passed.
 
 No dependency, generated code, endpoint, schema, migration or Flutter UI changed. The root check script already discovers the new core tests. The complete database/browser/two-host suite was not repeated for this isolated core increment. Named-zone conversion, DST behavior, recurrence and iCalendar rejection/atomicity remain unimplemented and unverified.
+
+## Named-zone increment validation
+
+With pinned Dart 3.13.5 and timezone 0.11.2:
+
+- `flutter pub get`, then `flutter pub get --enforce-lockfile`: passed; only timezone 0.11.2 was added to the root lockfile. `http`/`path` dependencies were already present.
+- `dart format packages/serverpod_calendar_core/lib` and the new resolver test file: completed.
+- `dart analyze --fatal-infos`: workspace analysis passed after adding the resolver tests.
+- `dart test --reporter expanded`, from the core package: **101 tests passed** (71 existing, 30 zone tests).
+- `dart test --platform chrome --reporter expanded`, from the core package: the same **101 tests passed in Chrome**. This verifies the actual pure-core web runtime, including negative-epoch and transition-edge microseconds; it is separate from the Flutter example journey.
+- Serverpod MCP `hot_reload`: completed successfully. No endpoint consumes the resolver yet; tests exercise the resolver directly.
+- The installed generated data header reported IANA 2026e. `Get-FileHash .../timezone-0.11.2/lib/data/latest_all.tzf -Algorithm SHA256` matched `86a4e2c9b047275d1948a98e5c5023b39bcae3fb2b440b3027cac7a3665fedfe`, recorded in toolchain.json. The embedded Dart byte payload was independently hashed and matched the same binary artifact. Pinned package APIs/source and LICENSE were inspected through Dart MCP.
+- Documentation links/anchors, ADR numbering, PowerShell check-script syntax, changed-file review and `git diff --check`: passed.
+
+The first root-level `dart test` attempt found no root test directory; rerunning from the core package passed as recorded above. Root `tool/check.ps1` now includes core Chrome tests unless `-SkipBrowser` is supplied. No endpoint, generated source, migration or Flutter UI changed, and the full database/browser-journey/two-host suite was not rerun for this core increment. VTIMEZONE matching, all-zone/year coverage, recurrence, duration semantics and persistence upgrade behavior remain unverified.

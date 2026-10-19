@@ -49,7 +49,10 @@ The [scaffolding plan](scaffolding-plan.md) records confirmed walkthrough select
 
 - [x] Add validated native `CivilDateTime` fields with selected microsecond precision and leap-second rejection under [ADR 0024](adr/0024-civil-date-time-values.md). Future iCalendar export must reject nonzero fractions; named-zone resolution, DST policy and adapter rejection tests remain pending.
 
-- [ ] Preserve Gregorian date-only, UTC and named-zone civil meanings with pinned zone data. Accept validated matching VTIMEZONE definitions for known named zones; reject arbitrary/mismatched custom rules and floating forms. Specify aliases, matching horizon and zone upgrades.
+- [x] Add the pinned native named-zone resolver and recurrence-candidate gap helper under [ADR 0025](adr/0025-bounded-named-zone-resolution.md), with RFC explicit gap/fold policy, exact aliases, outer civil years 1900–2037 and narrower conservative per-zone coverage. VM/Chrome tests pass.
+- [ ] Replace/enrich the finite/truncated zone data and prove required per-zone/year coverage before claiming general named-zone support; implement VTIMEZONE matching/horizons and durable upgrade/recalculation policy.
+
+- [ ] Preserve Gregorian date-only, UTC and named-zone civil meanings with pinned zone data. Accept validated matching VTIMEZONE definitions for known named zones; reject arbitrary/mismatched custom rules and floating forms. Exact alias acceptance is selected; complete matching horizon and zone upgrade contracts.
 - [ ] Implement the selected bounded recurrence profile from [RFC 5545](rfc/rfc-5545.md), including hourly/minutely cadence, selected filters, all WKST values, RDATE/EXDATE and stable original RECURRENCE-ID. Reject SECONDLY/BYSECOND without dropping timestamp seconds or flattening series.
 - [ ] Support whole-series, single-occurrence and selected THISANDFUTURE event edits; provide recurrence contracts for tasks with separately defined lifecycle rules. Keep internal/source/scheduling/publication identities and application revisions distinct.
 - [ ] Test Stockholm and another zone, DST gaps/folds, exclusive ends, point events, DTEND/DURATION, month/year boundaries, leap dates, open-ended series, moved/cancelled occurrences, stable pagination and expansion limits without false-free partial results.

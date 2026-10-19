@@ -1,10 +1,12 @@
 # Local example development
 
-Status: **scaffold plus temporal value foundations**. See [temporal core](temporal-core.md) for the implemented pure-Dart UTC-window and Gregorian date-only/civil primitives. Full calendar semantics, iCalendar interchange, tasks, feeds, availability, scheduling and alarm/notification delivery are not implemented. The example verifies normal host-owned authentication and generated-client wiring for both reusable modules. CI configuration and the optional Flutter GUI package follow later.
+Status: **scaffold plus temporal value foundations**. See [temporal core](temporal-core.md) for the implemented pure-Dart UTC/date/civil values and bounded pinned named-zone resolver. Full calendar semantics, iCalendar interchange, tasks, feeds, availability, scheduling and alarm/notification delivery are not implemented. The example verifies normal host-owned authentication and generated-client wiring for both reusable modules. CI configuration and the optional Flutter GUI package follow later.
 
 ## Pinned tools and packages
 
 Use Flutter **3.47.7 stable**, bundled Dart **3.13.5**, and Serverpod CLI/runtime/auth/client/test packages **4.0.4**. Pins are recorded in `toolchain.json`, `.flutter-version`, SDK constraints and package manifests; `pubspec.lock` locks the workspace resolution. Docker/Compose are required; the initial local checks used Docker **29.8.2** and Compose **v5.6.0**. Compose images are pinned by digest in the Compose file and toolchain.json. Chrome, a matching ChromeDriver and PowerShell 7 are used by the local scripts. The browser setup helper downloads a matching official Windows ChromeDriver into ignored .local/webdriver when absent; CHROMEDRIVER can point to an existing driver. Transitive dependencies can include prerelease dependencies selected by the stable Serverpod release; the lockfile records actual resolution.
+
+The core pins `timezone` 0.11.2 with IANA 2026e `latest_all`; toolchain.json records the data checksum and profile. Calculations have explicit outer years 1900–2037 with narrower per-zone coverage. These are verified implementation limits, not complete first-release zone support; see [ADR 0025](adr/0025-bounded-named-zone-resolution.md).
 
 The root workspace contains nine packages: pure core and iCalendar foundations, calendar server/client, notification server/client, example server/client and example Flutter Web. Serverpod module templates require `_server` and `_client` package suffixes. The agreed names identify the logical modules; there is no additional umbrella pub package. All packages are initially non-publishable.
 
@@ -77,7 +79,7 @@ Run the complete local check sequence:
 ./tool/check.ps1
 ```
 
-The script verifies tool pins and locked dependency resolution, retains local credentials, regenerates all three server/client pairs and checks byte-for-byte generated-output stability, checks formatting and analysis, runs the pure Dart core tests and sign-in form test, resets only the dedicated synthetic test database, builds a host bundle, runs two independent host processes against shared test storage, runs real-client JWT login/refresh/rotation/logout checks and Flutter WebDriver integration journeys, and builds the Flutter Web release output. `-SkipBrowser` skips only the connected Chrome journey; the widget test and Web build still run. CI has not been configured.
+The script verifies tool pins and locked dependency resolution, retains local credentials, regenerates all three server/client pairs and checks byte-for-byte generated-output stability, checks formatting and analysis, runs the pure Dart core tests on the VM and Chrome plus the sign-in form test, resets only the dedicated synthetic test database, builds a host bundle, runs two independent host processes against shared test storage, runs real-client JWT login/refresh/rotation/logout checks and Flutter WebDriver integration journeys, and builds the Flutter Web release output. `-SkipBrowser` skips the core Chrome tests and connected Chrome journey; the widget test and Web build still run. CI has not been configured.
 
 The test reset is intentionally destructive only to the dedicated `calendar_example_test` Compose database. Run no other test hosts against that database while the checks run. The harness owns its test processes and stops them on success/failure; logs stay under ignored `.local/`. Development storage is not reset. A standalone reset is available with `./tool/reset-test.ps1` after local setup.
 
