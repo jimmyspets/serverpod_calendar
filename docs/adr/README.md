@@ -27,6 +27,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0021](0021-initial-workspace-scaffold.md) | Concrete package workspace, local example authentication and test harness | Proposed implementation; walkthrough choices confirmed |
 | [0022](0022-utc-query-window-foundation.md) | Pure Dart UTC query-window operations and bounded implementation scope | Proposed implementation; foundation verified |
 | [0023](0023-gregorian-date-only-values.md) | Gregorian date-only values and selected 0001–9999 year range | Year range confirmed; foundation verified |
+| [0024](0024-civil-date-time-values.md) | Native civil precision, fractional export rejection and leap-second profile | Precision/leap choices confirmed; core value verified |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

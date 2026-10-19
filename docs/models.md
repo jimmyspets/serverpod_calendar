@@ -1,6 +1,6 @@
 # Proposed model catalog
 
-Status: **proposed domain catalog; only pure Dart UTC-window and Gregorian date-only foundations are implemented**. No generated calendar domain models, tables or migrations exist; framework/authentication scaffolding is separate. See [temporal core](temporal-core.md). Date: 2026-10-19. This catalog translates the [requirements](requirements.md) and latest [RFC feature tables](rfc/README.md) into candidate model contracts. Names, physical storage, field cardinalities and unresolved lifecycle rules require review under [ADR 0019](adr/0019-model-contracts.md). Feature scope is selected; this document does not accept the implementation proposals in earlier ADRs.
+Status: **proposed domain catalog; only pure Dart UTC-window and Gregorian date-only/civil foundations are implemented**. No generated calendar domain models, tables or migrations exist; framework/authentication scaffolding is separate. See [temporal core](temporal-core.md). Date: 2026-10-19. This catalog translates the [requirements](requirements.md) and latest [RFC feature tables](rfc/README.md) into candidate model contracts. Names, physical storage, field cardinalities and unresolved lifecycle rules require review under [ADR 0019](adr/0019-model-contracts.md). Feature scope is selected; this document does not accept the implementation proposals in earlier ADRs.
 
 ## Reading the catalog
 
@@ -43,7 +43,7 @@ The second snippet intentionally omits table, relation and index declarations; t
 | --- | --- | --- |
 | `SubjectRef` | `namespace: String`, `kind: String`, `externalId: String` | Opaque host reference; built-in kinds user/group/room/venue/equipment plus host-approved kinds. No user profile or membership snapshot. |
 | `CalendarDate` | `year: int`, `month: int`, `day: int` | Valid Gregorian date; never represented as midnight UTC. Native value implemented with the maintainer-selected years 0001–9999 under [ADR 0023](adr/0023-gregorian-date-only-values.md); transport/storage remain proposed. |
-| `CivilDateTime` | `date: CalendarDate`, `hour/minute/second: int`, optional fractional precision selected at scaffolding | Local wall-clock fields; not an independently accepted floating time. |
+| `CivilDateTime` | `date: CalendarDate`, `hour/minute/second: int`, `microsecond: int` (full fractional second, 0–999999) | Pure native value implemented; seconds 0–59 and microsecond precision under [ADR 0024](adr/0024-civil-date-time-values.md). Leap second 60 rejected. Not an independently accepted floating time; named-zone resolution remains pending. |
 | `CalendarTime` | `kind: TimeKind`, `utc: DateTime?`, `date: CalendarDate?`, `local: CivilDateTime?`, `zoneRef: Id?` | Exactly one of UTC, date-only, or local plus validated named zone. Reject mixed and floating representations. |
 | `CalendarDuration` | `sign: int`, `weeks/days/hours/minutes/seconds: int` | Preserve nominal units and legal RFC combinations; do not flatten a day/week into elapsed seconds. Context controls sign and zero validity. |
 | `TimeSpan` | `start: CalendarTime`, `end: CalendarTime?`, `duration: CalendarDuration?` | End and duration mutually exclusive. Component rules determine omitted-end semantics, compatible types and positive/zero lengths; date ends are exclusive. |

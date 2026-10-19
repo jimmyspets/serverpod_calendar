@@ -1,6 +1,6 @@
 # Local example development
 
-Status: **scaffold plus temporal value foundations**. See [temporal core](temporal-core.md) for the implemented pure-Dart UTC-window and Gregorian date-only primitives. Full calendar semantics, iCalendar interchange, tasks, feeds, availability, scheduling and alarm/notification delivery are not implemented. The example verifies normal host-owned authentication and generated-client wiring for both reusable modules. CI configuration and the optional Flutter GUI package follow later.
+Status: **scaffold plus temporal value foundations**. See [temporal core](temporal-core.md) for the implemented pure-Dart UTC-window and Gregorian date-only/civil primitives. Full calendar semantics, iCalendar interchange, tasks, feeds, availability, scheduling and alarm/notification delivery are not implemented. The example verifies normal host-owned authentication and generated-client wiring for both reusable modules. CI configuration and the optional Flutter GUI package follow later.
 
 ## Pinned tools and packages
 
