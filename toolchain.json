@@ -1,0 +1,9 @@
+{
+  "flutter": "3.47.7",
+  "dart": "3.13.5",
+  "serverpod": "4.0.4",
+  "localImages": {
+    "postgres": "ghcr.io/serverpod/postgres@sha256:a8ba1720aa58e55b3972a6db49a2311e8bbb60ea9341e5a68695c4b86ba81169",
+    "redis": "redis@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499"
+  }
+}

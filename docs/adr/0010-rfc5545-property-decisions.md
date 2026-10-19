@@ -1,5 +1,7 @@
 # ADR 0010: RFC 5545 property decisions
 
+> Notification scope update: [ADR 0020](0020-notification-delivery-scope.md) supersedes earlier requirements for direct iOS/Android push delivery. Durable alarms remain required; a reusable notification module and connected Serverpod streaming example replace the platform-provider release gate. Earlier platform examples below are historical proposals.
+
 Status: **Proposed implementation; selected capabilities confirmed by the maintainer**. Date: 2026-10-19. This record captures the interactive RFC 5545 review. Confirmed property choices do not approve unrelated ADRs or imply implementation. Formal ADR acceptance still follows repository review discipline.
 
 Current-scope note: batches below retain their review sequence. Later decisions resolve earlier open questions: FMTTYPE/LANGUAGE/SENT-BY in subsequent batches, baseline alarm/snooze scope in [RFC scope](../rfc/README.md), richer relationships in [ADR 0014](0014-rfc-extension-decisions.md), and recurring tasks/known zones/standalone free-busy import in [ADR 0017](0017-profile-review-clarifications.md). Use current RFC table statuses and notes for scope.

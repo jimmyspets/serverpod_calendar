@@ -1,0 +1,41 @@
+name: serverpod-calendar-example
+services:
+  postgres:
+    image: ghcr.io/serverpod/postgres@sha256:a8ba1720aa58e55b3972a6db49a2311e8bbb60ea9341e5a68695c4b86ba81169 # PostgreSQL 16
+    ports: ["127.0.0.1:18090:5432"]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: calendar_example
+      POSTGRES_PASSWORD: ${DEV_DATABASE_PASSWORD:?Run dart run tool/setup.dart}
+    volumes: [development_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d calendar_example"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  redis:
+    image: redis@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499 # Redis 7.4 alpine
+    ports: ["127.0.0.1:18091:6379"]
+    command: [redis-server, --requirepass, "${DEV_REDIS_PASSWORD:?Run dart run tool/setup.dart}"]
+  postgres_test:
+    profiles: [test]
+    image: ghcr.io/serverpod/postgres@sha256:a8ba1720aa58e55b3972a6db49a2311e8bbb60ea9341e5a68695c4b86ba81169 # PostgreSQL 16
+    ports: ["127.0.0.1:19090:5432"]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: calendar_example_test
+      POSTGRES_PASSWORD: ${TEST_DATABASE_PASSWORD:?Run dart run tool/setup.dart}
+    volumes: [test_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d calendar_example_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  redis_test:
+    profiles: [test]
+    image: redis@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499 # Redis 7.4 alpine
+    ports: ["127.0.0.1:19091:6379"]
+    command: [redis-server, --requirepass, "${TEST_REDIS_PASSWORD:?Run dart run tool/setup.dart}"]
+volumes:
+  development_data:
+  test_data:

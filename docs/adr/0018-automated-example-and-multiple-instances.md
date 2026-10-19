@@ -1,5 +1,7 @@
 # ADR 0018: Automated example tests and multiple active instances
 
+> Notification scope update: [ADR 0020](0020-notification-delivery-scope.md) supersedes earlier requirements for direct iOS/Android push delivery. Durable alarms remain required; a reusable notification module and connected Serverpod streaming example replace the platform-provider release gate. Earlier platform examples below are historical proposals.
+
 Status: **Maintainer-confirmed requirements; implementation design proposed**. Date: 2026-10-19. Formal ADR acceptance remains subject to repository review.
 
 ## Context and confirmed requirements

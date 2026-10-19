@@ -1,0 +1,27 @@
+name: calendar_example_server
+description: Local authenticated host for developing the reusable calendar packages.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+environment:
+  sdk: '>=3.13.5 <3.14.0'
+dependencies:
+  serverpod: 4.0.4
+  serverpod_auth_idp_server: 4.0.4
+  serverpod_calendar_server:
+    path: ../../../packages/serverpod_calendar/serverpod_calendar_server
+  serverpod_notifications_server:
+    path: ../../../packages/serverpod_notifications/serverpod_notifications_server
+dev_dependencies:
+  lints: 6.1.0
+  serverpod_test: 4.0.4
+  test: ^1.25.5
+serverpod:
+  flutter_apps:
+    calendar_example:
+      path: ../calendar_example_flutter
+      displayName: Calendar package example
+      auto_launch: true
+      target: lib/main.dart
+      web-hostname: localhost
+      web-port: 18083

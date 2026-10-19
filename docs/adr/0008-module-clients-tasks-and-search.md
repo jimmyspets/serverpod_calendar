@@ -1,5 +1,7 @@
 # ADR 0008: Serverpod capabilities, Flutter clients, tasks and availability search
 
+> Notification scope update: [ADR 0020](0020-notification-delivery-scope.md) supersedes earlier requirements for direct iOS/Android push delivery. Durable alarms remain required; a reusable notification module and connected Serverpod streaming example replace the platform-provider release gate. Earlier platform examples below are historical proposals.
+
 Status: **Proposed**. Date: 2026-10-19. The maintainer clarified that the main product is a calendar module for Serverpod projects, including free/busy, scheduling and tasks; Flutter clients provide most of the GUI. External subscription clients only need a subset. The concrete contracts below await review.
 
 ## Primary interface and projections

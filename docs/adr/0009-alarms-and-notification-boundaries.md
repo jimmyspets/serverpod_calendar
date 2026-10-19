@@ -1,5 +1,7 @@
 # ADR 0009: Alarms, notification delivery and Flutter boundaries
 
+> Notification scope update: [ADR 0020](0020-notification-delivery-scope.md) supersedes earlier requirements for direct iOS/Android push delivery. Durable alarms remain required; a reusable notification module and connected Serverpod streaming example replace the platform-provider release gate. Earlier platform examples below are historical proposals.
+
 Status: **Proposed**. Date: 2026-10-19. The maintainer requires first-release alarm functionality and a Flutter push path through Serverpod to iOS/Android, and asks for a module-boundary recommendation. Alarm execution is no longer deferred. Package layout, channels and detailed constraints remain recommendations for review. The RFC tables confirm the personal UID/acknowledgement/snooze/DISPLAY and imported-alarm activation baselines; the RFC tables govern current feature scope.
 
 ## Recommended ownership

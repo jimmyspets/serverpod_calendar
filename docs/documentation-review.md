@@ -70,3 +70,11 @@ Check all local Markdown links, table column counts, RFC feature-status vocabula
 Current validation: 42 Markdown documents, 325 local links including 35 section anchors, table column counts, 18 consecutive ADR filenames/titles/index entries and all 46 requirement identifiers passed checks. The 336 RFC feature rows and implementation disclaimers are retained. LICENSE matches Git HEAD under normal line-ending normalization; git diff --check passed. No runtime or multi-instance acceptance has been executed.
 
 No runtime or external-client tests were run because no application exists.
+
+## Later notification scope clarification
+
+The maintainer superseded the required mobile-provider push path with a reusable notification module and an example using Serverpod server events/streaming under [ADR 0020](adr/0020-notification-delivery-scope.md). Current requirements, compatibility, roadmap, RFC 9074 and contributor guidance reflect this. Committed ADRs retain historical proposals with prominent supersession notices; durable alarm semantics and multiple-instance tests remain required. The validation counts above describe the earlier review, not the current file inventory.
+
+## Initial executable scaffold follow-up
+
+The earlier documentation-only review above is historical. The workspace/authentication scaffold now has actual local runtime evidence in [scaffold validation](scaffold-validation.md) under [ADR 0021](adr/0021-initial-workspace-scaffold.md). The full local check script passed, including real migrations, generated clients, two independent auth hosts, Flutter WebDriver sign-in/sign-out and a Web release build. Calendar feature and interoperability evidence remain pending.

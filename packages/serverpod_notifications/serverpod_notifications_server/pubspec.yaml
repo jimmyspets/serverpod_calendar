@@ -1,0 +1,13 @@
+name: serverpod_notifications_server
+description: Provider-independent notification module scaffold.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+environment:
+  sdk: '>=3.13.5 <3.14.0'
+dependencies:
+  serverpod: 4.0.4
+dev_dependencies:
+  lints: 6.1.0
+  serverpod_test: 4.0.4
+  test: ^1.25.5

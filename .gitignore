@@ -1,0 +1,30 @@
+# Local tool/build state.
+.dart_tool/
+.pub-cache/
+build/
+coverage/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.log
+.local/
+.scaffold/
+
+# Local configuration and generated credentials must never be committed.
+**/config/passwords.yaml
+**/config/*.local.yaml
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+**/docker-data/
+
+# IDE and OS state.
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+**/.serverpod/
+**/web/app/

@@ -1,6 +1,6 @@
 # Module interfaces and interoperability profiles
 
-Status: **requirements, unimplemented and untested**. The main product is a Serverpod module with generated Dart APIs used by host Flutter GUIs. External calendar feeds need only a documented subset. Their client limitations do not restrict canonical calendar/task/scheduling/availability capabilities.
+Status: **calendar/interoperability requirements remain unimplemented and untested**. Initial host authentication and module diagnostic wiring have separate [scaffold evidence](scaffold-validation.md). The main product is a Serverpod module with generated Dart APIs used by host Flutter GUIs. External calendar feeds need only a documented subset. Their client limitations do not restrict canonical calendar/task/scheduling/availability capabilities.
 
 The baseline features formerly marked Proposed in the RFC matrices are now Yes — planned by maintainer instruction; see [RFC scope](rfc/README.md). This includes scoped UID/acknowledgement/snooze and DISPLAY alarm behavior, event/free-busy method baselines, calendar UID/update/color and the documented HTTP validation/caching policy. Detailed combinations and evidence remain pending; deferred rows retain their scope; the subsequent walkthrough resolved all listed Undecided rows.
 
@@ -15,7 +15,7 @@ The subscription HTTP profile in [ADR 0016](adr/0016-subscription-http-profile.m
 | Read-only subscription feeds | Declared event/calendar-description subset suitable for Apple Calendar on iOS, Google Calendar and Outlook | Feed-subset client matrix; no full task/scheduling/search GUI requirement |
 | iTIP/restricted iMIP | Approved event/free-busy scheduling and trusted email; component hints supported, S/MIME deferred under ADR 0015 | Protocol/state/MIME tests, host authority evidence and explicit limited client profile; no complete RFC 6047 conformance |
 
-VTODO scheduling over iTIP and inbound/outbound iMIP mail is deferred under [ADR 0011](adr/0011-defer-vtodo-scheduling.md). Native task assignment, standalone VTODO import/export and task alarms/push remain required. Test unsupported scheduling rejection without mutation, partial processing or automatic replies separately from ordinary task import/export.
+VTODO scheduling over iTIP and inbound/outbound iMIP mail is deferred under [ADR 0011](adr/0011-defer-vtodo-scheduling.md). Native task assignment, standalone VTODO import/export and task alarms/notifications remain required. Test unsupported scheduling rejection without mutation, partial processing or automatic replies separately from ordinary task import/export.
 
 Initial standards include RFC 5545, RFC 7953, RFC 5546, RFC 6047, the descriptive RFC 7986 profile, RFC 9110 and RFC 9111. RFC 9074 now has scoped first-release alarm/runtime work; RFCs 9073/9253 have selected scoped metadata profiles under ADR 0014; detailed constraints remain pending, while proximity and arbitrary audio/email actions are deferred. See [standards](standards.md), [ADR 0014](adr/0014-rfc-extension-decisions.md) and [ADR 0008](adr/0008-module-clients-tasks-and-search.md).
 
@@ -23,7 +23,7 @@ The [RFC property matrices](rfc/README.md) itemize named properties and relevant
 
 ## Automated example and deployment evidence
 
-The real example host/Flutter app is the automated test application under [ADR 0018](adr/0018-automated-example-and-multiple-instances.md), NFR-14 and NFR-15. CI must run actual migrations/module code, generated-client APIs, feed HTTP routes and Flutter integration journeys with isolated synthetic host data and deterministic mail/push adapters.
+The real example host/Flutter app is the automated test application under [ADR 0018](adr/0018-automated-example-and-multiple-instances.md), NFR-14 and NFR-15. CI must run actual migrations/module code, generated-client APIs, feed HTTP routes and Flutter integration journeys with isolated synthetic host data and deterministic mail/notification adapters.
 
 | Test surface | Required evidence |
 | --- | --- |
@@ -33,7 +33,7 @@ The real example host/Flutter app is the automated test application under [ADR 0
 | Background processing | Competing planners/consumers, duplicate ingress, durable occurrence/intent uniqueness, stale-owner rejection and crash/lease recovery |
 | Instance loss/restart | Remaining instance continues safely and recovers durable work within specified bounds; tests assert state rather than relying on unbounded sleeps |
 
-Keep core unit tests, real-host/database integration, Flutter UI integration, protocol fixtures and external client/provider evidence distinct. CI provider doubles do not prove OS background delivery, actual client polling or end-to-end exactly-once behavior. The independently required working iOS/Android push path and measured feed subset remain release evidence.
+Keep core unit tests, real-host/database integration, Flutter UI integration, protocol fixtures and external client/provider evidence distinct. CI provider doubles do not prove OS background delivery, actual client polling or end-to-end exactly-once behavior. The connected notification example and measured feed subset remain release evidence under [ADR 0020](adr/0020-notification-delivery-scope.md); platform push delivery is an optional external integration.
 
 ## Native and interchange profile
 
@@ -69,11 +69,11 @@ Approve exact property/parameter/recurrence matrices before claiming conformance
 | VAVAILABILITY/AVAILABLE | RFC 7953 rules and shared RFC 5545 metadata/privacy/recurrence profile under ADR 0012; legal per-component contexts and UTC/zoned date-times | Metadata/extension round trips, invalid contexts and DATE/floating rejection, composition with bookings, no-rule policy, DST and work limits |
 | Scheduling metadata | METHOD/ORGANIZER/ATTENDEE and approved participation fields | Roles, version/order/deduplication, trusted addresses and MIME method consistency |
 | VALARM and native alarms | Scoped time-based definition/execution and private action state | Calendar edits/recurrence/DST, due worker recovery, stale generation, approved triggers and imported-alarm activation |
-| iOS/Android push integration | Serverpod reminder intents through reusable notification service to Flutter | Real reference provider path, permission/token lifecycle, foreground/background and action/privacy evidence |
+| Notification integration | Durable reminder intents through reusable notification module; example server events/streaming to Flutter | Authorized connected-client delivery/actions, disconnect/reconnect recovery and cross-instance routing; no OS background push claim or direct platform provider implementation |
 | IANA/X-properties and ALTREP | Explicit profile allowlist for registered properties; host-configured X-property validation; alternate text URI metadata only | Unknown/unconfigured names rejected atomically; approved-field retention; no fetching/rendering or permission override; ordinary text retained |
 | Unapproved forms | Reject unsupported input explicitly before mutation | No silent flattening or loss; component-specific diagnostics |
 
-General imports validate the complete batch atomically. Master and legitimate overrides sharing a UID are not duplicate-series errors. Ordinary import conflicts are distinct from authorized scheduling updates. VJOURNAL remains deferred; alarm execution and mobile push are required with the selected personal alarm baseline under ADR 0009 and the RFC tables. Task dates are not automatically busy events. A reusable standalone Flutter widget package is separate from the required host Flutter integration.
+General imports validate the complete batch atomically. Master and legitimate overrides sharing a UID are not duplicate-series errors. Ordinary import conflicts are distinct from authorized scheduling updates. VJOURNAL remains deferred; alarm execution and the reusable notification/connected-stream example are required with the selected personal alarm baseline under ADR 0009 and the RFC tables. Task dates are not automatically busy events. A reusable standalone Flutter widget package is separate from the required host Flutter integration.
 
 ## Subscription feed subset
 
@@ -103,4 +103,4 @@ Use the selected per-feature RFC 9073/9074/9253 tables when finalizing schemas a
 
 ## Alarm integration evidence
 
-Calendar alarm state/semantics, generic notification/device/provider delivery and Flutter platform presentation have separate owners under [ADR 0009](adr/0009-alarms-and-notification-boundaries.md). A working iOS/Android reference push path is required, with trigger recalculation, cancellation/access loss, restart/duplicate/retry, expiry and authorized actions tested separately from provider acceptance. Native personal alarm state is not published in subset feeds by default. Live Serverpod streams do not replace OS background push. Proximity/geofencing and other advanced actions remain deferred; local scheduled notifications are an optional extension needing explicit push/local ownership and deduplication. Record versions and best-effort delivery limitations without claiming every alarm was displayed.
+Calendar alarm state/semantics, generic notification/device/provider delivery and Flutter platform presentation have separate owners under [ADR 0009](adr/0009-alarms-and-notification-boundaries.md). [ADR 0020](adr/0020-notification-delivery-scope.md) supersedes the required iOS/Android push path with a reusable notification module and an example using Serverpod server events/streaming. Test trigger recalculation, cancellation/access loss, restart/duplicate/retry, expiry and authorized actions, including disconnect/reconnect and cross-instance delivery. Native personal alarm state is not published in subset feeds by default. Streams demonstrate delivery to connected clients; they do not establish OS background delivery. Proximity/geofencing and other advanced actions remain deferred; platform push/local notifications are external adapter concerns requiring their own delivery evidence. Record versions and best-effort delivery limitations without claiming every alarm was displayed.

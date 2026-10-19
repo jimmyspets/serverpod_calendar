@@ -1,0 +1,4 @@
+type: module
+nickname: serverpod_calendar
+client_package_path: ../serverpod_calendar_client
+server_test_tools_path: test/integration/test_tools

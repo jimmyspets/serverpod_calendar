@@ -1,6 +1,6 @@
 # Proposed architecture
 
-Status: **proposed implementation of maintainer-stated scope**. No module or endpoint exists yet. Target Serverpod 4.x and later.
+Status: **proposed implementation of maintainer-stated scope**. The initial workspace contains authenticated diagnostic endpoints and example host authentication only; calendar domain behavior remains proposed. The tested scaffold pins Serverpod 4.0.4; the wider target is 4.x and later subject to verification. See [local development](development.md) and [scaffold validation](scaffold-validation.md).
 
 The primary interface is the Serverpod module and its generated Dart client for host Flutter GUIs. Calendar, task, scheduling and availability-search services exceed the external feed subset. A feed is an explicit publication projection; client display limitations must not narrow canonical storage or native API behavior. See [ADR 0008](adr/0008-module-clients-tasks-and-search.md).
 
@@ -14,8 +14,8 @@ The primary interface is the Serverpod module and its generated Dart client for 
 | Scheduling core/service | iTIP role validation, message reconciliation and participant state | Core and iCalendar adapter; independent of mail provider |
 | iMIP email adapters | MIME encoding/decoding, outbound host delivery and trusted inbound host ingress | Scheduling service, evaluated MIME library and host address policy |
 | Notification port/adapter | Submit due reminder intents with cancellation/revalidation and idempotency | Calendar services depend on an abstract port |
-| Host/shared notification service | Generic device routing, credentials/provider adapters and delivery retries | Separate reusable module/service; FCM/APNs reference integration |
-| Flutter notification integration | Permissions, token lifecycle, presentation, taps and authenticated actions | Host app/platform plugins; no calendar core dependency |
+| Host/shared notification service | Generic device routing, credentials/provider adapters and delivery retries | Separate reusable module with host delivery adapters; connected streaming example under ADR 0020 |
+| Flutter notification integration | Connected stream subscription, in-app presentation and authenticated actions; optional platform integration belongs to the host | Host app/platform plugins; no calendar core dependency |
 | Feed HTTP adapter | HTTPS GET/HEAD, token validation, representation and conditional requests | Module services and iCalendar adapter |
 | Generated client | Full authorized calendar/task/scheduling/search services for Flutter | Generated from module sources |
 | Example host/app | Automated host/Flutter integration journeys, external identity/policy adapters, subset feeds and multiple-instance acceptance harness | Actual module/client/migrations; synthetic fixtures; deterministic delivery adapters in CI |
@@ -44,7 +44,7 @@ flowchart LR
 
 Module state, revisions, inbound deduplication and background intent must be durable and shared. Proposed coordination uses transactions, constraints and reclaimable claims with stale-owner protection; select and verify the exact framework/database mechanism during scaffolding. Process-local locks, a singleton assumption and sticky routing cannot supply correctness. Host policy/cache invalidation must prevent successful post-revocation requests on any instance; unchanged feed bytes/configuration must have consistent ETags across nodes.
 
-Automated acceptance uses the actual module, generated client, HTTP routes and migrations, plus Flutter integration journeys. Run competing writes, worker/ingress duplicates, warm-cache revocation, process interruption/restart and cross-instance reads. Deterministic CI mail/push adapters verify intent and retries; separately measured feed-client/mobile push evidence remains required. No multi-instance runtime behavior has been verified yet.
+Automated acceptance uses the actual module, generated client, HTTP routes and migrations, plus Flutter integration journeys. Run competing writes, worker/ingress duplicates, warm-cache revocation, process interruption/restart and cross-instance reads. Deterministic CI mail/notification adapters verify intent and retries; separately measured feed-client and connected streaming example evidence remains required under ADR 0020. No multi-instance runtime behavior has been verified yet.
 
 ## Proposed relationships
 
@@ -109,8 +109,12 @@ RFC 7986 descriptive metadata is part of the initial calendar/feed output under 
 
 Availability search: accept subject list + bounded window + optional minimum duration + explicit per-target/common-free mode -> resolve and authorize complete calendars -> apply rules/bookings -> return each target's intervals/coverage or intersect common free intervals. Support selecting available rooms or meeting times for everyone; unknown targets never become free. Flutter renders results via generated client APIs. See [ADR 0008](adr/0008-module-clients-tasks-and-search.md).
 
-Alarm: validate personal alarm -> commit item/alarm change and planning/invalidation intent -> bounded occurrence planner -> due worker with current-generation/access/expiry checks -> generic notification port -> shared provider delivery -> Flutter presentation/actions. Reconcile pending work after crashes; provider acceptance is not display or acknowledgement. See [ADR 0009](adr/0009-alarms-and-notification-boundaries.md) for the recommended module split and first-release push integration.
+Alarm: validate personal alarm -> commit item/alarm change and planning/invalidation intent -> bounded occurrence planner -> due worker with current-generation/access/expiry checks -> generic notification port -> shared provider delivery -> Flutter presentation/actions. Reconcile pending work after crashes; provider acceptance is not display or acknowledgement. See [ADR 0009](adr/0009-alarms-and-notification-boundaries.md) for the recommended module split and connected-client notification example.
 
 ## Decisions still needed
 
 Define detailed alarm action/expiry and notification-port/device contracts, validate RFC availability-rule precedence and the selected per-calendar fallback/intersection, specify method/property constraints for the selected event/free-busy scheduling methods and identity/trust profiles, inbound/outbound mail adapters, resource/availability association semantics, blocking/group/capacity policy, host authorization/publication lifecycle, deletion behavior, exact recurrence constraints and recurring-task lifecycle, known-zone/alias validation, gap/fold rules, feed limits and client versions. Select compatible SDKs, parser, recurrence engine, zone database, licenses and package layout. See [requirements](requirements.md), [compatibility](compatibility.md), and [ADRs](adr/README.md).
+
+## Current notification delivery scope
+
+[ADR 0020](adr/0020-notification-delivery-scope.md) supersedes earlier direct mobile-provider implementation requirements. Build a reusable notification module with provider-independent contracts. The example host may publish Serverpod server events into an authenticated stream consumed by Flutter. Keep this transport adapter in example code; iOS/Android push implementations and credentials remain external. Server events/streams are transient signals, not durable intent, replay storage or proof of display. Define authorized reconnect/recovery and current access checks; verify delivery between two host processes using the pinned Serverpod configuration.

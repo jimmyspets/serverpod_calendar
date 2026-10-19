@@ -1,5 +1,7 @@
 # ADR 0019: Model contracts and storage/API separation
 
+> Notification scope update: [ADR 0020](0020-notification-delivery-scope.md) supersedes earlier requirements for direct iOS/Android push delivery. Durable alarms remain required; a reusable notification module and connected Serverpod streaming example replace the platform-provider release gate. Earlier platform examples below are historical proposals.
+
 Status: **Proposed**. Date: 2026-10-19. The maintainer requested documentation of the necessary models using current repository scope and Serverpod's model documentation. This request authorizes model documentation, not final schema selection or acceptance of this ADR.
 
 ## Context

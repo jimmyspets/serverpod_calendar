@@ -1,0 +1,24 @@
+name: calendar_example_flutter
+description: Flutter Web example for the reusable calendar workspace.
+version: 0.1.0+1
+publish_to: none
+resolution: workspace
+environment:
+  sdk: '>=3.13.5 <3.14.0'
+  flutter: '>=3.47.7 <3.48.0'
+dependencies:
+  cupertino_icons: 1.0.8
+  flutter:
+    sdk: flutter
+  calendar_example_client:
+    path: ../calendar_example_client
+  serverpod_flutter: 4.0.4
+  serverpod_auth_idp_flutter: 4.0.4
+dev_dependencies:
+  flutter_lints: 6.0.0
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+flutter:
+  uses-material-design: true
