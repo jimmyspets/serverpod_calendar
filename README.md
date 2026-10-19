@@ -13,6 +13,7 @@ A reusable calendar module intended for Serverpod projects, providing calendar, 
 - [Documentation index](docs/README.md)
 - [First-project requirements](docs/requirements.md)
 - [Architecture and module boundaries](docs/architecture.md)
+- [Proposed model catalog](docs/models.md)
 - [iCalendar compatibility scope](docs/compatibility.md)
 - [RFC property and feature coverage](docs/rfc/README.md)
 - [Delivery plan and acceptance checks](docs/roadmap.md)

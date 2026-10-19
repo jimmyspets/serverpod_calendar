@@ -9,6 +9,7 @@ The maintainer has specified first-release capabilities in [requirements](requir
 | [Resource availability](adr/0006-resource-availability.md) | Proposed resource associations, free/busy semantics and privacy |
 | [Alarm and push boundaries](adr/0009-alarms-and-notification-boundaries.md) | Recommended calendar/notification/Flutter ownership and first-release alarm scope |
 | [Architecture](architecture.md) | Module boundaries, proposed relationships and request flows |
+| [Model catalog](models.md) | Proposed fields, relationships, storage/API boundaries, invariants and requirement coverage for all model areas |
 | [Compatibility](compatibility.md) | Full module/interchange profiles, subset feeds and independent scheduling evidence |
 | [Standards scope](standards.md) | First-release RFCs, considered extensions and component/method boundaries |
 | [RFC property coverage](rfc/README.md) | Latest feature-scope source: per-RFC properties, purpose, planned support and detailed constraints |

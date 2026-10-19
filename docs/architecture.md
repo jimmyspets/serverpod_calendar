@@ -72,6 +72,8 @@ erDiagram
 
 ## Candidate entities and invariants
 
+The [model catalog](models.md) expands these candidates into shared values, stored records, generated-client contracts and adapter projections. [ADR 0019](adr/0019-model-contracts.md) records the proposed storage/API separation and outstanding schema review gates; neither document is executable scaffolding.
+
 - Calendar: ID, name, description, optional color and RFC 7986 publication metadata, revision, timestamps; associations reference external subjects by namespace, kind (`user`/`group`/`room`/`venue`/`equipment`, with approved host extensions), and opaque ID. Multiple associations are allowed. No user/group profiles or memberships are copied into the module. Resource catalog ownership is also proposed at the host boundary. Explicit availability-contribution metadata distinguishes booked subjects from access/management associations; each calendar defines an availability zone for date-only events.
 - Host policy adapter: authenticate management callers and decide read/write/manage/publish/free-busy permissions. Associations alone do not grant rights. Resolve current group membership and tenant context server-side; fail closed if resolution fails.
 - Event/series: transparency, status/blocking classification, internal identity, source iCalendar UID, globally unique stable publication UID, typed times, recurrence set, revision and persistent export metadata. Distinguish source identity from publication identity so independently imported equal UIDs can coexist in aggregate feeds. Publication UIDs remain stable across URLs and feeds.

@@ -22,6 +22,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0016](0016-subscription-http-profile.md) | Subscription HTTP profile review | Selected scope confirmed; implementation pending |
 | [0017](0017-profile-review-clarifications.md) | Recurring tasks, known zones and deferred standalone free/busy import | Confirmed scope; implementation pending |
 | [0018](0018-automated-example-and-multiple-instances.md) | Automated example host/app testing and multiple active Serverpod instances | Confirmed requirements; implementation proposed |
+| [0019](0019-model-contracts.md) | Logical model catalog, storage/API separation and durable lifecycle records | Proposed |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

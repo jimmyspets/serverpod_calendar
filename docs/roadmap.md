@@ -25,6 +25,8 @@ Independent packages can progress in parallel after their contracts are defined.
 
 ## Design contracts
 
+- [ ] Review the [model catalog](models.md) and [ADR 0019](adr/0019-model-contracts.md): finalize logical fields/ownership, component cardinalities, physical schema/IDs, typed changes, uniqueness, retention and generated-client projections before writing model YAML or migrations. Preserve the selected RFC scope and resolve the catalog's explicit lifecycle/temporal review gates.
+
 - [ ] Review the retained ADR implementation proposals against the selected RFC tables. Define exact property contexts/cardinalities, accepted values, native/interchange schemas, limits and diagnostics; keep feature scope separate from implementation approval.
 - [ ] Specify task occurrence/completion/series-edit behavior, known-zone aliases and matching rules, DST/duration semantics, host authorization/publication lifecycle, deletion/identity removal, resource blocking/exclusivity/capacity and client variants.
 - [ ] Finalize structured-component nesting/shared fields, DERIVED update authority, graph/reference scope, cycles/missing/filtered targets and privacy-aware UID mapping. Selected relationships remain metadata; they do not execute workflows.
