@@ -1,5 +1,10 @@
 # serverpod_calendar
 
+> [!WARNING]
+> **NOT SAFE FOR NAMED-ZONE DATES AFTER 2037.** Do not use this code for calendar or scheduling calculations that require named-zone dates in **2038 or later**. The bundled timezone data does not provide safe future coverage; the resolver explicitly rejects those years. **Do not remove or bypass this guard.**
+>
+> The current calculation envelope is **1900–2037**, and some zones/periods within it are also rejected because coverage cannot be proved. Date-only values supporting years 0001–9999 do **not** extend timezone calculation support. See [the coverage limits](docs/adr/0025-bounded-named-zone-resolution.md#coverage-safeguards).
+
 A reusable calendar module intended for Serverpod projects, providing calendar, free/busy, availability-search, scheduling, task and alarm services. Host Flutter clients provide most of the GUI.
 
 **Calendar system:** Gregorian only. Recurring events and tasks are included; time zones initially use known named zones with validated matching definitions.
