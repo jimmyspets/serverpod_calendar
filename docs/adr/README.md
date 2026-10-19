@@ -25,6 +25,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0019](0019-model-contracts.md) | Logical model catalog, storage/API separation and durable lifecycle records | Proposed |
 | [0020](0020-notification-delivery-scope.md) | Reusable notification module and example streaming; external platform providers | Maintainer-confirmed scope; implementation proposed |
 | [0021](0021-initial-workspace-scaffold.md) | Concrete package workspace, local example authentication and test harness | Proposed implementation; walkthrough choices confirmed |
+| [0022](0022-utc-query-window-foundation.md) | Pure Dart UTC query-window operations and bounded implementation scope | Proposed implementation; foundation verified |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

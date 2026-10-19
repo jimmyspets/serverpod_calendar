@@ -1,6 +1,6 @@
 # Local example development
 
-Status: **initial scaffold**. Calendar semantics, iCalendar interchange, tasks, feeds, availability, scheduling and alarm/notification delivery are not implemented. The example verifies normal host-owned authentication and generated-client wiring for both reusable modules. CI configuration and the optional Flutter GUI package follow later.
+Status: **scaffold plus UTC-window foundation**. See [temporal core](temporal-core.md) for the implemented pure-Dart interval primitive. Full calendar semantics, iCalendar interchange, tasks, feeds, availability, scheduling and alarm/notification delivery are not implemented. The example verifies normal host-owned authentication and generated-client wiring for both reusable modules. CI configuration and the optional Flutter GUI package follow later.
 
 ## Pinned tools and packages
 
@@ -77,7 +77,7 @@ Run the complete local check sequence:
 ./tool/check.ps1
 ```
 
-The script verifies tool pins and locked dependency resolution, retains local credentials, regenerates all three server/client pairs and checks byte-for-byte generated-output stability, checks formatting and analysis, runs the sign-in form test, resets only the dedicated synthetic test database, builds a host bundle, runs two independent host processes against shared test storage, runs real-client JWT login/refresh/rotation/logout checks and Flutter WebDriver integration journeys, and builds the Flutter Web release output. `-SkipBrowser` skips only the connected Chrome journey; the widget test and Web build still run. CI has not been configured.
+The script verifies tool pins and locked dependency resolution, retains local credentials, regenerates all three server/client pairs and checks byte-for-byte generated-output stability, checks formatting and analysis, runs the pure Dart core tests and sign-in form test, resets only the dedicated synthetic test database, builds a host bundle, runs two independent host processes against shared test storage, runs real-client JWT login/refresh/rotation/logout checks and Flutter WebDriver integration journeys, and builds the Flutter Web release output. `-SkipBrowser` skips only the connected Chrome journey; the widget test and Web build still run. CI has not been configured.
 
 The test reset is intentionally destructive only to the dedicated `calendar_example_test` Compose database. Run no other test hosts against that database while the checks run. The harness owns its test processes and stops them on success/failure; logs stay under ignored `.local/`. Development storage is not reset. A standalone reset is available with `./tool/reset-test.ps1` after local setup.
 

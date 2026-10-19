@@ -43,6 +43,8 @@ The [scaffolding plan](scaffolding-plan.md) records confirmed walkthrough select
 
 ## Temporal core
 
+- [x] Implement the isolated UTC query-window foundation with half-open bounds, membership, intersection and boundary tests. See [ADR 0022](adr/0022-utc-query-window-foundation.md) and [validation](temporal-core.md). This does not complete the temporal work package or resolve remaining date/zone/recurrence contracts.
+
 - [ ] Preserve Gregorian date-only, UTC and named-zone civil meanings with pinned zone data. Accept validated matching VTIMEZONE definitions for known named zones; reject arbitrary/mismatched custom rules and floating forms. Specify aliases, matching horizon and zone upgrades.
 - [ ] Implement the selected bounded recurrence profile from [RFC 5545](rfc/rfc-5545.md), including hourly/minutely cadence, selected filters, all WKST values, RDATE/EXDATE and stable original RECURRENCE-ID. Reject SECONDLY/BYSECOND without dropping timestamp seconds or flattening series.
 - [ ] Support whole-series, single-occurrence and selected THISANDFUTURE event edits; provide recurrence contracts for tasks with separately defined lifecycle rules. Keep internal/source/scheduling/publication identities and application revisions distinct.

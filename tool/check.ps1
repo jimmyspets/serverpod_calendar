@@ -38,6 +38,9 @@ try {
     Select-Object -ExpandProperty FullName
   Invoke-Checked dart (@('format', '--output=none', '--set-exit-if-changed') + $dartFiles)
   Invoke-Checked dart @('analyze', '--fatal-infos')
+  Push-Location (Join-Path $WorkspaceRoot 'packages/serverpod_calendar_core')
+  try { Invoke-Checked dart @('test') }
+  finally { Pop-Location }
   Push-Location $ExampleFlutter
   try { Invoke-Checked flutter @('test', '--no-pub', 'test/sign_in_test.dart') }
   finally { Pop-Location }

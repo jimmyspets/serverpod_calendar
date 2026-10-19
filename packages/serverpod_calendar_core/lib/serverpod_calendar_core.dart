@@ -1,4 +1,7 @@
-/// Framework-independent calendar semantic types will be introduced here after contract review.
+/// Framework-independent calendar semantics.
 ///
-/// This scaffold does not implement calendar behavior or protocol compatibility.
+/// Currently provides UTC query-window primitives only. Date-only values,
+/// named zones, recurrence and calendar services remain under development.
 library;
+
+export 'src/utc_window.dart';

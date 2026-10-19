@@ -1,6 +1,6 @@
 # Proposed model catalog
 
-Status: **documentation-only proposal; no models, tables, generated clients or migrations exist**. Date: 2026-10-19. This catalog translates the [requirements](requirements.md) and latest [RFC feature tables](rfc/README.md) into candidate model contracts. Names, physical storage, field cardinalities and unresolved lifecycle rules require review under [ADR 0019](adr/0019-model-contracts.md). Feature scope is selected; this document does not accept the implementation proposals in earlier ADRs.
+Status: **proposed domain catalog; only the pure Dart UTC-window foundation is implemented**. No generated calendar domain models, tables or migrations exist; framework/authentication scaffolding is separate. See [temporal core](temporal-core.md). Date: 2026-10-19. This catalog translates the [requirements](requirements.md) and latest [RFC feature tables](rfc/README.md) into candidate model contracts. Names, physical storage, field cardinalities and unresolved lifecycle rules require review under [ADR 0019](adr/0019-model-contracts.md). Feature scope is selected; this document does not accept the implementation proposals in earlier ADRs.
 
 ## Reading the catalog
 
