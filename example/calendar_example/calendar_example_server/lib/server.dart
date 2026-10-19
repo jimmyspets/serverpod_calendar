@@ -15,10 +15,7 @@ Future<void> run(List<String> args) async {
   }
   pod.initializeAuthServices(
     tokenManagerBuilders: [
-      ServerSideSessionsConfigFromPasswords(
-        defaultSessionLifetime: const Duration(hours: 8),
-        defaultSessionInactivityTimeout: const Duration(hours: 1),
-      ),
+      JwtConfigFromPasswords(),
     ],
     identityProviderBuilders: [
       EmailIdpConfigFromPasswords(

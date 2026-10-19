@@ -19,7 +19,7 @@ flutter pub get --enforce-lockfile
 dart run tool/setup.dart
 ```
 
-Setup generates random local secrets in ignored `.local/credentials.json`, `.local/compose.env` and the example server's `config/passwords.yaml`. Subsequent setup retains existing secrets, initializing missing session configuration only. Keep these files private and do not commit or paste their contents into issues. Synthetic account addresses are `alice@example.invalid` and `bob@example.invalid`; their generated passwords are the corresponding `demoAlicePassword`/`demoBobPassword` entries for the `development` mode. Test credentials are separate. Auth email is recorded locally, never delivered.
+Setup generates random local secrets in ignored `.local/credentials.json`, `.local/compose.env` and the example server's `config/passwords.yaml`. Subsequent setup retains existing secrets, initializing missing JWT configuration only. Keep these files private and do not commit or paste their contents into issues. Synthetic account addresses are `alice@example.invalid` and `bob@example.invalid`; their generated passwords are the corresponding `demoAlicePassword`/`demoBobPassword` entries for the `development` mode. Test credentials are separate. Auth email is recorded locally, never delivered.
 
 Start the server in one terminal:
 
@@ -27,7 +27,7 @@ Start the server in one terminal:
 ./tool/start-server.ps1
 ```
 
-This starts only the local development Compose services, builds the host bundle, applies migrations and idempotently seeds the two synthetic accounts. Seeding is gated to local development/test modes and an explicit process environment flag, with no seed/reset endpoint. The example refuses staging/production modes. It uses Serverpod's database-backed sessions with an eight-hour absolute and one-hour inactivity limit; this is an example host choice, not a mandatory module auth scheme.
+This starts only the local development Compose services, builds the host bundle, applies migrations and idempotently seeds the two synthetic accounts. Seeding is gated to local development/test modes and an explicit process environment flag, with no seed/reset endpoint. The example refuses staging/production modes. It uses Serverpod's built-in JWT token manager and refresh endpoint, as selected by the maintainer, with the pinned SDK defaults (ten-minute access tokens and fourteen-day refresh-token lifetime). Logout clears local credentials and revokes refresh credentials; an already-issued access JWT remains valid until expiry. Current calendar authorization and feed-token revocation remain separate checks; reusable modules do not mandate a host authentication scheme.
 
 Start Flutter Web in another terminal:
 
@@ -61,7 +61,7 @@ Run the complete local check sequence:
 ./tool/check.ps1
 ```
 
-The script verifies tool pins and locked dependency resolution, retains local credentials, regenerates all three server/client pairs and checks byte-for-byte generated-output stability, checks formatting and analysis, runs the sign-in form test, resets only the dedicated synthetic test database, builds a host bundle, runs two independent host processes against shared test storage, runs real-client and Flutter WebDriver integration journeys, and builds the Flutter Web release output. `-SkipBrowser` skips only the connected Chrome journey; the widget test and Web build still run. CI has not been configured.
+The script verifies tool pins and locked dependency resolution, retains local credentials, regenerates all three server/client pairs and checks byte-for-byte generated-output stability, checks formatting and analysis, runs the sign-in form test, resets only the dedicated synthetic test database, builds a host bundle, runs two independent host processes against shared test storage, runs real-client JWT login/refresh/rotation/logout checks and Flutter WebDriver integration journeys, and builds the Flutter Web release output. `-SkipBrowser` skips only the connected Chrome journey; the widget test and Web build still run. CI has not been configured.
 
 The test reset is intentionally destructive only to the dedicated `calendar_example_test` Compose database. Run no other test hosts against that database while the checks run. The harness owns its test processes and stops them on success/failure; logs stay under ignored `.local/`. Development storage is not reset. A standalone reset is available with `./tool/reset-test.ps1` after local setup.
 

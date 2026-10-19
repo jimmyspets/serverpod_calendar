@@ -7,5 +7,7 @@ emailIdp:
   - verifyPasswordResetCode:
   - finishPasswordReset:
   - hasAccount:
+refreshJwtTokens:
+  - refreshAccessToken:
 smoke:
   - whoAmI:

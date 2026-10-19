@@ -16,11 +16,12 @@ Status: **walkthrough selections confirmed; initial executable scaffold locally 
 | Initial Flutter target | Web first; keep example portable |
 | Development services | Local Serverpod host with Docker Compose database/supporting services from the verified template |
 | Example identity | Self-contained Serverpod authentication and synthetic host-owned users/groups/resources; calendar receives opaque references and host policy decisions |
+| Example token manager | Serverpod JWT with its standard refresh endpoint and default lifetimes, selected to match the maintainer's production authentication |
 | Initial sign-in | Seeded synthetic demo accounts using normal authenticated sign-in; registration/password-reset screens later; recording adapter for any local authentication email |
 | Checks | Local repeatable automated checks first; CI configuration later, retaining release CI and multi-instance requirements |
 | First milestone | Buildable workspace, example authentication and authenticated generated-client connection smoke test |
 
-The selected template produces calendar/notification `_server` and `_client` package pairs in a root workspace; resolved pins and seeded-account session authentication are recorded in [ADR 0021](adr/0021-initial-workspace-scaffold.md) and the [development guide](development.md). Provider-specific iOS/Android delivery implementations remain external. No calendar domain YAML or migrations are approved solely by selecting the scaffold milestone.
+The selected template produces calendar/notification `_server` and `_client` package pairs in a root workspace; resolved pins and seeded-account JWT authentication are recorded in [ADR 0021](adr/0021-initial-workspace-scaffold.md) and the [development guide](development.md). Provider-specific iOS/Android delivery implementations remain external. No calendar domain YAML or migrations are approved solely by selecting the scaffold milestone.
 
 ## Local tools verified
 

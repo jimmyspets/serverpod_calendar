@@ -20,6 +20,7 @@ import 'package:serverpod_calendar_server/serverpod_calendar_server.dart'
 import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
     as _ik9lwgjh;
 import '../auth/email_idp_endpoint.dart' as _iuc1hd5t;
+import '../auth/refresh_jwt_tokens_endpoint.dart' as _ih79u0oj;
 import '../endpoints/smoke_endpoint.dart' as _ivabzmjp;
 
 class Endpoints extends _is.EndpointDispatch {
@@ -30,6 +31,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'emailIdp',
+          null,
+        ),
+      'refreshJwtTokens': _ih79u0oj.RefreshJwtTokensEndpoint()
+        ..initialize(
+          server,
+          'refreshJwtTokens',
           null,
         ),
       'smoke': _ivabzmjp.SmokeEndpoint()
@@ -216,6 +223,33 @@ class Endpoints extends _is.EndpointDispatch {
                 Map<String, dynamic> params,
               ) async => (endpoints['emailIdp'] as _iuc1hd5t.EmailIdpEndpoint)
                   .hasAccount(session),
+        ),
+      },
+    );
+    connectors['refreshJwtTokens'] = _is.EndpointConnector(
+      name: 'refreshJwtTokens',
+      endpoint: endpoints['refreshJwtTokens']!,
+      methodConnectors: {
+        'refreshAccessToken': _is.MethodConnector(
+          name: 'refreshAccessToken',
+          params: {
+            'refreshToken': _is.ParameterDescription(
+              name: 'refreshToken',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['refreshJwtTokens']
+                          as _ih79u0oj.RefreshJwtTokensEndpoint)
+                      .refreshAccessToken(
+                        session,
+                        refreshToken: params['refreshToken'],
+                      ),
         ),
       },
     );

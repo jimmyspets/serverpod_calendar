@@ -26,10 +26,15 @@ Future<void> main() async {
     );
     for (final mode in ['development', 'test']) {
       final values = existing[mode] as Map<String, dynamic>;
-      values.putIfAbsent(
-        'serverSideSessionKeyHashPepper',
-        () => base64UrlEncode(List.generate(48, (_) => random.nextInt(256))),
-      );
+      for (final key in [
+        'jwtHmacSha512PrivateKey',
+        'jwtRefreshTokenHashPepper',
+      ]) {
+        values.putIfAbsent(
+          key,
+          () => base64UrlEncode(List.generate(48, (_) => random.nextInt(256))),
+        );
+      }
       yaml.writeln('$mode:');
       for (final entry in values.entries) {
         yaml.writeln('  ${entry.key}: ${jsonEncode(entry.value)}');
@@ -47,7 +52,7 @@ Future<void> main() async {
       }),
     );
     stdout.writeln(
-      'Existing local credentials retained; missing session configuration initialized.',
+      'Existing local credentials retained; missing JWT configuration initialized.',
     );
     return;
   }
@@ -70,7 +75,6 @@ Future<void> main() async {
         'database',
         'redis',
         'emailSecretHashPepper',
-        'serverSideSessionKeyHashPepper',
         'jwtHmacSha512PrivateKey',
         'jwtRefreshTokenHashPepper',
         'demoAlicePassword',

@@ -60,7 +60,7 @@ Future<void> main(List<String> args) async {
         throw StateError('Unauthenticated module call was not rejected.');
       }
     }
-    final auth = await first.emailIdp.login(
+    var auth = await first.emailIdp.login(
       email: 'alice@example.invalid',
       password: values['demoAlicePassword'] as String,
     );
@@ -85,20 +85,71 @@ Future<void> main(List<String> args) async {
         throw StateError('Module identity mismatch.');
       }
     }
-    await first.auth.signOutDevice();
-    // The same token must also fail on a different running host after revocation.
+    if (auth.authStrategy != AuthStrategy.jwt.name ||
+        auth.refreshToken == null) {
+      throw StateError('Expected JWT access and refresh credentials.');
+    }
     final verifier = clients.length > 1 ? clients.last : first;
+    // Exercise real refresh/rotation on another host before revoking the pair.
+    final refreshed = await verifier.refreshJwtTokens.refreshAccessToken(
+      refreshToken: auth.refreshToken!,
+    );
+    if (refreshed.authUserId != auth.authUserId ||
+        refreshed.refreshToken == null ||
+        refreshed.refreshToken == auth.refreshToken) {
+      throw StateError(
+        'JWT refresh did not preserve identity and rotate secret.',
+      );
+    }
+    auth = refreshed;
+    for (final client in clients) {
+      await client.auth.updateSignedInUser(auth);
+      if (await client.smoke.whoAmI() != auth.authUserId.toString()) {
+        throw StateError('Refreshed JWT identity mismatch.');
+      }
+    }
+    if (!await first.auth.signOutDevice() || first.auth.isAuthenticated) {
+      throw StateError('Sign-out failed or retained local authentication.');
+    }
     rejected = false;
     try {
-      await verifier.smoke.whoAmI();
+      await first.smoke.whoAmI();
     } on ServerpodClientUnauthorized {
       rejected = true;
     }
     if (!rejected) {
-      throw StateError('Signed-out/revoked call was not rejected.');
+      throw StateError('Signed-out local call was not rejected.');
+    }
+    // Logout revokes refresh credentials; a copied access JWT stays valid until
+    // expiry. Use a separate client even in the single-host development smoke.
+    final copied = Client(urls.last)
+      ..authSessionManager = ClientAuthSessionManager(
+        storage: MemoryAuthStorage(),
+      );
+    try {
+      await copied.auth.updateSignedInUser(auth);
+      if (await copied.smoke.whoAmI() != auth.authUserId.toString()) {
+        throw StateError(
+          'Unexpired copied JWT should remain valid after logout.',
+        );
+      }
+      rejected = false;
+      try {
+        await copied.refreshJwtTokens.refreshAccessToken(
+          refreshToken: auth.refreshToken!,
+        );
+      } on RefreshTokenNotFoundException {
+        rejected = true;
+      }
+      if (!rejected) {
+        throw StateError('Revoked JWT refresh credential was accepted.');
+      }
+    } finally {
+      copied.close();
     }
     stdout.writeln(
-      'PASS: generated-client auth, module identity and revocation on ${clients.length} host(s).',
+      'PASS: JWT login, module identity, cross-host refresh/rotation, local '
+      'logout and refresh revocation on ${clients.length} host(s).',
     );
   } finally {
     for (final client in clients) {

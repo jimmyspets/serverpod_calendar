@@ -18,27 +18,29 @@ Commands are from the repository root unless a working directory is stated.
 | `serverpod --no-analytics create --template module --no-interactive --ide none serverpod_calendar` and equivalent notification module command, from packages/ | Official 4.0.4 module templates generated; then connected into the root workspace |
 | `serverpod --no-analytics create --template fullstack --database --redis --auth --webapp --no-website --no-interactive --ide none calendar_example`, from example/ | Official host/app template generated; unused platform/cloud/deployment defaults removed from the final scaffold |
 | `flutter pub get --enforce-lockfile` | Nine workspace packages resolve with the committed lockfile |
-| `dart run tool/setup.dart` | Local secrets created; subsequent runs retain existing secret values and initialize missing local session configuration |
+| `dart run tool/setup.dart` | Local secrets created; subsequent runs retain existing secret values and initialize missing local JWT configuration |
 | `pwsh -NoProfile -File tool/check.ps1` | **Passed completely**, including every step below |
 | Generation via `tool/generate.ps1` | All three server/client pairs regenerated; protocol/test-tool file sets and SHA-256 hashes unchanged |
-| Formatting check on authored Dart sources | 18 files checked; zero changes required. Generator-owned code is checked by regeneration, not manually reformatted |
+| Formatting check on authored Dart sources | 19 files checked; zero changes required. Generator-owned code is checked by regeneration, not manually reformatted |
 | `dart analyze --fatal-infos` | No issues found |
 | `flutter test --no-pub test/sign_in_test.dart`, from example Flutter package | Passed: empty form validates required input and does not expose the authenticated connection UI |
 | `tool/reset-test.ps1` | Only dedicated Compose test database dropped/recreated; fresh auth/framework migrations applied by the first test host |
 | Host bundle via `dart build cli --target bin/main.dart --output ...`, from example server | Native bundle built successfully; both test processes use the same build |
-| `dart run tool/host_smoke.dart --flutter` | Both independent hosts ready; actual generated-client and browser checks passed; owned test processes cleaned up |
+| `dart run tool/host_smoke.dart --flutter` | Both independent hosts ready; actual generated-client JWT lifecycle and browser checks passed; owned test processes cleaned up |
 | `flutter build web --no-pub`, from example Flutter package | Release Web build passed; compiler's WASM dry run also passed, without a separate WASM runtime compatibility claim |
 | `pwsh -NoProfile -File tool/start-server.ps1` | Development services healthy, development migrations applied and synthetic accounts seeded |
 | `dart run tool/client_smoke.dart --development` | Normal generated-client auth/module/sign-out smoke passed against the documented development host |
 | `pwsh -NoProfile -File tool/start-flutter.ps1` | Passed: Chrome debug service connected and app started on http://localhost:18083 |
 
-The two-host test uses distinct processes/server IDs and ports 18180/18280, sharing only dedicated test PostgreSQL/Redis storage. It verifies anonymous host/module rejection, ordinary email/password login, the same caller identity through host/calendar/notification generated clients on both instances, and committed session revocation on A being enforced on B. Sequential idempotent seeding on both hosts avoids duplicate account creation. It does not test domain edits, feed revocation, competing workers, crashes or every NFR-14 scenario yet.
+After the maintainer selected JWT, `pwsh -NoProfile -File tool/check.ps1` was rerun completely and passed with the regenerated refresh endpoint/client. The development host was restored from the validated bundle using `main.exe --mode=development --server-id=development --apply-migrations` with local seeding enabled; `dart run tool/client_smoke.dart --development` also passed with JWT.
+
+The two-host test uses distinct processes/server IDs and ports 18180/18280, sharing only dedicated test PostgreSQL/Redis storage. It verifies anonymous host/module rejection, ordinary email/password login, the same caller identity through host/calendar/notification generated clients on both instances, and successful JWT refresh/rotation on B, refreshed identity on both hosts, local credential clearing on logout from A, revoked-refresh rejection on B and continued acceptance of a copied unexpired access JWT on B. Sequential idempotent seeding on both hosts avoids duplicate account creation. It does not test domain edits, feed revocation, competing workers, crashes or every NFR-14 scenario yet.
 
 The Flutter WebDriver integration test drives the actual example UI through sign-in, connection check across the host and both modules, visible result and sign-out using the real host APIs. It uses the Flutter SDK integration_test driver and a matching local ChromeDriver. No mock backend replaces the example module/client/migrations.
 
 ## Implementation observations and choices
 
-The template JWT configuration kept an access token usable on another host after refresh-token sign-out. This is [Serverpod's documented JWT behavior](https://docs.serverpod.dev/concepts/authentication/token-managers/managing-tokens): existing access tokens remain valid until expiry. Immediate rejection was an added test assumption, not a maintainer-selected requirement or a JWT defect. The current example uses built-in database-backed sessions and passes that additional cross-host revocation check; its token-manager choice remains under review in [ADR 0021](adr/0021-initial-workspace-scaffold.md).
+The initial template JWT configuration kept an access token usable on another host after refresh-token sign-out. This is [Serverpod's documented JWT behavior](https://docs.serverpod.dev/concepts/authentication/token-managers/managing-tokens): existing access tokens remain valid until expiry. Immediate rejection was an added test assumption, not a maintainer-selected requirement or a JWT defect. The earlier database-backed session implementation is superseded by the maintainer's explicit JWT selection in [ADR 0021](adr/0021-initial-workspace-scaffold.md). The revised smoke checks refresh/rotation and revocation of refresh credentials, local sign-out and acceptance of a copied unexpired access JWT; it does not wait for the ten-minute access-token expiry or exercise automatic refresh at expiry.
 
 Starting two Windows `dart run` hosts collided when rebuilding a loaded native Argon2 DLL; the final harness builds once and runs two bundle processes. The deprecated Chrome widget-test backend stalled before test execution; the final browser test uses Flutter's documented integration_test/WebDriver runner and passed.
 
