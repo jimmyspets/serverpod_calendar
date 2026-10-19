@@ -1,5 +1,6 @@
 # Local tool/build state.
 .dart_tool/
+.packages
 .pub-cache/
 build/
 coverage/
@@ -8,9 +9,25 @@ coverage/
 *.log
 .local/
 .scaffold/
+pubspec_overrides.yaml
+doc/api/
+
+# Local agent and MCP configuration (also used by the example template).
+.dart_skills/
+.agents/
+.claude/
+.gemini/
+.cursor/
+.vscode/mcp.json
+.codex/
+.mcp.json
+
+# Serverpod Cloud CLI local state.
+.scloud/
 
 # Local configuration and generated credentials must never be committed.
 **/config/passwords.yaml
+**/config/firebase_service_account_key.json
 **/config/*.local.yaml
 .env
 .env.*
@@ -27,4 +44,5 @@ coverage/
 Thumbs.db
 
 **/.serverpod/
+**/sp_*.db*
 **/web/app/

@@ -2,7 +2,7 @@
 
 This is the automated integration/example host for the root workspace. It uses official Serverpod authentication with synthetic seeded accounts and built-in server-side sessions. It currently exposes only authenticated diagnostic/identity endpoints; domain calendar and notification delivery features remain planned.
 
-The maintainer authorized the repeatable local CLI workflow in ../../docs/development.md. Use the root setup/generation/check/start scripts. They start and stop owned test hosts, use isolated Docker test storage and exercise real generated clients and Flutter Web. No Serverpod MCP is configured here. Never expose seeding/reset as production endpoints, send real auth email, or commit local secrets.
+The maintainer authorized the repeatable local CLI workflow in ../../docs/development.md. Use the root setup/generation/check/start scripts. They start and stop owned test hosts, use isolated Docker test storage and exercise real generated clients and Flutter Web. Verify Serverpod MCP availability in the current tool session rather than assuming configuration implies access. Never expose seeding/reset as production endpoints, send real auth email, or commit local secrets.
 
 ## Interactive MCP workflow
 

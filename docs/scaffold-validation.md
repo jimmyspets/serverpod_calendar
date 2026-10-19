@@ -36,9 +36,11 @@ The two-host test uses distinct processes/server IDs and ports 18180/18280, shar
 
 The Flutter WebDriver integration test drives the actual example UI through sign-in, connection check across the host and both modules, visible result and sign-out using the real host APIs. It uses the Flutter SDK integration_test driver and a matching local ChromeDriver. No mock backend replaces the example module/client/migrations.
 
-## Findings resolved during implementation
+## Implementation observations and choices
 
-The template JWT configuration kept an access token usable on another host after refresh-token sign-out. The final example uses built-in database-backed sessions and passes the cross-host revocation check; see ADR 0021. Starting two Windows `dart run` hosts collided when rebuilding a loaded native Argon2 DLL; the final harness builds once and runs two bundle processes. The deprecated Chrome widget-test backend stalled before test execution; the final browser test uses Flutter's documented integration_test/WebDriver runner and passed.
+The template JWT configuration kept an access token usable on another host after refresh-token sign-out. This is [Serverpod's documented JWT behavior](https://docs.serverpod.dev/concepts/authentication/token-managers/managing-tokens): existing access tokens remain valid until expiry. Immediate rejection was an added test assumption, not a maintainer-selected requirement or a JWT defect. The current example uses built-in database-backed sessions and passes that additional cross-host revocation check; its token-manager choice remains under review in [ADR 0021](adr/0021-initial-workspace-scaffold.md).
+
+Starting two Windows `dart run` hosts collided when rebuilding a loaded native Argon2 DLL; the final harness builds once and runs two bundle processes. The deprecated Chrome widget-test backend stalled before test execution; the final browser test uses Flutter's documented integration_test/WebDriver runner and passed.
 
 The template emitted a macOS entitlement-update failure during creation on Windows. Native target folders were removed for the selected Web-only initial scaffold; the final Web builds/tests passed. Native target generation and mobile delivery remain later/external work. SDK-generated Windows CPU/memory metric warnings do not provide performance evidence.
 

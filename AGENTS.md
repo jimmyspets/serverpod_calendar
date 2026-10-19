@@ -17,6 +17,12 @@ This repository now contains an initial workspace/authentication scaffold; calen
 
 ## Implementation guidance once scaffolding exists
 
+Read the scoped [example guidance](example/calendar_example/AGENTS.md) and module AGENTS.md files before working in those folders. Use the root setup/generation/check/start scripts described in [local development](docs/development.md); they coordinate the workspace, isolated synthetic test storage, generated clients and Flutter Web journeys. Keep seeding/reset local to development/test, record auth mail locally and inspect owned test logs under ignored `.local/`.
+
+For an interactive running example, prefer Serverpod MCP migration, log, hot-reload/restart and Flutter launch/tooling-daemon operations when those tools are actually exposed and connected. Verify availability in the current session; a generated AGENTS.md or local MCP configuration does not establish access. Use the pinned CLI workflow when MCP is unavailable. Reusable modules are not standalone servers; run them through the example host. Stop a running host bundle before rebuilding that bundle on Windows.
+
+After approved table-source changes, generate migrations with the pinned CLI or connected MCP and verify fresh/upgrade database behavior. Never hand-edit generated protocol/client/test tools or migration metadata. A generated `migration.sql` may be edited only for a necessary data-preserving transformation; its final schema must match `definition.sql`. Domain schema changes still require the model/ADR review gates.
+
 Target Serverpod 4.x and later. Select and pin compatible Dart, Flutter, and Serverpod SDK versions during scaffolding, and verify compatibility before claiming support for a version.
 
 Keep reusable calendar semantics independent of Serverpod and Flutter. Put persistence, authorization, and endpoint adaptation in the Serverpod module; keep iCalendar parsing/serialization behind an explicit adapter boundary. Do not hand-edit generated files: change their sources and regenerate using the pinned toolchain.

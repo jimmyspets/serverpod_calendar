@@ -8,6 +8,8 @@ Use Flutter **3.47.7 stable**, bundled Dart **3.13.5**, and Serverpod CLI/runtim
 
 The root workspace contains nine packages: pure core and iCalendar foundations, calendar server/client, notification server/client, example server/client and example Flutter Web. Serverpod module templates require `_server` and `_client` package suffixes. The agreed names identify the logical modules; there is no additional umbrella pub package. All packages are initially non-publishable.
 
+Follow the scoped [example guidance](../example/calendar_example/AGENTS.md) alongside the root guidance. The root `.gitignore` incorporates the example's local agent/MCP, pub override and Serverpod Cloud state exclusions; nested ignore files retain package-specific rules. Keep the root workspace `pubspec.lock` tracked.
+
 ## First checkout
 
 Run these commands from the repository root. Install the pinned SDK/CLI if not already available; no global upgrade is performed by these scripts.
@@ -71,6 +73,8 @@ dart run tool/host_smoke.dart --flutter
 ```
 
 On Windows, the harness runs two copies of a single compiled host bundle. Launching two `dart run` commands can conflict when the second command tries to replace the native Argon2 DLL loaded by the first. The bundle avoids that tooling conflict; it does not supply distributed correctness. Do not rebuild a bundle while its executable is running. The example can also be used with Serverpod's interactive development tooling, but the scripts above are the repeatable local acceptance workflow.
+
+For interactive work, prefer Serverpod MCP migration, log, reload/restart and Flutter launch/tooling-daemon operations when exposed and connected. The 2026-10-19 session check found no callable Serverpod MCP tools or listed Serverpod resources/templates; MCP access was not verified. This describes the session's available tools, not whether another editor has a working connection. CLI availability and a running host do not establish MCP connectivity.
 
 Full cross-instance calendar/feed/scheduling/worker recovery tests arrive with those features under [ADR 0018](adr/0018-automated-example-and-multiple-instances.md). Connected streaming/replay contracts remain future work under [ADR 0020](adr/0020-notification-delivery-scope.md); this authentication scaffold does not claim durable notification delivery or mobile background delivery.
 
