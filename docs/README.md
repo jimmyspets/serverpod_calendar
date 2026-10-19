@@ -9,7 +9,7 @@ The maintainer has specified first-release capabilities in [requirements](requir
 | [Resource availability](adr/0006-resource-availability.md) | Proposed resource associations, free/busy semantics and privacy |
 | [Alarm and notification boundaries](adr/0009-alarms-and-notification-boundaries.md) | Recommended calendar/notification/Flutter ownership and first-release alarm scope |
 | [Architecture](architecture.md) | Module boundaries, proposed relationships and request flows |
-| [Temporal core](temporal-core.md) | Implemented UTC-window foundation, remaining temporal scope and validation |
+| [Temporal core](temporal-core.md) | Implemented UTC-window/date-only foundations, remaining temporal scope and validation |
 | [Model catalog](models.md) | Proposed fields, relationships, storage/API boundaries, invariants and requirement coverage for all model areas |
 | [Local development](development.md) | Pinned workspace, local setup/run/check commands and example boundaries |
 | [Scaffold validation](scaffold-validation.md) | Commands actually run and limits of the initial milestone evidence |

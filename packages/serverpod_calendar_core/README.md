@@ -1,5 +1,8 @@
 # serverpod_calendar_core
 
-Framework-independent Dart calendar semantics. The initial implementation exports `UtcWindow`: validated UTC bounds, half-open membership, overlap/intersection and value equality. It has no runtime dependencies on Serverpod or Flutter.
+Framework-independent Dart calendar semantics:
 
-Run `dart test` from this package. See the repository [temporal core contract and validation](../../docs/temporal-core.md). Date-only values, zones, recurrence and full calendar behavior remain unimplemented.
+- `UtcWindow`: validated UTC bounds, half-open membership, overlap/intersection and value equality.
+- `CalendarDate`: Gregorian date-only fields for years 0001–9999, strict date validation, leap-year/month lengths, chronological ordering and value equality.
+
+The package has no runtime dependencies on Serverpod or Flutter. Run `dart test` from this package. See the repository [temporal core contract and validation](../../docs/temporal-core.md). Named zones, recurrence, interchange and calendar services remain unimplemented.

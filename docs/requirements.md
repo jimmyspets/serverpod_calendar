@@ -22,7 +22,7 @@ The example host/Flutter app is also the automated integration-test application,
 | FR-02 | Authorized callers create, list, rename, associate, and delete calendars | CRUD and association tests; documented deletion policy |
 | FR-03 | Authorized callers create/read/edit/delete events, series, and individual exceptions | Persistence; range validation; whole-series and single-occurrence edits/deletions |
 | FR-04 | Bounded paginated queries return overlapping events/occurrences with stable ordering | Boundaries, multi-day, point events, recurrence, exceptions, page stability |
-| FR-05 | UTC, date-only, and named-zone local times retain distinct meaning | Restart/round-trip tests; exclusive date ends; DST gaps/folds; local recurring time preserved |
+| FR-05 | UTC, date-only, and named-zone local times retain distinct meaning | Restart/round-trip tests; exclusive date ends; date-only years 0001–9999 with explicit rejection outside the selected range under ADR 0023; DST gaps/folds; local recurring time preserved |
 | FR-06 | Import/export implements a documented iCalendar profile including named zones and recurrence | Semantic round trips; VTIMEZONE; supported RRULE/RDATE/EXDATE/RECURRENCE-ID fixtures |
 | FR-07 | Conflicting imports and stale writes fail explicitly and atomically | Series master/exception identity, duplicate imports, rollback, concurrent edits |
 | FR-08 | Backend enforces host-supplied authorization on every operation | User/group isolation, role and membership changes, forged references, import/export and feed management |
