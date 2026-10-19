@@ -1,0 +1,44 @@
+# Repository guidance
+
+## Current state and sources
+
+This is a documentation-first repository. Read README.md, docs/discussion-migration.md, docs/requirements.md, and the relevant proposed ADRs before changes. The per-RFC tables in docs/rfc/ are the latest feature-scope source; explicit newer maintainer instructions take precedence. Reconcile older narrative text with the table statuses and notes without treating unapproved implementation detail as accepted. Architecture documents describe proposals, not implemented behavior. Do not invent earlier chat decisions or claim complete iCalendar, CalDAV, or client compatibility.
+
+## Change discipline
+
+- Preserve existing contents and the Apache 2.0 LICENSE.
+- Use a focused branch and pull request; keep architecture PRs draft while material design questions remain.
+- Check existing issues and PRs before creating overlapping work.
+- Keep source evidence, assumptions, proposed decisions, and verified behavior distinct.
+- Record material boundary, storage, time, recurrence, or protocol changes in an ADR. Proposed ADRs become accepted only after explicit maintainer agreement; merging documentation alone does not approve every proposal. The maintainer authorized removing superseded uncommitted ADR drafts after preserving relevant guidance and updating references; preserve committed/accepted decision history. Keep uncommitted draft ADR numbering consecutive and update filenames, titles, indexes and references together when renumbering.
+- Keep requirements, compatibility matrix, per-RFC property/feature plans under docs/rfc/, roadmap, and issue acceptance criteria consistent. Distinguish planned/proposed/undecided support from implemented behavior and preserve the module-versus-feed boundary.
+- Use Mermaid diagrams in Markdown fenced code blocks labeled `mermaid` for documentation diagrams. Keep diagrams consistent with the accompanying text and clearly label proposed designs.
+- Never commit credentials, private calendar exports, personal event data, or production configuration. Use synthetic fixtures.
+
+## Implementation guidance once scaffolding exists
+
+Target Serverpod 4.x and later. Select and pin compatible Dart, Flutter, and Serverpod SDK versions during scaffolding, and verify compatibility before claiming support for a version.
+
+Keep reusable calendar semantics independent of Serverpod and Flutter. Put persistence, authorization, and endpoint adaptation in the Serverpod module; keep iCalendar parsing/serialization behind an explicit adapter boundary. Do not hand-edit generated files: change their sources and regenerate using the pinned toolchain.
+
+Authorization must be checked server-side for every read, write, query, import, export, association change and feed-management operation. Users, groups and membership belong to the host; store only opaque namespaced association references and use host policy adapters. Never trust client-supplied identity or membership. Handle event changes, import batches and feed selection changes transactionally; reject stale revisions rather than silently overwriting.
+
+First-release requirements include named time zones, recurrence/exceptions, and iCalendar subscription feeds targeting Apple Calendar on iOS, Google Calendar and Microsoft Outlook. Date-only values are not midnight UTC timestamps. Preserve UTC, date-only and zoned local meanings; reject unsupported floating times explicitly. Never silently flatten recurrence or discard unsupported calendar data.
+
+Feeds select one or more calendars and support multiple independently revocable long random bearer URLs with ETag/If-None-Match. Tokens grant read-only subscription access without a password; management remains host-authorized. Store token digests, redact bearer URLs, check revocation and continuing publication authorization before content or 304 responses, and keep proposed security policies distinct from verified behavior. See ADRs 0004 and 0005. Calendars also represent rooms, venues and equipment; first-release free/busy queries must resolve all availability-contributing calendars, preserve recurrence/DST/status semantics, protect event details and never label incomplete/denied results free. Separate management associations from subjects whose time is booked. See ADR 0006; querying availability alone does not guarantee an exclusive reservation.
+
+## Validation and reporting
+
+For documentation-only changes, check relative links, requirement/ADR consistency, and the changed-file list. Do not claim runtime tests passed when there is no application. Once code exists, document and run appropriate formatting, analysis, unit, and database integration checks using the selected SDK versions. Include commands actually run and results in each implementation PR. Add tests for authorization boundaries, import rejection/atomicity, temporal semantics, concurrency, and supported interoperability cases.
+
+First-release standards also include RFC 7953 availability rules, RFC 5546 iTIP and RFC 6047 iMIP. Keep scheduling reconciliation separate from ordinary import and feed publication; host adapters provide trusted calendar addresses and inbound/outbound email. Validate participant authority, method/version/occurrence identity and duplicate/stale messages. Persist outbound intent transactionally and test retries/crash recovery. See docs/standards.md and ADRs 0012/0007; do not claim scheduling interoperability from subscription-only tests. No real email is authorized by documentation changes alone.
+
+Use the defined RFC 7986 profile for calendar/feed descriptions. RFCs 9073/9253 and advanced RFC 9074 features are required design considerations; a scoped time-based alarm/runtime capability is now required under ADR 0009. Do not imply blanket extension support. Record per-feature support/defer/reject decisions under ADR 0014 before finalizing parser/schema choices; keep resource/participant publication metadata distinct from host identities and permissions, alarm data distinct from reminder execution, and relationship links distinct from authorization. Metadata changes must be reflected in deterministic feed output and ETags without disclosing other bearer URLs.
+
+The primary product is the Serverpod calendar/free-busy/scheduling/task module, with generated Dart clients for host Flutter GUIs. External iOS/Google/Outlook feeds consume only a declared subset; preserve full canonical/native capability independently. Native availability search accepts lists of people/rooms/resources and a bounded period, with explicit per-target versus common-free behavior, optional minimum duration and complete/unknown coverage. Native tasks and an approved VTODO interchange profile are in scope; task dates do not automatically book time. Validate native/protocol behavior separately from feed-client UI support, and choose scheduling-mail targets independently. See ADR 0008.
+
+First-release alarm execution and a working iOS/Android Flutter push integration are required. ADR 0009 proposes calendar-owned timing/occurrence/action state and durable intent, a separate reusable notification delivery/device/provider boundary, and Flutter permissions/presentation/actions. Keep provider SDKs/tokens/credentials out of calendar core/tables. Revalidate current generation, recipient access, cancellation and expiry before dispatch/retries; distinguish provider acceptance from display/acknowledgement. Private/imported alarm handling and advanced actions need explicit policy; never auto-arm untrusted ICS alarms. Module boundaries and the exact trigger/action baseline remain proposed.
+
+The example host/Flutter app is a required automated integration-test application. Test real module/migrations, generated-client APIs, feed routes and Flutter journeys. The module must work with multiple concurrently active Serverpod instances; CI must exercise at least two independent host processes sharing test storage, cross-instance state/revocation, competing workers and instance-loss recovery. Do not rely on process-local locks, caches or sticky routing for correctness. Use synthetic data and deterministic mail/push test adapters; retain separate real-client/mobile evidence. See ADR 0018 and NFR-14/NFR-15.
+
+No executable checks or dependency versions are prescribed until scaffolding establishes them.

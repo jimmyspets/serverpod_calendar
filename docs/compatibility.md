@@ -1,0 +1,106 @@
+# Module interfaces and interoperability profiles
+
+Status: **requirements, unimplemented and untested**. The main product is a Serverpod module with generated Dart APIs used by host Flutter GUIs. External calendar feeds need only a documented subset. Their client limitations do not restrict canonical calendar/task/scheduling/availability capabilities.
+
+The baseline features formerly marked Proposed in the RFC matrices are now Yes — planned by maintainer instruction; see [RFC scope](rfc/README.md). This includes scoped UID/acknowledgement/snooze and DISPLAY alarm behavior, event/free-busy method baselines, calendar UID/update/color and the documented HTTP validation/caching policy. Detailed combinations and evidence remain pending; deferred rows retain their scope; the subsequent walkthrough resolved all listed Undecided rows.
+
+The subscription HTTP profile in [ADR 0016](adr/0016-subscription-http-profile.md) initially uses ETag validators only, defers HTTP date validators and byte ranges, and serves fixed ICS media output. Test varied Accept/date/range inputs without changing ordinary GET/HEAD/304 or revocation behavior; calendar LAST-MODIFIED fields remain supported separately. Feed-adapter If-Match uses strong comparison/412 with RFC precedence after authorization; Content-Language is optional host-declared audience metadata, and subscription redirects are deferred. Explicit privacy-safe errors retain opaque credential 404 and If-Match 412; all errors/denials use no-store and prohibit negative caching. Successful responses use Cache-Control: private, no-cache, max-age=0, must-revalidate, omitting proxy-revalidate/Expires. Verify this through host infrastructure; failures never masquerade as empty success or 304.
+
+## Interface coverage
+
+| Surface | Required capability | Evidence |
+| --- | --- | --- |
+| Native Serverpod/generated Dart client | Calendar/event/task management, scheduling, rule management and availability search across lists of people/resources | Server/domain/database tests and host Flutter journeys |
+| General iCalendar interchange | Approved VEVENT, VTODO, VTIMEZONE, VAVAILABILITY and free/busy profiles | Independent fixtures, semantic round trips and explicit unsupported-input diagnostics |
+| Read-only subscription feeds | Declared event/calendar-description subset suitable for Apple Calendar on iOS, Google Calendar and Outlook | Feed-subset client matrix; no full task/scheduling/search GUI requirement |
+| iTIP/restricted iMIP | Approved event/free-busy scheduling and trusted email; component hints supported, S/MIME deferred under ADR 0015 | Protocol/state/MIME tests, host authority evidence and explicit limited client profile; no complete RFC 6047 conformance |
+
+VTODO scheduling over iTIP and inbound/outbound iMIP mail is deferred under [ADR 0011](adr/0011-defer-vtodo-scheduling.md). Native task assignment, standalone VTODO import/export and task alarms/push remain required. Test unsupported scheduling rejection without mutation, partial processing or automatic replies separately from ordinary task import/export.
+
+Initial standards include RFC 5545, RFC 7953, RFC 5546, RFC 6047, the descriptive RFC 7986 profile, RFC 9110 and RFC 9111. RFC 9074 now has scoped first-release alarm/runtime work; RFCs 9073/9253 have selected scoped metadata profiles under ADR 0014; detailed constraints remain pending, while proximity and arbitrary audio/email actions are deferred. See [standards](standards.md), [ADR 0014](adr/0014-rfc-extension-decisions.md) and [ADR 0008](adr/0008-module-clients-tasks-and-search.md).
+
+The [RFC property matrices](rfc/README.md) itemize named properties and relevant protocol features without claiming current implementation. Use their plan/status legend alongside the interface profiles here; unresolved values and contexts still need decisions.
+
+## Automated example and deployment evidence
+
+The real example host/Flutter app is the automated test application under [ADR 0018](adr/0018-automated-example-and-multiple-instances.md), NFR-14 and NFR-15. CI must run actual migrations/module code, generated-client APIs, feed HTTP routes and Flutter integration journeys with isolated synthetic host data and deterministic mail/push adapters.
+
+| Test surface | Required evidence |
+| --- | --- |
+| Example host and Flutter app | Automated calendar/task, recurrence, scheduling, search and reminder-action journeys through real generated APIs |
+| Concurrent instances | At least two independent active Serverpod processes sharing a database; route requests to either and test cross-instance committed state and stale writes |
+| Feeds and authority | Stable cross-instance bytes/ETags, updates and warm-cache conditional denial after committed token/publication revocation |
+| Background processing | Competing planners/consumers, duplicate ingress, durable occurrence/intent uniqueness, stale-owner rejection and crash/lease recovery |
+| Instance loss/restart | Remaining instance continues safely and recovers durable work within specified bounds; tests assert state rather than relying on unbounded sleeps |
+
+Keep core unit tests, real-host/database integration, Flutter UI integration, protocol fixtures and external client/provider evidence distinct. CI provider doubles do not prove OS background delivery, actual client polling or end-to-end exactly-once behavior. The independently required working iOS/Android push path and measured feed subset remain release evidence.
+
+## Native and interchange profile
+
+Approve exact property/parameter/recurrence matrices before claiming conformance. Internal/native support is distinct from what a subscription feed publishes.
+
+| Feature | Module/interchange target | Required evidence |
+| --- | --- | --- |
+| Calendar system | Gregorian only; CALSCALE:GREGORIAN or omitted default, with no alternative calendar arithmetic/conversion | Accept explicit/default Gregorian; atomic rejection of other systems/non-Gregorian recurrence and host-extension bypass attempts; leap-year/date fixtures under ADR 0013 |
+| ORDER/SCHEMA/DERIVED | Native/interchange presentation order and schema/media metadata; preserved/exported derived markers with server-enforced client read-only behavior | Valid contexts/defaults/ties, no fetching or content interpretation, edit/round-trip retention, host source updates and rejected marker-clearing bypasses |
+| CALENDAR-ADDRESS/STYLED-DESCRIPTION/STRUCTURED-DATA | Host-validated participant addresses; URI-only rich descriptions with plain text retained and associated-data links in approved contexts | Address spoofing/mapping checks, no inline payloads/fetch/render/directory import, atomic rejection, semantic round trips/edit retention and host disclosure |
+| Structured participants/locations/resources | Native/interchange event/task PARTICIPANT/VLOCATION/VRESOURCE and standardized LOCATION-TYPE, standard PARTICIPANT-TYPE and four standard RESOURCE-TYPE categories under ADR 0014; bounded RFC-defined nesting and legal shared-core field reuse selected | Nested round trips/edit retention, per-component validity and limits, host mapping validation, participant location permission and no directory/invitation/access/booking side effects; external feed rendering needs separate evidence |
+| CONFERENCE/EMAIL/FEATURE/LABEL | Native/interchange event/task conference links and tags/labels; host-validated organizer/attendee contact email | Round trips/native edits, moderator credential isolation, spoofed email/routing rejection, no provider operation and continued VTODO scheduling deferral |
+| Calendar SOURCE/IMAGE/DISPLAY | Private import-preserved SOURCE for authenticated interchange; native/interchange calendar image links and standard display hints under ADR 0014 | SOURCE retention and feed omission; URI-only image/hint round trips, no binary/fetch/resize/storage, host file-access/disclosure and unrelated-edit retention |
+| Calendars and descriptions | RFC 7986 names/descriptions/identity/update/color, editable URL, host-validated calendar labels and configurable REFRESH-INTERVAL hint | Authorized edits/round trips, no-fetch/credential isolation, label validation, positive duration/wire syntax and stable metadata/ETags; polling remains client-controlled |
+| VEVENT and persistent identity/metadata | Durable events/series, distinct source/scheduling/publication identity | Revisions, updates/deletes, no duplicates or identity loss |
+| ATTACH/CATEGORIES/CLASS | URI-only host file references, searchable free-form labels with host validation, classification with host disclosure/masking | No binary/file copying; host validation; no PUBLIC permission escalation; surface masking and private free/busy isolation under ADR 0010 |
+| COMMENT/GEO/RESOURCES | Editable event/task plain-text notes, event coordinates and descriptive event resource labels in native APIs/interchange | Coordinate/text validation and round trips; no chat/geocoding service or resource auto-linking/booking; publication remains a separate choice |
+| TZNAME/TZURL/CONTACT | Zone display labels and no-fetch zone-source URI metadata; CONTACT preserved only from imports | Valid zone rules remain authoritative; no native CONTACT mutation; retain imported text through unrelated edits and apply host disclosure |
+| CONCEPT/LINK/REFID | Native/interchange event/task formal category references, typed links and scoped grouping keys/search under ADR 0014; LINK UID/URI targets planned and XML-REFERENCE deferred; host-approved LINKREL, editable label/target-language/media metadata and authorized cross-calendar links planned; detailed target/deletion policy pending | Authorized search/grouping, private key/target isolation, host validation, no fetch/hierarchy/access/workflow side effects and edit/round-trip retention |
+| Temporal relationships/GAP/DEPENDS-ON | Native/interchange declared dependencies and bounded signed lead/lag metadata under ADR 0014 | Direction/sign/context fixtures, authorized bounded inspection and round trips; no automatic date/lifecycle/status/booking/alarm/workflow changes or holiday calculations |
+| RELATED-TO/URL/REPEAT | Basic native/interchange event/task relationships and information links; bounded automatic alarm repeats | Base hierarchy plus selected RFC 9253 target/group/ordering forms under ADR 0014; no permission inheritance/dependency execution or URL fetch; alarm DURATION pairing, configurable limits and stale/retry handling under ADR 0010 |
+| Participant metadata and delegation | CN display names, standard CUTYPE values and host-authorized meeting delegation in native APIs/interchange | Round trips, spoofed labels, host mapping checks, unauthorized delegation rejection and unchanged access/bookings |
+| DIR/FMTTYPE/LANGUAGE | Directory URI preservation/export, validated attachment media types and native/interchange text/name language tags | No fetch, lookup or content inspection; round trips/edit retention, valid tags/types, legal property cardinality and host disclosure |
+| MEMBER/RANGE/SENT-BY | Host-validated membership metadata, this-and-future edits and host-authorized acting senders | No authority from imported claims; range/override identity, DST, booking/alarm recalculation, stale revisions and scheduling method validation |
+| Text/content lines | Escaping, Unicode, CRLF and octet-aware folding | Valid/malformed/over-limit fixtures |
+| UTC, date-only and named-zone times | Preserve temporal meanings; exclusive event date ends; known named zones and validated matching VTIMEZONE definitions under ADR 0017, arbitrary custom rules deferred | DST gaps/folds, multi-day events and zone resolution |
+| RRULE/RDATE/EXDATE/RECURRENCE-ID | Declared grammar and moved/cancelled exceptions; confirmed hourly/minutely, BYHOUR/BYMINUTE, BYYEARDAY/BYWEEKNO/BYMONTH, BYSETPOS and all WKST values (omitted default Monday); SECONDLY/BYSECOND deferred | Month ends/leap dates, original identity, DST/list combinations, bounded expansion without false-free partial results; explicit deferred-form rejection |
+| DTEND/DURATION and missing event end | Explicit duration/default rules and mutual exclusion | Point events, date defaults and DST-spanning durations |
+| VTODO tasks | Authorized native lifecycle/assignment and approved standalone interchange including optional dates and recurrence under ADR 0017; iTIP/iMIP tasks deferred | Needs-action/in-progress/completed/cancelled, due/completion validation, restart and round trips; per-occurrence completion, exceptions and series edits specified/tested |
+| Free/busy and search | Per-target intervals and optional common-free search for explicit person/resource lists | Coverage/privacy, minimum duration, limits, no false-free results and generated-client calls |
+| VFREEBUSY | Privacy-safe bounded UTC projection and supported iTIP methods | Explicit periods after recurrence resolution; valid component/role constraints |
+| Calendar availability policy | Per-calendar no-rule setting (default free), separate calendar results and authenticated-only raw rules plus optional host-selected person/resource booking summaries under ADR 0012; summary free time intersects each contributor's independently evaluated rules, fallback and bookings | Fallback boundaries, bookings, unknown coverage, policy revision/cache updates and no raw rule exposure through bearer feeds |
+| VAVAILABILITY/AVAILABLE | RFC 7953 rules and shared RFC 5545 metadata/privacy/recurrence profile under ADR 0012; legal per-component contexts and UTC/zoned date-times | Metadata/extension round trips, invalid contexts and DATE/floating rejection, composition with bookings, no-rule policy, DST and work limits |
+| Scheduling metadata | METHOD/ORGANIZER/ATTENDEE and approved participation fields | Roles, version/order/deduplication, trusted addresses and MIME method consistency |
+| VALARM and native alarms | Scoped time-based definition/execution and private action state | Calendar edits/recurrence/DST, due worker recovery, stale generation, approved triggers and imported-alarm activation |
+| iOS/Android push integration | Serverpod reminder intents through reusable notification service to Flutter | Real reference provider path, permission/token lifecycle, foreground/background and action/privacy evidence |
+| IANA/X-properties and ALTREP | Explicit profile allowlist for registered properties; host-configured X-property validation; alternate text URI metadata only | Unknown/unconfigured names rejected atomically; approved-field retention; no fetching/rendering or permission override; ordinary text retained |
+| Unapproved forms | Reject unsupported input explicitly before mutation | No silent flattening or loss; component-specific diagnostics |
+
+General imports validate the complete batch atomically. Master and legitimate overrides sharing a UID are not duplicate-series errors. Ordinary import conflicts are distinct from authorized scheduling updates. VJOURNAL remains deferred; alarm execution and mobile push are required with the selected personal alarm baseline under ADR 0009 and the RFC tables. Task dates are not automatically busy events. A reusable standalone Flutter widget package is separate from the required host Flutter integration.
+
+## Subscription feed subset
+
+The proposed baseline publishes selected VEVENT fields, supported UTC/all-day/zoned recurring semantics and exceptions, necessary time-zone definitions, and approved RFC 7986 calendar descriptions. Approve exact feed properties separately from general interchange. Tasks, internal scheduling/workflow state, availability rules and free/busy search need not be exposed to subscription clients. Richer approved module fields remain in storage/native APIs even when intentionally excluded from feeds. Exclusions must be documented, with no silent change to the meaning of a published event.
+
+Publish long random HTTPS URLs returning `text/calendar; charset=utf-8`, with read-only GET/HEAD and no password/cookie/login requirement. Multiple URLs can reference a feed selecting several calendars. Each feed has its own metadata and stable publication identities, including collision handling for independent source UIDs/zones. Authorized managers create/revoke credentials independently.
+
+Implement ETag/If-None-Match under [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html#name-if-none-match): unchanged representation gives bodyless 304, changed representation gives 200/current validator. Test weak comparison, lists/wildcard, HEAD, encoding variants and snapshot consistency. Access/revocation checks precede cache handling; private revalidation prevents shared-cache disclosure under RFC 9111. Repeated requests alone do not change metadata/ETag.
+
+Refresh timing belongs to clients. Revocation stops future origin access, not downloaded copies. URL/SOURCE metadata must not disclose other credentials; REFRESH-INTERVAL is a hint. URI metadata does not authorize remote fetching.
+
+| Feed client | Setup evidence | Required coverage |
+| --- | --- | --- |
+| Apple Calendar on iOS | [Apple subscription guide](https://support.apple.com/en-gb/102301) | Declared feed fixtures, subscribe and later event changes/deletes |
+| Google Calendar | [Google From URL guide](https://support.google.com/calendar/answer/37100?hl=en) | Same feed subset; observed refresh and metadata behavior |
+| Microsoft Outlook | [Microsoft web subscription guide](https://support.microsoft.com/en-us/outlook/import-or-subscribe-to-a-calendar-in-outlook-com-or-outlook-on-the-web) | Same feed subset in recorded account/client variant |
+
+Test aggregation and URL lifecycle along with published temporal/metadata fixtures. Record version/account/date/setup/fixture/results, refresh delays and deviations. Full module task/search/rule/scheduling interfaces are not acceptance requirements for these clients. Any legacy fallback or deliberate feed transformation needs explicit measured justification. No universal client rendering claim is made.
+
+## Scheduling, availability and extension evidence
+
+Validate iTIP/iMIP methods independently from feeds with protocol fixtures, host Flutter scheduling journeys and trusted test mail adapters. Choose external scheduling client/account targets separately; the feed target list does not automatically require every listed client to implement all scheduling methods or task assignment. Record invitation/reply/update/cancellation and recurring-instance directions/results for selected targets, plus server tests for all supported methods. Include spoof/stale/duplicate messages, MIME variants/mismatches, provider retries and crash recovery.
+
+Free/busy calculation includes RFC 7953 rules and privacy. Native person/room/resource search must return complete/unknown coverage and never label unresolved data free. Standalone VFREEBUSY file import is confirmed deferred under [ADR 0017](adr/0017-profile-review-clarifications.md); generated output and authorized iTIP exchanges remain planned. CalDAV scheduling/discovery remain deferred. RFC 7953 does not define VAVAILABILITY iTIP message semantics.
+
+Use the selected per-feature RFC 9073/9074/9253 tables when finalizing schemas and parser constraints; do not reopen chosen features as unselected scope. Separate resource publication from host identity/authorization, alarm storage from execution, and links from permission inheritance. Client display support is evidence for a projection, not a veto on approved module capabilities. Unsupported imports still fail explicitly; deliberate subset publishing never authorizes loss of canonical data.
+
+## Alarm integration evidence
+
+Calendar alarm state/semantics, generic notification/device/provider delivery and Flutter platform presentation have separate owners under [ADR 0009](adr/0009-alarms-and-notification-boundaries.md). A working iOS/Android reference push path is required, with trigger recalculation, cancellation/access loss, restart/duplicate/retry, expiry and authorized actions tested separately from provider acceptance. Native personal alarm state is not published in subset feeds by default. Live Serverpod streams do not replace OS background push. Proximity/geofencing and other advanced actions remain deferred; local scheduled notifications are an optional extension needing explicit push/local ownership and deduplication. Record versions and best-effort delivery limitations without claiming every alarm was displayed.

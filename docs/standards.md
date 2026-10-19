@@ -1,0 +1,53 @@
+# Standards scope and extension review
+
+Status: **required standards, implementation pending**. Maintainer instruction on 2026-10-19 adds RFC 7953, iTIP and iMIP. Calendar descriptions now target RFC 7986; RFC 9074 now targets a scoped first-release alarm capability; RFCs 9073/9253 now have selected scoped metadata profiles; detailed constraints remain pending, while proximity and arbitrary audio/email actions are deferred. Detailed component/method coverage must be approved and tested before claiming conformance.
+
+| Standard | First-release responsibility | Boundary |
+| --- | --- | --- |
+| [RFC 5545: iCalendar](https://www.rfc-editor.org/rfc/rfc5545.html) | Events/tasks (VTODO), recurrence/exceptions, zones, scheduling properties and free/busy periods | Full module/interchange profile is separate from the narrower external feed projection; journal scope remains separate; scoped time-based VALARM and native execution are required |
+| [RFC 7986: Calendar Property Extensions](https://www.rfc-editor.org/rfc/rfc7986.html) | Calendar/feed name, description and publication metadata | Planned NAME/DESCRIPTION/UID/LAST-MODIFIED/COLOR plus URL/CATEGORIES/REFRESH-INTERVAL, private imported SOURCE and URI-only calendar IMAGE/DISPLAY under ADR 0014; event/task CONFERENCE, organizer/attendee EMAIL and conference FEATURE/LABEL are also planned; exact contexts/limits remain profile work |
+| [RFC 7953: Calendar Availability](https://www.rfc-editor.org/rfc/rfc7953.html) | Store/import/export VAVAILABILITY/AVAILABLE rules and use them when calculating free/busy | Include recurrence, exceptions, priorities and BUSYTYPE; CalDAV-specific transport extensions remain deferred |
+| [RFC 5546: iTIP](https://www.rfc-editor.org/rfc/rfc5546.html) | Event scheduling lifecycle and VFREEBUSY scheduling exchanges | Planned event/free-busy method baseline below; component-specific rules apply |
+| [RFC 6047: iMIP](https://www.rfc-editor.org/rfc/rfc6047.html) | Outbound and inbound email binding for supported iTIP exchanges | Restricted profile under ADR 0015: component hints supported, S/MIME deferred; no complete RFC 6047 conformance. Host supplies trusted ingress/address authority and delivery; no embedded mail server |
+| [RFC 9110: HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html) | Feed GET/HEAD, ETag, If-None-Match and 304 | Read-only fixed ICS profile under ADR 0016; ETag-only validators, HTTP dates/ranges deferred |
+| [RFC 9111: HTTP Caching](https://www.rfc-editor.org/rfc/rfc9111.html) | Private feed caching/revalidation and shared-cache protection | ADR 0016: successful responses private, no-cache, max-age=0, must-revalidate; errors/denials no-store with no negative caching; authorization/revocation checked before successful reuse |
+
+Gregorian is the only supported calendar system under [ADR 0013](adr/0013-gregorian-only.md). CALSCALE may specify GREGORIAN or be omitted using its Gregorian default; other systems are explicitly rejected without conversion.
+
+## Property and feature inventories
+
+See the [per-RFC matrices](rfc/README.md): one file per tracked RFC with property or protocol feature, purpose, first-release plan and notes. All actual implementation is still pending. All formerly Proposed RFC matrix rows are now Yes — planned under [RFC scope](rfc/README.md). All listed feature rows now have selected statuses. Planned features, delegated host/library behavior and deferred protocols remain distinguished; these inventories do not approve unresolved profiles or require the whole model in feeds.
+
+## Native module and feed boundaries
+
+The module provides full calendar, task, free/busy, availability-search and scheduling services to Serverpod projects with Flutter GUIs. External iOS/Google/Outlook feeds need only a declared event-publication subset. Interchange and scheduling coverage are evaluated independently; an external feed client need not expose tasks, rules, search or the full RFC profile. Deliberate output exclusions do not authorize lossy import or deletion of canonical fields. See [ADR 0008](adr/0008-module-clients-tasks-and-search.md).
+
+## Selected extension profiles
+
+| Standard | Relevance | Current status |
+| --- | --- | --- |
+| [RFC 9073](https://www.rfc-editor.org/rfc/rfc9073.html) | Structured participants, locations and resources; rich event metadata | PARTICIPANT/VLOCATION/VRESOURCE and selected standard type vocabularies planned in native event/task APIs/interchange under ADR 0014; CALENDAR-ADDRESS and URI-only STYLED-DESCRIPTION/STRUCTURED-DATA also planned; ORDER/SCHEMA/FMTTYPE/DERIVED selected with metadata-only and read-only boundaries; bounded RFC nesting and legal shared fields selected; exact allowlists/limits and implementation pending, no blanket RFC commitment |
+| [RFC 9074](https://www.rfc-editor.org/rfc/rfc9074.html) | Extended alarms, acknowledgement, snooze and proximity | First-release alarm runtime required; UID/acknowledgement/snooze profile selected in the RFC tables; exact wire/lifecycle constraints pending; proximity/advanced actions deferred |
+| [RFC 9253](https://datatracker.ietf.org/doc/html/rfc9253) | Calendar-item relationships, links, concepts and grouping references | CONCEPT/LINK/REFID planned for event/task native APIs/interchange under ADR 0014; LINK UID/URI targets selected and XML-REFERENCE deferred; host-approved LINKREL, link metadata and authorized cross-calendar links selected; legal RELATED-TO targets, group references and FIRST/NEXT ordering also planned; temporal dependency/GAP/general dependency metadata also planned; exact graph/reference/limit policies and implementation remain pending |
+
+See [ADR 0014](adr/0014-rfc-extension-decisions.md) and [profile contracts](roadmap.md#design-contracts). Complete the review before finalizing parser/schema/profile choices; record implement/preserve/reject/defer decisions separately. Only the selected table features are first-release commitments; unlisted legal combinations are not automatically supported. Alarm runtime is now required. [ADR 0009](adr/0009-alarms-and-notification-boundaries.md) proposes scoped time-based semantics and reusable push delivery; exact RFC 9074 mappings and advanced features still require review.
+## Planned scheduling coverage
+
+| Component | Methods to specify, implement and test |
+| --- | --- |
+| VEVENT | PUBLISH, REQUEST, REPLY, ADD, CANCEL, REFRESH, COUNTER, DECLINECOUNTER |
+| VTODO | Native recurring/non-recurring tasks and standalone RFC 5545 interchange remain required under ADR 0017; all iTIP VTODO methods and inbound/outbound iMIP task mail are deferred under ADR 0011 |
+| VFREEBUSY | PUBLISH, REQUEST, REPLY |
+| VAVAILABILITY/AVAILABLE | Calendar availability storage/exchange and free/busy calculation under RFC 7953; no invented iTIP method mapping |
+
+RFC 7953 section 6 does not define VAVAILABILITY scheduling messages. Its rules instead inform supported free/busy calculations. Exact method roles, property constraints, delegation/forwarding and unsupported-feature responses require a component-by-component acceptance matrix under [ADR 0007](adr/0007-scheduling-and-email.md). There is no claim of all RFC 5546 component support.
+
+## Validation evidence
+
+Automate selected protocol behavior through the real example host/app and at least two concurrently active Serverpod processes under [ADR 0018](adr/0018-automated-example-and-multiple-instances.md). Include cross-instance feed authority/validator checks and competing scheduling/alarm processing with crash recovery. Deterministic adapter tests complement separately required external-client/mobile-provider evidence.
+
+Use independent RFC fixtures and negative cases, not only serializer round trips. Test RFC 7953 rule precedence and availability/booking composition; scheduling identities, sequence/order and duplicate handling; MIME/calendar METHOD consistency; authenticated inbound address mapping; and durable outbound retries.
+
+The iOS/Google/Outlook subscription matrix is required only for the declared feed subset. Validate full module behavior through server/protocol fixtures and generated-client Flutter journeys. Select scheduling/email client targets separately and record client/account/version, directions and results; being a feed target does not require full scheduling/task UI support. Preserve required server method semantics even when an external client supports less.
+
+CalDAV (RFC 4791), CalDAV Scheduling (RFC 6638), general upstream synchronization and VJOURNAL remain outside the initial profile; VTODO task services/interchange are now in scope; time-based VALARM/native alarm execution and an iOS/Android push path are now required, with detailed trigger/action and RFC 9074 mappings proposed under ADR 0009. Identity directories, mail providers and resource catalogs are host integration boundaries.

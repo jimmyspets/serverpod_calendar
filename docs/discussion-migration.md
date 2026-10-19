@@ -1,0 +1,39 @@
+# Discussion migration and scope evidence
+
+Date: 2026-10-19. Earlier-source status: **partial reconstruction**. This document records provenance; current feature scope lives in the [RFC tables](rfc/README.md) and [requirements](requirements.md).
+
+## Earlier sources and limitations
+
+The earlier conversation was “Summarize iCalendar Compatibility”, conversation ID 6ad5c7e5-93a8-83eb-934a-41ffd5fb19e4. The supplied [shared conversation link](https://chatgpt.com/share/e/6ad5d8ae-3b28-83ed-b9b1-f8369fadb1e8) required sign-in; assistant architecture answers were not recovered. Accessible questions concerned module documentation, a first working project, public library publication, Serverpod versus Stalwart and repository migration. No earlier product comparison or architecture agreement is established here.
+
+The imported creation report recorded inspection of a LICENSE-only repository at b13c228141112b371bfcbab2c56717129c81e450, no issues/PRs at that inspection, and GitHub write attempts rejected with HTTP 403. These are historical reported outcomes, not current GitHub inventory. No branch, commit, issue or PR was created by that import.
+
+The original UTC-only/non-recurring, owner-only proposal and six-issue bootstrap were superseded by direct maintainer instructions. Its patch, PR draft and creation report were removed during cleanup; they are no longer planning inputs. The remaining bootstrap issue drafts were subsequently removed after consolidating useful delivery checks in [the roadmap](roadmap.md). The Apache 2.0 LICENSE is preserved.
+
+## Confirmed scope and decision evidence
+
+Direct instructions in the repository conversation establish Serverpod 4.x+, Mermaid documentation, Gregorian-only dates, external identity references, resource calendars, recurring events and tasks, named zones, free/busy/search, multi-calendar secret feeds with independently revocable URLs and ETags, scheduling, native tasks and first-release alarms/mobile push. Flutter provides most GUI; external feed clients consume a narrower declared subset.
+
+Detailed selections are recorded without treating all ADR implementation proposals as accepted:
+
+| Decisions | Record |
+| --- | --- |
+| RFC 5545 metadata, recurrence filters, host authority and bounded repeats | [ADR 0010](adr/0010-rfc5545-property-decisions.md) |
+| Native tasks/interchange retained; all VTODO iTIP/mail deferred | [ADR 0011](adr/0011-defer-vtodo-scheduling.md) |
+| RFC 5545 principles in legal availability contexts | [ADR 0012](adr/0012-calendar-availability-policy.md) |
+| Per-calendar fallback default free, separate results, optional host-selected subject summaries using intersection, authenticated-only raw rules | [ADR 0012](adr/0012-calendar-availability-policy.md) |
+| Promote all 35 formerly Proposed RFC rows to Yes — planned | [RFC scope](rfc/README.md) |
+| Gregorian only | [ADR 0013](adr/0013-gregorian-only.md) |
+| Selected RFC 7986/9073/9253 metadata and relationship profiles | [ADR 0014](adr/0014-rfc-extension-decisions.md) |
+| Restricted iMIP profile; S/MIME deferred | [ADR 0015](adr/0015-restricted-imip-profile.md) |
+| ETag-only fixed ICS HTTP profile, explicit errors and private success/no-store error caching | [ADR 0016](adr/0016-subscription-http-profile.md) |
+| Recurring tasks included, known named zones initially, standalone VFREEBUSY import deferred | [ADR 0017](adr/0017-profile-review-clarifications.md) |
+| Example host/app used for automated testing; more than one concurrently active Serverpod instance supported | [ADR 0018](adr/0018-automated-example-and-multiple-instances.md) |
+
+## Current interpretation and remaining work
+
+The maintainer identifies the RFC tables as the latest feature-scope source. New explicit instructions take precedence; update the tables and dependent guidance together. Earlier “still under review” statements do not reopen subsequently selected features. No feature rows remain Undecided or Proposed, but row notes and ADRs still identify detailed design work.
+
+Physical package boundaries, host authorization contracts, storage schema, task occurrence lifecycle, temporal validation details, alarm delivery policies, protocol limits and release evidence remain implementation design. Formal ADR acceptance is separate from confirmed feature scope. Recovery of the earlier conversation is optional evidence work and does not block the current requirements.
+
+No executable implementation or verified client compatibility exists. Do not copy personal calendar data or unrelated chat into this repository; use synthetic fixtures.
