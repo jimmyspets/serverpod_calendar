@@ -45,6 +45,22 @@ docker compose --env-file .local/compose.env -f example/calendar_example/calenda
 
 The local server is an API host; Flutter's development server serves the Web app separately. A production web/deployment configuration is deliberately not provided by this milestone.
 
+## Interactive Serverpod MCP development
+
+Stop the compiled development host, then run from the repository root:
+
+```powershell
+./tool/start-server.ps1 -Interactive
+```
+
+This retains the pinned tool checks, local setup, Compose services and synthetic account seeding, then runs `serverpod start` in watch mode. It disables the TUI, automatic Docker management and automatic Flutter launch: the script already configures Compose, and Flutter can be started separately or through MCP. Keep the runner alive while using MCP. Stop the development runner before the complete check script rebuilds native assets.
+
+The MCP client must launch `serverpod --no-analytics mcp-server --server-dir <absolute-example-server-directory>`. In this monorepo, always specify `example/calendar_example/calendar_example_server` explicitly rather than relying on server auto-detection. The bridge connects to the runner's local `.dart_tool/serverpod/mcp.sock`; starting the compiled bundle alone does not expose that runner connection.
+
+For Codex, configure `[mcp_servers.serverpod]` in ignored root `.codex/config.toml`. The verified local Windows entry uses `command = "cmd.exe"`, arguments `/d`, `/c`, `serverpod`, `--no-analytics`, `mcp-server`, `--server-dir`, followed by the absolute example-server path, an explicit repository `cwd`, and `startup_timeout_sec = 60`. The companion `dart_mcp` entry uses `cmd.exe /d /c dart mcp-server --force-roots-fallback`. Preserve any existing local settings. `codex mcp list` verifies registration, not connection; verify initialization, tool discovery and a read-only log call separately. Restart the MCP client after adding configuration so it can load the new servers.
+
+See the official [Serverpod MCP reference](https://docs.serverpod.dev/concepts/cli/commands/mcp-server) and [Codex MCP configuration](https://developers.openai.com/codex/mcp). Local machine paths/configuration remain ignored; neither credentials nor a global MCP configuration is required.
+
 ## Generation and local checks
 
 After editing endpoints or `.spy.yaml` source models:
@@ -74,7 +90,7 @@ dart run tool/host_smoke.dart --flutter
 
 On Windows, the harness runs two copies of a single compiled host bundle. Launching two `dart run` commands can conflict when the second command tries to replace the native Argon2 DLL loaded by the first. The bundle avoids that tooling conflict; it does not supply distributed correctness. Do not rebuild a bundle while its executable is running. The example can also be used with Serverpod's interactive development tooling, but the scripts above are the repeatable local acceptance workflow.
 
-For interactive work, prefer Serverpod MCP migration, log, reload/restart and Flutter launch/tooling-daemon operations when exposed and connected. The 2026-10-19 session check found no callable Serverpod MCP tools or listed Serverpod resources/templates; MCP access was not verified. This describes the session's available tools, not whether another editor has a working connection. CLI availability and a running host do not establish MCP connectivity.
+For interactive work, prefer Serverpod MCP operations when exposed and connected. On 2026-10-19, the local configuration and watch runner were verified using real STDIO initialization, discovery of all nine Serverpod tools and a successful read-only `tail_server_logs` call. The companion Dart MCP handshake/tool discovery also passed. The existing chat's tool catalog still did not expose these newly configured tools; local transport verification is distinct from loading them into an already running client. See [validation evidence](scaffold-validation.md).
 
 Full cross-instance calendar/feed/scheduling/worker recovery tests arrive with those features under [ADR 0018](adr/0018-automated-example-and-multiple-instances.md). Connected streaming/replay contracts remain future work under [ADR 0020](adr/0020-notification-delivery-scope.md); this authentication scaffold does not claim durable notification delivery or mobile background delivery.
 

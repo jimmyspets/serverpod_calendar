@@ -46,6 +46,20 @@ Starting two Windows `dart run` hosts collided when rebuilding a loaded native A
 
 The template emitted a macOS entitlement-update failure during creation on Windows. Native target folders were removed for the selected Web-only initial scaffold; the final Web builds/tests passed. Native target generation and mobile delivery remain later/external work. SDK-generated Windows CPU/memory metric warnings do not provide performance evidence.
 
+## Local MCP repair verification
+
+The initial session had no Serverpod MCP registration, and the compiled host did not run the development bridge. Project-local ignored `.codex/config.toml` now registers the Serverpod bridge with an explicit example-server directory and companion Dart MCP. Global configuration and credentials were unchanged.
+
+Commands/checks actually run on 2026-10-19:
+
+- `codex mcp list --json`: both `serverpod` and `dart_mcp` enabled with the intended local commands and sixty-second startup timeouts.
+- `pwsh -NoProfile -File tool/start-server.ps1 -Interactive`: passed setup/tool checks, retained local Compose storage, started the watch runner and its MCP socket, applied no new migrations and seeded synthetic accounts idempotently.
+- Local Python JSON-RPC probes launched the exact configured STDIO commands, performed `initialize`, `notifications/initialized` and `tools/list`. Serverpod bridge 4.0.4 exposed nine tools and a real `tail_server_logs` call returned without error. Dart MCP 1.2.1 initialized and exposed fourteen tools. No migration or reload tool was invoked by the probes.
+- `dart run tool/client_smoke.dart --development`: the JWT lifecycle smoke passed against the watch runner.
+- PowerShell parser, documentation links, ignore rules and `git diff --check`: passed. The complete build/browser/two-host suite was not repeated for this tooling-only change; its JWT implementation results above remain the earlier evidence.
+
+The existing chat's tool catalog did not dynamically add the servers after configuration. A client restart/reload is still needed to test agent-native calls in a fresh tool catalog. Registration and successful external MCP protocol calls establish local bridge connectivity, not that this chat already has those tools. Flutter was not auto-launched by this runner; Flutter launch/DTD operations remain untested here.
+
 ## Review and limits
 
 Relative documentation links/anchors, ADR numbering, changed-file list, unchanged Apache 2.0 LICENSE and generated-secret exclusions are checked separately before commit. Generated local secrets were compared against all tracked/candidate text files without printing their values; no matches were found. Password/config/build artifacts remain ignored. Dependency LICENSE observations are in ADR 0021; no blanket dependency license compatibility is claimed.

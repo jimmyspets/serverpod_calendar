@@ -6,7 +6,7 @@ The maintainer authorized the repeatable local CLI workflow in ../../docs/develo
 
 ## Interactive MCP workflow
 
-If a Serverpod MCP is configured for an already running interactive server, prefer it for create_migration/apply_migrations, repair migrations, tail_server_logs/tail_flutter_logs, hot_reload/hot_restart, spawn_flutter_app and get_flutter_app_dtd. Connect the Dart tooling daemon for interactive Flutter driving when available. The CLI scripts remain the supported automated fallback and do not require a manually started server. Interactive `serverpod start` can be used separately; stop running bundle processes before rebuilding the same bundle.
+If a Serverpod MCP is configured for an already running interactive server, prefer it for create_migration/apply_migrations, repair migrations, tail_server_logs/tail_flutter_logs, hot_reload/hot_restart, spawn_flutter_app and get_flutter_app_dtd. Connect the Dart tooling daemon for interactive Flutter driving when available. The CLI scripts remain the supported automated fallback and do not require a manually started server. From the repository root, use `./tool/start-server.ps1 -Interactive` for the MCP-capable watch runner with the existing local setup. Stop the compiled development host first; keep the runner alive while using MCP. Stop running development processes before rebuilding native assets. Project-local MCP configuration is ignored; recheck client registration and connection after restarting the client.
 
 ## Generated code and migrations
 
