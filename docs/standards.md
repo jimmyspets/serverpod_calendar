@@ -14,6 +14,10 @@ Status: **required standards, implementation pending**. Maintainer instruction o
 
 Gregorian is the only supported calendar system under [ADR 0013](adr/0013-gregorian-only.md). CALSCALE may specify GREGORIAN or be omitted using its Gregorian default; other systems are explicitly rejected without conversion.
 
+## ISO 8601 week convention
+
+Native calendar week labels and first-day presentation follow ISO 8601: Monday first, week 1 containing January 4 (equivalently, the first Thursday), and a distinct ISO week-year at New Year. This is the selected week convention, not blanket support for all ISO date/time/duration representations. Explicit non-Monday RFC WKST semantics are separate from ISO week labels; see [ADR 0032](adr/0032-iso-week-convention.md).
+
 ## Property and feature inventories
 
 See the [per-RFC matrices](rfc/README.md): one file per tracked RFC with property or protocol feature, purpose, first-release plan and notes. All actual implementation is still pending. All formerly Proposed RFC matrix rows are now Yes — planned under [RFC scope](rfc/README.md). All listed feature rows now have selected statuses. Planned features, delegated host/library behavior and deferred protocols remain distinguished; these inventories do not approve unresolved profiles or require the whole model in feeds.

@@ -2,6 +2,10 @@
 
 Status: **temporal values, bounded named-zone operations and initial bounded date-only recurrence**, 2026-10-20. The pure Dart core exports `UtcWindow`, `CalendarDate`, `CivilDateTime`, `CalendarDuration`, `NamedZoneResolver` and DATE-only recurrence parameter/generator types. Full recurrence expansion, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
 
+## ISO 8601 week convention
+
+The native convention is ISO 8601: Monday first (1–7), week 1 containing January 4 (equivalently, the first Thursday), and a separate ISO week-year. The current recurrence default of Monday uses this convention. Alternate explicitly supplied RFC WKST calculations are not ISO week numbering; their continued acceptance is pending clarification under [ADR 0032](adr/0032-iso-week-convention.md). Native week labels and Flutter presentation must follow the confirmed ISO convention; those presentation APIs are not implemented yet.
+
 ## Gregorian date-only values
 
 ```dart
