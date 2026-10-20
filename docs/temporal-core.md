@@ -1,6 +1,6 @@
 # Temporal core implementation
 
-Status: **temporal values, bounded named-zone operations and initial bounded date-only recurrence**, 2026-10-20. The pure Dart core exports `UtcWindow`, `CalendarDate`, `DateEventSpan`, `DateEventSeries`, native DATE exception/occurrence values, `CivilDateTime`, `CalendarDuration`, `NamedZoneResolver`, `IsoWeekDate` and DATE-only recurrence parameter/generator/set types. Full recurrence expansion, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
+Status: **temporal values, bounded named-zone operations and initial bounded date-only recurrence**, 2026-10-20. The pure Dart core exports `UtcWindow`, `CalendarDate`, `DateEventSpan`, `DateEventSeries`, native DATE exception/occurrence/range values, `CivilDateTime`, `CalendarDuration`, `NamedZoneResolver`, `IsoWeekDate` and DATE-only recurrence parameter/generator/set types. Full recurrence expansion, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
 
 ## ISO 8601 week convention
 
@@ -427,3 +427,66 @@ At batch completion:
 New cases cover original/effective identity, cancellation, all replacement forms, movement in both directions, length changes, touching boundaries, actual-start ties, immutable canonical snapshots/equality, duplicate/orphan/EXDATE target rejection, earlier inclusions, COUNT/UNTIL, shared target-range validation, each query budget, profile endpoints and WKST/ISO independence. A finite occupied-date oracle independently checks output membership, original identity, length and ordering across a grid of changed spans and query windows.
 
 No dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE or main README warning changed. The full database/browser-journey/two-host suite is deferred for this pure-core batch, as no such surface changed. Full repository checks remain required before PR readiness. Documentation links/anchors (246), consecutive ADR numbering, requirement/RFC/model consistency, changed-file scope and `git diff --check`: passed. No intermediate code commit was made; the completed batch is checked in together.
+
+## DATE-only THISANDFUTURE timing batch
+
+`DateEventRangeChange` pairs an original DATE anchor with a complete replacement span. `dayShift` measures replacement start minus original date. `DateEventRangeSet` layers sorted range changes over a validated `DateEventExceptionSet`. From an anchor through the date before the next original anchor, apply its shift and length/form. Later shifts are relative to their own originals, not accumulated; original rule cadence, COUNT/UNTIL and EXDATE membership remain unchanged. Separate single replacements/cancellations retain their own spans regardless of actual movement across an anchor.
+
+Construction checks raw `maxRangeChanges` before copying, rejects duplicate/excluded/orphan anchors and single/range collisions at the same original date, and uses one shared target validation expansion. Validation budgets retain the names and semantics from the single-exception batch. These collision/multiple-anchor policies are scoped native proposals; imported component reconciliation remains pending.
+
+For example, daily original starts January 1–7 with a range at January 3 moving it to January 8 and another at January 6 moving it to January 4 produce original/actual pairs 1/1, 2/2, 3/8, 4/9, 5/10, 6/4, 7/5. Results are sorted by actual start then original date; each occurrence keeps its original identity.
+
+For overlap, invert the half-open actual date window through each segment's shift and length. Expand one envelope of candidate original dates, sharing `maxCandidateDays`, `maxRuleOccurrences` and `maxBaseOccurrences`. Starts in gaps between inverse ranges consume capacity before segment overlap filtering or single suppression. `maxResults` bounds final output. This trades extra bounded work for shared accounting; practical budget failures never become partial success or free coverage. Independent singles are scanned separately, and spans are returned complete without clipping/merging.
+
+For an existing validated single-exception `base`, a timing range is explicit:
+
+```dart
+final timing = DateEventRangeSet(
+  base: base,
+  changes: [
+    DateEventRangeChange(
+      originalStart: CalendarDate(year: 2026, month: 1, day: 3),
+      replacement: DateEventSpan(
+        start: CalendarDate(year: 2026, month: 1, day: 8),
+        duration: CalendarDuration(days: 2),
+      ),
+    ),
+  ],
+  maxRangeChanges: 10,
+  maxValidationCandidateDays: 1000,
+  maxValidationRuleOccurrences: 100,
+  maxValidationResults: 100,
+);
+final occurrences = timing.expandOverlapping(
+  from: CalendarDate(year: 2026, month: 1, day: 8),
+  until: CalendarDate(year: 2026, month: 1, day: 9),
+  maxCandidateDays: 1000,
+  maxRuleOccurrences: 100,
+  maxBaseOccurrences: 100,
+  maxResults: 100,
+);
+```
+
+The sample assumes January 3 is an effective member with no separate single exception at that anchor. Budgets illustrate operation separation, not production defaults.
+
+Only materialize selected overlapping endpoints; selected overflow fails the whole query. Date and effective-end years remain 0001–9999, named zones remain bounded to 1900–2037 with potentially narrower coverage, and the main README warning is unchanged. This is native timing only: range cancellation, arbitrary pattern edits, timed/task spans, authorization, persistence, booking/alarm recalculation and wire/scheduling support remain pending. See [ADR 0038](adr/0038-date-only-this-and-future-timing.md).
+
+## Date-only range timing batch validation
+
+With pinned Dart 3.13.5, feature iterations used focused VM tests:
+
+- `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe test test/date_event_range_change_test.dart --reporter expanded`, from the core package: **4 value tests passed**.
+- The same executable with `test test/date_event_range_change_test.dart test/date_event_range_set_test.dart test/date_event_exception_set_test.dart --reporter expanded`, from the core package: **64 tests passed** (34 new range tests and 30 affected single-exception regressions).
+- Focused `format` over the two range source/test pairs: four files checked, three formatted.
+
+At batch completion:
+
+- `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe format --output=none --set-exit-if-changed packages/serverpod_calendar_core/lib packages/serverpod_calendar_core/test`: thirty-six files checked, no formatting changes.
+- The same executable with `analyze --fatal-infos`: workspace analysis passed without diagnostics.
+- The same executable with `test --reporter expanded`, from the core package: all **456 tests passed**.
+- The same executable with `test --platform chrome --reporter expanded`, from the core package: all **456 tests passed in Chrome**.
+- Serverpod MCP `hot_reload`: completed successfully; no endpoint consumes range timing yet.
+
+New cases cover signed shifts and length/form preservation; original-order multiple anchors and separate overrides moved across them; original COUNT/UNTIL, RDATE/EXDATE and monthly invalid-date skipping; duplicate/orphan/collision validation; each shared membership/query budget and intervening-envelope capacity; immutable equality; first/last date boundaries, selected overflow and unrelated future overflow. An independent finite occupied-date oracle compares identity, actual spans and output order across mixed ranges/singles and many query windows.
+
+Dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE and the main README warning are unchanged. Database/browser-journey/two-host checks are deferred because no such surface changed. Full repository checks remain required before PR readiness. Documentation links/anchors (244), consecutive ADR numbering, requirement/RFC/model consistency, changed-file scope and `git diff --check`: passed. No intermediate commit was made; the completed group is checked in together.

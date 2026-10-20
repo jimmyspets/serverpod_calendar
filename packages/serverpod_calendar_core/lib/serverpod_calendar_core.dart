@@ -11,6 +11,8 @@ export 'src/civil_date_time.dart';
 export 'src/date_event_exception.dart';
 export 'src/date_event_exception_set.dart';
 export 'src/date_event_occurrence.dart';
+export 'src/date_event_range_change.dart';
+export 'src/date_event_range_set.dart';
 export 'src/date_event_series.dart';
 export 'src/date_event_span.dart';
 export 'src/date_recurrence_rule.dart';
