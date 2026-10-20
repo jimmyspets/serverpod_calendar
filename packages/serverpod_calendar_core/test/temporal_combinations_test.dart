@@ -56,7 +56,7 @@ void main() {
       );
       expect(
         () =>
-            DateEventSpan(start: CalendarDate(year: 2038, month: 1, day: 1))
+            DateEventSpan(start: CalendarDate(year: 2100, month: 1, day: 1))
                 .occupiedWindowIn(zoneId: 'UTC'),
         throwsRangeError,
       );
@@ -202,9 +202,9 @@ void main() {
       );
     },
   );
-  test('distant UTC recurrence preserves odd microseconds on web', () {
-    for (final year in [1, 1600, 9999]) {
-      final start = TimedValue.utc(DateTime.utc(year, 1, 1, 9, 0, 7, 123, 457));
+  test('whole-second UTC recurrence spans the supported year profile', () {
+    for (final year in [1970, 2038, 2099]) {
+      final start = TimedValue.utc(DateTime.utc(year, 1, 1, 9, 0, 7));
       final values = expand(
         start,
         TimedRecurrenceRule(
@@ -215,9 +215,7 @@ void main() {
       );
       expect(values.length, 2);
       expect(
-        values.every(
-          (v) => v.civil.microsecond == 123457 && v.instant.microsecond == 457,
-        ),
+        values.every((v) => v.civil.second == 7 && v.civil.microsecond == 0),
         isTrue,
       );
     }

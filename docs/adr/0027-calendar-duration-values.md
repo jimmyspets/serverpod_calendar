@@ -2,6 +2,8 @@
 
 Status: **Microsecond precision/export rejection explicitly confirmed; value implementation proposed; broader temporal policies remain under review**. Date: 2026-10-20.
 
+Current-profile note: [ADR 0041](0041-whole-second-1970-2100-profile.md) supersedes this record's earlier date-range/precision/zone-envelope choices. Ordinary calendar dates are now 1970 inclusive to 2100 exclusive, with whole seconds and a special exclusive endpoint. The original increment and validation history below is preserved.
+
 ## Context and source evidence
 
 Calendar operations need durations that retain nominal calendar units independently of elapsed clock time. RFC 5545 [section 3.3.6](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.3.6) separates week-only syntax from day/clock syntax, excludes month/year units and specifies date-sensitive duration application. Its wire grammar has whole-second precision. Property/component constraints are separate from the general value grammar.

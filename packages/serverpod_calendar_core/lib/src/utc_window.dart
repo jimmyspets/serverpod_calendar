@@ -10,6 +10,8 @@ final class UtcWindow {
   ///
   /// Throws [ArgumentError] for local bounds, equal bounds or reversed bounds.
   UtcWindow({required this.start, required this.end}) {
+    utcMicroseconds(start);
+    utcMicroseconds(end);
     if (!start.isUtc) {
       throw ArgumentError.value(start, 'start', 'Must be explicitly UTC.');
     }
@@ -46,6 +48,7 @@ final class UtcWindow {
   ///
   /// Throws [ArgumentError] for a local instant rather than converting it.
   bool contains(DateTime instant) {
+    utcMicroseconds(instant);
     if (!instant.isUtc) {
       throw ArgumentError.value(instant, 'instant', 'Must be explicitly UTC.');
     }

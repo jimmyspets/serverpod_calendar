@@ -2,6 +2,8 @@
 
 Status: **Implementation proposal; batch authorized, APIs and native conflict policies remain reviewable**. Date: 2026-10-20.
 
+Current-profile note: [ADR 0041](0041-whole-second-1970-2100-profile.md) supersedes this record's earlier date-range/precision/zone-envelope choices. Ordinary calendar dates are now 1970 inclusive to 2100 exclusive, with whole seconds and a special exclusive endpoint. The original increment and validation history below is preserved.
+
 ## Context and sources
 
 The maintainer asked to finish the temporal core, then stop for questions. This group completes native computation within the selected bounded zone profile. It does not promote the module's planned wire, storage or lifecycle designs to accepted decisions. Earlier accepted precision, Gregorian/ISO, WKST, gap/fold, date-range and duration policies are retained.

@@ -12,7 +12,7 @@ final class CalendarDuration {
   ///
   /// [sign] must be 1 or -1. Magnitudes are nonnegative; nonzero [weeks]
   /// cannot be combined with other nonzero components. [microsecond] is the
-  /// complete fractional-second magnitude, from 0 through 999999.
+  /// fractional-second input slot and must be zero. Nonzero fractions reject.
   /// Zero is allowed here, including a retained negative sign; consumers must
   /// enforce their own positive/nonzero or date-only constraints.
   CalendarDuration({
@@ -32,7 +32,7 @@ final class CalendarDuration {
     RangeError.checkValueInInterval(hours, 0, maxComponent, 'hours');
     RangeError.checkValueInInterval(minutes, 0, maxComponent, 'minutes');
     RangeError.checkValueInInterval(seconds, 0, maxComponent, 'seconds');
-    RangeError.checkValueInInterval(microsecond, 0, 999999, 'microsecond');
+    RangeError.checkValueInInterval(microsecond, 0, 0, 'microsecond');
     if (weeks != 0 &&
         (days != 0 ||
             hours != 0 ||
@@ -75,8 +75,8 @@ final class CalendarDuration {
       throw ArgumentError('Date-only application requires days or weeks only');
     }
     final available = sign == 1
-        ? start.daysUntil(CalendarDate(year: 9999, month: 12, day: 31))
-        : CalendarDate(year: 1, month: 1, day: 1).daysUntil(start);
+        ? start.daysUntil(const CalendarDate.exclusiveEnd())
+        : CalendarDate(year: 1970, month: 1, day: 1).daysUntil(start);
     RangeError.checkValueInInterval(weeks, 0, available ~/ 7, 'weeks');
     RangeError.checkValueInInterval(days, 0, available, 'days');
     return start.addDays(sign * (weeks == 0 ? days : weeks * 7));
@@ -139,8 +139,10 @@ final class CalendarDuration {
         BigInt.from(base.microsecondsSinceEpoch) + BigInt.from(sign) * clock;
     // Loose UTC bounds allow offset spillover at the civil envelope edges.
     // localAt enforces the actual local-year and per-zone coverage limits.
-    if (result < BigInt.from(DateTime.utc(1899).microsecondsSinceEpoch) ||
-        result >= BigInt.from(DateTime.utc(2039).microsecondsSinceEpoch)) {
+    if (result <
+            BigInt.from(DateTime.utc(1969, 12, 30).microsecondsSinceEpoch) ||
+        result >=
+            BigInt.from(DateTime.utc(2100, 1, 3).microsecondsSinceEpoch)) {
       throw RangeError(
         'Zoned duration result exceeds the supported time envelope',
       );

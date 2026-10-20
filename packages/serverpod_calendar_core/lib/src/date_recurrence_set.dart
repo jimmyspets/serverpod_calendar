@@ -18,6 +18,7 @@ final class DateRecurrenceSet {
     List<CalendarDate> exclusions = const [],
     required int maxExplicitDates,
   }) {
+    start.requireOrdinary('DTSTART');
     RangeError.checkValueInInterval(
       maxExplicitDates,
       0,
@@ -27,6 +28,9 @@ final class DateRecurrenceSet {
     if (inclusions.length > maxExplicitDates ||
         exclusions.length > maxExplicitDates - inclusions.length) {
       throw const RecurrenceLimitException('maxExplicitDates');
+    }
+    for (final date in [...inclusions, ...exclusions]) {
+      date.requireOrdinary();
     }
     return DateRecurrenceSet._(
       start,

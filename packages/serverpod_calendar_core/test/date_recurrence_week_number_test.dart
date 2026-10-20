@@ -151,33 +151,13 @@ void main() {
       );
     });
   }
-  test(
-    'virtual adjacent week-years do not create year-zero or year-10000 dates',
-    () {
-      expect(
-        expand(
-          d(1, 1, 1),
-          [-1],
-          wkst: Weekday.tuesday,
-          count: 1,
-          through: d(1, 12, 31),
-        ),
-        [d(1, 1, 1)],
-      );
-      expect(
-        expand(
-          d(9999, 12, 31),
-          [1],
-          wkst: Weekday.friday,
-          count: 1,
-          through: d(9999, 12, 31),
-        ),
-        [d(9999, 12, 31)],
-      );
-      expect(() => d(0, 1, 1), throwsRangeError);
-      expect(() => d(10000, 1, 1), throwsRangeError);
-    },
-  );
+  test('adjacent week-years do not admit out-of-profile dates', () {
+    expect(() => d(1969, 12, 31), throwsRangeError);
+    expect(() => d(2100, 1, 1), throwsRangeError);
+    expect(expand(d(1970, 1, 1), [1], count: 1, through: d(1970, 12, 31)), [
+      d(1970, 1, 1),
+    ]);
+  });
   test(
     'week-number work and result exhaustion still throw without truncation',
     () {
@@ -193,10 +173,10 @@ void main() {
   );
   for (final wkst in Weekday.values) {
     test(
-      '400-year first/last-week membership agrees with fourth-day anchors for $wkst',
+      'supported-year first/last-week membership agrees with fourth-day anchors for $wkst',
       () {
-        final start = d(1600, 1, 4);
-        final end = d(1999, 12, 31);
+        final start = d(1970, 1, 4);
+        final end = d(2099, 12, 27);
         final actual = expand(
           start,
           [1, -1],
@@ -210,11 +190,15 @@ void main() {
         for (var i = 0; i <= length; i++) {
           final date = start.addDays(i);
           // Independent construction: the fourth weekday determines week-year.
-          final fourth = date.addDays(
-            3 - (date.weekday - wkst.isoNumber + 7) % 7,
-          );
-          final inFirstWeek = d(fourth.year, 1, 1).daysUntil(fourth) < 7;
-          final inLastWeek = fourth.addDays(7).year != fourth.year;
+          final fourth = DateTime.utc(
+            date.year,
+            date.month,
+            date.day,
+          ).add(Duration(days: 3 - (date.weekday - wkst.isoNumber + 7) % 7));
+          final inFirstWeek =
+              fourth.difference(DateTime.utc(fourth.year)).inDays < 7;
+          final inLastWeek =
+              fourth.add(const Duration(days: 7)).year != fourth.year;
           if (inFirstWeek || inLastWeek) expected.add(date);
         }
         expect(actual, expected);

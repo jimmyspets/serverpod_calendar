@@ -230,8 +230,8 @@ void main() {
     expect(value.rule!.weekStart, Weekday.sunday);
   });
   test('date-profile edges remain distinct date-only values', () {
-    final first = CalendarDate(year: 1, month: 1, day: 1);
-    final last = CalendarDate(year: 9999, month: 12, day: 31);
+    final first = CalendarDate(year: 1970, month: 1, day: 1);
+    final last = CalendarDate(year: 2099, month: 12, day: 31);
     final value = set(start: first, inclusions: [last]);
     expect(expand(value, from: first, through: last), [first, last]);
   });

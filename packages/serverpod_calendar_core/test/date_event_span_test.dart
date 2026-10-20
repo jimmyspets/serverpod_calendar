@@ -60,7 +60,6 @@ void main() {
     CalendarDuration(days: 1, hours: 1),
     CalendarDuration(days: 1, minutes: 1),
     CalendarDuration(days: 1, seconds: 1),
-    CalendarDuration(days: 1, microsecond: 1),
   ].indexed) {
     test('rejects invalid event duration #$index', () {
       expect(
@@ -69,7 +68,7 @@ void main() {
       );
     });
   }
-  for (final year in [1900, 2000, 2024, 2100]) {
+  for (final year in [1971, 2000, 2024, 2099]) {
     test('default/duration spans cross Gregorian February in $year', () {
       final leap = year == 2000 || year == 2024;
       final span = DateEventSpan(start: date(year, 2, 28));
@@ -180,41 +179,49 @@ void main() {
     expect(DateEventSpan(start: d(1)), isNot(d(1)));
   });
   test('full-profile explicit bounds are dates rather than instants', () {
-    final span = DateEventSpan(start: date(1, 1, 1), end: date(9999, 12, 31));
-    expect(span.dayCount, 3652058);
-    expect(span.contains(date(9999, 12, 30)), isTrue);
-    expect(span.contains(date(9999, 12, 31)), isFalse);
-    expect(DateEventSpan(start: date(1, 1, 1)).endExclusive, date(1, 1, 2));
+    final span = DateEventSpan(
+      start: date(1970, 1, 1),
+      end: date(2099, 12, 31),
+    );
+    expect(span.dayCount, 47481);
+    expect(span.contains(date(2099, 12, 30)), isTrue);
+    expect(span.contains(date(2099, 12, 31)), isFalse);
+    expect(
+      DateEventSpan(start: date(1970, 1, 1)).endExclusive,
+      date(1970, 1, 2),
+    );
   });
   test('effective end can reach the maximum date exactly', () {
-    final span = DateEventSpan(start: date(9999, 12, 30));
-    expect(span.endExclusive, date(9999, 12, 31));
+    final span = DateEventSpan(start: date(2099, 12, 30));
+    expect(span.endExclusive, date(2099, 12, 31));
     final week = DateEventSpan(
-      start: date(9999, 12, 24),
+      start: date(2099, 12, 24),
       duration: CalendarDuration(weeks: 1),
     );
-    expect(week.endExclusive, date(9999, 12, 31));
+    expect(week.endExclusive, date(2099, 12, 31));
   });
-  test(
-    'last-profile-day event fails rather than clipping its exclusive end',
-    () {
-      expect(() => DateEventSpan(start: date(9999, 12, 31)), throwsRangeError);
-      expect(
-        () => DateEventSpan(
-          start: date(9999, 12, 31),
-          duration: CalendarDuration(days: 1),
-        ),
-        throwsRangeError,
-      );
-      expect(
-        () => DateEventSpan(
-          start: date(9999, 12, 25),
-          duration: CalendarDuration(weeks: 1),
-        ),
-        throwsRangeError,
-      );
-    },
-  );
+  test('last ordinary day reaches the explicit endpoint, never beyond it', () {
+    final start = date(2099, 12, 31);
+    expect(
+      DateEventSpan(start: start).endExclusive,
+      const CalendarDate.exclusiveEnd(),
+    );
+    expect(
+      DateEventSpan(
+        start: start,
+        duration: CalendarDuration(days: 1),
+      ).endExclusive,
+      const CalendarDate.exclusiveEnd(),
+    );
+    expect(
+      () => DateEventSpan(start: start, duration: CalendarDuration(days: 2)),
+      throwsRangeError,
+    );
+    expect(
+      () => DateEventSpan(start: const CalendarDate.exclusiveEnd()),
+      throwsRangeError,
+    );
+  });
   for (final duration in [
     CalendarDuration(days: CalendarDuration.maxComponent),
     CalendarDuration(weeks: CalendarDuration.maxComponent),
@@ -229,18 +236,15 @@ void main() {
       },
     );
   }
-  test('all-day calendar spans do not resolve DST or extend zone coverage', () {
-    final spring = DateEventSpan(start: date(2026, 3, 29));
-    final autumn = DateEventSpan(start: date(2026, 10, 25));
-    expect(spring.dayCount, 1);
-    expect(autumn.dayCount, 1);
-    expect(DateEventSpan(start: date(2038, 1, 1)).dayCount, 1);
-    expect(
-      () => NamedZoneResolver().resolve(
-        CivilDateTime(date: date(2038, 1, 1), hour: 0, minute: 0),
-        zoneId: 'Europe/Stockholm',
-      ),
-      throwsA(isA<RangeError>()),
-    );
-  });
+  test(
+    'all-day dates remain date-only even when future zones are supported',
+    () {
+      final event = DateEventSpan(start: date(2038, 1, 1));
+      expect(event.dayCount, 1);
+      expect(
+        event.occupiedWindowIn(zoneId: 'Europe/Stockholm')!.duration.inHours,
+        24,
+      );
+    },
+  );
 }

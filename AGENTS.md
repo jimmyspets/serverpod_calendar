@@ -4,6 +4,10 @@
 
 This repository now contains an initial workspace/authentication scaffold; calendar domain features remain documentation-first. Read README.md, docs/discussion-migration.md, docs/requirements.md, and the relevant proposed ADRs before changes. The per-RFC tables in docs/rfc/ are the latest feature-scope source; explicit newer maintainer instructions take precedence. Reconcile older narrative text with the table statuses and notes without treating unapproved implementation detail as accepted. Architecture documents describe proposals, not implemented behavior. Do not invent earlier chat decisions or claim complete iCalendar, CalDAV, or client compatibility.
 
+## Current calendar profile
+
+The maintainer selected whole-second calendar timing and ordinary dates in **[1970-01-01, 2100-01-01)** under [ADR 0041](docs/adr/0041-whole-second-1970-2100-profile.md), superseding earlier microsecond/broad-date/2037 limits. Nonzero fractions reject without rounding. Only explicit exclusive endpoints may be 2100-01-01 midnight; UTC calculation padding does not extend ordinary storage. Keep the current timezone library and reproduce the bounded generated IANA data using [the update procedure](docs/timezone-data.md); never edit its generated payload by hand. Preserve historical ADR/validation evidence with clear supersession notes. APIs remain unpublished and breaking changes are authorized.
+
 ## Change discipline
 
 - Preserve existing contents and the Apache 2.0 LICENSE.

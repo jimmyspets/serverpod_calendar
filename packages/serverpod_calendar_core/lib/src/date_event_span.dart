@@ -13,13 +13,14 @@ final class DateEventSpan {
   ///
   /// [end] is exclusive and cannot accompany [duration]. A duration must be
   /// positive and contain only days or weeks. Omitting both means one day.
-  /// The effective exclusive end must remain within date years 1 through 9999;
-  /// overflow throws [RangeError] rather than clipping or creating year 10000.
+  /// The effective end may reach the explicit 2100-01-01 boundary; later
+  /// endpoints throw [RangeError] without clipping. Ordinary starts are 1970–2099.
   factory DateEventSpan({
     required CalendarDate start,
     CalendarDate? end,
     CalendarDuration? duration,
   }) {
+    start.requireOrdinary('start');
     if (end != null && duration != null) {
       throw ArgumentError('Event end and duration are mutually exclusive');
     }

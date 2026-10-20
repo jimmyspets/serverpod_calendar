@@ -1,15 +1,24 @@
 /// A Gregorian calendar date without a time, timezone or UTC instant.
 ///
-/// The selected native/interchange profile accepts years 1 through 9999.
+/// The selected native/interchange profile accepts years 1970 through 2099.
 /// Invalid fields are rejected, never normalized into another date.
 final class CalendarDate implements Comparable<CalendarDate> {
   /// Creates a valid Gregorian date in the selected year range.
   ///
   /// Throws [RangeError] for an unsupported year, month or day.
   CalendarDate({required this.year, required this.month, required this.day}) {
-    RangeError.checkValueInInterval(year, 1, 9999, 'year');
+    RangeError.checkValueInInterval(year, 1970, 2099, 'year');
     RangeError.checkValueInInterval(month, 1, 12, 'month');
     RangeError.checkValueInInterval(day, 1, daysInMonth, 'day');
+  }
+
+  /// The sole date outside the ordinary profile, for exclusive endpoints only.
+  const CalendarDate.exclusiveEnd() : year = 2100, month = 1, day = 1;
+
+  bool get isExclusiveEnd => year == 2100;
+
+  void requireOrdinary([String name = 'date']) {
+    if (isExclusiveEnd) throw RangeError('$name must precede 2100-01-01');
   }
 
   final int year;
@@ -36,19 +45,20 @@ final class CalendarDate implements Comparable<CalendarDate> {
 
   /// Moves forward or backward by calendar days, without timestamp conversion.
   ///
-  /// Throws [RangeError] if the result would leave years 1 through 9999.
+  /// Throws [RangeError] if the result would leave years 1970 through 2099.
   CalendarDate addDays(int days) {
     final current = _dayNumber;
     // Validate before addition to avoid overflow for very large input values.
     RangeError.checkValueInInterval(
       days,
-      -current,
-      _lastDayNumber - current,
+      _firstDayNumber - current,
+      _endDayNumber - current,
       'days',
     );
     final target = current + days;
-    var lower = 1;
-    var upper = 10000;
+    if (target == _endDayNumber) return const CalendarDate.exclusiveEnd();
+    var lower = 1970;
+    var upper = 2100;
     while (lower + 1 < upper) {
       final middle = (lower + upper) ~/ 2;
       if (_daysBeforeYear(middle) <= target) {
@@ -75,7 +85,8 @@ final class CalendarDate implements Comparable<CalendarDate> {
   }
 
   // Zero-based Gregorian day numbers; 0001-01-01 is Monday.
-  static const _lastDayNumber = 3652058;
+  static const _firstDayNumber = 719162;
+  static const _endDayNumber = 766644;
   static const _daysBeforeMonth = [
     0,
     31,

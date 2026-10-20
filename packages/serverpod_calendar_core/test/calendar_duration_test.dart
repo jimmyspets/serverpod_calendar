@@ -8,11 +8,10 @@ void main() {
     'hours': (value) => CalendarDuration(hours: value),
     'minutes': (value) => CalendarDuration(minutes: value),
     'seconds': (value) => CalendarDuration(seconds: value),
-    'microsecond': (value) => CalendarDuration(microsecond: value),
   };
   for (final entry in constructors.entries) {
     final maximum = entry.key == 'microsecond'
-        ? 999999
+        ? 209999
         : CalendarDuration.maxComponent;
     test('${entry.key} accepts zero and the portable upper bound', () {
       expect(entry.value(0).isZero, isTrue);
@@ -35,7 +34,6 @@ void main() {
     'hours': () => CalendarDuration(weeks: 1, hours: 1),
     'minutes': () => CalendarDuration(weeks: 1, minutes: 1),
     'seconds': () => CalendarDuration(weeks: 1, seconds: 1),
-    'microsecond': () => CalendarDuration(weeks: 1, microsecond: 1),
   };
   for (final entry in mixedWeeks.entries) {
     test('rejects weeks combined with ${entry.key}', () {
@@ -49,7 +47,6 @@ void main() {
       hours: 25,
       minutes: 90,
       seconds: 60,
-      microsecond: 123456,
     );
     expect(value.sign, -1);
     expect(value.weeks, 0);
@@ -57,7 +54,7 @@ void main() {
     expect(value.hours, 25);
     expect(value.minutes, 90);
     expect(value.seconds, 60);
-    expect(value.microsecond, 123456);
+    expect(value.microsecond, 0);
     expect(value.isZero, isFalse);
   });
   test(
@@ -87,7 +84,6 @@ void main() {
       hours: 3,
       minutes: 4,
       seconds: 5,
-      microsecond: 6,
     );
     final equal = CalendarDuration(
       sign: -1,
@@ -95,61 +91,18 @@ void main() {
       hours: 3,
       minutes: 4,
       seconds: 5,
-      microsecond: 6,
     );
     expect(value, equal);
     expect(value.hashCode, equal.hashCode);
     final different = [
-      CalendarDuration(
-        days: 2,
-        hours: 3,
-        minutes: 4,
-        seconds: 5,
-        microsecond: 6,
-      ),
-      CalendarDuration(
-        sign: -1,
-        days: 1,
-        hours: 3,
-        minutes: 4,
-        seconds: 5,
-        microsecond: 6,
-      ),
-      CalendarDuration(
-        sign: -1,
-        days: 2,
-        hours: 1,
-        minutes: 4,
-        seconds: 5,
-        microsecond: 6,
-      ),
-      CalendarDuration(
-        sign: -1,
-        days: 2,
-        hours: 3,
-        minutes: 1,
-        seconds: 5,
-        microsecond: 6,
-      ),
-      CalendarDuration(
-        sign: -1,
-        days: 2,
-        hours: 3,
-        minutes: 4,
-        seconds: 1,
-        microsecond: 6,
-      ),
-      CalendarDuration(
-        sign: -1,
-        days: 2,
-        hours: 3,
-        minutes: 4,
-        seconds: 5,
-        microsecond: 1,
-      ),
+      CalendarDuration(days: 2, hours: 3, minutes: 4, seconds: 5),
+      CalendarDuration(sign: -1, days: 1, hours: 3, minutes: 4, seconds: 5),
+      CalendarDuration(sign: -1, days: 2, hours: 1, minutes: 4, seconds: 5),
+      CalendarDuration(sign: -1, days: 2, hours: 3, minutes: 1, seconds: 5),
+      CalendarDuration(sign: -1, days: 2, hours: 3, minutes: 4, seconds: 1),
     ];
     expect(different, everyElement(isNot(value)));
-    expect({value, equal, ...different}, hasLength(7));
+    expect({value, equal, ...different}, hasLength(6));
     expect(CalendarDuration(weeks: 1), isNot(CalendarDuration(weeks: 2)));
   });
 }

@@ -5,6 +5,7 @@ The maintainer has specified first-release capabilities in [requirements](requir
 | Document | Purpose |
 | --- | --- |
 | [Discussion migration](discussion-migration.md) | Source evidence, current instructions and remaining gaps |
+| [Timezone data](timezone-data.md) | Whole-second range limits, future-rule generation and database update/recalculation procedure |
 | [Requirements](requirements.md) | First-release capabilities and acceptance evidence |
 | [Resource availability](adr/0006-resource-availability.md) | Proposed resource associations, free/busy semantics and privacy |
 | [Alarm and notification boundaries](adr/0009-alarms-and-notification-boundaries.md) | Recommended calendar/notification/Flutter ownership and first-release alarm scope |

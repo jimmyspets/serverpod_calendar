@@ -1,10 +1,15 @@
 import 'date_recurrence_generator.dart';
 import 'date_recurrence_rule.dart';
 import 'utc_window.dart';
+import 'utc_arithmetic.dart';
 
 /// A normalized offset change at an exact UTC instant, within a declared horizon.
 final class ZoneOffsetChange {
   ZoneOffsetChange({required this.instant, required this.offset}) {
+    utcMicroseconds(instant);
+    if (offset.inMicroseconds % 1000000 != 0) {
+      throw ArgumentError('Offsets require whole seconds');
+    }
     if (!instant.isUtc) throw ArgumentError('Transition instant must be UTC');
     // Pinned IANA offsets and RFC UTC-OFFSET are within one day.
     RangeError.checkValueInInterval(

@@ -7,9 +7,10 @@ import 'calendar_date.dart';
 final class IsoWeekDate {
   /// Projects [date] without attaching a time or timezone.
   factory IsoWeekDate.fromDate(CalendarDate date) {
+    date.requireOrdinary();
     final weekday = date.weekday;
     // A week's Thursday determines its ISO year. For the supported profile,
-    // even the first and last weeks have their Thursday within years 1–9999.
+    // even the first and last weeks have their Thursday within years 1970–2099.
     final thursday = date.addDays(4 - weekday);
     final januaryFirst = CalendarDate(year: thursday.year, month: 1, day: 1);
     final week = januaryFirst.daysUntil(thursday) ~/ 7 + 1;

@@ -1,121 +1,48 @@
 import 'package:serverpod_calendar_core/serverpod_calendar_core.dart';
 import 'package:test/test.dart';
 
+DateTime t(int s) => DateTime.utc(2026).add(Duration(seconds: s));
+UtcWindow w(int a, int b) => UtcWindow(start: t(a), end: t(b));
 void main() {
-  final start = DateTime.utc(2024, 2, 29, 23, 59, 59, 999, 998);
-  final middle = start.add(const Duration(microseconds: 1));
-  final end = start.add(const Duration(microseconds: 2));
-  UtcWindow window(DateTime from, DateTime to) =>
-      UtcWindow(start: from, end: to);
-
-  group('validation', () {
-    test(
-      'retains explicit UTC bounds and elapsed precision across leap day',
-      () {
-        final value = window(start, end);
-        expect(value.start, start);
-        expect(value.end, DateTime.utc(2024, 3));
-        expect(value.duration, const Duration(microseconds: 2));
-      },
+  test('half-open membership, adjacency, intersection and equality', () {
+    expect(w(1, 3).contains(t(1)), isTrue);
+    expect(w(1, 3).contains(t(3)), isFalse);
+    expect(w(1, 3).overlaps(w(3, 4)), isFalse);
+    expect(w(1, 3).intersection(w(3, 4)), isNull);
+    expect(w(1, 3).intersection(w(2, 4)), w(2, 3));
+    expect(w(1, 3), w(1, 3));
+    expect(w(1, 3).hashCode, w(1, 3).hashCode);
+    expect(w(1, 3).duration, const Duration(seconds: 2));
+  });
+  test('finite occupied-second oracle checks every short window pair', () {
+    for (var a = 0; a < 6; a++) {
+      for (var b = a + 1; b <= 6; b++) {
+        for (var c = 0; c < 6; c++) {
+          for (var d = c + 1; d <= 6; d++) {
+            final left = {for (var i = a; i < b; i++) i},
+                right = {for (var i = c; i < d; i++) i};
+            expect(
+              w(a, b).overlaps(w(c, d)),
+              left.intersection(right).isNotEmpty,
+            );
+          }
+        }
+      }
+    }
+  });
+  test('rejects local, equal, reversed and fractional bounds', () {
+    expect(
+      () => UtcWindow(start: DateTime(2026), end: t(1)),
+      throwsArgumentError,
     );
-
-    test('rejects local start even when local offset happens to be zero', () {
-      expect(() => window(DateTime(2024, 2, 29), end), throwsArgumentError);
-    });
-
-    test('rejects local end', () {
-      expect(() => window(start, DateTime(2024, 3)), throwsArgumentError);
-    });
-
-    test('rejects an empty window', () {
-      expect(() => window(start, start), throwsArgumentError);
-    });
-
-    test('rejects reversed bounds', () {
-      expect(() => window(end, start), throwsArgumentError);
-    });
-  });
-
-  group('half-open membership', () {
-    final value = window(start, end);
-    test('includes start and interior but excludes end', () {
-      expect(value.contains(start), isTrue);
-      expect(value.contains(middle), isTrue);
-      expect(value.contains(end), isFalse);
-    });
-
-    test('excludes instants outside both bounds', () {
-      expect(
-        value.contains(start.subtract(const Duration(microseconds: 1))),
-        isFalse,
-      );
-      expect(value.contains(end.add(const Duration(microseconds: 1))), isFalse);
-    });
-
-    test('rejects local instants', () {
-      expect(() => value.contains(DateTime(2024, 3)), throwsArgumentError);
-    });
-  });
-
-  group('intersection', () {
-    final a = window(start, end);
-    test('adjacent windows in either order do not overlap', () {
-      final b = window(end, end.add(const Duration(seconds: 1)));
-      expect(a.overlaps(b), isFalse);
-      expect(b.overlaps(a), isFalse);
-      expect(a.intersection(b), isNull);
-      expect(b.intersection(a), isNull);
-    });
-
-    test('separated windows do not overlap', () {
-      final b = window(
-        end.add(const Duration(seconds: 1)),
-        end.add(const Duration(seconds: 2)),
-      );
-      expect(a.overlaps(b), isFalse);
-      expect(a.intersection(b), isNull);
-    });
-
-    test('partial overlap clips bounds and is symmetric', () {
-      final b = window(middle, end.add(const Duration(microseconds: 1)));
-      final expected = window(middle, end);
-      expect(a.overlaps(b), isTrue);
-      expect(a.intersection(b), expected);
-      expect(b.intersection(a), expected);
-    });
-
-    test('a contained window is preserved in both directions', () {
-      final outer = window(
-        start.subtract(const Duration(days: 1)),
-        end.add(const Duration(days: 1)),
-      );
-      expect(a.intersection(outer), a);
-      expect(outer.intersection(a), a);
-    });
-
-    test('identical windows preserve the whole interval', () {
-      expect(a.overlaps(a), isTrue);
-      expect(a.intersection(a), a);
-    });
-  });
-
-  test('value equality and hashing distinguish both bounds', () {
-    final a = window(start, end);
-    final equal = window(
-      DateTime.fromMicrosecondsSinceEpoch(
-        start.microsecondsSinceEpoch,
-        isUtc: true,
+    expect(() => w(1, 1), throwsArgumentError);
+    expect(() => w(2, 1), throwsArgumentError);
+    expect(
+      () => UtcWindow(
+        start: t(0).add(const Duration(milliseconds: 1)),
+        end: t(1),
       ),
-      end,
+      throwsArgumentError,
     );
-    expect(a, equal);
-    expect(a.hashCode, equal.hashCode);
-    expect({
-      a,
-      equal,
-      window(start, middle),
-      window(middle, end),
-    }, hasLength(3));
-    expect(a == Object(), isFalse);
   });
 }

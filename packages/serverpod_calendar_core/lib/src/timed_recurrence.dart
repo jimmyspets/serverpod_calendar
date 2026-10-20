@@ -144,6 +144,7 @@ final class TimedRecurrenceGenerator {
     required int maxCandidateWork,
     required int maxResults,
   }) {
+    start.civil.date.requireOrdinary('DTSTART');
     for (final entry in {
       'maxCandidateWork': maxCandidateWork,
       'maxResults': maxResults,
@@ -162,23 +163,19 @@ final class TimedRecurrenceGenerator {
     var upper = window.end;
     if (rule.until != null && rule.until!.isBefore(upper)) upper = rule.until!;
     if (start.zoneId != null) {
-      // Validate the requested coverage even when no occurrence is returned.
-      resolver.localAt(window.start, zoneId: start.zoneId!);
-      resolver.localAt(
-        window.end.subtract(const Duration(microseconds: 1)),
-        zoneId: start.zoneId!,
-      );
+      // UTC query geometry may include boundary padding. Every generated civil
+      // value is still clipped to the ordinary profile and guarded on resolve.
       upper = upper.add(resolver.maximumOffset(zoneId: start.zoneId!));
     }
-    final first = CalendarDate(year: 1, month: 1, day: 1);
-    final last = first.daysUntil(CalendarDate(year: 9999, month: 12, day: 31));
+    final first = CalendarDate(year: 1970, month: 1, day: 1);
+    final last = first.daysUntil(CalendarDate(year: 2099, month: 12, day: 31));
     final maxMinute = (last + 1) * 1440;
     int minute(CivilDateTime c) =>
         first.daysUntil(c.date) * 1440 + c.hour * 60 + c.minute;
     final startMinute = minute(start.civil);
-    final upperMinute = upper.year < 1
+    final upperMinute = upper.year < 1970
         ? -1
-        : upper.year > 9999
+        : upper.year >= 2100
         ? maxMinute - 1
         : minute(civilFields(upper));
     var work = 0;
@@ -353,7 +350,7 @@ final class _TimedPeriod {
   static _TimedPeriod _calendar(int year, int month, bool yearly) {
     final date = CalendarDate(year: year, month: month, day: 1);
     final begin =
-        CalendarDate(year: 1, month: 1, day: 1).daysUntil(date) * 1440;
+        CalendarDate(year: 1970, month: 1, day: 1).daysUntil(date) * 1440;
     return _TimedPeriod(
       begin,
       begin +
@@ -381,11 +378,11 @@ final class _TimedPeriod {
     }
     if (rule.frequency == TimedRecurrenceFrequency.monthly) {
       final index = (year - 1) * 12 + month - 1;
-      if (rule.interval > 119987 - index) return null;
+      if (rule.interval > 25199 - index) return null;
       final next = index + rule.interval;
       return _calendar(next ~/ 12 + 1, next % 12 + 1, false);
     }
-    return rule.interval > 9999 - year
+    return rule.interval > 2099 - year
         ? null
         : _calendar(year + rule.interval, 1, true);
   }

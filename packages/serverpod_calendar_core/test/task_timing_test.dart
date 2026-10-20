@@ -160,7 +160,7 @@ void main() {
     );
   });
   test('last-date start-only task valid; unsupported computed dues reject', () {
-    final last = CalendarDate(year: 9999, month: 12, day: 31);
+    final last = CalendarDate(year: 2099, month: 12, day: 31);
     expect(DateTaskTiming(start: last).effectiveDue, isNull);
     expect(
       () => DateTaskTiming(start: last, duration: CalendarDuration(days: 1)),
@@ -168,7 +168,7 @@ void main() {
     );
     expect(
       () => TimedTaskTiming(
-        start: TimedValue.utc(DateTime.utc(9999, 12, 31, 23)),
+        start: TimedValue.utc(DateTime.utc(2099, 12, 31, 23)),
         duration: CalendarDuration(hours: 1),
       ),
       throwsRangeError,

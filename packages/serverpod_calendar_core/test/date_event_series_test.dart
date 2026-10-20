@@ -265,7 +265,7 @@ void main() {
     expect(() => expand(value, from: d(20)), throwsArgumentError);
   });
   test('lookback clamps safely at the first supported date', () {
-    final first = date(1, 1, 1);
+    final first = date(1970, 1, 1);
     final value = series(start: first, length: 30, rule: daily(2));
     expect(
       expand(value, from: first, until: first.addDays(1)).single.start,
@@ -277,8 +277,8 @@ void main() {
     );
   });
   test('full-profile length can overlap a query near its far end', () {
-    final first = date(1, 1, 1);
-    final last = date(9999, 12, 31);
+    final first = date(1970, 1, 1);
+    final last = date(2099, 12, 31);
     final value = DateEventSeries(
       recurrence: DateRecurrenceSet(start: first, maxExplicitDates: 0),
       span: DateEventSpan(start: first, end: last),
@@ -288,51 +288,51 @@ void main() {
     expect(result.single.endExclusive, last);
   });
   test('query upper bound excludes an otherwise invalid terminal start', () {
-    final origin = date(9999, 12, 30);
+    final origin = date(2099, 12, 30);
     final value = series(start: origin, rule: daily(2));
     expect(
       expand(
         value,
         from: origin,
-        until: date(9999, 12, 31),
+        until: date(2099, 12, 31),
       ).single.endExclusive,
-      date(9999, 12, 31),
+      date(2099, 12, 31),
     );
   });
   test('overflow in any overlapping occurrence fails the whole query', () {
-    final origin = date(9999, 12, 28);
+    final origin = date(2099, 12, 28);
     final value = series(
       start: origin,
-      length: 2,
-      inclusions: [date(9999, 12, 30)],
+      length: 3,
+      inclusions: [date(2099, 12, 30)],
     );
     expect(
-      () => expand(value, from: origin, until: date(9999, 12, 31)),
+      () => expand(value, from: origin, until: date(2099, 12, 31)),
       throwsRangeError,
     );
     final excluded = series(
       start: origin,
-      length: 2,
-      inclusions: [date(9999, 12, 30)],
-      exclusions: [date(9999, 12, 30)],
+      length: 3,
+      inclusions: [date(2099, 12, 30)],
+      exclusions: [date(2099, 12, 30)],
     );
     expect(
-      expand(excluded, from: origin, until: date(9999, 12, 31)).single.start,
+      expand(excluded, from: origin, until: date(2099, 12, 31)).single.start,
       origin,
     );
   });
   test('explicit-end overflow fails instead of clipping a returned span', () {
-    final origin = date(9999, 12, 28);
+    final origin = date(2099, 12, 28);
     final value = DateEventSeries(
       recurrence: DateRecurrenceSet(
         start: origin,
-        inclusions: [date(9999, 12, 30)],
+        inclusions: [date(2099, 12, 30)],
         maxExplicitDates: 1,
       ),
-      span: DateEventSpan(start: origin, end: date(9999, 12, 30)),
+      span: DateEventSpan(start: origin, end: date(2099, 12, 31)),
     );
     expect(
-      () => expand(value, from: origin, until: date(9999, 12, 31)),
+      () => expand(value, from: origin, until: date(2099, 12, 31)),
       throwsRangeError,
     );
   });

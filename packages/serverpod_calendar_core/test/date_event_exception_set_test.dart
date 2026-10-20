@@ -2,7 +2,7 @@ import 'package:serverpod_calendar_core/serverpod_calendar_core.dart';
 import 'package:test/test.dart';
 
 CalendarDate d(int day) => CalendarDate(year: 2026, month: 1, day: day);
-CalendarDate last(int day) => CalendarDate(year: 9999, month: 12, day: day);
+CalendarDate last(int day) => CalendarDate(year: 2099, month: 12, day: day);
 
 void main() {
   DateEventSeries base({
@@ -320,17 +320,17 @@ void main() {
     'cancellation/replacement suppress base before terminal endpoint overflow',
     () {
       final series = base(
-        start: last(28),
+        start: last(27),
         count: 1,
-        length: 2,
+        length: 3,
         inclusions: [last(30)],
       );
       final cancelled = apply(series, [
         DateEventException.cancel(originalStart: last(30)),
       ]);
       expect(
-        query(cancelled, from: last(28), until: last(31)).single.originalStart,
-        last(28),
+        query(cancelled, from: last(27), until: last(31)).single.originalStart,
+        last(27),
       );
       final replaced = apply(series, [
         DateEventException.replace(
@@ -343,7 +343,7 @@ void main() {
         last(30),
       );
       expect(
-        () => query(apply(series, []), from: last(28), until: last(31)),
+        () => query(apply(series, []), from: last(27), until: last(31)),
         throwsRangeError,
       );
     },
@@ -362,7 +362,7 @@ void main() {
     );
   });
   test('first-profile-date replacement needs no out-of-range lookback', () {
-    final first = CalendarDate(year: 1, month: 1, day: 1);
+    final first = CalendarDate(year: 1970, month: 1, day: 1);
     final series = base(start: first, count: 2, length: 10);
     final set = apply(series, [
       DateEventException.replace(

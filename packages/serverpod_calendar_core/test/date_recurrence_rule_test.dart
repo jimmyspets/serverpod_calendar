@@ -64,8 +64,8 @@ void main() {
   );
   test('UNTIL retains a date at either selected profile boundary', () {
     for (final date in [
-      CalendarDate(year: 1, month: 1, day: 1),
-      CalendarDate(year: 9999, month: 12, day: 31),
+      CalendarDate(year: 1970, month: 1, day: 1),
+      CalendarDate(year: 2099, month: 12, day: 31),
     ]) {
       expect(
         DateRecurrenceRule(

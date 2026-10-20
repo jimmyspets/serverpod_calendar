@@ -8,14 +8,25 @@ import 'named_zone_resolver.dart';
 final class TimedValue implements Comparable<TimedValue> {
   TimedValue._(this.civil, this.instant, this.zoneId);
 
-  factory TimedValue.utc(DateTime instant) {
+  factory TimedValue.utc(DateTime instant) => TimedValue._utc(instant, false);
+  factory TimedValue.utcEnd(DateTime instant) => TimedValue._utc(instant, true);
+  factory TimedValue._utc(DateTime instant, bool allowEnd) {
     if (!instant.isUtc) {
       throw ArgumentError('An explicit UTC value is required');
     }
-    return TimedValue._(civilFields(instant), instant, null);
+    if (instant.millisecond != 0 || instant.microsecond != 0) {
+      throw ArgumentError('Calendar time requires whole seconds');
+    }
+    final civil = civilFields(instant);
+    if (!allowEnd) civil.date.requireOrdinary();
+    return TimedValue._(civil, instant, null);
   }
 
-  factory TimedValue.zoned(CivilDateTime civil, {required String zoneId}) =>
+  factory TimedValue.zoned(CivilDateTime civil, {required String zoneId}) {
+    civil.date.requireOrdinary();
+    return TimedValue.zonedEnd(civil, zoneId: zoneId);
+  }
+  factory TimedValue.zonedEnd(CivilDateTime civil, {required String zoneId}) =>
       TimedValue._(
         civil,
         NamedZoneResolver().resolve(civil, zoneId: zoneId).instant,
@@ -71,13 +82,20 @@ DateTime civilEncoding(CivilDateTime value) => DateTime.utc(
 );
 
 CivilDateTime civilFields(DateTime value) => CivilDateTime(
-  date: CalendarDate(year: value.year, month: value.month, day: value.day),
+  date: value.year == 2100 && value.month == 1 && value.day == 1
+      ? const CalendarDate.exclusiveEnd()
+      : CalendarDate(year: value.year, month: value.month, day: value.day),
   hour: value.hour,
   minute: value.minute,
   second: value.second,
   microsecond: value.millisecond * 1000 + value.microsecond,
 );
 
-void validateZonedInstant(DateTime instant, String zoneId) {
-  NamedZoneResolver().localAt(instant, zoneId: zoneId);
+void validateZonedInstant(
+  DateTime instant,
+  String zoneId, {
+  bool allowExclusiveEnd = true,
+}) {
+  final local = NamedZoneResolver().localAt(instant, zoneId: zoneId);
+  if (!allowExclusiveEnd) local.date.requireOrdinary();
 }

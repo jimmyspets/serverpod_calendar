@@ -1,4 +1,5 @@
 import 'calendar_duration.dart';
+import 'timed_value.dart';
 import 'utc_arithmetic.dart';
 import 'utc_window.dart';
 
@@ -12,6 +13,27 @@ final class UtcEventSpan {
     DateTime? end,
     CalendarDuration? duration,
   }) {
+    TimedValue.utc(start);
+    final result = UtcEventSpan._create(
+      start: start,
+      end: end,
+      duration: duration,
+    );
+    TimedValue.utcEnd(result.endExclusive);
+    return result;
+  }
+
+  /// Resolved geometry with UTC spillover at the civil profile boundaries.
+  factory UtcEventSpan.projected({required DateTime start, DateTime? end}) =>
+      UtcEventSpan._create(start: start, end: end);
+
+  factory UtcEventSpan._create({
+    required DateTime start,
+    DateTime? end,
+    CalendarDuration? duration,
+  }) {
+    utcMicroseconds(start);
+    if (end != null) utcMicroseconds(end);
     if (!start.isUtc || (end != null && !end.isUtc)) {
       throw ArgumentError('Event bounds must be explicitly UTC');
     }
@@ -39,7 +61,7 @@ final class UtcEventSpan {
 
   bool get isPoint => endExclusive == start;
 
-  /// Exact elapsed microseconds, including spans too large for an int Duration.
+  /// Exact elapsed microseconds, in the bounded whole-second calculation profile.
   BigInt get elapsedMicroseconds =>
       utcMicroseconds(endExclusive) - utcMicroseconds(start);
 

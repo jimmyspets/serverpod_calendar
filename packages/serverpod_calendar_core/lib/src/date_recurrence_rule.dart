@@ -69,6 +69,7 @@ final class DateRecurrenceRule {
        byWeekNo = _integers(byWeekNo, 53, 'byWeekNo'),
        byMonth = _integers(byMonth, 12, 'byMonth', positiveOnly: true),
        bySetPosition = _integers(bySetPosition, 366, 'bySetPosition') {
+    until?.requireOrdinary('UNTIL');
     RangeError.checkValueInInterval(interval, 1, maxScalar, 'interval');
     final limit = count;
     if (limit != null) {

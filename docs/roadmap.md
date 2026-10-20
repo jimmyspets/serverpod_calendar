@@ -43,23 +43,28 @@ The [scaffolding plan](scaffolding-plan.md) records confirmed walkthrough select
 
 ## Temporal core
 
+Current profile: [ADR 0041](adr/0041-whole-second-1970-2100-profile.md) supersedes earlier precision/range increments below: whole seconds, 1970 inclusive to 2100 exclusive, explicit exclusive endpoints, calculated future IANA transitions and a documented [update procedure](timezone-data.md). Historical checked increments do not restore their older limits.
+
+- [x] Apply the accepted unpublished whole-second/range API changes, retarget normal tests to supported dates and retain outside-profile rejection/boundary tests. Generate bounded timezone data with pinned IANA zic, preserve unknown offsets, and validate against an independent all-year/zone reference.
+
+
 Native calendar week numbering and presentation follow the confirmed ISO 8601/Monday convention under [ADR 0032](adr/0032-iso-week-convention.md). The core exposes ISO week fields under [ADR 0034](adr/0034-native-iso-week-fields.md); preserve the convention in future Flutter views; honor explicit RFC WKST values for recurrence and its week numbers, independently of display labels. See [examples](week-conventions.md).
 
 - [x] Implement the isolated UTC query-window foundation with half-open bounds, membership, intersection and boundary tests. See [ADR 0022](adr/0022-utc-query-window-foundation.md) and [validation](temporal-core.md). This does not complete the temporal work package or resolve remaining date/zone/recurrence contracts.
 
-- [x] Add validated Gregorian `CalendarDate` values for selected years 0001–9999, with month/leap-year rules, comparison and boundary tests under [ADR 0023](adr/0023-gregorian-date-only-values.md). Generated values, interchange, event spans and persistence remain future work.
+- [x] Add validated Gregorian `CalendarDate` values for ordinary years 1970–2099 under ADR 0041 (superseding the initial broad range), with month/leap-year rules, comparison and boundary tests under [ADR 0023](adr/0023-gregorian-date-only-values.md). Generated values, interchange, event spans and persistence remain future work.
 - [x] Add native ISO week-year, week and weekday projection under [ADR 0034](adr/0034-native-iso-week-fields.md), with independent full-cycle and full-profile year-boundary evidence. Flutter presentation remains pending.
 - [x] Add bounded Gregorian calendar-day addition, signed day distances and weekdays under [ADR 0026](adr/0026-gregorian-calendar-day-arithmetic.md). Recurrence generation and duration semantics remain future work.
 
 - [x] Add validated native `CivilDateTime` fields with selected microsecond precision and leap-second rejection under [ADR 0024](adr/0024-civil-date-time-values.md). Future iCalendar export must reject nonzero fractions; named-zone resolution, DST policy and adapter rejection tests remain pending.
 
-- [x] Add the pinned native named-zone resolver and recurrence-candidate gap helper under [ADR 0025](adr/0025-bounded-named-zone-resolution.md), with RFC explicit gap/fold policy, exact aliases, outer civil years 1900–2037 and narrower conservative per-zone coverage. VM/Chrome tests pass.
-- [x] Add unit-preserving signed `CalendarDuration` values with selected native microseconds under [ADR 0027](adr/0027-calendar-duration-values.md). Property-specific constraints and atomic interchange rejection remain pending.
+- [x] Add the pinned native named-zone resolver and recurrence-candidate gap helper under [ADR 0025](adr/0025-bounded-named-zone-resolution.md), with RFC explicit gap/fold policy, exact aliases, now superseded by generated 1970–2099 coverage plus exclusive-end padding under ADR 0041, with unknown offsets rejected. VM/Chrome tests pass.
+- [x] Add unit-preserving signed `CalendarDuration` values with whole-second precision under ADR 0041 (superseding native microseconds) under [ADR 0027](adr/0027-calendar-duration-values.md). Property-specific constraints and atomic interchange rejection remain pending.
 - [x] Implement date-only and selected calendar-first zoned duration application plus guarded UTC-to-local projection under [ADR 0028](adr/0028-duration-application.md). Complete span/default/adapter semantics and practical limits separately.
 - [x] Add scoped DATE-only event spans under [ADR 0035](adr/0035-date-only-event-spans.md), with preserved end/duration/default intent, exclusive ends, positive day/week restrictions, one-day defaults and explicit endpoint overflow errors. Timed/task spans follow under ADR 0040; scoped DATE-only series queries follow under ADR 0036.
 - [x] Add the UTC event foundation batch under [ADR 0039](adr/0039-exact-utc-duration-and-event-spans.md): exact signed duration arithmetic, preserved event end/duration/default forms, point-marker versus occupied-interval queries and exact BigInt window lengths with guarded Duration conversion. Timed recurrence and zoned spans follow under ADR 0040; service/wire integration remains pending.
 - [x] Complete bounded native zone snapshots/equal-horizon offset comparison and explicit version invalidation contracts under [ADR 0040](adr/0040-bounded-temporal-core-completion.md). VTIMEZONE validation/acceptance belongs to the adapter; durable upgrades belong to storage/workers.
-- [ ] Replace/enrich finite/truncated zone data and prove coverage before any general all-zone/year claim. This future expansion does not remove the current approved 1900–2037 envelope or README warning.
+- [x] Replace the truncated runtime data with generated coverage for the accepted [1970, 2100) profile under ADR 0041. General all-year coverage remains outside scope; unknown-offset periods still fail explicitly.
 
 - [x] Preserve DATE, explicit UTC and exact named-zone civil meanings in the bounded core, with typed identities, pinned version evidence and guarded coverage under ADR 0040. No floating factory exists.
 - [ ] Adapter/module follow-up: validate/expand known-zone VTIMEZONE definitions before bounded comparison; reject custom/mismatched/floating wire forms atomically and implement transactional upgrade/recalculation.

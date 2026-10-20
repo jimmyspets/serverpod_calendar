@@ -7,6 +7,7 @@ import 'utc_window.dart';
 /// Preserved UTC or zoned event bounds, including an omitted-end point.
 final class TimedEventSpan {
   TimedEventSpan({required this.start, this.end, this.duration}) {
+    start.civil.date.requireOrdinary('start');
     if (end != null && duration != null) {
       throw ArgumentError('End and duration are exclusive');
     }
@@ -17,7 +18,7 @@ final class TimedEventSpan {
       throw ArgumentError('Event duration must be positive');
     }
     final finish = endExclusive;
-    if (start.zoneId == null) TimedValue.utc(finish);
+    if (start.zoneId == null) TimedValue.utcEnd(finish);
     if ((end != null || duration != null) && !finish.isAfter(start.instant)) {
       throw ArgumentError('Event end must follow start');
     }
@@ -31,17 +32,18 @@ final class TimedEventSpan {
       utcMicroseconds(endExclusive) - utcMicroseconds(start.instant);
   bool get isPoint => end == null && duration == null;
   UtcEventSpan get resolved => isPoint
-      ? UtcEventSpan(start: start.instant)
-      : UtcEventSpan(start: start.instant, end: endExclusive);
+      ? UtcEventSpan.projected(start: start.instant)
+      : UtcEventSpan.projected(start: start.instant, end: endExclusive);
   bool occursIn(UtcWindow window) => resolved.occursIn(window);
 
   /// RRULE instances inherit exact length for explicit end, nominal units for
   /// DURATION. The resolved projection never replaces the preserved template.
   UtcEventSpan projectAt(TimedValue value) {
+    value.civil.date.requireOrdinary("occurrenceStart");
     if (!start.sameProfile(value)) {
       throw ArgumentError('Different temporal profiles');
     }
-    if (isPoint) return UtcEventSpan(start: value.instant);
+    if (isPoint) return UtcEventSpan.projected(start: value.instant);
     final finish = duration != null
         ? value.add(duration!)
         : utcFromMicroseconds(
@@ -52,9 +54,9 @@ final class TimedEventSpan {
     if (value.zoneId != null) {
       validateZonedInstant(finish, value.zoneId!);
     } else {
-      TimedValue.utc(finish);
+      TimedValue.utcEnd(finish);
     }
-    return UtcEventSpan(start: value.instant, end: finish);
+    return UtcEventSpan.projected(start: value.instant, end: finish);
   }
 
   @override

@@ -3,7 +3,7 @@ import 'date_event_span.dart';
 
 // Shared internal arithmetic for uniform DATE templates. Not a public API.
 CalendarDate dateEventLookback(DateEventSpan span, CalendarDate from) {
-  final first = CalendarDate(year: 1, month: 1, day: 1);
+  final first = CalendarDate(year: 1970, month: 1, day: 1);
   final available = first.daysUntil(from);
   final wanted = span.dayCount - 1;
   return from.addDays(-(wanted < available ? wanted : available));

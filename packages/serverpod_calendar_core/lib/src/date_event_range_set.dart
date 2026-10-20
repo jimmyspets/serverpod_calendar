@@ -74,8 +74,8 @@ final class DateEventRangeSet {
     if (from.compareTo(until) >= 0) {
       throw ArgumentError('from must precede until');
     }
-    final first = CalendarDate(year: 1, month: 1, day: 1);
-    final last = first.daysUntil(CalendarDate(year: 9999, month: 12, day: 31));
+    final first = CalendarDate(year: 1970, month: 1, day: 1);
+    final last = first.daysUntil(CalendarDate(year: 2099, month: 12, day: 31));
     final lowerQuery = first.daysUntil(from);
     final upperQuery = first.daysUntil(until);
     final segments = <_RangeSegment>[];

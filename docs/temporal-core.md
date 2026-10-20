@@ -1,5 +1,43 @@
 # Temporal core implementation
 
+Current contract: **whole seconds; ordinary calendar dates in [1970-01-01, 2100-01-01)**. The last ordinary date is 2099-12-31. [ADR 0041](adr/0041-whole-second-1970-2100-profile.md) supersedes the older microsecond, broad-date and 2037 profiles. APIs are unpublished; breaking changes are permitted.
+
+## Current calendar profile
+
+- `CalendarDate` construction accepts 1970–2099. `CalendarDate.exclusiveEnd()` is only 2100-01-01; arithmetic may reach it for an exclusive endpoint, but not pass it. It cannot be a start, RDATE/EXDATE or task date.
+- `CivilDateTime` and `CalendarDuration` accept only zero fractional input. Typed UTC inputs reject nonzero milliseconds or microseconds before arithmetic. There is no rounding/truncation. Whole-second DateTime spellings with zero fractions are accepted where their input format allows them. Future ICS parsers must reject fractional timestamp syntax even if all digits are zero. Ordinary seconds remain 0–59; leap second 60 remains explicitly rejected.
+- `TimedValue.utc`/`zoned` represent ordinary starts. `utcEnd`/`zonedEnd` allow the explicit midnight boundary for event ends. `UtcEventSpan` validates canonical UTC event bounds; `.projected` represents resolved UTC geometry with boundary spillover. Task dues are ordinary dates/times, not the exclusive endpoint.
+- `UtcWindow` and exact arithmetic support the small UTC calculation padding needed by valid zoned boundaries. Padding does not authorize out-of-profile canonical dates. Exact `elapsedMicroseconds` getters retain their measurement unit, always in whole-second multiples. Operational timestamps are separate.
+- DATE and timed recurrence generation stops before year 2100. COUNT/UNTIL, WKST, filters/positions, RDATE/EXDATE, PERIOD additions, single cancellation/replacement and THISANDFUTURE timing retain their prior semantics. Work/raw/base/final budgets still fail without partial results.
+- Gregorian/ISO rules remain unchanged: Monday-first native weeks, January-4 week 1, separate ISO week-year; explicit recurrence WKST remains independent. Task timing never implicitly books intervals.
+
+## Current timezone handling
+
+Keep `timezone` **0.11.2** and IANA **2026e**. The current generated data calculates future transitions through the exclusive 2100 boundary, with UTC padding [1969-12-30, 2100-01-03). It contains 598 exact names/aliases, of which Factory is unknown-only. Unknown `-00` periods still fail explicitly. Future offsets assume the pinned laws/rules remain unchanged; no general all-year or future-legislation guarantee is made.
+
+The previous 2037 guard is superseded by generated, tested coverage, not bypassed. The immutable decoder path does not mutate host global timezone state. Explicit gap/fold and nominal-duration policies remain the selected RFC rules. See [timezone limits and the exact update procedure](timezone-data.md) before changing data, package versions, profiles or derived state. Durable host-side recalculation and adapter/storage/client interoperability remain separate work.
+
+## Current profile validation
+
+Validated 2026-10-20 with pinned Dart 3.13.5 / Flutter 3.47.7:
+
+- Core `dart test --reporter expanded`: **442 passed** on VM.
+- Core `dart test --platform chrome --reporter expanded`: **442 passed** on Chrome.
+- Root `dart analyze --fatal-infos`: no issues. `dart format --output=none --set-exit-if-changed packages/serverpod_calendar_core`: 58 files, no changes.
+- Two consecutive Python/WSL builds followed by `dart run packages/serverpod_calendar_core/tool/encode_timezone_data.dart`: byte-identical runtime data, reference fixture and serialized TZF. TZF SHA-256 `3ed7e4f36fd34974f521be79c96f1effece3ac8de83432c70fd6fc021764cae9` matches `toolchain.json`.
+- Connected Serverpod MCP hot reload completed successfully.
+- Documentation validation: 364 relative links/anchors valid, consecutive ADRs 0001–0041, scope/requirement consistency reviewed, and `git diff --check` passed. LICENSE, dependency lockfile and framework-generated output are unchanged.
+
+Superseded broad-range/fraction-preservation tests were replaced with exhaustive supported-profile and rejection checks; the earlier 565-test total belongs to that previous contract. This batch does not claim new database, two-host or Flutter journey verification; those checks were not repeated for pure-core changes and remain required before PR readiness.
+
+ The tests now focus on all 47,482 supported Gregorian/ISO dates, explicit rejection outside the profile, endpoint/UTC-spillover behavior and whole-second acceptance/rejection. The independent zone reference covers 155,220 samples, while recurrence/exception/task/DST regression scenarios remain in scope.
+
+## Historical evidence and superseded contracts
+
+The records below preserve the development history and commands actually run. Their microsecond acceptance, years 0001–9999, 1900–2037 zone envelope and old after-2037 warnings are **historical contracts superseded by ADR 0041**, not current behavior. Old examples using those inputs must not be copied as current API examples. Native computation evidence does not imply implemented storage, protocol adapters or external-client support.
+
+# Historical temporal-core increment records
+
 Status: **bounded native temporal computation milestone implemented**, 2026-10-20. DATE and UTC/zoned values, spans, selected recurrence, sets, native event timing exceptions/ranges, task milestones/projections and bounded zone-offset comparison are implemented in pure Dart. See [ADR 0040](adr/0040-bounded-temporal-core-completion.md) for this completion scope and reviewable native policies. Calendar/task lifecycle services, parsing/serialization, durable zone-data upgrades, storage and external-client interoperability remain unimplemented. **Named-zone calculations are still unsafe after 2037 and reject unsupported coverage.** This is not complete RFC or general all-zone/year support.
 
 ## ISO 8601 week convention

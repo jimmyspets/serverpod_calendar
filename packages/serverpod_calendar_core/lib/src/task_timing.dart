@@ -10,6 +10,8 @@ import 'utc_window.dart';
 /// An undated, start-only or due-only task is valid; DURATION requires DTSTART.
 final class DateTaskTiming {
   DateTaskTiming({this.start, this.due, this.duration}) {
+    start?.requireOrdinary('start');
+    due?.requireOrdinary('due');
     if (due != null && duration != null) {
       throw ArgumentError('DUE and DURATION are exclusive');
     }
@@ -18,6 +20,7 @@ final class DateTaskTiming {
       throw ArgumentError('Task duration requires a start and positive units');
     }
     final finish = effectiveDue;
+    finish?.requireOrdinary('effectiveDue');
     if (start != null && finish != null && finish.compareTo(start!) <= 0) {
       throw ArgumentError('DUE must follow DTSTART');
     }
@@ -78,6 +81,8 @@ final class DateTaskOccurrence {
 /// UTC/zoned task milestones, preserving explicit DUE versus nominal DURATION.
 final class TimedTaskTiming {
   TimedTaskTiming({this.start, this.due, this.duration}) {
+    start?.civil.date.requireOrdinary('start');
+    due?.civil.date.requireOrdinary('due');
     if (due != null && duration != null) {
       throw ArgumentError('DUE and DURATION are exclusive');
     }
@@ -91,7 +96,7 @@ final class TimedTaskTiming {
     final finish = effectiveDue;
     if (finish != null) {
       if (start?.zoneId != null) {
-        validateZonedInstant(finish, start!.zoneId!);
+        validateZonedInstant(finish, start!.zoneId!, allowExclusiveEnd: false);
       } else {
         TimedValue.utc(finish);
       }
@@ -108,6 +113,7 @@ final class TimedTaskTiming {
   /// Original explicit DUE propagates exact elapsed length; duration units stay
   /// nominal. The resolved due instant can retain a later-fold identity.
   TimedTaskProjection at(TimedValue occurrenceStart) {
+    occurrenceStart.civil.date.requireOrdinary("occurrenceStart");
     if (start == null) throw StateError('Recurrence requires DTSTART');
     if (!start!.sameProfile(occurrenceStart)) {
       throw ArgumentError('Recurrence profile mismatch');
@@ -123,7 +129,11 @@ final class TimedTaskTiming {
           );
     if (finish != null) {
       if (occurrenceStart.zoneId != null) {
-        validateZonedInstant(finish, occurrenceStart.zoneId!);
+        validateZonedInstant(
+          finish,
+          occurrenceStart.zoneId!,
+          allowExclusiveEnd: false,
+        );
       } else {
         TimedValue.utc(finish);
       }

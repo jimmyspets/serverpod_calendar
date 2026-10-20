@@ -115,16 +115,22 @@ void main() {
       [d(2026, 1, 31), d(2026, 3, 31), d(2026, 5, 31), d(2026, 7, 31)],
     );
   });
-  test('yearly February 29 skips non-leap years including 2100', () {
-    expect(
-      expand(
-        d(2096, 2, 29),
-        DateRecurrenceRule(frequency: DateRecurrenceFrequency.yearly, count: 3),
-        through: d(2108, 12, 31),
-      ),
-      [d(2096, 2, 29), d(2104, 2, 29), d(2108, 2, 29)],
-    );
-  });
+  test(
+    'yearly February 29 skips non-leap years within the supported profile',
+    () {
+      expect(
+        expand(
+          d(2088, 2, 29),
+          DateRecurrenceRule(
+            frequency: DateRecurrenceFrequency.yearly,
+            count: 3,
+          ),
+          through: d(2099, 12, 31),
+        ),
+        [d(2088, 2, 29), d(2092, 2, 29), d(2096, 2, 29)],
+      );
+    },
+  );
   test('monthly negative month day and weekday ordinal', () {
     expect(
       expand(
@@ -377,23 +383,23 @@ void main() {
     () {
       expect(
         expand(
-          d(9999, 12, 31),
+          d(2099, 12, 31),
           DateRecurrenceRule(frequency: DateRecurrenceFrequency.daily),
-          through: d(9999, 12, 31),
+          through: d(2099, 12, 31),
         ),
-        [d(9999, 12, 31)],
+        [d(2099, 12, 31)],
       );
       expect(
         expand(
-          d(1, 1, 1),
+          d(1970, 1, 1),
           DateRecurrenceRule(
             frequency: DateRecurrenceFrequency.weekly,
             weekStart: Weekday.tuesday,
             count: 2,
           ),
-          through: d(1, 1, 8),
+          through: d(1970, 1, 8),
         ),
-        [d(1, 1, 1), d(1, 1, 8)],
+        [d(1970, 1, 1), d(1970, 1, 8)],
       );
     },
   );
@@ -443,26 +449,26 @@ void main() {
     () {
       expect(
         () => expand(
-          d(1, 1, 1),
+          d(1970, 1, 1),
           DateRecurrenceRule(
             frequency: DateRecurrenceFrequency.weekly,
             weekStart: Weekday.tuesday,
             byDay: [day(Weekday.monday)],
             bySetPosition: [1],
           ),
-          through: d(1, 1, 8),
+          through: d(1970, 1, 8),
         ),
         throwsRangeError,
       );
       expect(
         () => expand(
-          d(9999, 12, 31),
+          d(2099, 12, 31),
           DateRecurrenceRule(
             frequency: DateRecurrenceFrequency.weekly,
             byDay: [day(Weekday.friday)],
             bySetPosition: [-1],
           ),
-          through: d(9999, 12, 31),
+          through: d(2099, 12, 31),
         ),
         throwsRangeError,
       );

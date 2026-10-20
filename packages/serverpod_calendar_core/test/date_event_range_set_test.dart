@@ -2,7 +2,7 @@ import 'package:serverpod_calendar_core/serverpod_calendar_core.dart';
 import 'package:test/test.dart';
 
 CalendarDate d(int day) => CalendarDate(year: 2026, month: 1, day: day);
-CalendarDate terminal(int day) => CalendarDate(year: 9999, month: 12, day: day);
+CalendarDate terminal(int day) => CalendarDate(year: 2099, month: 12, day: day);
 void main() {
   DateEventExceptionSet base({
     int count = 10,
@@ -495,7 +495,7 @@ void main() {
         originalStart: terminal(28),
         replacement: DateEventSpan(
           start: terminal(29),
-          duration: CalendarDuration(days: 2),
+          duration: CalendarDuration(days: 3),
         ),
       );
       expect(
@@ -541,7 +541,7 @@ void main() {
     );
   });
   test('first-profile-date anchor has no earlier segment to materialize', () {
-    final first = CalendarDate(year: 1, month: 1, day: 1);
+    final first = CalendarDate(year: 1970, month: 1, day: 1);
     final value = apply(base(start: first, count: 2), [
       DateEventRangeChange(
         originalStart: first,
@@ -562,7 +562,7 @@ void main() {
   test(
     'huge shifts stay exact and unrelated future overflow is not materialized',
     () {
-      final first = CalendarDate(year: 1, month: 1, day: 1);
+      final first = CalendarDate(year: 1970, month: 1, day: 1);
       final original = base(start: first, count: 2);
       final change = DateEventRangeChange(
         originalStart: first,

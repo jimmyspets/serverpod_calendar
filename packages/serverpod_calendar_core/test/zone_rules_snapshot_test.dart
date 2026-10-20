@@ -157,15 +157,18 @@ void main() {
     expect(
       () => resolver.snapshot(
         zoneId: 'Europe/Stockholm',
-        horizon: UtcWindow(start: DateTime.utc(2038), end: DateTime.utc(2039)),
+        horizon: UtcWindow(
+          start: DateTime.utc(2100, 1, 2),
+          end: DateTime.utc(2100, 1, 3),
+        ),
         maxTransitions: 10,
       ),
       throwsRangeError,
     );
     expect(
       () => resolver.snapshot(
-        zoneId: 'Africa/Abidjan',
-        horizon: UtcWindow(start: DateTime.utc(1900), end: DateTime.utc(1901)),
+        zoneId: 'Factory',
+        horizon: UtcWindow(start: DateTime.utc(2026), end: DateTime.utc(2027)),
         maxTransitions: 10,
       ),
       throwsA(isA<ZoneCoverageException>()),

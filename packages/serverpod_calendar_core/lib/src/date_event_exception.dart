@@ -4,13 +4,17 @@ import 'date_event_span.dart';
 /// A complete DATE-only cancellation or replacement, keyed by original start.
 /// Membership and duplicate validation belong to DateEventExceptionSet.
 final class DateEventException {
-  const DateEventException.cancel({required this.originalStart})
-    : replacement = null;
+  DateEventException.cancel({required this.originalStart})
+    : replacement = null {
+    originalStart.requireOrdinary('originalStart');
+  }
 
-  const DateEventException.replace({
+  DateEventException.replace({
     required this.originalStart,
     required DateEventSpan this.replacement,
-  });
+  }) {
+    originalStart.requireOrdinary('originalStart');
+  }
 
   final CalendarDate originalStart;
   final DateEventSpan? replacement;

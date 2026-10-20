@@ -2,6 +2,8 @@
 
 Status: **DST/identifier/year-envelope choices explicitly confirmed; bounded core resolver verified; remaining storage/protocol contracts proposed**. Date: 2026-10-19.
 
+Current-profile note: [ADR 0041](0041-whole-second-1970-2100-profile.md) supersedes this record's earlier date-range/precision/zone-envelope choices. Ordinary calendar dates are now 1970 inclusive to 2100 exclusive, with whole seconds and a special exclusive endpoint. The original increment and validation history below is preserved.
+
 ## Selected scope and evidence
 
 The maintainer selected RFC 5545 explicit-time rules for native and imported values: choose the first instant during a fold, and interpret a gap using the offset before it. Nonexistent recurrence-generated times are skipped; a future recurrence engine must also skip invalid dates and must not count those omissions. The maintainer selected exact case-sensitive names/legacy aliases present in pinned IANA data, retaining the supplied identifier with no Windows-name, abbreviation, case or spelling guessing. An abbreviation-like string that is itself an exact database key is a registered name, not an inferred geographical location.

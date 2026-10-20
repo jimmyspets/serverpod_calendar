@@ -21,9 +21,13 @@ final class TimedEventOccurrence {
 }
 
 final class TimedEventException {
-  const TimedEventException.cancel(this.originalStart) : replacement = null;
-  const TimedEventException.replace(this.originalStart, TimedEventSpan span)
-    : replacement = span;
+  TimedEventException.cancel(this.originalStart) : replacement = null {
+    originalStart.civil.date.requireOrdinary('originalStart');
+  }
+  TimedEventException.replace(this.originalStart, TimedEventSpan span)
+    : replacement = span {
+    originalStart.civil.date.requireOrdinary('originalStart');
+  }
   final TimedValue originalStart;
   final TimedEventSpan? replacement;
 }
@@ -35,6 +39,7 @@ final class TimedEventRangeChange {
     required this.originalStart,
     required this.replacement,
   }) {
+    originalStart.civil.date.requireOrdinary('originalStart');
     if (!originalStart.sameProfile(replacement.start)) {
       throw ArgumentError('Range profile mismatch');
     }
@@ -107,7 +112,7 @@ final class TimedEventSeries {
           .expand(
             window: UtcWindow(
               start: times.first,
-              end: times.last.add(const Duration(microseconds: 1)),
+              end: times.last.add(const Duration(seconds: 1)),
             ),
             maxCandidateWork: maxValidationCandidateWork,
             maxRuleOccurrences: maxValidationOccurrences,
@@ -164,7 +169,7 @@ final class TimedEventSeries {
     }
     var upper = utcFromMicroseconds(utcMicroseconds(window.end) + inverse);
     if (!upper.isAfter(recurrence.start.instant)) {
-      upper = recurrence.start.instant.add(const Duration(microseconds: 1));
+      upper = recurrence.start.instant.add(const Duration(seconds: 1));
     }
     // Include all earlier explicit additions separately, including before DTSTART.
     var lower = recurrence.start.instant;

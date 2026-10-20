@@ -1,13 +1,13 @@
 import 'calendar_date.dart';
 
-/// Gregorian wall-clock fields, with microsecond precision and no zone.
+/// Gregorian wall-clock fields, with whole-second precision and no zone.
 ///
 /// This is a building block for named-zone values, not an accepted floating
 /// event time or a UTC instant. Zone resolution and DST policy belong elsewhere.
 final class CivilDateTime implements Comparable<CivilDateTime> {
   /// Creates validated wall-clock fields without normalizing or resolving them.
   ///
-  /// [microsecond] is the fractional second, from 0 through 999999, rather than
+  /// [microsecond] is the fractional second, zero under the whole-second profile, rather than
   /// Dart's microsecond-within-a-millisecond field. Leap second 60 is rejected.
   /// Throws [RangeError] for an invalid time field.
   CivilDateTime({
@@ -17,10 +17,13 @@ final class CivilDateTime implements Comparable<CivilDateTime> {
     this.second = 0,
     this.microsecond = 0,
   }) {
+    if (date.isExclusiveEnd && (hour != 0 || minute != 0 || second != 0)) {
+      throw RangeError('The exclusive boundary must be exactly midnight');
+    }
     RangeError.checkValueInInterval(hour, 0, 23, 'hour');
     RangeError.checkValueInInterval(minute, 0, 59, 'minute');
     RangeError.checkValueInInterval(second, 0, 59, 'second');
-    RangeError.checkValueInInterval(microsecond, 0, 999999, 'microsecond');
+    RangeError.checkValueInInterval(microsecond, 0, 0, 'microsecond');
   }
 
   final CalendarDate date;
@@ -28,7 +31,7 @@ final class CivilDateTime implements Comparable<CivilDateTime> {
   final int minute;
   final int second;
 
-  /// Fractional second in microseconds, from 0 through 999999.
+  /// Fractional second in microseconds, zero under the whole-second profile.
   final int microsecond;
 
   /// Wall-clock field ordering only, not instant ordering across zones or folds.

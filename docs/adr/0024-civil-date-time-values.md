@@ -2,6 +2,8 @@
 
 Status: **Precision/export and leap-second choices explicitly confirmed; core implementation locally verified; broader ADR acceptance remains under review**. Date: 2026-10-19.
 
+Current-profile note: [ADR 0041](0041-whole-second-1970-2100-profile.md) supersedes this record's earlier date-range/precision/zone-envelope choices. Ordinary calendar dates are now 1970 inclusive to 2100 exclusive, with whole seconds and a special exclusive endpoint. The original increment and validation history below is preserved.
+
 ## Context and selected scope
 
 The maintainer selected native microsecond precision and explicit rejection of lossy iCalendar export, rather than restricting native values to whole seconds. The maintainer also selected explicit leap-second rejection for the initial profile, rather than normalizing second 60 to 59 or expanding implementation to preserve leap seconds.

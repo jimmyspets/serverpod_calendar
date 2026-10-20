@@ -333,9 +333,9 @@ void main() {
     expect(() => query(series(recurrence: r), 1, 2), throwsArgumentError);
   });
   test('date-time profile overflow rejects instead of extending UTC years', () {
-    final last = TimedValue.utc(DateTime.utc(9999, 12, 31, 23));
+    final last = TimedValue.utc(DateTime.utc(2099, 12, 31, 23));
     expect(
-      () => TimedEventSpan(start: last, duration: CalendarDuration(hours: 1)),
+      () => TimedEventSpan(start: last, duration: CalendarDuration(hours: 2)),
       throwsRangeError,
     );
   });

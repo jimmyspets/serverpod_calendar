@@ -31,6 +31,9 @@ final class DateRecurrenceGenerator {
     required int maxCandidateDays,
     required int maxResults,
   }) {
+    start.requireOrdinary('DTSTART');
+    from.requireOrdinary('from');
+    through.requireOrdinary('through');
     RangeError.checkValueInInterval(
       maxCandidateDays,
       1,
@@ -49,8 +52,8 @@ final class DateRecurrenceGenerator {
     if (rule.until != null && rule.until!.compareTo(start) < 0) {
       throw ArgumentError('UNTIL must not exclude DTSTART');
     }
-    final first = CalendarDate(year: 1, month: 1, day: 1);
-    final last = first.daysUntil(CalendarDate(year: 9999, month: 12, day: 31));
+    final first = CalendarDate(year: 1970, month: 1, day: 1);
+    final last = first.daysUntil(CalendarDate(year: 2099, month: 12, day: 31));
     final startDay = first.daysUntil(start);
     final lower = first.daysUntil(from);
     var upper = first.daysUntil(through);
@@ -166,11 +169,11 @@ final class _DatePeriod {
         return _DatePeriod(next, next + scale, year, month);
       case DateRecurrenceFrequency.monthly:
         final index = (year - 1) * 12 + month - 1;
-        if (rule.interval > 119987 - index) return null;
+        if (rule.interval > 25199 - index) return null;
         final next = index + rule.interval;
         return _calendar(next ~/ 12 + 1, next % 12 + 1, false, first, last);
       case DateRecurrenceFrequency.yearly:
-        if (rule.interval > 9999 - year) return null;
+        if (rule.interval > 2099 - year) return null;
         return _calendar(year + rule.interval, 1, true, first, last);
     }
   }

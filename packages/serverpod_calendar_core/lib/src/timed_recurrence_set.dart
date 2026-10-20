@@ -16,6 +16,7 @@ final class TimedRecurrenceSet {
     List<TimedEventSpan> periods = const [],
     required int maxExplicitDates,
   }) {
+    start.civil.date.requireOrdinary('DTSTART');
     RangeError.checkValueInInterval(
       maxExplicitDates,
       0,
@@ -31,6 +32,7 @@ final class TimedRecurrenceSet {
       ...exclusions,
       ...periods.map((p) => p.start),
     ]) {
+      value.civil.date.requireOrdinary();
       if (!start.sameProfile(value)) {
         throw ArgumentError('Mixed recurrence profiles');
       }

@@ -3,7 +3,15 @@ import 'utc_window.dart';
 import 'date_recurrence_generator.dart';
 import 'date_recurrence_rule.dart';
 
-import 'package:timezone/data/latest_all.dart' as data;
+import 'dart:convert';
+
+// Pinned timezone 0.11.2 decoder; generation verifies serialization compatibility.
+// ignore: implementation_imports
+import 'package:timezone/src/tzdb.dart' show tzdbDeserialize;
+
+import 'bounded_timezone_data.dart';
+import 'utc_arithmetic.dart';
+
 import 'package:timezone/timezone.dart' as tz;
 
 import 'calendar_date.dart';
@@ -53,11 +61,13 @@ final class ZoneResolution {
   CivilDateTime get effectiveLocal {
     final fields = instant.add(effectiveOffset);
     return CivilDateTime(
-      date: CalendarDate(
-        year: fields.year,
-        month: fields.month,
-        day: fields.day,
-      ),
+      date: fields.year == 2100 && fields.month == 1 && fields.day == 1
+          ? const CalendarDate.exclusiveEnd()
+          : CalendarDate(
+              year: fields.year,
+              month: fields.month,
+              day: fields.day,
+            ),
       hour: fields.hour,
       minute: fields.minute,
       second: fields.second,
@@ -68,14 +78,15 @@ final class ZoneResolution {
 
 /// Resolves exact names/aliases from a pinned, immutable IANA rules snapshot.
 ///
-/// Civil years are limited to 1900–2037. Historical coverage can be narrower
-/// per zone: the upstream data discards its first transition's timestamp.
+/// Ordinary civil dates are in [1970, 2100), with an explicit midnight end
+/// boundary. Generated IANA transitions include UTC padding; unknown offsets
+/// are still rejected. The pinned timezone decoder never mutates host globals.
 /// Unprovable periods and unknown offsets throw [ZoneCoverageException].
 /// This does not validate imported VTIMEZONE data or expand recurrence rules.
 final class NamedZoneResolver {
   NamedZoneResolver();
 
-  static const dataVersion = 'iana-2026e/timezone-0.11.2/all/profile-1';
+  static const dataVersion = boundedTimezoneVersion;
   static final Map<String, _Rules> _rules = _loadRules();
 
   /// Exact database keys, including aliases, excluding unknown-only placeholders.
@@ -95,8 +106,8 @@ final class NamedZoneResolver {
   ZoneResolution resolve(CivilDateTime local, {required String zoneId}) {
     RangeError.checkValueInInterval(
       local.date.year,
-      1900,
-      2037,
+      1970,
+      2100,
       'local.date.year',
     );
     final rules = _rules[zoneId];
@@ -145,8 +156,8 @@ final class NamedZoneResolver {
     }
     for (var i = 0; i < rules.transitions.length; i++) {
       final transition = rules.transitions[i];
-      if (!rules.covers(transition - 1)) continue;
-      final before = rules.at(transition - 1);
+      if (!rules.covers(transition - 1000000)) continue;
+      final before = rules.at(transition - 1000000);
       final after = rules.at(transition);
       if (!before.known || !after.known) continue;
       if (after.micros > before.micros &&
@@ -165,13 +176,17 @@ final class NamedZoneResolver {
   /// Projects a UTC instant to local fields without re-resolving a fold.
   ///
   /// Requires UTC input and exact zone names. The resulting local year must be
-  /// 1900–2037; unproved coverage and unknown offsets still fail explicitly.
+  /// [1970, 2100), or the midnight exclusive endpoint. Unknown offsets fail.
   CivilDateTime localAt(DateTime instant, {required String zoneId}) {
     if (!instant.isUtc) {
       throw ArgumentError.value(instant, 'instant', 'Must be UTC');
     }
-    // Avoid arithmetic on distant dates before the offset is inspected.
-    RangeError.checkValueInInterval(instant.year, 1899, 2038, 'instant.year');
+    // Padding supports valid civil boundaries; it is not ordinary date storage.
+    utcMicroseconds(instant);
+    if (instant.isBefore(DateTime.utc(1969, 12, 30)) ||
+        !instant.isBefore(DateTime.utc(2100, 1, 3))) {
+      throw RangeError('UTC instant is outside calculation padding');
+    }
     final rules = _rules[zoneId];
     if (rules == null) {
       throw ArgumentError.value(zoneId, 'zoneId', 'Unknown exact IANA name.');
@@ -182,13 +197,15 @@ final class NamedZoneResolver {
       micros + offset.micros,
       isUtc: true,
     );
-    RangeError.checkValueInInterval(fields.year, 1900, 2037, 'local.date.year');
+
     final local = CivilDateTime(
-      date: CalendarDate(
-        year: fields.year,
-        month: fields.month,
-        day: fields.day,
-      ),
+      date: fields.year == 2100 && fields.month == 1 && fields.day == 1
+          ? const CalendarDate.exclusiveEnd()
+          : CalendarDate(
+              year: fields.year,
+              month: fields.month,
+              day: fields.day,
+            ),
       hour: fields.hour,
       minute: fields.minute,
       second: fields.second,
@@ -250,10 +267,7 @@ final class NamedZoneResolver {
       'maxTransitions',
     );
     final local = localAt(horizon.start, zoneId: zoneId);
-    localAt(
-      horizon.end.subtract(const Duration(microseconds: 1)),
-      zoneId: zoneId,
-    );
+    localAt(horizon.end.subtract(const Duration(seconds: 1)), zoneId: zoneId);
     final rules = _rules[zoneId]!;
     final first = horizon.start.microsecondsSinceEpoch;
     final last = horizon.end.microsecondsSinceEpoch;
@@ -267,7 +281,7 @@ final class NamedZoneResolver {
       }
       // Validate local envelope at both sides, including unusual historical jumps.
       localAt(
-        DateTime.fromMicrosecondsSinceEpoch(instant - 1, isUtc: true),
+        DateTime.fromMicrosecondsSinceEpoch(instant - 1000000, isUtc: true),
         zoneId: zoneId,
       );
       localAt(
@@ -306,30 +320,10 @@ final class NamedZoneResolver {
     maxTransitions: maxTransitions,
   ).matchesOffsets(definition);
 
-  static Map<String, _Rules> _loadRules() {
-    // The upstream embedded initializer uses a global registry. Capture only
-    // immutable primitive rules, synchronously restoring the host's registry
-    // and any existing local-zone setting, so calculations never rely on it.
-    final registry = tz.timeZoneDatabase.locations;
-    final previous = Map<String, tz.Location>.of(registry);
-    tz.Location? previousLocal;
-    try {
-      previousLocal = tz.local;
-    } on Error {
-      // The package's late local field is unset before its first initialization.
-    }
-    try {
-      data.initializeTimeZones();
-      return Map.unmodifiable({
-        for (final e in registry.entries) e.key: _Rules.fromLocation(e.value),
-      });
-    } finally {
-      registry
-        ..clear()
-        ..addAll(previous);
-      tz.setLocalLocation(previousLocal ?? tz.UTC);
-    }
-  }
+  static Map<String, _Rules> _loadRules() => Map.unmodifiable({
+    for (final location in tzdbDeserialize(base64Decode(boundedTimezoneData)))
+      location.name: _Rules.fromLocation(location),
+  });
 }
 
 final class _Offset {
@@ -372,7 +366,7 @@ final class _Rules {
   final bool hasKnownOffset;
 
   bool covers(int instant) =>
-      fixedKnown || (transitions.isNotEmpty && instant >= transitions.first);
+      instant >= -172800000000 && instant < 4102617600000000;
 
   _Offset at(int instant) {
     var low = 0;

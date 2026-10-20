@@ -5,10 +5,12 @@ import 'date_event_span.dart';
 /// Applies the anchor's signed calendar-day shift and replacement span length.
 /// It does not change the recurrence rule or represent range cancellation.
 final class DateEventRangeChange {
-  const DateEventRangeChange({
+  DateEventRangeChange({
     required this.originalStart,
     required this.replacement,
-  });
+  }) {
+    originalStart.requireOrdinary('originalStart');
+  }
 
   final CalendarDate originalStart;
   final DateEventSpan replacement;

@@ -2,6 +2,8 @@
 
 Status: **Native implementation proposal; timed recurrence, adapters and service contracts remain under review**. Date: 2026-10-20.
 
+Current-profile note: [ADR 0041](0041-whole-second-1970-2100-profile.md) supersedes this record's earlier date-range/precision/zone-envelope choices. Ordinary calendar dates are now 1970 inclusive to 2100 exclusive, with whole seconds and a special exclusive endpoint. The original increment and validation history below is preserved.
+
 ## Context and sources
 
 After the DATE-only recurrence batches, timed recurrence needs UTC duration and span foundations. This batch adds exact signed UTC duration application, preserved event bounds/defaults, point-versus-interval queries and a related correction for long UTC-window elapsed lengths. Focused iteration precedes broader batch checks and one completed-group commit.

@@ -1,9 +1,9 @@
 # serverpod_calendar
 
 > [!WARNING]
-> **NOT SAFE FOR NAMED-ZONE DATES AFTER 2037.** Do not use this code for calendar or scheduling calculations that require named-zone dates in **2038 or later**. The bundled timezone data does not provide safe future coverage; the resolver explicitly rejects those years. **Do not remove or bypass this guard.**
+> **SUPPORTED CALENDAR DATES: 1970-01-01 inclusive to 2100-01-01 exclusive.** The final ordinary date is **2099-12-31**. Calendar timing accepts **whole seconds only**; nonzero fractions are rejected, never rounded.
 >
-> The current calculation envelope is **1900–2037**, and some zones/periods within it are also rejected because coverage cannot be proved. Date-only values supporting years 0001–9999 do **not** extend timezone calculation support. See [the coverage limits](docs/adr/0025-bounded-named-zone-resolution.md#coverage-safeguards).
+> **2100 is excluded**, except for an explicit midnight boundary used as an exclusive event/query end. Necessary UTC spillover is calculation padding, not permission to store out-of-range calendar dates. Named-zone data now includes calculated future transitions through the supported horizon; the former 2037 restriction is superseded by generated coverage. Future results assume the pinned IANA rules continue to apply, and unknown-offset periods still fail explicitly. See [timezone limits and updates](docs/timezone-data.md) and [ADR 0041](docs/adr/0041-whole-second-1970-2100-profile.md). **Do not remove or bypass these profile/coverage guards.**
 
 A reusable calendar module intended for Serverpod projects, providing calendar, free/busy, availability-search, scheduling, task and alarm services. Host Flutter clients provide most of the GUI.
 
