@@ -40,6 +40,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0034](0034-native-iso-week-fields.md) | Native ISO week-year, week and weekday projection | Confirmed convention; API implementation proposed |
 | [0035](0035-date-only-event-spans.md) | DATE-only event bounds, exclusive ends and preserved duration/default intent | Scoped API implementation proposed; broader span contracts pending |
 | [0036](0036-date-event-series-overlap.md) | Bounded DATE-only event-series overlap with earlier-start lookback | Scoped API implementation proposed; timed/override/service integration pending |
+| [0037](0037-date-only-single-occurrence-exceptions.md) | DATE-only identity, cancellation/replacement and bounded overlap batch | Batch authorized; native policies/API proposed; timed/range/service work pending |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

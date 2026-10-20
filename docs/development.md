@@ -73,6 +73,18 @@ After editing endpoints or `.spy.yaml` source models:
 
 Never hand-edit generated protocol Dart or test tools. Calendar domain table models require the [model review gates](models.md) before implementation. Serverpod-created migrations are retained for the scaffold and authentication schema.
 
+### Feature batches and focused iteration
+
+During a feature, run its VM tests plus directly affected regressions. For example, from `packages/serverpod_calendar_core`:
+
+```powershell
+dart test test/date_event_exception_test.dart test/date_event_exception_set_test.dart test/date_event_series_test.dart --reporter expanded
+```
+
+After finishing the agreed feature group, run formatting, workspace analysis and the complete core suite on VM and Chrome. Add relevant server/database/generated-client/Flutter checks when those surfaces change. Record commands actually run and checks deferred; focused success is not full-suite evidence. Commit and push only after the batch is complete, using one commit for the group. Run the full repository sequence before marking the PR ready.
+
+### Complete local sequence
+
 Run the complete local check sequence:
 
 ```powershell

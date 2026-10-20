@@ -35,6 +35,8 @@ Feeds select one or more calendars and support multiple independently revocable 
 
 ## Validation and reporting
 
+Use focused VM tests and directly affected regressions during feature development. At the end of an agreed feature batch, run broader formatting, analysis and complete core VM/Chrome checks plus relevant integration checks; run the full repository checks before marking the PR ready. Record which checks ran and which were deferred. Commit and push code only after the whole agreed batch is complete; do not make intermediate feature check-ins.
+
 For documentation-only changes, check relative links, requirement/ADR consistency, and the changed-file list. Do not claim runtime tests passed when there is no application. Once code exists, document and run appropriate formatting, analysis, unit, and database integration checks using the selected SDK versions. Include commands actually run and results in each implementation PR. Add tests for authorization boundaries, import rejection/atomicity, temporal semantics, concurrency, and supported interoperability cases.
 
 First-release standards also include RFC 7953 availability rules, RFC 5546 iTIP and RFC 6047 iMIP. Keep scheduling reconciliation separate from ordinary import and feed publication; host adapters provide trusted calendar addresses and inbound/outbound email. Validate participant authority, method/version/occurrence identity and duplicate/stale messages. Persist outbound intent transactionally and test retries/crash recovery. See docs/standards.md and ADRs 0012/0007; do not claim scheduling interoperability from subscription-only tests. No real email is authorized by documentation changes alone.
