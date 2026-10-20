@@ -2,6 +2,8 @@
 
 Status: **Proposed**. Date: 2026-10-19.
 
+Current module-boundary decision: [ADR 0042](0042-optional-http-feed-module.md) places feed persistence/management and HTTP transport in a separate optional Serverpod module; the calendar module retains the publication/policy boundary. Older combined-module wording below is superseded only on that ownership.
+
 Walkthrough scope clarification: the maintainer confirmed one repository, separate core/iCalendar/calendar-module/notification responsibilities and the names in the [scaffolding plan](../scaffolding-plan.md). An optional Flutter UI package is planned for later extraction. The selected first milestone is a buildable authenticated example with local checks; CI follows later while remaining required for release. These selections refine the original proposal below without accepting its unresolved template/API details or unrelated ADRs. [ADR 0020](0020-notification-delivery-scope.md) governs the newer notification boundary.
 
 ## Context

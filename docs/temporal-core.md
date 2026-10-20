@@ -32,6 +32,10 @@ Superseded broad-range/fraction-preservation tests were replaced with exhaustive
 
  The tests now focus on all 47,482 supported Gregorian/ISO dates, explicit rejection outside the profile, endpoint/UTC-spillover behavior and whole-second acceptance/rejection. The independent zone reference covers 155,220 samples, while recurrence/exception/task/DST regression scenarios remain in scope.
 
+## Pre-merge review correction
+
+The final review added a due-only zoned task boundary regression and fixed validation to use its due zone when DTSTART is absent. Valid 1970/2099 local dues retain required UTC spillover; the explicit 2100 local endpoint remains invalid for tasks. Focused task/profile tests passed (12), followed by **443 tests on each of VM and Chrome**, clean workspace analysis and formatting. The full repository sequence also passed, including fresh migrations, two hosts, JWT lifecycle, Flutter browser journey and release Web build. See [the dated review evidence](scaffold-validation.md#pre-merge-review-and-full-revalidation-2026-10-20).
+
 ## Historical evidence and superseded contracts
 
 The records below preserve the development history and commands actually run. Their microsecond acceptance, years 0001–9999, 1900–2037 zone envelope and old after-2037 warnings are **historical contracts superseded by ADR 0041**, not current behavior. Old examples using those inputs must not be copied as current API examples. Native computation evidence does not imply implemented storage, protocol adapters or external-client support.

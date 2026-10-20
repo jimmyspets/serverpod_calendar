@@ -48,6 +48,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0041](0041-whole-second-1970-2100-profile.md) | Whole-second timing, exclusive 2100 horizon, generated future zones and update policy | Accepted maintainer profile; supersedes earlier precision/range limits |
 
+| [0042](0042-optional-http-feed-module.md) | Separate optional Serverpod module for iCalendar HTTP feeds | Accepted boundary; names, contracts and scaffolding pending |
+
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
 Use the next consecutive number for a new ADR covering a material decision. Include context, proposal/decision, alternatives, consequences, and acceptance conditions. Preserve committed/accepted decision history; supersede accepted decisions with a linked ADR. Superseded uncommitted drafts may be removed under the maintainer-authorized cleanup. Mark an ADR accepted only after explicit maintainer agreement recorded in the PR or issue.

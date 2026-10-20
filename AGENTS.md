@@ -19,6 +19,8 @@ The maintainer selected whole-second calendar timing and ordinary dates in **[19
 - Use Mermaid diagrams in Markdown fenced code blocks labeled `mermaid` for documentation diagrams. Keep diagrams consistent with the accompanying text and clearly label proposed designs.
 - Never commit credentials, private calendar exports, personal event data, or production configuration. Use synthetic fixtures.
 
+The maintainer confirmed a separate optional Serverpod module for iCalendar HTTP feeds under [ADR 0042](docs/adr/0042-optional-http-feed-module.md). Calendar domain APIs/storage and authenticated import/export remain independent; feed credentials, selections and HTTP/ETags belong to the feed module. Names/contracts/scaffolding remain pending.
+
 ## Implementation guidance once scaffolding exists
 
 Read the scoped [example guidance](example/calendar_example/AGENTS.md) and module AGENTS.md files before working in those folders. Use the root setup/generation/check/start scripts described in [local development](docs/development.md); they coordinate the workspace, isolated synthetic test storage, generated clients and Flutter Web journeys. Keep seeding/reset local to development/test, record auth mail locally and inspect owned test logs under ignored `.local/`.

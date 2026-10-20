@@ -45,3 +45,7 @@ The initial workspace/authentication scaffold now exists under [ADR 0021](adr/00
 ## Superseding temporal profile
 
 The maintainer subsequently selected whole seconds and ordinary calendar dates from 1970-01-01 inclusive to 2100-01-01 exclusive, keeping the current timezone library and generating future transitions. Nonzero fractions reject without rounding, explicit exclusive endpoints and required UTC spillover are retained, and updates/limitations must be documented. Breaking unpublished APIs are authorized. [ADR 0041](adr/0041-whole-second-1970-2100-profile.md) supersedes the prior microsecond/broad-date/2037 profile; [timezone maintenance](timezone-data.md) records the generation and update process.
+
+## Optional HTTP feed module
+
+The maintainer explicitly confirmed a separate optional Serverpod module for iCalendar HTTP subscription feeds. [ADR 0042](adr/0042-optional-http-feed-module.md) records ownership and dependency direction without claiming implementation or selecting final package names. Calendar APIs, availability and authenticated import/export remain usable without feeds.

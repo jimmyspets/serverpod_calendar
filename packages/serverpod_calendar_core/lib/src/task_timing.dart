@@ -95,8 +95,9 @@ final class TimedTaskTiming {
     }
     final finish = effectiveDue;
     if (finish != null) {
-      if (start?.zoneId != null) {
-        validateZonedInstant(finish, start!.zoneId!, allowExclusiveEnd: false);
+      final zoneId = start?.zoneId ?? due?.zoneId;
+      if (zoneId != null) {
+        validateZonedInstant(finish, zoneId, allowExclusiveEnd: false);
       } else {
         TimedValue.utc(finish);
       }

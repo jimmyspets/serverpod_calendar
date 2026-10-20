@@ -25,6 +25,8 @@ Independent packages can progress in parallel after their contracts are defined.
 
 ## Design contracts
 
+- [ ] Implement the confirmed optional HTTP feed module boundary under [ADR 0042](adr/0042-optional-http-feed-module.md): define calendar publication/policy contracts, keep feed storage/routes/credentials separate, and test installations with and without feeds. Package names and detailed contracts remain pending.
+
 - [ ] Review the [model catalog](models.md) and [ADR 0019](adr/0019-model-contracts.md): finalize logical fields/ownership, component cardinalities, physical schema/IDs, typed changes, uniqueness, retention and generated-client projections before writing model YAML or migrations. Preserve the selected RFC scope and resolve the catalog's explicit lifecycle/temporal review gates.
 
 - [ ] Review the retained ADR implementation proposals against the selected RFC tables. Define exact property contexts/cardinalities, accepted values, native/interchange schemas, limits and diagnostics; keep feature scope separate from implementation approval.

@@ -2,6 +2,8 @@
 
 Status: **Proposed**. Date: 2026-10-19. Maintainer-required capabilities: read-only iCalendar feeds, multiple revocable long random URLs, ETag support and multi-calendar publication. The concrete policy below is proposed.
 
+Current module-boundary decision: [ADR 0042](0042-optional-http-feed-module.md) places feed persistence/management and HTTP transport in a separate optional Serverpod module; the calendar module retains the publication/policy boundary. Older combined-module wording below is superseded only on that ownership.
+
 ## Proposal
 
 Separate Feed, FeedCalendar selection, and FeedUrl credentials. A feed selects one or more calendars; multiple independent URL credentials can publish that selection. A calendar can participate in multiple feeds. Management callers need publish/manage permission for every selected calendar; possession of a URL grants only feed reads.

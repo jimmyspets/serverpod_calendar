@@ -2,6 +2,8 @@
 
 Status: **maintainer-stated scope; implementation pending**. On 2026-10-19 the maintainer specified subscription feeds, external subject associations, recurring events, named time zones, resource calendars, free/busy availability, RFC 7953 availability rules, iTIP scheduling, iMIP email exchange, RFC 7986 descriptions, native tasks, Flutter-facing services and list-based availability search. Alarm execution, a reusable notification module and a connected Flutter streaming example are first-release requirements under [ADR 0020](adr/0020-notification-delivery-scope.md). iOS/Android push providers are optional host integrations, with no direct platform delivery implementation required here. RFC 9074 has a selected scoped time-based personal alarm profile; RFCs 9073/9253 now have selected scoped metadata profiles; detailed constraints still need design, while proximity and arbitrary audio/email actions remain deferred. Detailed designs and ADRs remain proposed.
 
+The maintainer selected a separate optional Serverpod module for iCalendar HTTP subscription feeds under [ADR 0042](adr/0042-optional-http-feed-module.md). Feed delivery remains first-release scope; hosts using only native authenticated APIs may omit it.
+
 ## User journey and scope
 
 Target Serverpod 4.x and later; pin compatible Dart, Flutter, and Serverpod SDK versions during scaffolding and verify supported versions.

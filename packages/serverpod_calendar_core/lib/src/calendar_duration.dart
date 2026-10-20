@@ -86,7 +86,7 @@ final class CalendarDuration {
   ///
   /// In UTC, a day is 24 hours and a week is seven days; no zone/DST or leap
   /// second is applied. Zero still validates UTC input. Unsupported DateTime
-  /// results throw [RangeError] before narrowing; fractions remain exact on web.
+  /// results throw [RangeError] before narrowing; nonzero fractions are rejected.
   DateTime addToUtc(DateTime start) {
     final origin = utcMicroseconds(start);
     final dayUnits = BigInt.from(weeks) * BigInt.from(7) + BigInt.from(days);

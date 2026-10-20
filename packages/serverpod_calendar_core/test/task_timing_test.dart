@@ -20,6 +20,29 @@ void main() {
     expect(TimedTaskTiming(start: u(1)).effectiveDue, isNull);
     expect(TimedTaskTiming(due: u(2)).effectiveDue, u(2).instant);
   });
+
+  test(
+    'due-only zoned tasks retain valid local dates across UTC boundaries',
+    () {
+      for (final (year, month, day, hour, zoneId) in [
+        (1970, 1, 1, 0, 'Asia/Tokyo'),
+        (2099, 12, 31, 23, 'America/New_York'),
+      ]) {
+        final due = TimedValue.zoned(
+          CivilDateTime(
+            date: CalendarDate(year: year, month: month, day: day),
+            hour: hour,
+            minute: 0,
+          ),
+          zoneId: zoneId,
+        );
+        final task = TimedTaskTiming(due: due);
+        expect(task.start, isNull);
+        expect(task.due, due);
+        expect(task.effectiveDue, due.instant);
+      }
+    },
+  );
   test('duration/start/due cardinality and positive endpoint constraints', () {
     for (final action in <void Function()>[
       () => DateTaskTiming(duration: CalendarDuration(days: 1)),

@@ -136,6 +136,8 @@ THISANDFUTURE stores an effective change anchored to original recurrence order, 
 
 Both item aggregates also carry optional `confidentiality` (CLASS), legal `priority`, `styledDescriptions: List<StyledDescriptionLink>` and `structuredData: List<StructuredDataLink>`. Confidentiality labels are distinct from `ItemClassification` search/grouping metadata and never grant access. Task metadata includes legal organizer/attendee values for standalone interchange without enabling scheduling mail. Only selected legal property contexts are accepted; event-only resource text and coordinates are not automatically added to tasks.
 
+Feed records, selections, credentials and feed-management models in this catalog belong to the optional HTTP feed module under [ADR 0042](adr/0042-optional-http-feed-module.md). Calendar records/rules and authenticated import/export remain independent of installing feeds; physical schemas and projection/policy contracts remain pending.
+
 ## Availability rules and query models
 
 | Model | Candidate fields | Contract |

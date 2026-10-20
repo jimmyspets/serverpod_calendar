@@ -10,7 +10,8 @@ The primary interface is the Serverpod module and its generated Dart client for 
 | --- | --- | --- |
 | Calendar core | Alarm trigger/occurrence semantics, calendar/event/task types, temporal/availability rules, recurrence, exceptions, interval/free-busy calculations, domain errors | Pure Dart; evaluated time-zone/recurrence libraries |
 | iCalendar adapter | Parse/validate/serialize the declared profile, including VEVENT/VTODO, VTIMEZONE, recurring series, VAVAILABILITY and supported scheduling/free-busy components | Core and evaluated parser |
-| Serverpod module | Persistence, transactions, host authorization integration, feed/URL management, alarm lifecycle/due state/reminder outbox, task lifecycle/assignment, list-based availability searches, availability rules/queries and transactional scheduling inbox/outbox | Core and adapter |
+| Serverpod module | Persistence, transactions, host authorization integration, alarm lifecycle/due state/reminder outbox, task lifecycle/assignment, list-based availability searches, availability rules/queries and transactional scheduling inbox/outbox | Core and adapter |
+| Optional HTTP feed module | Subscription routes, feed selections/metadata, bearer-token lifecycle, authorized management and deterministic HTTP/ETags | Calendar publication/policy contracts and iCalendar adapter; calendar module does not depend on feeds |
 | Scheduling core/service | iTIP role validation, message reconciliation and participant state | Core and iCalendar adapter; independent of mail provider |
 | iMIP email adapters | MIME encoding/decoding, outbound host delivery and trusted inbound host ingress | Scheduling service, evaluated MIME library and host address policy |
 | Notification port/adapter | Submit due reminder intents with cancellation/revalidation and idempotency | Calendar services depend on an abstract port |
@@ -21,6 +22,8 @@ The primary interface is the Serverpod module and its generated Dart client for 
 | Example host/app | Automated host/Flutter integration journeys, external identity/policy adapters, subset feeds and multiple-instance acceptance harness | Actual module/client/migrations; synthetic fixtures; deterministic delivery adapters in CI |
 
 Physical layout follows the pinned Serverpod template selected during scaffolding. Verify the [official module guide](https://docs.serverpod.dev/concepts/server-fundamentals/modules) for that version. CalDAV and general upstream-provider synchronization remain separate adapters. iTIP and iMIP are first-release boundaries; see [standards](standards.md).
+
+The optional HTTP feed module is a confirmed boundary under [ADR 0042](adr/0042-optional-http-feed-module.md). Its implementation and package names remain pending. Authenticated import/export, availability and scheduling remain calendar capabilities; installing feeds is optional for hosts, while feed support remains first-release scope.
 
 ## Multiple active instances and automated acceptance
 
