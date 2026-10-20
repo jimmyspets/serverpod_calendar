@@ -22,6 +22,10 @@ Use explicit typed references rather than an ambiguous collection name or a bare
 
 UI folders/groups, feed selections and person/resource availability contributors are distinct concepts. They do not grant access to their member calendars or become authorization containers automatically. General-purpose calendar collections have not been selected. If introduced later, give them their own typed identity and explicit membership/policy rules. The separate protocol meaning of UID collection scope also does not establish permission.
 
+## Permission granularity
+
+The maintainer confirmed separate permissions for calendar presentation versus availability changes, and for task content versus progress versus assignment changes. Hosts can map these distinct operations to the same business rule. Mixed requests require every applicable permission before an atomic commit. The [operation catalog](authorization-operations.md) gives the proposed actions, targets, composition rules and examples; exact API names and unreviewed operation details remain proposals.
+
 ## Context supplied to the adapter
 
 The following are candidate server-only contracts, not generated-client request types or final Dart interfaces:
@@ -65,6 +69,7 @@ Do not cache allow decisions by process alone or assume JWT logout instantly rev
 
 ## Implementation acceptance checklist
 
+- [ ] Verify presentation permission cannot change availability settings/rules; task content, progress and assignment permissions remain independent, including mixed requests and alternate/nested payloads.
 - [ ] Register two different host policies without changing module code: a simple synthetic policy and a custom object-level policy.
 - [ ] Verify the adapter receives scope, actual collection/object/ancestor identities, operation and validated proposed changes for each service path, including create and occurrence operations.
 - [ ] Test absent adapter, deny/error/timeout, forged caller/parent IDs, colliding IDs across scopes and child-specific detail restrictions.

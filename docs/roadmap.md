@@ -25,7 +25,7 @@ Independent packages can progress in parallel after their contracts are defined.
 
 ## Design contracts
 
-- [ ] Finalize and implement the accepted host authorization/context boundary under [ADR 0043](adr/0043-host-authorization-context.md) and the [guide](host-authorization.md): trusted actual collection/object/parent context, custom host policies, query visibility, transaction/revision integration, external-policy consistency and two-host enforcement. Do not generate domain endpoints before these dependent contracts are reviewed.
+- [ ] Finalize and implement the accepted host authorization/context boundary under [ADR 0043](adr/0043-host-authorization-context.md) and the [guide](host-authorization.md): trusted actual collection/object/parent context, custom host policies, query visibility, transaction/revision integration, external-policy consistency and two-host enforcement. Preserve the confirmed permission separations and mixed-request checks in the [operation catalog](authorization-operations.md). Do not generate domain endpoints before these dependent contracts are reviewed.
 
 - [ ] Implement the confirmed optional HTTP feed module boundary under [ADR 0042](adr/0042-optional-http-feed-module.md): define calendar publication/policy contracts, keep feed storage/routes/credentials separate, and test installations with and without feeds. Package names and detailed contracts remain pending.
 

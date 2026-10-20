@@ -16,6 +16,12 @@ Host applications can supply existing ACL, organization/group or custom object p
 
 Detailed context, operation cases and future acceptance tests are in [host authorization](../host-authorization.md). The listed field/type names and interfaces are proposals, not generated schemas or implemented APIs. Permission evaluation must participate in the mutation snapshot/revision protocol. External policy services require an explicit consistency/revocation contract; a module transaction alone cannot make remote decisions atomic.
 
+## Confirmed granularity refinement, 2026-10-20
+
+During the operation review, the maintainer explicitly chose separate permissions for calendar name/description changes versus availability zone/working-hours/no-rule fallback changes. They also chose separate permissions for task content, completion/reopening/progress and assignment changes. Hosts may map multiple actions to the same rule. Mixed requests require all applicable checks without partial commit or silently ignored fields.
+
+The [operation catalog](../authorization-operations.md) documents proposed action families/targets and examples. These two permission separations are confirmed; the rest of the identifiers, query/result/transaction contracts, deletion behavior and task lifecycle remain proposed. This refinement does not implement authorization or introduce required roles.
+
 ## Alternatives and consequences
 
 A built-in fixed owner/role scheme prevents hosts from reusing their business rules. A caller-only callback lacks the target information needed for object-specific decisions. Client-side enforcement or endpoint-only checks miss internal jobs and other entry points. A replaceable host adapter preserves customization but requires careful query, transaction, disclosure and outage contracts.
