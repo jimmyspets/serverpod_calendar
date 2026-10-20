@@ -1,10 +1,22 @@
 # ISO weeks and recurrence WKST
 
-Status: **maintainer-confirmed behavior**. The native week display convention and explicit RFC WKST handling are confirmed under [ADR 0032](adr/0032-iso-week-convention.md). The core date-only recurrence calculations exist; the calendar GUI, standalone week-label API and iCalendar parser remain unimplemented.
+Status: **maintainer-confirmed behavior**. The native week display convention and explicit RFC WKST handling are confirmed under [ADR 0032](adr/0032-iso-week-convention.md). The core date-only recurrence calculations and native `IsoWeekDate` projection exist; the calendar GUI and iCalendar parser remain unimplemented.
 
 ## Native calendars use ISO 8601
 
 Native calendars use Monday-first layout and ISO week labels. A week runs Monday through Sunday. Week 1 is the week containing January 4, equivalently the year's first Thursday. An ISO week-year has 52 or 53 weeks and can differ from the Gregorian year near New Year. Device locale does not change this convention. Native weekday numbers remain Monday 1 through Sunday 7.
+
+## Native ISO fields in the core
+
+```dart
+final iso = IsoWeekDate.fromDate(
+  CalendarDate(year: 2021, month: 1, day: 3),
+);
+// iso.weekYear == 2020, iso.week == 53, iso.weekday == 7
+// iso.toString() == "2020-W53-7" (diagnostic text)
+```
+
+The pure-core projection accepts an existing validated date and returns immutable ISO fields. It never consults recurrence WKST, device locale or timezone data. Use `weekYear` with `week`, rather than the date's Gregorian year. This API does not draw a calendar, parse week-date strings or implement iCalendar serialization. See [ADR 0034](adr/0034-native-iso-week-fields.md).
 
 ## Recurrence rules honor WKST
 

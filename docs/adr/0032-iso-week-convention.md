@@ -21,6 +21,10 @@ RFC 5545 [section 3.3.10](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.
 
 The maintainer explicitly confirmed honoring supplied WKST values, including non-Monday starts, while retaining ISO native week labels and Monday-first presentation. This applies to explicit native recurrence parameters and the future supported interchange profile. Never silently replace a supplied WKST, because that can change recurrence dates. Week 1 still uses the four-day rule under that rule's start; negative BYWEEKNO selectors use its actual week-year length. See [the week-convention guide](../week-conventions.md) for week-number boundary examples and differing two-week schedules. The existing code already honors every WKST; this confirmation requires documentation changes only.
 
+## Implementation follow-up
+
+[ADR 0034](0034-native-iso-week-fields.md) now supplies native ISO week fields from a validated date. The earlier validation section below records the original documentation-only increment; the follow-up has its own runtime evidence. Flutter calendar presentation remains pending.
+
 ## Boundaries and validation
 
 The confirmed ISO convention does not widen date years 0001–9999 or named-zone calculations beyond civil years 1900–2037. The main README warning remains unchanged. No alternate calendar, arbitrary zone, parser or new interoperability claim is introduced.

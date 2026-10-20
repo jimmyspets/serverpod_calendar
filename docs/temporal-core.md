@@ -1,10 +1,10 @@
 # Temporal core implementation
 
-Status: **temporal values, bounded named-zone operations and initial bounded date-only recurrence**, 2026-10-20. The pure Dart core exports `UtcWindow`, `CalendarDate`, `CivilDateTime`, `CalendarDuration`, `NamedZoneResolver` and DATE-only recurrence parameter/generator/set types. Full recurrence expansion, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
+Status: **temporal values, bounded named-zone operations and initial bounded date-only recurrence**, 2026-10-20. The pure Dart core exports `UtcWindow`, `CalendarDate`, `CivilDateTime`, `CalendarDuration`, `NamedZoneResolver`, `IsoWeekDate` and DATE-only recurrence parameter/generator/set types. Full recurrence expansion, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
 
 ## ISO 8601 week convention
 
-The native convention is ISO 8601: Monday first (1–7), week 1 containing January 4 (equivalently, the first Thursday), and a separate ISO week-year. The current recurrence default of Monday uses this convention. Explicit RFC WKST values are honored, including non-Monday starts and their rule-specific week numbers; those calculations are not ISO display labels. See [the behavior and examples](week-conventions.md) and [ADR 0032](adr/0032-iso-week-convention.md). Native week labels and Flutter presentation must follow the confirmed ISO convention; those presentation APIs are not implemented yet.
+The native convention is ISO 8601: Monday first (1–7), week 1 containing January 4 (equivalently, the first Thursday), and a separate ISO week-year. The current recurrence default of Monday uses this convention. Explicit RFC WKST values are honored, including non-Monday starts and their rule-specific week numbers; those calculations are not ISO display labels. See [the behavior and examples](week-conventions.md) and [ADR 0032](adr/0032-iso-week-convention.md). `IsoWeekDate.fromDate(CalendarDate)` now exposes immutable native `weekYear`, `week` and `weekday` fields under [ADR 0034](adr/0034-native-iso-week-fields.md). For 2021-01-03 they are 2020, 53 and 7; for 2024-12-30 they are 2025, 1 and 1. Pair the ISO week-year with the week number. The pure date projection never consults timestamps, locale, zones or recurrence WKST. Diagnostic `YYYY-Www-D` text is not a parser or adapter format. Flutter presentation remains pending.
 
 ## Gregorian date-only values
 
@@ -293,3 +293,18 @@ With pinned Dart 3.13.5:
 New tests cover canonical immutable inputs/results, raw duplicate input caps, earlier additions, excluded DTSTART identity, union/exclusion precedence, COUNT/UNTIL independence, query boundaries/history, every limit failure, excluded mismatched starts, explicit Sunday BYWEEKNO and years 0001/9999. Existing named-zone coverage rejection tests remain unchanged and pass.
 
 Dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE and the main README/2037 warning are unchanged. The full database/browser-journey/two-host suite was not repeated for this pure-core increment. Timed/PERIOD sets, overrides, spans, production budgets and protocol/client interoperability remain pending. Documentation links/anchors (193), consecutive ADR numbering, changed-file scope and `git diff --check`: passed.
+
+## Native ISO week field validation
+
+With pinned Dart 3.13.5:
+
+- `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe format packages/serverpod_calendar_core/lib packages/serverpod_calendar_core/test`: twenty-two files checked, no formatting changes needed.
+- The same executable with `test --reporter expanded`, from the core package: all **329 tests passed**, including 31 new ISO projection tests.
+- The same executable with `test --platform chrome --reporter expanded`, from the core package: all **329 tests passed in Chrome**.
+- Serverpod MCP `hot_reload`: completed successfully. No Flutter calendar GUI consumes these fields yet.
+
+Python 3.11.9 `datetime.date.isocalendar()` independently supplied 24 exact fixtures and rolling fingerprints for 146097 dates in each of years 0001–0400 and 2000–2399, plus 39996 January/December boundary dates across years 0001–9999. To reproduce a fingerprint, begin with zero and update `(previous * 31 + iso_year * 1000 + iso_week * 10 + iso_weekday) % 2147483647` for each chronological date. Expected cycle values are 222650477 and 1784885802; the year-boundary sequence (January 1, January 4, December 28, December 31 for each ascending year) is 843918866. These portable arithmetic fingerprints supplement exact fixtures, not a claim of exhaustive proof.
+
+A separate test constructs ISO-year Mondays from January 4 using Dart UTC Gregorian arithmetic as an independent test oracle, checks every date through the next boundary, and confirms 71 long week-years in 400 years. Production code never converts dates to timestamps. Tests also cover equality/hash, padded diagnostics and a Sunday-WKST recurrence whose native ISO label remains 2020-W53-7.
+
+No dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE or main README warning changed. The full database/browser-journey/two-host suite was not repeated for this pure-core projection. Inverse conversion, week-date parsing, Flutter presentation and protocol/client interoperability remain pending. `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe analyze --fatal-infos`: workspace analysis passed. Documentation links/anchors (206), consecutive ADR numbering, changed-file scope and `git diff --check`: passed.
