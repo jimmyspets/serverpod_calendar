@@ -26,6 +26,8 @@ The [operation catalog](../authorization-operations.md) documents proposed actio
 
 [ADR 0044](0044-authorized-query-projections-and-pagination.md) records the subsequent confirmed detail/free-busy separation, predefined field groups and no-total initial pagination. Its query/batch, cursor and snapshot mechanics remain proposed; the broader adapter/transaction gates below remain open.
 
+Consistency refinement: [ADR 0045](0045-authorization-consistency-guarantees.md) confirms support for transaction-coordinated and external fresh-check guarantees with explicit declaration/no silent downgrade. Concrete algorithms, defaults, deadlines and operation requirements remain proposed.
+
 ## Alternatives and consequences
 
 A built-in fixed owner/role scheme prevents hosts from reusing their business rules. A caller-only callback lacks the target information needed for object-specific decisions. Client-side enforcement or endpoint-only checks miss internal jobs and other entry points. A replaceable host adapter preserves customization but requires careful query, transaction, disclosure and outage contracts.

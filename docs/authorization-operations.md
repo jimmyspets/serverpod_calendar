@@ -69,6 +69,10 @@ An operation describes **what the caller is asking to do**, while target/context
 
 [ADR 0044](adr/0044-authorized-query-projections-and-pagination.md) records the selected separate detail/free-busy responses, predefined field groups and initial pages with opaque continuation and no totals. Query authorization does not turn hidden detail objects into free time or grant caller-requested groups. See [the proposed filtering and cursor contract](authorization-queries.md).
 
+## Confirmed consistency boundary
+
+[ADR 0045](adr/0045-authorization-consistency-guarantees.md) selects support for coordinated and external host policies with explicit guarantees and no silent downgrade. Configuration must reject an adapter that cannot supply an operation's required guarantee. Defaults, per-operation requirements, freshness limits and concrete coordination remain pending in [the consistency design](authorization-consistency.md).
+
 ## Decisions still needed before implementation
 
 - Exact action identifiers, adapter signatures and allow/deny/error/projection result types.

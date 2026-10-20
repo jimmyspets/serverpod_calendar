@@ -33,6 +33,8 @@ Hosts can use their own ACLs, memberships or business rules. Confirmed permissio
 
 The maintainer selected separate detail/free-busy responses, typed field groups and no-total initial pages under [ADR 0044](adr/0044-authorized-query-projections-and-pagination.md). The [query design](authorization-queries.md) proposes bounded candidate/batch policy evaluation before visible page boundaries, current authorization on continuation and protected cross-instance cursor/snapshot state. Mechanics and schemas remain unimplemented proposals.
 
+The maintainer selected support for both coordinated and external fresh-check host policies with declared guarantees under [ADR 0045](adr/0045-authorization-consistency-guarantees.md). The [consistency design](authorization-consistency.md) distinguishes commit/revocation ordering from the unavoidable external after-check race. No silent downgrade or process-local coordination is permitted; concrete protocols, defaults and operation requirements remain pending.
+
 ## Multiple active instances and automated acceptance
 
 The example host/app is a maintained automated integration-test application as well as a demonstration. [ADR 0018](adr/0018-automated-example-and-multiple-instances.md) requires at least two simultaneously active Serverpod host processes sharing logical storage, with requests and workers able to run on either instance.

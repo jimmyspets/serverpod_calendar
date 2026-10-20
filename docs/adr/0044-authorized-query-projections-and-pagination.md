@@ -16,6 +16,8 @@ Use module-defined typed field groups for detail disclosure, selected by host po
 
 [Authorized query design](../authorization-queries.md) proposes trusted candidate constraints plus bounded object-policy batches, filtering before visible page boundaries, stable cursors with scope/query/actor/policy binding and explicit limit failures. These mechanics, query/result interfaces, cursor encoding/lifetimes, error behavior and transaction/external-policy consistency remain proposals. No database/HTTP/Flutter implementation is claimed.
 
+Consistency refinement: [ADR 0045](0045-authorization-consistency-guarantees.md) confirms support for transaction-coordinated and external fresh-check guarantees with explicit declaration/no silent downgrade. Concrete algorithms, defaults, deadlines and operation requirements remain proposed.
+
 ## Alternatives and consequences
 
 Mixed detail/busy lists complicate identity and source-count disclosure; separate responses keep their meanings explicit. A detail list is not proof of availability. Initial totals add database/policy cost and disclosure rules, so are omitted. Unrestricted field-level policies offer finer control but enlarge response mappings and test combinations; typed groups provide a bounded initial contract. Hosts may deny groups or map them to shared business rules without a fixed role model.

@@ -14,6 +14,8 @@ Host authorization boundary is selected under [ADR 0043](adr/0043-host-authoriza
 
 Native query response choices are selected in [ADR 0044](adr/0044-authorized-query-projections-and-pagination.md): separate detail/free-busy, predefined field groups and no-total initial pages. Domain policy/filter/cursor behavior is not implemented or verified; this does not change wire/feed-client support.
 
+[ADR 0045](adr/0045-authorization-consistency-guarantees.md) selects support for declared coordinated/external authorization guarantees without automatic downgrade. No concrete domain transaction/revocation protocol, remote provider integration or consistency evidence exists yet. Initial authenticated/JWT tests do not establish those guarantees.
+
 ## Interface coverage
 
 | Surface | Required capability | Evidence |

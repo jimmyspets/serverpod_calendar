@@ -50,13 +50,19 @@ The maintainer confirmed module-enforced, host-defined authorization with collec
 
 Operation context must preserve the confirmed calendar presentation/availability and task content/progress/assignment separations. A candidate `operation` value comes from the [proposed operation catalog](authorization-operations.md); family identifiers do not bypass specific object/field/action checks. Mixed intents require all applicable permissions against a consistent snapshot before commit. Final enum and adapter result types remain proposed.
 
-A calendar is an item collection, not a general UI group or feed selection. Membership in a grouping or a subject link never grants access automatically. Context loading is internal and scope-limited; callers receive only authorized projections. Default ownership, role inheritance, adapter result/query types and external-policy consistency remain unselected.
+A calendar is an item collection, not a general UI group or feed selection. Membership in a grouping or a subject link never grants access automatically. Context loading is internal and scope-limited; callers receive only authorized projections. Default ownership, role inheritance and adapter result/query types remain unselected. [ADR 0045](adr/0045-authorization-consistency-guarantees.md) selects support for declared coordinated/external guarantees; concrete consistency mechanisms/defaults remain proposed.
 
 ## Authorized query/view proposals
 
 The maintainer selected separate detail/free-busy responses, typed field-group disclosure and initial pages with opaque continuation but no totals under [ADR 0044](adr/0044-authorized-query-projections-and-pagination.md). Candidate internal batch decisions carry object visibility and granted groups; a candidate view envelope records disclosed groups so undisclosed content differs from genuine null/empty values. Exact group-to-field mappings, policy result types and minimum envelope fields remain unselected. See [the query design](authorization-queries.md).
 
 No generic storage serializer becomes a response. Calendar/event/task pages contain authorized views only; a missing detail object does not remove it from a separately authorized busy calculation. `totalCount`, estimated/denied/candidate counts are excluded from the initial page contract. Cursor fields and snapshots are protected internal design, not client authority.
+
+## Authorization decision/transaction proposals
+
+[ADR 0045](adr/0045-authorization-consistency-guarantees.md) confirms support for both coordinated and external fresh-check host policies with declared guarantees and no silent downgrade. Candidate server-only decision evidence binds the actor/scope, operation, targets/revisions, validated change, attempt and guarantee/freshness context; exact types, persistence and validity rules remain proposed in [the consistency guide](authorization-consistency.md). A version label or same-database read alone is not a commit/revocation fence.
+
+Mutations compare revisions, reestablish authorization on retries and commit domain changes/invalidation/outbound intent atomically; external dispatch and response disclosure have separate current checks. Required operation profiles, mode defaults, deadlines and coordination mechanisms must be specified before model/schema implementation. No client payload or cached receipt can assert authority.
 
 ## Shared temporal and identity values
 

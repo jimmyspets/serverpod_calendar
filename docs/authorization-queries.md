@@ -84,6 +84,8 @@ Page size limits visible results. A proposed page either contains the requested 
 
 No process-local cursor state alone can be required for correctness across hosts. If using server-side handles, their state must be consistently accessible to independent instances. Pure in-memory cursors and sticky routing cannot satisfy the multi-instance requirements. Snapshot lifetime, transaction isolation and external-policy freshness must be finalized before implementing pagination.
 
+The supported policy guarantee arrangements are selected under [ADR 0045](adr/0045-authorization-consistency-guarantees.md). Exact query snapshot/freshness rules and cursor compatibility still require review; a declared external write guarantee does not turn a cursor into an enduring authorization grant. See [the consistency guide](authorization-consistency.md).
+
 ## Future acceptance checks
 
 - [ ] Interleave visible and denied objects; verify stable full visible pages and proven shorter final pages without raw/denied totals.

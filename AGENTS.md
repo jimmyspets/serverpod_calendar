@@ -25,6 +25,8 @@ Under [ADR 0043](docs/adr/0043-host-authorization-context.md), modules enforce a
 
 Query response choices under [ADR 0044](docs/adr/0044-authorized-query-projections-and-pagination.md) are confirmed: separate detail/free-busy responses, predefined disclosure groups, and authorized initial pages with opaque continuation and no totals. Filtering, field mappings, cursor/snapshot and policy consistency are still proposed; see [query design](docs/authorization-queries.md). Never derive free time from a detail list filtered by visibility.
 
+Under [ADR 0045](docs/adr/0045-authorization-consistency-guarantees.md), support coordinated and external fresh-check host policies with explicit guarantees and no silent downgrade. A final external check does not eliminate an after-check revocation race; same-database reads alone do not prove commit coordination. Defaults/operation requirements/protocols remain proposed in [the consistency guide](docs/authorization-consistency.md). Existing current feed/worker/cursor checks remain required.
+
 ## Implementation guidance once scaffolding exists
 
 Read the scoped [example guidance](example/calendar_example/AGENTS.md) and module AGENTS.md files before working in those folders. Use the root setup/generation/check/start scripts described in [local development](docs/development.md); they coordinate the workspace, isolated synthetic test storage, generated clients and Flutter Web journeys. Keep seeding/reset local to development/test, record auth mail locally and inspect owned test logs under ignored `.local/`.

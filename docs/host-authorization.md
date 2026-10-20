@@ -71,6 +71,10 @@ For a mutation, use a consistent authoritative target snapshot, enforce authoriz
 
 Do not cache allow decisions by process alone or assume JWT logout instantly revokes an already-issued access token. Current host permissions and feed revocation remain separate checks. Any policy caching must have an explicit bounded invalidation/version contract that works across active hosts and satisfies required revocation behavior.
 
+## Declared consistency guarantees
+
+The maintainer selected support for both transaction-coordinated policies and external fresh checks, with guarantees explicitly declared and no silent downgrade under [ADR 0045](adr/0045-authorization-consistency-guarantees.md). External permission can change after its final check and before commit unless the host supplies effective coordination; same-database reads alone do not prove coordination either. Defaults, per-operation requirements, deadlines and mechanisms remain proposed in [the consistency guide](authorization-consistency.md). Required current feed/worker/cursor checks are not weakened.
+
 ## Implementation acceptance checklist
 
 - [ ] Verify presentation permission cannot change availability settings/rules; task content, progress and assignment permissions remain independent, including mixed requests and alternate/nested payloads.

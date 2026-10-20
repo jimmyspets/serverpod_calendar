@@ -59,3 +59,7 @@ The subsequent operation review confirmed separate calendar presentation/availab
 ## Authorized query response choices
 
 The maintainer selected separate detail/free-busy responses, authorized initial pages with opaque continuation and no totals, and predefined field-group disclosure. [ADR 0044](adr/0044-authorized-query-projections-and-pagination.md) records those choices; [the query design](authorization-queries.md) keeps filtering algorithms, group mappings, cursor/snapshot behavior and external-policy consistency proposed. No runtime implementation or new feed projection was approved by these choices.
+
+## Declared authorization consistency
+
+The maintainer selected support for transaction-coordinated policies and external authorization services with their guarantee explicitly declared and no silent fallback. [ADR 0045](adr/0045-authorization-consistency-guarantees.md) and [the consistency guide](authorization-consistency.md) distinguish ordered commit/revocation from an external after-check race. No default mode, numeric freshness limit, operation requirement or concrete coordination mechanism was selected; those remain implementation review gates.

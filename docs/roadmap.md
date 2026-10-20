@@ -25,6 +25,8 @@ Independent packages can progress in parallel after their contracts are defined.
 
 ## Design contracts
 
+- [ ] Finalize and implement [authorization consistency contracts](authorization-consistency.md) under [ADR 0045](adr/0045-authorization-consistency-guarantees.md): declare coordinated/external guarantees, reject unsupported requirements without downgrade, define defaults/freshness/deadlines and effective coordination, and test two-host revocation/write ordering, retries and late external decisions.
+
 - [ ] Finalize and implement [authorized query/view contracts](authorization-queries.md) under [ADR 0044](adr/0044-authorized-query-projections-and-pagination.md): preserve separate detail/free-busy, typed groups and no initial totals; review batch constraints, mappings, pagination/cursors, snapshot freshness and two-host behavior before generated schemas.
 
 - [ ] Finalize and implement the accepted host authorization/context boundary under [ADR 0043](adr/0043-host-authorization-context.md) and the [guide](host-authorization.md): trusted actual collection/object/parent context, custom host policies, query visibility, transaction/revision integration, external-policy consistency and two-host enforcement. Preserve the confirmed permission separations and mixed-request checks in the [operation catalog](authorization-operations.md). Do not generate domain endpoints before these dependent contracts are reviewed.
