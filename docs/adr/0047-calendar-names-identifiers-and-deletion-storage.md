@@ -14,6 +14,8 @@ Use immutable server-generated UUIDs for native calendar identities, without a c
 
 The [storage proposal](../calendar-storage.md) gives active fields, name/identity boundaries and source/toolchain evidence. Local pinned UUID serialization/database support and official guides establish feasibility, not calendar-generation or database test results. After dependency-safe deletion, atomically remove calendar content and retain only the selected minimal marker; ordinary APIs hide it and IDs are never reused. Markers do not grant permission or define a sync protocol. Exact active/payload/marker layout, retention/purge and authorized retry/receipt handling remain implementation gates.
 
+Schema refinement: [ADR 0048](0048-calendar-name-validation-and-row-layout.md) selects 256-code-point trimmed/nonempty/single-line native names and identity/active-data rows. It resolves those choices without approving final keys/indexes, low-level validation, coordination or indefinite marker retention.
+
 ## Alternatives and consequences
 
 A single shared native/protocol name can let imports silently rename a UI calendar and complicates legal missing/multilingual metadata. Separate roles add explicit mappings but avoid accidental synchronization. Numeric API identifiers are compact but reveal ordering; server-generated UUIDs supply opaque stable references without becoming access credentials. Requiring one UUID version would add a constraint the maintainer does not need.

@@ -25,6 +25,8 @@ Independent packages can progress in parallel after their contracts are defined.
 
 ## Design contracts
 
+- [ ] Implement the selected [native-name/schema shape](calendar-schema.md) under [ADR 0048](adr/0048-calendar-name-validation-and-row-layout.md): trimmed/nonempty/single-line labels up to 256 Unicode code points, identity-owned revision and content removal from separate active rows. Verify low-level Unicode/raw-byte limits, generated keys/indexes and two-host lifecycle invariants; marker retention remains undecided.
+
 - [ ] Finalize and implement [calendar storage](calendar-storage.md) under [ADR 0047](adr/0047-calendar-names-identifiers-and-deletion-storage.md): native/protocol/feed names stay distinct; server UUIDs have no public version requirement; deletion atomically removes content and retains only the selected internal marker. Review physical layout, text validation, retention/purge and generated UUID/schema behavior before claiming implementation.
 
 - [ ] Review [concrete adapter interfaces](authorization-adapter-contract.md) and the [first native calendar CRUD contract](calendar-crud-contract.md) under [ADR 0046](adr/0046-first-native-calendar-crud-contract.md). Preserve confirmed explicit-zone/nonempty-name creation and dependency-blocked deletion; apply ADR 0047 name-role separation and settle text validation, physical UUID/marker schema/retention, typed commands/results and real coordination before the calendar CRUD implementation batch.

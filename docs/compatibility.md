@@ -20,6 +20,8 @@ Native calendar creation/deletion rules are selected under [ADR 0046](adr/0046-f
 
 [ADR 0047](adr/0047-calendar-names-identifiers-and-deletion-storage.md) keeps native labels/UUIDs/minimal deletion markers separate from protocol NAME/UID and feed metadata. These are selected logical rules, not implemented CRUD, tested migrations, deletion synchronization or new wire/client support.
 
+[ADR 0048](adr/0048-calendar-name-validation-and-row-layout.md) selects native label rules and separate identity/data rows; no native name length/trim restriction is imposed on protocol NAME by this choice. Generated calendar schema, Unicode-boundary and lifecycle tests are not implemented or claimed here.
+
 ## Interface coverage
 
 | Surface | Required capability | Evidence |

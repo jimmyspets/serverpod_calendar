@@ -71,3 +71,7 @@ The maintainer selected rejection of deletion while active dependencies remain, 
 ## Calendar names, UUIDs and deletion markers
 
 The maintainer selected a native UI label separate from preserved imported NAME metadata, server-generated native calendar UUIDs without a specific UUID-version requirement, and minimal UUID/scope/revision/deletion-time markers after dependency-safe deletion. Markers retain no calendar label/content, are hidden from ordinary APIs and provide no archive/restore behavior. [ADR 0047](adr/0047-calendar-names-identifiers-and-deletion-storage.md) and [storage guidance](calendar-storage.md) preserve physical layout, text validation, purge/retention duration and generator verification as implementation gates.
+
+## Native name validation and identity/data rows
+
+The maintainer selected a 256-Unicode-code-point native display-name cap, outer trimming with blank/multiline rejection and internal spacing/Unicode preservation, and separate identity/active-data rows. [ADR 0048](adr/0048-calendar-name-validation-and-row-layout.md) and [schema guidance](calendar-schema.md) record these choices. Surviving identity rows do not imply indefinite retention; exact validation/raw-byte limits, generated keys/metadata/indexes and concrete coordination remain proposed.

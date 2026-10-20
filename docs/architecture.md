@@ -39,6 +39,8 @@ The maintainer selected support for both coordinated and external fresh-check ho
 
 [ADR 0047](adr/0047-calendar-names-identifiers-and-deletion-storage.md) selects separate native labels/protocol names, native server UUID identities without a version mandate and minimal content-free deletion markers. [Storage details](calendar-storage.md) distinguish accepted logical choices from pending physical layout/text/retention/generation work. A retained identity does not authorize new children or expose deleted calendars.
 
+[ADR 0048](adr/0048-calendar-name-validation-and-row-layout.md) selects bounded native-name validation and identity/active-data rows. Identity owns UUID/scope/revision/deletion time; active data owns label/settings/metadata/timestamps and is removed on deletion. The [schema proposal](calendar-schema.md) still needs pinned generation and lifecycle/constraint tests.
+
 ## Multiple active instances and automated acceptance
 
 The example host/app is a maintained automated integration-test application as well as a demonstration. [ADR 0018](adr/0018-automated-example-and-multiple-instances.md) requires at least two simultaneously active Serverpod host processes sharing logical storage, with requests and workers able to run on either instance.

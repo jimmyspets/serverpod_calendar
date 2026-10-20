@@ -31,6 +31,8 @@ First native calendar rules under [ADR 0046](docs/adr/0046-first-native-calendar
 
 Under [ADR 0047](docs/adr/0047-calendar-names-identifiers-and-deletion-storage.md), native displayName, protocol NAME and feed presentation are separate. Native calendar IDs are server-generated UUIDs with no required UUID version; never conflate them with protocol UIDs or authority. Delete retains only UUID/scope/revision/deletion time, with no calendar content/archive/restore and no ordinary API discovery. Physical layout, text validation and marker retention remain proposed in [storage guidance](docs/calendar-storage.md).
 
+Under [ADR 0048](docs/adr/0048-calendar-name-validation-and-row-layout.md), native names are outer-trimmed, nonempty/single-line and at most 256 Unicode code points, preserving internal spacing/Unicode spelling. Store small identity rows separately from active content; deletion removes payload and leaves only marker fields, without selecting indefinite retention. Final validation/generated constraints/protocols remain proposed in [schema guidance](docs/calendar-schema.md).
+
 ## Implementation guidance once scaffolding exists
 
 Read the scoped [example guidance](example/calendar_example/AGENTS.md) and module AGENTS.md files before working in those folders. Use the root setup/generation/check/start scripts described in [local development](docs/development.md); they coordinate the workspace, isolated synthetic test storage, generated clients and Flutter Web journeys. Keep seeding/reset local to development/test, record auth mail locally and inspect owned test logs under ignored `.local/`.
