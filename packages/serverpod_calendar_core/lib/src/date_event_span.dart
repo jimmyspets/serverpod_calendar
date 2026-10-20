@@ -1,5 +1,8 @@
 import 'calendar_date.dart';
 import 'calendar_duration.dart';
+import 'civil_date_time.dart';
+import 'named_zone_resolver.dart';
+import 'utc_window.dart';
 
 /// DATE-only event bounds retaining explicit end/duration/default intent.
 ///
@@ -45,6 +48,25 @@ final class DateEventSpan {
 
   /// Calendar days, not elapsed 24-hour periods or a resolved instant duration.
   int get dayCount => start.daysUntil(endExclusive);
+
+  /// Explicit projection in a selected zone; DATE itself remains zone-free.
+  /// Midnight uses the selected RFC explicit gap/fold rules. A wholly skipped
+  /// civil date can occupy zero instants; null means empty geometry, not free
+  /// access/coverage. Missing zone coverage still throws.
+  UtcWindow? occupiedWindowIn({required String zoneId}) {
+    final resolver = NamedZoneResolver();
+    final begin = resolver
+        .resolve(CivilDateTime(date: start, hour: 0, minute: 0), zoneId: zoneId)
+        .instant;
+    final finish = resolver
+        .resolve(
+          CivilDateTime(date: endExclusive, hour: 0, minute: 0),
+          zoneId: zoneId,
+        )
+        .instant;
+    if (finish == begin) return null;
+    return UtcWindow(start: begin, end: finish);
+  }
 
   bool contains(CalendarDate date) =>
       start.compareTo(date) <= 0 && date.compareTo(endExclusive) < 0;

@@ -44,6 +44,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0038](0038-date-only-this-and-future-timing.md) | DATE-only THISANDFUTURE shifts, spans and bounded overlap batch | Selected range scope; native timing API/policies proposed; service/wire work pending |
 | [0039](0039-exact-utc-duration-and-event-spans.md) | Exact UTC duration application, spans/points and query lengths | Native API/precision correction proposed; timed recurrence/service/wire pending |
 
+| [0040](0040-bounded-temporal-core-completion.md) | Bounded UTC/zoned recurrence, spans/edits, task milestones and zone evidence | Batch authorized; native APIs/policies proposed; wire/storage/lifecycle separate |
+
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
 Use the next consecutive number for a new ADR covering a material decision. Include context, proposal/decision, alternatives, consequences, and acceptance conditions. Preserve committed/accepted decision history; supersede accepted decisions with a linked ADR. Superseded uncommitted drafts may be removed under the maintainer-authorized cleanup. Mark an ADR accepted only after explicit maintainer agreement recorded in the PR or issue.

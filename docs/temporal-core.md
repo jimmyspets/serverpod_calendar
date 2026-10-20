@@ -1,6 +1,6 @@
 # Temporal core implementation
 
-Status: **temporal values, bounded named-zone operations and initial bounded date-only recurrence**, 2026-10-20. The pure Dart core exports `UtcWindow`, `UtcEventSpan`, `CalendarDate`, `DateEventSpan`, `DateEventSeries`, native DATE exception/occurrence/range values, `CivilDateTime`, `CalendarDuration`, `NamedZoneResolver`, `IsoWeekDate` and DATE-only recurrence parameter/generator/set types. Full recurrence expansion, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
+Status: **bounded native temporal computation milestone implemented**, 2026-10-20. DATE and UTC/zoned values, spans, selected recurrence, sets, native event timing exceptions/ranges, task milestones/projections and bounded zone-offset comparison are implemented in pure Dart. See [ADR 0040](adr/0040-bounded-temporal-core-completion.md) for this completion scope and reviewable native policies. Calendar/task lifecycle services, parsing/serialization, durable zone-data upgrades, storage and external-client interoperability remain unimplemented. **Named-zone calculations are still unsafe after 2037 and reject unsupported coverage.** This is not complete RFC or general all-zone/year support.
 
 ## ISO 8601 week convention
 
@@ -533,3 +533,85 @@ The initial 499-test VM/Chrome runs also passed. The related window correction c
 Tests cover signed/mixed/zero and enormous durations; Gregorian boundaries; negative epoch and distant odd fractions; valid full-range deltas wider than signed 64-bit; exact endpoints/overflow; all span forms; invalid local/conflicting/nonpositive inputs; point versus interval query boundaries; independent finite tick-set geometry; exact full-range BigInt lengths and guarded portable Duration conversion. Named-zone rejection after 2037 remains unchanged and passes.
 
 Dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE and the main README warning are unchanged. Database/browser-journey/two-host checks are deferred because no such surface changed; full repository checks remain required before PR readiness. Documentation links/anchors (248), consecutive ADR numbering, requirement/RFC/model consistency, changed-file scope and `git diff --check`: passed. No intermediate commit was made; the completed group is checked in together.
+
+
+## Bounded temporal core completion
+
+This milestone completes the selected **native calculation** profile under [ADR 0040](adr/0040-bounded-temporal-core-completion.md). Earlier sections retain incremental validation history; the contracts below describe the new timed/task/zone capabilities. Service persistence, authorization, revisions, task completion/edit workflows, protocol reconciliation, alarms and feed compatibility are separate work.
+
+| Native capability | API and behavior |
+| --- | --- |
+| Explicit timed meaning | `TimedValue.utc` or `.zoned`; UTC civil years 0001–9999, zones 1900–2037 with narrower coverage; original civil fields, exact zone alias, resolved instant and version |
+| Timed rule/generation | `TimedRecurrenceRule`, `TimedRecurrenceGenerator`; minutely/hourly/daily/weekly/monthly/yearly, selected date/hour/minute/position filters, UTC inclusive UNTIL, original COUNT, explicit work/output budgets |
+| Timed sets | `TimedRecurrenceSet`; earlier RDATE additions, exclusion precedence, positive PERIOD span additions; raw explicit/rule and final limits |
+| Zoned/UTC event spans | `TimedEventSpan`; preserved end/duration/point form, exact explicit-end versus nominal-duration recurrence propagation |
+| Timing edits | `TimedEventSeries`, `TimedEventException`, `TimedEventRangeChange`; validated original identities, cancellation/replacement, absolute civil THISANDFUTURE shifts, separate singles preserved |
+| Occurrence projection | `TimedEventOccurrence`; original and actual typed starts plus resolved UTC span; sorting by actual instant then original identity |
+| Explicit all-day occupancy | `DateEventSpan.occupiedWindowIn(zoneId: ...)`; guarded midnight boundaries; 23/25/23.5-hour or empty skipped-date geometry without changing canonical DATE meaning |
+| Task milestones | `DateTaskTiming`, `TimedTaskTiming`; undated/start-only/due-only/positive duration forms, no event defaults or implicit booking |
+| Recurring task timing | `expandStarts` and `at`; matching original DTSTART, existing sets/budgets, preserved due-versus-duration behavior; no completion/status transitions; task PERIOD additions explicitly rejected |
+| Zone evidence | `NamedZoneResolver.snapshot`, `ZoneRulesSnapshot`, `ZoneOffsetChange`; finite complete offset segments, normalized comparison on equal horizons, explicit version assertion |
+
+```dart
+final start = TimedValue.zoned(
+  CivilDateTime(
+    date: CalendarDate(year: 2026, month: 3, day: 28),
+    hour: 9,
+    minute: 0,
+  ),
+  zoneId: 'Europe/Stockholm',
+);
+final recurrence = TimedRecurrenceSet(
+  start: start,
+  rule: TimedRecurrenceRule(
+    frequency: TimedRecurrenceFrequency.daily,
+    count: 3,
+  ),
+  maxExplicitDates: 0,
+);
+final series = TimedEventSeries(
+  recurrence: recurrence,
+  span: TimedEventSpan(start: start, duration: CalendarDuration(days: 1)),
+  maxChanges: 0,
+  maxValidationCandidateWork: 100,
+  maxValidationOccurrences: 10,
+);
+final occurrences = series.expandOverlapping(
+  window: UtcWindow(start: DateTime.utc(2026, 3, 28), end: DateTime.utc(2026, 4)),
+  maxCandidateWork: 100,
+  maxRuleOccurrences: 10,
+  maxBaseOccurrences: 10,
+  maxResults: 10,
+);
+// Three original 09:00 civil starts. The first nominal day lasts 23 hours.
+```
+
+Budgets here are examples, not production defaults. Timed generation charges each visited date and considered clock candidate, including rejected/history candidates and full cadence periods needed for BYSETPOS. Generated nonexistent times are removed before positions and COUNT; explicit gap DTSTART remains under the selected explicit-time rule. Around such a start, increasing civil identities can map to equal or reordered instants; all identities remain distinct and output is sorted by instant then original fields. Leap seconds/floating values remain unsupported. Native fractions remain exact; a future iCalendar adapter must reject lossy export, SECONDLY and BYSECOND explicitly rather than discard them.
+
+Timed event queries scan original history once with shared work/raw/base/final caps. Conservative inverse bounds include future originals moved backwards, even across offset changes. Complete-period/inverse/history coverage may therefore fail for a small output. Limit, overflow and coverage failures return no partial result and cannot be presented as free/complete availability. This implementation has no pagination token; host APIs must design bounded stable pagination separately. Native single/range collisions, orphan/EXDATE targets and conflicting PERIOD forms reject; these policies do not define scheduling/import reconciliation. A range changes timing, not recurrence pattern; whole-series service edits and range cancellation are separate.
+
+Task `DUE` is a milestone rather than an event's exclusive occupied end. Omitted due remains absent. DATE recurrence uses inclusive from/through dates; timed queries use half-open UTC windows. Task projections query starts, then return their possibly later dues. They never mark that interval busy. For timed recurrence, explicit due inherits exact elapsed length and duration preserves nominal calendar units. Per-occurrence completion, task edits and alarm lifecycle remain host/module services under model review.
+
+Zone snapshots validate all offset segments and both horizon endpoints under existing guards. Comparisons require the same horizon and normalized offset function; matching names/version labels are insufficient. Imported evidence must already be fully expanded/validated by a future adapter. Matching says nothing outside the horizon and does not authorize arbitrary custom zones. `calculatedWith` detects a different version label; actual durable upgrades must recalculate projections and dependent work transactionally in the module. The pure core neither persists nor migrates that state. General historical coverage and dates after 2037 remain unsupported; the main README warning/guard is unchanged.
+
+
+### Completion batch validation
+
+Pinned Dart 3.13.5 was used throughout. From `packages/serverpod_calendar_core`, focused iterations ran:
+
+- `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe test test/timed_recurrence_test.dart test/date_recurrence_generator_test.dart --reporter expanded`: **52 passed**, including the extracted DATE selection regressions.
+- The same executable with `test test/timed_event_series_test.dart test/timed_recurrence_test.dart --reporter expanded`: **36 passed** at that iteration.
+- The same executable with `test test/task_timing_test.dart test/zone_rules_snapshot_test.dart test/timed_event_series_test.dart --reporter expanded`: **27 passed** at that iteration.
+- The same executable with `test test/temporal_combinations_test.dart test/date_event_span_test.dart --reporter expanded`: **40 passed**, including the all-day projection regressions.
+
+At group completion, from repository root unless noted:
+
+- `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe format --output=none --set-exit-if-changed packages/serverpod_calendar_core/lib packages/serverpod_calendar_core/test`: **54 files checked, no changes**.
+- The same executable with `analyze --fatal-infos`: **workspace analysis passed without diagnostics**.
+- The same executable with `test --reporter expanded`, from the core package: **565 tests passed**. Detailed output retained locally in ignored `.local/temporal-vm.log`.
+- The same executable with `test --platform chrome --reporter expanded`, from the core package: **565 tests passed in Chrome**. Detailed output retained locally in ignored `.local/temporal-chrome.log`.
+- Connected Serverpod MCP `hot_reload`: **completed successfully after final code changes**. No endpoint consumes these new temporal APIs yet.
+
+An initial 556-test full VM/Chrome run and a subsequent 564-test combined-feature run passed. Final review added always-validated constructor budgets and a distinct base-occurrence diagnostic/regression; the final 565-test runs above include that correction. Analysis/format findings were resolved before final checks. The group adds 59 tests beyond the prior 506-test core; several contain finite independent oracles and cross-zone/query loops.
+
+All 255 changed-document relative links/anchors, ADR numbering 0001–0040, requirements/model/RFC/roadmap consistency, changed-file scope and `git diff --check` passed. No intermediate check-in was made. LICENSE, dependencies, generated files/migrations, endpoints, Flutter UI and the main README/2037 warning are unchanged. Full database/two-host/Flutter-journey checks were not repeated for pure-core changes; full repository checks remain required before PR readiness. Native API/conflict-policy proposals stay reviewable; no wire or external-client support follows from these tests.

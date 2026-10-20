@@ -1,3 +1,8 @@
+import 'zone_rules_snapshot.dart';
+import 'utc_window.dart';
+import 'date_recurrence_generator.dart';
+import 'date_recurrence_rule.dart';
+
 import 'package:timezone/data/latest_all.dart' as data;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -207,6 +212,99 @@ final class NamedZoneResolver {
     final result = resolve(local, zoneId: zoneId);
     return result.kind == ZoneResolutionKind.gap ? null : result;
   }
+
+  /// Conservative candidate bound, not evidence that a period is covered.
+  /// Every generated local value still requires normal guarded resolution.
+  Duration maximumOffset({required String zoneId}) {
+    final rules = _rules[zoneId];
+    if (rules == null || !rules.hasKnownOffset) {
+      throw ArgumentError.value(zoneId, 'zoneId', 'Unknown usable IANA name');
+    }
+    return Duration(
+      microseconds: rules.offsets.reduce((a, b) => a > b ? a : b),
+    );
+  }
+
+  /// Largest possible offset difference in this pinned zone's known table.
+  Duration offsetRange({required String zoneId}) {
+    final rules = _rules[zoneId];
+    if (rules == null || !rules.hasKnownOffset) {
+      throw ArgumentError.value(zoneId, 'zoneId', 'Unknown usable IANA name');
+    }
+    final low = rules.offsets.reduce((a, b) => a < b ? a : b);
+    final high = rules.offsets.reduce((a, b) => a > b ? a : b);
+    return Duration(microseconds: high - low);
+  }
+
+  /// Proves all offset segments in a bounded horizon, including its endpoints.
+  /// Unsupported periods fail; no unverified historical/future tail is added.
+  ZoneRulesSnapshot snapshot({
+    required String zoneId,
+    required UtcWindow horizon,
+    required int maxTransitions,
+  }) {
+    RangeError.checkValueInInterval(
+      maxTransitions,
+      0,
+      DateRecurrenceRule.maxScalar,
+      'maxTransitions',
+    );
+    final local = localAt(horizon.start, zoneId: zoneId);
+    localAt(
+      horizon.end.subtract(const Duration(microseconds: 1)),
+      zoneId: zoneId,
+    );
+    final rules = _rules[zoneId]!;
+    final first = horizon.start.microsecondsSinceEpoch;
+    final last = horizon.end.microsecondsSinceEpoch;
+    final initial = rules.at(first);
+    final changes = <ZoneOffsetChange>[];
+    for (var i = 0; i < rules.transitions.length; i++) {
+      final instant = rules.transitions[i];
+      if (instant <= first || instant >= last) continue;
+      if (!rules.covers(instant) || !rules.after[i].known) {
+        throw ZoneCoverageException(zoneId, local);
+      }
+      // Validate local envelope at both sides, including unusual historical jumps.
+      localAt(
+        DateTime.fromMicrosecondsSinceEpoch(instant - 1, isUtc: true),
+        zoneId: zoneId,
+      );
+      localAt(
+        DateTime.fromMicrosecondsSinceEpoch(instant, isUtc: true),
+        zoneId: zoneId,
+      );
+      if (changes.length >= maxTransitions) {
+        throw const RecurrenceLimitException('maxTransitions');
+      }
+      changes.add(
+        ZoneOffsetChange(
+          instant: DateTime.fromMicrosecondsSinceEpoch(instant, isUtc: true),
+          offset: Duration(microseconds: rules.after[i].micros),
+        ),
+      );
+    }
+    return ZoneRulesSnapshot(
+      zoneId: zoneId,
+      horizon: horizon,
+      initialOffset: Duration(microseconds: initial.micros),
+      changes: changes,
+      maxTransitions: maxTransitions,
+      dataVersion: dataVersion,
+    );
+  }
+
+  /// Known-zone matching is limited to the supplied, fully expanded horizon.
+  /// This does not parse or trust an imported VTIMEZONE component.
+  bool matchesDefinition(
+    ZoneRulesSnapshot definition, {
+    required String zoneId,
+    required int maxTransitions,
+  }) => snapshot(
+    zoneId: zoneId,
+    horizon: definition.horizon,
+    maxTransitions: maxTransitions,
+  ).matchesOffsets(definition);
 
   static Map<String, _Rules> _loadRules() {
     // The upstream embedded initializer uses a global registry. Capture only
