@@ -18,6 +18,8 @@ Validate month/day/year/week/position ranges, reject zero signed selectors, reje
 
 Snapshot input lists and expose them as unmodifiable. The maintainer selected sorting filter lists and removing duplicates. The implementation sorts numeric lists and removes exact duplicate values; BYDAY sorts by weekday Monday–Sunday, then signed ordinal with omission occupying the zero position. Unnumbered Monday and first Monday remain distinct selections. Equality/hashing compare the resulting value fields. Canonicalization does not collapse overlapping selectors, prove that arbitrary different rules generate the same dates or authorize dropping unsupported parts. The maintainer explicitly selected “Sort and remove duplicates” on 2026-10-20; preserving supplied order/duplicates was offered and not selected.
 
+Follow-up: [ADR 0030](0030-bounded-date-recurrence-generation.md) adds an initial bounded DATE-only generator and selected mismatched-start rejection. The boundaries below describe the original parameter-only increment.
+
 ## Boundaries and safeguards
 
 Empty native lists mean no filter, not an accepted empty wire rule part. No parser/serializer, timed frequency/filter representation, UTC/zoned UNTIL contract, start alignment check, inclusive-end evaluation, invalid-date skipping, COUNT execution, week-number calculation, candidate evaluation order, RDATE/EXDATE or override identity is implemented. An adapter must validate unsupported/malformed syntax before constructing a narrower native value; it must never drop clock/deferred parts to make an input fit this class. Repeated rule properties/parts are separate from duplicate values inside a filter.

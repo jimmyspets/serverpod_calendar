@@ -1,6 +1,6 @@
 # Temporal core implementation
 
-Status: **temporal values, bounded named-zone operations and date-only recurrence parameter validation**, 2026-10-20. The pure Dart core exports `UtcWindow`, `CalendarDate`, `CivilDateTime`, `CalendarDuration`, `NamedZoneResolver` and the DATE-only recurrence parameter types. Recurrence expansion, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
+Status: **temporal values, bounded named-zone operations and initial bounded date-only recurrence**, 2026-10-20. The pure Dart core exports `UtcWindow`, `CalendarDate`, `CivilDateTime`, `CalendarDuration`, `NamedZoneResolver` and DATE-only recurrence parameter/generator types. Full recurrence expansion, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
 
 ## Gregorian date-only values
 
@@ -80,6 +80,25 @@ Validate selector ranges and RFC combinations: signed nonzero month-day/year-day
 Native filter lists are snapshotted, sorted and deduplicated by exact value, and returned unmodifiable. The maintainer explicitly confirmed sorting filters and removing duplicates on 2026-10-20. BYDAY sorts Monday–Sunday, then ordinal with omission at zero; unnumbered and numbered weekdays remain distinct. Equality/hashing retain every field. Empty lists mean absent filters. Structurally legal selections that may yield no dates remain unchanged.
 
 No start/rule alignment, inclusive UNTIL evaluation, COUNT execution, invalid-date skipping, week-number calculation, timed rule/UNTIL support, bounded expansion or adapter is implemented here. Future adapters must reject malformed/unsupported syntax before constructing a narrower value; they cannot strip timed filters or confuse empty native lists with valid empty wire parts. The named-zone 2037 guard remains unchanged. See [ADR 0029](adr/0029-date-recurrence-rule-values.md).
+
+## Initial bounded date-only generation
+
+```dart
+final dates = DateRecurrenceGenerator().expand(
+  start: CalendarDate(year: 2026, month: 1, day: 30),
+  rule: rule,
+  from: CalendarDate(year: 2026, month: 1, day: 1),
+  through: CalendarDate(year: 2026, month: 12, day: 31),
+  maxCandidateDays: 400,
+  maxResults: 20,
+);
+```
+
+This returns immutable sorted start dates within an **inclusive** date range. It is not an event overlap query or event-end convention. Support daily/weekly/monthly/yearly intervals, date filters other than BYWEEKNO, all week starts, COUNT and inclusive UNTIL. Invalid month-end/leap dates are omitted without consuming COUNT; missing fields inherit the start where appropriate. Position selection uses the full cadence period, then applies query/end bounds. Earlier occurrences still consume COUNT.
+
+The maintainer selected rejecting starts that do not match their rule, including first-period BYSETPOS; UNTIL before the start is also rejected. Validate starts even for empty output ranges. Each date examined in a period consumes the required work budget, including rejected/pre-query/full-period dates. Exceeding work or output limits throws `RecurrenceLimitException` without returning a partial list; an exactly full output limit requires proof of completion. Practical trusted server limits remain to be defined before any endpoint exposes this API.
+
+BYWEEKNO throws `UnsupportedError` explicitly. BYSETPOS on a week clipped by date-profile year 0001/9999 throws `RangeError`. Cadence arithmetic checks large intervals before multiplication. The implementation scans from DTSTART rather than fast-forwarding with unproved COUNT semantics. Timed recurrence, full week-year support, inclusions/exclusions, exceptions, spans and adapters remain pending. See [ADR 0030](adr/0030-bounded-date-recurrence-generation.md).
 
 ## Bounded named-zone resolution
 
@@ -217,3 +236,18 @@ With pinned Dart 3.13.5:
 New tests cover scalar bounds and count/until exclusion, every week start, weekday ordinal bounds, signed selector ranges, illegal combinations, potentially empty candidate selections without clamping, canonical equivalent lists/rules, immutable snapshots and every equality/hash field. They do not execute any recurrence or establish wire compatibility.
 
 Dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE and the main README/2037 warning are unchanged. The full database/browser-journey/two-host suite was not repeated for this pure-core parameter addition. Start matching, timed rules, bounded generation, RDATE/EXDATE, exceptions and protocol behavior remain future work. Documentation links/anchors, ADR numbering, changed-file review and `git diff --check`: passed.
+
+## Initial bounded date-only generator validation
+
+With pinned Dart 3.13.5:
+
+- `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe format packages/serverpod_calendar_core/lib packages/serverpod_calendar_core/test`: seventeen files checked; new implementation/fixture formatting completed.
+- The same executable with `fix --apply --code=curly_braces_in_flow_control_structures lib/src`, from the core package: corrected nine brace-style diagnostics found by the initial analysis.
+- The same executable with `analyze --fatal-infos`: workspace analysis passed.
+- The same executable with `test --reporter expanded`, from the core package: all **247 tests passed**, including 29 new generator tests.
+- The same executable with `test --platform chrome --reporter expanded`, from the core package: all **247 tests passed in Chrome**.
+- Serverpod MCP `hot_reload`: completed successfully. There is no endpoint consumer of this generator yet.
+
+New cases cover inclusive query/UNTIL boundaries, historical COUNT, cadence defaults, all week starts and a two-week boundary fixture, invalid month-end/leap-century skipping, signed and ordinal selectors, full-period positions, duplicate collapse, selected start rejection, unsupported week-number rejection, exact/failed budgets, safe huge-interval termination and profile-edge behavior. Date-only generation beyond 2037 does not imply expanded zone support; existing named-zone rejection tests pass unchanged.
+
+No dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE or main README warning changed. The full database/browser-journey/two-host suite was not repeated for this pure-core increment. Full week-number/timed/set/override semantics, spans, production limits and protocol/client interoperability remain pending. Documentation links/anchors, ADR numbering, changed-file scope and `git diff --check`: passed.
