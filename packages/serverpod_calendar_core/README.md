@@ -2,12 +2,13 @@
 
 Framework-independent Dart calendar semantics:
 
-- `UtcWindow`: validated UTC bounds, half-open membership, overlap/intersection and value equality.
+- `UtcWindow`: validated UTC bounds, half-open membership and overlap/intersection. Exact BigInt elapsed microseconds; the Duration getter rejects relative lengths beyond 2^53−1 microseconds rather than rounding/wrapping.
+- `UtcEventSpan`: preserved UTC end/duration/default form, exact elapsed microseconds, positive intervals and omitted-end point markers. Points can appear in queries without occupying an interval; no recurrence or booking policy.
 - `CalendarDate`: Gregorian date-only fields for years 0001–9999, strict date validation, leap-year/month lengths, calendar-day addition/distance, Monday-based weekdays, chronological ordering and value equality.
 - `DateEventSpan`: DATE-only event bounds with preserved optional end/duration, exclusive-end membership/overlap, positive day/week durations and a one-day default. Effective end must remain within years 0001–9999; no task or UTC occupancy integration.
 - `DateEventSeries`: bounded uniform-length DATE-only occurrence queries over half-open date ranges, including earlier overlapping starts. Preserves full spans and template form; no clipping, merged occurrences, moved overrides, UTC occupancy or availability decisions.
 - `CivilDateTime`: validated Gregorian wall-clock fields, microsecond precision, leap-second rejection and field ordering/equality; no implicit zone or instant.
-- `CalendarDuration`: signed, unit-preserving week/day/clock magnitudes and native microseconds; strict structural validation and explicit date/calendar-first zoned application. Property-specific constraints remain pending.
+- `CalendarDuration`: signed, unit-preserving week/day/clock magnitudes and native microseconds; strict structural validation and explicit date/calendar-first zoned application and exact UTC application across Dart instant bounds. Scoped DATE/UTC event constraints exist separately; remaining component constraints and interchange are pending.
 - `DateRecurrenceRule`, `DateRecurrenceFrequency`, `Weekday`, `ByDayValue`: immutable DATE-only recurrence parameters with range/combination validation and canonical filter lists; no expansion.
 - `IsoWeekDate.fromDate`: native ISO week-year, week and weekday fields, independent of recurrence WKST, locale and timezone. Monday-first; week 1 contains January 4. No GUI or parser.
 - `DateRecurrenceGenerator`: bounded initial DATE-only start-date generation with COUNT/UNTIL, period filters and explicit limit errors. Yearly BYWEEKNO honors all WKST values and adjacent week-years; timed recurrence remains pending; native DATE-only exceptions are separate below.

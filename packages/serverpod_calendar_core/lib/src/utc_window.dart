@@ -1,3 +1,5 @@
+import 'utc_arithmetic.dart';
+
 /// A finite, increasing interval of UTC instants: `[start, end)`.
 ///
 /// The start is included and the end is excluded. Adjacent windows do not
@@ -25,8 +27,20 @@ final class UtcWindow {
   /// Exclusive upper bound.
   final DateTime end;
 
-  /// Elapsed UTC time between the bounds, not a nominal calendar duration.
-  Duration get duration => end.difference(start);
+  /// Exact elapsed microseconds, without a portable int/Duration size limit.
+  BigInt get elapsedMicroseconds =>
+      utcMicroseconds(end) - utcMicroseconds(start);
+
+  /// Elapsed UTC time, not a nominal calendar duration.
+  /// Throws [RangeError] beyond the exact portable integer magnitude 2^53 - 1;
+  /// use [elapsedMicroseconds] for longer windows instead of rounding/wrapping.
+  Duration get duration {
+    final elapsed = elapsedMicroseconds;
+    if (elapsed > BigInt.from(9007199254740991)) {
+      throw RangeError('Window duration exceeds the exact portable int range');
+    }
+    return Duration(microseconds: elapsed.toInt());
+  }
 
   /// Whether an explicit UTC [instant] belongs to this window.
   ///

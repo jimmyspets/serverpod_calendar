@@ -1,6 +1,6 @@
 # Temporal core implementation
 
-Status: **temporal values, bounded named-zone operations and initial bounded date-only recurrence**, 2026-10-20. The pure Dart core exports `UtcWindow`, `CalendarDate`, `DateEventSpan`, `DateEventSeries`, native DATE exception/occurrence/range values, `CivilDateTime`, `CalendarDuration`, `NamedZoneResolver`, `IsoWeekDate` and DATE-only recurrence parameter/generator/set types. Full recurrence expansion, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
+Status: **temporal values, bounded named-zone operations and initial bounded date-only recurrence**, 2026-10-20. The pure Dart core exports `UtcWindow`, `UtcEventSpan`, `CalendarDate`, `DateEventSpan`, `DateEventSeries`, native DATE exception/occurrence/range values, `CivilDateTime`, `CalendarDuration`, `NamedZoneResolver`, `IsoWeekDate` and DATE-only recurrence parameter/generator/set types. Full recurrence expansion, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
 
 ## ISO 8601 week convention
 
@@ -490,3 +490,46 @@ At batch completion:
 New cases cover signed shifts and length/form preservation; original-order multiple anchors and separate overrides moved across them; original COUNT/UNTIL, RDATE/EXDATE and monthly invalid-date skipping; duplicate/orphan/collision validation; each shared membership/query budget and intervening-envelope capacity; immutable equality; first/last date boundaries, selected overflow and unrelated future overflow. An independent finite occupied-date oracle compares identity, actual spans and output order across mixed ranges/singles and many query windows.
 
 Dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE and the main README warning are unchanged. Database/browser-journey/two-host checks are deferred because no such surface changed. Full repository checks remain required before PR readiness. Documentation links/anchors (244), consecutive ADR numbering, requirement/RFC/model consistency, changed-file scope and `git diff --check`: passed. No intermediate commit was made; the completed group is checked in together.
+
+## Exact UTC duration and event foundations
+
+`CalendarDuration.addToUtc` requires an explicit UTC instant and applies signed weeks/days/clock fields with arbitrary-precision intermediate arithmetic. UTC days are 24 hours; the existing named-zone calendar-first/DST operation remains separate. Preserve microseconds by combining exact epoch milliseconds and the sub-millisecond remainder before arithmetic, rather than using the rounded JavaScript epoch-microsecond getter. Reconstruct output only after checking Dart's instant bounds, including before 1970 and at the endpoints.
+
+`UtcEventSpan` preserves an explicit end, a unit-preserving duration or joint omission. Explicit end must be UTC and strictly later; duration must be positive/nonzero; both cannot be supplied. Omission means a point at start, unlike a DATE event's one-day default. `occursIn(UtcWindow)` uses interval overlap or point membership with lower-inclusive/upper-exclusive queries. `occupiedWindow` is null for points; a marker found by a query does not occupy a positive interval or automatically block availability.
+
+```dart
+final span = UtcEventSpan(
+  start: DateTime.utc(2026, 1, 1, 9),
+  duration: CalendarDuration(hours: 1, microsecond: 1),
+);
+// span.elapsedMicroseconds == BigInt.from(3600000001)
+final point = UtcEventSpan(start: DateTime.utc(2026, 1, 1, 9));
+// point.isPoint == true; point.occupiedWindow == null
+```
+
+These native explicit UTC operations retain the existing Dart/UtcWindow instant bounds; they do not select a broader interchange-year profile or change date/civil years 0001–9999. A point at the last supported instant is representable, but a nonempty half-open supported query cannot include that terminal instant. Future adapters must validate lexical years, fractions and leap seconds before DateTime construction. No parser/export or floating-time acceptance is introduced.
+
+`UtcWindow.elapsedMicroseconds` and `UtcEventSpan.elapsedMicroseconds` return exact BigInt lengths. The existing `UtcWindow.duration` getter now throws beyond the exact portable integer magnitude 2^53−1 microseconds; geometric window bounds remain unchanged. This corrects distant/long difference rounding or native overflow without changing ordinary short-window callers. Use the BigInt getter for longer intervals. Future generated transport models still need their own representation contract.
+
+Named-zone support remains 1900–2037 with potentially narrower coverage; explicit UTC arithmetic after 2037 does not bypass resolver guards. Timed recurrence, zoned/task spans, native UTC exceptions, authorization, persistence, busy-status policy, alarms and interchange remain pending. See [ADR 0039](adr/0039-exact-utc-duration-and-event-spans.md).
+
+## UTC event foundation batch validation
+
+With pinned Dart 3.13.5, feature iterations used focused VM checks:
+
+- `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe test test/utc_duration_application_test.dart --reporter expanded`, from the core package: initial **17 tests passed**.
+- The same executable with `test test/utc_duration_application_test.dart test/utc_event_span_test.dart test/utc_window_test.dart --reporter expanded`: **57 tests passed** (43 new UTC tests plus 14 existing window tests).
+- Review then identified the related long-window Duration boundary. After its correction, `test test/utc_duration_application_test.dart test/utc_event_span_test.dart test/utc_window_test.dart test/utc_window_precision_test.dart --reporter expanded`: **64 tests passed** (50 new tests plus 14 existing regressions).
+- Focused formatting checked five initial source/test files (three formatted), then two window source/test files (both formatted).
+
+The initial 499-test VM/Chrome runs also passed. The related window correction changed executable code, so final broader validation includes its seven new precision cases:
+
+- `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe format --output=none --set-exit-if-changed packages/serverpod_calendar_core/lib packages/serverpod_calendar_core/test`: final forty-one files checked, no formatting changes.
+- The same executable with `analyze --fatal-infos`: final workspace analysis passed without diagnostics.
+- The same executable with `test --reporter expanded`, from the core package: all **506 tests passed**.
+- The same executable with `test --platform chrome --reporter expanded`, from the core package: all **506 tests passed in Chrome**.
+- Serverpod MCP `hot_reload`: completed successfully, including after the window correction. No endpoint consumes UTC event spans yet.
+
+Tests cover signed/mixed/zero and enormous durations; Gregorian boundaries; negative epoch and distant odd fractions; valid full-range deltas wider than signed 64-bit; exact endpoints/overflow; all span forms; invalid local/conflicting/nonpositive inputs; point versus interval query boundaries; independent finite tick-set geometry; exact full-range BigInt lengths and guarded portable Duration conversion. Named-zone rejection after 2037 remains unchanged and passes.
+
+Dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE and the main README warning are unchanged. Database/browser-journey/two-host checks are deferred because no such surface changed; full repository checks remain required before PR readiness. Documentation links/anchors (248), consecutive ADR numbering, requirement/RFC/model consistency, changed-file scope and `git diff --check`: passed. No intermediate commit was made; the completed group is checked in together.

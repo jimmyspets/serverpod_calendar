@@ -20,4 +20,5 @@ export 'src/date_recurrence_set.dart';
 export 'src/date_recurrence_generator.dart';
 export 'src/iso_week_date.dart';
 export 'src/named_zone_resolver.dart';
+export 'src/utc_event_span.dart';
 export 'src/utc_window.dart';

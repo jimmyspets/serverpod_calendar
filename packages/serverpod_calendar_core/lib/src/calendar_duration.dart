@@ -1,6 +1,7 @@
 import 'calendar_date.dart';
 import 'civil_date_time.dart';
 import 'named_zone_resolver.dart';
+import 'utc_arithmetic.dart';
 
 /// A signed duration retaining nominal calendar units and clock units.
 ///
@@ -79,6 +80,24 @@ final class CalendarDuration {
     RangeError.checkValueInInterval(weeks, 0, available ~/ 7, 'weeks');
     RangeError.checkValueInInterval(days, 0, available, 'days');
     return start.addDays(sign * (weeks == 0 ? days : weeks * 7));
+  }
+
+  /// Applies signed units to an explicit UTC instant without lossy aggregation.
+  ///
+  /// In UTC, a day is 24 hours and a week is seven days; no zone/DST or leap
+  /// second is applied. Zero still validates UTC input. Unsupported DateTime
+  /// results throw [RangeError] before narrowing; fractions remain exact on web.
+  DateTime addToUtc(DateTime start) {
+    final origin = utcMicroseconds(start);
+    final dayUnits = BigInt.from(weeks) * BigInt.from(7) + BigInt.from(days);
+    final secondsTotal =
+        dayUnits * BigInt.from(86400) +
+        BigInt.from(hours) * BigInt.from(3600) +
+        BigInt.from(minutes) * BigInt.from(60) +
+        BigInt.from(seconds);
+    final delta =
+        secondsTotal * BigInt.from(1000000) + BigInt.from(microsecond);
+    return utcFromMicroseconds(origin + BigInt.from(sign) * delta);
   }
 
   /// Applies calendar units to requested wall fields, then elapsed clock units.
