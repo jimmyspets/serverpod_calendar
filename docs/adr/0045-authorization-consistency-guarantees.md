@@ -22,6 +22,8 @@ Requiring coordinated policy for every deployment would exclude useful host inte
 
 Same-database policy reads, version labels and repeated remote checks do not by themselves close every commit race. The integration must specify actual snapshot/serialization/freshness behavior and fail when it cannot meet the selected operation requirement. Operational defaults and implementation details remain review gates.
 
+Concrete [adapter method proposals](../authorization-adapter-contract.md) now identify a commit-guard responsibility alongside batch checks and query planning. They do not close the concrete coordination/freshness gates below. [ADR 0046](0046-first-native-calendar-crud-contract.md) selects the first calendar creation/deletion rules.
+
 ## Acceptance conditions
 
 Review guarantee declarations/defaults, required operation profiles, authoritative freshness, protected target/change/attempt evidence, bounded failures, transaction/retry/receipt handling and the concrete coordination mechanism. Test two-host revocation/write ordering, external after-check races, late/expired/mismatched allows, stale revisions, crashes/retries, current feed/worker checks and no side effects before commit. Documentation approval provides no runtime or provider-specific guarantee.

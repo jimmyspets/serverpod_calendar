@@ -25,6 +25,8 @@ Independent packages can progress in parallel after their contracts are defined.
 
 ## Design contracts
 
+- [ ] Review [concrete adapter interfaces](authorization-adapter-contract.md) and the [first native calendar CRUD contract](calendar-crud-contract.md) under [ADR 0046](adr/0046-first-native-calendar-crud-contract.md). Preserve confirmed explicit-zone/nonempty-name creation and dependency-blocked deletion; settle label mapping, physical schema/retention, typed commands/results and real coordination before the calendar CRUD implementation batch.
+
 - [ ] Finalize and implement [authorization consistency contracts](authorization-consistency.md) under [ADR 0045](adr/0045-authorization-consistency-guarantees.md): declare coordinated/external guarantees, reject unsupported requirements without downgrade, define defaults/freshness/deadlines and effective coordination, and test two-host revocation/write ordering, retries and late external decisions.
 
 - [ ] Finalize and implement [authorized query/view contracts](authorization-queries.md) under [ADR 0044](adr/0044-authorized-query-projections-and-pagination.md): preserve separate detail/free-busy, typed groups and no initial totals; review batch constraints, mappings, pagination/cursors, snapshot freshness and two-host behavior before generated schemas.

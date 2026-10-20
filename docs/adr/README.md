@@ -56,6 +56,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0045](0045-authorization-consistency-guarantees.md) | Declared coordinated/external authorization guarantees and commit/revocation boundary | Accepted support/declaration; defaults, operation requirements and mechanics proposed |
 
+| [0046](0046-first-native-calendar-crud-contract.md) | First native calendar CRUD: dependent-delete rejection, explicit zone and nonempty name | Accepted product rules; commands, label/schema and adapter details proposed |
+
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
 Use the next consecutive number for a new ADR covering a material decision. Include context, proposal/decision, alternatives, consequences, and acceptance conditions. Preserve committed/accepted decision history; supersede accepted decisions with a linked ADR. Superseded uncommitted drafts may be removed under the maintainer-authorized cleanup. Mark an ADR accepted only after explicit maintainer agreement recorded in the PR or issue.

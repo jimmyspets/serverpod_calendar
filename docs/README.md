@@ -7,6 +7,8 @@ The maintainer has specified first-release capabilities in [requirements](requir
 | [Discussion migration](discussion-migration.md) | Source evidence, current instructions and remaining gaps |
 | [Timezone data](timezone-data.md) | Whole-second range limits, future-rule generation and database update/recalculation procedure |
 | [Requirements](requirements.md) | First-release capabilities and acceptance evidence |
+| [Calendar CRUD contract](calendar-crud-contract.md) | Confirmed creation/deletion rules and proposed first native command/view batch |
+| [Authorization interfaces](authorization-adapter-contract.md) | Concrete proposals for context resolution, batch decisions, queries and commit guards |
 | [Authorization consistency](authorization-consistency.md) | Declared coordinated/external guarantees, revocation races and proposed transaction/retry handling |
 | [Authorized queries](authorization-queries.md) | Separate detail/free-busy results, field groups, no-total pages and proposed filtering/cursors |
 | [Authorization operations](authorization-operations.md) | Proposed action/target matrix, confirmed permission separations and composition examples |

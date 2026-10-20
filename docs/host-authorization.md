@@ -75,6 +75,10 @@ Do not cache allow decisions by process alone or assume JWT logout instantly rev
 
 The maintainer selected support for both transaction-coordinated policies and external fresh checks, with guarantees explicitly declared and no silent downgrade under [ADR 0045](adr/0045-authorization-consistency-guarantees.md). External permission can change after its final check and before commit unless the host supplies effective coordination; same-database reads alone do not prove coordination either. Defaults, per-operation requirements, deadlines and mechanisms remain proposed in [the consistency guide](authorization-consistency.md). Required current feed/worker/cursor checks are not weakened.
 
+## Concrete interface proposals
+
+[Adapter contracts](authorization-adapter-contract.md) propose separate trusted context resolvers, guarantee declaration, keyed batch decisions, candidate query planning and a commit guard. These are reviewable responsibility/method contracts, not implemented or accepted final Dart signatures. [The first calendar CRUD contract](calendar-crud-contract.md) applies those paths to creation, reads, metadata/settings/associations and dependency-safe deletion.
+
 ## Implementation acceptance checklist
 
 - [ ] Verify presentation permission cannot change availability settings/rules; task content, progress and assignment permissions remain independent, including mixed requests and alternate/nested payloads.

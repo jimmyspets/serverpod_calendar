@@ -23,7 +23,7 @@ The example host/Flutter app is also the automated integration-test application,
 | ID | Requirement | Acceptance evidence |
 | --- | --- | --- |
 | FR-01 | Host integrates module and generated client with pinned compatible Serverpod 4.x-or-later SDKs | Clean-checkout authenticated example, fresh migration and automated host/app integration tests under ADR 0018 |
-| FR-02 | Authorized callers create, list, rename, associate, and delete calendars | CRUD and association tests; documented deletion policy |
+| FR-02 | Authorized callers create, list, rename, associate, and delete calendars | Native creation requires nonempty display name and explicit named availability zone; independent metadata/settings/association gates; reject deletion with active dependencies under ADR 0046; stale/concurrent change and real host/app tests |
 | FR-03 | Authorized callers create/read/edit/delete events, series, and individual exceptions | Persistence; range validation; whole-series and single-occurrence edits/deletions |
 | FR-04 | Bounded paginated queries return authorized overlapping events/occurrences with stable ordering and opaque continuation, without initial totals | Boundaries, multi-day/point events, recurrence/exceptions, interleaved denied objects, genuine exhaustion, protected cursors and revocation under ADR 0044 |
 | FR-05 | UTC, date-only, and named-zone local times retain distinct meaning | Restart/round-trip tests; exclusive date ends; ordinary dates [1970-01-01, 2100-01-01), explicit exclusive endpoints and whole-second timing with nonzero-fraction rejection under ADR 0041; initial leap-second rejection; RFC explicit gap/fold and generated-gap policy, exact IANA names/aliases and generated bounded timezone coverage; local recurring time preserved |

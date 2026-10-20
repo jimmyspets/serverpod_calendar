@@ -63,3 +63,7 @@ The maintainer selected separate detail/free-busy responses, authorized initial 
 ## Declared authorization consistency
 
 The maintainer selected support for transaction-coordinated policies and external authorization services with their guarantee explicitly declared and no silent fallback. [ADR 0045](adr/0045-authorization-consistency-guarantees.md) and [the consistency guide](authorization-consistency.md) distinguish ordered commit/revocation from an external after-check race. No default mode, numeric freshness limit, operation requirement or concrete coordination mechanism was selected; those remain implementation review gates.
+
+## First native calendar CRUD rules
+
+The maintainer selected rejection of deletion while active dependencies remain, an explicit named availability zone at native creation and a nonempty native display name. [ADR 0046](adr/0046-first-native-calendar-crud-contract.md) records these rules. [CRUD](calendar-crud-contract.md) and [adapter interfaces](authorization-adapter-contract.md) are concrete proposals, not implemented/final signatures or physical schemas. No archive/cascade policy, implicit host owner or mandatory ICS NAME was selected.

@@ -16,6 +16,8 @@ Native query response choices are selected in [ADR 0044](adr/0044-authorized-que
 
 [ADR 0045](adr/0045-authorization-consistency-guarantees.md) selects support for declared coordinated/external authorization guarantees without automatic downgrade. No concrete domain transaction/revocation protocol, remote provider integration or consistency evidence exists yet. Initial authenticated/JWT tests do not establish those guarantees.
 
+Native calendar creation/deletion rules are selected under [ADR 0046](adr/0046-first-native-calendar-crud-contract.md), with [CRUD](calendar-crud-contract.md) and [adapter interface](authorization-adapter-contract.md) proposals. A required native name is not an iCalendar NAME grammar constraint. Calendar CRUD, dependency coordination and related generated APIs remain unimplemented.
+
 ## Interface coverage
 
 | Surface | Required capability | Evidence |

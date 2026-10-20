@@ -53,6 +53,8 @@ Cursors and idempotency keys never carry permanent allow decisions. Reauthorize 
 
 All coordination/evidence/cursor handling must work across independent Serverpod instances. No process-local allow cache, mutex, singleton callback or sticky routing can establish a shared commit/revocation order. Exact policy cache invalidation/version contracts remain pending; missing invalidation must not restore revoked authority.
 
+The [adapter interface proposal](authorization-adapter-contract.md) assigns context, batch, query and commit-guard responsibilities without claiming that signatures prove the guarantee. The [calendar CRUD proposal](calendar-crud-contract.md) supplies the first concrete operations, including a separate dependency/delete coordination boundary.
+
 ## Future acceptance checks
 
 - [ ] Validate declared adapter capabilities against required operation guarantees; absent/unsupported configuration rejects, with no fallback.

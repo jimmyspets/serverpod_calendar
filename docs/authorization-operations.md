@@ -73,6 +73,10 @@ An operation describes **what the caller is asking to do**, while target/context
 
 [ADR 0045](adr/0045-authorization-consistency-guarantees.md) selects support for coordinated and external host policies with explicit guarantees and no silent downgrade. Configuration must reject an adapter that cannot supply an operation's required guarantee. Defaults, per-operation requirements, freshness limits and concrete coordination remain pending in [the consistency design](authorization-consistency.md).
 
+## First calendar command/interface proposal
+
+The [adapter methods](authorization-adapter-contract.md) and [CRUD contract](calendar-crud-contract.md) make the next batch concrete. [ADR 0046](adr/0046-first-native-calendar-crud-contract.md) confirms dependency-blocked deletion and explicit named zone/nonempty native name on creation; it does not finalize signatures, physical deletion, label mapping or query/coordination protocols.
+
 ## Decisions still needed before implementation
 
 - Exact action identifiers, adapter signatures and allow/deny/error/projection result types.

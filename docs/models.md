@@ -64,6 +64,10 @@ No generic storage serializer becomes a response. Calendar/event/task pages cont
 
 Mutations compare revisions, reestablish authorization on retries and commit domain changes/invalidation/outbound intent atomically; external dispatch and response disclosure have separate current checks. Required operation profiles, mode defaults, deadlines and coordination mechanisms must be specified before model/schema implementation. No client payload or cached receipt can assert authority.
 
+## First calendar adapter/CRUD proposals
+
+[Adapter methods](authorization-adapter-contract.md) specify proposed context resolution, keyed batch decisions, query planning and guarded commit responsibilities. [ADR 0046](adr/0046-first-native-calendar-crud-contract.md) confirms nonempty native creation name, explicit named creation availability zone and active-dependency deletion rejection. The [CRUD contract](calendar-crud-contract.md) preserves separate presentation/settings/association gates and revision checks. Exact name-to-CalendarDescription mapping, command/view types, physical deletion/retention, IDs/schema and coordination remain review gates.
+
 ## Shared temporal and identity values
 
 Current range/precision is selected in [ADR 0041](adr/0041-whole-second-1970-2100-profile.md): whole seconds, ordinary dates 1970 inclusive to 2100 exclusive, and a special exclusive endpoint. Earlier ADRs retain historical evidence; they do not restore superseded precision/ranges. Proposed generated calendar fields should omit fractional payloads. Native microsecond-named slots currently accept zero only; exact elapsed-microsecond getters are units, not fractional acceptance.
@@ -148,7 +152,7 @@ All records use the common isolation/revision contract above. Values in this sec
 
 | Record | Candidate fields beyond common fields | Relationships and invariants |
 | --- | --- | --- |
-| `CalendarRecord` | `id`, `description: CalendarDescription`, `availabilityZoneRef`, `noRuleFallback: free/unavailable`, import-preserved metadata | Owns events/tasks/rules. Default fallback free only for completely known unbooked time with no applicable rule. Calendar deletion policy pending. |
+| `CalendarRecord` | `id`, `description: CalendarDescription`, `availabilityZoneRef`, `noRuleFallback: free/unavailable`, import-preserved metadata | Owns events/tasks/rules. Default fallback free only for completely known unbooked time with no applicable rule. Native creation requires a nonempty display name and explicit named availability zone; deletion rejects active dependencies under ADR 0046. Exact name mapping, physical deletion/history retention and schema remain pending. |
 | `CalendarSubjectRecord` | `id`, `calendarId`, `subject: SubjectRef`, `contributesAvailability: bool` | Many-to-many host links; unique calendar/subject tuple. Administration/access is host policy, not implied by this flag or link. |
 | `EventSeriesRecord` | `id`, `calendarId`, component identity, protocol stamp, `span`, `recurrence?`, `status`, `transparency`, `summary?`, `description?`, `location?`, `geo?`, `resourceLabels`, classification, comments, attachments, URL, organizer/attendee metadata, conferences, structured children, relationships, preserved metadata/extensions | Represents recurring or non-recurring VEVENT. Unique source UID in calendar collection; no title requirement invented for valid imported components. Opaque confirmed events block; tentative mapping remains policy. |
 | `EventOverrideRecord` | `id`, `eventSeriesId`, `originalStart`, `range: single/thisAndFuture`, explicit changes, cancellation state, protocol stamp | Unique original occurrence identity per series. Omitted versus cleared fields must differ. Retain cancellations; moved start never replaces original identity. |
@@ -244,7 +248,7 @@ These are candidate model families, not implemented endpoint signatures. Create/
 
 | Family | Required request data | Response/data model |
 | --- | --- | --- |
-| Calendar CRUD | `CalendarCreate`, `CalendarUpdate`, `CalendarDelete`: writable description/settings, ID and expected revision for changes | `CalendarView` with authorized metadata, settings and revision |
+| Calendar CRUD | Proposed `CalendarCreate/Get/List/UpdateMetadata/UpdateAvailabilitySettings/Delete`: explicit nonempty native name/named zone on creation, ID and expected revision for changes, separate metadata/settings gates | `CalendarView` with authorized groups and revision; dependency-blocked deletion. See [first CRUD contract](calendar-crud-contract.md); exact shapes/name mapping remain proposed |
 | Associations | `CalendarSubjectChange`: calendar ID/revision, validated subject and contribution flag | Authorized association views and new calendar revision |
 | Event CRUD/series edits | `EventCreate`, `EventUpdate`, `EventDelete`: content, ID/revision, explicit whole/single/this-and-future scope and original identity where applicable | `EventView`, `EventOccurrenceView` with original and effective times, revision and permitted metadata |
 | Event query | `EventQuery`: calendars, bounded window, page size/cursor, approved filters | `EventPage`: occurrences/items, opaque next cursor, snapshot and explicit limit result; stable sort includes identity tie-breaker |

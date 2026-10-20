@@ -27,6 +27,8 @@ Query response choices under [ADR 0044](docs/adr/0044-authorized-query-projectio
 
 Under [ADR 0045](docs/adr/0045-authorization-consistency-guarantees.md), support coordinated and external fresh-check host policies with explicit guarantees and no silent downgrade. A final external check does not eliminate an after-check revocation race; same-database reads alone do not prove commit coordination. Defaults/operation requirements/protocols remain proposed in [the consistency guide](docs/authorization-consistency.md). Existing current feed/worker/cursor checks remain required.
 
+First native calendar rules under [ADR 0046](docs/adr/0046-first-native-calendar-crud-contract.md): creation requires a nonempty display name and explicit validated named availability zone; deletion rejects active dependencies, without implicit cascade/archive/detachment. Native-name rules do not make ICS NAME mandatory. [CRUD](docs/calendar-crud-contract.md) and [adapter interfaces](docs/authorization-adapter-contract.md) remain proposals; final name mapping, schema and coordination require review.
+
 ## Implementation guidance once scaffolding exists
 
 Read the scoped [example guidance](example/calendar_example/AGENTS.md) and module AGENTS.md files before working in those folders. Use the root setup/generation/check/start scripts described in [local development](docs/development.md); they coordinate the workspace, isolated synthetic test storage, generated clients and Flutter Web journeys. Keep seeding/reset local to development/test, record auth mail locally and inspect owned test logs under ignored `.local/`.

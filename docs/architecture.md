@@ -35,6 +35,8 @@ The maintainer selected separate detail/free-busy responses, typed field groups 
 
 The maintainer selected support for both coordinated and external fresh-check host policies with declared guarantees under [ADR 0045](adr/0045-authorization-consistency-guarantees.md). The [consistency design](authorization-consistency.md) distinguishes commit/revocation ordering from the unavoidable external after-check race. No silent downgrade or process-local coordination is permitted; concrete protocols, defaults and operation requirements remain pending.
 
+[Concrete adapter interfaces](authorization-adapter-contract.md) and the [first calendar CRUD contract](calendar-crud-contract.md) are now proposed for implementation review. [ADR 0046](adr/0046-first-native-calendar-crud-contract.md) confirms explicit creation zone/nonempty native name and deletion rejection while active dependencies remain. It does not select an archive/cascade workflow or final storage/API mechanics.
+
 ## Multiple active instances and automated acceptance
 
 The example host/app is a maintained automated integration-test application as well as a demonstration. [ADR 0018](adr/0018-automated-example-and-multiple-instances.md) requires at least two simultaneously active Serverpod host processes sharing logical storage, with requests and workers able to run on either instance.
