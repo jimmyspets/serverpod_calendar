@@ -25,6 +25,22 @@ Physical layout follows the pinned Serverpod template selected during scaffoldin
 
 The optional HTTP feed module is a confirmed boundary under [ADR 0042](adr/0042-optional-http-feed-module.md). Its implementation and package names remain pending. Authenticated import/export, availability and scheduling remain calendar capabilities; installing feeds is optional for hosts, while feed support remains first-release scope.
 
+## Host authorization boundary
+
+The confirmed boundary is module enforcement with host-defined, replaceable rules under [ADR 0043](adr/0043-host-authorization-context.md). Every server service operation supplies trusted actor/scope, requested operation, actual calendar/object/ancestor identities and relevant current/proposed state. Calendar listing/creation targets the host scope; occurrence operations retain original identity. A client-provided parent ID or subject association is not authority.
+
+Hosts can use their own ACLs, memberships or business rules. Confirmed permission separations distinguish calendar presentation from availability changes, and task content from progress and assignments; mixed requests require all applicable permissions. See the [proposed operation matrix](authorization-operations.md). A separate authorization package or built-in owner/role scheme is not required. Missing/denied/unresolved policy fails closed. Detail, free/busy, write and publication access are separate. Query visibility, transaction/revision checks, background jobs and the optional feed module use this boundary; precise APIs and external-policy consistency remain pending. See [context and operation examples](host-authorization.md).
+
+The maintainer selected separate detail/free-busy responses, typed field groups and no-total initial pages under [ADR 0044](adr/0044-authorized-query-projections-and-pagination.md). The [query design](authorization-queries.md) proposes bounded candidate/batch policy evaluation before visible page boundaries, current authorization on continuation and protected cross-instance cursor/snapshot state. Mechanics and schemas remain unimplemented proposals.
+
+The maintainer selected support for both coordinated and external fresh-check host policies with declared guarantees under [ADR 0045](adr/0045-authorization-consistency-guarantees.md). The [consistency design](authorization-consistency.md) distinguishes commit/revocation ordering from the unavoidable external after-check race. No silent downgrade or process-local coordination is permitted; concrete protocols, defaults and operation requirements remain pending.
+
+[Concrete adapter interfaces](authorization-adapter-contract.md) and the [first calendar CRUD contract](calendar-crud-contract.md) are now proposed for implementation review. [ADR 0046](adr/0046-first-native-calendar-crud-contract.md) confirms explicit creation zone/nonempty native name and deletion rejection while active dependencies remain. It does not select an archive/cascade workflow or final storage/API mechanics.
+
+[ADR 0047](adr/0047-calendar-names-identifiers-and-deletion-storage.md) selects separate native labels/protocol names, native server UUID identities without a version mandate and minimal content-free deletion markers. [Storage details](calendar-storage.md) distinguish accepted logical choices from pending physical layout/text/retention/generation work. A retained identity does not authorize new children or expose deleted calendars.
+
+[ADR 0048](adr/0048-calendar-name-validation-and-row-layout.md) selects bounded native-name validation and identity/active-data rows. Identity owns UUID/scope/revision/deletion time; active data owns label/settings/metadata/timestamps and is removed on deletion. The [schema proposal](calendar-schema.md) still needs pinned generation and lifecycle/constraint tests.
+
 ## Multiple active instances and automated acceptance
 
 The example host/app is a maintained automated integration-test application as well as a demonstration. [ADR 0018](adr/0018-automated-example-and-multiple-instances.md) requires at least two simultaneously active Serverpod host processes sharing logical storage, with requests and workers able to run on either instance.

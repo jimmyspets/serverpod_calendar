@@ -11,6 +11,8 @@ A reusable calendar module intended for Serverpod projects, providing calendar, 
 
 **Week convention:** ISO 8601: Monday is the first day; week 1 contains January 4, equivalently the year's first Thursday. Use the ISO week-year at New Year. Honor explicit RFC 5545 WKST values for recurrence, including their rule-specific week numbers. See [ISO weeks and recurrence WKST](docs/week-conventions.md).
 
+**Authorization:** the modules enforce access; hosts provide replaceable rules using trusted caller, operation and requested collection/object context. No fixed ownership/role model is required. See the [authorization contract](docs/host-authorization.md); domain enforcement is not implemented yet.
+
 **HTTP subscriptions:** iCalendar feeds belong to a separate optional Serverpod module under [ADR 0042](docs/adr/0042-optional-http-feed-module.md). Hosts can use authenticated calendar APIs without installing feeds; the feed module itself is not implemented yet.
 
 **Platform target:** Serverpod 4.x and later. The initial scaffold pins Serverpod 4.0.4, Flutter 3.47.7 and Dart 3.13.5; additional supported versions require separate verification.
