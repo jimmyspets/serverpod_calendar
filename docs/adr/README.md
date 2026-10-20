@@ -38,6 +38,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0032](0032-iso-week-convention.md) | ISO 8601 native week numbering and Monday first day | ISO native convention and honoring explicit RFC WKST confirmed |
 | [0033](0033-date-recurrence-sets.md) | Bounded DATE-only recurrence sets and inclusion/exclusion precedence | Earlier inclusions confirmed; set/API implementation proposed |
 | [0034](0034-native-iso-week-fields.md) | Native ISO week-year, week and weekday projection | Confirmed convention; API implementation proposed |
+| [0035](0035-date-only-event-spans.md) | DATE-only event bounds, exclusive ends and preserved duration/default intent | Scoped API implementation proposed; broader span contracts pending |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

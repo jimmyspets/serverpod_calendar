@@ -1,6 +1,6 @@
 # Temporal core implementation
 
-Status: **temporal values, bounded named-zone operations and initial bounded date-only recurrence**, 2026-10-20. The pure Dart core exports `UtcWindow`, `CalendarDate`, `CivilDateTime`, `CalendarDuration`, `NamedZoneResolver`, `IsoWeekDate` and DATE-only recurrence parameter/generator/set types. Full recurrence expansion, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
+Status: **temporal values, bounded named-zone operations and initial bounded date-only recurrence**, 2026-10-20. The pure Dart core exports `UtcWindow`, `CalendarDate`, `DateEventSpan`, `CivilDateTime`, `CalendarDuration`, `NamedZoneResolver`, `IsoWeekDate` and DATE-only recurrence parameter/generator/set types. Full recurrence expansion, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
 
 ## ISO 8601 week convention
 
@@ -16,7 +16,7 @@ The maintainer selected years 0001–9999. Construction rejects year zero, out-o
 
 `addDays(int)` moves forward or backward by calendar days and rejects results outside 0001–9999. `daysUntil(other)` returns the signed calendar-day count from this date to the other; `weekday` uses Monday 1 through Sunday 7. These operations use Gregorian integer arithmetic without timestamps. Calendar days do not imply elapsed 24-hour durations, recurrence week numbers or month-end clamping. The named-zone 1900–2037 envelope and narrower coverage guards are unchanged. See [ADR 0026](adr/0026-gregorian-calendar-day-arithmetic.md).
 
-This is not yet a generated request/storage model, all-day event span or interchange parser. Later adapters must enforce the selected date-only year range explicitly and atomically; RFC 5545's four-digit year grammar alone does not require the selected lower bound. UTC query windows continue to have their own instant contract. Civil precision and leap-second policy are selected under ADR 0024; zones and recurrence remain separate review gates.
+This single-date value is not a generated request/storage model or interchange parser. Scoped all-day event spans now exist separately under [ADR 0035](adr/0035-date-only-event-spans.md). Later adapters must enforce the selected date-only year range explicitly and atomically; RFC 5545's four-digit year grammar alone does not require the selected lower bound. UTC query windows continue to have their own instant contract. Civil precision and leap-second policy are selected under ADR 0024; zones and recurrence remain separate review gates.
 
 ## Civil date/time fields
 
@@ -308,3 +308,33 @@ Python 3.11.9 `datetime.date.isocalendar()` independently supplied 24 exact fixt
 A separate test constructs ISO-year Mondays from January 4 using Dart UTC Gregorian arithmetic as an independent test oracle, checks every date through the next boundary, and confirms 71 long week-years in 400 years. Production code never converts dates to timestamps. Tests also cover equality/hash, padded diagnostics and a Sunday-WKST recurrence whose native ISO label remains 2020-W53-7.
 
 No dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE or main README warning changed. The full database/browser-journey/two-host suite was not repeated for this pure-core projection. Inverse conversion, week-date parsing, Flutter presentation and protocol/client interoperability remain pending. `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe analyze --fatal-infos`: workspace analysis passed. Documentation links/anchors (206), consecutive ADR numbering, changed-file scope and `git diff --check`: passed.
+
+## DATE-only event spans
+
+```dart
+final event = DateEventSpan(
+  start: CalendarDate(year: 2026, month: 1, day: 1),
+  duration: CalendarDuration(weeks: 1),
+);
+// event.end == null; event.duration retains one week.
+// event.endExclusive == CalendarDate(year: 2026, month: 1, day: 8)
+// event.dayCount == 7; January 8 is not included.
+```
+
+`DateEventSpan` preserves an explicit end, a unit-preserving duration, or their joint omission. Its derived bounds are inclusive/exclusive. Conflicting fields, non-increasing ends, nonpositive durations and nonzero clock/fraction units are rejected. Omitting both end and duration means one calendar day. Equal occupied dates do not erase structural differences between forms. `contains` and `overlaps` compare dates only; they neither resolve instants nor decide authorization or busy status.
+
+Every effective exclusive end must remain within the existing date profile. A default event on 9999-12-31 fails because its end would require year 10000; an event ending at 9999-12-31 excludes that date. No clipping, implicit sentinel or wider zone coverage is introduced. Timed/task spans, recurrence-span application/overlap queries and adapters remain pending. See [ADR 0035](adr/0035-date-only-event-spans.md).
+
+## Date-only event span validation
+
+With pinned Dart 3.13.5:
+
+- `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe format packages/serverpod_calendar_core/lib packages/serverpod_calendar_core/test`: twenty-four files checked, one formatted initially; repeated after deterministic test-name cleanup with no further formatting changes.
+- The same executable with `analyze --fatal-infos`: workspace analysis passed, including after the cleanup.
+- The same executable with `test --reporter expanded`, from the core package: all **361 tests passed**, including 32 new event-span tests.
+- The same executable with `test --platform chrome --reporter expanded`, from the core package: all **361 tests passed in Chrome**.
+- Serverpod MCP `hot_reload`: completed successfully. No endpoint consumes these spans yet.
+
+New evidence covers defaults, preserved end/day/week representations, conflicting/nonpositive/clock-valued input rejection, leap centuries, year crossings, membership, adjacency and symmetric overlap. Every pair of short synthetic spans is compared with independently enumerated occupied-date sets. Profile endpoints and huge durations fail explicitly; date-only spans after 2037 do not bypass named-zone rejection.
+
+Dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE and the main README warning are unchanged. The full database/browser-journey/two-host suite was not repeated for this pure-core increment. Documentation links/anchors (207), consecutive ADR numbering, changed-file scope and `git diff --check`: passed.
