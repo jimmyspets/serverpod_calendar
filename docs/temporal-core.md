@@ -42,7 +42,26 @@ final clockHours = CalendarDuration(hours: 24);
 
 `CalendarDuration` retains sign (+1/-1), nonnegative week/day/hour/minute/second magnitudes and a full fractional-second `microsecond` magnitude 0–999999. Each whole unit accepts 0 through 9007199254740991 for exact VM/web representation; this is not a permitted operational horizon. Nonzero weeks cannot mix with other nonzero units. Invalid magnitudes throw `RangeError`; invalid signs and mixed weeks throw `ArgumentError`. Nothing is carried or normalized. Structural equality/hashing retain sign and every unit: the day and clock-hour examples remain distinct. Zero is permitted by the generic value (`isZero`), with a supplied negative sign retained.
 
-The maintainer selected microseconds and future iCalendar export rejection for nonzero fractions. The wire adapter must reject fractional duration input and lossy output atomically; those paths remain unimplemented. This value does not apply a duration, produce elapsed totals or validate event/task/alarm constraints. Consumer-specific positivity, DATE-only units, repeat pairing, practical limits, DST application and endpoint semantics remain separate work. See [ADR 0027](adr/0027-calendar-duration-values.md).
+The maintainer selected microseconds and future iCalendar export rejection for nonzero fractions. The wire adapter must reject fractional duration input and lossy output atomically; those paths remain unimplemented. Explicit date/zoned application is described below; the value has no context-free elapsed total and does not validate event/task/alarm constraints. Consumer-specific positivity, wire DATE-only syntax, repeat pairing and practical limits remain separate work. See [ADR 0027](adr/0027-calendar-duration-values.md).
+
+## Duration application
+
+```dart
+final nextDate = CalendarDuration(weeks: 1).addToDate(date);
+final end = CalendarDuration(days: 1, hours: 1).addToZoned(
+  civil,
+  zoneId: 'Europe/Stockholm',
+  resolver: NamedZoneResolver(),
+);
+```
+
+Date-only application accepts signed days/weeks and zero; any nonzero clock magnitude throws `ArgumentError`. Check result capacity before multiplying weeks, and reject dates outside 0001–9999 with `RangeError`. No timestamp is constructed.
+
+The maintainer selected calendar-units-first zoned application: resolve the start, move weeks/days in its requested local fields, resolve the intermediate with RFC explicit gap/fold rules, then apply clock units as elapsed time. The result is UTC. A gap start's requested fields remain the basis for calendar movement; clock-only/zero application uses its resolved instant. Negative operations follow the same order and are not guaranteed inverse operations across discontinuities. Clock aggregation uses arbitrary precision and checks bounds before narrowing to an instant.
+
+`NamedZoneResolver.localAt(utc, zoneId: ...)` projects a known UTC instant to civil fields without choosing a new fold instant. Non-UTC input and unknown exact keys fail; unknown offsets/coverage throw `ZoneCoverageException`. The final local year must be 1900–2037, allowing only UTC spillover that still projects into that local envelope. Zoned application checks the start, calendar intermediate and final projection, even for zero durations. It preserves a later-fold elapsed endpoint instead of re-resolving its fields to an earlier instant. See [ADR 0028](adr/0028-duration-application.md).
+
+These methods do not establish legal event/task/alarm lengths, span defaults, UTC-only application, query budgets, recurrence or iCalendar support. Wire adapters must validate syntax before constructing semantic values, because zero-component lexical presence is not retained.
 
 ## Bounded named-zone resolution
 
@@ -152,3 +171,17 @@ With pinned Dart 3.13.5:
 New tests exercise negative/out-of-range magnitudes for every component, maximum exact portable whole-unit integers and fractions, invalid signs, each prohibited mixed-week form, signed zero, retained non-normalized values and all-field equality/hashing. Existing named-zone coverage/rejection tests also pass. No duration application, parsing/serialization, property restrictions or client interoperability is inferred.
 
 Documentation links/anchors, consecutive ADR numbering, changed-file review and `git diff --check`: passed for this increment. Dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE and the main README/2037 warning are unchanged. The full database/browser-journey/two-host suite was not rerun for this isolated core value; practical duration/work limits and temporal application remain future work.
+
+## Duration-application validation
+
+With pinned Dart 3.13.5:
+
+- `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe format packages/serverpod_calendar_core/lib packages/serverpod_calendar_core/test`: thirteen files checked; implementation/test formatting completed.
+- The same executable with `analyze --fatal-infos`: workspace analysis passed after correcting one brace-style diagnostic in the initial run.
+- The same executable with `test --reporter expanded`, from the core package: all **167 tests passed** (27 new application/projection tests).
+- The same executable with `test --platform chrome --reporter expanded`, from the core package: all **167 tests passed in Chrome**.
+- Serverpod MCP `hot_reload`: completed successfully; core correctness evidence comes from the direct tests, with no endpoint consumer yet.
+
+Coverage includes signed date/week boundaries, nonzero clock rejection for dates, maximum-component overflow before narrowing, Stockholm 23/25-hour days, negative mixed durations, intermediate gaps/folds, requested gap-start fields, Lord Howe half-hour and Apia whole-day changes, negative-epoch fractions, non-normalized clock units, later-fold elapsed endpoint identity, exact aliases, historical intermediate/final failures, zero-operation validation and supported local-year/UTC spillover boundaries.
+
+No dependencies, generated files, migration, endpoint, Flutter UI, LICENSE or main README warning changed. The full database/browser-journey/two-host suite was not repeated for these pure-core changes. Property-specific spans, UTC-only duration application, practical work limits, recurrence, iCalendar and client interoperability remain separate work. Documentation links/anchors, ADR numbering, changed-file review and `git diff --check`: passed.

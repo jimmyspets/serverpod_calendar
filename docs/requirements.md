@@ -72,7 +72,7 @@ The example host/Flutter app is also the automated integration-test application,
 
 ## Native duration precision
 
-The maintainer selected microsecond duration precision, with future iCalendar export rejecting nonzero fractions rather than truncating them. The pure-core value preserves nominal week/day and clock units under [ADR 0027](adr/0027-calendar-duration-values.md); constructor validation does not implement duration application, property/component restrictions, parsing or atomic export rejection. Practical limits and DST endpoint semantics remain under review.
+The maintainer selected microsecond duration precision, with future iCalendar export rejecting nonzero fractions rather than truncating them. The pure-core value preserves nominal week/day and clock units under [ADR 0027](adr/0027-calendar-duration-values.md); explicit date/zoned application follows [ADR 0028](adr/0028-duration-application.md). The maintainer selected moving calendar units in local fields, resolving the intermediate with existing RFC explicit rules, then applying elapsed clock units. Property/component restrictions, parsing, atomic export rejection and practical limits remain under review.
 
 ## Confirmed RFC 5545 metadata choices
 

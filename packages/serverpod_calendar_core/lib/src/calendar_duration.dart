@@ -1,7 +1,11 @@
+import 'calendar_date.dart';
+import 'civil_date_time.dart';
+import 'named_zone_resolver.dart';
+
 /// A signed duration retaining nominal calendar units and clock units.
 ///
-/// This is not an elapsed [Duration]. Applying it to a date or zoned time,
-/// property-specific validity and iCalendar conversion are separate contracts.
+/// This is not an elapsed [Duration]. Explicit date/zoned application preserves
+/// calendar meaning; property-specific validity and interchange remain separate.
 final class CalendarDuration {
   /// Creates a duration without carrying or normalizing its components.
   ///
@@ -60,6 +64,75 @@ final class CalendarDuration {
       minutes == 0 &&
       seconds == 0 &&
       microsecond == 0;
+
+  /// Applies signed days or weeks to a date without timestamp conversion.
+  ///
+  /// Nonzero clock units throw [ArgumentError]. Result overflow throws
+  /// [RangeError], with weeks checked before multiplication.
+  CalendarDate addToDate(CalendarDate start) {
+    if (hours != 0 || minutes != 0 || seconds != 0 || microsecond != 0) {
+      throw ArgumentError('Date-only application requires days or weeks only');
+    }
+    final available = sign == 1
+        ? start.daysUntil(CalendarDate(year: 9999, month: 12, day: 31))
+        : CalendarDate(year: 1, month: 1, day: 1).daysUntil(start);
+    RangeError.checkValueInInterval(weeks, 0, available ~/ 7, 'weeks');
+    RangeError.checkValueInInterval(days, 0, available, 'days');
+    return start.addDays(sign * (weeks == 0 ? days : weeks * 7));
+  }
+
+  /// Applies calendar units to requested wall fields, then elapsed clock units.
+  ///
+  /// Explicit start and intermediate fields use the resolver's RFC gap/fold
+  /// policy. Even zero durations validate the start. The final UTC instant is
+  /// checked by inverse projection, preserving later-fold instant identity.
+  /// Unsupported years/coverage throw rather than returning a partial result.
+  DateTime addToZoned(
+    CivilDateTime start, {
+    required String zoneId,
+    required NamedZoneResolver resolver,
+  }) {
+    final origin = resolver.resolve(start, zoneId: zoneId);
+    var base = origin.instant;
+    if (weeks != 0 || days != 0) {
+      final date = CalendarDuration(
+        sign: sign,
+        weeks: weeks,
+        days: days,
+      ).addToDate(start.date);
+      final intermediate = CivilDateTime(
+        date: date,
+        hour: start.hour,
+        minute: start.minute,
+        second: start.second,
+        microsecond: start.microsecond,
+      );
+      base = resolver.resolve(intermediate, zoneId: zoneId).instant;
+    }
+    // Aggregate with arbitrary precision before narrowing to a supported
+    // instant. Large accepted component values must never overflow or round.
+    final clock =
+        BigInt.from(hours) * BigInt.from(3600000000) +
+        BigInt.from(minutes) * BigInt.from(60000000) +
+        BigInt.from(seconds) * BigInt.from(1000000) +
+        BigInt.from(microsecond);
+    final result =
+        BigInt.from(base.microsecondsSinceEpoch) + BigInt.from(sign) * clock;
+    // Loose UTC bounds allow offset spillover at the civil envelope edges.
+    // localAt enforces the actual local-year and per-zone coverage limits.
+    if (result < BigInt.from(DateTime.utc(1899).microsecondsSinceEpoch) ||
+        result >= BigInt.from(DateTime.utc(2039).microsecondsSinceEpoch)) {
+      throw RangeError(
+        'Zoned duration result exceeds the supported time envelope',
+      );
+    }
+    final instant = DateTime.fromMicrosecondsSinceEpoch(
+      result.toInt(),
+      isUtc: true,
+    );
+    resolver.localAt(instant, zoneId: zoneId);
+    return instant;
+  }
 
   /// Structural equality preserves units; one day is not rewritten as 24 hours.
   @override

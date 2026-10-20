@@ -31,6 +31,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0025](0025-bounded-named-zone-resolution.md) | Pinned, bounded named-zone resolution, DST policies and coverage errors | DST/identifier/envelope choices confirmed; bounded resolver verified |
 | [0026](0026-gregorian-calendar-day-arithmetic.md) | Gregorian day addition, signed distances and weekdays | Proposed implementation; date profile unchanged |
 | [0027](0027-calendar-duration-values.md) | Unit-preserving signed durations and native microsecond precision | Precision/export choice confirmed; value implementation proposed |
+| [0028](0028-duration-application.md) | Date-only application and calendar-first zoned durations | Calendar-first policy confirmed; API implementation proposed |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

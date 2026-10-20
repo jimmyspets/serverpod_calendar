@@ -18,6 +18,8 @@ Each whole-unit magnitude is bounded by `maxComponent = 9007199254740991` (2^53â
 
 Future iCalendar export must reject a nonzero fractional magnitude, never truncate it; import must reject fractional duration syntax before mutation. No parser/exporter exists yet. Native precision remains independent of narrower feed projections.
 
+Follow-up: [ADR 0028](0028-duration-application.md) records subsequently selected calendar-first zoned policy and explicit date/zoned application. The boundaries below describe this original value-only increment.
+
 ## Deliberate boundaries
 
 This increment does not apply durations to dates, civil times or instants, choose a DST endpoint policy, define event/task span defaults, permit negative event lengths or configure alarm-repeat intervals. Positive/nonzero requirements, DATE-only unit restrictions, pairing/cardinality rules, trigger policy, operational limits and transactional import validation remain consumer/adapter contracts. A generic zero or signed value does not bypass them. The named-zone 1900â€“2037 envelope and narrower coverage failures are unchanged.

@@ -157,6 +157,44 @@ final class NamedZoneResolver {
     throw ZoneCoverageException(zoneId, local);
   }
 
+  /// Projects a UTC instant to local fields without re-resolving a fold.
+  ///
+  /// Requires UTC input and exact zone names. The resulting local year must be
+  /// 1900–2037; unproved coverage and unknown offsets still fail explicitly.
+  CivilDateTime localAt(DateTime instant, {required String zoneId}) {
+    if (!instant.isUtc) {
+      throw ArgumentError.value(instant, 'instant', 'Must be UTC');
+    }
+    // Avoid arithmetic on distant dates before the offset is inspected.
+    RangeError.checkValueInInterval(instant.year, 1899, 2038, 'instant.year');
+    final rules = _rules[zoneId];
+    if (rules == null) {
+      throw ArgumentError.value(zoneId, 'zoneId', 'Unknown exact IANA name.');
+    }
+    final micros = instant.microsecondsSinceEpoch;
+    final offset = rules.at(micros);
+    final fields = DateTime.fromMicrosecondsSinceEpoch(
+      micros + offset.micros,
+      isUtc: true,
+    );
+    RangeError.checkValueInInterval(fields.year, 1900, 2037, 'local.date.year');
+    final local = CivilDateTime(
+      date: CalendarDate(
+        year: fields.year,
+        month: fields.month,
+        day: fields.day,
+      ),
+      hour: fields.hour,
+      minute: fields.minute,
+      second: fields.second,
+      microsecond: fields.millisecond * 1000 + fields.microsecond,
+    );
+    if (!rules.covers(micros) || !offset.known) {
+      throw ZoneCoverageException(zoneId, local);
+    }
+    return local;
+  }
+
   /// Resolves one already-valid recurrence candidate; a gap returns null.
   ///
   /// Unknown names, unsupported years and incomplete coverage still throw.

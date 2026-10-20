@@ -21,7 +21,7 @@ Initial standards include RFC 5545, RFC 7953, RFC 5546, RFC 6047, the descriptiv
 
 The [RFC property matrices](rfc/README.md) itemize named properties and relevant protocol features without claiming current implementation. Use their plan/status legend alongside the interface profiles here; unresolved values and contexts still need decisions.
 
-The core also has a native unit-preserving `CalendarDuration` value with selected microsecond precision; see [ADR 0027](adr/0027-calendar-duration-values.md). Its constructor tests establish structural validation only. Duration application across DST, event/task/alarm restrictions and iCalendar whole-second rejection/round trips still need separate evidence.
+The core also has a native unit-preserving `CalendarDuration` value with selected microsecond precision; see [ADR 0027](adr/0027-calendar-duration-values.md). Constructor tests establish structural validation; date-only and selected calendar-first zoned application now have scoped core evidence under [ADR 0028](adr/0028-duration-application.md). Event/task/alarm restrictions and iCalendar whole-second rejection/round trips still need separate evidence.
 
 ## Automated example and deployment evidence
 
