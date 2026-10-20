@@ -65,10 +65,14 @@ An operation describes **what the caller is asking to do**, while target/context
 
 **Room search:** a host permits searching Room A's busy projection while denying event details and raw working-hours rules. The module uses authorized complete contributors internally and returns intervals/coverage without titles or private source IDs. A denied contributor cannot be omitted to manufacture free time.
 
+## Confirmed query/disclosure refinement
+
+[ADR 0044](adr/0044-authorized-query-projections-and-pagination.md) records the selected separate detail/free-busy responses, predefined field groups and initial pages with opaque continuation and no totals. Query authorization does not turn hidden detail objects into free time or grant caller-requested groups. See [the proposed filtering and cursor contract](authorization-queries.md).
+
 ## Decisions still needed before implementation
 
 - Exact action identifiers, adapter signatures and allow/deny/error/projection result types.
-- Query constraint/batch evaluation mechanism, field projections, pagination/count semantics and fail-closed resource limits.
+- Query constraint/batch evaluation mechanism, field projections, pagination/continuation semantics without initial totals and fail-closed resource limits.
 - Transaction/snapshot integration and consistency/revocation rules when the host policy lives outside the calendar database.
 - Calendar deletion behavior, item move semantics, task lifecycle and recurrence mutation rules; a permission does not define their behavior.
 

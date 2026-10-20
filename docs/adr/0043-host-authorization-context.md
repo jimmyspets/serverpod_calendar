@@ -22,6 +22,10 @@ During the operation review, the maintainer explicitly chose separate permission
 
 The [operation catalog](../authorization-operations.md) documents proposed action families/targets and examples. These two permission separations are confirmed; the rest of the identifiers, query/result/transaction contracts, deletion behavior and task lifecycle remain proposed. This refinement does not implement authorization or introduce required roles.
 
+## Query/disclosure refinement
+
+[ADR 0044](0044-authorized-query-projections-and-pagination.md) records the subsequent confirmed detail/free-busy separation, predefined field groups and no-total initial pagination. Its query/batch, cursor and snapshot mechanics remain proposed; the broader adapter/transaction gates below remain open.
+
 ## Alternatives and consequences
 
 A built-in fixed owner/role scheme prevents hosts from reusing their business rules. A caller-only callback lacks the target information needed for object-specific decisions. Client-side enforcement or endpoint-only checks miss internal jobs and other entry points. A replaceable host adapter preserves customization but requires careful query, transaction, disclosure and outage contracts.

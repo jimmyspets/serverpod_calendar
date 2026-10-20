@@ -31,6 +31,8 @@ The confirmed boundary is module enforcement with host-defined, replaceable rule
 
 Hosts can use their own ACLs, memberships or business rules. Confirmed permission separations distinguish calendar presentation from availability changes, and task content from progress and assignments; mixed requests require all applicable permissions. See the [proposed operation matrix](authorization-operations.md). A separate authorization package or built-in owner/role scheme is not required. Missing/denied/unresolved policy fails closed. Detail, free/busy, write and publication access are separate. Query visibility, transaction/revision checks, background jobs and the optional feed module use this boundary; precise APIs and external-policy consistency remain pending. See [context and operation examples](host-authorization.md).
 
+The maintainer selected separate detail/free-busy responses, typed field groups and no-total initial pages under [ADR 0044](adr/0044-authorized-query-projections-and-pagination.md). The [query design](authorization-queries.md) proposes bounded candidate/batch policy evaluation before visible page boundaries, current authorization on continuation and protected cross-instance cursor/snapshot state. Mechanics and schemas remain unimplemented proposals.
+
 ## Multiple active instances and automated acceptance
 
 The example host/app is a maintained automated integration-test application as well as a demonstration. [ADR 0018](adr/0018-automated-example-and-multiple-instances.md) requires at least two simultaneously active Serverpod host processes sharing logical storage, with requests and workers able to run on either instance.

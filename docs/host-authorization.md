@@ -59,6 +59,10 @@ The module verifies client-supplied IDs and parent relationships; it does not co
 - **Feeds:** the optional feed module identifies the feed and all selected calendars, authorizes management separately and revalidates continuing publication authority before content or 304. A bearer URL is read-only capability, not a caller identity or query/management grant. Use a trusted host publication authority reference, not the secret, for policy evaluation.
 - **Workers/notifications/scheduling:** use a trusted purpose-specific execution/publication/participant context, not a fabricated interactive session or blanket bypass. Revalidate recipient access, generation, cancellation and expiry before dispatch/retries and on stream reconnection. Incoming mail identity still requires the separate verified scheduling ingress contract.
 
+## Query disclosure and pagination
+
+The maintainer selected separate detail/free-busy responses, predefined field-group disclosure and authorized initial pages with opaque continuation but no total counts under [ADR 0044](adr/0044-authorized-query-projections-and-pagination.md). A filtered detail list cannot establish availability. Hosts choose permitted typed groups per object; requested groups cannot grant themselves access. Exact group mappings, query/batch integration and cursor/snapshot mechanics remain proposed in [the query design](authorization-queries.md).
+
 ## Consistency and integration rules
 
 Keep the adapter on the server integration boundary; the pure temporal core and generated Dart clients do not make policy decisions. Endpoints and background jobs call services that enforce checks; a second internal entry point must not bypass policy.
@@ -73,7 +77,7 @@ Do not cache allow decisions by process alone or assume JWT logout instantly rev
 - [ ] Register two different host policies without changing module code: a simple synthetic policy and a custom object-level policy.
 - [ ] Verify the adapter receives scope, actual collection/object/ancestor identities, operation and validated proposed changes for each service path, including create and occurrence operations.
 - [ ] Test absent adapter, deny/error/timeout, forged caller/parent IDs, colliding IDs across scopes and child-specific detail restrictions.
-- [ ] Test visibility/disclosure with pagination, counts, mixed permitted/denied objects and privacy-safe free/busy coverage.
+- [ ] Test group disclosure and authorized pagination without totals, mixed permitted/denied objects and separate privacy-safe complete/unknown free/busy coverage under [ADR 0044](adr/0044-authorized-query-projections-and-pagination.md).
 - [ ] Test stale revisions and permission changes during writes; specify external-policy consistency limits explicitly.
 - [ ] Test atomic imports, source/destination authorization, association changes, publication revocation before 304 and worker/stream revalidation as those features are implemented.
 - [ ] Exercise two independent host processes sharing storage; confirm no local allow cache or internal service bypass changes outcomes.

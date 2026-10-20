@@ -55,3 +55,7 @@ The maintainer explicitly confirmed a separate optional Serverpod module for iCa
 The maintainer confirmed module enforcement with replaceable host rules and requested clear documentation plus the identity of the requested collection/object. [ADR 0043](adr/0043-host-authorization-context.md) and the [guide](host-authorization.md) record this boundary, distinguish calendar containment from display/feed groupings and retain detailed adapter/query/transaction contracts as proposals. No authorization implementation or mandatory role/owner model was approved by this documentation request.
 
 The subsequent operation review confirmed separate calendar presentation/availability permissions and separate task content/progress/assignment permissions. The [operation catalog](authorization-operations.md) records those choices and keeps remaining action/API details proposed under ADR 0043.
+
+## Authorized query response choices
+
+The maintainer selected separate detail/free-busy responses, authorized initial pages with opaque continuation and no totals, and predefined field-group disclosure. [ADR 0044](adr/0044-authorized-query-projections-and-pagination.md) records those choices; [the query design](authorization-queries.md) keeps filtering algorithms, group mappings, cursor/snapshot behavior and external-policy consistency proposed. No runtime implementation or new feed projection was approved by these choices.

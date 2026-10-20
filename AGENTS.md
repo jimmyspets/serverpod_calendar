@@ -23,6 +23,8 @@ The maintainer confirmed a separate optional Serverpod module for iCalendar HTTP
 
 Under [ADR 0043](docs/adr/0043-host-authorization-context.md), modules enforce authorization while a replaceable host adapter decides using trusted actor/scope, specific operation, actual collection/object/parent context and relevant current/validated proposed state. Do not trust client-claimed parentage or hard-code a required owner/role scheme. See [authorization documentation](docs/host-authorization.md); APIs/query/transaction integration remain proposed, not implemented.
 
+Query response choices under [ADR 0044](docs/adr/0044-authorized-query-projections-and-pagination.md) are confirmed: separate detail/free-busy responses, predefined disclosure groups, and authorized initial pages with opaque continuation and no totals. Filtering, field mappings, cursor/snapshot and policy consistency are still proposed; see [query design](docs/authorization-queries.md). Never derive free time from a detail list filtered by visibility.
+
 ## Implementation guidance once scaffolding exists
 
 Read the scoped [example guidance](example/calendar_example/AGENTS.md) and module AGENTS.md files before working in those folders. Use the root setup/generation/check/start scripts described in [local development](docs/development.md); they coordinate the workspace, isolated synthetic test storage, generated clients and Flutter Web journeys. Keep seeding/reset local to development/test, record auth mail locally and inspect owned test logs under ignored `.local/`.

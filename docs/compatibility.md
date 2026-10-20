@@ -12,6 +12,8 @@ Current native date/precision profile: **[1970-01-01, 2100-01-01)** and **whole 
 
 Host authorization boundary is selected under [ADR 0043](adr/0043-host-authorization-context.md): host-defined policy receives trusted collection/object context; modules enforce it. Domain policy, object-specific disclosure and query/mutation integration remain unimplemented. Authenticated diagnostic smoke tests do not verify this contract. See [the authorization guide](host-authorization.md).
 
+Native query response choices are selected in [ADR 0044](adr/0044-authorized-query-projections-and-pagination.md): separate detail/free-busy, predefined field groups and no-total initial pages. Domain policy/filter/cursor behavior is not implemented or verified; this does not change wire/feed-client support.
+
 ## Interface coverage
 
 | Surface | Required capability | Evidence |
