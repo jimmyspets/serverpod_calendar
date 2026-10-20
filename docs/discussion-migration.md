@@ -67,3 +67,7 @@ The maintainer selected support for transaction-coordinated policies and externa
 ## First native calendar CRUD rules
 
 The maintainer selected rejection of deletion while active dependencies remain, an explicit named availability zone at native creation and a nonempty native display name. [ADR 0046](adr/0046-first-native-calendar-crud-contract.md) records these rules. [CRUD](calendar-crud-contract.md) and [adapter interfaces](authorization-adapter-contract.md) are concrete proposals, not implemented/final signatures or physical schemas. No archive/cascade policy, implicit host owner or mandatory ICS NAME was selected.
+
+## Calendar names, UUIDs and deletion markers
+
+The maintainer selected a native UI label separate from preserved imported NAME metadata, server-generated native calendar UUIDs without a specific UUID-version requirement, and minimal UUID/scope/revision/deletion-time markers after dependency-safe deletion. Markers retain no calendar label/content, are hidden from ordinary APIs and provide no archive/restore behavior. [ADR 0047](adr/0047-calendar-names-identifiers-and-deletion-storage.md) and [storage guidance](calendar-storage.md) preserve physical layout, text validation, purge/retention duration and generator verification as implementation gates.

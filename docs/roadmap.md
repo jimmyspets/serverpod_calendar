@@ -25,7 +25,9 @@ Independent packages can progress in parallel after their contracts are defined.
 
 ## Design contracts
 
-- [ ] Review [concrete adapter interfaces](authorization-adapter-contract.md) and the [first native calendar CRUD contract](calendar-crud-contract.md) under [ADR 0046](adr/0046-first-native-calendar-crud-contract.md). Preserve confirmed explicit-zone/nonempty-name creation and dependency-blocked deletion; settle label mapping, physical schema/retention, typed commands/results and real coordination before the calendar CRUD implementation batch.
+- [ ] Finalize and implement [calendar storage](calendar-storage.md) under [ADR 0047](adr/0047-calendar-names-identifiers-and-deletion-storage.md): native/protocol/feed names stay distinct; server UUIDs have no public version requirement; deletion atomically removes content and retains only the selected internal marker. Review physical layout, text validation, retention/purge and generated UUID/schema behavior before claiming implementation.
+
+- [ ] Review [concrete adapter interfaces](authorization-adapter-contract.md) and the [first native calendar CRUD contract](calendar-crud-contract.md) under [ADR 0046](adr/0046-first-native-calendar-crud-contract.md). Preserve confirmed explicit-zone/nonempty-name creation and dependency-blocked deletion; apply ADR 0047 name-role separation and settle text validation, physical UUID/marker schema/retention, typed commands/results and real coordination before the calendar CRUD implementation batch.
 
 - [ ] Finalize and implement [authorization consistency contracts](authorization-consistency.md) under [ADR 0045](adr/0045-authorization-consistency-guarantees.md): declare coordinated/external guarantees, reject unsupported requirements without downgrade, define defaults/freshness/deadlines and effective coordination, and test two-host revocation/write ordering, retries and late external decisions.
 

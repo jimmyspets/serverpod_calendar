@@ -58,6 +58,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0046](0046-first-native-calendar-crud-contract.md) | First native calendar CRUD: dependent-delete rejection, explicit zone and nonempty name | Accepted product rules; commands, label/schema and adapter details proposed |
 
+| [0047](0047-calendar-names-identifiers-and-deletion-storage.md) | Separate native names, version-independent UUID identity and minimal deletion marker | Accepted logical boundaries; physical layout, validation and retention duration proposed |
+
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
 Use the next consecutive number for a new ADR covering a material decision. Include context, proposal/decision, alternatives, consequences, and acceptance conditions. Preserve committed/accepted decision history; supersede accepted decisions with a linked ADR. Superseded uncommitted drafts may be removed under the maintainer-authorized cleanup. Mark an ADR accepted only after explicit maintainer agreement recorded in the PR or issue.

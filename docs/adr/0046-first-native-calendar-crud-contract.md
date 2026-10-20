@@ -16,6 +16,8 @@ Keep presentation, availability settings and subject associations on distinct pe
 
 [The CRUD contract](../calendar-crud-contract.md) proposes the first command/view surface, batch boundary and future tests. [Adapter interface proposals](../authorization-adapter-contract.md) make context resolution, batch decisions, query planning and commit-guard responsibilities reviewable. Method names and result/configuration/storage details are not accepted final interfaces or runtime implementation.
 
+Storage refinement: [ADR 0047](0047-calendar-names-identifiers-and-deletion-storage.md) selects separate native/protocol names, server UUIDs without a version mandate and minimal deletion markers without calendar content/archive/restore. It resolves those logical choices while retaining physical layout, text validation and retention duration as implementation gates.
+
 ## Alternatives and consequences
 
 Automatic cascade deletion expands risk and lifecycle requirements; archiving needs its own visibility/availability/retention semantics. Initially rejecting active dependencies avoids selecting either workflow. Explicit zone input prevents environment-dependent all-day projections. A nonempty native name supports usable lists without changing permitted ICS syntax or inventing imported properties.

@@ -37,6 +37,8 @@ The maintainer selected support for both coordinated and external fresh-check ho
 
 [Concrete adapter interfaces](authorization-adapter-contract.md) and the [first calendar CRUD contract](calendar-crud-contract.md) are now proposed for implementation review. [ADR 0046](adr/0046-first-native-calendar-crud-contract.md) confirms explicit creation zone/nonempty native name and deletion rejection while active dependencies remain. It does not select an archive/cascade workflow or final storage/API mechanics.
 
+[ADR 0047](adr/0047-calendar-names-identifiers-and-deletion-storage.md) selects separate native labels/protocol names, native server UUID identities without a version mandate and minimal content-free deletion markers. [Storage details](calendar-storage.md) distinguish accepted logical choices from pending physical layout/text/retention/generation work. A retained identity does not authorize new children or expose deleted calendars.
+
 ## Multiple active instances and automated acceptance
 
 The example host/app is a maintained automated integration-test application as well as a demonstration. [ADR 0018](adr/0018-automated-example-and-multiple-instances.md) requires at least two simultaneously active Serverpod host processes sharing logical storage, with requests and workers able to run on either instance.

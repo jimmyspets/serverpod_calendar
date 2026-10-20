@@ -18,6 +18,8 @@ Native query response choices are selected in [ADR 0044](adr/0044-authorized-que
 
 Native calendar creation/deletion rules are selected under [ADR 0046](adr/0046-first-native-calendar-crud-contract.md), with [CRUD](calendar-crud-contract.md) and [adapter interface](authorization-adapter-contract.md) proposals. A required native name is not an iCalendar NAME grammar constraint. Calendar CRUD, dependency coordination and related generated APIs remain unimplemented.
 
+[ADR 0047](adr/0047-calendar-names-identifiers-and-deletion-storage.md) keeps native labels/UUIDs/minimal deletion markers separate from protocol NAME/UID and feed metadata. These are selected logical rules, not implemented CRUD, tested migrations, deletion synchronization or new wire/client support.
+
 ## Interface coverage
 
 | Surface | Required capability | Evidence |

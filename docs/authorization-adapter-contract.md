@@ -51,4 +51,4 @@ The concrete same-database locking/serialization protocol and external authorita
 - Test create/metadata/settings/association/delete gates, stale revisions and mixed-request rollback; verify unsupported guarantee rejection and no fallback.
 - Test full authorized pages and continuation, late external allows and declared revocation ordering across two independent hosts. Keep concrete protocol tests distinct from the existing authentication-only scaffold evidence.
 
-No domain runtime code, generated models, migrations or final interfaces are introduced by this document.
+[ADR 0047](adr/0047-calendar-names-identifiers-and-deletion-storage.md) selects native UUID identity, separate display/protocol names and minimal deletion markers. Adapters must distinguish active targets from internal deleted identities without granting access through markers. No domain runtime code, generated models, migrations or final interfaces are introduced by this document.

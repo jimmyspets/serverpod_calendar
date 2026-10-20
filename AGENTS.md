@@ -29,6 +29,8 @@ Under [ADR 0045](docs/adr/0045-authorization-consistency-guarantees.md), support
 
 First native calendar rules under [ADR 0046](docs/adr/0046-first-native-calendar-crud-contract.md): creation requires a nonempty display name and explicit validated named availability zone; deletion rejects active dependencies, without implicit cascade/archive/detachment. Native-name rules do not make ICS NAME mandatory. [CRUD](docs/calendar-crud-contract.md) and [adapter interfaces](docs/authorization-adapter-contract.md) remain proposals; final name mapping, schema and coordination require review.
 
+Under [ADR 0047](docs/adr/0047-calendar-names-identifiers-and-deletion-storage.md), native displayName, protocol NAME and feed presentation are separate. Native calendar IDs are server-generated UUIDs with no required UUID version; never conflate them with protocol UIDs or authority. Delete retains only UUID/scope/revision/deletion time, with no calendar content/archive/restore and no ordinary API discovery. Physical layout, text validation and marker retention remain proposed in [storage guidance](docs/calendar-storage.md).
+
 ## Implementation guidance once scaffolding exists
 
 Read the scoped [example guidance](example/calendar_example/AGENTS.md) and module AGENTS.md files before working in those folders. Use the root setup/generation/check/start scripts described in [local development](docs/development.md); they coordinate the workspace, isolated synthetic test storage, generated clients and Flutter Web journeys. Keep seeding/reset local to development/test, record auth mail locally and inspect owned test logs under ignored `.local/`.
