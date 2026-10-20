@@ -297,17 +297,18 @@ void main() {
       );
     },
   );
-  test('unsupported week-number rules fail before any results, including COUNT one', () {
+  test('yearly week 20 follows the RFC Monday example', () {
     expect(
-      () => expand(
-        d(2026, 1, 1),
+      expand(
+        d(1997, 5, 12),
         DateRecurrenceRule(
           frequency: DateRecurrenceFrequency.yearly,
-          byWeekNo: [1],
-          count: 1,
+          byWeekNo: [20],
+          byDay: [day(Weekday.monday)],
+          count: 3,
         ),
       ),
-      throwsUnsupportedError,
+      [d(1997, 5, 12), d(1998, 5, 11), d(1999, 5, 17)],
     );
   });
   test('work limit counts rejected candidates and pre-query history', () {

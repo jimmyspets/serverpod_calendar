@@ -24,6 +24,8 @@ Every valid calendar date examined in a cadence period consumes `maxCandidateDay
 
 The caller supplies both budgets explicitly, within positive portable integer representation bounds. This does not select production maxima or permit clients to choose trusted server limits. Host/service input, work and output policies must be defined before endpoint exposure. This initial engine scans from DTSTART; an old series may exhaust work even for a narrow recent query. No unproved fast-forward or falsely complete/free result is introduced.
 
+Follow-up: [ADR 0031](0031-date-recurrence-week-numbers.md) lifts the BYWEEKNO implementation restriction with scoped date-only week-year calculations. The restriction below records this original increment.
+
 ## Explicit unsupported scope
 
 Reject every BYWEEKNO rule with `UnsupportedError` before generation, including COUNT=1 and empty-range cases. The rule validator can retain these planned selectors, but this first engine does not yet calculate week-year boundaries. This is an incremental implementation limit, not a first-release deferral or permission to drop the selector.

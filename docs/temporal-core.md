@@ -94,11 +94,13 @@ final dates = DateRecurrenceGenerator().expand(
 );
 ```
 
-This returns immutable sorted start dates within an **inclusive** date range. It is not an event overlap query or event-end convention. Support daily/weekly/monthly/yearly intervals, date filters other than BYWEEKNO, all week starts, COUNT and inclusive UNTIL. Invalid month-end/leap dates are omitted without consuming COUNT; missing fields inherit the start where appropriate. Position selection uses the full cadence period, then applies query/end bounds. Earlier occurrences still consume COUNT.
+This returns immutable sorted start dates within an **inclusive** date range. It is not an event overlap query or event-end convention. Support daily/weekly/monthly/yearly intervals, date filters including yearly BYWEEKNO, all week starts, COUNT and inclusive UNTIL. Invalid month-end/leap dates are omitted without consuming COUNT; missing fields inherit the start where appropriate. Position selection uses the full cadence period, then applies query/end bounds. Earlier occurrences still consume COUNT.
 
 The maintainer selected rejecting starts that do not match their rule, including first-period BYSETPOS; UNTIL before the start is also rejected. Validate starts even for empty output ranges. Each date examined in a period consumes the required work budget, including rejected/pre-query/full-period dates. Exceeding work or output limits throws `RecurrenceLimitException` without returning a partial list; an exactly full output limit requires proof of completion. Practical trusted server limits remain to be defined before any endpoint exposes this API.
 
-BYWEEKNO throws `UnsupportedError` explicitly. BYSETPOS on a week clipped by date-profile year 0001/9999 throws `RangeError`. Cadence arithmetic checks large intervals before multiplication. The implementation scans from DTSTART rather than fast-forwarding with unproved COUNT semantics. Timed recurrence, full week-year support, inclusions/exclusions, exceptions, spans and adapters remain pending. See [ADR 0030](adr/0030-bounded-date-recurrence-generation.md).
+Yearly BYWEEKNO uses the week containing January 4 under the supplied WKST. Dates near New Year may carry an adjacent week-year; negative selectors use that actual week-year's 52/53-week length. Without BYDAY, retain all matching week days. Yearly cadence and BYSETPOS remain anchored to calendar-year periods, while other filters apply to actual calendar dates. Missing week 53 is skipped without consuming COUNT. See [ADR 0031](adr/0031-date-recurrence-week-numbers.md).
+
+Private adjacent week-year labels 0/10000 are integer boundaries, never additional accepted dates. BYSETPOS on a week clipped by date-profile year 0001/9999 throws `RangeError`. Cadence arithmetic checks large intervals before multiplication. The implementation scans from DTSTART rather than fast-forwarding with unproved COUNT semantics. Timed recurrence, inclusions/exclusions, exceptions, spans and adapters remain pending. See [ADR 0030](adr/0030-bounded-date-recurrence-generation.md).
 
 ## Bounded named-zone resolution
 
@@ -251,3 +253,17 @@ With pinned Dart 3.13.5:
 New cases cover inclusive query/UNTIL boundaries, historical COUNT, cadence defaults, all week starts and a two-week boundary fixture, invalid month-end/leap-century skipping, signed and ordinal selectors, full-period positions, duplicate collapse, selected start rejection, unsupported week-number rejection, exact/failed budgets, safe huge-interval termination and profile-edge behavior. Date-only generation beyond 2037 does not imply expanded zone support; existing named-zone rejection tests pass unchanged.
 
 No dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE or main README warning changed. The full database/browser-journey/two-host suite was not repeated for this pure-core increment. Full week-number/timed/set/override semantics, spans, production limits and protocol/client interoperability remain pending. Documentation links/anchors, ADR numbering, changed-file scope and `git diff --check`: passed.
+
+## Date-only week-number validation
+
+With pinned Dart 3.13.5:
+
+- `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe format packages/serverpod_calendar_core/lib packages/serverpod_calendar_core/test`: eighteen files checked, three formatted.
+- The same executable with `analyze --fatal-infos`: workspace analysis passed.
+- The same executable with `test --reporter expanded`, from the core package: all **272 tests passed**. This adds 25 week-number tests and replaces the previous unsupported-BYWEEKNO test with the RFC week-20 fixture.
+- The same executable with `test --platform chrome --reporter expanded`, from the core package: all **272 tests passed in Chrome**.
+- Serverpod MCP `hot_reload`: completed successfully. No endpoint consumes the date recurrence engine yet.
+
+Evidence includes week 53 missing-year skipping, positive/negative adjacent week-year membership, calendar-year interval anchoring, month/position combinations, duplicate collapse, all WKST boundary cases, both date-profile edges and explicit budget failures. For each of seven week starts, first/last-week membership across a complete 146097-day Gregorian cycle is compared with an independent fourth-day construction. The RFC fixture is compared as start dates, not as a timed/zone interchange claim. The existing 2037 zone rejection tests remain unchanged and pass.
+
+Dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE and the main README warning are unchanged. The full database/browser-journey/two-host suite was not repeated for this pure-core increment. Timed/set/override semantics, production budgets, spans and protocol/client interoperability remain pending. Documentation links/anchors, ADR numbering, changed-file scope and `git diff --check`: passed.

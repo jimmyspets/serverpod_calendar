@@ -11,7 +11,7 @@ final class RecurrenceLimitException implements Exception {
 
 /// Bounded DATE-only start-date generation, without event spans or exceptions.
 ///
-/// BYWEEKNO is explicitly unsupported by this initial engine. Timed recurrence,
+/// Yearly week-number filters honor WKST and adjacent week-years. Timed recurrence,
 /// RDATE/EXDATE and overrides require separate implementations.
 final class DateRecurrenceGenerator {
   /// Returns sorted dates in the inclusive [from] through [through] range.
@@ -44,9 +44,6 @@ final class DateRecurrenceGenerator {
     );
     if (from.compareTo(through) > 0) {
       throw ArgumentError('from must not follow through');
-    }
-    if (rule.byWeekNo.isNotEmpty) {
-      throw UnsupportedError('BYWEEKNO generation is not implemented');
     }
     if (rule.until != null && rule.until!.compareTo(start) < 0) {
       throw ArgumentError('UNTIL must not exclude DTSTART');
@@ -130,6 +127,9 @@ final class DateRecurrenceGenerator {
     final yearStart = CalendarDate(year: date.year, month: 1, day: 1);
     final yearDay = yearStart.daysUntil(date) + 1;
     final yearLength = date.isLeapYear ? 366 : 365;
+    if (rule.byWeekNo.isNotEmpty && !_weekMatches(date, yearDay, rule)) {
+      return false;
+    }
     if (rule.byYearDay.isNotEmpty &&
         !_signed(rule.byYearDay, yearDay, yearLength)) {
       return false;
@@ -163,12 +163,49 @@ final class DateRecurrenceGenerator {
         final expandsDay =
             rule.byDay.isNotEmpty ||
             rule.byMonthDay.isNotEmpty ||
-            rule.byYearDay.isNotEmpty;
+            rule.byYearDay.isNotEmpty ||
+            rule.byWeekNo.isNotEmpty;
         if (!expandsDay && date.day != start.day) return false;
         return expandsDay ||
             rule.byMonth.isNotEmpty ||
             date.month == start.month;
     }
+  }
+
+  static bool _weekMatches(
+    CalendarDate date,
+    int yearDay,
+    DateRecurrenceRule rule,
+  ) {
+    var year = date.year;
+    final ordinal = _daysBeforeYear(year) + yearDay - 1;
+    var begin = _weekOne(year, rule.weekStart);
+    if (ordinal < begin) {
+      begin = _weekOne(--year, rule.weekStart);
+    } else {
+      final next = _weekOne(year + 1, rule.weekStart);
+      if (ordinal >= next) {
+        year++;
+        begin = next;
+      }
+    }
+    final number = (ordinal - begin) ~/ 7 + 1;
+    final total = (_weekOne(year + 1, rule.weekStart) - begin) ~/ 7;
+    return _signed(rule.byWeekNo, number, total);
+  }
+
+  // Week one contains January 4 for every week start under the four-day rule.
+  // Adjacent week-year labels 0/10000 are integer boundaries only, not dates.
+  static int _weekOne(int year, Weekday weekStart) {
+    final january4 = _daysBeforeYear(year) + 3;
+    return january4 - (january4 - (weekStart.isoNumber - 1)) % 7;
+  }
+
+  static int _daysBeforeYear(int year) {
+    // Avoid truncating negative integer division at the virtual year-zero edge.
+    if (year == 0) return -366;
+    final previous = year - 1;
+    return previous * 365 + previous ~/ 4 - previous ~/ 100 + previous ~/ 400;
   }
 
   static bool _signed(List<int> values, int day, int length) =>

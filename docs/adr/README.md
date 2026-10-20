@@ -34,6 +34,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0028](0028-duration-application.md) | Date-only application and calendar-first zoned durations | Calendar-first policy confirmed; API implementation proposed |
 | [0029](0029-date-recurrence-rule-values.md) | Immutable date-only recurrence rule parameters and validation | Filter normalization confirmed; broader API proposed; generator in ADR 0030 |
 | [0030](0030-bounded-date-recurrence-generation.md) | Bounded initial DATE-only occurrence generation and explicit limits | Mismatched-start rejection confirmed; initial subset tested; API proposed |
+| [0031](0031-date-recurrence-week-numbers.md) | DATE-only yearly week-number generation and boundary semantics | Implementation proposed; native evidence separate from protocol support |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
