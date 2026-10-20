@@ -8,6 +8,7 @@ library;
 export 'src/calendar_date.dart';
 export 'src/calendar_duration.dart';
 export 'src/civil_date_time.dart';
+export 'src/date_event_series.dart';
 export 'src/date_event_span.dart';
 export 'src/date_recurrence_rule.dart';
 export 'src/date_recurrence_set.dart';

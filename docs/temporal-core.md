@@ -1,6 +1,6 @@
 # Temporal core implementation
 
-Status: **temporal values, bounded named-zone operations and initial bounded date-only recurrence**, 2026-10-20. The pure Dart core exports `UtcWindow`, `CalendarDate`, `DateEventSpan`, `CivilDateTime`, `CalendarDuration`, `NamedZoneResolver`, `IsoWeekDate` and DATE-only recurrence parameter/generator/set types. Full recurrence expansion, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
+Status: **temporal values, bounded named-zone operations and initial bounded date-only recurrence**, 2026-10-20. The pure Dart core exports `UtcWindow`, `CalendarDate`, `DateEventSpan`, `DateEventSeries`, `CivilDateTime`, `CalendarDuration`, `NamedZoneResolver`, `IsoWeekDate` and DATE-only recurrence parameter/generator/set types. Full recurrence expansion, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
 
 ## ISO 8601 week convention
 
@@ -323,7 +323,7 @@ final event = DateEventSpan(
 
 `DateEventSpan` preserves an explicit end, a unit-preserving duration, or their joint omission. Its derived bounds are inclusive/exclusive. Conflicting fields, non-increasing ends, nonpositive durations and nonzero clock/fraction units are rejected. Omitting both end and duration means one calendar day. Equal occupied dates do not erase structural differences between forms. `contains` and `overlaps` compare dates only; they neither resolve instants nor decide authorization or busy status.
 
-Every effective exclusive end must remain within the existing date profile. A default event on 9999-12-31 fails because its end would require year 10000; an event ending at 9999-12-31 excludes that date. No clipping, implicit sentinel or wider zone coverage is introduced. Timed/task spans, recurrence-span application/overlap queries and adapters remain pending. See [ADR 0035](adr/0035-date-only-event-spans.md).
+Every effective exclusive end must remain within the existing date profile. A default event on 9999-12-31 fails because its end would require year 10000; an event ending at 9999-12-31 excludes that date. No clipping, implicit sentinel or wider zone coverage is introduced. Scoped uniform-length DATE-only series overlap queries now exist under [ADR 0036](adr/0036-date-event-series-overlap.md). Timed/task spans, overrides and adapters remain pending. See [ADR 0035](adr/0035-date-only-event-spans.md).
 
 ## Date-only event span validation
 
@@ -338,3 +338,25 @@ With pinned Dart 3.13.5:
 New evidence covers defaults, preserved end/day/week representations, conflicting/nonpositive/clock-valued input rejection, leap centuries, year crossings, membership, adjacency and symmetric overlap. Every pair of short synthetic spans is compared with independently enumerated occupied-date sets. Profile endpoints and huge durations fail explicitly; date-only spans after 2037 do not bypass named-zone rejection.
 
 Dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE and the main README warning are unchanged. The full database/browser-journey/two-host suite was not repeated for this pure-core increment. Documentation links/anchors (207), consecutive ADR numbering, changed-file scope and `git diff --check`: passed.
+
+## Bounded DATE-only event-series overlap
+
+`DateEventSeries` pairs a `DateRecurrenceSet` with a `DateEventSpan` sharing its DTSTART. `expandOverlapping` accepts `from` inclusive and `until` exclusive, unlike the underlying set's closed start-date range. A three-day event queried for January 5–6 includes starts on January 3, 4 and 5; January 2 ends at the lower boundary and January 6 starts at the upper boundary, so both are excluded. Return complete spans, retaining dates outside the query and separate overlapping occurrences.
+
+The query searches back by template length minus one, bounded by year 0001, and applies the original explicit-end, duration or default form at each selected start. COUNT/UNTIL remain start constraints; earlier inclusions and exclusion precedence are unchanged. `maxRuleOccurrences` counts raw rule starts in this widened range before exclusions; `maxResults` includes all selected overlapping starts, including earlier ones. `maxCandidateDays` still bounds rule history and period work. Required budgets must be trusted and practical at future host boundaries.
+
+Endpoint overflow in any selected span fails the entire query, with no clipping, skipping or partial result. The query does not validate unrelated future occurrences. No UTC conversion, moved/variable-length override query, globally scoped occurrence key or complete availability result is provided. See [ADR 0036](adr/0036-date-event-series-overlap.md).
+
+## Date event series overlap validation
+
+With pinned Dart 3.13.5:
+
+- `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe format packages/serverpod_calendar_core/lib packages/serverpod_calendar_core/test`: twenty-six files checked, one formatted.
+- The same executable with `analyze --fatal-infos`: workspace analysis passed.
+- The same executable with `test --reporter expanded`, from the core package: all **387 tests passed**, including 26 new series tests.
+- The same executable with `test --platform chrome --reporter expanded`, from the core package: all **387 tests passed in Chrome**.
+- Serverpod MCP `hot_reload`: completed successfully. No endpoint consumes these queries yet.
+
+Tests cover lower/upper touching boundaries, earlier starts, unclipped spans and each input form, leap-boundary shifts, COUNT/UNTIL, earlier additions, duplicate/excluded dates, immutable sorted results, every widened-range/work budget, mismatched starts/rules, safe full-profile lookback, selected endpoint overflow and explicit Sunday WKST independent of ISO labels. A grid of short query windows and lengths is checked against independently enumerated occupied-date sets.
+
+Dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE and the main README warning are unchanged. The full database/browser-journey/two-host suite was not repeated for this pure-core increment. Documentation links/anchors (219), consecutive ADR numbering, changed-file scope and `git diff --check`: passed.

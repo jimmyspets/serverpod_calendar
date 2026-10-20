@@ -4,7 +4,8 @@ Framework-independent Dart calendar semantics:
 
 - `UtcWindow`: validated UTC bounds, half-open membership, overlap/intersection and value equality.
 - `CalendarDate`: Gregorian date-only fields for years 0001–9999, strict date validation, leap-year/month lengths, calendar-day addition/distance, Monday-based weekdays, chronological ordering and value equality.
-- `DateEventSpan`: DATE-only event bounds with preserved optional end/duration, exclusive-end membership/overlap, positive day/week durations and a one-day default. Effective end must remain within years 0001–9999; no task, UTC occupancy or recurrence-span integration.
+- `DateEventSpan`: DATE-only event bounds with preserved optional end/duration, exclusive-end membership/overlap, positive day/week durations and a one-day default. Effective end must remain within years 0001–9999; no task or UTC occupancy integration.
+- `DateEventSeries`: bounded uniform-length DATE-only occurrence queries over half-open date ranges, including earlier overlapping starts. Preserves full spans and template form; no clipping, merged occurrences, moved overrides, UTC occupancy or availability decisions.
 - `CivilDateTime`: validated Gregorian wall-clock fields, microsecond precision, leap-second rejection and field ordering/equality; no implicit zone or instant.
 - `CalendarDuration`: signed, unit-preserving week/day/clock magnitudes and native microseconds; strict structural validation and explicit date/calendar-first zoned application. Property-specific constraints remain pending.
 - `DateRecurrenceRule`, `DateRecurrenceFrequency`, `Weekday`, `ByDayValue`: immutable DATE-only recurrence parameters with range/combination validation and canonical filter lists; no expansion.
