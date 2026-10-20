@@ -47,4 +47,4 @@ Changing WKST can move occurrences, so neither imports nor unrelated edits may r
 
 ## Implementation and limits
 
-The DATE-only core supports every WKST and yearly BYWEEKNO with explicit work/result limits. [Temporal core validation](temporal-core.md) records VM/Chrome tests, including all week starts and 400-year boundary checks. Timed recurrence, recurrence sets/exceptions, parsing/export and external-client behavior remain pending. These week conventions do not extend date years 0001–9999 or the **1900–2037 named-zone envelope**; the main README warning and coverage guards remain in force.
+The DATE-only core supports every WKST and yearly BYWEEKNO with explicit work/result limits. [Temporal core validation](temporal-core.md) records VM/Chrome tests, including all week starts and 400-year boundary checks. Timed recurrence, timed/PERIOD sets and moved/cancelled overrides, parsing/export and external-client behavior remain pending. These week conventions do not extend date years 0001–9999 or the **1900–2037 named-zone envelope**; the main README warning and coverage guards remain in force.

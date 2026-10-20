@@ -1,6 +1,6 @@
 # Temporal core implementation
 
-Status: **temporal values, bounded named-zone operations and initial bounded date-only recurrence**, 2026-10-20. The pure Dart core exports `UtcWindow`, `CalendarDate`, `CivilDateTime`, `CalendarDuration`, `NamedZoneResolver` and DATE-only recurrence parameter/generator types. Full recurrence expansion, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
+Status: **temporal values, bounded named-zone operations and initial bounded date-only recurrence**, 2026-10-20. The pure Dart core exports `UtcWindow`, `CalendarDate`, `CivilDateTime`, `CalendarDuration`, `NamedZoneResolver` and DATE-only recurrence parameter/generator/set types. Full recurrence expansion, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
 
 ## ISO 8601 week convention
 
@@ -104,7 +104,7 @@ The maintainer selected rejecting starts that do not match their rule, including
 
 Yearly BYWEEKNO uses the week containing January 4 under the supplied WKST. Dates near New Year may carry an adjacent week-year; negative selectors use that actual week-year's 52/53-week length. Without BYDAY, retain all matching week days. Yearly cadence and BYSETPOS remain anchored to calendar-year periods, while other filters apply to actual calendar dates. Missing week 53 is skipped without consuming COUNT. See [ADR 0031](adr/0031-date-recurrence-week-numbers.md).
 
-Private adjacent week-year labels 0/10000 are integer boundaries, never additional accepted dates. BYSETPOS on a week clipped by date-profile year 0001/9999 throws `RangeError`. Cadence arithmetic checks large intervals before multiplication. The implementation scans from DTSTART rather than fast-forwarding with unproved COUNT semantics. Timed recurrence, inclusions/exclusions, exceptions, spans and adapters remain pending. See [ADR 0030](adr/0030-bounded-date-recurrence-generation.md).
+Private adjacent week-year labels 0/10000 are integer boundaries, never additional accepted dates. BYSETPOS on a week clipped by date-profile year 0001/9999 throws `RangeError`. Cadence arithmetic checks large intervals before multiplication. The implementation scans from DTSTART rather than fast-forwarding with unproved COUNT semantics. DATE-only additions/exclusions are implemented separately under [ADR 0033](adr/0033-date-recurrence-sets.md). Timed/PERIOD values, overrides, spans and adapters remain pending. See [ADR 0030](adr/0030-bounded-date-recurrence-generation.md).
 
 ## Bounded named-zone resolution
 
@@ -271,3 +271,25 @@ With pinned Dart 3.13.5:
 Evidence includes week 53 missing-year skipping, positive/negative adjacent week-year membership, calendar-year interval anchoring, month/position combinations, duplicate collapse, all WKST boundary cases, both date-profile edges and explicit budget failures. For each of seven week starts, first/last-week membership across a complete 146097-day Gregorian cycle is compared with an independent fourth-day construction. The RFC fixture is compared as start dates, not as a timed/zone interchange claim. The existing 2037 zone rejection tests remain unchanged and pass.
 
 Dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE and the main README warning are unchanged. The full database/browser-journey/two-host suite was not repeated for this pure-core increment. Timed/set/override semantics, production budgets, spans and protocol/client interoperability remain pending. Documentation links/anchors, ADR numbering, changed-file scope and `git diff --check`: passed.
+
+## Bounded DATE-only recurrence sets
+
+`DateRecurrenceSet` combines an optional rule with explicit additions and exclusions. For a daily rule starting 2026-01-01 with COUNT=3, adding January 5 and excluding January 2 yields January 1, 3 and 5. Exclusions take precedence over both sources; duplicates collapse. Excluding DTSTART retains its stored value. Earlier inclusions are preserved as explicitly selected, without rebasing DTSTART or changing COUNT. UNTIL constrains the rule, not additions; exclusions never replenish COUNT.
+
+Construction requires `maxExplicitDates`, bounding the combined raw inclusion/exclusion lengths before copying or deduplication (zero permits neither). Expansion takes an inclusive `from`/`through` date range and separate `maxCandidateDays`, `maxRuleOccurrences` and `maxResults` limits. Candidate work includes pre-query rule history. Raw in-query rule output is capped before exclusions; final output is capped after exclusions. Limit failures name the exceeded budget and never return partial success. The sorted merge avoids allocating the complete union. Output and stored lists are immutable; constructor budgets are not semantic equality fields. Hosts still need trusted practical production limits.
+
+This is a pure DATE-only start-date set under [ADR 0033](adr/0033-date-recurrence-sets.md), not an event-span query, timed/PERIOD interchange model, override engine or service API. Explicit WKST remains honored; native ISO presentation and named-zone guards are unchanged.
+
+## Date-only recurrence set validation
+
+With pinned Dart 3.13.5:
+
+- `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe format packages/serverpod_calendar_core/lib packages/serverpod_calendar_core/test`: twenty files checked, two formatted.
+- The same executable with `analyze --fatal-infos`: workspace analysis passed.
+- The same executable with `test --reporter expanded`, from the core package: all **298 tests passed**, including 26 new set tests.
+- The same executable with `test --platform chrome --reporter expanded`, from the core package: all **298 tests passed in Chrome**.
+- Serverpod MCP `hot_reload`: completed successfully. No endpoint consumes this recurrence set yet.
+
+New tests cover canonical immutable inputs/results, raw duplicate input caps, earlier additions, excluded DTSTART identity, union/exclusion precedence, COUNT/UNTIL independence, query boundaries/history, every limit failure, excluded mismatched starts, explicit Sunday BYWEEKNO and years 0001/9999. Existing named-zone coverage rejection tests remain unchanged and pass.
+
+Dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE and the main README/2037 warning are unchanged. The full database/browser-journey/two-host suite was not repeated for this pure-core increment. Timed/PERIOD sets, overrides, spans, production budgets and protocol/client interoperability remain pending. Documentation links/anchors (193), consecutive ADR numbering, changed-file scope and `git diff --check`: passed.
