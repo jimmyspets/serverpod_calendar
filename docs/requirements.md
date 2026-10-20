@@ -72,7 +72,7 @@ The example host/Flutter app is also the automated integration-test application,
 
 ## Recurrence implementation boundary
 
-A pure-core DATE-only rule parameter validator now exists under [ADR 0029](adr/0029-date-recurrence-rule-values.md). Its immutable lists and range/combination checks do not establish bounded occurrence queries, timed recurrence, COUNT/UNTIL evaluation, task lifecycle or interchange support. Native filter sorting/deduplication is a proposed representation default; the selected full first-release recurrence scope is unchanged.
+A pure-core DATE-only rule parameter validator now exists under [ADR 0029](adr/0029-date-recurrence-rule-values.md). Its immutable lists and range/combination checks do not establish bounded occurrence queries, timed recurrence, COUNT/UNTIL evaluation, task lifecycle or interchange support. The maintainer confirmed sorted, duplicate-free native filters; the selected full first-release recurrence scope is unchanged.
 
 ## Native duration precision
 

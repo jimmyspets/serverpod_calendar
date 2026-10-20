@@ -1,6 +1,6 @@
 # ADR 0029: Validated date-only recurrence rule values
 
-Status: **Proposed API implementation; filter canonicalization is an implementation default, not a recorded maintainer decision**. Date: 2026-10-20.
+Status: **Sorted, duplicate-free filter representation explicitly confirmed; broader API implementation remains proposed**. Date: 2026-10-20.
 
 ## Context and scope
 
@@ -16,7 +16,7 @@ The DATE-only rule accepts daily/weekly/monthly/yearly frequency, positive inter
 
 Validate month/day/year/week/position ranges, reject zero signed selectors, reject weekly month-day filters, restrict DATE-only year-day/week-number filters to yearly rules, restrict ordinal weekdays to monthly/yearly, prohibit yearly ordinal weekdays with week-number filters, and require another BY part for set-position selection. Bad ranges throw `RangeError`; illegal combinations throw `ArgumentError`. Valid selectors can describe an empty candidate set (such as February 30) without being clamped into another date. Context-specific ordinal existence is determined during future generation.
 
-Snapshot input lists and expose them as unmodifiable. The proposed default sorts numeric lists and removes exact duplicate values; BYDAY sorts by weekday Monday–Sunday, then signed ordinal with omission occupying the zero position. Unnumbered Monday and first Monday remain distinct selections. Equality/hashing compare the resulting value fields. Canonicalization does not collapse overlapping selectors, prove that arbitrary different rules generate the same dates or authorize dropping unsupported parts. This recommendation was offered for maintainer preference; no explicit response is recorded at this increment.
+Snapshot input lists and expose them as unmodifiable. The maintainer selected sorting filter lists and removing duplicates. The implementation sorts numeric lists and removes exact duplicate values; BYDAY sorts by weekday Monday–Sunday, then signed ordinal with omission occupying the zero position. Unnumbered Monday and first Monday remain distinct selections. Equality/hashing compare the resulting value fields. Canonicalization does not collapse overlapping selectors, prove that arbitrary different rules generate the same dates or authorize dropping unsupported parts. The maintainer explicitly selected “Sort and remove duplicates” on 2026-10-20; preserving supplied order/duplicates was offered and not selected.
 
 ## Boundaries and safeguards
 
