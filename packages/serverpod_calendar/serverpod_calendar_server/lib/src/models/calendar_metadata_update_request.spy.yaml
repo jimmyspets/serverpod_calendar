@@ -1,0 +1,5 @@
+class: CalendarMetadataUpdateRequest
+fields:
+  calendarId: UuidValue
+  expectedRevision: int
+  displayName: String

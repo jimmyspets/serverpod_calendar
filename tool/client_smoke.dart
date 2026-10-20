@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'calendar_smoke.dart';
+
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart';
 
@@ -89,6 +91,7 @@ Future<void> main(List<String> args) async {
         auth.refreshToken == null) {
       throw StateError('Expected JWT access and refresh credentials.');
     }
+    await calendarSmoke(clients, values['demoBobPassword'] as String);
     final verifier = clients.length > 1 ? clients.last : first;
     // Exercise real refresh/rotation on another host before revoking the pair.
     final refreshed = await verifier.refreshJwtTokens.refreshAccessToken(

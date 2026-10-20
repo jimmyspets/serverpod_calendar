@@ -1,5 +1,8 @@
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:flutter/material.dart';
+
+import 'calendar_screen.dart';
+
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:serverpod_flutter/serverpod_flutter.dart';
 
@@ -172,6 +175,18 @@ class _ConnectionScreenState extends State<_ConnectionScreen> {
                     child: const Text('Sign in'),
                   ),
                 ] else ...[
+                  FilledButton(
+                    key: const Key('open-calendars'),
+                    onPressed: _busy
+                        ? null
+                        : () => Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  CalendarScreen(client: widget.client),
+                            ),
+                          ),
+                    child: const Text('My calendars'),
+                  ),
                   FilledButton(
                     key: const Key('check'),
                     onPressed: _busy ? null : _check,

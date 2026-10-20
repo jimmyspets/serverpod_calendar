@@ -11,9 +11,20 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_calendar_server/src/generated/calendar_create_request.dart'
+    as _i287wpc6;
+import 'package:serverpod_calendar_server/src/generated/calendar_field_group.dart'
+    as _i3d02yxy;
+import 'package:serverpod_calendar_server/src/generated/calendar_metadata_update_request.dart'
+    as _io29vhgw;
+import 'package:serverpod_calendar_server/src/generated/calendar_settings_update_request.dart'
+    as _i3f5mgyk;
+import 'package:serverpod_calendar_server/src/generated/calendar_subject_change_request.dart'
+    as _ib1wmljm;
 import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
     as _ik9lwgjh;
 import '../endpoints/calendar_diagnostics_endpoint.dart' as _icr8drn5;
+import '../endpoints/calendar_endpoint.dart' as _inx4l1vp;
 
 class Endpoints extends _is.EndpointDispatch {
   @override
@@ -23,6 +34,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'calendarDiagnostics',
+          'serverpod_calendar',
+        ),
+      'calendar': _inx4l1vp.CalendarEndpoint()
+        ..initialize(
+          server,
+          'calendar',
           'serverpod_calendar',
         ),
     };
@@ -41,6 +58,188 @@ class Endpoints extends _is.EndpointDispatch {
                   (endpoints['calendarDiagnostics']
                           as _icr8drn5.CalendarDiagnosticsEndpoint)
                       .check(session),
+        ),
+      },
+    );
+    connectors['calendar'] = _is.EndpointConnector(
+      name: 'calendar',
+      endpoint: endpoints['calendar']!,
+      methodConnectors: {
+        'create': _is.MethodConnector(
+          name: 'create',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i287wpc6.CalendarCreateRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendar'] as _inx4l1vp.CalendarEndpoint).create(
+                    session,
+                    params['request'],
+                  ),
+        ),
+        'getCalendar': _is.MethodConnector(
+          name: 'getCalendar',
+          params: {
+            'calendarId': _is.ParameterDescription(
+              name: 'calendarId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'fieldGroups': _is.ParameterDescription(
+              name: 'fieldGroups',
+              type: _is.getType<List<_i3d02yxy.CalendarFieldGroup>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['calendar'] as _inx4l1vp.CalendarEndpoint)
+                  .getCalendar(
+                    session,
+                    params['calendarId'],
+                    params['fieldGroups'],
+                  ),
+        ),
+        'list': _is.MethodConnector(
+          name: 'list',
+          params: {
+            'pageSize': _is.ParameterDescription(
+              name: 'pageSize',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'fieldGroups': _is.ParameterDescription(
+              name: 'fieldGroups',
+              type: _is.getType<List<_i3d02yxy.CalendarFieldGroup>>(),
+              nullable: false,
+            ),
+            'cursor': _is.ParameterDescription(
+              name: 'cursor',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendar'] as _inx4l1vp.CalendarEndpoint).list(
+                    session,
+                    pageSize: params['pageSize'],
+                    fieldGroups: params['fieldGroups'],
+                    cursor: params['cursor'],
+                  ),
+        ),
+        'updateMetadata': _is.MethodConnector(
+          name: 'updateMetadata',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_io29vhgw.CalendarMetadataUpdateRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['calendar'] as _inx4l1vp.CalendarEndpoint)
+                  .updateMetadata(
+                    session,
+                    params['request'],
+                  ),
+        ),
+        'updateSettings': _is.MethodConnector(
+          name: 'updateSettings',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i3f5mgyk.CalendarSettingsUpdateRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['calendar'] as _inx4l1vp.CalendarEndpoint)
+                  .updateSettings(
+                    session,
+                    params['request'],
+                  ),
+        ),
+        'subjects': _is.MethodConnector(
+          name: 'subjects',
+          params: {
+            'calendarId': _is.ParameterDescription(
+              name: 'calendarId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['calendar'] as _inx4l1vp.CalendarEndpoint)
+                  .subjects(
+                    session,
+                    params['calendarId'],
+                  ),
+        ),
+        'changeSubject': _is.MethodConnector(
+          name: 'changeSubject',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_ib1wmljm.CalendarSubjectChangeRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['calendar'] as _inx4l1vp.CalendarEndpoint)
+                  .changeSubject(
+                    session,
+                    params['request'],
+                  ),
+        ),
+        'delete': _is.MethodConnector(
+          name: 'delete',
+          params: {
+            'calendarId': _is.ParameterDescription(
+              name: 'calendarId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'expectedRevision': _is.ParameterDescription(
+              name: 'expectedRevision',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendar'] as _inx4l1vp.CalendarEndpoint).delete(
+                    session,
+                    params['calendarId'],
+                    params['expectedRevision'],
+                  ),
         ),
       },
     );

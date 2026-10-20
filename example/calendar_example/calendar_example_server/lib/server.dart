@@ -1,10 +1,13 @@
 import 'dart:io';
 
+import 'package:serverpod_calendar_server/serverpod_calendar_server.dart';
+
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 
 import 'src/generated/serverpod.dart';
 import 'src/local_demo.dart';
+import 'src/calendar_policy.dart';
 
 Future<void> run(List<String> args) async {
   final pod = Serverpod(args);
@@ -41,6 +44,13 @@ Future<void> run(List<String> args) async {
             },
       ),
     ],
+  );
+  CalendarModule.install(
+    pod,
+    policy: DemoCalendarPolicy(),
+    options: const CalendarModuleOptions(
+      requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+    ),
   );
   await pod.start();
   if (Platform.environment['CALENDAR_EXAMPLE_SEED_DEMO'] == 'true') {

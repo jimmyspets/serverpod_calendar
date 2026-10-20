@@ -62,6 +62,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0048](0048-calendar-name-validation-and-row-layout.md) | Native 256-code-point/trim name rules and separate identity/active-data rows | Accepted validation/layout boundaries; generated constraints and protocols proposed |
 
+| [0049](0049-first-calendar-crud-implementation.md) | First native CRUD, duplicate labels, private demo scopes and bounded storage/authorization mechanics | Accepted batch scope; implementation mechanics under review |
+
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
 Use the next consecutive number for a new ADR covering a material decision. Include context, proposal/decision, alternatives, consequences, and acceptance conditions. Preserve committed/accepted decision history; supersede accepted decisions with a linked ADR. Superseded uncommitted drafts may be removed under the maintainer-authorized cleanup. Mark an ADR accepted only after explicit maintainer agreement recorded in the PR or issue.

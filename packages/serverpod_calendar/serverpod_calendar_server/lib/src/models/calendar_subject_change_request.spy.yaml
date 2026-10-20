@@ -1,0 +1,9 @@
+class: CalendarSubjectChangeRequest
+fields:
+  calendarId: UuidValue
+  expectedRevision: int
+  action: CalendarSubjectAction
+  namespace: String
+  kind: String
+  externalId: String
+  contributesAvailability: bool

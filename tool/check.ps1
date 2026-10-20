@@ -36,7 +36,11 @@ try {
   $dartFiles = Get-ChildItem tool,packages,example -Recurse -File -Filter '*.dart' |
     Where-Object { $_.FullName -notmatch '[\\/](\.dart_tool|build|\.serverpod|generated|protocol|test_tools)[\\/]' -and $_.Name -notlike '*_client.dart' } |
     Select-Object -ExpandProperty FullName
-  Invoke-Checked dart (@('format', '--output=none', '--set-exit-if-changed') + $dartFiles)
+  # Windows batch entry points have a short command-line limit.
+  for ($offset = 0; $offset -lt $dartFiles.Count; $offset += 25) {
+    $last = [Math]::Min($offset + 24, $dartFiles.Count - 1)
+    Invoke-Checked dart (@('format', '--output=none', '--set-exit-if-changed') + $dartFiles[$offset..$last])
+  }
   Invoke-Checked dart @('analyze', '--fatal-infos')
   Push-Location (Join-Path $WorkspaceRoot 'packages/serverpod_calendar_core')
   try {
@@ -44,10 +48,19 @@ try {
     if (-not $SkipBrowser) { Invoke-Checked dart @('test', '--platform', 'chrome') }
   }
   finally { Pop-Location }
+  Push-Location (Join-Path $WorkspaceRoot 'packages/serverpod_calendar/serverpod_calendar_server')
+  try {
+    Invoke-Checked dart @('test', 'test/unit')
+    if (-not $SkipBrowser) { Invoke-Checked dart @('test', '--platform', 'chrome', 'test/unit') }
+  }
+  finally { Pop-Location }
   Push-Location $ExampleFlutter
   try { Invoke-Checked flutter @('test', '--no-pub', 'test/sign_in_test.dart') }
   finally { Pop-Location }
   & "$PSScriptRoot/reset-test.ps1"
+  Push-Location $ExampleServer
+  try { Invoke-Checked dart @('test', 'test/integration/calendar_test.dart') }
+  finally { Pop-Location }
   & "$PSScriptRoot/build-host.ps1"
   $smokeArgs = @('run', 'tool/host_smoke.dart')
   if (-not $SkipBrowser) { $smokeArgs += '--flutter' }

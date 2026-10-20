@@ -12,6 +12,8 @@ dependencies:
     sdk: flutter
   calendar_example_client:
     path: ../calendar_example_client
+  serverpod_calendar_client:
+    path: ../../../packages/serverpod_calendar/serverpod_calendar_client
   serverpod_flutter: 4.0.4
   serverpod_auth_idp_flutter: 4.0.4
 dev_dependencies:
