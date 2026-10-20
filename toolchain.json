@@ -1,0 +1,29 @@
+{
+  "flutter": "3.47.7",
+  "dart": "3.13.5",
+  "serverpod": "4.0.4",
+  "localImages": {
+    "postgres": "ghcr.io/serverpod/postgres@sha256:a8ba1720aa58e55b3972a6db49a2311e8bbb60ea9341e5a68695c4b86ba81169",
+    "redis": "redis@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499"
+  },
+  "timezone": {
+    "package": "0.11.2",
+    "iana": "2026e",
+    "variant": "generated-bounded",
+    "tzfSha256": "3ed7e4f36fd34974f521be79c96f1effece3ac8de83432c70fd6fc021764cae9",
+    "civilYearEnvelope": [
+      1970,
+      2100
+    ],
+    "profile": 2,
+    "endExclusive": true,
+    "utcPadding": [
+      "1969-12-30T00:00:00Z",
+      "2100-01-03T00:00:00Z"
+    ],
+    "sourceArchives": {
+      "tzcode2026e.tar.gz": "cc3d27ca2a0d8399504551b920970d80af83bfb9c216e8082a15491921935d54",
+      "tzdata2026e.tar.gz": "b26882805f26aac59d5b222978e6580484b834ccdc98be89df2f05a6dc53a652"
+    }
+  }
+}

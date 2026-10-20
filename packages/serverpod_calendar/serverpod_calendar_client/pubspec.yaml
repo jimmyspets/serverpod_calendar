@@ -1,0 +1,11 @@
+name: serverpod_calendar_client
+description: Generated client for the serverpod_calendar module scaffold.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+environment:
+  sdk: '>=3.13.5 <3.14.0'
+dependencies:
+  serverpod_client: 4.0.4
+  serverpod_notifications_client:
+    path: ../../serverpod_notifications/serverpod_notifications_client

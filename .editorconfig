@@ -1,0 +1,23 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+[*.{bat,cmd}]
+end_of_line = crlf
+
+# Preserve intentional Markdown hard breaks and patch content.
+[*.{md,patch,diff}]
+trim_trailing_whitespace = false
+
+# Protocol fixtures may deliberately contain unusual bytes or line endings.
+[*.ics]
+charset = unset
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = false

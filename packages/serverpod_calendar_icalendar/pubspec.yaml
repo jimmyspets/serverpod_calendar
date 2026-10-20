@@ -1,0 +1,12 @@
+name: serverpod_calendar_icalendar
+description: Explicit iCalendar adapter foundation.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+environment:
+  sdk: '>=3.13.5 <3.14.0'
+dependencies:
+  serverpod_calendar_core:
+    path: ../serverpod_calendar_core
+dev_dependencies:
+  lints: 6.1.0
