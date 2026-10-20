@@ -1,0 +1,6 @@
+class: CalendarSubjectView
+fields:
+  namespace: String
+  kind: String
+  externalId: String
+  contributesAvailability: bool

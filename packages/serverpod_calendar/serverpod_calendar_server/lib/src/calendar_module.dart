@@ -1,0 +1,815 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_calendar_core/serverpod_calendar_core.dart';
+
+import 'calendar_authorization.dart';
+import 'generated/protocol.dart';
+import 'native_calendar_name.dart';
+
+/// Configuration is per Serverpod instance, never an allow-decision cache.
+abstract final class CalendarModule {
+  static final _installed = Expando<_Runtime>();
+  static void install(
+    Serverpod pod, {
+    required CalendarHostPolicy policy,
+    required CalendarModuleOptions options,
+    List<CalendarDependencyProvider> dependencies = const [],
+  }) {
+    for (final n in [
+      options.maxPageSize,
+      options.maxScannedCalendars,
+      options.policyBatchSize,
+      options.maxAssociations,
+      options.maxCursorsPerScope,
+    ]) {
+      if (n < 1 || n > 10000) throw ArgumentError('Invalid calendar limit');
+    }
+    if (dependencies.length > 16 ||
+        options.policyTimeout <= Duration.zero ||
+        options.policyTimeout > const Duration(seconds: 30) ||
+        options.cursorLifetime <= Duration.zero ||
+        options.cursorLifetime > const Duration(hours: 1)) {
+      throw ArgumentError('Invalid calendar configuration');
+    }
+    if (options.requiredWriteGuarantee ==
+            CalendarAuthorizationGuarantee.coordinated &&
+        policy.guarantee != CalendarAuthorizationGuarantee.coordinated) {
+      throw ArgumentError('Host cannot supply required coordinated guarantee');
+    }
+    _installed[pod] = _Runtime(
+      policy,
+      options,
+      List.unmodifiable(dependencies),
+    );
+  }
+
+  static CalendarService service(Session session) {
+    final runtime = _installed[session.serverpod];
+    if (runtime == null || session.authenticated == null) {
+      throw _failure(CalendarFailureCode.accessDenied);
+    }
+    return CalendarService._(session, runtime);
+  }
+}
+
+CalendarException _failure(CalendarFailureCode code) => CalendarException(
+  code: code,
+  message: switch (code) {
+    CalendarFailureCode.validation => 'Invalid calendar request.',
+    CalendarFailureCode.accessDenied => 'Calendar operation is not permitted.',
+    CalendarFailureCode.staleRevision => 'Calendar revision has changed.',
+    CalendarFailureCode.dependencyConflict =>
+      'Calendar change has active dependencies or conflicts.',
+    CalendarFailureCode.limitExceeded =>
+      'Calendar operation exceeds its work limit.',
+    CalendarFailureCode.invalidCursor =>
+      'Calendar continuation is no longer valid; restart the query.',
+    _ => 'Calendar operation is temporarily unavailable.',
+  },
+);
+
+final class _Runtime {
+  _Runtime(this.policy, this.options, this.dependencies);
+  final CalendarHostPolicy policy;
+  final CalendarModuleOptions options;
+  final List<CalendarDependencyProvider> dependencies;
+}
+
+/// Every entry point resolves trusted context and enforces policy itself.
+final class CalendarService {
+  CalendarService._(this._session, this._runtime);
+  final Session _session;
+  final _Runtime _runtime;
+  CalendarModuleOptions get _options => _runtime.options;
+  static const _maxRevision = 9007199254740991;
+
+  Future<T> _bounded<T>(Future<T> Function() action) async {
+    try {
+      return await action().timeout(_options.policyTimeout);
+    } on CalendarException {
+      rethrow;
+    } catch (_) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
+  }
+
+  void _opaque(String value, {int maxUtf8Bytes = 512}) {
+    try {
+      validateCalendarOpaqueText(value, maxUtf8Bytes: maxUtf8Bytes);
+    } on ArgumentError {
+      throw _failure(CalendarFailureCode.validation);
+    }
+  }
+
+  Future<CalendarHostContext> _context() async {
+    final c = await _bounded(() => _runtime.policy.resolveContext(_session));
+    for (final s in [c.principalId, c.scopeKey, c.policyRevision]) {
+      _opaque(s);
+    }
+    return c;
+  }
+
+  Future<void> _verifyContext(CalendarHostContext c) async {
+    final now = await _context();
+    if (c.principalId != now.principalId ||
+        c.scopeKey != now.scopeKey ||
+        c.policyRevision != now.policyRevision) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
+  }
+
+  Future<Map<String, CalendarAuthorizationDecision>> _decide(
+    CalendarHostContext c,
+    List<CalendarAuthorizationRequest> requests,
+    Transaction tx,
+    CalendarAuthorizationPhase phase, {
+    bool filterDenied = false,
+  }) async {
+    if (requests.length > _options.policyBatchSize) {
+      throw _failure(CalendarFailureCode.limitExceeded);
+    }
+    final expected = requests.map((r) => r.key).toSet();
+    if (expected.length != requests.length) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
+    final decisions = await _bounded(
+      () => _runtime.policy.authorizeBatch(
+        _session,
+        c,
+        List.unmodifiable(requests),
+        tx,
+        phase,
+      ),
+    );
+    final result = <String, CalendarAuthorizationDecision>{};
+    for (final d in decisions) {
+      if (!expected.contains(d.key) || result.containsKey(d.key)) {
+        throw _failure(CalendarFailureCode.unavailable);
+      }
+      result[d.key] = d;
+    }
+    if (result.length != expected.length) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
+    for (final d in result.values) {
+      if (d.verdict == CalendarAuthorizationVerdict.unavailable) {
+        throw _failure(CalendarFailureCode.unavailable);
+      }
+      if (!filterDenied && d.verdict != CalendarAuthorizationVerdict.allow) {
+        throw _failure(CalendarFailureCode.accessDenied);
+      }
+    }
+    return result;
+  }
+
+  Future<Map<String, CalendarAuthorizationDecision>> _final(
+    CalendarHostContext c,
+    List<CalendarAuthorizationRequest> requests,
+    Transaction tx,
+  ) async {
+    if (_options.requiredWriteGuarantee ==
+            CalendarAuthorizationGuarantee.coordinated &&
+        _runtime.policy.guarantee !=
+            CalendarAuthorizationGuarantee.coordinated) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
+    await _verifyContext(c);
+    return _decide(c, requests, tx, CalendarAuthorizationPhase.finalWrite);
+  }
+
+  /// Scope-row locking serializes this first bounded API across processes.
+  /// Policy coordination is a distinct host responsibility, not this data lock.
+  Future<T> _transaction<T>(
+    CalendarHostContext c,
+    Future<T> Function(Transaction, CalendarScopeRecord) action,
+  ) => _session.db.transaction((tx) async {
+    await CalendarScopeRecord.db.insert(
+      _session,
+      [CalendarScopeRecord(scopeKey: c.scopeKey, revision: 1)],
+      transaction: tx,
+      ignoreConflicts: true,
+      noReturn: true,
+    );
+    final scope = await CalendarScopeRecord.db.findFirstRow(
+      _session,
+      where: (t) => t.scopeKey.equals(c.scopeKey),
+      transaction: tx,
+      lockMode: LockMode.forUpdate,
+    );
+    if (scope == null) throw _failure(CalendarFailureCode.unavailable);
+    return action(tx, scope);
+  });
+  Future<void> _bump(CalendarScopeRecord scope, Transaction tx) async {
+    if (scope.revision >= _maxRevision) {
+      throw _failure(CalendarFailureCode.limitExceeded);
+    }
+    scope.revision++;
+    await CalendarScopeRecord.db.updateRow(_session, scope, transaction: tx);
+  }
+
+  Future<CalendarIdentityRecord> _identity(
+    CalendarHostContext c,
+    UuidValue id,
+    Transaction tx,
+  ) async {
+    final row = await CalendarIdentityRecord.db.findFirstRow(
+      _session,
+      where: (t) =>
+          t.id.equals(id) &
+          t.scopeKey.equals(c.scopeKey) &
+          t.deletedAt.equals(null),
+      transaction: tx,
+      lockMode: LockMode.forUpdate,
+    );
+    if (row == null) throw _failure(CalendarFailureCode.accessDenied);
+    return row;
+  }
+
+  Future<_Active> _active(
+    CalendarHostContext c,
+    UuidValue id,
+    Transaction tx,
+  ) async {
+    final identity = await _identity(c, id, tx);
+    final data = await CalendarDataRecord.db.findFirstRow(
+      _session,
+      where: (t) => t.calendarId.equals(id),
+      transaction: tx,
+    );
+    if (data == null) throw _failure(CalendarFailureCode.unavailable);
+    final links = await CalendarSubjectRecord.db.find(
+      _session,
+      where: (t) => t.calendarId.equals(id),
+      transaction: tx,
+      orderBy: (t) => t.id,
+      limit: _options.maxAssociations + 1,
+    );
+    if (links.length > _options.maxAssociations) {
+      throw _failure(CalendarFailureCode.limitExceeded);
+    }
+    return _Active(identity, data, links);
+  }
+
+  CalendarAuthorizationRequest _request(
+    CalendarPermission op,
+    _Active active, {
+    CalendarProposedChange? proposed,
+    Set<CalendarFieldGroup> groups = const {},
+  }) => CalendarAuthorizationRequest(
+    key: active.identity.id.toString(),
+    operation: op,
+    calendarId: active.identity.id,
+    current: active.snapshot,
+    proposed: proposed,
+    requestedGroups: groups,
+  );
+  void _revision(_Active a, int expected) {
+    if (expected < 1 || expected > _maxRevision) {
+      throw _failure(CalendarFailureCode.validation);
+    }
+    if (a.identity.revision != expected) {
+      throw _failure(CalendarFailureCode.staleRevision);
+    }
+    if (expected == _maxRevision) {
+      throw _failure(CalendarFailureCode.limitExceeded);
+    }
+  }
+
+  String _name(String value) {
+    try {
+      return normalizeCalendarDisplayName(value);
+    } on ArgumentError {
+      throw _failure(CalendarFailureCode.validation);
+    }
+  }
+
+  void _zone(String value) {
+    if (value.length > 255 || !NamedZoneResolver().zoneIds.contains(value)) {
+      throw _failure(CalendarFailureCode.validation);
+    }
+  }
+
+  Set<CalendarFieldGroup> _groups(List<CalendarFieldGroup> groups) {
+    if (groups.length > CalendarFieldGroup.values.length) {
+      throw _failure(CalendarFailureCode.validation);
+    }
+    return Set.unmodifiable(groups.toSet());
+  }
+
+  CalendarView _view(
+    _Active a,
+    Set<CalendarFieldGroup> requested,
+    CalendarAuthorizationDecision decision,
+  ) {
+    final groups = requested.intersection(decision.disclosedGroups).toList()
+      ..sort((a, b) => a.index.compareTo(b.index));
+    final metadata = groups.contains(CalendarFieldGroup.metadata);
+    final settings = groups.contains(CalendarFieldGroup.availabilitySettings);
+    return CalendarView(
+      id: a.identity.id!,
+      revision: a.identity.revision,
+      disclosedGroups: groups,
+      displayName: metadata ? a.data.displayName : null,
+      createdAt: metadata ? a.data.createdAt : null,
+      updatedAt: metadata ? a.data.updatedAt : null,
+      availabilityZoneId: settings ? a.data.availabilityZoneId : null,
+      noRuleFallback: settings ? a.data.noRuleFallback : null,
+    );
+  }
+
+  CalendarMutationReceipt? _receipt(
+    UuidValue id,
+    int revision,
+    bool deleted,
+    Iterable<CalendarAuthorizationDecision> decisions,
+  ) => decisions.every((d) => d.discloseMutationReceipt)
+      ? CalendarMutationReceipt(
+          calendarId: id,
+          revision: revision,
+          deleted: deleted,
+        )
+      : null;
+
+  Future<CalendarMutationReceipt?> create(CalendarCreateRequest input) async {
+    // Generated requests are mutable; hold a private validated command snapshot.
+    input = input.copyWith();
+    final c = await _context();
+    final name = _name(input.displayName);
+    _zone(input.availabilityZoneId);
+    final request = CalendarAuthorizationRequest(
+      key: 'create',
+      operation: CalendarPermission.create,
+      proposed: CalendarProposedChange(
+        displayName: name,
+        availabilityZoneId: input.availabilityZoneId,
+        noRuleFallback: input.noRuleFallback,
+      ),
+    );
+    return _transaction(c, (tx, scope) async {
+      await _decide(
+        c,
+        [request],
+        tx,
+        CalendarAuthorizationPhase.preliminaryWrite,
+      );
+      final decisions = await _final(c, [request], tx);
+      final now = DateTime.now().toUtc();
+      final identity = await CalendarIdentityRecord.db.insertRow(
+        _session,
+        CalendarIdentityRecord(scopeKey: c.scopeKey, revision: 1),
+        transaction: tx,
+      );
+      await CalendarDataRecord.db.insertRow(
+        _session,
+        CalendarDataRecord(
+          calendarId: identity.id!,
+          displayName: name,
+          availabilityZoneId: input.availabilityZoneId,
+          noRuleFallback: input.noRuleFallback,
+          createdAt: now,
+          updatedAt: now,
+        ),
+        transaction: tx,
+      );
+      await _bump(scope, tx);
+      return _receipt(identity.id!, 1, false, decisions.values);
+    });
+  }
+
+  Future<CalendarView> get(
+    UuidValue id,
+    List<CalendarFieldGroup> fieldGroups,
+  ) async {
+    final c = await _context();
+    final groups = _groups(fieldGroups);
+    return _transaction(c, (tx, _) async {
+      final a = await _active(c, id, tx);
+      final request = _request(CalendarPermission.read, a, groups: groups);
+      final decisions = await _decide(
+        c,
+        [request],
+        tx,
+        CalendarAuthorizationPhase.read,
+      );
+      await _verifyContext(c);
+      return _view(a, groups, decisions[request.key]!);
+    });
+  }
+
+  Future<CalendarMutationReceipt?> updateMetadata(
+    CalendarMetadataUpdateRequest input,
+  ) async {
+    // Generated requests are mutable; hold a private validated command snapshot.
+    input = input.copyWith();
+    final c = await _context();
+    final name = _name(input.displayName);
+    return _transaction(c, (tx, scope) async {
+      final a = await _active(c, input.calendarId, tx);
+      final request = _request(
+        CalendarPermission.updateMetadata,
+        a,
+        proposed: CalendarProposedChange(displayName: name),
+      );
+      await _decide(
+        c,
+        [request],
+        tx,
+        CalendarAuthorizationPhase.preliminaryWrite,
+      );
+      _revision(a, input.expectedRevision);
+      final decisions = await _final(c, [request], tx);
+      a.data.displayName = name;
+      a.data.updatedAt = DateTime.now().toUtc();
+      a.identity.revision++;
+      await CalendarDataRecord.db.updateRow(_session, a.data, transaction: tx);
+      await CalendarIdentityRecord.db.updateRow(
+        _session,
+        a.identity,
+        transaction: tx,
+      );
+      await _bump(scope, tx);
+      return _receipt(
+        a.identity.id!,
+        a.identity.revision,
+        false,
+        decisions.values,
+      );
+    });
+  }
+
+  Future<CalendarMutationReceipt?> updateSettings(
+    CalendarSettingsUpdateRequest input,
+  ) async {
+    // Generated requests are mutable; hold a private validated command snapshot.
+    input = input.copyWith();
+    final c = await _context();
+    _zone(input.availabilityZoneId);
+    return _transaction(c, (tx, scope) async {
+      final a = await _active(c, input.calendarId, tx);
+      final request = _request(
+        CalendarPermission.updateAvailabilitySettings,
+        a,
+        proposed: CalendarProposedChange(
+          availabilityZoneId: input.availabilityZoneId,
+          noRuleFallback: input.noRuleFallback,
+        ),
+      );
+      await _decide(
+        c,
+        [request],
+        tx,
+        CalendarAuthorizationPhase.preliminaryWrite,
+      );
+      _revision(a, input.expectedRevision);
+      final decisions = await _final(c, [request], tx);
+      a.data.availabilityZoneId = input.availabilityZoneId;
+      a.data.noRuleFallback = input.noRuleFallback;
+      a.data.updatedAt = DateTime.now().toUtc();
+      a.identity.revision++;
+      await CalendarDataRecord.db.updateRow(_session, a.data, transaction: tx);
+      await CalendarIdentityRecord.db.updateRow(
+        _session,
+        a.identity,
+        transaction: tx,
+      );
+      await _bump(scope, tx);
+      return _receipt(
+        a.identity.id!,
+        a.identity.revision,
+        false,
+        decisions.values,
+      );
+    });
+  }
+
+  Future<List<CalendarSubjectView>> subjects(UuidValue id) async {
+    final c = await _context();
+    return _transaction(c, (tx, _) async {
+      final a = await _active(c, id, tx);
+      await _decide(
+        c,
+        [_request(CalendarPermission.readAssociations, a)],
+        tx,
+        CalendarAuthorizationPhase.read,
+      );
+      await _verifyContext(c);
+      return [
+        for (final s in a.links)
+          CalendarSubjectView(
+            namespace: s.namespace,
+            kind: s.kind,
+            externalId: s.externalId,
+            contributesAvailability: s.contributesAvailability,
+          ),
+      ];
+    });
+  }
+
+  Future<CalendarMutationReceipt?> changeSubject(
+    CalendarSubjectChangeRequest input,
+  ) async {
+    // Generated requests are mutable; hold a private validated command snapshot.
+    input = input.copyWith();
+    final c = await _context();
+    _opaque(input.namespace, maxUtf8Bytes: 128);
+    _opaque(input.kind, maxUtf8Bytes: 64);
+    _opaque(input.externalId, maxUtf8Bytes: 512);
+    return _transaction(c, (tx, scope) async {
+      final a = await _active(c, input.calendarId, tx);
+      final intent = CalendarSubjectIntent(
+        input.action,
+        CalendarSubjectReference(input.namespace, input.kind, input.externalId),
+        input.contributesAvailability,
+      );
+      final request = _request(
+        CalendarPermission.changeAssociations,
+        a,
+        proposed: CalendarProposedChange(subject: intent),
+      );
+      await _decide(
+        c,
+        [request],
+        tx,
+        CalendarAuthorizationPhase.preliminaryWrite,
+      );
+      _revision(a, input.expectedRevision);
+      final matching = a.links
+          .where(
+            (s) =>
+                s.namespace == input.namespace &&
+                s.kind == input.kind &&
+                s.externalId == input.externalId,
+          )
+          .toList();
+      if ((input.action == CalendarSubjectAction.attach &&
+              matching.isNotEmpty) ||
+          (input.action != CalendarSubjectAction.attach && matching.isEmpty)) {
+        throw _failure(CalendarFailureCode.dependencyConflict);
+      }
+      if (input.action == CalendarSubjectAction.attach &&
+          a.links.length >= _options.maxAssociations) {
+        throw _failure(CalendarFailureCode.limitExceeded);
+      }
+      final decisions = await _final(c, [request], tx);
+      switch (input.action) {
+        case CalendarSubjectAction.attach:
+          await CalendarSubjectRecord.db.insertRow(
+            _session,
+            CalendarSubjectRecord(
+              calendarId: input.calendarId,
+              namespace: input.namespace,
+              kind: input.kind,
+              externalId: input.externalId,
+              contributesAvailability: input.contributesAvailability,
+            ),
+            transaction: tx,
+          );
+        case CalendarSubjectAction.detach:
+          await CalendarSubjectRecord.db.deleteRow(
+            _session,
+            matching.single,
+            transaction: tx,
+          );
+        case CalendarSubjectAction.setContribution:
+          matching.single.contributesAvailability =
+              input.contributesAvailability;
+          await CalendarSubjectRecord.db.updateRow(
+            _session,
+            matching.single,
+            transaction: tx,
+          );
+      }
+      a.identity.revision++;
+      a.data.updatedAt = DateTime.now().toUtc();
+      await CalendarIdentityRecord.db.updateRow(
+        _session,
+        a.identity,
+        transaction: tx,
+      );
+      await CalendarDataRecord.db.updateRow(_session, a.data, transaction: tx);
+      await _bump(scope, tx);
+      return _receipt(
+        a.identity.id!,
+        a.identity.revision,
+        false,
+        decisions.values,
+      );
+    });
+  }
+
+  Future<CalendarMutationReceipt?> delete(
+    UuidValue id,
+    int expectedRevision,
+  ) async {
+    final c = await _context();
+    return _transaction(c, (tx, scope) async {
+      final a = await _active(c, id, tx);
+      final request = _request(CalendarPermission.delete, a);
+      await _decide(
+        c,
+        [request],
+        tx,
+        CalendarAuthorizationPhase.preliminaryWrite,
+      );
+      _revision(a, expectedRevision);
+      if (a.links.isNotEmpty) {
+        throw _failure(CalendarFailureCode.dependencyConflict);
+      }
+      for (final dependency in _runtime.dependencies) {
+        if (await _bounded(
+          () => dependency.hasActiveDependencies(_session, id, tx),
+        )) {
+          throw _failure(CalendarFailureCode.dependencyConflict);
+        }
+      }
+      final decisions = await _final(c, [request], tx);
+      await CalendarDataRecord.db.deleteRow(_session, a.data, transaction: tx);
+      a.identity.revision++;
+      a.identity.deletedAt = DateTime.now().toUtc();
+      await CalendarIdentityRecord.db.updateRow(
+        _session,
+        a.identity,
+        transaction: tx,
+      );
+      await _bump(scope, tx);
+      return _receipt(id, a.identity.revision, true, decisions.values);
+    });
+  }
+
+  Future<CalendarPage> list({
+    required int pageSize,
+    required List<CalendarFieldGroup> fieldGroups,
+    String? cursor,
+  }) async {
+    final c = await _context();
+    final groups = _groups(fieldGroups);
+    if (pageSize < 1 || pageSize > _options.maxPageSize) {
+      throw _failure(CalendarFailureCode.validation);
+    }
+    if (cursor != null && !RegExp(r'^[A-Za-z0-9_-]{43}$').hasMatch(cursor)) {
+      throw _failure(CalendarFailureCode.invalidCursor);
+    }
+    return _transaction(c, (tx, scope) async {
+      final query = CalendarAuthorizationRequest(
+        key: 'query',
+        operation: CalendarPermission.list,
+        requestedGroups: groups,
+      );
+      await _decide(c, [query], tx, CalendarAuthorizationPhase.read);
+      final plan = await _bounded(
+        () => _runtime.policy.planQuery(_session, c, groups),
+      );
+      if (plan.calendarIds != null &&
+          plan.calendarIds!.length > _options.maxScannedCalendars) {
+        throw _failure(CalendarFailureCode.limitExceeded);
+      }
+      UuidValue? after;
+      final canonicalGroups = groups.toList()
+        ..sort((a, b) => a.index.compareTo(b.index));
+      if (cursor != null) {
+        final saved = await CalendarCursorRecord.db.findFirstRow(
+          _session,
+          where: (t) =>
+              t.token.equals(cursor) &
+              t.scopeKey.equals(c.scopeKey) &
+              t.principalId.equals(c.principalId),
+          transaction: tx,
+        );
+        if (saved == null ||
+            !saved.expiresAt.isAfter(DateTime.now().toUtc()) ||
+            saved.policyRevision != c.policyRevision ||
+            saved.dataRevision != scope.revision ||
+            saved.pageSize != pageSize ||
+            saved.fieldGroups.length != canonicalGroups.length ||
+            !Iterable<int>.generate(canonicalGroups.length)
+                .every((i) => saved.fieldGroups[i] == canonicalGroups[i])) {
+          throw _failure(CalendarFailureCode.invalidCursor);
+        }
+        after = saved.afterId;
+      }
+      final visible = <CalendarView>[];
+      var scanned = 0;
+      while (visible.length <= pageSize) {
+        final remaining = _options.maxScannedCalendars - scanned;
+        final rows = await CalendarIdentityRecord.db.find(
+          _session,
+          where: (t) {
+            var predicate =
+                t.scopeKey.equals(c.scopeKey) & t.deletedAt.equals(null);
+            if (after != null) predicate = predicate & (t.id > after);
+            if (plan.calendarIds != null) {
+              predicate = predicate & t.id.inSet(plan.calendarIds!);
+            }
+            return predicate;
+          },
+          orderBy: (t) => t.id,
+          transaction: tx,
+          limit: min(_options.policyBatchSize, remaining + 1),
+        );
+        if (rows.isEmpty) break;
+        if (rows.length > remaining) {
+          throw _failure(CalendarFailureCode.limitExceeded);
+        }
+        scanned += rows.length;
+        final active = <_Active>[];
+        for (final row in rows) {
+          active.add(await _active(c, row.id!, tx));
+        }
+        final requests = [
+          for (final a in active)
+            _request(CalendarPermission.read, a, groups: groups),
+        ];
+        final decisions = await _decide(
+          c,
+          requests,
+          tx,
+          CalendarAuthorizationPhase.read,
+          filterDenied: true,
+        );
+        for (final a in active) {
+          final d = decisions[a.identity.id.toString()]!;
+          if (d.verdict == CalendarAuthorizationVerdict.allow) {
+            visible.add(_view(a, groups, d));
+          }
+          if (visible.length > pageSize) break;
+        }
+        after = rows.last.id;
+        if (visible.length > pageSize) break;
+      }
+      await _verifyContext(c);
+      String? continuation;
+      if (visible.length > pageSize) {
+        final expired = await CalendarCursorRecord.db.find(
+          _session,
+          where: (t) =>
+              t.scopeKey.equals(c.scopeKey) &
+              (t.expiresAt < DateTime.now().toUtc()),
+          transaction: tx,
+          limit: _options.maxCursorsPerScope,
+        );
+        if (expired.isNotEmpty) {
+          await CalendarCursorRecord.db.delete(
+            _session,
+            expired,
+            transaction: tx,
+          );
+        }
+        if (await CalendarCursorRecord.db.count(
+              _session,
+              where: (t) => t.scopeKey.equals(c.scopeKey),
+              transaction: tx,
+              limit: _options.maxCursorsPerScope,
+            ) >=
+            _options.maxCursorsPerScope) {
+          throw _failure(CalendarFailureCode.limitExceeded);
+        }
+        final random = Random.secure();
+        continuation = base64UrlEncode(
+          List.generate(32, (_) => random.nextInt(256)),
+        ).replaceAll('=', '');
+        await CalendarCursorRecord.db.insertRow(
+          _session,
+          CalendarCursorRecord(
+            token: continuation,
+            scopeKey: c.scopeKey,
+            principalId: c.principalId,
+            policyRevision: c.policyRevision,
+            dataRevision: scope.revision,
+            afterId: visible[pageSize - 1].id,
+            pageSize: pageSize,
+            fieldGroups: canonicalGroups,
+            expiresAt: DateTime.now().toUtc().add(_options.cursorLifetime),
+          ),
+          transaction: tx,
+        );
+      }
+      return CalendarPage(
+        calendars: visible.take(pageSize).toList(),
+        nextCursor: continuation,
+      );
+    });
+  }
+}
+
+final class _Active {
+  _Active(this.identity, this.data, this.links);
+  final CalendarIdentityRecord identity;
+  final CalendarDataRecord data;
+  final List<CalendarSubjectRecord> links;
+  CalendarPolicySnapshot get snapshot => CalendarPolicySnapshot(
+    calendarId: identity.id!,
+    revision: identity.revision,
+    displayName: data.displayName,
+    availabilityZoneId: data.availabilityZoneId,
+    noRuleFallback: data.noRuleFallback,
+    subjects: links.map(
+      (s) => CalendarPolicySubject(
+        CalendarSubjectReference(s.namespace, s.kind, s.externalId),
+        s.contributesAvailability,
+      ),
+    ),
+  );
+}

@@ -18,4 +18,4 @@ Migrations are a narrow exception: the `migration.sql` of a generated migration 
 
 Projects that depend on this module reference its types as `module:serverpod_calendar:MyType`, where `serverpod_calendar` is the `nickname` in `config/generator.yaml`.
 
-This is the serverpod_calendar scaffold. Only an authenticated diagnostic endpoint exists. Domain behavior, persistence and delivery semantics are pending; follow the root requirements and model review gates.
+This is the serverpod_calendar scaffold. Native calendar CRUD/association endpoints, host-policy enforcement and module migrations now exist under docs/adr/0049-first-calendar-crud-implementation.md. Other domain behavior and delivery semantics are pending; follow the root requirements and model review gates.

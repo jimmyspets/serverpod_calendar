@@ -1,5 +1,8 @@
 # First calendar schema and native name validation
 
+**Current implementation:** the first native calendar CRUD/association slice is described in [the implementation guide](calendar-crud-implementation.md) and [ADR 0049](adr/0049-first-calendar-crud-implementation.md). Broader model/interface proposals below remain future design unless explicitly covered there; this adds no iCalendar/feed-client compatibility.
+
+
 Status: **maintainer-confirmed name rules and identity/active-data split; generated field/constraint details proposed, not implemented**. See [ADR 0048](adr/0048-calendar-name-validation-and-row-layout.md), [storage roles](calendar-storage.md) and [CRUD contract](calendar-crud-contract.md).
 
 ## Confirmed native display-name rules
@@ -16,7 +19,7 @@ Proposed validation sequence:
 4. Trim surrounding whitespace using a documented deterministic rule. The proposed implementation uses pinned Dart `String.trim()` with VM/Chrome boundary fixtures; do not collapse internal spaces.
 5. Reject an empty result or more than 256 Unicode scalar/code-point values; store the trimmed result. Exact field-error codes/messages remain proposed.
 
-The maximum, trim/single-line/nonempty behavior and preservation are selected; exact low-level rejection/whitespace implementation and raw-byte caps still need code review/tests. Name uniqueness, locale collation and localized native-label support are not selected. Initially permitting duplicate labels is proposed; UUID/scope, not display text, identifies a calendar.
+The maximum, trim/single-line/nonempty behavior and preservation are selected; exact low-level rejection/whitespace implementation and raw-byte caps still need code review/tests. Name uniqueness, locale collation and localized native-label support are not selected. The maintainer selected duplicate labels under ADR 0049; UUID/scope, not display text, identifies a calendar.
 
 ## Confirmed two-row layout
 

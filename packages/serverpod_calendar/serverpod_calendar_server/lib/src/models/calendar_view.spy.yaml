@@ -1,0 +1,10 @@
+class: CalendarView
+fields:
+  id: UuidValue
+  revision: int
+  disclosedGroups: List<CalendarFieldGroup>
+  displayName: String?
+  availabilityZoneId: String?
+  noRuleFallback: CalendarNoRuleFallback?
+  createdAt: DateTime?
+  updatedAt: DateTime?

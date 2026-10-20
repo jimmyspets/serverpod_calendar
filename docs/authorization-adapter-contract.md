@@ -1,5 +1,8 @@
 # Proposed server authorization adapter interfaces
 
+**Current implementation:** the first native calendar CRUD/association slice is described in [the implementation guide](calendar-crud-implementation.md) and [ADR 0049](adr/0049-first-calendar-crud-implementation.md). Broader model/interface proposals below remain future design unless explicitly covered there; this adds no iCalendar/feed-client compatibility.
+
+
 Status: **concrete interface proposal for implementation review, not Dart code or approved final signatures**. The confirmed responsibilities, permission separations, disclosure and consistency choices are in ADRs [0043](adr/0043-host-authorization-context.md), [0044](adr/0044-authorized-query-projections-and-pagination.md) and [0045](adr/0045-authorization-consistency-guarantees.md).
 
 ## Proposed contracts

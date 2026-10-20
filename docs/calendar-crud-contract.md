@@ -1,5 +1,8 @@
 # First native calendar CRUD contract
 
+**Current implementation:** the first native calendar CRUD/association slice is described in [the implementation guide](calendar-crud-implementation.md) and [ADR 0049](adr/0049-first-calendar-crud-implementation.md). Broader model/interface proposals below remain future design unless explicitly covered there; this adds no iCalendar/feed-client compatibility.
+
+
 Status: **three maintainer-confirmed product rules; API/storage details proposed, not implemented**. See [ADR 0046](adr/0046-first-native-calendar-crud-contract.md) and the [proposed authorization interfaces](authorization-adapter-contract.md).
 
 ## Confirmed product rules
@@ -54,4 +57,4 @@ Proposed acceptance:
 - [ ] Dependency conflicts do not cascade, detach links or disclose hidden objects. Two hosts race a parent delete against dependent creation/linking without orphaned records.
 - [ ] Real generated clients, fresh migrations and Flutter calendar journeys pass; the module works without the feed module. Authorization consistency tests prove only their configured guarantees.
 
-Before implementation, settle adapter/result types, low-level label validation/raw-byte caps, generated identity/active-data UUID schema/indexes, patch/receipt/error shapes, concrete query/cursor mechanics and coordinated policy/delete protocols. No calendar-domain runtime or schema is implemented by this proposal.
+Before implementation, settle adapter/result types, low-level label validation/raw-byte caps, generated identity/active-data UUID schema/indexes, patch/receipt/error shapes, concrete query/cursor mechanics and coordinated policy/delete protocols. The first basic native slice is now implemented separately in ADR 0049; broader commands/protocol metadata remain proposed.

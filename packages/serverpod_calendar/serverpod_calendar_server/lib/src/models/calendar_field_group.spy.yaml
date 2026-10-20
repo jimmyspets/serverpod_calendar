@@ -1,0 +1,5 @@
+enum: CalendarFieldGroup
+serialized: byName
+values:
+  - metadata
+  - availabilitySettings
