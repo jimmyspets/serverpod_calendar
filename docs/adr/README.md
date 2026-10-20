@@ -32,6 +32,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0026](0026-gregorian-calendar-day-arithmetic.md) | Gregorian day addition, signed distances and weekdays | Proposed implementation; date profile unchanged |
 | [0027](0027-calendar-duration-values.md) | Unit-preserving signed durations and native microsecond precision | Precision/export choice confirmed; value implementation proposed |
 | [0028](0028-duration-application.md) | Date-only application and calendar-first zoned durations | Calendar-first policy confirmed; API implementation proposed |
+| [0029](0029-date-recurrence-rule-values.md) | Immutable date-only recurrence rule parameters and validation | Proposed API/default canonicalization; expansion pending |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

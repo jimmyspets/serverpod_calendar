@@ -70,6 +70,10 @@ The example host/Flutter app is also the automated integration-test application,
 | NFR-14 | Operate correctly with multiple concurrently active Serverpod instances in one deployment | At least two independent host processes sharing test storage; cross-instance reads/stale writes, warm-cache revocation, scheduling/worker races, durable claiming and instance-loss recovery; no sticky-routing or process-local-lock correctness dependency |
 | NFR-15 | Maintain the example host/Flutter app as an automated integration-test application | CI runs real module/migrations, generated-client and feed HTTP tests, automated Flutter journeys, isolated synthetic fixtures and deterministic mail/notification adapters; single- and multiple-instance runs with recorded commands/results |
 
+## Recurrence implementation boundary
+
+A pure-core DATE-only rule parameter validator now exists under [ADR 0029](adr/0029-date-recurrence-rule-values.md). Its immutable lists and range/combination checks do not establish bounded occurrence queries, timed recurrence, COUNT/UNTIL evaluation, task lifecycle or interchange support. Native filter sorting/deduplication is a proposed representation default; the selected full first-release recurrence scope is unchanged.
+
 ## Native duration precision
 
 The maintainer selected microsecond duration precision, with future iCalendar export rejecting nonzero fractions rather than truncating them. The pure-core value preserves nominal week/day and clock units under [ADR 0027](adr/0027-calendar-duration-values.md); explicit date/zoned application follows [ADR 0028](adr/0028-duration-application.md). The maintainer selected moving calendar units in local fields, resolving the intermediate with existing RFC explicit rules, then applying elapsed clock units. Property/component restrictions, parsing, atomic export rejection and practical limits remain under review.

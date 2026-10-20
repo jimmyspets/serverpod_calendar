@@ -1,6 +1,6 @@
 # Temporal core implementation
 
-Status: **UTC/date/civil/duration values and bounded named-zone resolution**, 2026-10-20. The pure Dart core exports `UtcWindow`, `CalendarDate`, `CivilDateTime`, `CalendarDuration` and `NamedZoneResolver`. Recurrence, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
+Status: **temporal values, bounded named-zone operations and date-only recurrence parameter validation**, 2026-10-20. The pure Dart core exports `UtcWindow`, `CalendarDate`, `CivilDateTime`, `CalendarDuration`, `NamedZoneResolver` and the DATE-only recurrence parameter types. Recurrence expansion, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
 
 ## Gregorian date-only values
 
@@ -62,6 +62,24 @@ The maintainer selected calendar-units-first zoned application: resolve the star
 `NamedZoneResolver.localAt(utc, zoneId: ...)` projects a known UTC instant to civil fields without choosing a new fold instant. Non-UTC input and unknown exact keys fail; unknown offsets/coverage throw `ZoneCoverageException`. The final local year must be 1900–2037, allowing only UTC spillover that still projects into that local envelope. Zoned application checks the start, calendar intermediate and final projection, even for zero durations. It preserves a later-fold elapsed endpoint instead of re-resolving its fields to an earlier instant. See [ADR 0028](adr/0028-duration-application.md).
 
 These methods do not establish legal event/task/alarm lengths, span defaults, UTC-only application, query budgets, recurrence or iCalendar support. Wire adapters must validate syntax before constructing semantic values, because zero-component lexical presence is not retained.
+
+## Date-only recurrence rule parameters
+
+```dart
+final rule = DateRecurrenceRule(
+  frequency: DateRecurrenceFrequency.monthly,
+  byDay: [ByDayValue(weekday: Weekday.friday, ordinal: -1)],
+  count: 12,
+);
+```
+
+This stores and validates a DATE-only rule; it does not generate the last Fridays. Supported parameter cadence is daily/weekly/monthly/yearly. Interval defaults to one; count and a typed `CalendarDate` until are mutually exclusive. Positive interval/count values use the exact portable 1…2^53−1 representation range, not a work budget. Week start accepts every weekday and defaults to Monday. Weekday identity is independent of Flutter display preferences.
+
+Validate selector ranges and RFC combinations: signed nonzero month-day/year-day/week-number/set-position selectors; months 1–12; optional nonzero BYDAY ordinal −53…53. Weekly rules reject month days; DATE-only year-day and week-number filters require yearly cadence; ordinal weekdays require monthly/yearly and cannot mix with yearly week-number filters. Set positions require another BY part. Invalid ranges throw `RangeError`; invalid combinations throw `ArgumentError`.
+
+Native filter lists are snapshotted, sorted and deduplicated by exact value, and returned unmodifiable. This is the proposed implementation default; maintainer confirmation of that representation choice is not recorded. BYDAY sorts Monday–Sunday, then ordinal with omission at zero; unnumbered and numbered weekdays remain distinct. Equality/hashing retain every field. Empty lists mean absent filters. Structurally legal selections that may yield no dates remain unchanged.
+
+No start/rule alignment, inclusive UNTIL evaluation, COUNT execution, invalid-date skipping, week-number calculation, timed rule/UNTIL support, bounded expansion or adapter is implemented here. Future adapters must reject malformed/unsupported syntax before constructing a narrower value; they cannot strip timed filters or confuse empty native lists with valid empty wire parts. The named-zone 2037 guard remains unchanged. See [ADR 0029](adr/0029-date-recurrence-rule-values.md).
 
 ## Bounded named-zone resolution
 
@@ -185,3 +203,17 @@ With pinned Dart 3.13.5:
 Coverage includes signed date/week boundaries, nonzero clock rejection for dates, maximum-component overflow before narrowing, Stockholm 23/25-hour days, negative mixed durations, intermediate gaps/folds, requested gap-start fields, Lord Howe half-hour and Apia whole-day changes, negative-epoch fractions, non-normalized clock units, later-fold elapsed endpoint identity, exact aliases, historical intermediate/final failures, zero-operation validation and supported local-year/UTC spillover boundaries.
 
 No dependencies, generated files, migration, endpoint, Flutter UI, LICENSE or main README warning changed. The full database/browser-journey/two-host suite was not repeated for these pure-core changes. Property-specific spans, UTC-only duration application, practical work limits, recurrence, iCalendar and client interoperability remain separate work. Documentation links/anchors, ADR numbering, changed-file review and `git diff --check`: passed.
+
+## Date-only recurrence parameter validation
+
+With pinned Dart 3.13.5:
+
+- `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe format packages/serverpod_calendar_core/lib packages/serverpod_calendar_core/test`: fifteen files checked, two formatted; later brace/comment corrections were checked with the same formatter.
+- The same executable with `analyze --fatal-infos`: workspace analysis passed after correcting two brace-style diagnostics in the initial run.
+- The same executable with `test --reporter expanded`, from the core package: all **218 tests passed**, including 51 new parameter-validation tests.
+- The same executable with `test --platform chrome --reporter expanded`, from the core package: all **218 tests passed in Chrome**.
+- Serverpod MCP `hot_reload`: completed successfully. No endpoint consumes these rule values yet.
+
+New tests cover scalar bounds and count/until exclusion, every week start, weekday ordinal bounds, signed selector ranges, illegal combinations, potentially empty candidate selections without clamping, canonical equivalent lists/rules, immutable snapshots and every equality/hash field. They do not execute any recurrence or establish wire compatibility.
+
+Dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE and the main README/2037 warning are unchanged. The full database/browser-journey/two-host suite was not repeated for this pure-core parameter addition. Start matching, timed rules, bounded generation, RDATE/EXDATE, exceptions and protocol behavior remain future work. Documentation links/anchors, ADR numbering, changed-file review and `git diff --check`: passed.

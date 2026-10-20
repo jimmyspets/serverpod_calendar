@@ -23,6 +23,8 @@ The [RFC property matrices](rfc/README.md) itemize named properties and relevant
 
 The core also has a native unit-preserving `CalendarDuration` value with selected microsecond precision; see [ADR 0027](adr/0027-calendar-duration-values.md). Constructor tests establish structural validation; date-only and selected calendar-first zoned application now have scoped core evidence under [ADR 0028](adr/0028-duration-application.md). Event/task/alarm restrictions and iCalendar whole-second rejection/round trips still need separate evidence.
 
+The core DATE-only recurrence parameter validator has scoped structural tests under [ADR 0029](adr/0029-date-recurrence-rule-values.md). These do not prove occurrence generation, WKST/week-number evaluation, timed recurrence, import/export or external-client behavior; canonical filter representation remains proposed.
+
 ## Automated example and deployment evidence
 
 The real example host/Flutter app is the automated test application under [ADR 0018](adr/0018-automated-example-and-multiple-instances.md), NFR-14 and NFR-15. CI must run actual migrations/module code, generated-client APIs, feed HTTP routes and Flutter integration journeys with isolated synthetic host data and deterministic mail/notification adapters.
