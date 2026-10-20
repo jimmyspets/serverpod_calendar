@@ -1,6 +1,6 @@
 # Temporal core implementation
 
-Status: **UTC/date/civil values and bounded named-zone resolution**, 2026-10-20. The pure Dart core exports `UtcWindow`, `CalendarDate`, `CivilDateTime` and `NamedZoneResolver`. Recurrence, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
+Status: **UTC/date/civil/duration values and bounded named-zone resolution**, 2026-10-20. The pure Dart core exports `UtcWindow`, `CalendarDate`, `CivilDateTime`, `CalendarDuration` and `NamedZoneResolver`. Recurrence, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
 
 ## Gregorian date-only values
 
@@ -31,6 +31,18 @@ Hours are 0–23, minutes/seconds 0–59 and the `microsecond` field is a comple
 The value retains wall-clock fields without timezone lookup, normalization or instant conversion. It can hold potential gap/fold fields, but does not validate or resolve them. It does not authorize floating event/task values or provide elapsed-time ordering across zones/folds. Explicit conversion is available through the bounded `NamedZoneResolver` below; a bare civil value still implies no zone or instant.
 
 The maintainer selected native microseconds, future iCalendar export rejection for nonzero fractions and initial leap-second rejection. RFC 5545 supports whole-second syntax and positive leap seconds; these choices define a narrower profile where applicable. The adapter must eventually enforce rejection atomically with diagnostics; the core value alone is not a tested import/export implementation. See [ADR 0024](adr/0024-civil-date-time-values.md).
+
+## Unit-preserving duration values
+
+```dart
+final reminderOffset = CalendarDuration(sign: -1, minutes: 15, microsecond: 123456);
+final nominalDay = CalendarDuration(days: 1);
+final clockHours = CalendarDuration(hours: 24);
+```
+
+`CalendarDuration` retains sign (+1/-1), nonnegative week/day/hour/minute/second magnitudes and a full fractional-second `microsecond` magnitude 0–999999. Each whole unit accepts 0 through 9007199254740991 for exact VM/web representation; this is not a permitted operational horizon. Nonzero weeks cannot mix with other nonzero units. Invalid magnitudes throw `RangeError`; invalid signs and mixed weeks throw `ArgumentError`. Nothing is carried or normalized. Structural equality/hashing retain sign and every unit: the day and clock-hour examples remain distinct. Zero is permitted by the generic value (`isZero`), with a supplied negative sign retained.
+
+The maintainer selected microseconds and future iCalendar export rejection for nonzero fractions. The wire adapter must reject fractional duration input and lossy output atomically; those paths remain unimplemented. This value does not apply a duration, produce elapsed totals or validate event/task/alarm constraints. Consumer-specific positivity, DATE-only units, repeat pairing, practical limits, DST application and endpoint semantics remain separate work. See [ADR 0027](adr/0027-calendar-duration-values.md).
 
 ## Bounded named-zone resolution
 
@@ -126,3 +138,17 @@ With pinned Dart 3.13.5:
 The first Chrome run exposed a test fixture using a bit shift with different web integer semantics. Replacing it with the exact large integer tests the intended overflow input on both runtimes. The implementation required no change. The initial `dart` wrapper invocation did not complete, and direct SDK invocation without settings-directory access failed; verification uses the pinned SDK executable with local settings/cache access.
 
 No dependencies, generated code, endpoint, schema, migration or Flutter UI changed. The full database/browser-journey/two-host suite was not repeated for this pure-core increment. The README warning and named-zone coverage guards remain unchanged; recurrence and elapsed/nominal duration semantics remain future work.
+
+## Duration-value validation
+
+With pinned Dart 3.13.5:
+
+- `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe format packages/serverpod_calendar_core/lib packages/serverpod_calendar_core/test`: twelve files checked, two formatted.
+- `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe analyze --fatal-infos`: workspace analysis passed.
+- `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe test --reporter expanded`, from the core package: **140 tests passed**, including thirty new duration tests.
+- The same executable with `test --platform chrome --reporter expanded`, from the core package: all **140 tests passed in Chrome**.
+- Serverpod MCP `hot_reload`: completed successfully. No endpoint consumes this value yet.
+
+New tests exercise negative/out-of-range magnitudes for every component, maximum exact portable whole-unit integers and fractions, invalid signs, each prohibited mixed-week form, signed zero, retained non-normalized values and all-field equality/hashing. Existing named-zone coverage/rejection tests also pass. No duration application, parsing/serialization, property restrictions or client interoperability is inferred.
+
+Documentation links/anchors, consecutive ADR numbering, changed-file review and `git diff --check`: passed for this increment. Dependencies, generated files, migrations, endpoints, Flutter UI, LICENSE and the main README/2037 warning are unchanged. The full database/browser-journey/two-host suite was not rerun for this isolated core value; practical duration/work limits and temporal application remain future work.

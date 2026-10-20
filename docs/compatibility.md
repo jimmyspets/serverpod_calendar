@@ -21,6 +21,8 @@ Initial standards include RFC 5545, RFC 7953, RFC 5546, RFC 6047, the descriptiv
 
 The [RFC property matrices](rfc/README.md) itemize named properties and relevant protocol features without claiming current implementation. Use their plan/status legend alongside the interface profiles here; unresolved values and contexts still need decisions.
 
+The core also has a native unit-preserving `CalendarDuration` value with selected microsecond precision; see [ADR 0027](adr/0027-calendar-duration-values.md). Its constructor tests establish structural validation only. Duration application across DST, event/task/alarm restrictions and iCalendar whole-second rejection/round trips still need separate evidence.
+
 ## Automated example and deployment evidence
 
 The real example host/Flutter app is the automated test application under [ADR 0018](adr/0018-automated-example-and-multiple-instances.md), NFR-14 and NFR-15. CI must run actual migrations/module code, generated-client APIs, feed HTTP routes and Flutter integration journeys with isolated synthetic host data and deterministic mail/notification adapters.

@@ -51,6 +51,7 @@ The [scaffolding plan](scaffolding-plan.md) records confirmed walkthrough select
 - [x] Add validated native `CivilDateTime` fields with selected microsecond precision and leap-second rejection under [ADR 0024](adr/0024-civil-date-time-values.md). Future iCalendar export must reject nonzero fractions; named-zone resolution, DST policy and adapter rejection tests remain pending.
 
 - [x] Add the pinned native named-zone resolver and recurrence-candidate gap helper under [ADR 0025](adr/0025-bounded-named-zone-resolution.md), with RFC explicit gap/fold policy, exact aliases, outer civil years 1900–2037 and narrower conservative per-zone coverage. VM/Chrome tests pass.
+- [x] Add unit-preserving signed `CalendarDuration` values with selected native microseconds under [ADR 0027](adr/0027-calendar-duration-values.md). Duration application, property-specific constraints and atomic interchange rejection remain pending.
 - [ ] Replace/enrich the finite/truncated zone data and prove required per-zone/year coverage before claiming general named-zone support; implement VTIMEZONE matching/horizons and durable upgrade/recalculation policy.
 
 - [ ] Preserve Gregorian date-only, UTC and named-zone civil meanings with pinned zone data. Accept validated matching VTIMEZONE definitions for known named zones; reject arbitrary/mismatched custom rules and floating forms. Exact alias acceptance is selected; complete matching horizon and zone upgrade contracts.
