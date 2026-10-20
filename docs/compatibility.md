@@ -10,6 +10,8 @@ Native calendar week labels and first-day presentation use ISO 8601/Monday under
 
 Current native date/precision profile: **[1970-01-01, 2100-01-01)** and **whole seconds**, with explicit exclusive endpoints and necessary UTC spillover only. [ADR 0041](adr/0041-whole-second-1970-2100-profile.md) supersedes the historical microsecond, broad-date and 2037 evidence below. Generated timezone data calculates the supported future horizon; see [limits and updates](timezone-data.md). This is native calculation evidence, not ICS or external-client verification.
 
+Host authorization boundary is selected under [ADR 0043](adr/0043-host-authorization-context.md): host-defined policy receives trusted collection/object context; modules enforce it. Domain policy, object-specific disclosure and query/mutation integration remain unimplemented. Authenticated diagnostic smoke tests do not verify this contract. See [the authorization guide](host-authorization.md).
+
 ## Interface coverage
 
 | Surface | Required capability | Evidence |

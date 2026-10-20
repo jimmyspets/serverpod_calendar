@@ -25,6 +25,8 @@ Independent packages can progress in parallel after their contracts are defined.
 
 ## Design contracts
 
+- [ ] Finalize and implement the accepted host authorization/context boundary under [ADR 0043](adr/0043-host-authorization-context.md) and the [guide](host-authorization.md): trusted actual collection/object/parent context, custom host policies, query visibility, transaction/revision integration, external-policy consistency and two-host enforcement. Do not generate domain endpoints before these dependent contracts are reviewed.
+
 - [ ] Implement the confirmed optional HTTP feed module boundary under [ADR 0042](adr/0042-optional-http-feed-module.md): define calendar publication/policy contracts, keep feed storage/routes/credentials separate, and test installations with and without feeds. Package names and detailed contracts remain pending.
 
 - [ ] Review the [model catalog](models.md) and [ADR 0019](adr/0019-model-contracts.md): finalize logical fields/ownership, component cardinalities, physical schema/IDs, typed changes, uniqueness, retention and generated-client projections before writing model YAML or migrations. Preserve the selected RFC scope and resolve the catalog's explicit lifecycle/temporal review gates.

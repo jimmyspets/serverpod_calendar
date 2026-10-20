@@ -49,3 +49,7 @@ The maintainer subsequently selected whole seconds and ordinary calendar dates f
 ## Optional HTTP feed module
 
 The maintainer explicitly confirmed a separate optional Serverpod module for iCalendar HTTP subscription feeds. [ADR 0042](adr/0042-optional-http-feed-module.md) records ownership and dependency direction without claiming implementation or selecting final package names. Calendar APIs, availability and authenticated import/export remain usable without feeds.
+
+## Host-defined authorization context
+
+The maintainer confirmed module enforcement with replaceable host rules and requested clear documentation plus the identity of the requested collection/object. [ADR 0043](adr/0043-host-authorization-context.md) and the [guide](host-authorization.md) record this boundary, distinguish calendar containment from display/feed groupings and retain detailed adapter/query/transaction contracts as proposals. No authorization implementation or mandatory role/owner model was approved by this documentation request.

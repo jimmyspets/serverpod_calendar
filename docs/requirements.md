@@ -4,6 +4,8 @@ Status: **maintainer-stated scope; implementation pending**. On 2026-10-19 the m
 
 The maintainer selected a separate optional Serverpod module for iCalendar HTTP subscription feeds under [ADR 0042](adr/0042-optional-http-feed-module.md). Feed delivery remains first-release scope; hosts using only native authenticated APIs may omit it.
 
+Host authorization is replaceable under [ADR 0043](adr/0043-host-authorization-context.md): the modules enforce every operation; the host decides using trusted caller/scope, operation and actual collection/object/parent context, plus relevant current and validated proposed state. Custom object rules are supported by design; no module-owned role/identity scheme is required. See [the documented contract and future tests](host-authorization.md).
+
 ## User journey and scope
 
 Target Serverpod 4.x and later; pin compatible Dart, Flutter, and Serverpod SDK versions during scaffolding and verify supported versions.
@@ -27,7 +29,7 @@ The example host/Flutter app is also the automated integration-test application,
 | FR-05 | UTC, date-only, and named-zone local times retain distinct meaning | Restart/round-trip tests; exclusive date ends; ordinary dates [1970-01-01, 2100-01-01), explicit exclusive endpoints and whole-second timing with nonzero-fraction rejection under ADR 0041; initial leap-second rejection; RFC explicit gap/fold and generated-gap policy, exact IANA names/aliases and generated bounded timezone coverage; local recurring time preserved |
 | FR-06 | Import/export implements a documented iCalendar profile including named zones and recurrence | Semantic round trips; VTIMEZONE; supported RRULE/RDATE/EXDATE/RECURRENCE-ID fixtures |
 | FR-07 | Conflicting imports and stale writes fail explicitly and atomically | Series master/exception identity, duplicate imports, rollback, concurrent edits |
-| FR-08 | Backend enforces host-supplied authorization on every operation | User/group isolation, role and membership changes, forged references, import/export and feed management |
+| FR-08 | Backend enforces replaceable host-supplied authorization on every operation | Trusted caller/scope and actual collection/object/change context under ADR 0043; custom object rules, absent/denied policy, user/group isolation, role/membership changes, forged parent references, authorized queries/counts, import/export and feed management |
 | FR-09 | Calendars can be associated with multiple external users, groups, rooms, venues, equipment or approved host-defined subject kinds | Opaque namespaced references; add/remove associations; host resolves current membership and permissions; no identity tables |
 | FR-10 | Authorized managers create/list/revoke several independent secret URLs for a calendar/feed | Multiple active URLs; revoke one while others work; reject unauthorized management; never expose token again in lists |
 | FR-11 | One feed can select one or several calendars | Authorize every calendar; atomic membership edits; stable event identity and collision handling; no partial or cross-tenant leakage |

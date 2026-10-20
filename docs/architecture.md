@@ -25,6 +25,12 @@ Physical layout follows the pinned Serverpod template selected during scaffoldin
 
 The optional HTTP feed module is a confirmed boundary under [ADR 0042](adr/0042-optional-http-feed-module.md). Its implementation and package names remain pending. Authenticated import/export, availability and scheduling remain calendar capabilities; installing feeds is optional for hosts, while feed support remains first-release scope.
 
+## Host authorization boundary
+
+The confirmed boundary is module enforcement with host-defined, replaceable rules under [ADR 0043](adr/0043-host-authorization-context.md). Every server service operation supplies trusted actor/scope, requested operation, actual calendar/object/ancestor identities and relevant current/proposed state. Calendar listing/creation targets the host scope; occurrence operations retain original identity. A client-provided parent ID or subject association is not authority.
+
+Hosts can use their own ACLs, memberships or business rules. A separate authorization package or built-in owner/role scheme is not required. Missing/denied/unresolved policy fails closed. Detail, free/busy, write and publication access are separate. Query visibility, transaction/revision checks, background jobs and the optional feed module use this boundary; precise APIs and external-policy consistency remain pending. See [context and operation examples](host-authorization.md).
+
 ## Multiple active instances and automated acceptance
 
 The example host/app is a maintained automated integration-test application as well as a demonstration. [ADR 0018](adr/0018-automated-example-and-multiple-instances.md) requires at least two simultaneously active Serverpod host processes sharing logical storage, with requests and workers able to run on either instance.

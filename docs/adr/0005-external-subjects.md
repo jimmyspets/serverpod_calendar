@@ -2,6 +2,8 @@
 
 Status: **Proposed**. Date: 2026-10-19. The maintainer requires flexible external user/group associations and calendars for rooms, venues and equipment. Users and groups are not stored in this project; resource catalog integration is proposed at the host boundary. The adapter and association schema below are proposed.
 
+Confirmed refinement: [ADR 0043](0043-host-authorization-context.md) selects module enforcement with host-defined replaceable rules and trusted collection/object context. The [authorization guide](../host-authorization.md) describes current/proposed state, query and execution cases; detailed signatures/schema remain proposed. This does not accept the remaining association/role proposals below.
+
 ## Proposal
 
 Store only calendar-to-subject associations using opaque `(namespace, kind, externalId)` references. Kind distinguishes users, groups, rooms, venues and equipment, with host-defined extensions; namespace scopes host/tenant references. Allow several subjects on one calendar and one subject on many calendars. Resource catalog ownership is proposed at the host boundary. ADR 0006 distinguishes availability-contributing links from management/access links. Never add module user/group profiles, credentials or membership tables, or foreign keys to a mandatory host identity schema.
