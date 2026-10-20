@@ -9,7 +9,7 @@ A reusable calendar module intended for Serverpod projects, providing calendar, 
 
 **Calendar system:** Gregorian only. Recurring events and tasks are included; time zones initially use known named zones with validated matching definitions.
 
-**Week convention:** ISO 8601: Monday is the first day; week 1 contains January 4, equivalently the year's first Thursday. Use the ISO week-year at New Year. See [the week convention and RFC distinction](docs/adr/0032-iso-week-convention.md).
+**Week convention:** ISO 8601: Monday is the first day; week 1 contains January 4, equivalently the year's first Thursday. Use the ISO week-year at New Year. Honor explicit RFC 5545 WKST values for recurrence, including their rule-specific week numbers. See [ISO weeks and recurrence WKST](docs/week-conventions.md).
 
 **Platform target:** Serverpod 4.x and later. The initial scaffold pins Serverpod 4.0.4, Flutter 3.47.7 and Dart 3.13.5; additional supported versions require separate verification.
 

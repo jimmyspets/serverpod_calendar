@@ -4,7 +4,7 @@ Status: **temporal values, bounded named-zone operations and initial bounded dat
 
 ## ISO 8601 week convention
 
-The native convention is ISO 8601: Monday first (1–7), week 1 containing January 4 (equivalently, the first Thursday), and a separate ISO week-year. The current recurrence default of Monday uses this convention. Alternate explicitly supplied RFC WKST calculations are not ISO week numbering; their continued acceptance is pending clarification under [ADR 0032](adr/0032-iso-week-convention.md). Native week labels and Flutter presentation must follow the confirmed ISO convention; those presentation APIs are not implemented yet.
+The native convention is ISO 8601: Monday first (1–7), week 1 containing January 4 (equivalently, the first Thursday), and a separate ISO week-year. The current recurrence default of Monday uses this convention. Explicit RFC WKST values are honored, including non-Monday starts and their rule-specific week numbers; those calculations are not ISO display labels. See [the behavior and examples](week-conventions.md) and [ADR 0032](adr/0032-iso-week-convention.md). Native week labels and Flutter presentation must follow the confirmed ISO convention; those presentation APIs are not implemented yet.
 
 ## Gregorian date-only values
 

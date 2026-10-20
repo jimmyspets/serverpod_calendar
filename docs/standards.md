@@ -16,7 +16,7 @@ Gregorian is the only supported calendar system under [ADR 0013](adr/0013-gregor
 
 ## ISO 8601 week convention
 
-Native calendar week labels and first-day presentation follow ISO 8601: Monday first, week 1 containing January 4 (equivalently, the first Thursday), and a distinct ISO week-year at New Year. This is the selected week convention, not blanket support for all ISO date/time/duration representations. Explicit non-Monday RFC WKST semantics are separate from ISO week labels; see [ADR 0032](adr/0032-iso-week-convention.md).
+Native calendar week labels and first-day presentation follow ISO 8601: Monday first, week 1 containing January 4 (equivalently, the first Thursday), and a distinct ISO week-year at New Year. This is the selected week convention, not blanket support for all ISO date/time/duration representations. Explicit RFC WKST values must be honored, including their rule-specific week-number calculations; they remain separate from native ISO labels. See [the behavior and examples](week-conventions.md) and [ADR 0032](adr/0032-iso-week-convention.md).
 
 ## Property and feature inventories
 

@@ -72,7 +72,7 @@ The example host/Flutter app is also the automated integration-test application,
 
 ## Native ISO week convention
 
-The maintainer requires ISO 8601 week numbering and Monday as the first day for native calendars. Week 1 is the week containing January 4, equivalently the first Thursday; weekday numbers run Monday 1 through Sunday 7. Display the ISO week-year, which can differ from the Gregorian year at New Year. Device locale must not change this convention. The current recurrence default is Monday; the treatment of explicitly supplied non-Monday RFC WKST is recorded separately in [ADR 0032](adr/0032-iso-week-convention.md), pending clarification.
+The maintainer requires ISO 8601 week numbering and Monday as the first day for native calendars. Week 1 is the week containing January 4, equivalently the first Thursday; weekday numbers run Monday 1 through Sunday 7. Display the ISO week-year, which can differ from the Gregorian year at New Year. Device locale must not change this convention. The current recurrence default is Monday; explicit WKST values, including non-Monday starts, must be honored for recurrence and its week-number calculations without changing native presentation. See [the behavior and examples](week-conventions.md) and [ADR 0032](adr/0032-iso-week-convention.md).
 
 ## Recurrence implementation boundary
 

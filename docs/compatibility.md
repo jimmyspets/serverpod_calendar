@@ -6,7 +6,7 @@ The baseline features formerly marked Proposed in the RFC matrices are now Yes â
 
 The subscription HTTP profile in [ADR 0016](adr/0016-subscription-http-profile.md) initially uses ETag validators only, defers HTTP date validators and byte ranges, and serves fixed ICS media output. Test varied Accept/date/range inputs without changing ordinary GET/HEAD/304 or revocation behavior; calendar LAST-MODIFIED fields remain supported separately. Feed-adapter If-Match uses strong comparison/412 with RFC precedence after authorization; Content-Language is optional host-declared audience metadata, and subscription redirects are deferred. Explicit privacy-safe errors retain opaque credential 404 and If-Match 412; all errors/denials use no-store and prohibit negative caching. Successful responses use Cache-Control: private, no-cache, max-age=0, must-revalidate, omitting proxy-revalidate/Expires. Verify this through host infrastructure; failures never masquerade as empty success or 304.
 
-Native calendar week labels and first-day presentation use ISO 8601/Monday under [ADR 0032](adr/0032-iso-week-convention.md). Explicit RFC WKST recurrence semantics are separate; the current engine supports them, with the non-Monday acceptance policy pending clarification. This does not claim an implemented calendar GUI.
+Native calendar week labels and first-day presentation use ISO 8601/Monday under [ADR 0032](adr/0032-iso-week-convention.md). Explicit RFC WKST recurrence semantics are separate; the maintainer confirmed honoring every explicit value, including its rule-specific week numbers. See [the behavior and examples](week-conventions.md). This does not claim an implemented calendar GUI.
 
 ## Interface coverage
 

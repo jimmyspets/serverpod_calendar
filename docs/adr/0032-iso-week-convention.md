@@ -1,6 +1,6 @@
 # ADR 0032: ISO 8601 native week convention
 
-Status: **ISO week numbering and Monday first day explicitly required by the maintainer; explicit non-Monday RFC WKST policy pending clarification**. Date: 2026-10-20.
+Status: **ISO native week convention and honoring explicit RFC WKST values explicitly confirmed; broader implementation remains subject to review**. Date: 2026-10-20.
 
 ## Confirmed native convention
 
@@ -15,11 +15,11 @@ Native calendar presentation must use Monday as its first day and ISO week label
 
 Sources: [ISO 8601 overview](https://www.iso.org/iso-8601-date-and-time-format.html) identifies the standard; [Python's primary ISO calendar documentation](https://docs.python.org/3/library/datetime.html#datetime.date.isocalendar) explicitly describes the Monday/Thursday and week-year rules. These sources describe the convention, not complete project conformance to every ISO 8601 representation.
 
-## RFC recurrence distinction and remaining clarification
+## Confirmed RFC recurrence distinction
 
 RFC 5545 [section 3.3.10](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.3.10) supports all WKST weekdays, and the previously selected recurrence profile implements them under [ADR 0031](0031-date-recurrence-week-numbers.md). When WKST is omitted, RFC 5545 defaults it to Monday (`WKST=MO`), matching the native ISO convention. `WKST` means the recurrence rule's week start: `WKST=MO` is Monday and `WKST=SU` is Sunday. It groups weeks for weekly INTERVAL/BYDAY rules and defines week boundaries for BYWEEKNO. It does not set a Flutter calendar's layout. A non-Monday WKST calculation is RFC rule-specific week numbering; it must not be described as ISO week numbering or change native calendar presentation.
 
-The maintainer's newer ISO instruction takes precedence over older narrative guidance. Clarification has been requested on whether explicitly supplied non-Monday WKST values remain permitted rule-specific exceptions or must be rejected. Until resolved, the code still accepts them; no implementation restriction or silent conversion is claimed. Never silently replace a supplied WKST, because that can change recurrence dates.
+The maintainer explicitly confirmed honoring supplied WKST values, including non-Monday starts, while retaining ISO native week labels and Monday-first presentation. This applies to explicit native recurrence parameters and the future supported interchange profile. Never silently replace a supplied WKST, because that can change recurrence dates. Week 1 still uses the four-day rule under that rule's start; negative BYWEEKNO selectors use its actual week-year length. See [the week-convention guide](../week-conventions.md) for week-number boundary examples and differing two-week schedules. The existing code already honors every WKST; this confirmation requires documentation changes only.
 
 ## Boundaries and validation
 
