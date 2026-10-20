@@ -46,6 +46,7 @@ The [scaffolding plan](scaffolding-plan.md) records confirmed walkthrough select
 - [x] Implement the isolated UTC query-window foundation with half-open bounds, membership, intersection and boundary tests. See [ADR 0022](adr/0022-utc-query-window-foundation.md) and [validation](temporal-core.md). This does not complete the temporal work package or resolve remaining date/zone/recurrence contracts.
 
 - [x] Add validated Gregorian `CalendarDate` values for selected years 0001–9999, with month/leap-year rules, comparison and boundary tests under [ADR 0023](adr/0023-gregorian-date-only-values.md). Generated values, interchange, event spans and persistence remain future work.
+- [x] Add bounded Gregorian calendar-day addition, signed day distances and weekdays under [ADR 0026](adr/0026-gregorian-calendar-day-arithmetic.md). Recurrence generation and duration semantics remain future work.
 
 - [x] Add validated native `CivilDateTime` fields with selected microsecond precision and leap-second rejection under [ADR 0024](adr/0024-civil-date-time-values.md). Future iCalendar export must reject nonzero fractions; named-zone resolution, DST policy and adapter rejection tests remain pending.
 

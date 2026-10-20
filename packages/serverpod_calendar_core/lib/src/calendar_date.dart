@@ -17,7 +17,7 @@ final class CalendarDate implements Comparable<CalendarDate> {
   final int day;
 
   /// Whether this date's year has February 29 under Gregorian rules.
-  bool get isLeapYear => year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+  bool get isLeapYear => _isLeapYear(year);
 
   /// Number of days in this date's month, independent of timezone or DST.
   int get daysInMonth => switch (month) {
@@ -25,6 +25,86 @@ final class CalendarDate implements Comparable<CalendarDate> {
     4 || 6 || 9 || 11 => 30,
     _ => 31,
   };
+
+  /// Monday is 1 and Sunday is 7, independent of timezone or week start.
+  int get weekday => _dayNumber % 7 + 1;
+
+  /// Signed calendar days from this date to [other].
+  ///
+  /// This is not an elapsed-time duration and does not resolve either date.
+  int daysUntil(CalendarDate other) => other._dayNumber - _dayNumber;
+
+  /// Moves forward or backward by calendar days, without timestamp conversion.
+  ///
+  /// Throws [RangeError] if the result would leave years 1 through 9999.
+  CalendarDate addDays(int days) {
+    final current = _dayNumber;
+    // Validate before addition to avoid overflow for very large input values.
+    RangeError.checkValueInInterval(
+      days,
+      -current,
+      _lastDayNumber - current,
+      'days',
+    );
+    final target = current + days;
+    var lower = 1;
+    var upper = 10000;
+    while (lower + 1 < upper) {
+      final middle = (lower + upper) ~/ 2;
+      if (_daysBeforeYear(middle) <= target) {
+        lower = middle;
+      } else {
+        upper = middle;
+      }
+    }
+    final dayOfYear = target - _daysBeforeYear(lower);
+    final leap = _isLeapYear(lower);
+    var resultMonth = 1;
+    while (resultMonth < 12 &&
+        _daysBeforeMonth[resultMonth] + (leap && resultMonth >= 2 ? 1 : 0) <=
+            dayOfYear) {
+      resultMonth++;
+    }
+    final beforeMonth =
+        _daysBeforeMonth[resultMonth - 1] + (leap && resultMonth > 2 ? 1 : 0);
+    return CalendarDate(
+      year: lower,
+      month: resultMonth,
+      day: dayOfYear - beforeMonth + 1,
+    );
+  }
+
+  // Zero-based Gregorian day numbers; 0001-01-01 is Monday.
+  static const _lastDayNumber = 3652058;
+  static const _daysBeforeMonth = [
+    0,
+    31,
+    59,
+    90,
+    120,
+    151,
+    181,
+    212,
+    243,
+    273,
+    304,
+    334,
+  ];
+
+  static bool _isLeapYear(int year) =>
+      year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+
+  static int _daysBeforeYear(int year) {
+    final previous = year - 1;
+    return previous * 365 + previous ~/ 4 - previous ~/ 100 + previous ~/ 400;
+  }
+
+  int get _dayNumber =>
+      _daysBeforeYear(year) +
+      _daysBeforeMonth[month - 1] +
+      (isLeapYear && month > 2 ? 1 : 0) +
+      day -
+      1;
 
   /// Chronological date ordering, without resolving a date to an instant.
   @override

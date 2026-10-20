@@ -1,6 +1,6 @@
 # Temporal core implementation
 
-Status: **UTC/date/civil values and bounded named-zone resolution**, 2026-10-19. The pure Dart core exports `UtcWindow`, `CalendarDate`, `CivilDateTime` and `NamedZoneResolver`. Recurrence, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
+Status: **UTC/date/civil values and bounded named-zone resolution**, 2026-10-20. The pure Dart core exports `UtcWindow`, `CalendarDate`, `CivilDateTime` and `NamedZoneResolver`. Recurrence, calendar/task services, imported-zone validation and wire/storage representations remain unimplemented; no complete temporal or RFC support is claimed. See ADRs [0022](adr/0022-utc-query-window-foundation.md), [0023](adr/0023-gregorian-date-only-values.md), [0024](adr/0024-civil-date-time-values.md) and [0025](adr/0025-bounded-named-zone-resolution.md).
 
 ## Gregorian date-only values
 
@@ -9,6 +9,8 @@ final date = CalendarDate(year: 2024, month: 2, day: 29);
 ```
 
 The maintainer selected years 0001–9999. Construction rejects year zero, out-of-range years/months/days and impossible Gregorian dates with `RangeError`; values are never normalized. Dates retain only integer fields, with no `DateTime`, timezone or instant conversion. Gregorian leap rules apply consistently throughout the range, with no historical calendar cutover. Month lengths, leap-year inspection, chronological comparison and equality/hashing are available. `toString()` produces diagnostic YYYY-MM-DD text, not an iCalendar serialization contract.
+
+`addDays(int)` moves forward or backward by calendar days and rejects results outside 0001–9999. `daysUntil(other)` returns the signed calendar-day count from this date to the other; `weekday` uses Monday 1 through Sunday 7. These operations use Gregorian integer arithmetic without timestamps. Calendar days do not imply elapsed 24-hour durations, recurrence week numbers or month-end clamping. The named-zone 1900–2037 envelope and narrower coverage guards are unchanged. See [ADR 0026](adr/0026-gregorian-calendar-day-arithmetic.md).
 
 This is not yet a generated request/storage model, all-day event span or interchange parser. Later adapters must enforce the selected date-only year range explicitly and atomically; RFC 5545's four-digit year grammar alone does not require the selected lower bound. UTC query windows continue to have their own instant contract. Civil precision and leap-second policy are selected under ADR 0024; zones and recurrence remain separate review gates.
 
@@ -109,3 +111,18 @@ With pinned Dart 3.13.5 and timezone 0.11.2:
 - Documentation links/anchors, ADR numbering, PowerShell check-script syntax, changed-file review and `git diff --check`: passed.
 
 The first root-level `dart test` attempt found no root test directory; rerunning from the core package passed as recorded above. Root `tool/check.ps1` now includes core Chrome tests unless `-SkipBrowser` is supplied. No endpoint, generated source, migration or Flutter UI changed, and the full database/browser-journey/two-host suite was not rerun for this core increment. VTIMEZONE matching, all-zone/year coverage, recurrence, duration semantics and persistence upgrade behavior remain unverified.
+
+## Calendar-day arithmetic validation
+
+With pinned Dart 3.13.5:
+
+- `K:/sources/flutter/bin/cache/dart-sdk/bin/dart.exe format packages/serverpod_calendar_core/lib packages/serverpod_calendar_core/test`: ten files checked; the implementation formatted. The corrected test fixture was also checked with the formatter.
+- `dart test --reporter expanded`, from the core package: **110 tests passed**, including nine arithmetic tests. Coverage includes leap centuries, positive/negative date crossings, full-profile bounds/distances, known weekdays and all 146097 successive days in a Gregorian 400-year cycle.
+- `dart test --platform chrome --reporter expanded`, from the core package: the same **110 tests passed**.
+- `dart analyze --fatal-infos`: workspace analysis passed. Dart MCP `analyze_files` for the core package also reported no errors.
+- Serverpod MCP `hot_reload`: completed successfully; core methods still have no endpoint consumer.
+- Changed documentation links/anchors, consecutive ADR numbering, unchanged README warning/LICENSE/lockfile, changed-file scope and `git diff --check`: passed.
+
+The first Chrome run exposed a test fixture using a bit shift with different web integer semantics. Replacing it with the exact large integer tests the intended overflow input on both runtimes. The implementation required no change. The initial `dart` wrapper invocation did not complete, and direct SDK invocation without settings-directory access failed; verification uses the pinned SDK executable with local settings/cache access.
+
+No dependencies, generated code, endpoint, schema, migration or Flutter UI changed. The full database/browser-journey/two-host suite was not repeated for this pure-core increment. The README warning and named-zone coverage guards remain unchanged; recurrence and elapsed/nominal duration semantics remain future work.
