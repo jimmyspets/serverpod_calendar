@@ -49,3 +49,5 @@ See [native protocol UID and modification time](calendar-protocol-identity.md) f
 See [first native non-recurring events](native-single-events.md) for typed timing, separate lifecycle permissions, event storage and example behavior under ADR 0053.
 
 See [native recurrence and occurrence previews](native-event-recurrence.md) for the next event increment under ADR 0054.
+
+See [native occurrence timing editing](native-occurrence-timing.md) for single/future timing changes and single cancellation/restoration under ADR 0055.

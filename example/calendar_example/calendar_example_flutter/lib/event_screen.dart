@@ -660,14 +660,17 @@ class _EventEditorState extends State<EventEditor> {
                 key: const Key('event-preview'),
                 onPressed: locked || _dirty
                     ? null
-                    : () => Navigator.of(context).push<void>(
-                        MaterialPageRoute(
-                          builder: (_) => EventOccurrenceScreen(
-                            client: widget.client,
-                            event: _view!,
+                    : () async {
+                        await Navigator.of(context).push<void>(
+                          MaterialPageRoute(
+                            builder: (_) => EventOccurrenceScreen(
+                              client: widget.client,
+                              event: _view!,
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                        if (mounted) await _run(_reload);
+                      },
                 child: const Text('Preview saved occurrences'),
               ),
             if (_view?.status != null) ...[

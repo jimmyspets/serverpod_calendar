@@ -335,6 +335,84 @@ void main() {
     expect(find.text('2026-03-27'), findsOneWidget);
     expect(find.text('2026-03-29'), findsOneWidget);
     expect(find.text('2026-03-31'), findsOneWidget);
+    final untilField = find.byKey(const Key('preview-until'));
+    await _enabledField(tester, untilField);
+    await tester.tap(untilField);
+    await _idle(tester);
+    await tester.enterText(untilField, '2026-04-05');
+    expect(tester.widget<TextField>(untilField).controller!.text, '2026-04-05');
+    await _tap(tester, 'preview-load');
+    await _tap(tester, 'occurrence-edit-2026-03-29T00:00:00');
+    await tester.enterText(
+      find.byKey(const Key('occurrence-start')),
+      '2026-03-28',
+    );
+    final savedForRace = await events.getEvent(
+      event.id,
+      cal.CalendarEventFieldGroup.values,
+    );
+    await events.update(
+      cal.CalendarEventUpdateRequest(
+        eventId: event.id,
+        expectedRevision: savedForRace.revision,
+        content: cal.CalendarEventContent(
+          summary: savedForRace.summary,
+          timing: savedForRace.timing!,
+          recurrence: savedForRace.recurrence,
+        ),
+      ),
+    );
+    await _tap(tester, 'occurrence-save');
+    expect(find.byKey(const Key('occurrence-edit-error')), findsOneWidget);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('occurrence-start')))
+          .controller!
+          .text,
+      '2026-03-28',
+    );
+    expect(
+      (await events.getEvent(
+        event.id,
+        cal.CalendarEventFieldGroup.values,
+      )).timingOverrides,
+      isNull,
+    );
+    await tester.pageBack();
+    await _idle(tester);
+    await _tap(tester, 'preview-reload-series');
+    await _tap(tester, 'occurrence-edit-2026-03-29T00:00:00');
+    await tester.enterText(
+      find.byKey(const Key('occurrence-start')),
+      '2026-03-28',
+    );
+    await _tap(tester, 'occurrence-save');
+    await _waitFor(tester, find.text('2026-03-28'));
+    await _tap(tester, 'occurrence-future-2026-03-31T00:00:00');
+    await tester.enterText(
+      find.byKey(const Key('occurrence-start')),
+      '2026-04-02',
+    );
+    await _tap(tester, 'occurrence-save');
+    await _showOccurrence(tester, find.text('2026-04-02'));
+    expect(find.text('2026-04-02'), findsOneWidget);
+    await _tap(tester, 'occurrence-cancel-2026-03-29T00:00:00');
+    await _showOccurrence(tester, find.text('2 occurrences'));
+    expect(find.text('2 occurrences'), findsOneWidget);
+    await _tap(tester, 'occurrence-restore-2026-03-29T00:00:00');
+    await _showOccurrence(tester, find.text('3 occurrences'));
+    expect(find.text('2026-03-28'), findsOneWidget);
+    await _tap(tester, 'occurrence-clear-future-2026-03-31T00:00:00');
+    await _tap(tester, 'occurrence-clear-single-2026-03-29T00:00:00');
+    expect(
+      (await events.getEvent(
+        event.id,
+        cal.CalendarEventFieldGroup.values,
+      )).timingOverrides,
+      isNull,
+    );
+    expect(find.text('2026-03-29'), findsOneWidget);
+    expect(find.text('2026-03-31'), findsOneWidget);
     await tester.pageBack();
     await _idle(tester);
     await _tap(tester, 'event-status-cancelled');
@@ -385,7 +463,11 @@ Future<void> _waitFor(WidgetTester tester, Finder finder) async {
 
 Future<void> _tap(WidgetTester tester, String key) async {
   final finder = find.byKey(Key(key));
-  await _waitFor(tester, finder);
+  if (key.startsWith('occurrence-') || key.startsWith('preview-')) {
+    await _showOccurrence(tester, finder);
+  } else {
+    await _waitFor(tester, finder);
+  }
   await tester.ensureVisible(finder);
   await tester.tap(finder);
   await _idle(tester, step: key);
@@ -418,4 +500,22 @@ Future<void> _enabledField(WidgetTester tester, Finder finder) async {
     }
   }
   fail('Event editor did not become editable');
+}
+
+// Preview rows are lazily built by ListView. Scroll the real list to find
+// offscreen actions/results instead of treating an unbuilt row as absent data.
+Future<void> _showOccurrence(WidgetTester tester, Finder finder) async {
+  final list = find.byType(ListView).last;
+  final scrollable = find
+      .descendant(of: list, matching: find.byType(Scrollable))
+      .first;
+  await tester.drag(scrollable, const Offset(0, 10000));
+  await tester.pump(const Duration(milliseconds: 200));
+  await tester.scrollUntilVisible(
+    finder,
+    200,
+    scrollable: scrollable,
+    maxScrolls: 30,
+  );
+  await tester.pump();
 }

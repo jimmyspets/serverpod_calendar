@@ -12,10 +12,29 @@ CalendarEventContent _validatedEvent(CalendarEventContent input) {
   }
 }
 
+CalendarEventTimingOverrides? _validatedOverrides(
+  CalendarEventContent c,
+  CalendarEventTimingOverrides? v,
+) {
+  try {
+    return validateEventOverrides(c, v);
+  } on RecurrenceLimitException {
+    throw _failure(CalendarFailureCode.limitExceeded);
+  } on ArgumentError {
+    throw _failure(CalendarFailureCode.validation);
+  } on ZoneCoverageException {
+    throw _failure(CalendarFailureCode.validation);
+  }
+}
+
 final class _Event {
   _Event(this.identity, this.data, this.parent) {
     try {
       data.content = validateEventContent(data.content);
+      data.timingOverrides = validateEventOverrides(
+        data.content,
+        data.timingOverrides,
+      );
     } catch (_) {
       throw _failure(CalendarFailureCode.unavailable);
     }
@@ -30,6 +49,7 @@ final class _Event {
     data.content,
     data.protocolUid.toString(),
     data.updatedAt,
+    timingOverrides: data.timingOverrides,
   );
 }
 
@@ -47,6 +67,8 @@ extension CalendarEventOperations on CalendarService {
     _Event? event,
     CalendarEventContent? proposed,
     CalendarEventOccurrenceQuery? query,
+    CalendarEventOccurrenceChange? change,
+    CalendarEventTimingOverrides? proposedOverrides,
     Set<CalendarEventFieldGroup> groups = const {},
   }) => CalendarAuthorizationRequest(
     key: '${op.name}:${event?.identity.id ?? parent.identity.id}',
@@ -57,6 +79,8 @@ extension CalendarEventOperations on CalendarService {
     currentEvent: event?.snapshot,
     proposedEvent: proposed,
     occurrenceQuery: query,
+    occurrenceChange: change,
+    proposedTimingOverrides: proposedOverrides,
     eventGroups: groups,
   );
 
@@ -132,6 +156,9 @@ extension CalendarEventOperations on CalendarService {
       location: has(CalendarEventFieldGroup.location) ? v.location : null,
       timing: has(CalendarEventFieldGroup.timing) ? v.timing : null,
       recurrence: has(CalendarEventFieldGroup.timing) ? v.recurrence : null,
+      timingOverrides: has(CalendarEventFieldGroup.timing)
+          ? e.data.timingOverrides
+          : null,
       status: has(CalendarEventFieldGroup.state) ? v.status : null,
       transparency: has(CalendarEventFieldGroup.state) ? v.transparency : null,
       protocolUid: has(CalendarEventFieldGroup.protocolIdentity)
@@ -276,6 +303,7 @@ extension CalendarEventOperations on CalendarService {
             CalendarPermission.updateEvent,
             event: e,
             proposed: value,
+            proposedOverrides: e.data.timingOverrides,
           ),
         if (status != null || value.status != e.data.content.status)
           _er(
@@ -283,6 +311,7 @@ extension CalendarEventOperations on CalendarService {
             CalendarPermission.changeEventStatus,
             event: e,
             proposed: value,
+            proposedOverrides: e.data.timingOverrides,
           ),
       ];
       await _decide(
@@ -292,8 +321,72 @@ extension CalendarEventOperations on CalendarService {
         CalendarAuthorizationPhase.preliminaryWrite,
       );
       _eventRevision(e, expected);
+      final overrides = _validatedOverrides(value, e.data.timingOverrides);
       final decisions = await _final(c, requests, tx);
+      e.data.timingOverrides = overrides;
       e.data.content = value;
+      e.data.updatedAt = await _revisionTime(tx, previous: e.data.updatedAt);
+      e.identity.revision++;
+      await CalendarEventDataRecord.db.updateRow(
+        _session,
+        e.data,
+        transaction: tx,
+      );
+      await CalendarEventRecord.db.updateRow(
+        _session,
+        e.identity,
+        transaction: tx,
+      );
+      await _bump(scope, tx);
+      return _eventReceipt(e, decisions.values);
+    });
+  }
+
+  Future<CalendarEventReceipt?> changeOccurrence(
+    CalendarEventOccurrenceChange input,
+  ) async {
+    // Nested request values have scalar immutable fields, no caller-owned lists.
+    final c = await _context();
+    return _transaction(c, (tx, scope) async {
+      final e = await _event(c, input.eventId, tx);
+      final lifecycle =
+          input.action == CalendarEventOccurrenceAction.cancelSingle ||
+          input.action == CalendarEventOccurrenceAction.restoreSingle;
+      final operation = lifecycle
+          ? CalendarPermission.changeEventStatus
+          : CalendarPermission.updateEvent;
+      CalendarAuthorizationRequest request(
+        CalendarEventTimingOverrides? proposed,
+      ) => _er(
+        e.parent,
+        operation,
+        event: e,
+        change: input,
+        proposedOverrides: proposed,
+      );
+      await _decide(
+        c,
+        [request(null)],
+        tx,
+        CalendarAuthorizationPhase.preliminaryWrite,
+      );
+      _eventRevision(e, input.expectedRevision);
+      late final CalendarEventTimingOverrides? proposed;
+      try {
+        proposed = changeEventOverrides(
+          e.data.content,
+          e.data.timingOverrides,
+          input,
+        );
+      } on RecurrenceLimitException {
+        throw _failure(CalendarFailureCode.limitExceeded);
+      } on ArgumentError {
+        throw _failure(CalendarFailureCode.validation);
+      } on ZoneCoverageException {
+        throw _failure(CalendarFailureCode.validation);
+      }
+      final decisions = await _final(c, [request(proposed)], tx);
+      e.data.timingOverrides = proposed;
       e.data.updatedAt = await _revisionTime(tx, previous: e.data.updatedAt);
       e.identity.revision++;
       await CalendarEventDataRecord.db.updateRow(
@@ -386,7 +479,11 @@ extension CalendarEventOperations on CalendarService {
       }
       late final CalendarEventOccurrencePreview result;
       try {
-        result = previewEventOccurrences(e.data.content, query);
+        result = previewEventOccurrences(
+          e.data.content,
+          query,
+          overrides: e.data.timingOverrides,
+        );
       } on RecurrenceLimitException {
         throw _failure(CalendarFailureCode.limitExceeded);
       } on ArgumentError {

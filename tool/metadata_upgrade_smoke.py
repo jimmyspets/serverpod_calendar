@@ -158,6 +158,30 @@ BEGIN
 END;
 $events$;
 """)
+        sql(database, """
+INSERT INTO serverpod_calendar_event (id, "calendarId", revision)
+VALUES ('55555555-5555-4555-8555-555555555555', '11111111-1111-4111-8111-111111111111', 9);
+INSERT INTO serverpod_calendar_event_data ("eventId", "protocolUid", content, "createdAt", "updatedAt")
+VALUES ('55555555-5555-4555-8555-555555555555','66666666-6666-4666-8666-666666666666',
+'{"summary":"Before timing overrides","timing":{"kind":"date","start":{"year":2026,"month":3,"day":29}},"status":"confirmed","transparency":"opaque"}',
+'2026-01-01 00:00:00','2026-01-02 03:04:05.987654');
+""")
+        sql(database, (SERVER / "migrations/20261021094608490-event-occurrence-timing/migration.sql").read_text(encoding="utf-8"))
+        sql(database, """
+DO $occurrences$
+BEGIN
+  IF (SELECT count(*) FROM serverpod_calendar_event_data WHERE "timingOverrides" IS NULL
+      AND content->>'summary' = 'Before timing overrides'
+      AND content->'timing'->>'kind' = 'date'
+      AND "protocolUid" = '66666666-6666-4666-8666-666666666666'
+      AND "updatedAt" = '2026-01-02 03:04:05.987654') <> 1
+     OR (SELECT revision FROM serverpod_calendar_event WHERE id = '55555555-5555-4555-8555-555555555555') <> 9
+     OR (SELECT revision FROM serverpod_calendar_scope WHERE "scopeKey" = 'metadata-upgrade-test') <> 11 THEN
+    RAISE EXCEPTION 'Occurrence upgrade changed existing event content/UID/time/revision or added overrides';
+  END IF;
+END;
+$occurrences$;
+""")
         print("PASS: populated schema upgrades preserve identity, revisions, content, associations, unique protocol UIDs and old cursor bindings.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")
