@@ -43,38 +43,24 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0037](0037-date-only-single-occurrence-exceptions.md) | DATE-only identity, cancellation/replacement and bounded overlap batch | Batch authorized; native policies/API proposed; timed/range/service work pending |
 | [0038](0038-date-only-this-and-future-timing.md) | DATE-only THISANDFUTURE shifts, spans and bounded overlap batch | Selected range scope; native timing API/policies proposed; service/wire work pending |
 | [0039](0039-exact-utc-duration-and-event-spans.md) | Exact UTC duration application, spans/points and query lengths | Native API/precision correction proposed; timed recurrence/service/wire pending |
-
 | [0040](0040-bounded-temporal-core-completion.md) | Bounded UTC/zoned recurrence, spans/edits, task milestones and zone evidence | Batch authorized; native APIs/policies proposed; wire/storage/lifecycle separate |
-
 | [0041](0041-whole-second-1970-2100-profile.md) | Whole-second timing, exclusive 2100 horizon, generated future zones and update policy | Accepted maintainer profile; supersedes earlier precision/range limits |
-
 | [0042](0042-optional-http-feed-module.md) | Separate optional Serverpod module for iCalendar HTTP feeds | Accepted boundary; names, contracts and scaffolding pending |
-
 | [0043](0043-host-authorization-context.md) | Host-defined authorization and trusted collection/object context | Accepted responsibility/context requirement; signatures, query and consistency contracts proposed |
-
 | [0044](0044-authorized-query-projections-and-pagination.md) | Separate detail/free-busy, typed field groups and no-total initial pagination | Accepted response choices; filtering, cursor and schema mechanics proposed |
-
 | [0045](0045-authorization-consistency-guarantees.md) | Declared coordinated/external authorization guarantees and commit/revocation boundary | Accepted support/declaration; defaults, operation requirements and mechanics proposed |
-
 | [0046](0046-first-native-calendar-crud-contract.md) | First native calendar CRUD: dependent-delete rejection, explicit zone and nonempty name | Accepted product rules; commands, label/schema and adapter details proposed |
-
 | [0047](0047-calendar-names-identifiers-and-deletion-storage.md) | Separate native names, version-independent UUID identity and minimal deletion marker | Accepted logical boundaries; physical layout, validation and retention duration proposed |
-
 | [0048](0048-calendar-name-validation-and-row-layout.md) | Native 256-code-point/trim name rules and separate identity/active-data rows | Accepted validation/layout boundaries; generated constraints and protocols proposed |
-
 | [0049](0049-first-calendar-crud-implementation.md) | First native CRUD, duplicate labels, private demo scopes and bounded storage/authorization mechanics | Accepted batch scope; implementation mechanics under review |
-
 | [0050](0050-calendar-presentation-and-protocol-text.md) | Separate native description/RGB and language-specific protocol text/CSS3 color | Accepted product/batch boundaries; implementation mechanics under review |
-
 | [0051](0051-calendar-links-categories-images-refresh.md) | HTTP links, exact category search, image hints and bounded unit-preserving refresh metadata | Accepted product profile; schema/query mechanics under review |
 | [0052](0052-calendar-protocol-identity-and-revision-time.md) | Calendar protocol identity and revision time | Accepted generated UID/automatic timestamp; implementation mechanics under review |
 | [0053](0053-first-native-single-events.md) | First native non-recurring event CRUD and separate lifecycle authority | Accepted batch/summary/lifecycle boundaries; mechanics under review |
-
 | [0054](0054-native-event-recurrence-and-previews.md) | Native event recurrence storage and bounded previews | Accepted batch/date preservation; mechanics under review |
-
 | [0055](0055-native-occurrence-timing-edits.md) | Native single/future occurrence timing edits | Accepted timing/cancellation/preservation scope; mechanics under review |
-
 | [0056](0056-first-calendar-free-busy.md) | First bounded per-calendar free/busy | Accepted increment/tentative policy; mechanics under review |
+| [0057](0057-native-working-hours.md) | Native working hours and calendar composition | Accepted increment/timing choices; mechanics under review |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

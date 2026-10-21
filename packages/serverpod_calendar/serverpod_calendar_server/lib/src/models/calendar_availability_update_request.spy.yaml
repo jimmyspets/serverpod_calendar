@@ -1,0 +1,6 @@
+class: CalendarAvailabilityUpdateRequest
+immutable: true
+fields:
+  availabilityId: UuidValue
+  expectedRevision: int
+  content: CalendarAvailabilityContent

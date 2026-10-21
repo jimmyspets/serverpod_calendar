@@ -143,6 +143,264 @@ void main() {
         ),
       ),
     ))!;
+    CalendarAvailabilityContent hours({
+      int priority = 0,
+      bool closed = false,
+    }) => CalendarAvailabilityContent(
+      summary: 'Private working hours',
+      priority: priority,
+      openings: closed
+          ? []
+          : [
+              CalendarAvailabilityOpening(
+                timing: CalendarEventTiming(
+                  kind: CalendarEventTimeKind.utc,
+                  start: CalendarEventCivil(
+                    year: 2026,
+                    month: 3,
+                    day: 29,
+                    hour: 9,
+                  ),
+                  end: CalendarEventCivil(
+                    year: 2026,
+                    month: 3,
+                    day: 29,
+                    hour: 17,
+                  ),
+                ),
+                recurrence: CalendarEventRecurrence(
+                  rule: daily(),
+                  inclusions: [],
+                  exclusions: [],
+                ),
+              ),
+            ],
+    );
+    test('availability CRUD has stable identities stale protection markers and parent dependencies', () async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      final receipt = (await service.createAvailability(
+        CalendarAvailabilityCreateRequest(
+          calendarId: calendar,
+          content: hours(),
+        ),
+      ))!;
+      final first = await service.getAvailability(receipt.availabilityId);
+      expect(first.content.openings.single.uid, isNotNull);
+      expect(policy.lastAvailabilityRequest!.calendarId, calendar);
+      expect(
+        policy.lastAvailabilityRequest!.currentAvailability!.availabilityId,
+        first.id,
+      );
+      await expectLater(
+        service.delete(calendar, 1),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      final changed = (await service.updateAvailability(
+        CalendarAvailabilityUpdateRequest(
+          availabilityId: first.id,
+          expectedRevision: 1,
+          content: first.content.copyWith(summary: 'New hours'),
+        ),
+      ))!;
+      expect(changed.revision, 2);
+      final second = await service.getAvailability(first.id);
+      expect(second.protocolUid, first.protocolUid);
+      expect(
+        second.content.openings.single.uid,
+        first.content.openings.single.uid,
+      );
+      expect(second.lastModified.millisecond, 0);
+      await expectLater(
+        service.updateAvailability(
+          CalendarAvailabilityUpdateRequest(
+            availabilityId: first.id,
+            expectedRevision: 1,
+            content: first.content,
+          ),
+        ),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      expect(await service.listAvailability(calendar), hasLength(1));
+      await service.deleteAvailability(first.id, 2);
+      expect(await service.listAvailability(calendar), isEmpty);
+      expect(
+        (await CalendarAvailabilityRecord.db.findById(
+          session,
+          first.id,
+        ))!.deletedAt,
+        isNotNull,
+      );
+      expect(
+        await CalendarAvailabilityDataRecord.db.findFirstRow(
+          session,
+          where: (t) => t.availabilityId.equals(first.id),
+        ),
+        isNull,
+      );
+      await service.delete(calendar, 1);
+    });
+    test('availability rules replace fallback and higher priority closures do not erase bookings', () async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      final rule = (await service.createAvailability(
+        CalendarAvailabilityCreateRequest(
+          calendarId: calendar,
+          content: hours(),
+        ),
+      ))!;
+      await booking(calendar, 10, 11);
+      final result = await service.freeBusy(busyQuery(calendar));
+      expect(result.coverage, CalendarFreeBusyCoverage.complete);
+      expect(result.periods.map((p) => p.kind), [
+        CalendarFreeBusyKind.unavailable,
+        CalendarFreeBusyKind.free,
+        CalendarFreeBusyKind.busy,
+        CalendarFreeBusyKind.free,
+        CalendarFreeBusyKind.unavailable,
+      ]);
+      expect(result.periods[1].startUtc, DateTime.utc(2026, 3, 29, 9));
+      expect(
+        result.toJson().toString(),
+        isNot(contains('Private working hours')),
+      );
+      final closure = (await service.createAvailability(
+        CalendarAvailabilityCreateRequest(
+          calendarId: calendar,
+          content: hours(priority: 5, closed: true),
+        ),
+      ))!;
+      expect(
+        (await service.freeBusy(busyQuery(calendar))).periods.single.kind,
+        CalendarFreeBusyKind.unavailable,
+      );
+      await service.deleteAvailability(closure.availabilityId, 1);
+      await service.deleteAvailability(rule.availabilityId, 1);
+      expect(
+        (await service.freeBusy(busyQuery(calendar))).periods.first.kind,
+        CalendarFreeBusyKind.free,
+      );
+    });
+    test('availability raw disclosure is independent from complete projection; denial yields unknown', () async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      final rule = (await service.createAvailability(
+        CalendarAvailabilityCreateRequest(
+          calendarId: calendar,
+          content: hours(),
+        ),
+      ))!;
+      policy.denied.add(CalendarPermission.readAvailability);
+      await expectLater(
+        service.getAvailability(rule.availabilityId),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(await service.listAvailability(calendar), isEmpty);
+      expect(
+        (await service.freeBusy(busyQuery(calendar))).coverage,
+        CalendarFreeBusyCoverage.complete,
+      );
+      policy.denied.add(CalendarPermission.projectAvailability);
+      final result = await service.freeBusy(busyQuery(calendar));
+      expect(result.coverage, CalendarFreeBusyCoverage.unknown);
+      expect(result.periods, isEmpty);
+    });
+    test('availability update denial is atomic frozen and cannot cross scopes or spoof opening identities', () async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      final receipt = (await service.createAvailability(
+        CalendarAvailabilityCreateRequest(
+          calendarId: calendar,
+          content: hours(),
+        ),
+      ))!;
+      final first = await service.getAvailability(receipt.availabilityId);
+      policy.onPreliminary = () {
+        expect(
+          () => policy.lastAvailabilityRequest!.proposedAvailability!.openings
+              .clear(),
+          throwsUnsupportedError,
+        );
+        policy.denied.add(CalendarPermission.updateAvailability);
+      };
+      await expectLater(
+        service.updateAvailability(
+          CalendarAvailabilityUpdateRequest(
+            availabilityId: first.id,
+            expectedRevision: 1,
+            content: first.content,
+          ),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.onPreliminary = null;
+      policy.denied.clear();
+      expect((await service.getAvailability(first.id)).revision, 1);
+      await expectLater(
+        service.createAvailability(
+          CalendarAvailabilityCreateRequest(
+            calendarId: calendar,
+            content: first.content,
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      policy.scopeOverride = 'other';
+      await expectLater(
+        service.getAvailability(first.id),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      await expectLater(
+        service.createAvailability(
+          CalendarAvailabilityCreateRequest(
+            calendarId: calendar,
+            content: hours(),
+          ),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+
+    test('availability named-zone hours survive calendar zone changes and source caps never imply free', () async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      final input = hours().copyWith(
+        openings: [
+          CalendarAvailabilityOpening(
+            timing: hours().openings.single.timing.copyWith(
+              kind: CalendarEventTimeKind.zoned,
+              zoneId: 'Europe/Stockholm',
+            ),
+          ),
+        ],
+      );
+      await service.createAvailability(
+        CalendarAvailabilityCreateRequest(calendarId: calendar, content: input),
+      );
+      final before = await service.freeBusy(busyQuery(calendar));
+      await service.updateSettings(
+        CalendarSettingsUpdateRequest(
+          calendarId: calendar,
+          expectedRevision: 1,
+          availabilityZoneId: 'America/New_York',
+          noRuleFallback: CalendarNoRuleFallback.free,
+        ),
+      );
+      expect(
+        (await service.freeBusy(busyQuery(calendar))).toJson(),
+        before.toJson(),
+      );
+      expect(before.periods[1].startUtc, DateTime.utc(2026, 3, 29, 7));
+      for (var n = 0; n < 4; n++) {
+        await service.createAvailability(
+          CalendarAvailabilityCreateRequest(
+            calendarId: calendar,
+            content: hours().copyWith(
+              openings: List.generate(16, (_) => hours().openings.single),
+            ),
+          ),
+        );
+      }
+      final limited = await service.freeBusy(busyQuery(calendar));
+      expect(limited.coverage, CalendarFreeBusyCoverage.unknown);
+      expect(limited.periods, isEmpty);
+    });
+
     test('free busy merges private overlapping bookings and retains tentative classification', () async {
       final calendar = (await service.create(createInput()))!.calendarId;
       final first = await booking(calendar, 9, 11);
@@ -2267,12 +2525,14 @@ final class TestPolicy implements CalendarHostPolicy {
   Set<CalendarEventFieldGroup> eventGrants = eventGroups.toSet();
   Set<UuidValue>? eventCandidates;
   CalendarAuthorizationRequest? lastEventRequest;
+  CalendarAuthorizationRequest? lastAvailabilityRequest;
   final busyDenied = <UuidValue>{};
   bool denyFinal = false,
       malformed = false,
       unavailable = false,
       sawActualSnapshot = false;
   String epoch = 'v1';
+  String? scopeOverride;
   CalendarPolicySnapshot? lastSnapshot;
   CalendarProposedChange? lastProtocolIntent;
   CalendarProposedChange? lastSupplementalIntent;
@@ -2287,7 +2547,8 @@ final class TestPolicy implements CalendarHostPolicy {
   Future<CalendarHostContext> resolveContext(Session session) async =>
       CalendarHostContext(
         principalId: session.authenticated!.userIdentifier,
-        scopeKey: 'test:${session.authenticated!.userIdentifier}',
+        scopeKey:
+            scopeOverride ?? 'test:${session.authenticated!.userIdentifier}',
         policyRevision: epoch,
       );
   @override
@@ -2312,6 +2573,12 @@ final class TestPolicy implements CalendarHostPolicy {
     Transaction tx,
     CalendarAuthorizationPhase phase,
   ) async {
+    for (final request in requests) {
+      if (request.availabilityId != null ||
+          request.proposedAvailability != null) {
+        lastAvailabilityRequest = request;
+      }
+    }
     if (phase == CalendarAuthorizationPhase.preliminaryWrite) {
       onPreliminary?.call();
     }

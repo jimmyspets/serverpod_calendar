@@ -11,3 +11,4 @@
 20261021061921307-calendar-protocol-identity
 20261021064805603-native-single-events
 20261021094608490-event-occurrence-timing
+20261021121924598-availability-rules

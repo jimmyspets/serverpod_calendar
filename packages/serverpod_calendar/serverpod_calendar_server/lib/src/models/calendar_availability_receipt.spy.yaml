@@ -1,0 +1,7 @@
+class: CalendarAvailabilityReceipt
+immutable: true
+fields:
+  availabilityId: UuidValue
+  calendarId: UuidValue
+  revision: int
+  deleted: bool

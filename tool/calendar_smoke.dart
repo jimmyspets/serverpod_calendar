@@ -703,6 +703,103 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
             cal.CalendarFreeBusyKind.free,
         'Transparent event continued blocking remote free/busy',
       );
+      final aa = clients.first.modules.serverpod_calendar.calendarAvailability;
+      final ab = clients.last.modules.serverpod_calendar.calendarAvailability;
+      final opening = cal.CalendarEventTiming(
+        kind: cal.CalendarEventTimeKind.utc,
+        start: cal.CalendarEventCivil(year: 2026, month: 4, day: 4, hour: 8),
+        end: cal.CalendarEventCivil(year: 2026, month: 4, day: 4, hour: 18),
+      );
+      final working = (await aa.create(
+        cal.CalendarAvailabilityCreateRequest(
+          calendarId: second.calendarId,
+          content: cal.CalendarAvailabilityContent(
+            summary: 'Private rule',
+            openings: [cal.CalendarAvailabilityOpening(timing: opening)],
+          ),
+        ),
+      ))!;
+      final remoteRule = await ab.getRule(working.availabilityId);
+      check(
+        remoteRule.content.openings.single.uid != null,
+        'Opening identity was not persisted across hosts',
+      );
+      final withHours = await b.freeBusy(busyQuery);
+      check(
+        withHours.periods.length == 3 &&
+            withHours.periods[0].kind == cal.CalendarFreeBusyKind.unavailable &&
+            withHours.periods[1].startUtc.hour == 8 &&
+            withHours.periods[1].kind == cal.CalendarFreeBusyKind.free &&
+            !withHours.toJson().toString().contains('Private rule'),
+        'Remote query ignored working hours or disclosed their label',
+      );
+      final edits = await Future.wait([
+        for (final endpoint in [aa, ab])
+          () async {
+            try {
+              await endpoint.update(
+                cal.CalendarAvailabilityUpdateRequest(
+                  availabilityId: working.availabilityId,
+                  expectedRevision: 1,
+                  content: remoteRule.content.copyWith(openings: []),
+                ),
+              );
+              return true;
+            } on cal.CalendarException catch (e) {
+              if (e.code == cal.CalendarFailureCode.staleRevision) return false;
+              rethrow;
+            }
+          }(),
+      ]);
+      check(
+        edits.where((v) => v).length == 1,
+        'Competing rule writes had multiple winners',
+      );
+      check(
+        (await a.freeBusy(busyQuery)).periods.single.kind ==
+            cal.CalendarFreeBusyKind.unavailable,
+        'Committed closure was not visible from another host',
+      );
+      await ab.deleteRule(working.availabilityId, 2);
+      check(
+        (await a.freeBusy(busyQuery)).periods.single.kind ==
+            cal.CalendarFreeBusyKind.free,
+        'Deleted rule continued restricting another host',
+      );
+      final ruleParent = await create();
+      final parentRace = await Future.wait<Object?>([
+        a
+            .delete(ruleParent.calendarId, 1)
+            .then<Object?>((v) => v, onError: (Object e) => e),
+        ab
+            .create(
+              cal.CalendarAvailabilityCreateRequest(
+                calendarId: ruleParent.calendarId,
+                content: cal.CalendarAvailabilityContent(openings: []),
+              ),
+            )
+            .then<Object?>((v) => v, onError: (Object e) => e),
+      ]);
+      final createdRules = parentRace
+          .whereType<cal.CalendarAvailabilityReceipt>();
+      if (createdRules.isNotEmpty) {
+        check(
+          parentRace.first is cal.CalendarException &&
+              (parentRace.first as cal.CalendarException).code ==
+                  cal.CalendarFailureCode.dependencyConflict,
+          'Parent deletion ignored committed rule dependency',
+        );
+        await aa.deleteRule(createdRules.single.availabilityId, 1);
+      } else {
+        ids.remove(ruleParent.calendarId);
+        check(
+          parentRace.first is cal.CalendarMutationReceipt &&
+              parentRace.last is cal.CalendarException &&
+              (parentRace.last as cal.CalendarException).code ==
+                  cal.CalendarFailureCode.accessDenied,
+          'Rule was attached to a deleted parent',
+        );
+      }
       final firstPage = await ea.list(
         second.calendarId,
         pageSize: 1,
@@ -823,7 +920,7 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
       await b.delete(raceParent.calendarId, 1);
     }
     print(
-      'PASS: per-calendar free/busy and native events/recurrence/occurrence timing, temporal forms, lifecycle/cursors and cross-host stale-write race, stable calendar protocol UID/time, links/categories/image/refresh metadata, cross-host filtered cursors, native/protocol metadata isolation, multilingual round trips and generated calendar CRUD, scope isolation, cursors, stale writes and cross-host delete/attach race.',
+      'PASS: working-hours CRUD/composition and cross-host rule writes/parent races, per-calendar free/busy and native events/recurrence/occurrence timing, temporal forms, lifecycle/cursors and cross-host stale-write race, stable calendar protocol UID/time, links/categories/image/refresh metadata, cross-host filtered cursors, native/protocol metadata isolation, multilingual round trips and generated calendar CRUD, scope isolation, cursors, stale writes and cross-host delete/attach race.',
     );
   } finally {
     for (final id in ids) {

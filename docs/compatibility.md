@@ -1,6 +1,6 @@
 # Module interfaces and interoperability profiles
 
-[First native non-recurring event CRUD](native-single-events.md) now implements scoped event storage/commands/projections under [ADR 0053](adr/0053-first-native-single-events.md). Recurrence persistence, free/busy and wire/client interoperability remain pending.
+[First native non-recurring event CRUD](native-single-events.md) now implements scoped event storage/commands/projections under [ADR 0053](adr/0053-first-native-single-events.md). Native recurrence, occurrence timing, free/busy and scoped working-hours composition are implemented in the increments linked below; wire/client interoperability remains pending.
 
 [Native protocol UID and modification time](calendar-protocol-identity.md) add read-only identity/time disclosure under [ADR 0052](adr/0052-calendar-protocol-identity-and-revision-time.md), without parsing/export or feed validators.
 
@@ -148,4 +148,6 @@ The maintainer selected timing edits for one/this-and-future, single cancellatio
 
 ## First per-calendar free/busy increment, 2026-10-21
 
-The maintainer selected per-calendar free/busy before RFC 7953 working-hours rules and subject/common-slot search, with tentative opaque bookings blocking time and classified separately. [ADR 0056](adr/0056-first-calendar-free-busy.md) and [the guide](calendar-free-busy.md) describe this partial native FR-16/17/27 implementation: independent calendar/source busy authority, complete/unknown coverage, effective recurring/overridden booking intervals, saved fallback, UTC classifications and no private source identities/counts. Limits/denied coverage cannot appear free. Full RFC 7953 composition, subject contributor resolution/search, VFREEBUSY serialization, scheduling, alarms and external-client/feed interoperability remain pending.
+The maintainer selected per-calendar free/busy before RFC 7953 working-hours rules and subject/common-slot search, with tentative opaque bookings blocking time and classified separately. [ADR 0056](adr/0056-first-calendar-free-busy.md) and [the guide](calendar-free-busy.md) describe this partial native FR-16/17/27 implementation: independent calendar/source busy authority, complete/unknown coverage, effective recurring/overridden booking intervals, saved fallback, UTC classifications and no private source identities/counts. Limits/denied coverage cannot appear free. Broader RFC 7953 metadata/override/interchange support, subject contributor resolution/search, VFREEBUSY serialization, scheduling, alarms and external-client/feed interoperability remain pending.
+
+[Native working-hours CRUD/composition](native-working-hours.md) implements `CalendarAvailabilityContent`, `CalendarAvailabilityOpening`, create/update requests, views/receipts and separate identity/active-data records under [ADR 0057](adr/0057-native-working-hours.md). Raw management and private projection have separate host gates. Rich metadata, opening-occurrence overrides and wire import/export remain planned.

@@ -9,6 +9,12 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  listAvailability,
+  readAvailability,
+  createAvailability,
+  updateAvailability,
+  deleteAvailability,
+  projectAvailability,
   readFreeBusy,
   projectEventBusy,
   previewEventOccurrences,
@@ -135,6 +141,9 @@ final class CalendarAuthorizationRequest {
     this.proposedEvent,
     this.occurrenceQuery,
     this.freeBusyQuery,
+    this.availabilityId,
+    this.currentAvailability,
+    this.proposedAvailability,
     this.occurrenceChange,
     this.proposedTimingOverrides,
     Iterable<CalendarEventFieldGroup> eventGroups = const [],
@@ -148,6 +157,9 @@ final class CalendarAuthorizationRequest {
   final CalendarEventContent? proposedEvent;
   final CalendarEventOccurrenceQuery? occurrenceQuery;
   final CalendarFreeBusyQuery? freeBusyQuery;
+  final UuidValue? availabilityId;
+  final CalendarAvailabilityPolicySnapshot? currentAvailability;
+  final CalendarAvailabilityContent? proposedAvailability;
   final CalendarEventOccurrenceChange? occurrenceChange;
   final CalendarEventTimingOverrides? proposedTimingOverrides;
   final Set<CalendarEventFieldGroup> eventGroups;
@@ -273,5 +285,21 @@ final class CalendarEventPolicySnapshot {
   final int revision;
   final CalendarEventContent content;
   final String protocolUid;
+  final DateTime updatedAt;
+}
+
+/// Validated, frozen native rule state plus its actual parent identity.
+final class CalendarAvailabilityPolicySnapshot {
+  const CalendarAvailabilityPolicySnapshot(
+    this.availabilityId,
+    this.calendarId,
+    this.revision,
+    this.content,
+    this.protocolUid,
+    this.updatedAt,
+  );
+  final UuidValue availabilityId, calendarId, protocolUid;
+  final int revision;
+  final CalendarAvailabilityContent content;
   final DateTime updatedAt;
 }

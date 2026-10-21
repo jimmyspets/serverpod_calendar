@@ -1,0 +1,16 @@
+class: CalendarAvailabilityDataRecord
+serverOnly: true
+table: serverpod_calendar_availability_data
+fields:
+  availabilityId: UuidValue, relation(parent=serverpod_calendar_availability)
+  protocolUid: UuidValue, default=random
+  content: CalendarAvailabilityContent
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  calendar_availability_data_identity_unique:
+    fields: availabilityId
+    unique: true
+  calendar_availability_data_uid_unique:
+    fields: protocolUid
+    unique: true
