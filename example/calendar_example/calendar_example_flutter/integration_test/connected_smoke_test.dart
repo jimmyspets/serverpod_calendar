@@ -237,6 +237,94 @@ void main() {
     await tester.ensureVisible(find.text(renamedLabel));
     await tester.tap(find.text(renamedLabel));
     await _idle(tester);
+    await _tap(tester, 'calendar-events');
+    await _tap(tester, 'event-create');
+    await _tap(tester, 'event-end-form-omitted');
+    await tester.tap(find.text('duration').last);
+    await _idle(tester);
+    await tester.enterText(
+      find.byKey(const Key('event-duration-2')),
+      'invalid',
+    );
+    await _tap(tester, 'event-end-form-duration');
+    await tester.tap(find.text('omitted').last);
+    await _idle(tester);
+    await _tap(tester, 'event-save');
+    await _waitFor(tester, find.text('Untitled event'));
+    final events = client.modules.serverpod_calendar.calendarEvent;
+    final event = (await events.list(
+      calendar.id,
+      pageSize: 10,
+      fieldGroups: cal.CalendarEventFieldGroup.values,
+    )).events.single;
+    expect(event.summary, isNull);
+    await tester.tap(find.text('Untitled event'));
+    await _idle(tester);
+    await tester.enterText(
+      find.byKey(const Key('event-summary')),
+      'Local draft',
+    );
+    await events.update(
+      cal.CalendarEventUpdateRequest(
+        eventId: event.id,
+        expectedRevision: 1,
+        content: cal.CalendarEventContent(
+          summary: 'External event',
+          timing: event.timing!,
+        ),
+      ),
+    );
+    await _tap(tester, 'event-save');
+    expect(find.byKey(const Key('event-error')), findsOneWidget);
+    expect(
+      (await events.getEvent(
+        event.id,
+        cal.CalendarEventFieldGroup.values,
+      )).summary,
+      'External event',
+    );
+    await _tap(tester, 'event-reload');
+    final summaryField = find.byKey(const Key('event-summary'));
+    await _enabledField(tester, summaryField);
+    expect(
+      tester.widget<TextField>(summaryField).controller!.text,
+      'External event',
+    );
+    final eventLabel = '$renamedLabel event';
+    await tester.ensureVisible(summaryField);
+    await tester.tap(summaryField);
+    await _idle(tester);
+    await tester.enterText(summaryField, eventLabel);
+    await tester.pump();
+    expect(tester.widget<TextField>(summaryField).controller!.text, eventLabel);
+    await _tap(tester, 'event-save');
+    await _enabledField(tester, summaryField);
+    expect(
+      (await events.getEvent(
+        event.id,
+        cal.CalendarEventFieldGroup.values,
+      )).summary,
+      eventLabel,
+    );
+    await _tap(tester, 'event-status-cancelled');
+    expect(find.text('Status: cancelled'), findsOneWidget);
+    await tester.pageBack();
+    await _idle(tester);
+    await tester.pageBack();
+    await _idle(tester);
+    await _tap(tester, 'calendar-delete');
+    await _tap(tester, 'calendar-confirm-delete');
+    expect(find.byKey(const Key('calendar-error')), findsOneWidget);
+    await _tap(tester, 'calendar-events');
+    await _waitFor(tester, find.text(eventLabel));
+    await tester.tap(find.text(eventLabel));
+    await _idle(tester);
+    await _tap(tester, 'event-status-confirmed');
+    await _tap(tester, 'event-delete');
+    await _tap(tester, 'event-confirm-delete');
+    expect(find.text(eventLabel), findsNothing);
+    await tester.pageBack();
+    await _idle(tester);
     await _tap(tester, 'calendar-attach-self');
     await _tap(tester, 'calendar-delete');
     await _tap(tester, 'calendar-confirm-delete');
@@ -285,4 +373,18 @@ Future<void> _idle(WidgetTester tester, {String step = 'calendar'}) async {
     }
   }
   fail('Calendar request did not become idle: $step');
+}
+
+Future<void> _enabledField(WidgetTester tester, Finder finder) async {
+  for (var i = 0; i < 120; i++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+    if (finder.evaluate().isNotEmpty &&
+        tester.widget<TextField>(finder).enabled == true) {
+      return;
+    }
+  }
+  fail('Event editor did not become editable');
 }

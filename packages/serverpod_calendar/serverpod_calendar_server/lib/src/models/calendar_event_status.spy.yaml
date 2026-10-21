@@ -1,0 +1,6 @@
+enum: CalendarEventStatus
+serialized: byName
+values:
+  - confirmed
+  - tentative
+  - cancelled

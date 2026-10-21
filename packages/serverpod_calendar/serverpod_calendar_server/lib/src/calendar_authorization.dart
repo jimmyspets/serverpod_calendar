@@ -9,6 +9,12 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  listEvents,
+  readEvent,
+  createEvent,
+  updateEvent,
+  changeEventStatus,
+  deleteEvent,
   list,
   read,
   create,
@@ -121,10 +127,19 @@ final class CalendarAuthorizationRequest {
     this.proposed,
     this.calendarId,
     this.categoryFilter,
+    this.eventId,
+    this.currentEvent,
+    this.proposedEvent,
+    Iterable<CalendarEventFieldGroup> eventGroups = const [],
     Iterable<CalendarFieldGroup> requestedGroups = const [],
-  }) : requestedGroups = Set.unmodifiable(requestedGroups);
+  }) : requestedGroups = Set.unmodifiable(requestedGroups),
+       eventGroups = Set.unmodifiable(eventGroups);
   final String key;
   final CalendarPermission operation;
+  final UuidValue? eventId;
+  final CalendarEventPolicySnapshot? currentEvent;
+  final CalendarEventContent? proposedEvent;
+  final Set<CalendarEventFieldGroup> eventGroups;
   final CalendarCategoryQuery? categoryFilter;
 
   /// Actual server-resolved collection/object identity, absent for scope/create.
@@ -140,11 +155,14 @@ final class CalendarAuthorizationDecision {
     required this.verdict,
     Iterable<CalendarFieldGroup> disclosedGroups = const [],
     this.discloseMutationReceipt = false,
-  }) : disclosedGroups = Set.unmodifiable(disclosedGroups);
+    Iterable<CalendarEventFieldGroup> eventDisclosedGroups = const [],
+  }) : disclosedGroups = Set.unmodifiable(disclosedGroups),
+       eventDisclosedGroups = Set.unmodifiable(eventDisclosedGroups);
   final String key;
   final CalendarAuthorizationVerdict verdict;
   final Set<CalendarFieldGroup> disclosedGroups;
   final bool discloseMutationReceipt;
+  final Set<CalendarEventFieldGroup> eventDisclosedGroups;
 }
 
 /// Server-owned coarse candidate constraint. Object decisions still apply.
@@ -171,6 +189,13 @@ abstract interface class CalendarHostPolicy {
     Set<CalendarFieldGroup> requestedGroups, {
     CalendarCategoryQuery? categoryFilter,
   });
+
+  Future<CalendarEventCandidatePlan> planEventQuery(
+    Session session,
+    CalendarHostContext context,
+    CalendarPolicySnapshot calendar,
+    Set<CalendarEventFieldGroup> requestedGroups,
+  );
 
   /// For coordinated guarantees, finalWrite must coordinate every relevant
   /// policy revocation through this transaction until its actual commit.
@@ -199,6 +224,7 @@ final class CalendarModuleOptions {
     required this.requiredWriteGuarantee,
     this.maxPageSize = 100,
     this.maxScannedCalendars = 1000,
+    this.maxScannedEvents = 1000,
     this.policyBatchSize = 64,
     this.maxAssociations = 64,
     this.maxCursorsPerScope = 64,
@@ -208,8 +234,31 @@ final class CalendarModuleOptions {
   final CalendarAuthorizationGuarantee requiredWriteGuarantee;
   final int maxPageSize,
       maxScannedCalendars,
+      maxScannedEvents,
       policyBatchSize,
       maxAssociations,
       maxCursorsPerScope;
   final Duration cursorLifetime, policyTimeout;
+}
+
+final class CalendarEventCandidatePlan {
+  CalendarEventCandidatePlan({Iterable<UuidValue>? eventIds})
+    : eventIds = eventIds == null ? null : Set.unmodifiable(eventIds);
+  final Set<UuidValue>? eventIds;
+}
+
+final class CalendarEventPolicySnapshot {
+  const CalendarEventPolicySnapshot(
+    this.eventId,
+    this.calendarId,
+    this.revision,
+    this.content,
+    this.protocolUid,
+    this.updatedAt,
+  );
+  final UuidValue eventId, calendarId;
+  final int revision;
+  final CalendarEventContent content;
+  final String protocolUid;
+  final DateTime updatedAt;
 }

@@ -9,6 +9,9 @@ import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 import 'calendar_authorization.dart';
 import 'generated/protocol.dart';
 import 'native_calendar_name.dart';
+import 'event_values.dart';
+
+part 'calendar_events.dart';
 
 /// Configuration is per Serverpod instance, never an allow-decision cache.
 abstract final class CalendarModule {
@@ -22,6 +25,7 @@ abstract final class CalendarModule {
     for (final n in [
       options.maxPageSize,
       options.maxScannedCalendars,
+      options.maxScannedEvents,
       options.policyBatchSize,
       options.maxAssociations,
       options.maxCursorsPerScope,
@@ -740,7 +744,15 @@ final class CalendarService {
         CalendarAuthorizationPhase.preliminaryWrite,
       );
       _revision(a, expectedRevision);
-      if (a.links.isNotEmpty) {
+      if (a.links.isNotEmpty ||
+          await CalendarEventRecord.db.count(
+                _session,
+                where: (t) =>
+                    t.calendarId.equals(id) & t.deletedAt.equals(null),
+                transaction: tx,
+                limit: 1,
+              ) >
+              0) {
         throw _failure(CalendarFailureCode.dependencyConflict);
       }
       for (final dependency in _runtime.dependencies) {
@@ -829,6 +841,8 @@ final class CalendarService {
           transaction: tx,
         );
         if (saved == null ||
+            saved.eventCalendarId != null ||
+            saved.eventFieldGroups != null ||
             !saved.expiresAt.isAfter(DateTime.now().toUtc()) ||
             saved.policyRevision != c.policyRevision ||
             saved.dataRevision != scope.revision ||

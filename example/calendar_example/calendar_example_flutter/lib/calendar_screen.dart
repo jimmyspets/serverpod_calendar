@@ -4,6 +4,7 @@ import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
 import 'package:flutter/material.dart';
 
 import 'protocol_metadata_editor.dart';
+import 'event_screen.dart';
 import 'supplemental_metadata_editor.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -452,6 +453,23 @@ class _CalendarEditorState extends State<CalendarEditor> {
                     key: const Key('calendar-reload'),
                     onPressed: _busy ? null : () => _run(_reload),
                     child: const Text('Reload saved values'),
+                  ),
+                if (existing)
+                  OutlinedButton(
+                    key: const Key('calendar-events'),
+                    onPressed: locked
+                        ? null
+                        : () => Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (_) => EventScreen(
+                                client: widget.client,
+                                calendarId: _calendar!.id,
+                                initialZone:
+                                    _calendar!.availabilityZoneId ?? 'Etc/UTC',
+                              ),
+                            ),
+                          ),
+                    child: const Text('Events'),
                   ),
                 if (existing && _calendar!.protocolIdentity != null) ...[
                   SelectableText(

@@ -1,0 +1,7 @@
+enum: CalendarEventTimeKind
+serialized: byName
+values:
+  - date
+  - utc
+  - zoned
+  - floating

@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'calendar_category_filter.dart' as _i9j129by;
+import 'calendar_event_field_group.dart' as _iftiwkuj;
 import 'calendar_field_group.dart' as _i73hgz1s;
 
 abstract class CalendarCursorRecord
@@ -28,6 +29,8 @@ abstract class CalendarCursorRecord
     required this.afterId,
     required this.pageSize,
     required this.fieldGroups,
+    this.eventCalendarId,
+    this.eventFieldGroups,
     this.categoryFilter,
     required this.expiresAt,
   });
@@ -42,6 +45,8 @@ abstract class CalendarCursorRecord
     required _is.UuidValue afterId,
     required int pageSize,
     required List<_i73hgz1s.CalendarFieldGroup> fieldGroups,
+    _is.UuidValue? eventCalendarId,
+    List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups,
     _i9j129by.CalendarCategoryFilter? categoryFilter,
     required DateTime expiresAt,
   }) = _CalendarCursorRecordImpl;
@@ -64,6 +69,17 @@ abstract class CalendarCursorRecord
           .deserialize<List<_i73hgz1s.CalendarFieldGroup>>(
             jsonSerialization['fieldGroups'],
           ),
+      eventCalendarId: jsonSerialization['eventCalendarId'] == null
+          ? null
+          : _is.UuidValueJsonExtension.fromJson(
+              jsonSerialization['eventCalendarId'],
+            ),
+      eventFieldGroups: jsonSerialization['eventFieldGroups'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<List<_iftiwkuj.CalendarEventFieldGroup>>(
+                  jsonSerialization['eventFieldGroups'],
+                ),
       categoryFilter: jsonSerialization['categoryFilter'] == null
           ? null
           : _ix00hwbf.Protocol().deserialize<_i9j129by.CalendarCategoryFilter>(
@@ -98,6 +114,10 @@ abstract class CalendarCursorRecord
 
   List<_i73hgz1s.CalendarFieldGroup> fieldGroups;
 
+  _is.UuidValue? eventCalendarId;
+
+  List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups;
+
   _i9j129by.CalendarCategoryFilter? categoryFilter;
 
   DateTime expiresAt;
@@ -118,6 +138,8 @@ abstract class CalendarCursorRecord
     _is.UuidValue? afterId,
     int? pageSize,
     List<_i73hgz1s.CalendarFieldGroup>? fieldGroups,
+    _is.UuidValue? eventCalendarId,
+    List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups,
     _i9j129by.CalendarCategoryFilter? categoryFilter,
     DateTime? expiresAt,
   });
@@ -134,6 +156,11 @@ abstract class CalendarCursorRecord
       'afterId': afterId.toJson(),
       'pageSize': pageSize,
       'fieldGroups': fieldGroups.toJson(valueToJson: (v) => v.toJson()),
+      if (eventCalendarId != null) 'eventCalendarId': eventCalendarId?.toJson(),
+      if (eventFieldGroups != null)
+        'eventFieldGroups': eventFieldGroups?.toJson(
+          valueToJson: (v) => v.toJson(),
+        ),
       if (categoryFilter != null) 'categoryFilter': categoryFilter?.toJson(),
       'expiresAt': expiresAt.toJson(),
     };
@@ -185,6 +212,8 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
     required _is.UuidValue afterId,
     required int pageSize,
     required List<_i73hgz1s.CalendarFieldGroup> fieldGroups,
+    _is.UuidValue? eventCalendarId,
+    List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups,
     _i9j129by.CalendarCategoryFilter? categoryFilter,
     required DateTime expiresAt,
   }) : super._(
@@ -197,6 +226,8 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
          afterId: afterId,
          pageSize: pageSize,
          fieldGroups: fieldGroups,
+         eventCalendarId: eventCalendarId,
+         eventFieldGroups: eventFieldGroups,
          categoryFilter: categoryFilter,
          expiresAt: expiresAt,
        );
@@ -215,6 +246,8 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
     _is.UuidValue? afterId,
     int? pageSize,
     List<_i73hgz1s.CalendarFieldGroup>? fieldGroups,
+    Object? eventCalendarId = _Undefined,
+    Object? eventFieldGroups = _Undefined,
     Object? categoryFilter = _Undefined,
     DateTime? expiresAt,
   }) {
@@ -228,6 +261,13 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
       afterId: afterId ?? this.afterId,
       pageSize: pageSize ?? this.pageSize,
       fieldGroups: fieldGroups ?? this.fieldGroups.map((e0) => e0).toList(),
+      eventCalendarId: eventCalendarId is _is.UuidValue?
+          ? eventCalendarId
+          : this.eventCalendarId,
+      eventFieldGroups:
+          eventFieldGroups is List<_iftiwkuj.CalendarEventFieldGroup>?
+          ? eventFieldGroups
+          : this.eventFieldGroups?.map((e0) => e0).toList(),
       categoryFilter: categoryFilter is _i9j129by.CalendarCategoryFilter?
           ? categoryFilter
           : this.categoryFilter?.copyWith(),
@@ -286,6 +326,23 @@ class CalendarCursorRecordUpdateTable
     value,
   );
 
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> eventCalendarId(
+    _is.UuidValue? value,
+  ) => _is.ColumnValue(
+    table.eventCalendarId,
+    value,
+  );
+
+  _is.ColumnValue<
+    List<_iftiwkuj.CalendarEventFieldGroup>,
+    List<_iftiwkuj.CalendarEventFieldGroup>
+  >
+  eventFieldGroups(List<_iftiwkuj.CalendarEventFieldGroup>? value) =>
+      _is.ColumnValue(
+        table.eventFieldGroups,
+        value,
+      );
+
   _is.ColumnValue<
     _i9j129by.CalendarCategoryFilter,
     _i9j129by.CalendarCategoryFilter
@@ -338,6 +395,15 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
       'fieldGroups',
       this,
     );
+    eventCalendarId = _is.ColumnUuid(
+      'eventCalendarId',
+      this,
+    );
+    eventFieldGroups =
+        _is.ColumnSerializable<List<_iftiwkuj.CalendarEventFieldGroup>>(
+          'eventFieldGroups',
+          this,
+        );
     categoryFilter = _is.ColumnSerializable<_i9j129by.CalendarCategoryFilter>(
       'categoryFilter',
       this,
@@ -367,6 +433,11 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
   late final _is.ColumnSerializable<List<_i73hgz1s.CalendarFieldGroup>>
   fieldGroups;
 
+  late final _is.ColumnUuid eventCalendarId;
+
+  late final _is.ColumnSerializable<List<_iftiwkuj.CalendarEventFieldGroup>>
+  eventFieldGroups;
+
   late final _is.ColumnSerializable<_i9j129by.CalendarCategoryFilter>
   categoryFilter;
 
@@ -383,6 +454,8 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
     afterId,
     pageSize,
     fieldGroups,
+    eventCalendarId,
+    eventFieldGroups,
     categoryFilter,
     expiresAt,
   ];

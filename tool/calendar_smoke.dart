@@ -377,8 +377,168 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
     } finally {
       bob.close();
     }
+    final ea = clients.first.modules.serverpod_calendar.calendarEvent;
+    final eb = clients.last.modules.serverpod_calendar.calendarEvent;
+    final eventIds = <UuidValue>[];
+    try {
+      for (final kind in [
+        cal.CalendarEventTimeKind.date,
+        cal.CalendarEventTimeKind.utc,
+        cal.CalendarEventTimeKind.zoned,
+      ]) {
+        final receipt = (await ea.create(
+          cal.CalendarEventCreateRequest(
+            calendarId: second.calendarId,
+            content: cal.CalendarEventContent(
+              timing: cal.CalendarEventTiming(
+                kind: kind,
+                start: cal.CalendarEventCivil(
+                  year: 2026,
+                  month: 3,
+                  day: 28,
+                  hour: kind == cal.CalendarEventTimeKind.date ? 0 : 12,
+                ),
+                zoneId: kind == cal.CalendarEventTimeKind.zoned
+                    ? 'Europe/Stockholm'
+                    : null,
+                duration: cal.CalendarEventDuration(days: 1),
+              ),
+            ),
+          ),
+        ))!;
+        eventIds.add(receipt.eventId);
+        final view = await eb.getEvent(
+          receipt.eventId,
+          cal.CalendarEventFieldGroup.values,
+        );
+        check(
+          view.timing!.kind == kind &&
+              view.timing!.duration!.days == 1 &&
+              view.summary == null,
+          'Event temporal meaning or omitted summary changed',
+        );
+      }
+      final firstPage = await ea.list(
+        second.calendarId,
+        pageSize: 1,
+        fieldGroups: cal.CalendarEventFieldGroup.values,
+      );
+      final remotePage = await eb.list(
+        second.calendarId,
+        pageSize: 1,
+        fieldGroups: cal.CalendarEventFieldGroup.values,
+        cursor: firstPage.nextCursor,
+      );
+      check(
+        firstPage.events.single.id != remotePage.events.single.id,
+        'Cross-host event cursor repeated an item',
+      );
+      final id = eventIds.first;
+      final original = await ea.getEvent(
+        id,
+        cal.CalendarEventFieldGroup.values,
+      );
+      final updates = await Future.wait([
+        for (final endpoint in [ea, eb])
+          () async {
+            try {
+              await endpoint.changeStatus(
+                cal.CalendarEventStatusRequest(
+                  eventId: id,
+                  expectedRevision: 1,
+                  status: cal.CalendarEventStatus.cancelled,
+                ),
+              );
+              return true;
+            } on cal.CalendarException catch (e) {
+              if (e.code == cal.CalendarFailureCode.staleRevision) return false;
+              rethrow;
+            }
+          }(),
+      ]);
+      check(
+        updates.where((v) => v).length == 1,
+        'Competing event writes did not reject one stale revision',
+      );
+      final cancelled = await eb.getEvent(
+        id,
+        cal.CalendarEventFieldGroup.values,
+      );
+      check(
+        cancelled.protocolUid == original.protocolUid &&
+            cancelled.status == cal.CalendarEventStatus.cancelled,
+        'Cancellation lost identity or removed event',
+      );
+      final parent = await b.getCalendar(second.calendarId, groups);
+      await rejects(
+        () => a.delete(second.calendarId, parent.revision),
+        cal.CalendarFailureCode.dependencyConflict,
+      );
+      await rejects(
+        () => ea.list(
+          second.calendarId,
+          pageSize: 1,
+          fieldGroups: cal.CalendarEventFieldGroup.values,
+          cursor: firstPage.nextCursor,
+        ),
+        cal.CalendarFailureCode.invalidCursor,
+      );
+    } finally {
+      for (final id in eventIds) {
+        final view = await eb.getEvent(id, cal.CalendarEventFieldGroup.values);
+        await eb.deleteEvent(id, view.revision);
+      }
+    }
+    final raceParent = (await a.create(
+      cal.CalendarCreateRequest(
+        displayName: 'Event parent race',
+        availabilityZoneId: 'UTC',
+        noRuleFallback: cal.CalendarNoRuleFallback.free,
+      ),
+    ))!;
+    UuidValue? raceEvent;
+    final parentRace = await Future.wait([
+      () async {
+        try {
+          await a.delete(raceParent.calendarId, 1);
+          return true;
+        } on cal.CalendarException catch (e) {
+          if (e.code == cal.CalendarFailureCode.dependencyConflict) {
+            return false;
+          }
+          rethrow;
+        }
+      }(),
+      () async {
+        try {
+          raceEvent = (await eb.create(
+            cal.CalendarEventCreateRequest(
+              calendarId: raceParent.calendarId,
+              content: cal.CalendarEventContent(
+                timing: cal.CalendarEventTiming(
+                  kind: cal.CalendarEventTimeKind.date,
+                  start: cal.CalendarEventCivil(year: 2026, month: 1, day: 1),
+                ),
+              ),
+            ),
+          ))!.eventId;
+          return true;
+        } on cal.CalendarException catch (e) {
+          if (e.code == cal.CalendarFailureCode.accessDenied) return false;
+          rethrow;
+        }
+      }(),
+    ]);
+    check(
+      parentRace.where((v) => v).length == 1,
+      'Parent deletion and event creation did not serialize across hosts',
+    );
+    if (raceEvent != null) {
+      await ea.deleteEvent(raceEvent!, 1);
+      await b.delete(raceParent.calendarId, 1);
+    }
     print(
-      'PASS: stable calendar protocol UID/time, links/categories/image/refresh metadata, cross-host filtered cursors, native/protocol metadata isolation, multilingual round trips and generated calendar CRUD, scope isolation, cursors, stale writes and cross-host delete/attach race.',
+      'PASS: native events, temporal forms, lifecycle/cursors and cross-host stale-write race, stable calendar protocol UID/time, links/categories/image/refresh metadata, cross-host filtered cursors, native/protocol metadata isolation, multilingual round trips and generated calendar CRUD, scope isolation, cursors, stale writes and cross-host delete/attach race.',
     );
   } finally {
     for (final id in ids) {

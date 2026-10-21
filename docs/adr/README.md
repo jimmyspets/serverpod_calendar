@@ -68,6 +68,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0051](0051-calendar-links-categories-images-refresh.md) | HTTP links, exact category search, image hints and bounded unit-preserving refresh metadata | Accepted product profile; schema/query mechanics under review |
 | [0052](0052-calendar-protocol-identity-and-revision-time.md) | Calendar protocol identity and revision time | Accepted generated UID/automatic timestamp; implementation mechanics under review |
+| [0053](0053-first-native-single-events.md) | First native non-recurring event CRUD and separate lifecycle authority | Accepted batch/summary/lifecycle boundaries; mechanics under review |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

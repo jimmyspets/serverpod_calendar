@@ -91,3 +91,7 @@ The maintainer selected HTTP/HTTPS links without user information, exact case-se
 ## Native calendar protocol identity/time increment
 
 The maintainer confirmed separate generated native calendar protocol UIDs and automatic whole-second UTC modification time for calendar metadata/settings/association changes. [ADR 0052](adr/0052-calendar-protocol-identity-and-revision-time.md) and [the guide](calendar-protocol-identity.md) describe read-only independent disclosure, shared database time, stable UID/backfilled upgrades and unchanged minimal deletion markers. This limited FR-02/08/24 increment does not implement imported-source identity, full VCALENDAR change tracking or feed validators; event/task and publication changes require separate handling.
+
+## First native event increment
+
+The maintainer selected non-recurring CRUD first, optional/empty summary with an example-only placeholder, separate cancellation/content deletion and separate lifecycle permission. [ADR 0053](adr/0053-first-native-single-events.md) and [the guide](native-single-events.md) describe this scoped FR-03/04/08/27 implementation, typed core timing, actual parent/event host context, bounded authorized lists, transactional revisions and minimal deletion markers. Recurring event persistence/occurrence edits, full metadata, free/busy, scheduling, alarms and ICS/feed interoperability remain pending; event changes do not update the parent calendar's metadata time.
