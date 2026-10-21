@@ -1,0 +1,9 @@
+enum: CalendarEventFrequency
+serialized: byName
+values:
+  - minutely
+  - hourly
+  - daily
+  - weekly
+  - monthly
+  - yearly

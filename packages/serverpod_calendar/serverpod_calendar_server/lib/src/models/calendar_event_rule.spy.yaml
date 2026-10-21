@@ -1,0 +1,17 @@
+class: CalendarEventRule
+immutable: true
+fields:
+  frequency: CalendarEventFrequency
+  interval: int, default=1
+  count: int?
+  untilDate: CalendarEventCivil?
+  untilUtc: DateTime?
+  weekStart: int, default=1
+  byDay: List<CalendarEventByDay>
+  byMonthDay: List<int>
+  byYearDay: List<int>
+  byWeekNo: List<int>
+  byMonth: List<int>
+  byHour: List<int>
+  byMinute: List<int>
+  bySetPosition: List<int>

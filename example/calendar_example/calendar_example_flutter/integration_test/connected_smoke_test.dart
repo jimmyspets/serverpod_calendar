@@ -306,6 +306,37 @@ void main() {
       )).summary,
       eventLabel,
     );
+    // Persist recurrence through Flutter and preview through the real endpoint.
+    await tester.enterText(find.byKey(const Key('event-start')), '2026-03-29');
+    await _tap(tester, 'event-frequency-none');
+    await tester.tap(find.text('daily').last);
+    await _idle(tester);
+    await tester.ensureVisible(find.byKey(const Key('event-rule-count')));
+    await tester.enterText(find.byKey(const Key('event-rule-count')), '3');
+    await tester.ensureVisible(find.byKey(const Key('event-inclusions')));
+    await tester.enterText(
+      find.byKey(const Key('event-inclusions')),
+      '2026-03-27',
+    );
+    await tester.ensureVisible(find.byKey(const Key('event-exclusions')));
+    await tester.enterText(
+      find.byKey(const Key('event-exclusions')),
+      '2026-03-30',
+    );
+    await _tap(tester, 'event-save');
+    await _tap(tester, 'event-preview');
+    await tester.enterText(find.byKey(const Key('preview-from')), '2026-03-01');
+    await tester.enterText(
+      find.byKey(const Key('preview-until')),
+      '2026-04-01',
+    );
+    await _tap(tester, 'preview-load');
+    await _waitFor(tester, find.text('3 occurrences'));
+    expect(find.text('2026-03-27'), findsOneWidget);
+    expect(find.text('2026-03-29'), findsOneWidget);
+    expect(find.text('2026-03-31'), findsOneWidget);
+    await tester.pageBack();
+    await _idle(tester);
     await _tap(tester, 'event-status-cancelled');
     expect(find.text('Status: cancelled'), findsOneWidget);
     await tester.pageBack();

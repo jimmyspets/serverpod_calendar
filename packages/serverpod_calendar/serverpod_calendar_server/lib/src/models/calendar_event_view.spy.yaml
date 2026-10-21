@@ -12,3 +12,4 @@ fields:
   transparency: CalendarEventTransparency?
   protocolUid: String?
   lastModified: DateTime?
+  recurrence: CalendarEventRecurrence?

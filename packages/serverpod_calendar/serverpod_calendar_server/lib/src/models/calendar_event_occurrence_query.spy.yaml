@@ -1,0 +1,9 @@
+class: CalendarEventOccurrenceQuery
+immutable: true
+fields:
+  eventId: UuidValue
+  expectedRevision: int
+  fromDate: CalendarEventCivil?
+  untilDate: CalendarEventCivil?
+  fromUtc: DateTime?
+  untilUtc: DateTime?

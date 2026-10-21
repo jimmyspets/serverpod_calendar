@@ -9,6 +9,7 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  previewEventOccurrences,
   listEvents,
   readEvent,
   createEvent,
@@ -130,6 +131,7 @@ final class CalendarAuthorizationRequest {
     this.eventId,
     this.currentEvent,
     this.proposedEvent,
+    this.occurrenceQuery,
     Iterable<CalendarEventFieldGroup> eventGroups = const [],
     Iterable<CalendarFieldGroup> requestedGroups = const [],
   }) : requestedGroups = Set.unmodifiable(requestedGroups),
@@ -139,6 +141,7 @@ final class CalendarAuthorizationRequest {
   final UuidValue? eventId;
   final CalendarEventPolicySnapshot? currentEvent;
   final CalendarEventContent? proposedEvent;
+  final CalendarEventOccurrenceQuery? occurrenceQuery;
   final Set<CalendarEventFieldGroup> eventGroups;
   final CalendarCategoryQuery? categoryFilter;
 

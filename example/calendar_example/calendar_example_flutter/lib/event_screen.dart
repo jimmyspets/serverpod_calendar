@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import 'event_occurrence_screen.dart';
+
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
@@ -90,7 +93,7 @@ class _EventScreenState extends State<EventScreen> {
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 96),
       children: [
         const Text(
-          'Non-recurring events. This detail list does not establish free time.',
+          'Event series and single events. This detail list does not establish free time.',
         ),
         if (_busy) const LinearProgressIndicator(),
         if (_error != null) Text(_error!, key: const Key('event-error')),
@@ -150,6 +153,13 @@ class _EventEditorState extends State<EventEditor> {
       _end = TextEditingController(),
       _zone = TextEditingController();
   final _duration = List.generate(5, (_) => TextEditingController());
+  final _interval = TextEditingController(),
+      _count = TextEditingController(),
+      _weekStart = TextEditingController(),
+      _inclusions = TextEditingController(),
+      _exclusions = TextEditingController();
+  cal.CalendarEventFrequency? _frequency;
+  bool _datesDirty = false;
   cal.CalendarEventView? _view;
   cal.CalendarEventTimeKind _kind = cal.CalendarEventTimeKind.date;
   cal.CalendarEventTransparency _transparency =
@@ -182,6 +192,17 @@ class _EventEditorState extends State<EventEditor> {
           ),
     );
     _end.text = t?.end == null ? '' : _format(t!.end!);
+    final recurrence = _view?.recurrence;
+    final rule = recurrence?.rule;
+    _frequency = rule?.frequency;
+    _interval.text = (rule?.interval ?? 1).toString();
+    _count.text = rule?.count?.toString() ?? '';
+    _weekStart.text = (rule?.weekStart ?? 1).toString();
+    _inclusions.text =
+        recurrence?.inclusions.map((v) => _format(v.start)).join('\n') ?? '';
+    _exclusions.text =
+        recurrence?.exclusions.map((v) => _format(v.start)).join('\n') ?? '';
+    _datesDirty = false;
     _zone.text = t?.zoneId ?? widget.initialZone;
     final d = t?.duration;
     final units = [
@@ -214,6 +235,11 @@ class _EventEditorState extends State<EventEditor> {
       _end,
       _zone,
       ..._duration,
+      _interval,
+      _count,
+      _weekStart,
+      _inclusions,
+      _exclusions,
     ]) {
       c.dispose();
     }
@@ -324,6 +350,65 @@ class _EventEditorState extends State<EventEditor> {
       ),
       status: _view?.status ?? cal.CalendarEventStatus.confirmed,
       transparency: _transparency,
+      recurrence: _recurrence(),
+    );
+  }
+
+  cal.CalendarEventRecurrence? _recurrence() {
+    final previous = _view?.recurrence;
+    cal.CalendarEventRule? rule;
+    if (_frequency != null) {
+      int number(String value) {
+        if (!RegExp(r'^\d+$').hasMatch(value)) {
+          throw const FormatException(
+            'Recurrence numbers must be whole positive numbers.',
+          );
+        }
+        return int.parse(value);
+      }
+
+      final template =
+          previous?.rule ??
+          cal.CalendarEventRule(
+            frequency: _frequency!,
+            byDay: [],
+            byMonthDay: [],
+            byYearDay: [],
+            byWeekNo: [],
+            byMonth: [],
+            byHour: [],
+            byMinute: [],
+            bySetPosition: [],
+          );
+      rule = template.copyWith(
+        frequency: _frequency!,
+        interval: number(_interval.text),
+        count: _count.text.isEmpty ? null : number(_count.text),
+        weekStart: number(_weekStart.text),
+      );
+    }
+    List<cal.CalendarEventTiming> dates(String text) => [
+      for (final line in text.split('\n'))
+        if (line.isNotEmpty)
+          cal.CalendarEventTiming(
+            kind: _kind,
+            start: _civil(line),
+            zoneId: _kind == cal.CalendarEventTimeKind.zoned
+                ? _zone.text
+                : null,
+          ),
+    ];
+    final inclusions = _datesDirty
+        ? dates(_inclusions.text)
+        : previous?.inclusions ?? <cal.CalendarEventTiming>[];
+    final exclusions = _datesDirty
+        ? dates(_exclusions.text)
+        : previous?.exclusions ?? <cal.CalendarEventTiming>[];
+    if (rule == null && inclusions.isEmpty && exclusions.isEmpty) return null;
+    return cal.CalendarEventRecurrence(
+      rule: rule,
+      inclusions: inclusions,
+      exclusions: exclusions,
     );
   }
 
@@ -344,6 +429,7 @@ class _EventEditorState extends State<EventEditor> {
           eventId: _view!.id,
           expectedRevision: expected,
           content: content,
+          replaceRecurrenceDates: _datesDirty,
         ),
       );
       await _reload(expected: expected + 1);
@@ -477,7 +563,70 @@ class _EventEditorState extends State<EventEditor> {
                     _duration[i],
                   ),
               const Text(
-                'Omitted end means one day for dates, or a point for timed events. Floating times and recurrence are not supported by this first editor.',
+                'Omitted end means one day for dates, or a point for timed events. Floating times are unsupported.',
+              ),
+              DropdownButtonFormField<String>(
+                key: ValueKey('event-frequency-${_frequency?.name ?? 'none'}'),
+                initialValue: _frequency?.name ?? 'none',
+                decoration: const InputDecoration(
+                  labelText: 'Recurrence frequency',
+                ),
+                items: [
+                  for (final name in [
+                    'none',
+                    ...cal.CalendarEventFrequency.values.map((v) => v.name),
+                  ])
+                    DropdownMenuItem(value: name, child: Text(name)),
+                ],
+                onChanged: locked
+                    ? null
+                    : (name) => setState(() {
+                        _frequency = name == 'none'
+                            ? null
+                            : cal.CalendarEventFrequency.values.byName(name!);
+                        _dirty = true;
+                      }),
+              ),
+              if (_frequency != null) ...[
+                text('event-rule-interval', 'Recurrence interval', _interval),
+                text('event-rule-count', 'COUNT (optional)', _count),
+                text(
+                  'event-rule-week-start',
+                  'WKST: Monday 1 to Sunday 7',
+                  _weekStart,
+                ),
+                const Text(
+                  'Display week numbers remain ISO Monday-first. WKST affects the rule and its week numbers. Existing UNTIL and advanced filters are preserved; edit those through the typed API.',
+                ),
+              ],
+              TextField(
+                key: const Key('event-inclusions'),
+                controller: _inclusions,
+                enabled: !locked,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Inclusion dates/times (one per line)',
+                ),
+                onChanged: (_) => setState(() {
+                  _dirty = true;
+                  _datesDirty = true;
+                }),
+              ),
+              TextField(
+                key: const Key('event-exclusions'),
+                controller: _exclusions,
+                enabled: !locked,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Exclusion dates/times (one per line)',
+                ),
+                onChanged: (_) => setState(() {
+                  _dirty = true;
+                  _datesDirty = true;
+                }),
+              ),
+              const Text(
+                'Pattern edits retain explicit dates. Editing either date list explicitly replaces both lists in the selected timing profile. Exclusions take precedence.',
               ),
               DropdownButtonFormField<cal.CalendarEventTransparency>(
                 key: ValueKey('event-transparency-$_transparency'),
@@ -502,6 +651,24 @@ class _EventEditorState extends State<EventEditor> {
             ] else
               const Text(
                 'Some fields are withheld. Full editing is unavailable.',
+              ),
+            if (_view != null &&
+                _view!.disclosedGroups.contains(
+                  cal.CalendarEventFieldGroup.timing,
+                ))
+              TextButton(
+                key: const Key('event-preview'),
+                onPressed: locked || _dirty
+                    ? null
+                    : () => Navigator.of(context).push<void>(
+                        MaterialPageRoute(
+                          builder: (_) => EventOccurrenceScreen(
+                            client: widget.client,
+                            event: _view!,
+                          ),
+                        ),
+                      ),
+                child: const Text('Preview saved occurrences'),
               ),
             if (_view?.status != null) ...[
               Text(

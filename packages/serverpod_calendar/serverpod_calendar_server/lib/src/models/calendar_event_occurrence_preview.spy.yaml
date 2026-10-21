@@ -1,0 +1,7 @@
+class: CalendarEventOccurrencePreview
+fields:
+  eventId: UuidValue
+  revision: int
+  kind: CalendarEventTimeKind
+  zoneId: String?
+  occurrences: List<CalendarEventOccurrence>
