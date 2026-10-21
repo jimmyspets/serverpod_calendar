@@ -6,4 +6,5 @@ fields:
   revision: int
   protocolUid: UuidValue
   lastModified: DateTime
+  timingOverrides: List<CalendarAvailabilityOpeningEdits>?
   content: CalendarAvailabilityContent

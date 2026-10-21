@@ -13,7 +13,9 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
 import 'calendar_availability_content.dart' as _ifxxil5c;
+import 'calendar_availability_opening_edits.dart' as _id5ke9r5;
 
 @_is.immutable
 abstract class CalendarAvailabilityView
@@ -24,6 +26,7 @@ abstract class CalendarAvailabilityView
     required this.revision,
     required this.protocolUid,
     required this.lastModified,
+    this.timingOverrides,
     required this.content,
   });
 
@@ -33,6 +36,7 @@ abstract class CalendarAvailabilityView
     required int revision,
     required _is.UuidValue protocolUid,
     required DateTime lastModified,
+    List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
     required _ifxxil5c.CalendarAvailabilityContent content,
   }) = _CalendarAvailabilityViewImpl;
 
@@ -51,6 +55,12 @@ abstract class CalendarAvailabilityView
       lastModified: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['lastModified'],
       ),
+      timingOverrides: jsonSerialization['timingOverrides'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<List<_id5ke9r5.CalendarAvailabilityOpeningEdits>>(
+                  jsonSerialization['timingOverrides'],
+                ),
       content: _ix00hwbf.Protocol()
           .deserialize<_ifxxil5c.CalendarAvailabilityContent>(
             jsonSerialization['content'],
@@ -68,6 +78,8 @@ abstract class CalendarAvailabilityView
 
   final DateTime lastModified;
 
+  final List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides;
+
   final _ifxxil5c.CalendarAvailabilityContent content;
 
   /// Returns a shallow copy of this [CalendarAvailabilityView]
@@ -79,6 +91,7 @@ abstract class CalendarAvailabilityView
     int? revision,
     _is.UuidValue? protocolUid,
     DateTime? lastModified,
+    List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
     _ifxxil5c.CalendarAvailabilityContent? content,
   });
   @override
@@ -114,6 +127,10 @@ abstract class CalendarAvailabilityView
                   lastModified,
                 ) ||
                 other.lastModified == lastModified) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.timingOverrides,
+              timingOverrides,
+            ) &&
             (identical(
                   other.content,
                   content,
@@ -130,6 +147,7 @@ abstract class CalendarAvailabilityView
       revision,
       protocolUid,
       lastModified,
+      const _iss.DeepCollectionEquality().hash(timingOverrides),
       content,
     );
   }
@@ -143,6 +161,10 @@ abstract class CalendarAvailabilityView
       'revision': revision,
       'protocolUid': protocolUid.toJson(),
       'lastModified': lastModified.toJson(),
+      if (timingOverrides != null)
+        'timingOverrides': timingOverrides?.toJson(
+          valueToJson: (v) => v.toJson(),
+        ),
       'content': content.toJson(),
     };
   }
@@ -156,6 +178,10 @@ abstract class CalendarAvailabilityView
       'revision': revision,
       'protocolUid': protocolUid.toJson(),
       'lastModified': lastModified.toJson(),
+      if (timingOverrides != null)
+        'timingOverrides': timingOverrides?.toJson(
+          valueToJson: (v) => v.toJsonForProtocol(),
+        ),
       'content': content.toJsonForProtocol(),
     };
   }
@@ -166,6 +192,8 @@ abstract class CalendarAvailabilityView
   }
 }
 
+class _Undefined {}
+
 class _CalendarAvailabilityViewImpl extends CalendarAvailabilityView {
   const _CalendarAvailabilityViewImpl({
     required _is.UuidValue id,
@@ -173,6 +201,7 @@ class _CalendarAvailabilityViewImpl extends CalendarAvailabilityView {
     required int revision,
     required _is.UuidValue protocolUid,
     required DateTime lastModified,
+    List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
     required _ifxxil5c.CalendarAvailabilityContent content,
   }) : super._(
          id: id,
@@ -180,6 +209,7 @@ class _CalendarAvailabilityViewImpl extends CalendarAvailabilityView {
          revision: revision,
          protocolUid: protocolUid,
          lastModified: lastModified,
+         timingOverrides: timingOverrides,
          content: content,
        );
 
@@ -193,6 +223,7 @@ class _CalendarAvailabilityViewImpl extends CalendarAvailabilityView {
     int? revision,
     _is.UuidValue? protocolUid,
     DateTime? lastModified,
+    Object? timingOverrides = _Undefined,
     _ifxxil5c.CalendarAvailabilityContent? content,
   }) {
     return CalendarAvailabilityView(
@@ -201,6 +232,10 @@ class _CalendarAvailabilityViewImpl extends CalendarAvailabilityView {
       revision: revision ?? this.revision,
       protocolUid: protocolUid ?? this.protocolUid,
       lastModified: lastModified ?? this.lastModified,
+      timingOverrides:
+          timingOverrides is List<_id5ke9r5.CalendarAvailabilityOpeningEdits>?
+          ? timingOverrides
+          : this.timingOverrides?.map((e0) => e0.copyWith()).toList(),
       content: content ?? this.content.copyWith(),
     );
   }

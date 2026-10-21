@@ -205,7 +205,11 @@ extension CalendarFreeBusyOperations on CalendarService {
         if (sourceOpenings > 64) {
           throw const AvailabilityLimitException('maxSourceOpenings');
         }
-        final evaluated = evaluateAvailability(rule.data.content, window);
+        final evaluated = evaluateAvailability(
+          rule.data.content,
+          window,
+          edits: rule.data.timingOverrides,
+        );
         budget.projected(evaluated.openings.length);
         openingCount += evaluated.openings.length;
         if (openingCount > 5000) {

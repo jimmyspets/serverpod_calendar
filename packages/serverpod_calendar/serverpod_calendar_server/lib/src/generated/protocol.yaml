@@ -3,6 +3,9 @@ calendarAvailability:
   - getRule:
   - list:
   - update:
+  - updateMetadata:
+  - changeOccurrence:
+  - preview:
   - deleteRule:
 calendarAvailabilitySearch:
   - search:

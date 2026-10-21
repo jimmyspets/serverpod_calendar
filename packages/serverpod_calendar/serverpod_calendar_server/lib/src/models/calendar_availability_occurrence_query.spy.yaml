@@ -1,0 +1,8 @@
+class: CalendarAvailabilityOccurrenceQuery
+immutable: true
+fields:
+  availabilityId: UuidValue
+  openingUid: UuidValue
+  expectedRevision: int
+  fromUtc: DateTime
+  untilUtc: DateTime

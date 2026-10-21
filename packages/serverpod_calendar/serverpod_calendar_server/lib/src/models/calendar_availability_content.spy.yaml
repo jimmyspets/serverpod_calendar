@@ -7,3 +7,9 @@ fields:
   priority: int, default=0
   closedKind: CalendarFreeBusyKind, default=unavailable
   openings: List<CalendarAvailabilityOpening>
+  description: String?
+  location: String?
+  categories: List<String>?
+  comments: List<String>?
+  url: String?
+  classification: CalendarAvailabilityClass?

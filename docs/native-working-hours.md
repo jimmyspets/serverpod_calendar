@@ -1,6 +1,6 @@
 # Native working-hours definitions
 
-The native module stores recurring opening hours and composes them into per-calendar free/busy under [ADR 0057](adr/0057-native-working-hours.md). This is a scoped RFC 7953 calculation profile; wire import/export, rich rule metadata, opening-occurrence overrides remain pending; [person/resource/common-free search](subject-availability-search.md) now uses these per-calendar results.
+The native module stores recurring opening hours and composes them into per-calendar free/busy under [ADR 0057](adr/0057-native-working-hours.md). [Opening-occurrence edits and scoped metadata](availability-occurrences-and-metadata.md) now extend that native profile, and [person/resource/common-free search](subject-availability-search.md) uses the per-calendar results. Wire import/export, organizer/language/ALTREP/extensions and the remaining protocol metadata profile are still pending.
 
 ## API and timing
 
@@ -18,7 +18,7 @@ Use `client.modules.serverpod_calendar.calendarAvailability`:
 
 Example: an unbounded priority-0 definition with Monday–Friday 09:00–17:00 Europe/Stockholm openings remains anchored to that zone even if the calendar's availability zone changes. Supply a DTSTART matching its weekly weekday filter. Explicit recurrence dates retain that opening's UTC/named-zone profile. Use exclusions for whole opening occurrences omitted on holidays, or a higher-priority bounded definition with no openings for a closure. All evaluation requests remain bounded, at most 31 days, within [1970,2100). Optional envelope bounds do not extend supported dates.
 
-The shared recurrence engine preserves WKST and its rule-specific week numbers; presentation remains ISO Monday-first. Explicit gap/fold and generated-gap behavior, exact-end versus nominal duration, whole-second rejection and generated IANA future-data limitations remain as documented in [the temporal core](temporal-core.md), [week conventions](week-conventions.md) and [timezone updates](timezone-data.md). Native envelope DURATION shorthand and opening-occurrence overrides are not exposed yet.
+The shared recurrence engine preserves WKST and its rule-specific week numbers; presentation remains ISO Monday-first. Explicit gap/fold and generated-gap behavior, exact-end versus nominal duration, whole-second rejection and generated IANA future-data limitations remain as documented in [the temporal core](temporal-core.md), [week conventions](week-conventions.md) and [timezone updates](timezone-data.md). Native envelope DURATION shorthand remains pending; opening-occurrence edits now follow [ADR 0059](adr/0059-availability-occurrence-edits-and-metadata.md).
 
 Updates are full configuration replacements, including explicit date lists. Fetch the current definition, preserve fields not being edited and send its expected revision. Supply existing opening UIDs unchanged; use null for a new opening. Foreign or duplicate UIDs reject. Removing entries deliberately deletes them. UIDs are stable independently of list position; application revisions are separate from future protocol SEQUENCE.
 
@@ -53,3 +53,5 @@ Writes, parent-dependency checks and free/busy share the durable scope transacti
 The query source cap includes all active definitions/openings, including outside the query; larger stored configurations can return unknown. Event-source limits in [free/busy](calendar-free-busy.md) remain. Work is bounded per opening and by source count; no global 200000-work guarantee is claimed. Failures do not truncate results or manufacture free time.
 
 The Flutter example offers simple daily/weekly single-opening hours, explicit dates, closures, priority and UTC validity fields. Unsupported advanced native definitions stay readable and cannot be saved through that small form. Stale saves retain the draft and require reopening current values. Full native definitions remain accessible through generated APIs. See [validation evidence](scaffold-validation.md).
+
+Ordinary configuration updates now preserve/revalidate separate occurrence edits on retained opening UIDs, and require additional metadata authority for metadata-signature changes. The timing form preserves unrelated metadata. See [the current editing contract](availability-occurrences-and-metadata.md).

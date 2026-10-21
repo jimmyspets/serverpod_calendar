@@ -16,12 +16,27 @@ class CalendarAvailabilityEndpoint extends Endpoint {
   ) => CalendarModule.service(session).getAvailability(availabilityId);
   Future<List<CalendarAvailabilityView>> list(
     Session session,
-    UuidValue calendarId,
-  ) => CalendarModule.service(session).listAvailability(calendarId);
+    UuidValue calendarId, {
+    String? category,
+  }) =>
+      CalendarModule.service(session)
+          .listAvailability(calendarId, category: category);
   Future<CalendarAvailabilityReceipt?> update(
     Session session,
     CalendarAvailabilityUpdateRequest request,
   ) => CalendarModule.service(session).updateAvailability(request);
+  Future<CalendarAvailabilityReceipt?> updateMetadata(
+    Session session,
+    CalendarAvailabilityUpdateRequest request,
+  ) => CalendarModule.service(session).updateAvailabilityMetadata(request);
+  Future<CalendarAvailabilityReceipt?> changeOccurrence(
+    Session session,
+    CalendarAvailabilityOccurrenceChange request,
+  ) => CalendarModule.service(session).changeAvailabilityOccurrence(request);
+  Future<CalendarAvailabilityOccurrencePreview> preview(
+    Session session,
+    CalendarAvailabilityOccurrenceQuery query,
+  ) => CalendarModule.service(session).previewAvailabilityOccurrences(query);
   Future<CalendarAvailabilityReceipt?> deleteRule(
     Session session,
     UuidValue availabilityId,
