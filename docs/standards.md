@@ -20,7 +20,7 @@ Native calendar week labels and first-day presentation follow ISO 8601: Monday f
 
 ## Property and feature inventories
 
-See the [per-RFC matrices](rfc/README.md): one file per tracked RFC with property or protocol feature, purpose, first-release plan and notes. All actual implementation is still pending. All formerly Proposed RFC matrix rows are now Yes — planned under [RFC scope](rfc/README.md). All listed feature rows now have selected statuses. Planned features, delegated host/library behavior and deferred protocols remain distinguished; these inventories do not approve unresolved profiles or require the whole model in feeds.
+See the [per-RFC matrices](rfc/README.md): one file per tracked RFC with property or protocol feature, purpose, first-release plan and notes. Scoped native and syntax implementations are recorded in the current guides; full wire semantic/interoperability support remains pending. All formerly Proposed RFC matrix rows are now Yes — planned under [RFC scope](rfc/README.md). All listed feature rows now have selected statuses. Planned features, delegated host/library behavior and deferred protocols remain distinguished; these inventories do not approve unresolved profiles or require the whole model in feeds.
 
 ## Native module and feed boundaries
 
@@ -55,3 +55,5 @@ Use independent RFC fixtures and negative cases, not only serializer round trips
 The iOS/Google/Outlook subscription matrix is required only for the declared feed subset. Validate full module behavior through server/protocol fixtures and generated-client Flutter journeys. Select scheduling/email client targets separately and record client/account/version, directions and results; being a feed target does not require full scheduling/task UI support. Preserve required server method semantics even when an external client supports less.
 
 CalDAV (RFC 4791), CalDAV Scheduling (RFC 6638), general upstream synchronization and VJOURNAL remain outside the initial profile; VTODO task services/interchange are now in scope; time-based VALARM/native alarm execution and a connected Flutter streaming notification example are now required under [ADR 0020](adr/0020-notification-delivery-scope.md), with detailed trigger/action and RFC 9074 mappings proposed under ADR 0009. Identity directories, mail providers and resource catalogs are host integration boundaries.
+
+[The RFC 6868 parameter encoding update](rfc/rfc-6868.md) is implemented in the bounded [syntax foundation](icalendar-syntax.md) under ADR 0062. It enables no additional calendar properties, vCard/XML adapters, imports, scheduling or publication.
