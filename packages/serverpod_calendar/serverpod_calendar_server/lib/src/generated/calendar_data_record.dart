@@ -15,6 +15,7 @@ import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'calendar_no_rule_fallback.dart' as _itts4qyp;
 import 'calendar_protocol_metadata.dart' as _itchuj1l;
+import 'calendar_supplemental_metadata.dart' as _ixppc388;
 
 abstract class CalendarDataRecord
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
@@ -27,6 +28,7 @@ abstract class CalendarDataRecord
     required this.availabilityZoneId,
     required this.noRuleFallback,
     this.protocolMetadata,
+    this.supplementalMetadata,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -40,6 +42,7 @@ abstract class CalendarDataRecord
     required String availabilityZoneId,
     required _itts4qyp.CalendarNoRuleFallback noRuleFallback,
     _itchuj1l.CalendarProtocolMetadata? protocolMetadata,
+    _ixppc388.CalendarSupplementalMetadata? supplementalMetadata,
     required DateTime createdAt,
     required DateTime updatedAt,
   }) = _CalendarDataRecordImpl;
@@ -62,6 +65,12 @@ abstract class CalendarDataRecord
           : _ix00hwbf.Protocol()
                 .deserialize<_itchuj1l.CalendarProtocolMetadata>(
                   jsonSerialization['protocolMetadata'],
+                ),
+      supplementalMetadata: jsonSerialization['supplementalMetadata'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_ixppc388.CalendarSupplementalMetadata>(
+                  jsonSerialization['supplementalMetadata'],
                 ),
       createdAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
@@ -93,6 +102,8 @@ abstract class CalendarDataRecord
 
   _itchuj1l.CalendarProtocolMetadata? protocolMetadata;
 
+  _ixppc388.CalendarSupplementalMetadata? supplementalMetadata;
+
   DateTime createdAt;
 
   DateTime updatedAt;
@@ -112,6 +123,7 @@ abstract class CalendarDataRecord
     String? availabilityZoneId,
     _itts4qyp.CalendarNoRuleFallback? noRuleFallback,
     _itchuj1l.CalendarProtocolMetadata? protocolMetadata,
+    _ixppc388.CalendarSupplementalMetadata? supplementalMetadata,
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -128,6 +140,8 @@ abstract class CalendarDataRecord
       'noRuleFallback': noRuleFallback.toJson(),
       if (protocolMetadata != null)
         'protocolMetadata': protocolMetadata?.toJson(),
+      if (supplementalMetadata != null)
+        'supplementalMetadata': supplementalMetadata?.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
     };
@@ -178,6 +192,7 @@ class _CalendarDataRecordImpl extends CalendarDataRecord {
     required String availabilityZoneId,
     required _itts4qyp.CalendarNoRuleFallback noRuleFallback,
     _itchuj1l.CalendarProtocolMetadata? protocolMetadata,
+    _ixppc388.CalendarSupplementalMetadata? supplementalMetadata,
     required DateTime createdAt,
     required DateTime updatedAt,
   }) : super._(
@@ -189,6 +204,7 @@ class _CalendarDataRecordImpl extends CalendarDataRecord {
          availabilityZoneId: availabilityZoneId,
          noRuleFallback: noRuleFallback,
          protocolMetadata: protocolMetadata,
+         supplementalMetadata: supplementalMetadata,
          createdAt: createdAt,
          updatedAt: updatedAt,
        );
@@ -206,6 +222,7 @@ class _CalendarDataRecordImpl extends CalendarDataRecord {
     String? availabilityZoneId,
     _itts4qyp.CalendarNoRuleFallback? noRuleFallback,
     Object? protocolMetadata = _Undefined,
+    Object? supplementalMetadata = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -220,6 +237,10 @@ class _CalendarDataRecordImpl extends CalendarDataRecord {
       protocolMetadata: protocolMetadata is _itchuj1l.CalendarProtocolMetadata?
           ? protocolMetadata
           : this.protocolMetadata?.copyWith(),
+      supplementalMetadata:
+          supplementalMetadata is _ixppc388.CalendarSupplementalMetadata?
+          ? supplementalMetadata
+          : this.supplementalMetadata?.copyWith(),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -277,6 +298,16 @@ class CalendarDataRecordUpdateTable
         value,
       );
 
+  _is.ColumnValue<
+    _ixppc388.CalendarSupplementalMetadata,
+    _ixppc388.CalendarSupplementalMetadata
+  >
+  supplementalMetadata(_ixppc388.CalendarSupplementalMetadata? value) =>
+      _is.ColumnValue(
+        table.supplementalMetadata,
+        value,
+      );
+
   _is.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _is.ColumnValue(
         table.createdAt,
@@ -324,6 +355,11 @@ class CalendarDataRecordTable extends _is.Table<int?> {
           'protocolMetadata',
           this,
         );
+    supplementalMetadata =
+        _is.ColumnSerializable<_ixppc388.CalendarSupplementalMetadata>(
+          'supplementalMetadata',
+          this,
+        );
     createdAt = _is.ColumnDateTime(
       'createdAt',
       this,
@@ -351,6 +387,9 @@ class CalendarDataRecordTable extends _is.Table<int?> {
   late final _is.ColumnSerializable<_itchuj1l.CalendarProtocolMetadata>
   protocolMetadata;
 
+  late final _is.ColumnSerializable<_ixppc388.CalendarSupplementalMetadata>
+  supplementalMetadata;
+
   late final _is.ColumnDateTime createdAt;
 
   late final _is.ColumnDateTime updatedAt;
@@ -365,6 +404,7 @@ class CalendarDataRecordTable extends _is.Table<int?> {
     availabilityZoneId,
     noRuleFallback,
     protocolMetadata,
+    supplementalMetadata,
     createdAt,
     updatedAt,
   ];

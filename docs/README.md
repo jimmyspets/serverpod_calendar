@@ -41,3 +41,5 @@ Use Mermaid for documentation diagrams, including architecture, relationships, a
 - [First native calendar CRUD implementation and host integration](calendar-crud-implementation.md)
 
 - [Calendar native presentation and scoped protocol text metadata](calendar-metadata.md)
+
+- [Calendar links, categories, images and refresh hints](calendar-links-and-categories.md)

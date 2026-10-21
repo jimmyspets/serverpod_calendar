@@ -1,0 +1,4 @@
+class: CalendarCategory
+fields:
+  value: String
+  language: String?

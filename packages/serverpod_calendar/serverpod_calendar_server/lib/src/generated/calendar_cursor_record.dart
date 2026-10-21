@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+import 'calendar_category_filter.dart' as _i9j129by;
 import 'calendar_field_group.dart' as _i73hgz1s;
 
 abstract class CalendarCursorRecord
@@ -27,6 +28,7 @@ abstract class CalendarCursorRecord
     required this.afterId,
     required this.pageSize,
     required this.fieldGroups,
+    this.categoryFilter,
     required this.expiresAt,
   });
 
@@ -40,6 +42,7 @@ abstract class CalendarCursorRecord
     required _is.UuidValue afterId,
     required int pageSize,
     required List<_i73hgz1s.CalendarFieldGroup> fieldGroups,
+    _i9j129by.CalendarCategoryFilter? categoryFilter,
     required DateTime expiresAt,
   }) = _CalendarCursorRecordImpl;
 
@@ -61,6 +64,11 @@ abstract class CalendarCursorRecord
           .deserialize<List<_i73hgz1s.CalendarFieldGroup>>(
             jsonSerialization['fieldGroups'],
           ),
+      categoryFilter: jsonSerialization['categoryFilter'] == null
+          ? null
+          : _ix00hwbf.Protocol().deserialize<_i9j129by.CalendarCategoryFilter>(
+              jsonSerialization['categoryFilter'],
+            ),
       expiresAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['expiresAt'],
       ),
@@ -90,6 +98,8 @@ abstract class CalendarCursorRecord
 
   List<_i73hgz1s.CalendarFieldGroup> fieldGroups;
 
+  _i9j129by.CalendarCategoryFilter? categoryFilter;
+
   DateTime expiresAt;
 
   @override
@@ -108,6 +118,7 @@ abstract class CalendarCursorRecord
     _is.UuidValue? afterId,
     int? pageSize,
     List<_i73hgz1s.CalendarFieldGroup>? fieldGroups,
+    _i9j129by.CalendarCategoryFilter? categoryFilter,
     DateTime? expiresAt,
   });
   @override
@@ -123,6 +134,7 @@ abstract class CalendarCursorRecord
       'afterId': afterId.toJson(),
       'pageSize': pageSize,
       'fieldGroups': fieldGroups.toJson(valueToJson: (v) => v.toJson()),
+      if (categoryFilter != null) 'categoryFilter': categoryFilter?.toJson(),
       'expiresAt': expiresAt.toJson(),
     };
   }
@@ -173,6 +185,7 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
     required _is.UuidValue afterId,
     required int pageSize,
     required List<_i73hgz1s.CalendarFieldGroup> fieldGroups,
+    _i9j129by.CalendarCategoryFilter? categoryFilter,
     required DateTime expiresAt,
   }) : super._(
          id: id,
@@ -184,6 +197,7 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
          afterId: afterId,
          pageSize: pageSize,
          fieldGroups: fieldGroups,
+         categoryFilter: categoryFilter,
          expiresAt: expiresAt,
        );
 
@@ -201,6 +215,7 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
     _is.UuidValue? afterId,
     int? pageSize,
     List<_i73hgz1s.CalendarFieldGroup>? fieldGroups,
+    Object? categoryFilter = _Undefined,
     DateTime? expiresAt,
   }) {
     return CalendarCursorRecord(
@@ -213,6 +228,9 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
       afterId: afterId ?? this.afterId,
       pageSize: pageSize ?? this.pageSize,
       fieldGroups: fieldGroups ?? this.fieldGroups.map((e0) => e0).toList(),
+      categoryFilter: categoryFilter is _i9j129by.CalendarCategoryFilter?
+          ? categoryFilter
+          : this.categoryFilter?.copyWith(),
       expiresAt: expiresAt ?? this.expiresAt,
     );
   }
@@ -268,6 +286,15 @@ class CalendarCursorRecordUpdateTable
     value,
   );
 
+  _is.ColumnValue<
+    _i9j129by.CalendarCategoryFilter,
+    _i9j129by.CalendarCategoryFilter
+  >
+  categoryFilter(_i9j129by.CalendarCategoryFilter? value) => _is.ColumnValue(
+    table.categoryFilter,
+    value,
+  );
+
   _is.ColumnValue<DateTime, DateTime> expiresAt(DateTime value) =>
       _is.ColumnValue(
         table.expiresAt,
@@ -311,6 +338,10 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
       'fieldGroups',
       this,
     );
+    categoryFilter = _is.ColumnSerializable<_i9j129by.CalendarCategoryFilter>(
+      'categoryFilter',
+      this,
+    );
     expiresAt = _is.ColumnDateTime(
       'expiresAt',
       this,
@@ -336,6 +367,9 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
   late final _is.ColumnSerializable<List<_i73hgz1s.CalendarFieldGroup>>
   fieldGroups;
 
+  late final _is.ColumnSerializable<_i9j129by.CalendarCategoryFilter>
+  categoryFilter;
+
   late final _is.ColumnDateTime expiresAt;
 
   @override
@@ -349,6 +383,7 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
     afterId,
     pageSize,
     fieldGroups,
+    categoryFilter,
     expiresAt,
   ];
 }
