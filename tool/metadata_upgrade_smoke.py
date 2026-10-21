@@ -1,4 +1,4 @@
-"""Exercise the generated nullable-column upgrade on synthetic populated storage."""
+"""Exercise generated metadata/identity upgrades on synthetic populated storage."""
 
 import os
 from pathlib import Path
@@ -98,7 +98,52 @@ BEGIN
 END;
 $links$;
 """)
-        print("PASS: populated schema upgrades preserve identity, revisions, content, associations and old cursor bindings.")
+        sql(database, """
+UPDATE serverpod_calendar_data SET "updatedAt" = '2026-01-02 03:04:05.987654';
+INSERT INTO serverpod_calendar_identity (id, "scopeKey", revision)
+VALUES ('22222222-2222-4222-8222-222222222222','metadata-upgrade-test',2),
+       ('33333333-3333-4333-8333-333333333333','metadata-upgrade-test',3);
+UPDATE serverpod_calendar_identity SET "deletedAt" = '2026-01-03'
+WHERE id = '33333333-3333-4333-8333-333333333333';
+INSERT INTO serverpod_calendar_data
+("calendarId", "displayName", "availabilityZoneId", "noRuleFallback", "createdAt", "updatedAt")
+VALUES ('22222222-2222-4222-8222-222222222222','Second active fixture','UTC','free','2026-01-01','2026-01-02 03:04:05.987654');
+""")
+        sql(database, (SERVER / "migrations/20261021061921307-calendar-protocol-identity/migration.sql").read_text(encoding="utf-8"))
+        sql(database, """
+DO $identity$
+DECLARE first_uid uuid;
+BEGIN
+  IF (SELECT count(DISTINCT "protocolUid") FROM serverpod_calendar_data) <> 2
+     OR EXISTS (SELECT 1 FROM serverpod_calendar_data WHERE "protocolUid" = "calendarId") THEN
+    RAISE EXCEPTION 'UID backfill is not distinct from other active/API identities';
+  END IF;
+  IF (SELECT count(*) FROM serverpod_calendar_data WHERE
+      "calendarId" = '11111111-1111-4111-8111-111111111111'
+      AND description = 'Native before links' AND color = '#112233'
+      AND "protocolMetadata"->'names'->0->>'value' = 'Preserved protocol'
+      AND "supplementalMetadata" IS NULL AND "displayName" = 'Upgrade fixture'
+      AND "updatedAt" = '2026-01-02 03:04:05.987654') <> 1 THEN
+    RAISE EXCEPTION 'Content or precise timestamp changed during identity upgrade';
+  END IF;
+  IF (SELECT revision FROM serverpod_calendar_identity WHERE id = '11111111-1111-4111-8111-111111111111') <> 7
+     OR (SELECT revision FROM serverpod_calendar_scope WHERE "scopeKey" = 'metadata-upgrade-test') <> 11
+     OR (SELECT count(*) FROM serverpod_calendar_cursor WHERE "categoryFilter" IS NULL AND "dataRevision" = 11) <> 1
+     OR (SELECT count(*) FROM serverpod_calendar_data WHERE "calendarId" = '33333333-3333-4333-8333-333333333333') <> 0 THEN
+    RAISE EXCEPTION 'Upgrade changed revisions, cursors or deleted payloads';
+  END IF;
+  SELECT "protocolUid" INTO first_uid FROM serverpod_calendar_data
+  WHERE "calendarId" = '11111111-1111-4111-8111-111111111111';
+  BEGIN
+    UPDATE serverpod_calendar_data SET "protocolUid" = first_uid
+    WHERE "calendarId" = '22222222-2222-4222-8222-222222222222';
+    RAISE EXCEPTION 'UID unique index is missing';
+  EXCEPTION WHEN unique_violation THEN NULL;
+  END;
+END;
+$identity$;
+""")
+        print("PASS: populated schema upgrades preserve identity, revisions, content, associations, unique protocol UIDs and old cursor bindings.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")
 

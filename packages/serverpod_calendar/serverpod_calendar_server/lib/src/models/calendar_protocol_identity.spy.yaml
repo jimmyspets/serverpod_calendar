@@ -1,0 +1,6 @@
+### Read-only native calendar identity and whole-second UTC revision time.
+class: CalendarProtocolIdentity
+immutable: true
+fields:
+  uid: String
+  lastModified: DateTime

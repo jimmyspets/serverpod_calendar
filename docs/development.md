@@ -116,4 +116,4 @@ For focused calendar work, run `dart test test/unit` in `packages/serverpod_cale
 
 The metadata increment adds pure profile tests in `test/unit/calendar_presentation_test.dart` and scoped real database cases in `calendar_test.dart`. Use `--name` to focus the database cases while developing; the full batch check runs the complete file and all Flutter widget tests.
 
-`python tool/metadata_upgrade_smoke.py` checks the generated pre-metadata-to-text-metadata and text-to-supplemental-metadata migrations on a temporary synthetic database using the existing dedicated Compose test service. It preserves fixture rows/revisions and drops only the database it creates. It runs automatically in the complete local sequence.
+`python tool/metadata_upgrade_smoke.py` checks the generated pre-metadata-to-text-metadata, text-to-supplemental-metadata and supplemental-to-protocol-identity migrations on a temporary synthetic database using the existing dedicated Compose test service. It preserves fixture rows/revisions and drops only the database it creates. It runs automatically in the complete local sequence.

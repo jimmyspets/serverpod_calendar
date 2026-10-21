@@ -42,6 +42,231 @@ void main() {
       service = CalendarModule.service(session);
     });
     test(
+      'protocol identity is stable, separate and independently disclosed',
+      () async {
+        final id = (await service.create(createInput()))!.calendarId;
+        final other = (await service.create(createInput()))!.calendarId;
+        final first = await service.get(id, groups);
+        final identity = first.protocolIdentity!;
+        expect(
+          identity.uid,
+          matches(
+            RegExp(
+              r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+            ),
+          ),
+        );
+        expect(identity.uid, isNot(id.toString()));
+        expect(
+          identity.uid,
+          isNot((await service.get(other, groups)).protocolIdentity!.uid),
+        );
+        expect(identity.lastModified.isUtc, isTrue);
+        expect(identity.lastModified.millisecond, 0);
+        expect(identity.lastModified.microsecond, 0);
+        final only = await service.get(id, [
+          CalendarFieldGroup.protocolIdentity,
+        ]);
+        expect(only.protocolIdentity, identity);
+        expect(policy.lastSnapshot!.protocolIdentity, identity);
+        expect(only.displayName, isNull);
+        expect(only.protocolMetadata, isNull);
+        expect(only.supplementalMetadata, isNull);
+        expect(only.updatedAt, isNull);
+        expect(
+          (await service.get(id, [
+            CalendarFieldGroup.protocolMetadata,
+          ])).protocolIdentity,
+          isNull,
+        );
+        policy.grants = {CalendarFieldGroup.metadata};
+        expect((await service.get(id, groups)).protocolIdentity, isNull);
+        expect(
+          (await service.list(
+            pageSize: 10,
+            fieldGroups: groups,
+          )).calendars.every((v) => v.protocolIdentity == null),
+          isTrue,
+        );
+        policy.grants = groups.toSet();
+        expect((await service.get(id, groups)).protocolIdentity, identity);
+      },
+    );
+    test('every calendar mutation touches automatic revision time without changing UID', () async {
+      final id = (await service.create(createInput()))!.calendarId;
+      final uid = (await service.get(id, groups)).protocolIdentity!.uid;
+      var revision = 1;
+      final mutations = <Future<dynamic> Function()>[
+        () => service.updateMetadata(
+          CalendarMetadataUpdateRequest(
+            calendarId: id,
+            expectedRevision: revision,
+            displayName: 'Renamed',
+          ),
+        ),
+        () => service.updatePresentation(
+          CalendarPresentationUpdateRequest(
+            calendarId: id,
+            expectedRevision: revision,
+            displayName: 'Presented',
+            description: 'Notes',
+            color: '#112233',
+          ),
+        ),
+        () => service.updateProtocolMetadata(
+          CalendarProtocolMetadataUpdateRequest(
+            calendarId: id,
+            expectedRevision: revision,
+            metadata: CalendarProtocolMetadata(
+              names: [],
+              descriptions: [],
+              color: 'red',
+            ),
+          ),
+        ),
+        () => service.updateSupplementalMetadata(
+          CalendarSupplementalMetadataUpdateRequest(
+            calendarId: id,
+            expectedRevision: revision,
+            metadata: CalendarSupplementalMetadata(
+              url: 'https://example.invalid/calendar',
+              categories: [],
+              images: [],
+            ),
+          ),
+        ),
+        () => service.updateSettings(
+          CalendarSettingsUpdateRequest(
+            calendarId: id,
+            expectedRevision: revision,
+            availabilityZoneId: 'UTC',
+            noRuleFallback: CalendarNoRuleFallback.unavailable,
+          ),
+        ),
+        for (final action in [
+          CalendarSubjectAction.attach,
+          CalendarSubjectAction.setContribution,
+          CalendarSubjectAction.detach,
+        ])
+          () => service.changeSubject(
+            CalendarSubjectChangeRequest(
+              calendarId: id,
+              expectedRevision: revision,
+              action: action,
+              namespace: 'fixture',
+              kind: 'room',
+              externalId: 'one',
+              contributesAvailability: action == CalendarSubjectAction.attach,
+            ),
+          ),
+      ];
+      for (final change in mutations) {
+        final row = (await CalendarDataRecord.db.findFirstRow(
+          session,
+          where: (t) => t.calendarId.equals(id),
+        ))!;
+        row.updatedAt = DateTime.utc(2020, 1, 1, 0, 0, 0, 123, 456);
+        await CalendarDataRecord.db.updateRow(session, row);
+        final before =
+            (await session.db.unsafeQuery('SELECT clock_timestamp()'))
+                    .single
+                    .single
+                as DateTime;
+        await change();
+        revision++;
+        final after = await service.get(id, groups);
+        expect(after.revision, revision);
+        expect(after.protocolIdentity!.uid, uid);
+        expect(after.updatedAt!.isBefore(before), isFalse);
+        expect(
+          after.protocolIdentity!.lastModified.isBefore(
+            before.subtract(const Duration(seconds: 1)),
+          ),
+          isFalse,
+        );
+        expect(
+          after.protocolIdentity!.lastModified.isAfter(after.updatedAt!),
+          isFalse,
+        );
+        expect(
+          after.updatedAt!.difference(after.protocolIdentity!.lastModified),
+          lessThan(const Duration(seconds: 1)),
+        );
+      }
+    });
+    test('clock correction preserves time while same-second revisions still advance', () async {
+      final id = (await service.create(createInput()))!.calendarId;
+      final row = (await CalendarDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.calendarId.equals(id),
+      ))!;
+      row.updatedAt = DateTime.utc(2080, 4, 5, 12, 34, 59, 987, 654);
+      await CalendarDataRecord.db.updateRow(session, row);
+      final original = await service.get(id, groups);
+      for (final revision in [1, 2]) {
+        await service.updateMetadata(
+          CalendarMetadataUpdateRequest(
+            calendarId: id,
+            expectedRevision: revision,
+            displayName: 'Same label',
+          ),
+        );
+        final view = await service.get(id, groups);
+        expect(view.revision, revision + 1);
+        expect(view.updatedAt, row.updatedAt);
+        expect(
+          view.protocolIdentity!.lastModified,
+          DateTime.utc(2080, 4, 5, 12, 34, 59),
+        );
+        expect(view.protocolIdentity!.uid, original.protocolIdentity!.uid);
+      }
+    });
+    test(
+      'failed writes and reads preserve protocol identity and revision time',
+      () async {
+        final id = (await service.create(createInput()))!.calendarId;
+        final before = await service.get(id, groups);
+        final command = CalendarMetadataUpdateRequest(
+          calendarId: id,
+          expectedRevision: 1,
+          displayName: 'Denied',
+        );
+        policy.denyFinal = true;
+        await expectLater(
+          service.updateMetadata(command),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        policy.denyFinal = false;
+        command.expectedRevision = 2;
+        await expectLater(
+          service.updateMetadata(command),
+          failure(CalendarFailureCode.staleRevision),
+        );
+        command.expectedRevision = 1;
+        command.displayName = ' ';
+        await expectLater(
+          service.updateMetadata(command),
+          failure(CalendarFailureCode.validation),
+        );
+        await service.list(pageSize: 10, fieldGroups: groups);
+        final after = await service.get(id, groups);
+        expect(after.protocolIdentity, before.protocolIdentity);
+        expect(after.updatedAt, before.updatedAt);
+        expect(after.revision, 1);
+        await service.delete(id, 1);
+        expect(
+          await CalendarDataRecord.db.findFirstRow(
+            session,
+            where: (t) => t.calendarId.equals(id),
+          ),
+          isNull,
+        );
+        final marker = (await CalendarIdentityRecord.db.findById(session, id))!;
+        expect(marker.toJson().containsKey('protocolUid'), isFalse);
+        expect(marker.toJson().containsKey('lastModified'), isFalse);
+      },
+    );
+    test(
       'duplicate names, independent fields and content-free deletion marker',
       () async {
         final first = (await service.create(createInput('  Shared  ')))!;
@@ -889,6 +1114,7 @@ final class TestPolicy implements CalendarHostPolicy {
       unavailable = false,
       sawActualSnapshot = false;
   String epoch = 'v1';
+  CalendarPolicySnapshot? lastSnapshot;
   CalendarProposedChange? lastProtocolIntent;
   CalendarProposedChange? lastSupplementalIntent;
   bool sawCategoryFilter = false;
@@ -944,6 +1170,7 @@ final class TestPolicy implements CalendarHostPolicy {
     }
     if (r.current != null) {
       sawActualSnapshot = true;
+      lastSnapshot = r.current;
       if (r.current!.calendarId != r.calendarId) {
         throw StateError('Wrong snapshot');
       }

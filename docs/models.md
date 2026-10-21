@@ -1,6 +1,8 @@
 # Proposed model catalog
 
-The next native increment adds [links, categories, images and refresh hints](calendar-links-and-categories.md) under [ADR 0051](adr/0051-calendar-links-categories-images-refresh.md), including authorized exact category filtering; wire/feed interoperability remains pending.
+[Native protocol UID and modification time](calendar-protocol-identity.md) add read-only identity/time disclosure under [ADR 0052](adr/0052-calendar-protocol-identity-and-revision-time.md), without parsing/export or feed validators.
+
+Native metadata includes [links, categories, images and refresh hints](calendar-links-and-categories.md) under [ADR 0051](adr/0051-calendar-links-categories-images-refresh.md), including authorized exact category filtering; wire/feed interoperability remains pending.
 
 
 The basic CRUD slice now also has [native presentation and scoped protocol text metadata](calendar-metadata.md) under [ADR 0050](adr/0050-calendar-presentation-and-protocol-text.md). This adds no wire/feed-client interoperability.
@@ -9,7 +11,7 @@ The basic CRUD slice now also has [native presentation and scoped protocol text 
 **Current implementation:** the first native calendar CRUD/association slice is described in [the implementation guide](calendar-crud-implementation.md) and [ADR 0049](adr/0049-first-calendar-crud-implementation.md). Broader model/interface proposals below remain future design unless explicitly covered there; this adds no iCalendar/feed-client compatibility.
 
 
-Status: **proposed domain catalog; bounded pure Dart temporal calculation is implemented**. No generated calendar domain models, tables or migrations exist; framework/authentication scaffolding is separate. See [temporal core](temporal-core.md). Date: 2026-10-19. This catalog translates the [requirements](requirements.md) and latest [RFC feature tables](rfc/README.md) into candidate model contracts. Names, physical storage, field cardinalities and unresolved lifecycle rules require review under [ADR 0019](adr/0019-model-contracts.md). Feature scope is selected; this document does not accept the implementation proposals in earlier ADRs.
+Status: **proposed domain catalog; bounded pure Dart temporal calculation is implemented**. Generated native calendar CRUD/metadata models and migrations are implemented in the scoped increments linked above; the broader catalog remains proposed. See [temporal core](temporal-core.md). Date: 2026-10-19. This catalog translates the [requirements](requirements.md) and latest [RFC feature tables](rfc/README.md) into candidate model contracts. Names, physical storage, field cardinalities and unresolved lifecycle rules require review under [ADR 0019](adr/0019-model-contracts.md). Feature scope is selected; this document does not accept the implementation proposals in earlier ADRs.
 
 ## Reading the catalog
 
