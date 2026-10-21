@@ -55,3 +55,7 @@ The concrete same-database locking/serialization protocol and external authorita
 - Test full authorized pages and continuation, late external allows and declared revocation ordering across two independent hosts. Keep concrete protocol tests distinct from the existing authentication-only scaffold evidence.
 
 [ADR 0047](adr/0047-calendar-names-identifiers-and-deletion-storage.md) selects native UUID identity, separate display/protocol names and minimal deletion markers. Adapters must distinguish active targets from internal deleted identities without granting access through markers. No domain runtime code, generated models, migrations or final interfaces are introduced by this document.
+
+## Implemented availability organizer check
+
+The scoped native extension under [ADR 0060](adr/0060-availability-publication-metadata.md) adds required `CalendarHostPolicy.approveAvailabilityOrganizer(session, context, request, transaction, phase)`, returning `CalendarAuthorizationVerdict`. It is independent of `authorizeBatch` and does not replace operation rights. Existing unpublished host adapters must implement it; absent approval cannot silently accept an organizer. The [native guide](availability-publication-metadata.md) defines current/final proposed context, removal/retention checks, failures and declared guarantee boundaries.

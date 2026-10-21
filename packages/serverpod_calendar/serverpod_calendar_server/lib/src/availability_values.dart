@@ -87,10 +87,118 @@ CalendarAvailabilityContent validateAvailabilityContent(
     }
   }
 
+  CalendarTextParameters? parameter(CalendarTextParameters? p, String? text) {
+    if (p == null) return null;
+    if (text == null) throw ArgumentError('Text parameters need ordinary text');
+    if (p.language != null) {
+      validateCalendarLanguageTag(p.language!);
+      metadataWork += p.language!.length;
+    }
+    if (p.alternativeUri != null) {
+      validateAvailabilityMetadataUri(p.alternativeUri!);
+      metadataWork += p.alternativeUri!.length;
+    }
+    return p.language == null && p.alternativeUri == null ? null : p;
+  }
+
+  CalendarAvailabilityTextParameters? parameters(
+    CalendarAvailabilityTextParameters? p,
+    String? summary,
+    String? description,
+    String? location,
+    List<String>? categories,
+    List<String>? comments,
+  ) {
+    if (p == null) return null;
+    final a = parameter(p.summary, summary),
+        b = parameter(p.description, description),
+        c = parameter(p.location, location);
+    if (p.categoryLanguage != null) {
+      if (categories == null || categories.isEmpty) {
+        throw ArgumentError('Category language needs categories');
+      }
+      validateCalendarLanguageTag(p.categoryLanguage!);
+      metadataWork += p.categoryLanguage!.length;
+    }
+    if (p.comments != null && p.comments!.length != (comments?.length ?? 0)) {
+      throw ArgumentError('Comment parameter positions must match comments');
+    }
+    if ((p.comments?.length ?? 0) > 32) {
+      throw ArgumentError('Too many comment parameters');
+    }
+    final notes = p.comments == null
+        ? null
+        : List<CalendarTextParameters?>.unmodifiable([
+            for (var i = 0; i < p.comments!.length; i++)
+              parameter(p.comments![i], comments![i]),
+          ]);
+    if (a == null &&
+        b == null &&
+        c == null &&
+        p.categoryLanguage == null &&
+        (notes == null || notes.every((v) => v == null))) {
+      return null;
+    }
+    return CalendarAvailabilityTextParameters(
+      summary: a,
+      description: b,
+      location: c,
+      categoryLanguage: p.categoryLanguage,
+      comments: notes,
+    );
+  }
+
+  List<CalendarAvailabilityExtension>? extensions(
+    List<CalendarAvailabilityExtension>? values,
+  ) {
+    if ((values?.length ?? 0) > 32) {
+      throw ArgumentError('Too many private extensions');
+    }
+    final names = <String>{};
+    for (final v in values ?? <CalendarAvailabilityExtension>[]) {
+      validateAvailabilityExtensionName(v.name);
+      if (!names.add(v.name.toUpperCase())) {
+        throw ArgumentError('Duplicate private extension');
+      }
+      validateCalendarPlainText(v.value, maxCodePoints: 4096);
+      metadataWork += v.name.length + v.value.runes.length;
+    }
+    return values == null || values.isEmpty ? null : List.unmodifiable(values);
+  }
+
   text(input.summary, input.description, input.location);
   if (input.url != null) {
     validateCalendarHttpUri(input.url!);
     metadataWork += input.url!.runes.length;
+  }
+  final envelopeParameters = parameters(
+    input.textParameters,
+    input.summary,
+    input.description,
+    input.location,
+    input.categories,
+    input.comments,
+  );
+  final envelopeExtensions = extensions(input.extensions);
+  final organizer = input.organizer;
+  if (organizer != null) {
+    validateAvailabilityMetadataUri(organizer.address, maxLength: 1024);
+    metadataWork += organizer.address.length;
+    if (organizer.commonName != null) {
+      validateCalendarPlainText(organizer.commonName!, maxCodePoints: 4096);
+      metadataWork += organizer.commonName!.runes.length;
+    }
+    if (organizer.language != null) {
+      if (organizer.commonName == null) {
+        throw ArgumentError('Organizer language needs a common name');
+      }
+      validateCalendarLanguageTag(organizer.language!);
+      metadataWork += organizer.language!.length;
+    }
+    if (organizer.directoryUri != null) {
+      validateAvailabilityMetadataUri(organizer.directoryUri!);
+      metadataWork += organizer.directoryUri!.length;
+    }
   }
   final envelopeCategories = categories(input.categories);
   final envelopeComments = comments(input.comments);
@@ -103,6 +211,15 @@ CalendarAvailabilityContent validateAvailabilityContent(
     text(opening.summary, opening.description, opening.location);
     final tags = categories(opening.categories);
     final notes = comments(opening.comments);
+    final annotation = parameters(
+      opening.textParameters,
+      opening.summary,
+      opening.description,
+      opening.location,
+      opening.categories,
+      opening.comments,
+    );
+    final extra = extensions(opening.extensions);
     final t = opening.timing;
     if (t.kind != CalendarEventTimeKind.utc &&
         t.kind != CalendarEventTimeKind.zoned) {
@@ -114,6 +231,8 @@ CalendarAvailabilityContent validateAvailabilityContent(
     }
     openings.add(
       opening.copyWith(
+        textParameters: annotation,
+        extensions: extra,
         categories: tags,
         comments: notes,
         recurrence: validateEventRecurrence(t, opening.recurrence),
@@ -125,6 +244,8 @@ CalendarAvailabilityContent validateAvailabilityContent(
   }
   return input.copyWith(
     openings: List.unmodifiable(openings),
+    textParameters: envelopeParameters,
+    extensions: envelopeExtensions,
     categories: envelopeCategories,
     comments: envelopeComments,
   );
@@ -272,6 +393,9 @@ Object availabilityMetadata(CalendarAvailabilityContent value) => [
   value.comments,
   value.url,
   value.classification?.name,
+  value.organizer?.toJson(),
+  value.textParameters?.toJson(),
+  value.extensions?.map((v) => v.toJson()).toList(),
   for (final o in value.openings)
     [
       o.uid?.toString(),
@@ -280,6 +404,8 @@ Object availabilityMetadata(CalendarAvailabilityContent value) => [
       o.location,
       o.categories,
       o.comments,
+      o.textParameters?.toJson(),
+      o.extensions?.map((v) => v.toJson()).toList(),
     ],
 ];
 Object availabilityStructure(CalendarAvailabilityContent value) => [
@@ -290,3 +416,30 @@ Object availabilityStructure(CalendarAvailabilityContent value) => [
   for (final o in value.openings)
     [o.uid?.toString(), o.timing.toJson(), o.recurrence?.toJson()],
 ];
+
+/// Decoded absolute URI metadata only; no retrieval or scheme-based authority.
+void validateAvailabilityMetadataUri(String value, {int maxLength = 4096}) {
+  if (value.isEmpty ||
+      value.length > maxLength ||
+      RegExp(r'[\x00-\x20\x7f-\uffff"<>\\^`{|}]').hasMatch(value) ||
+      RegExp(r'%(?![0-9a-fA-F]{2})').hasMatch(value)) {
+    throw ArgumentError('Invalid absolute metadata URI');
+  }
+  final uri = Uri.parse(value);
+  if (!uri.hasScheme ||
+      value.length <= uri.scheme.length + 1 ||
+      uri.userInfo.isNotEmpty) {
+    throw ArgumentError('Invalid absolute metadata URI');
+  }
+}
+
+void validateAvailabilityExtensionName(String name) {
+  if (name.length > 64 ||
+      RegExp(r'[^A-Za-z0-9-]').hasMatch(name) ||
+      !RegExp(
+        r'^X-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$',
+        caseSensitive: false,
+      ).hasMatch(name)) {
+    throw ArgumentError('Private extension name required');
+  }
+}

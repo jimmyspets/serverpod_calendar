@@ -14,6 +14,8 @@ import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+import 'calendar_availability_extension.dart' as _ip5gybl4;
+import 'calendar_availability_text_parameters.dart' as _ipbm7ji7;
 import 'calendar_event_recurrence.dart' as _iqxs44bf;
 import 'calendar_event_timing.dart' as _ieswiaty;
 
@@ -29,6 +31,8 @@ abstract class CalendarAvailabilityOpening
     this.location,
     this.categories,
     this.comments,
+    this.textParameters,
+    this.extensions,
   });
 
   const factory CalendarAvailabilityOpening({
@@ -40,6 +44,8 @@ abstract class CalendarAvailabilityOpening
     String? location,
     List<String>? categories,
     List<String>? comments,
+    _ipbm7ji7.CalendarAvailabilityTextParameters? textParameters,
+    List<_ip5gybl4.CalendarAvailabilityExtension>? extensions,
   }) = _CalendarAvailabilityOpeningImpl;
 
   factory CalendarAvailabilityOpening.fromJson(
@@ -70,6 +76,18 @@ abstract class CalendarAvailabilityOpening
           : _ie4a1wrz.Protocol().deserialize<List<String>>(
               jsonSerialization['comments'],
             ),
+      textParameters: jsonSerialization['textParameters'] == null
+          ? null
+          : _ie4a1wrz.Protocol()
+                .deserialize<_ipbm7ji7.CalendarAvailabilityTextParameters>(
+                  jsonSerialization['textParameters'],
+                ),
+      extensions: jsonSerialization['extensions'] == null
+          ? null
+          : _ie4a1wrz.Protocol()
+                .deserialize<List<_ip5gybl4.CalendarAvailabilityExtension>>(
+                  jsonSerialization['extensions'],
+                ),
     );
   }
 
@@ -89,6 +107,10 @@ abstract class CalendarAvailabilityOpening
 
   final List<String>? comments;
 
+  final _ipbm7ji7.CalendarAvailabilityTextParameters? textParameters;
+
+  final List<_ip5gybl4.CalendarAvailabilityExtension>? extensions;
+
   /// Returns a shallow copy of this [CalendarAvailabilityOpening]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -101,6 +123,8 @@ abstract class CalendarAvailabilityOpening
     String? location,
     List<String>? categories,
     List<String>? comments,
+    _ipbm7ji7.CalendarAvailabilityTextParameters? textParameters,
+    List<_ip5gybl4.CalendarAvailabilityExtension>? extensions,
   });
   @override
   bool operator ==(Object other) {
@@ -147,6 +171,15 @@ abstract class CalendarAvailabilityOpening
             const _iss.DeepCollectionEquality().equals(
               other.comments,
               comments,
+            ) &&
+            (identical(
+                  other.textParameters,
+                  textParameters,
+                ) ||
+                other.textParameters == textParameters) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.extensions,
+              extensions,
             );
   }
 
@@ -162,6 +195,8 @@ abstract class CalendarAvailabilityOpening
       location,
       const _iss.DeepCollectionEquality().hash(categories),
       const _iss.DeepCollectionEquality().hash(comments),
+      textParameters,
+      const _iss.DeepCollectionEquality().hash(extensions),
     );
   }
 
@@ -177,6 +212,9 @@ abstract class CalendarAvailabilityOpening
       if (location != null) 'location': location,
       if (categories != null) 'categories': categories?.toJson(),
       if (comments != null) 'comments': comments?.toJson(),
+      if (textParameters != null) 'textParameters': textParameters?.toJson(),
+      if (extensions != null)
+        'extensions': extensions?.toJson(valueToJson: (v) => v.toJson()),
     };
   }
 
@@ -192,6 +230,12 @@ abstract class CalendarAvailabilityOpening
       if (location != null) 'location': location,
       if (categories != null) 'categories': categories?.toJson(),
       if (comments != null) 'comments': comments?.toJson(),
+      if (textParameters != null)
+        'textParameters': textParameters?.toJsonForProtocol(),
+      if (extensions != null)
+        'extensions': extensions?.toJson(
+          valueToJson: (v) => v.toJsonForProtocol(),
+        ),
     };
   }
 
@@ -213,6 +257,8 @@ class _CalendarAvailabilityOpeningImpl extends CalendarAvailabilityOpening {
     String? location,
     List<String>? categories,
     List<String>? comments,
+    _ipbm7ji7.CalendarAvailabilityTextParameters? textParameters,
+    List<_ip5gybl4.CalendarAvailabilityExtension>? extensions,
   }) : super._(
          uid: uid,
          timing: timing,
@@ -222,6 +268,8 @@ class _CalendarAvailabilityOpeningImpl extends CalendarAvailabilityOpening {
          location: location,
          categories: categories,
          comments: comments,
+         textParameters: textParameters,
+         extensions: extensions,
        );
 
   /// Returns a shallow copy of this [CalendarAvailabilityOpening]
@@ -237,6 +285,8 @@ class _CalendarAvailabilityOpeningImpl extends CalendarAvailabilityOpening {
     Object? location = _Undefined,
     Object? categories = _Undefined,
     Object? comments = _Undefined,
+    Object? textParameters = _Undefined,
+    Object? extensions = _Undefined,
   }) {
     return CalendarAvailabilityOpening(
       uid: uid is _isc.UuidValue? ? uid : this.uid,
@@ -253,6 +303,13 @@ class _CalendarAvailabilityOpeningImpl extends CalendarAvailabilityOpening {
       comments: comments is List<String>?
           ? comments
           : this.comments?.map((e0) => e0).toList(),
+      textParameters:
+          textParameters is _ipbm7ji7.CalendarAvailabilityTextParameters?
+          ? textParameters
+          : this.textParameters?.copyWith(),
+      extensions: extensions is List<_ip5gybl4.CalendarAvailabilityExtension>?
+          ? extensions
+          : this.extensions?.map((e0) => e0.copyWith()).toList(),
     );
   }
 }
