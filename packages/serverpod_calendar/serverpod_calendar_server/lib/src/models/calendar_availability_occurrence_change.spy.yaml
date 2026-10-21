@@ -1,0 +1,9 @@
+class: CalendarAvailabilityOccurrenceChange
+immutable: true
+fields:
+  availabilityId: UuidValue
+  openingUid: UuidValue
+  expectedRevision: int
+  originalStart: CalendarEventTiming
+  action: CalendarEventOccurrenceAction
+  replacement: CalendarEventTiming?

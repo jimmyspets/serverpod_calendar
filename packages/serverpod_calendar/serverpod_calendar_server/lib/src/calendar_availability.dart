@@ -16,10 +16,28 @@ CalendarAvailabilityContent _validatedAvailability(
   }
 }
 
+T _availabilityValue<T>(T Function() value) {
+  try {
+    return value();
+  } on AvailabilityLimitException {
+    throw _failure(CalendarFailureCode.limitExceeded);
+  } on RecurrenceLimitException {
+    throw _failure(CalendarFailureCode.limitExceeded);
+  } on ArgumentError {
+    throw _failure(CalendarFailureCode.validation);
+  } on ZoneCoverageException {
+    throw _failure(CalendarFailureCode.validation);
+  }
+}
+
 final class _Availability {
   _Availability(this.identity, this.data, this.parent) {
     try {
       data.content = validateAvailabilityContent(data.content);
+      data.timingOverrides = validateAvailabilityEdits(
+        data.content,
+        data.timingOverrides,
+      );
       if (data.content.openings.any((o) => o.uid == null)) {
         throw StateError('Persisted opening lacks identity');
       }
@@ -38,6 +56,7 @@ final class _Availability {
         data.content,
         data.protocolUid,
         data.updatedAt,
+        timingOverrides: data.timingOverrides,
       );
   CalendarAvailabilityView get view => CalendarAvailabilityView(
     id: identity.id!,
@@ -49,6 +68,7 @@ final class _Availability {
       isUtc: true,
     ),
     content: data.content,
+    timingOverrides: data.timingOverrides,
   );
 }
 
@@ -61,6 +81,10 @@ extension CalendarAvailabilityOperations on CalendarService {
     CalendarFreeBusyQuery? query,
     CalendarAvailabilitySearchQuery? search,
     CalendarAvailabilityTarget? target,
+    CalendarAvailabilityOccurrenceChange? change,
+    CalendarAvailabilityOccurrenceQuery? occurrenceQuery,
+    List<CalendarAvailabilityOpeningEdits>? edits,
+    String? category,
   }) => CalendarAuthorizationRequest(
     key: '${operation.name}:${rule?.identity.id ?? parent.identity.id}',
     operation: operation,
@@ -72,6 +96,10 @@ extension CalendarAvailabilityOperations on CalendarService {
     freeBusyQuery: query,
     availabilitySearchQuery: search,
     availabilityTarget: target,
+    availabilityOccurrenceChange: change,
+    availabilityOccurrenceQuery: occurrenceQuery,
+    proposedAvailabilityEdits: edits,
+    availabilityCategoryFilter: category,
   );
 
   Future<_Availability> _availability(
@@ -217,14 +245,16 @@ extension CalendarAvailabilityOperations on CalendarService {
   /// A bounded configuration list, not a source of calculation coverage.
   /// Per-object denied rules are omitted; unavailable policy fails the request.
   Future<List<CalendarAvailabilityView>> listAvailability(
-    UuidValue calendarId,
-  ) async {
+    UuidValue calendarId, {
+    String? category,
+  }) async {
+    if (category != null) _availabilityValue(() => IcalendarCategory(category));
     final c = await _context();
     return _transaction(c, (tx, _) async {
       final parent = await _active(c, calendarId, tx);
       await _decide(
         c,
-        [_ar(parent, CalendarPermission.listAvailability)],
+        [_ar(parent, CalendarPermission.listAvailability, category: category)],
         tx,
         CalendarAuthorizationPhase.read,
       );
@@ -251,11 +281,24 @@ extension CalendarAvailabilityOperations on CalendarService {
         try {
           await _decide(
             c,
-            [_ar(parent, CalendarPermission.readAvailability, rule: rule)],
+            [
+              _ar(
+                parent,
+                CalendarPermission.readAvailability,
+                rule: rule,
+                category: category,
+              ),
+            ],
             tx,
             CalendarAuthorizationPhase.read,
           );
-          result.add(rule.view);
+          if (category == null ||
+              rule.data.content.categories!.contains(category) ||
+              rule.data.content.openings.any(
+                (o) => o.categories!.contains(category),
+              )) {
+            result.add(rule.view);
+          }
         } on CalendarException catch (e) {
           if (e.code != CalendarFailureCode.accessDenied) rethrow;
         }
@@ -267,26 +310,72 @@ extension CalendarAvailabilityOperations on CalendarService {
 
   Future<CalendarAvailabilityReceipt?> updateAvailability(
     CalendarAvailabilityUpdateRequest input,
-  ) async {
+  ) => _updateAvailability(input);
+  Future<CalendarAvailabilityReceipt?> updateAvailabilityMetadata(
+    CalendarAvailabilityUpdateRequest input,
+  ) => _updateAvailability(input, metadataOnly: true);
+  Future<CalendarAvailabilityReceipt?> _updateAvailability(
+    CalendarAvailabilityUpdateRequest input, {
+    bool metadataOnly = false,
+  }) async {
     final value = _validatedAvailability(input.content);
     final c = await _context();
     return _transaction(c, (tx, scope) async {
       final rule = await _availability(c, input.availabilityId, tx);
       final proposed = _openingIdentities(value, previous: rule.data.content);
-      final request = _ar(
-        rule.parent,
-        CalendarPermission.updateAvailability,
-        rule: rule,
-        proposed: proposed,
-      );
+      final requests = [
+        _ar(
+          rule.parent,
+          metadataOnly
+              ? CalendarPermission.updateAvailabilityMetadata
+              : CalendarPermission.updateAvailability,
+          rule: rule,
+          proposed: proposed,
+          edits: rule.data.timingOverrides,
+        ),
+        if (!metadataOnly &&
+            jsonEncode(availabilityMetadata(rule.data.content)) !=
+                jsonEncode(availabilityMetadata(proposed)))
+          _ar(
+            rule.parent,
+            CalendarPermission.updateAvailabilityMetadata,
+            rule: rule,
+            proposed: proposed,
+            edits: rule.data.timingOverrides,
+          ),
+      ];
       await _decide(
         c,
-        [request],
+        requests,
         tx,
         CalendarAuthorizationPhase.preliminaryWrite,
       );
       _availabilityRevision(rule, input.expectedRevision);
-      final decisions = await _final(c, [request], tx);
+      if (metadataOnly &&
+          jsonEncode(availabilityStructure(proposed)) !=
+              jsonEncode(availabilityStructure(rule.data.content))) {
+        throw _failure(CalendarFailureCode.validation);
+      }
+      final retained = rule.data.timingOverrides
+          ?.where(
+            (entry) => proposed.openings.any((o) => o.uid == entry.openingUid),
+          )
+          .toList();
+      final edits = _availabilityValue(
+        () => validateAvailabilityEdits(proposed, retained),
+      );
+      final finalRequests = [
+        for (final request in requests)
+          _ar(
+            rule.parent,
+            request.operation,
+            rule: rule,
+            proposed: proposed,
+            edits: edits,
+          ),
+      ];
+      final decisions = await _final(c, finalRequests, tx);
+      rule.data.timingOverrides = edits;
       rule.data.content = proposed;
       rule.data.updatedAt = await _revisionTime(
         tx,
@@ -305,6 +394,114 @@ extension CalendarAvailabilityOperations on CalendarService {
       );
       await _bump(scope, tx);
       return _availabilityReceipt(rule, decisions.values);
+    });
+  }
+
+  Future<CalendarAvailabilityReceipt?> changeAvailabilityOccurrence(
+    CalendarAvailabilityOccurrenceChange input,
+  ) async {
+    final c = await _context();
+    return _transaction(c, (tx, scope) async {
+      final rule = await _availability(c, input.availabilityId, tx);
+      CalendarAuthorizationRequest request(
+        List<CalendarAvailabilityOpeningEdits>? edits,
+      ) => _ar(
+        rule.parent,
+        CalendarPermission.changeAvailabilityOccurrence,
+        rule: rule,
+        change: input,
+        edits: edits,
+      );
+      await _decide(
+        c,
+        [request(null)],
+        tx,
+        CalendarAuthorizationPhase.preliminaryWrite,
+      );
+      _availabilityRevision(rule, input.expectedRevision);
+      final edits = _availabilityValue(
+        () => changeAvailabilityEdits(
+          rule.data.content,
+          rule.data.timingOverrides,
+          input,
+        ),
+      );
+      final decisions = await _final(c, [request(edits)], tx);
+      rule.data.timingOverrides = edits;
+      rule.data.updatedAt = await _revisionTime(
+        tx,
+        previous: rule.data.updatedAt,
+      );
+      rule.identity.revision++;
+      await CalendarAvailabilityDataRecord.db.updateRow(
+        _session,
+        rule.data,
+        transaction: tx,
+      );
+      await CalendarAvailabilityRecord.db.updateRow(
+        _session,
+        rule.identity,
+        transaction: tx,
+      );
+      await _bump(scope, tx);
+      return _availabilityReceipt(rule, decisions.values);
+    });
+  }
+
+  Future<CalendarAvailabilityOccurrencePreview> previewAvailabilityOccurrences(
+    CalendarAvailabilityOccurrenceQuery input,
+  ) async {
+    final window = _busyWindow(input.fromUtc, input.untilUtc);
+    final c = await _context();
+    return _transaction(c, (tx, _) async {
+      final rule = await _availability(c, input.availabilityId, tx);
+      await _decide(
+        c,
+        [
+          _ar(
+            rule.parent,
+            CalendarPermission.readAvailability,
+            rule: rule,
+            occurrenceQuery: input,
+          ),
+          _ar(
+            rule.parent,
+            CalendarPermission.previewAvailabilityOccurrences,
+            rule: rule,
+            occurrenceQuery: input,
+          ),
+        ],
+        tx,
+        CalendarAuthorizationPhase.read,
+      );
+      if (input.expectedRevision != rule.identity.revision) {
+        throw _failure(CalendarFailureCode.staleRevision);
+      }
+      final preview = _availabilityValue(() {
+        final opening = rule.data.content.openings.singleWhere(
+          (o) => o.uid == input.openingUid,
+          orElse: () => throw ArgumentError('Unknown opening'),
+        );
+        return previewEventOccurrences(
+          openingEvent(opening),
+          CalendarEventOccurrenceQuery(
+            eventId: rule.identity.id!,
+            expectedRevision: input.expectedRevision,
+            fromUtc: window.start,
+            untilUtc: window.end,
+          ),
+          overrides: openingEdits(rule.data.timingOverrides, input.openingUid),
+        );
+      });
+      await _verifyContext(c);
+      return CalendarAvailabilityOccurrencePreview(
+        availabilityId: rule.identity.id!,
+        openingUid: input.openingUid,
+        revision: rule.identity.revision,
+        kind: preview.kind,
+        zoneId: preview.zoneId,
+        occurrences: preview.occurrences,
+      );
     });
   }
 

@@ -3,6 +3,8 @@ import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
 
+import 'availability_opening_screen.dart';
+import 'availability_metadata_editor.dart';
 import 'occurrence_timing_editor.dart' show occurrenceLabel;
 
 String _error(Object e) => e is cal.CalendarException
@@ -27,6 +29,7 @@ class AvailabilityScreen extends StatefulWidget {
 
 class _AvailabilityScreenState extends State<AvailabilityScreen> {
   List<cal.CalendarAvailabilityView> _rules = [];
+  final _category = TextEditingController();
   bool _busy = true;
   String? _failure;
   cal.EndpointCalendarAvailability get _api =>
@@ -37,6 +40,12 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     _load();
   }
 
+  @override
+  void dispose() {
+    _category.dispose();
+    super.dispose();
+  }
+
   Future<void> _load() async {
     setState(() {
       _busy = true;
@@ -44,7 +53,10 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
       _rules = [];
     });
     try {
-      final rules = await _api.list(widget.calendarId);
+      final rules = await _api.list(
+        widget.calendarId,
+        category: _category.text.isEmpty ? null : _category.text,
+      );
       if (mounted) setState(() => _rules = rules);
     } catch (e) {
       if (mounted) setState(() => _failure = _error(e));
@@ -106,6 +118,16 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
         if (_failure != null)
           Text(_failure!, key: const Key('availability-error')),
         if (_busy) const LinearProgressIndicator(),
+        TextField(
+          key: const Key('availability-category-filter'),
+          controller: _category,
+          enabled: !_busy,
+          decoration: const InputDecoration(labelText: 'Exact category filter'),
+        ),
+        TextButton(
+          onPressed: _busy ? null : _load,
+          child: const Text('Filter definitions'),
+        ),
         ElevatedButton(
           key: const Key('availability-create'),
           onPressed: _busy ? null : () => _edit(),
@@ -131,6 +153,60 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                     ),
                   if (rule.content.openings.isEmpty)
                     const Text('Closed throughout the validity range.'),
+                  TextButton(
+                    key: Key('availability-metadata-${rule.id}'),
+                    onPressed: _busy
+                        ? null
+                        : () async {
+                            await Navigator.of(context).push<void>(
+                              MaterialPageRoute(
+                                builder: (_) => AvailabilityMetadataEditor(
+                                  client: widget.client,
+                                  rule: rule,
+                                ),
+                              ),
+                            );
+                            if (mounted) await _load();
+                          },
+                    child: const Text('Edit metadata'),
+                  ),
+                  for (final o in rule.content.openings) ...[
+                    TextButton(
+                      key: Key('opening-preview-${o.uid}'),
+                      onPressed: _busy
+                          ? null
+                          : () async {
+                              await Navigator.of(context).push<void>(
+                                MaterialPageRoute(
+                                  builder: (_) => AvailabilityOpeningScreen(
+                                    client: widget.client,
+                                    availabilityId: rule.id,
+                                    openingUid: o.uid!,
+                                  ),
+                                ),
+                              );
+                              if (mounted) await _load();
+                            },
+                      child: const Text('Opening occurrences'),
+                    ),
+                    TextButton(
+                      onPressed: _busy
+                          ? null
+                          : () async {
+                              await Navigator.of(context).push<void>(
+                                MaterialPageRoute(
+                                  builder: (_) => AvailabilityMetadataEditor(
+                                    client: widget.client,
+                                    rule: rule,
+                                    openingUid: o.uid,
+                                  ),
+                                ),
+                              );
+                              if (mounted) await _load();
+                            },
+                      child: const Text('Opening metadata'),
+                    ),
+                  ],
                   TextButton(
                     key: Key('availability-edit-${rule.id}'),
                     onPressed: _busy ? null : () => _edit(rule),
@@ -320,6 +396,12 @@ class _AvailabilityEditorState extends State<AvailabilityEditor> {
       }
       final content = cal.CalendarAvailabilityContent(
         summary: _summary.text.isEmpty ? null : _summary.text,
+        description: widget.rule?.content.description,
+        location: widget.rule?.content.location,
+        categories: widget.rule?.content.categories,
+        comments: widget.rule?.content.comments,
+        url: widget.rule?.content.url,
+        classification: widget.rule?.content.classification,
         priority: int.parse(_priority.text),
         closedKind: _closedKind,
         validFrom: _bound(_from.text),
@@ -329,6 +411,13 @@ class _AvailabilityEditorState extends State<AvailabilityEditor> {
             : [
                 cal.CalendarAvailabilityOpening(
                   uid: widget.rule?.content.openings.firstOrNull?.uid,
+                  summary: widget.rule?.content.openings.firstOrNull?.summary,
+                  description:
+                      widget.rule?.content.openings.firstOrNull?.description,
+                  location: widget.rule?.content.openings.firstOrNull?.location,
+                  categories:
+                      widget.rule?.content.openings.firstOrNull?.categories,
+                  comments: widget.rule?.content.openings.firstOrNull?.comments,
                   timing: date(_start.text).copyWith(end: _civil(_end.text)),
                   recurrence: cal.CalendarEventRecurrence(
                     inclusions: dates(_inclusions.text),

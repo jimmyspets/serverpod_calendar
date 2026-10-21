@@ -57,3 +57,5 @@ See [per-calendar free/busy](calendar-free-busy.md) for the first bounded bookin
 See [native working hours](native-working-hours.md) for scoped rule CRUD, recurring openings and integrated per-calendar composition under ADR 0057.
 
 See [person/resource availability and common-free search](subject-availability-search.md) for host-resolved contributors, independent summary authority, bounded modes and unknown coverage under ADR 0058.
+
+See [opening-occurrence edits and scoped availability metadata](availability-occurrences-and-metadata.md) for original-identity timing/skip/restore controls, exact categories and legal metadata contexts under ADR 0059.

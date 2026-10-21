@@ -4,3 +4,8 @@ fields:
   uid: UuidValue?
   timing: CalendarEventTiming
   recurrence: CalendarEventRecurrence?
+  summary: String?
+  description: String?
+  location: String?
+  categories: List<String>?
+  comments: List<String>?

@@ -16,6 +16,12 @@ import 'dart:io' as _idi;
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_create_request.dart'
     as _iys46g3v;
+import 'package:serverpod_calendar_server/src/generated/calendar_availability_occurrence_change.dart'
+    as _ihzf1dkn;
+import 'package:serverpod_calendar_server/src/generated/calendar_availability_occurrence_preview.dart'
+    as _i2fqfjcg;
+import 'package:serverpod_calendar_server/src/generated/calendar_availability_occurrence_query.dart'
+    as _idgpm5rc;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_receipt.dart'
     as _i6vowhmw;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_search_query.dart'
@@ -325,8 +331,9 @@ class _CalendarAvailabilityEndpoint {
 
   _ida.Future<List<_i6fuga80.CalendarAvailabilityView>> list(
     _ist.TestSessionBuilder sessionBuilder,
-    _is.UuidValue calendarId,
-  ) async {
+    _is.UuidValue calendarId, {
+    String? category,
+  }) async {
     return _ist.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
@@ -338,7 +345,10 @@ class _CalendarAvailabilityEndpoint {
           createSessionCallback: (_) => _localUniqueSession,
           endpointPath: 'calendarAvailability',
           methodName: 'list',
-          parameters: _ist.testObjectToJson({'calendarId': calendarId}),
+          parameters: _ist.testObjectToJson({
+            'calendarId': calendarId,
+            'category': category,
+          }),
           serializationManager: _serializationManager,
         );
         var _localReturnValue =
@@ -378,6 +388,101 @@ class _CalendarAvailabilityEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_i6vowhmw.CalendarAvailabilityReceipt?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i6vowhmw.CalendarAvailabilityReceipt?> updateMetadata(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i2zdh4d8.CalendarAvailabilityUpdateRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarAvailability',
+            method: 'updateMetadata',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarAvailability',
+          methodName: 'updateMetadata',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i6vowhmw.CalendarAvailabilityReceipt?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i6vowhmw.CalendarAvailabilityReceipt?> changeOccurrence(
+    _ist.TestSessionBuilder sessionBuilder,
+    _ihzf1dkn.CalendarAvailabilityOccurrenceChange request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarAvailability',
+            method: 'changeOccurrence',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarAvailability',
+          methodName: 'changeOccurrence',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i6vowhmw.CalendarAvailabilityReceipt?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i2fqfjcg.CalendarAvailabilityOccurrencePreview> preview(
+    _ist.TestSessionBuilder sessionBuilder,
+    _idgpm5rc.CalendarAvailabilityOccurrenceQuery query,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarAvailability',
+            method: 'preview',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarAvailability',
+          methodName: 'preview',
+          parameters: _ist.testObjectToJson({'query': query}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<
+                  _i2fqfjcg.CalendarAvailabilityOccurrencePreview
+                >);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

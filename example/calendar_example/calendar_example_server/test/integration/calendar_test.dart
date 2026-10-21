@@ -576,6 +576,303 @@ void main() {
       expect(result.commonSlots, isEmpty);
     });
 
+    Future<CalendarAvailabilityView> editableHours() async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      final created = (await service.createAvailability(
+        CalendarAvailabilityCreateRequest(
+          calendarId: calendar,
+          content: hours(),
+        ),
+      ))!;
+      return service.getAvailability(created.availabilityId);
+    }
+
+    CalendarAvailabilityOccurrenceChange openingChange(
+      CalendarAvailabilityView rule,
+      CalendarEventOccurrenceAction action, {
+      CalendarEventTiming? replacement,
+    }) => CalendarAvailabilityOccurrenceChange(
+      availabilityId: rule.id,
+      openingUid: rule.content.openings.single.uid!,
+      expectedRevision: rule.revision,
+      originalStart: rule.content.openings.single.timing.copyWith(
+        end: null,
+        duration: null,
+      ),
+      action: action,
+      replacement: replacement,
+    );
+    CalendarAvailabilityOccurrenceQuery openingQuery(
+      CalendarAvailabilityView rule,
+    ) => CalendarAvailabilityOccurrenceQuery(
+      availabilityId: rule.id,
+      openingUid: rule.content.openings.single.uid!,
+      expectedRevision: rule.revision,
+      fromUtc: DateTime.utc(2026, 3, 29),
+      untilUtc: DateTime.utc(2026, 4, 1),
+    );
+    test('opening lifecycle preserves single and future edits through metadata and rejects orphaning pattern changes', () async {
+      var rule = await editableHours();
+      final uid = rule.content.openings.single.uid;
+      final replacement = rule.content.openings.single.timing.copyWith(
+        start: CalendarEventCivil(year: 2026, month: 3, day: 29, hour: 10),
+        end: CalendarEventCivil(year: 2026, month: 3, day: 29, hour: 18),
+      );
+      await service.changeAvailabilityOccurrence(
+        openingChange(
+          rule,
+          CalendarEventOccurrenceAction.replaceSingleTiming,
+          replacement: replacement,
+        ),
+      );
+      rule = await service.getAvailability(rule.id);
+      expect(
+        (await service.previewAvailabilityOccurrences(openingQuery(rule)))
+            .occurrences
+            .first
+            .start
+            .hour,
+        10,
+      );
+      await service.changeAvailabilityOccurrence(
+        openingChange(rule, CalendarEventOccurrenceAction.cancelSingle),
+      );
+      rule = await service.getAvailability(rule.id);
+      expect(
+        (await service.previewAvailabilityOccurrences(openingQuery(rule)))
+            .occurrences,
+        hasLength(2),
+      );
+      expect(
+        (await service.freeBusy(busyQuery(rule.calendarId)))
+            .periods
+            .single
+            .kind,
+        CalendarFreeBusyKind.unavailable,
+      );
+      await service.updateAvailabilityMetadata(
+        CalendarAvailabilityUpdateRequest(
+          availabilityId: rule.id,
+          expectedRevision: rule.revision,
+          content: rule.content.copyWith(description: 'Preserved notes'),
+        ),
+      );
+      rule = await service.getAvailability(rule.id);
+      expect(
+        rule.timingOverrides!.single.overrides.singles.single.cancelled,
+        isTrue,
+      );
+      await service.changeAvailabilityOccurrence(
+        openingChange(rule, CalendarEventOccurrenceAction.restoreSingle),
+      );
+      rule = await service.getAvailability(rule.id);
+      expect(
+        (await service.freeBusy(busyQuery(rule.calendarId)))
+            .periods[1]
+            .startUtc
+            .hour,
+        10,
+      );
+      expect(rule.content.openings.single.uid, uid);
+      await expectLater(
+        service.updateAvailability(
+          CalendarAvailabilityUpdateRequest(
+            availabilityId: rule.id,
+            expectedRevision: rule.revision,
+            content: rule.content.copyWith(
+              openings: [
+                rule.content.openings.single.copyWith(
+                  recurrence: rule.content.openings.single.recurrence!.copyWith(
+                    exclusions: [
+                      rule.content.openings.single.timing.copyWith(
+                        end: null,
+                        duration: null,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      await service.changeAvailabilityOccurrence(
+        openingChange(rule, CalendarEventOccurrenceAction.clearSingleTiming),
+      );
+      rule = await service.getAvailability(rule.id);
+      await service.changeAvailabilityOccurrence(
+        openingChange(
+          rule,
+          CalendarEventOccurrenceAction.replaceFutureTiming,
+          replacement: replacement,
+        ),
+      );
+      rule = await service.getAvailability(rule.id);
+      expect(
+        (await service.previewAvailabilityOccurrences(openingQuery(rule)))
+            .occurrences
+            .map((o) => o.start.hour),
+        [10, 10, 10],
+      );
+      expect(
+        policy.lastAvailabilityRequest!.currentAvailability!.timingOverrides,
+        isNotNull,
+      );
+    });
+    test('opening mutation and preview enforce independent rights current revision and complete host intent', () async {
+      var rule = await editableHours();
+      policy.denied.add(CalendarPermission.changeAvailabilityOccurrence);
+      await expectLater(
+        service.changeAvailabilityOccurrence(
+          openingChange(rule, CalendarEventOccurrenceAction.cancelSingle),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denied.clear();
+      policy.denyFinal = true;
+      await expectLater(
+        service.changeAvailabilityOccurrence(
+          openingChange(rule, CalendarEventOccurrenceAction.cancelSingle),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denyFinal = false;
+      expect((await service.getAvailability(rule.id)).timingOverrides, isNull);
+      policy.denied.add(CalendarPermission.previewAvailabilityOccurrences);
+      await expectLater(
+        service.previewAvailabilityOccurrences(openingQuery(rule)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denied.clear();
+      final old = openingQuery(rule);
+      await service.changeAvailabilityOccurrence(
+        openingChange(rule, CalendarEventOccurrenceAction.cancelSingle),
+      );
+      await expectLater(
+        service.previewAvailabilityOccurrences(old),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      await expectLater(
+        service.changeAvailabilityOccurrence(
+          openingChange(rule, CalendarEventOccurrenceAction.restoreSingle),
+        ),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      rule = await service.getAvailability(rule.id);
+      expect(policy.lastAvailabilityRequest!.calendarId, rule.calendarId);
+      expect(policy.lastAvailabilityRequest!.availabilityId, rule.id);
+      expect(
+        () => rule.timingOverrides!.single.overrides.singles.clear(),
+        throwsUnsupportedError,
+      );
+    });
+    test('availability metadata is separate authority with exact authorized category search and no availability side effects', () async {
+      var rule = await editableHours();
+      final before = await service.freeBusy(busyQuery(rule.calendarId));
+      final next = rule.content.copyWith(
+        description: '  Notes\n',
+        location: 'Private room',
+        categories: ['Work', 'work', 'Work'],
+        comments: ['one\ntwo', 'three'],
+        url: 'https://example.invalid/info',
+        classification: CalendarAvailabilityClass.confidential,
+        openings: [
+          rule.content.openings.single.copyWith(
+            summary: 'Opening label',
+            categories: ['Opening'],
+          ),
+        ],
+      );
+      policy.denied.add(CalendarPermission.updateAvailabilityMetadata);
+      await expectLater(
+        service.updateAvailability(
+          CalendarAvailabilityUpdateRequest(
+            availabilityId: rule.id,
+            expectedRevision: rule.revision,
+            content: next,
+          ),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denied.clear();
+      policy.denied.add(CalendarPermission.updateAvailability);
+      await service.updateAvailabilityMetadata(
+        CalendarAvailabilityUpdateRequest(
+          availabilityId: rule.id,
+          expectedRevision: rule.revision,
+          content: next,
+        ),
+      );
+      rule = await service.getAvailability(rule.id);
+      expect(rule.content.categories, ['Work', 'work']);
+      expect(rule.content.comments, ['one\ntwo', 'three']);
+      expect(
+        (await service.freeBusy(busyQuery(rule.calendarId))).toJson(),
+        before.toJson(),
+      );
+      expect(
+        await service.listAvailability(rule.calendarId, category: 'Work'),
+        hasLength(1),
+      );
+      expect(
+        await service.listAvailability(rule.calendarId, category: 'WORK'),
+        isEmpty,
+      );
+      expect(
+        await service.listAvailability(rule.calendarId, category: 'Opening'),
+        hasLength(1),
+      );
+      await expectLater(
+        service.updateAvailabilityMetadata(
+          CalendarAvailabilityUpdateRequest(
+            availabilityId: rule.id,
+            expectedRevision: rule.revision,
+            content: rule.content.copyWith(priority: 1),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      policy.denied.add(CalendarPermission.readAvailability);
+      expect(
+        await service.listAvailability(rule.calendarId, category: 'Work'),
+        isEmpty,
+      );
+      final json = (await service.freeBusy(busyQuery(rule.calendarId)))
+          .toJson()
+          .toString();
+      expect(json, isNot(contains('Private room')));
+      expect(json, isNot(contains('Opening label')));
+    });
+    test('deleting an opening deliberately removes its edits and invalid metadata never partially commits', () async {
+      var rule = await editableHours();
+      await service.changeAvailabilityOccurrence(
+        openingChange(rule, CalendarEventOccurrenceAction.cancelSingle),
+      );
+      rule = await service.getAvailability(rule.id);
+      await expectLater(
+        service.updateAvailabilityMetadata(
+          CalendarAvailabilityUpdateRequest(
+            availabilityId: rule.id,
+            expectedRevision: rule.revision,
+            content: rule.content.copyWith(
+              url: 'https://user:password@example.invalid',
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      expect((await service.getAvailability(rule.id)).revision, rule.revision);
+      await service.updateAvailability(
+        CalendarAvailabilityUpdateRequest(
+          availabilityId: rule.id,
+          expectedRevision: rule.revision,
+          content: rule.content.copyWith(openings: []),
+        ),
+      );
+      expect((await service.getAvailability(rule.id)).timingOverrides, isNull);
+    });
+
     test('availability CRUD has stable identities stale protection markers and parent dependencies', () async {
       final calendar = (await service.create(createInput()))!.calendarId;
       final receipt = (await service.createAvailability(

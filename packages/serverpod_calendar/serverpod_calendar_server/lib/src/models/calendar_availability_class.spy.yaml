@@ -1,0 +1,5 @@
+enum: CalendarAvailabilityClass
+values:
+  - public
+  - private
+  - confidential

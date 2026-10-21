@@ -12,3 +12,4 @@
 20261021064805603-native-single-events
 20261021094608490-event-occurrence-timing
 20261021121924598-availability-rules
+20261021144851473-availability-opening-edits
