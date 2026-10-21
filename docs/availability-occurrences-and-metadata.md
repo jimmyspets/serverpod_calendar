@@ -48,3 +48,5 @@ Writes share the durable scope transaction, stale checks and final authorization
 Caps add 16 edited-opening entries and 128 combined raw single/future edits per definition. Core membership/expansion budgets remain; exhausted work fails atomically or yields unknown during free/busy. See [validation](scaffold-validation.md), [working hours](native-working-hours.md) and [subject search](subject-availability-search.md).
 
 Organizer authority, language/ALTREP, extensions, imported CONTACT preservation, full protocol stamps/SEQUENCE, envelope DURATION shorthand, future cancellation, occurrence text overrides and wire interoperability remain pending. No mail, alarm, feed or resource-booking side effect is introduced.
+
+Subsequent native scope: [organizer approval, text parameters and private extensions](availability-publication-metadata.md) under [ADR 0060](adr/0060-availability-publication-metadata.md) supersedes the earlier pending wording for those fields. CONTACT and wire interoperability remain separate.

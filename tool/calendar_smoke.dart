@@ -743,12 +743,61 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
         ),
       ))!;
       var detail = await ab.getRule(detailReceipt.availabilityId);
+      await rejects(
+        () => aa.updateMetadata(
+          cal.CalendarAvailabilityUpdateRequest(
+            availabilityId: detail.id,
+            expectedRevision: detail.revision,
+            content: detail.content.copyWith(
+              organizer: cal.CalendarAvailabilityOrganizer(
+                address: 'urn:calendar-example:user:someone-else',
+              ),
+            ),
+          ),
+        ),
+        cal.CalendarFailureCode.accessDenied,
+      );
+      await rejects(
+        () => aa.updateMetadata(
+          cal.CalendarAvailabilityUpdateRequest(
+            availabilityId: detail.id,
+            expectedRevision: detail.revision,
+            content: detail.content.copyWith(
+              extensions: [
+                cal.CalendarAvailabilityExtension(
+                  name: 'X-NOT-REGISTERED',
+                  value: 'No',
+                ),
+              ],
+            ),
+          ),
+        ),
+        cal.CalendarFailureCode.validation,
+      );
+
       await aa.updateMetadata(
         cal.CalendarAvailabilityUpdateRequest(
           availabilityId: detail.id,
           expectedRevision: 1,
           content: detail.content.copyWith(
             description: 'Synthetic notes',
+            organizer: cal.CalendarAvailabilityOrganizer(
+              address: 'urn:calendar-example:user:$principal',
+              commonName: 'Synthetic organizer',
+              language: 'en',
+            ),
+            textParameters: cal.CalendarAvailabilityTextParameters(
+              description: cal.CalendarTextParameters(
+                language: 'SV',
+                alternativeUri: 'cid:synthetic@example.invalid',
+              ),
+            ),
+            extensions: [
+              cal.CalendarAvailabilityExtension(
+                name: 'X-CALENDAR-EXAMPLE-LABEL',
+                value: 'Synthetic label',
+              ),
+            ],
             categories: ['Work'],
             comments: ['Note'],
             classification: cal.CalendarAvailabilityClass.private,
@@ -758,6 +807,9 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
       detail = await ab.getRule(detail.id);
       check(
         detail.content.description == 'Synthetic notes' &&
+            detail.content.organizer?.commonName == 'Synthetic organizer' &&
+            detail.content.textParameters?.description?.language == 'SV' &&
+            detail.content.extensions?.single.value == 'Synthetic label' &&
             (await ab.list(detailParent.calendarId, category: 'Work')).length ==
                 1,
         'Remote availability metadata/category round trip failed',

@@ -611,6 +611,267 @@ void main() {
       fromUtc: DateTime.utc(2026, 3, 29),
       untilUtc: DateTime.utc(2026, 4, 1),
     );
+    test('publication organizer creation denial and adapter timeout leave no active data', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final input = CalendarAvailabilityCreateRequest(
+        calendarId: parent,
+        content: hours().copyWith(
+          organizer: CalendarAvailabilityOrganizer(
+            address: 'mailto:alice@example.invalid',
+          ),
+        ),
+      );
+      policy.denyFinalOrganizer = true;
+      await expectLater(
+        service.createAvailability(input),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(await service.listAvailability(parent), isEmpty);
+      policy.denyFinalOrganizer = false;
+      policy.organizerDelay = const Duration(milliseconds: 100);
+      CalendarModule.install(
+        session.serverpod,
+        policy: policy,
+        options: const CalendarModuleOptions(
+          requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+          policyTimeout: Duration(milliseconds: 20),
+        ),
+      );
+      service = CalendarModule.service(session);
+      await expectLater(
+        service.createAvailability(input),
+        failure(CalendarFailureCode.unavailable),
+      );
+      policy.organizerDelay = Duration.zero;
+      expect(await service.listAvailability(parent), isEmpty);
+    });
+    test(
+      'publication organizer approval is independent, final checked and atomic',
+      () async {
+        var rule = await editableHours();
+        final proposed = rule.content.copyWith(
+          organizer: CalendarAvailabilityOrganizer(
+            address: 'mailto:alice@example.invalid',
+            commonName: 'Åsa',
+            language: 'SV',
+          ),
+        );
+        CalendarAvailabilityUpdateRequest request() =>
+            CalendarAvailabilityUpdateRequest(
+              availabilityId: rule.id,
+              expectedRevision: rule.revision,
+              content: proposed,
+            );
+        policy.denyOrganizer = true;
+        await expectLater(
+          service.updateAvailabilityMetadata(request()),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        expect(
+          (await service.getAvailability(rule.id)).revision,
+          rule.revision,
+        );
+        policy.denyOrganizer = false;
+        policy.denyFinalOrganizer = true;
+        await expectLater(
+          service.updateAvailabilityMetadata(request()),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        expect(
+          (await service.getAvailability(rule.id)).content.organizer,
+          isNull,
+        );
+        policy.denyFinalOrganizer = false;
+        policy.organizerUnavailable = true;
+        await expectLater(
+          service.updateAvailabilityMetadata(request()),
+          failure(CalendarFailureCode.unavailable),
+        );
+        policy.organizerUnavailable = false;
+        policy.denied.add(CalendarPermission.updateAvailabilityMetadata);
+        final calls = policy.organizerPhases.length;
+        await expectLater(
+          service.updateAvailabilityMetadata(request()),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        expect(policy.organizerPhases.length, calls);
+        policy.denied.clear();
+        await service.updateAvailabilityMetadata(request());
+        expect(
+          policy.organizerPhases.last,
+          CalendarAuthorizationPhase.finalWrite,
+        );
+        expect(policy.organizerRequest!.calendarId, rule.calendarId);
+        expect(
+          policy.organizerRequest!.currentAvailability!.availabilityId,
+          rule.id,
+        );
+        expect(
+          policy.organizerRequest!.proposedAvailability!.organizer!.commonName,
+          'Åsa',
+        );
+        rule = await service.getAvailability(rule.id);
+        expect(rule.content.organizer!.language, 'SV');
+        policy.denyOrganizer = true;
+        await expectLater(
+          service.updateAvailabilityMetadata(
+            CalendarAvailabilityUpdateRequest(
+              availabilityId: rule.id,
+              expectedRevision: rule.revision,
+              content: rule.content.copyWith(organizer: null),
+            ),
+          ),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        expect(
+          (await service.getAvailability(rule.id)).content.organizer,
+          isNotNull,
+        );
+      },
+    );
+    test('publication extension registry rejects names contexts values and failures atomically', () async {
+      var rule = await editableHours();
+      CalendarAvailabilityContent withExtension(String name, String value) =>
+          rule.content.copyWith(
+            extensions: [
+              CalendarAvailabilityExtension(name: name, value: value),
+            ],
+          );
+      Future<void> update(CalendarAvailabilityContent content) async {
+        await service.updateAvailabilityMetadata(
+          CalendarAvailabilityUpdateRequest(
+            availabilityId: rule.id,
+            expectedRevision: rule.revision,
+            content: content,
+          ),
+        );
+      }
+
+      await expectLater(
+        update(withExtension('X-HOST-LABEL', 'OK')),
+        failure(CalendarFailureCode.validation),
+      );
+      CalendarModule.install(
+        session.serverpod,
+        policy: policy,
+        options: const CalendarModuleOptions(
+          requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+        ),
+        availabilityExtensions: [
+          CalendarAvailabilityExtensionRegistration(
+            name: 'X-HOST-LABEL',
+            contexts: [CalendarAvailabilityExtensionContext.definition],
+            validate: (v) {
+              if (v == 'FAIL') throw StateError('Synthetic validator failure');
+              return v == 'OK';
+            },
+          ),
+        ],
+      );
+      service = CalendarModule.service(session);
+      await expectLater(
+        update(withExtension('X-HOST-LABEL', 'BAD')),
+        failure(CalendarFailureCode.validation),
+      );
+      await expectLater(
+        update(withExtension('X-HOST-LABEL', 'FAIL')),
+        failure(CalendarFailureCode.unavailable),
+      );
+      await expectLater(
+        update(
+          rule.content.copyWith(
+            openings: [
+              rule.content.openings.single.copyWith(
+                extensions: [
+                  CalendarAvailabilityExtension(
+                    name: 'X-HOST-LABEL',
+                    value: 'OK',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      expect((await service.getAvailability(rule.id)).revision, rule.revision);
+      await update(withExtension('x-host-label', 'OK'));
+      rule = await service.getAvailability(rule.id);
+      expect(rule.content.extensions!.single.name, 'x-host-label');
+      expect(
+        () => policy
+            .lastAvailabilityRequest!
+            .currentAvailability!
+            .content
+            .extensions!
+            .clear(),
+        throwsUnsupportedError,
+      );
+    });
+    test('publication annotations survive timing edits and stay out of busy summaries', () async {
+      var rule = await editableHours();
+      await service.updateAvailabilityMetadata(
+        CalendarAvailabilityUpdateRequest(
+          availabilityId: rule.id,
+          expectedRevision: rule.revision,
+          content: rule.content.copyWith(
+            summary: 'Private annotated hours',
+            comments: ['One', 'Two'],
+            textParameters: CalendarAvailabilityTextParameters(
+              summary: CalendarTextParameters(
+                language: 'SV',
+                alternativeUri: 'cid:private@example.invalid',
+              ),
+              comments: [
+                CalendarTextParameters(language: 'en'),
+                CalendarTextParameters(language: 'sv'),
+              ],
+            ),
+          ),
+        ),
+      );
+      rule = await service.getAvailability(rule.id);
+      await service.changeAvailabilityOccurrence(
+        openingChange(rule, CalendarEventOccurrenceAction.cancelSingle),
+      );
+      rule = await service.getAvailability(rule.id);
+      expect(rule.content.textParameters!.comments![1]!.language, 'sv');
+      expect(
+        rule.content.textParameters!.summary!.alternativeUri,
+        'cid:private@example.invalid',
+      );
+      await service.updateAvailability(
+        CalendarAvailabilityUpdateRequest(
+          availabilityId: rule.id,
+          expectedRevision: rule.revision,
+          content: rule.content.copyWith(priority: 1),
+        ),
+      );
+      rule = await service.getAvailability(rule.id);
+      expect(rule.content.textParameters!.summary!.language, 'SV');
+      final result = await service.freeBusy(
+        CalendarFreeBusyQuery(
+          calendarId: rule.calendarId,
+          fromUtc: DateTime.utc(2026, 3, 29),
+          untilUtc: DateTime.utc(2026, 3, 30),
+        ),
+      );
+      expect(result.coverage, CalendarFreeBusyCoverage.complete);
+      expect(
+        result.toJson().toString(),
+        isNot(contains('private@example.invalid')),
+      );
+      await expectLater(
+        service.updateAvailabilityMetadata(
+          CalendarAvailabilityUpdateRequest(
+            availabilityId: rule.id,
+            expectedRevision: rule.revision - 1,
+            content: rule.content,
+          ),
+        ),
+        failure(CalendarFailureCode.staleRevision),
+      );
+    });
     test('opening lifecycle preserves single and future edits through metadata and rejects orphaning pattern changes', () async {
       var rule = await editableHours();
       final uid = rule.content.openings.single.uid;
@@ -3134,7 +3395,7 @@ void main() {
           policy: policy,
           options: const CalendarModuleOptions(
             requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
-            policyTimeout: Duration(milliseconds: 5),
+            policyTimeout: Duration(milliseconds: 20),
           ),
         );
         policy.delay = const Duration(milliseconds: 30);
@@ -3216,6 +3477,32 @@ void main() {
 }
 
 final class TestPolicy implements CalendarHostPolicy {
+  Duration organizerDelay = Duration.zero;
+  bool denyOrganizer = false, denyFinalOrganizer = false;
+  bool organizerUnavailable = false;
+  CalendarAuthorizationRequest? organizerRequest;
+  final organizerPhases = <CalendarAuthorizationPhase>[];
+  @override
+  Future<CalendarAuthorizationVerdict> approveAvailabilityOrganizer(
+    Session session,
+    CalendarHostContext context,
+    CalendarAuthorizationRequest request,
+    Transaction transaction,
+    CalendarAuthorizationPhase phase,
+  ) async {
+    await Future<void>.delayed(organizerDelay);
+    organizerRequest = request;
+    organizerPhases.add(phase);
+    if (organizerUnavailable) {
+      throw StateError('Synthetic organizer service failure');
+    }
+    return denyOrganizer ||
+            (denyFinalOrganizer &&
+                phase == CalendarAuthorizationPhase.finalWrite)
+        ? CalendarAuthorizationVerdict.deny
+        : CalendarAuthorizationVerdict.allow;
+  }
+
   final resolverCalls = <String, int>{};
   CalendarSubjectResolution? Function(CalendarAvailabilityTarget, int)?
   resolveOverride;

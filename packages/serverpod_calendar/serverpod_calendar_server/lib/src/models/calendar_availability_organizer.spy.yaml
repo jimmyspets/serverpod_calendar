@@ -1,0 +1,7 @@
+class: CalendarAvailabilityOrganizer
+immutable: true
+fields:
+  address: String
+  commonName: String?
+  language: String?
+  directoryUri: String?

@@ -504,6 +504,32 @@ void main() {
       find.byKey(const Key('availability-comment-0')),
       'Synthetic comment',
     );
+    await _tap(tester, 'availability-text-parameters');
+    await tester.enterText(
+      find.byKey(const Key('availability-description-language')),
+      'SV',
+    );
+    await tester.enterText(
+      find.byKey(const Key('availability-description-altrep')),
+      'cid:notes@example.invalid',
+    );
+    await tester.ensureVisible(find.text('Organizer publication label'));
+    await tester.tap(find.text('Organizer publication label'));
+    await tester.pumpAndSettle();
+    await _tap(tester, 'availability-organizer-self');
+    await _idle(tester);
+    await tester.enterText(
+      find.byKey(const Key('availability-organizer-name')),
+      'Demo organizer',
+    );
+    await tester.ensureVisible(find.text('Private host extensions'));
+    await tester.tap(find.text('Private host extensions'));
+    await tester.pumpAndSettle();
+    await _tap(tester, 'availability-extension-add');
+    await tester.enterText(
+      find.byKey(const Key('availability-extension-0-value')),
+      'Demo label',
+    );
     await _tap(tester, 'availability-metadata-save');
     await _waitFor(tester, find.text('Example working hours'));
     final openingUid = rules.single.content.openings.single.uid!;
@@ -538,6 +564,13 @@ void main() {
     await _idle(tester);
     rules = await rulesApi.list(calendar.id);
     expect(rules.single.content.description, 'Opening notes');
+    expect(rules.single.content.textParameters!.description!.language, 'SV');
+    expect(
+      rules.single.content.textParameters!.description!.alternativeUri,
+      'cid:notes@example.invalid',
+    );
+    expect(rules.single.content.organizer!.commonName, 'Demo organizer');
+    expect(rules.single.content.extensions!.single.value, 'Demo label');
     expect(rules.single.content.categories, ['Work']);
     expect(rules.single.timingOverrides, isNull);
     await _tap(tester, 'availability-edit-${rules.single.id}');

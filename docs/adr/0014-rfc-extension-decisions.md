@@ -238,3 +238,7 @@ Test native URL/label/hint management, host validation, metadata round trips/edi
 Sources: [RFC 7986 sections 5.5–5.7](https://www.rfc-editor.org/rfc/rfc7986.html#section-5.5).
 
 Traceability: [RFC 7986 matrix](../rfc/rfc-7986.md), [requirements](../requirements.md), [compatibility](../compatibility.md), [metadata work](../roadmap.md#icalendar-and-metadata).
+
+## Scoped native availability extension implementation
+
+[ADR 0060](0060-availability-publication-metadata.md) implements a bounded first native private-extension profile for availability definitions/openings: trusted frozen registration, explicit component contexts, decoded TEXT-only values, no custom parameters or repeated names, independent ordinary host authorization and atomic validation. Registered IANA properties still require individual supported profiles; no blanket registry acceptance is enabled. [The native guide](../availability-publication-metadata.md) distinguishes this storage/editing increment from wire round trips, arbitrary property grouping and semantic extension behavior.

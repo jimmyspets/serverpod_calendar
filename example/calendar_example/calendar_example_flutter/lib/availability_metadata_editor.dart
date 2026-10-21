@@ -27,6 +27,16 @@ class _AvailabilityMetadataEditorState
       _location = TextEditingController();
   final _categories = TextEditingController(), _url = TextEditingController();
   final _comments = <TextEditingController>[];
+  final _summaryParameters = _TextParameters(),
+      _descriptionParameters = _TextParameters(),
+      _locationParameters = _TextParameters();
+  final _commentParameters = <_TextParameters>[];
+  final _categoryLanguage = TextEditingController();
+  final _organizerAddress = TextEditingController(),
+      _organizerName = TextEditingController(),
+      _organizerLanguage = TextEditingController(),
+      _organizerDirectory = TextEditingController();
+  final _extensions = <_ExtensionFields>[];
   cal.CalendarAvailabilityClass? _classification;
   bool _busy = false, _stale = false;
   String? _error;
@@ -48,6 +58,23 @@ class _AvailabilityMetadataEditorState
           ) ??
           [],
     );
+    final parameters = o == null ? c.textParameters : o.textParameters;
+    _summaryParameters.load(parameters?.summary);
+    _descriptionParameters.load(parameters?.description);
+    _locationParameters.load(parameters?.location);
+    _categoryLanguage.text = parameters?.categoryLanguage ?? '';
+    for (var i = 0; i < _comments.length; i++) {
+      _commentParameters.add(_TextParameters()..load(parameters?.comments?[i]));
+    }
+    for (final v
+        in (o == null ? c.extensions : o.extensions) ??
+            <cal.CalendarAvailabilityExtension>[]) {
+      _extensions.add(_ExtensionFields(v.name, v.value));
+    }
+    _organizerAddress.text = c.organizer?.address ?? '';
+    _organizerName.text = c.organizer?.commonName ?? '';
+    _organizerLanguage.text = c.organizer?.language ?? '';
+    _organizerDirectory.text = c.organizer?.directoryUri ?? '';
     _url.text = c.url ?? '';
     _classification = c.classification;
   }
@@ -61,6 +88,18 @@ class _AvailabilityMetadataEditorState
       _categories,
       _url,
       ..._comments,
+      _categoryLanguage,
+      _organizerAddress,
+      _organizerName,
+      _organizerLanguage,
+      _organizerDirectory,
+      for (final p in [
+        _summaryParameters,
+        _descriptionParameters,
+        _locationParameters,
+        ..._commentParameters,
+      ]) ...[p.language, p.uri],
+      for (final e in _extensions) ...[e.name, e.value],
     ]) {
       c.dispose();
     }
@@ -82,8 +121,40 @@ class _AvailabilityMetadataEditorState
           ? <String>[]
           : _categories.text.split('\n');
       final comments = _comments.map((c) => c.text).toList();
+      final parameters = cal.CalendarAvailabilityTextParameters(
+        summary: _summaryParameters.value,
+        description: _descriptionParameters.value,
+        location: _locationParameters.value,
+        categoryLanguage: _categoryLanguage.text.isEmpty
+            ? null
+            : _categoryLanguage.text,
+        comments: _commentParameters.map((p) => p.value).toList(),
+      );
+      final extensions = [
+        for (final e in _extensions)
+          cal.CalendarAvailabilityExtension(
+            name: e.name.text,
+            value: e.value.text,
+          ),
+      ];
       final next = widget.openingUid == null
           ? c.copyWith(
+              textParameters: parameters,
+              extensions: extensions,
+              organizer: _organizerAddress.text.isEmpty
+                  ? null
+                  : cal.CalendarAvailabilityOrganizer(
+                      address: _organizerAddress.text,
+                      commonName: _organizerName.text.isEmpty
+                          ? null
+                          : _organizerName.text,
+                      language: _organizerLanguage.text.isEmpty
+                          ? null
+                          : _organizerLanguage.text,
+                      directoryUri: _organizerDirectory.text.isEmpty
+                          ? null
+                          : _organizerDirectory.text,
+                    ),
               summary: summary,
               description: description,
               location: location,
@@ -99,6 +170,8 @@ class _AvailabilityMetadataEditorState
                     o
                   else
                     o.copyWith(
+                      textParameters: parameters,
+                      extensions: extensions,
                       summary: summary,
                       description: description,
                       location: location,
@@ -180,22 +253,71 @@ class _AvailabilityMetadataEditorState
               _categories,
               lines: 3,
             ),
-            for (var i = 0; i < _comments.length; i++)
-              Row(
-                children: [
-                  Expanded(
-                    child: field(
-                      'availability-comment-$i',
-                      'Comment',
-                      _comments[i],
-                      lines: 3,
-                    ),
+            ExpansionTile(
+              key: const Key('availability-text-parameters'),
+              title: const Text('Text language and alternative links'),
+              children: [
+                for (final p in [
+                  ('summary', _summaryParameters),
+                  ('description', _descriptionParameters),
+                  ('location', _locationParameters),
+                ]) ...[
+                  field(
+                    'availability-${p.$1}-language',
+                    '${p.$1} language tag',
+                    p.$2.language,
                   ),
-                  IconButton(
-                    onPressed: locked
-                        ? null
-                        : () => setState(() => _comments.removeAt(i).dispose()),
-                    icon: const Icon(Icons.remove),
+                  field(
+                    'availability-${p.$1}-altrep',
+                    '${p.$1} alternative URI (stored only)',
+                    p.$2.uri,
+                  ),
+                ],
+                field(
+                  'availability-category-language',
+                  'Category language tag',
+                  _categoryLanguage,
+                ),
+              ],
+            ),
+            for (var i = 0; i < _comments.length; i++)
+              Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: field(
+                          'availability-comment-$i',
+                          'Comment',
+                          _comments[i],
+                          lines: 3,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: locked
+                            ? null
+                            : () => setState(() {
+                                _comments.removeAt(i).dispose();
+                                _commentParameters.removeAt(i).dispose();
+                              }),
+                        icon: const Icon(Icons.remove),
+                      ),
+                    ],
+                  ),
+                  ExpansionTile(
+                    title: const Text('Comment language and alternative link'),
+                    children: [
+                      field(
+                        'availability-comment-$i-language',
+                        'Comment language tag',
+                        _commentParameters[i].language,
+                      ),
+                      field(
+                        'availability-comment-$i-altrep',
+                        'Comment alternative URI (stored only)',
+                        _commentParameters[i].uri,
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -203,11 +325,108 @@ class _AvailabilityMetadataEditorState
               key: const Key('availability-comment-add'),
               onPressed: locked
                   ? null
-                  : () =>
-                        setState(() => _comments.add(TextEditingController())),
+                  : () => setState(() {
+                      _comments.add(TextEditingController());
+                      _commentParameters.add(_TextParameters());
+                    }),
               child: const Text('Add comment'),
             ),
+            ExpansionTile(
+              title: const Text('Private host extensions'),
+              children: [
+                const Text(
+                  'This demo accepts X-CALENDAR-EXAMPLE-LABEL, a single-line label up to 256 characters.',
+                ),
+                for (var i = 0; i < _extensions.length; i++)
+                  Column(
+                    children: [
+                      field(
+                        'availability-extension-$i-name',
+                        'Registered extension name',
+                        _extensions[i].name,
+                      ),
+                      field(
+                        'availability-extension-$i-value',
+                        'Value',
+                        _extensions[i].value,
+                      ),
+                      TextButton(
+                        onPressed: locked
+                            ? null
+                            : () => setState(
+                                () => _extensions.removeAt(i).dispose(),
+                              ),
+                        child: const Text('Remove extension'),
+                      ),
+                    ],
+                  ),
+                TextButton(
+                  key: const Key('availability-extension-add'),
+                  onPressed: locked
+                      ? null
+                      : () => setState(
+                          () => _extensions.add(
+                            _ExtensionFields('X-CALENDAR-EXAMPLE-LABEL', ''),
+                          ),
+                        ),
+                  child: const Text('Add extension'),
+                ),
+              ],
+            ),
             if (widget.openingUid == null) ...[
+              ExpansionTile(
+                title: const Text('Organizer publication label'),
+                children: [
+                  const Text(
+                    'The host must approve this address. It grants no access and sends no invitations. Empty address clears the organizer.',
+                  ),
+                  field(
+                    'availability-organizer-address',
+                    'Calendar address URI',
+                    _organizerAddress,
+                  ),
+                  TextButton(
+                    key: const Key('availability-organizer-self'),
+                    onPressed: locked
+                        ? null
+                        : () async {
+                            setState(() => _busy = true);
+                            try {
+                              final principal = await widget.client.smoke
+                                  .whoAmI();
+                              if (mounted) {
+                                setState(
+                                  () => _organizerAddress.text =
+                                      'urn:calendar-example:user:$principal',
+                                );
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                setState(() => _error = occurrenceError(e));
+                              }
+                            } finally {
+                              if (mounted) setState(() => _busy = false);
+                            }
+                          },
+                    child: const Text('Use my demo calendar address'),
+                  ),
+                  field(
+                    'availability-organizer-name',
+                    'Organizer display name',
+                    _organizerName,
+                  ),
+                  field(
+                    'availability-organizer-language',
+                    'Display-name language tag',
+                    _organizerLanguage,
+                  ),
+                  field(
+                    'availability-organizer-directory',
+                    'Directory URI (stored only)',
+                    _organizerDirectory,
+                  ),
+                ],
+              ),
               field(
                 'availability-meta-url',
                 'HTTP/HTTPS information URL',
@@ -245,5 +464,36 @@ class _AvailabilityMetadataEditorState
         ),
       ),
     );
+  }
+}
+
+class _TextParameters {
+  final language = TextEditingController(), uri = TextEditingController();
+  void load(cal.CalendarTextParameters? p) {
+    language.text = p?.language ?? '';
+    uri.text = p?.alternativeUri ?? '';
+  }
+
+  cal.CalendarTextParameters? get value =>
+      language.text.isEmpty && uri.text.isEmpty
+      ? null
+      : cal.CalendarTextParameters(
+          language: language.text.isEmpty ? null : language.text,
+          alternativeUri: uri.text.isEmpty ? null : uri.text,
+        );
+  void dispose() {
+    language.dispose();
+    uri.dispose();
+  }
+}
+
+class _ExtensionFields {
+  _ExtensionFields(String name, String value)
+    : name = TextEditingController(text: name),
+      value = TextEditingController(text: value);
+  final TextEditingController name, value;
+  void dispose() {
+    name.dispose();
+    value.dispose();
   }
 }
