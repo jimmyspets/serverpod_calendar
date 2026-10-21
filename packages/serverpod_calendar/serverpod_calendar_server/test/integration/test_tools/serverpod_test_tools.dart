@@ -22,6 +22,10 @@ import 'package:serverpod_calendar_server/src/generated/calendar_event_create_re
     as _ixcfd9h0;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_field_group.dart'
     as _il5gdr09;
+import 'package:serverpod_calendar_server/src/generated/calendar_event_occurrence_preview.dart'
+    as _i2qqvmw2;
+import 'package:serverpod_calendar_server/src/generated/calendar_event_occurrence_query.dart'
+    as _i7o3kzld;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_page.dart'
     as _i092pg3q;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_receipt.dart'
@@ -732,6 +736,37 @@ class _CalendarEventEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_i092pg3q.CalendarEventPage>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i2qqvmw2.CalendarEventOccurrencePreview> preview(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i7o3kzld.CalendarEventOccurrenceQuery query,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarEvent',
+            method: 'preview',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarEvent',
+          methodName: 'preview',
+          parameters: _ist.testObjectToJson({'query': query}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i2qqvmw2.CalendarEventOccurrencePreview>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

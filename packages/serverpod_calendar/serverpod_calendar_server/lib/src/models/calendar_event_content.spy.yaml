@@ -7,4 +7,4 @@ fields:
   timing: CalendarEventTiming
   status: CalendarEventStatus, default=confirmed
   transparency: CalendarEventTransparency, default=opaque
-  recurring: bool, default=false
+  recurrence: CalendarEventRecurrence?

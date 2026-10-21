@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+import 'calendar_event_recurrence.dart' as _iqxs44bf;
 import 'calendar_event_status.dart' as _ivzxk9bc;
 import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_event_transparency.dart' as _iwjkdwy7;
@@ -27,11 +28,10 @@ abstract class CalendarEventContent
     required this.timing,
     _ivzxk9bc.CalendarEventStatus? status,
     _iwjkdwy7.CalendarEventTransparency? transparency,
-    bool? recurring,
+    this.recurrence,
   }) : status = status ?? _ivzxk9bc.CalendarEventStatus.confirmed,
        transparency =
-           transparency ?? _iwjkdwy7.CalendarEventTransparency.opaque,
-       recurring = recurring ?? false;
+           transparency ?? _iwjkdwy7.CalendarEventTransparency.opaque;
 
   const factory CalendarEventContent({
     String? summary,
@@ -40,7 +40,7 @@ abstract class CalendarEventContent
     required _ieswiaty.CalendarEventTiming timing,
     _ivzxk9bc.CalendarEventStatus? status,
     _iwjkdwy7.CalendarEventTransparency? transparency,
-    bool? recurring,
+    _iqxs44bf.CalendarEventRecurrence? recurrence,
   }) = _CalendarEventContentImpl;
 
   factory CalendarEventContent.fromJson(
@@ -63,9 +63,11 @@ abstract class CalendarEventContent
           : _iwjkdwy7.CalendarEventTransparency.fromJson(
               (jsonSerialization['transparency'] as String),
             ),
-      recurring: jsonSerialization['recurring'] == null
+      recurrence: jsonSerialization['recurrence'] == null
           ? null
-          : _is.BoolJsonExtension.fromJson(jsonSerialization['recurring']),
+          : _ix00hwbf.Protocol().deserialize<_iqxs44bf.CalendarEventRecurrence>(
+              jsonSerialization['recurrence'],
+            ),
     );
   }
 
@@ -81,7 +83,7 @@ abstract class CalendarEventContent
 
   final _iwjkdwy7.CalendarEventTransparency transparency;
 
-  final bool recurring;
+  final _iqxs44bf.CalendarEventRecurrence? recurrence;
 
   /// Returns a shallow copy of this [CalendarEventContent]
   /// with some or all fields replaced by the given arguments.
@@ -93,7 +95,7 @@ abstract class CalendarEventContent
     _ieswiaty.CalendarEventTiming? timing,
     _ivzxk9bc.CalendarEventStatus? status,
     _iwjkdwy7.CalendarEventTransparency? transparency,
-    bool? recurring,
+    _iqxs44bf.CalendarEventRecurrence? recurrence,
   });
   @override
   bool operator ==(Object other) {
@@ -134,10 +136,10 @@ abstract class CalendarEventContent
                 ) ||
                 other.transparency == transparency) &&
             (identical(
-                  other.recurring,
-                  recurring,
+                  other.recurrence,
+                  recurrence,
                 ) ||
-                other.recurring == recurring);
+                other.recurrence == recurrence);
   }
 
   @override
@@ -150,7 +152,7 @@ abstract class CalendarEventContent
       timing,
       status,
       transparency,
-      recurring,
+      recurrence,
     );
   }
 
@@ -164,7 +166,7 @@ abstract class CalendarEventContent
       'timing': timing.toJson(),
       'status': status.toJson(),
       'transparency': transparency.toJson(),
-      'recurring': recurring,
+      if (recurrence != null) 'recurrence': recurrence?.toJson(),
     };
   }
 
@@ -178,7 +180,7 @@ abstract class CalendarEventContent
       'timing': timing.toJsonForProtocol(),
       'status': status.toJson(),
       'transparency': transparency.toJson(),
-      'recurring': recurring,
+      if (recurrence != null) 'recurrence': recurrence?.toJsonForProtocol(),
     };
   }
 
@@ -198,7 +200,7 @@ class _CalendarEventContentImpl extends CalendarEventContent {
     required _ieswiaty.CalendarEventTiming timing,
     _ivzxk9bc.CalendarEventStatus? status,
     _iwjkdwy7.CalendarEventTransparency? transparency,
-    bool? recurring,
+    _iqxs44bf.CalendarEventRecurrence? recurrence,
   }) : super._(
          summary: summary,
          description: description,
@@ -206,7 +208,7 @@ class _CalendarEventContentImpl extends CalendarEventContent {
          timing: timing,
          status: status,
          transparency: transparency,
-         recurring: recurring,
+         recurrence: recurrence,
        );
 
   /// Returns a shallow copy of this [CalendarEventContent]
@@ -220,7 +222,7 @@ class _CalendarEventContentImpl extends CalendarEventContent {
     _ieswiaty.CalendarEventTiming? timing,
     _ivzxk9bc.CalendarEventStatus? status,
     _iwjkdwy7.CalendarEventTransparency? transparency,
-    bool? recurring,
+    Object? recurrence = _Undefined,
   }) {
     return CalendarEventContent(
       summary: summary is String? ? summary : this.summary,
@@ -229,7 +231,9 @@ class _CalendarEventContentImpl extends CalendarEventContent {
       timing: timing ?? this.timing.copyWith(),
       status: status ?? this.status,
       transparency: transparency ?? this.transparency,
-      recurring: recurring ?? this.recurring,
+      recurrence: recurrence is _iqxs44bf.CalendarEventRecurrence?
+          ? recurrence
+          : this.recurrence?.copyWith(),
     );
   }
 }

@@ -4,3 +4,4 @@ fields:
   eventId: UuidValue
   expectedRevision: int
   content: CalendarEventContent
+  replaceRecurrenceDates: bool, default=false

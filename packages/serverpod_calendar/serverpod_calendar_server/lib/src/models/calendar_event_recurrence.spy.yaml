@@ -1,0 +1,6 @@
+class: CalendarEventRecurrence
+immutable: true
+fields:
+  rule: CalendarEventRule?
+  inclusions: List<CalendarEventTiming>
+  exclusions: List<CalendarEventTiming>

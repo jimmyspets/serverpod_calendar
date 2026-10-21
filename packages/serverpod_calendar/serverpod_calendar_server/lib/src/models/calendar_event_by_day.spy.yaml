@@ -1,0 +1,5 @@
+class: CalendarEventByDay
+immutable: true
+fields:
+  weekday: int
+  ordinal: int?

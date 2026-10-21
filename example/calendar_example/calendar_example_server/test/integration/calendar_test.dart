@@ -54,6 +54,242 @@ void main() {
       );
       service = CalendarModule.service(session);
     });
+    CalendarEventRule daily({int count = 3}) => CalendarEventRule(
+      frequency: CalendarEventFrequency.daily,
+      count: count,
+      byDay: [],
+      byMonthDay: [],
+      byYearDay: [],
+      byWeekNo: [],
+      byMonth: [],
+      byHour: [],
+      byMinute: [],
+      bySetPosition: [],
+    );
+    CalendarEventTiming day(
+      int n, {
+      CalendarEventTimeKind kind = CalendarEventTimeKind.date,
+    }) => CalendarEventTiming(
+      kind: kind,
+      start: CalendarEventCivil(year: 2026, month: 3, day: n),
+    );
+    CalendarEventOccurrenceQuery preview(UuidValue id, {int revision = 1}) =>
+        CalendarEventOccurrenceQuery(
+          eventId: id,
+          expectedRevision: revision,
+          fromDate: CalendarEventCivil(year: 2026, month: 3, day: 1),
+          untilDate: CalendarEventCivil(year: 2026, month: 4, day: 1),
+        );
+    test('recurrence persists canonically, previews actual identity and preserves explicit dates on pattern replacement', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final c = eventInput().copyWith(
+        recurrence: CalendarEventRecurrence(
+          rule: daily(),
+          inclusions: [day(27), day(27)],
+          exclusions: [day(30)],
+        ),
+      );
+      final receipt = (await service.createEvent(
+        CalendarEventCreateRequest(calendarId: parent, content: c),
+      ))!;
+      final first = await service.getEvent(receipt.eventId, eventGroups);
+      expect(first.recurrence!.inclusions.length, 1);
+      final result = await service.previewOccurrences(preview(receipt.eventId));
+      expect(result.occurrences.map((v) => v.originalStart.day), [27, 29, 31]);
+      expect(policy.lastEventRequest!.eventId, receipt.eventId);
+      expect(policy.lastEventRequest!.calendarId, parent);
+      expect(
+        policy.lastEventRequest!.occurrenceQuery!.eventId,
+        receipt.eventId,
+      );
+      expect(
+        () => policy
+            .lastEventRequest!
+            .currentEvent!
+            .content
+            .recurrence!
+            .inclusions
+            .clear(),
+        throwsUnsupportedError,
+      );
+      expect(
+        () => policy
+            .lastEventRequest!
+            .currentEvent!
+            .content
+            .recurrence!
+            .rule!
+            .byDay
+            .clear(),
+        throwsUnsupportedError,
+      );
+      await service.updateEvent(
+        CalendarEventUpdateRequest(
+          eventId: receipt.eventId,
+          expectedRevision: 1,
+          content: eventInput().copyWith(
+            recurrence: CalendarEventRecurrence(
+              rule: daily(count: 2),
+              inclusions: [],
+              exclusions: [],
+            ),
+          ),
+        ),
+      );
+      final changed = await service.getEvent(receipt.eventId, eventGroups);
+      expect(changed.recurrence!.inclusions.single.start.day, 27);
+      expect(changed.recurrence!.exclusions.single.start.day, 30);
+      expect(changed.protocolUid, first.protocolUid);
+      await expectLater(
+        service.previewOccurrences(preview(receipt.eventId)),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      expect(
+        (await service.previewOccurrences(
+          preview(receipt.eventId, revision: 2),
+        )).occurrences.map((v) => v.start.day),
+        [27, 29],
+      );
+    });
+    test('incompatible pattern changes reject atomically; explicit replacement can clear dates', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final receipt = (await service.createEvent(
+        CalendarEventCreateRequest(
+          calendarId: parent,
+          content: eventInput().copyWith(
+            recurrence: CalendarEventRecurrence(
+              rule: daily(),
+              inclusions: [day(27)],
+              exclusions: [],
+            ),
+          ),
+        ),
+      ))!;
+      final change = CalendarEventUpdateRequest(
+        eventId: receipt.eventId,
+        expectedRevision: 1,
+        content: eventInput().copyWith(
+          timing: day(29, kind: CalendarEventTimeKind.utc),
+        ),
+      );
+      await expectLater(
+        service.updateEvent(change),
+        failure(CalendarFailureCode.validation),
+      );
+      expect(
+        (await service.getEvent(receipt.eventId, eventGroups)).revision,
+        1,
+      );
+      policy.denyFinal = true;
+      await expectLater(
+        service.updateEvent(change.copyWith(replaceRecurrenceDates: true)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denyFinal = false;
+      expect(
+        (await service.getEvent(
+          receipt.eventId,
+          eventGroups,
+        )).recurrence!.inclusions.length,
+        1,
+      );
+      await service.updateEvent(change.copyWith(replaceRecurrenceDates: true));
+      expect(
+        (await service.getEvent(receipt.eventId, eventGroups)).recurrence,
+        isNull,
+      );
+    });
+    test('preview requires both read and preview rights, timing disclosure and actual scope', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final id = (await service.createEvent(
+        CalendarEventCreateRequest(calendarId: parent, content: eventInput()),
+      ))!.eventId;
+      for (final permission in [
+        CalendarPermission.readEvent,
+        CalendarPermission.previewEventOccurrences,
+      ]) {
+        policy.denied
+          ..clear()
+          ..add(permission);
+        await expectLater(
+          service.previewOccurrences(preview(id)),
+          failure(CalendarFailureCode.accessDenied),
+        );
+      }
+      policy.denied.clear();
+      policy.eventGrants = {CalendarEventFieldGroup.summary};
+      await expectLater(
+        service.previewOccurrences(preview(id)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      final hidden = await service.getEvent(id, eventGroups);
+      expect(hidden.timing, isNull);
+      expect(hidden.recurrence, isNull);
+      policy.eventGrants = eventGroups.toSet();
+      final bobSession = builder
+          .copyWith(
+            authentication: AuthenticationOverride.authenticationInfo(
+              'bob',
+              {},
+            ),
+          )
+          .build();
+      await expectLater(
+        CalendarModule.service(bobSession).previewOccurrences(preview(id)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+    test(
+      'preview caps fail explicitly without changing event revision or time',
+      () async {
+        final parent = (await service.create(createInput()))!.calendarId;
+        final input = eventInput().copyWith(
+          timing: day(29, kind: CalendarEventTimeKind.utc),
+          recurrence: CalendarEventRecurrence(
+            rule: daily().copyWith(
+              frequency: CalendarEventFrequency.minutely,
+              count: null,
+            ),
+            inclusions: [],
+            exclusions: [],
+          ),
+        );
+        final id = (await service.createEvent(
+          CalendarEventCreateRequest(calendarId: parent, content: input),
+        ))!.eventId;
+        final before = await service.getEvent(id, eventGroups);
+        await expectLater(
+          service.previewOccurrences(
+            CalendarEventOccurrenceQuery(
+              eventId: id,
+              expectedRevision: 1,
+              fromUtc: DateTime.utc(2026, 3, 29),
+              untilUtc: DateTime.utc(2026, 3, 30),
+            ),
+          ),
+          failure(CalendarFailureCode.limitExceeded),
+        );
+        final after = await service.getEvent(id, eventGroups);
+        expect(after.revision, before.revision);
+        expect(after.lastModified, before.lastModified);
+      },
+    );
+    test('previous non-recurring JSON payload upgrades without changing event identities', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final id = (await service.createEvent(
+        CalendarEventCreateRequest(calendarId: parent, content: eventInput()),
+      ))!.eventId;
+      final before = await service.getEvent(id, eventGroups);
+      // Previous serializer wrote recurring:false and no recurrence property.
+      await session.db.unsafeQuery(
+        "UPDATE serverpod_calendar_event_data SET content = (content::jsonb - 'recurrence') || '{\"recurring\":false}'::jsonb WHERE \"eventId\" = '$id'",
+      );
+      final after = await service.getEvent(id, eventGroups);
+      expect(after.recurrence, isNull);
+      expect(after.protocolUid, before.protocolUid);
+      expect(after.revision, before.revision);
+      expect(after.lastModified, before.lastModified);
+    });
     test('event lifecycle preserves UID, separates cancel/delete and blocks parent deletion', () async {
       final parent = (await service.create(createInput()))!.calendarId;
       final calendar = await service.get(parent, groups);
@@ -393,7 +629,13 @@ void main() {
       );
       await expectLater(
         service.updateEvent(
-          update.copyWith(content: update.content.copyWith(recurring: true)),
+          update.copyWith(
+            content: update.content.copyWith(
+              timing: update.content.timing.copyWith(
+                kind: CalendarEventTimeKind.floating,
+              ),
+            ),
+          ),
         ),
         failure(CalendarFailureCode.validation),
       );
