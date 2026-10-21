@@ -1,0 +1,7 @@
+class: CalendarFreeBusyView
+fields:
+  calendarId: UuidValue
+  fromUtc: DateTime
+  untilUtc: DateTime
+  coverage: CalendarFreeBusyCoverage
+  periods: List<CalendarFreeBusyPeriod>

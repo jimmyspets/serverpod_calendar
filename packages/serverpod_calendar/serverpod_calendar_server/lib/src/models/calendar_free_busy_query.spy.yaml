@@ -1,0 +1,6 @@
+class: CalendarFreeBusyQuery
+immutable: true
+fields:
+  calendarId: UuidValue
+  fromUtc: DateTime
+  untilUtc: DateTime

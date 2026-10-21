@@ -51,3 +51,5 @@ See [first native non-recurring events](native-single-events.md) for typed timin
 See [native recurrence and occurrence previews](native-event-recurrence.md) for the next event increment under ADR 0054.
 
 See [native occurrence timing editing](native-occurrence-timing.md) for single/future timing changes and single cancellation/restoration under ADR 0055.
+
+See [per-calendar free/busy](calendar-free-busy.md) for the first bounded booking/fallback calculation under ADR 0056, with full rule/search scope still pending.

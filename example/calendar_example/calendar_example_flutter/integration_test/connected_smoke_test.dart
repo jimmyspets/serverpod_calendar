@@ -421,6 +421,41 @@ void main() {
     await _idle(tester);
     await tester.pageBack();
     await _idle(tester);
+    final busyExample = (await events.create(
+      cal.CalendarEventCreateRequest(
+        calendarId: calendar.id,
+        content: cal.CalendarEventContent(
+          summary: 'Never show private busy title',
+          status: cal.CalendarEventStatus.tentative,
+          timing: cal.CalendarEventTiming(
+            kind: cal.CalendarEventTimeKind.utc,
+            start: cal.CalendarEventCivil(
+              year: 2026,
+              month: 3,
+              day: 29,
+              hour: 9,
+            ),
+            duration: cal.CalendarEventDuration(hours: 1),
+          ),
+        ),
+      ),
+    ))!;
+    await _tap(tester, 'calendar-free-busy');
+    await tester.enterText(
+      find.byKey(const Key('busy-from')),
+      '2026-03-29T00:00:00Z',
+    );
+    await tester.enterText(
+      find.byKey(const Key('busy-until')),
+      '2026-03-30T00:00:00Z',
+    );
+    await _tap(tester, 'busy-load');
+    await _waitFor(tester, find.byKey(const Key('busy-complete')));
+    expect(find.text('tentative'), findsOneWidget);
+    expect(find.text('Never show private busy title'), findsNothing);
+    await tester.pageBack();
+    await _idle(tester);
+    await events.deleteEvent(busyExample.eventId, 1);
     await _tap(tester, 'calendar-delete');
     await _tap(tester, 'calendar-confirm-delete');
     expect(find.byKey(const Key('calendar-error')), findsOneWidget);

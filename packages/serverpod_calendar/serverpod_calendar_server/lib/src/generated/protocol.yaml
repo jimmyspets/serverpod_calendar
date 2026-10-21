@@ -1,6 +1,7 @@
 calendarDiagnostics:
   - check:
 calendar:
+  - freeBusy:
   - create:
   - getCalendar:
   - list:
