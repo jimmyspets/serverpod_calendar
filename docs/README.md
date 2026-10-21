@@ -61,3 +61,5 @@ See [person/resource availability and common-free search](subject-availability-s
 See [opening-occurrence edits and scoped availability metadata](availability-occurrences-and-metadata.md) for original-identity timing/skip/restore controls, exact categories and legal metadata contexts under ADR 0059.
 
 See [native availability organizer, text parameters and private extensions](availability-publication-metadata.md) for scoped native editing and independent host approval under ADR 0060; interchange remains pending.
+
+See [native availability versions, timestamps and envelope duration](availability-protocol-lifecycle.md) for ADR 0061, legacy baselines and unchanged-save behavior.

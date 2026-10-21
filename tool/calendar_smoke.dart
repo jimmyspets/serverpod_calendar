@@ -743,6 +743,14 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
         ),
       ))!;
       var detail = await ab.getRule(detailReceipt.availabilityId);
+      check(
+        detail.protocolState.sequence == 0 &&
+            detail.protocolState.openings.single.created != null,
+        'New opening protocol state missing',
+      );
+      final protocolCreated = detail.protocolState.created;
+      final openingStamp = detail.protocolState.openings.single.stamp;
+
       await rejects(
         () => aa.updateMetadata(
           cal.CalendarAvailabilityUpdateRequest(
@@ -806,7 +814,10 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
       );
       detail = await ab.getRule(detail.id);
       check(
-        detail.content.description == 'Synthetic notes' &&
+        detail.protocolState.sequence == 1 &&
+            detail.protocolState.created == protocolCreated &&
+            detail.protocolState.openings.single.stamp == openingStamp &&
+            detail.content.description == 'Synthetic notes' &&
             detail.content.organizer?.commonName == 'Synthetic organizer' &&
             detail.content.textParameters?.description?.language == 'SV' &&
             detail.content.extensions?.single.value == 'Synthetic label' &&
@@ -878,7 +889,45 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
             (await b.freeBusy(detailQuery)).periods[1].startUtc.hour == 9,
         'Remote future opening timing was not projected',
       );
+      final protocolFinal = await ab.getRule(detail.id);
+      check(
+        protocolFinal.protocolState.sequence == 4 &&
+            protocolFinal.protocolState.created == protocolCreated,
+        'Cross-host occurrence protocol versions diverged',
+      );
       await ab.deleteRule(detail.id, 5);
+      final envelopeReceipt = (await aa.create(
+        cal.CalendarAvailabilityCreateRequest(
+          calendarId: detailParent.calendarId,
+          content: cal.CalendarAvailabilityContent(
+            openings: [],
+            validFrom: opening.copyWith(end: null),
+            validDuration: cal.CalendarEventDuration(hours: 1),
+          ),
+        ),
+      ))!;
+      final envelope = await ab.getRule(envelopeReceipt.availabilityId);
+      check(
+        envelope.content.validDuration?.hours == 1 &&
+            envelope.content.validUntil == null,
+        'Remote envelope duration was flattened',
+      );
+      await aa.update(
+        cal.CalendarAvailabilityUpdateRequest(
+          availabilityId: envelope.id,
+          expectedRevision: 1,
+          content: envelope.content,
+        ),
+      );
+      final unchanged = await ab.getRule(envelope.id);
+      check(
+        unchanged.revision == 2 &&
+            unchanged.protocolState.sequence == 0 &&
+            unchanged.protocolState.stamp == envelope.protocolState.stamp,
+        'Identical cross-host write advanced protocol state',
+      );
+      await ab.deleteRule(envelope.id, 2);
+
       final edits = await Future.wait([
         for (final endpoint in [aa, ab])
           () async {

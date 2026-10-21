@@ -4,6 +4,7 @@ table: serverpod_calendar_availability_data
 fields:
   availabilityId: UuidValue, relation(parent=serverpod_calendar_availability)
   protocolUid: UuidValue, default=random
+  protocolState: CalendarAvailabilityProtocolState?
   timingOverrides: List<CalendarAvailabilityOpeningEdits>?
   content: CalendarAvailabilityContent
   createdAt: DateTime

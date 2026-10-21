@@ -64,6 +64,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0058](0058-subject-availability-search.md) | Host-resolved subject availability and common-free search | Accepted scope/access choices; mechanics under review |
 | [0059](0059-availability-occurrence-edits-and-metadata.md) | Opening-occurrence edits and scoped availability metadata | Accepted scope; mechanics under review |
 | [0060](0060-availability-publication-metadata.md) | Availability organizer, text parameters and private extensions | Accepted batch choices; mechanics under review |
+| [0061](0061-availability-protocol-lifecycle-and-envelope-duration.md) | Availability protocol lifecycle and envelope duration | Accepted version/opening choices; mechanics under review |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

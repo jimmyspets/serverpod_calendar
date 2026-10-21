@@ -38,6 +38,23 @@ final class _Availability {
         data.content,
         data.timingOverrides,
       );
+      data.protocolState = validateAvailabilityProtocolState(
+        data.protocolState ??
+            availabilityProtocolBaseline(
+              data.content,
+              data.createdAt,
+              data.updatedAt,
+              legacy: true,
+            ),
+        data.content,
+      );
+      if (data.protocolState!.created !=
+              availabilityProtocolInstant(data.createdAt) ||
+          data.protocolState!.lastModified.isAfter(
+            availabilityProtocolInstant(data.updatedAt),
+          )) {
+        throw StateError('Protocol state conflicts with storage time');
+      }
       if (data.content.openings.any((o) => o.uid == null)) {
         throw StateError('Persisted opening lacks identity');
       }
@@ -57,16 +74,15 @@ final class _Availability {
         data.protocolUid,
         data.updatedAt,
         timingOverrides: data.timingOverrides,
+        protocolState: data.protocolState!,
       );
   CalendarAvailabilityView get view => CalendarAvailabilityView(
     id: identity.id!,
     calendarId: identity.calendarId,
     revision: identity.revision,
     protocolUid: data.protocolUid,
-    lastModified: DateTime.fromMillisecondsSinceEpoch(
-      (data.updatedAt.millisecondsSinceEpoch ~/ 1000) * 1000,
-      isUtc: true,
-    ),
+    lastModified: data.protocolState!.lastModified,
+    protocolState: data.protocolState!,
     content: data.content,
     timingOverrides: data.timingOverrides,
   );
@@ -85,6 +101,7 @@ extension CalendarAvailabilityOperations on CalendarService {
     CalendarAvailabilityOccurrenceQuery? occurrenceQuery,
     List<CalendarAvailabilityOpeningEdits>? edits,
     String? category,
+    CalendarAvailabilityProtocolState? protocol,
   }) => CalendarAuthorizationRequest(
     key: '${operation.name}:${rule?.identity.id ?? parent.identity.id}',
     operation: operation,
@@ -99,6 +116,7 @@ extension CalendarAvailabilityOperations on CalendarService {
     availabilityOccurrenceChange: change,
     availabilityOccurrenceQuery: occurrenceQuery,
     proposedAvailabilityEdits: edits,
+    proposedAvailabilityProtocolState: protocol,
     availabilityCategoryFilter: category,
   );
 
@@ -255,14 +273,21 @@ extension CalendarAvailabilityOperations on CalendarService {
         tx,
         CalendarAuthorizationPhase.preliminaryWrite,
       );
-      final decisions = await _final(c, [request], tx);
+      final now = await _revisionTime(tx);
+      final protocol = availabilityProtocolBaseline(proposed, now, now);
+      final finalRequest = _ar(
+        parent,
+        CalendarPermission.createAvailability,
+        proposed: proposed,
+        protocol: protocol,
+      );
+      final decisions = await _final(c, [finalRequest], tx);
       await _approveAvailabilityMetadata(
         c,
-        request,
+        finalRequest,
         tx,
         CalendarAuthorizationPhase.finalWrite,
       );
-      final now = await _revisionTime(tx);
       final identity = await CalendarAvailabilityRecord.db.insertRow(
         _session,
         CalendarAvailabilityRecord(calendarId: input.calendarId, revision: 1),
@@ -273,6 +298,7 @@ extension CalendarAvailabilityOperations on CalendarService {
         CalendarAvailabilityDataRecord(
           availabilityId: identity.id!,
           content: proposed,
+          protocolState: protocol,
           createdAt: now,
           updatedAt: now,
         ),
@@ -423,6 +449,17 @@ extension CalendarAvailabilityOperations on CalendarService {
       final edits = _availabilityValue(
         () => validateAvailabilityEdits(proposed, retained),
       );
+      final now = await _revisionTime(tx, previous: rule.data.updatedAt);
+      final protocol = _availabilityValue(
+        () => advanceAvailabilityProtocol(
+          rule.data.protocolState!,
+          rule.data.content,
+          rule.data.timingOverrides,
+          proposed,
+          edits,
+          now,
+        ),
+      );
       final finalRequests = [
         for (final request in requests)
           _ar(
@@ -431,6 +468,7 @@ extension CalendarAvailabilityOperations on CalendarService {
             rule: rule,
             proposed: proposed,
             edits: edits,
+            protocol: protocol,
           ),
       ];
       await _approveAvailabilityMetadata(
@@ -448,10 +486,8 @@ extension CalendarAvailabilityOperations on CalendarService {
       );
       rule.data.timingOverrides = edits;
       rule.data.content = proposed;
-      rule.data.updatedAt = await _revisionTime(
-        tx,
-        previous: rule.data.updatedAt,
-      );
+      rule.data.protocolState = protocol;
+      rule.data.updatedAt = now;
       rule.identity.revision++;
       await CalendarAvailabilityDataRecord.db.updateRow(
         _session,
@@ -475,13 +511,15 @@ extension CalendarAvailabilityOperations on CalendarService {
     return _transaction(c, (tx, scope) async {
       final rule = await _availability(c, input.availabilityId, tx);
       CalendarAuthorizationRequest request(
-        List<CalendarAvailabilityOpeningEdits>? edits,
-      ) => _ar(
+        List<CalendarAvailabilityOpeningEdits>? edits, [
+        CalendarAvailabilityProtocolState? protocol,
+      ]) => _ar(
         rule.parent,
         CalendarPermission.changeAvailabilityOccurrence,
         rule: rule,
         change: input,
         edits: edits,
+        protocol: protocol,
       );
       await _decide(
         c,
@@ -497,12 +535,21 @@ extension CalendarAvailabilityOperations on CalendarService {
           input,
         ),
       );
-      final decisions = await _final(c, [request(edits)], tx);
-      rule.data.timingOverrides = edits;
-      rule.data.updatedAt = await _revisionTime(
-        tx,
-        previous: rule.data.updatedAt,
+      final now = await _revisionTime(tx, previous: rule.data.updatedAt);
+      final protocol = _availabilityValue(
+        () => advanceAvailabilityProtocol(
+          rule.data.protocolState!,
+          rule.data.content,
+          rule.data.timingOverrides,
+          rule.data.content,
+          edits,
+          now,
+        ),
       );
+      final decisions = await _final(c, [request(edits, protocol)], tx);
+      rule.data.timingOverrides = edits;
+      rule.data.protocolState = protocol;
+      rule.data.updatedAt = now;
       rule.identity.revision++;
       await CalendarAvailabilityDataRecord.db.updateRow(
         _session,

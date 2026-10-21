@@ -1,0 +1,7 @@
+class: CalendarAvailabilityOpeningProtocolState
+immutable: true
+fields:
+  openingUid: UuidValue
+  created: DateTime?
+  stamp: DateTime
+  lastModified: DateTime
