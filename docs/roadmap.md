@@ -1,8 +1,26 @@
 # Delivery roadmap
 
-Status: first-release scope selected; detailed contracts, implementation and release evidence remain pending. The [RFC tables](rfc/README.md) are the latest feature-scope source. [Requirements](requirements.md) define stable FR/NFR acceptance targets; [ADRs](adr/README.md) distinguish confirmed scope from proposed implementation details.
+Status reconciled **2026-10-21**, through the native recurrence/previews increment under ADR 0054. The bounded temporal core and scoped native calendar/event services have local validation evidence; the full first release remains incomplete. The [RFC tables](rfc/README.md) are the latest feature-scope source. [Requirements](requirements.md) define stable FR/NFR acceptance targets; [ADRs](adr/README.md) distinguish confirmed scope from proposed implementation details.
 
-This roadmap consolidates the useful delivery checks from the removed bootstrap drafts. It is the current planning document; no GitHub issues are created by this cleanup. Check existing GitHub work before filing issues, and link each implementation issue to the relevant requirements and roadmap section.
+This roadmap tracks the implementation represented by the current branch, including stacked draft PRs; an implemented checkbox does not mean the change is merged into main, released, or that every ADR mechanic is accepted. Check existing GitHub work before filing issues, and link each implementation issue to the relevant requirements and roadmap section.
+
+Checked items describe only the stated implemented slice or explicitly selected product boundary. Unchecked items remain delivery/review gates. A broader requirement stays incomplete when only part of it has evidence. [Scaffold validation](scaffold-validation.md) records actual commands/results; [temporal validation](temporal-core.md) retains historical increments whose older precision/range choices are superseded by ADR 0041.
+
+## Current delivery position
+
+| Area | Implemented and locally validated | Remaining for the first release |
+| --- | --- | --- |
+| Workspace and example | Pinned SDKs, module/client packages, JWT sign-in, local setup/generation/check scripts | CI and broader feature integration |
+| Temporal core | Selected bounded Gregorian/ISO, timezone, duration, recurrence, exception/range timing and task-timing calculations | Wire-zone validation and durable upgrade/recalculation integration |
+| Calendars and authorization | CRUD/associations, native/protocol metadata separation, UID/time, host policy, disclosure, revisions and cursors | Retention/cleanup, production coordinated-policy evidence and enforcement for remaining services |
+| Events | DATE/UTC/zoned CRUD, separate lifecycle rights, recurrence storage and bounded per-event previews | Individual/future occurrence edits, richer metadata and calendar-wide occurrence queries |
+| Tasks | Pure-core timing/recurrence projections | Durable CRUD, assignments, occurrence completion/history and Flutter journeys |
+| Availability | Stored named zone/fallback and subject-association foundation | RFC 7953 rule service, free/busy and per-target/common-free search |
+| iCalendar and HTTP feeds | Scoped decoded metadata adapters; optional feed-module boundary selected | ICS parsing/serialization, imports/exports, feed module and external-client evidence |
+| Scheduling and alarms | Selected scope; notification package scaffold | Scheduling/mail state and outbox; alarm workers/actions and connected Flutter delivery |
+| Validation and release | Local unit/browser/database/upgrade checks, two real hosts and Flutter journeys for implemented features | CI, remaining protocol/worker/recovery journeys, interoperability and publication readiness |
+
+Next agreed implementation batch: individual occurrence edits and “this and future” edits, following [ADR 0054](adr/0054-native-event-recurrence-and-previews.md). Availability is a suggested subsequent area, not a newly approved implementation contract. Review and merge the draft PR stack separately; passing local checks does not approve unresolved design mechanics.
 
 ## Work packages and dependencies
 
@@ -17,7 +35,7 @@ This roadmap consolidates the useful delivery checks from the removed bootstrap 
 | [Feeds](#feeds) | FR-10/11/12/13/14; NFR-04/07/08; ADRs 0004/0016 | Persistence and iCalendar output |
 | [Availability](#availability) | FR-15/16/17/18/19/26/27; NFR-09; ADRs 0006/0008/0012 | Core, persistence and bounded interchange |
 | [Scheduling](#scheduling) | FR-20/21/22/23; NFR-10/11; ADRs 0007/0011/0015 | Core, persistence, interchange and availability |
-| [Alarms and push](#alarms-and-push) | FR-28/29/30/31; NFR-12/13; ADRs 0009/0020 | Core, persistence, task lifecycle and notification-port contract |
+| [Alarms and notifications](#alarms-and-push) | FR-28/29/30/31; NFR-12/13; ADRs 0009/0020 | Core, persistence, task lifecycle and notification-port contract |
 | [Automated deployment tests](#automated-deployment-tests) | NFR-14/15; ADR 0018 | Scaffolded real host/app; extend tests as each feature is delivered |
 | [Release evidence](#release-evidence) | All FR/NFR evidence; NFR-05 | Required work packages and automated deployment tests complete |
 
@@ -25,100 +43,92 @@ Independent packages can progress in parallel after their contracts are defined.
 
 ## Design contracts
 
-- [ ] Implement the selected [native-name/schema shape](calendar-schema.md) under [ADR 0048](adr/0048-calendar-name-validation-and-row-layout.md): trimmed/nonempty/single-line labels up to 256 Unicode code points, identity-owned revision and content removal from separate active rows. Verify low-level Unicode/raw-byte limits, generated keys/indexes and two-host lifecycle invariants; marker retention remains undecided.
+Confirmed product choices and implemented interfaces are distinct from acceptance of every physical/API detail. [ADRs 0043–0054](adr/README.md) and their implementation guides refine the earlier [model catalog](models.md); that catalog is not a blanket implementation claim.
 
-- [ ] Finalize and implement [calendar storage](calendar-storage.md) under [ADR 0047](adr/0047-calendar-names-identifiers-and-deletion-storage.md): native/protocol/feed names stay distinct; server UUIDs have no public version requirement; deletion atomically removes content and retains only the selected internal marker. Review physical layout, text validation, retention/purge and generated UUID/schema behavior before claiming implementation.
-
-- [ ] Review [concrete adapter interfaces](authorization-adapter-contract.md) and the [first native calendar CRUD contract](calendar-crud-contract.md) under [ADR 0046](adr/0046-first-native-calendar-crud-contract.md). Preserve confirmed explicit-zone/nonempty-name creation and dependency-blocked deletion; apply ADR 0047 name-role separation and settle text validation, physical UUID/marker schema/retention, typed commands/results and real coordination before the calendar CRUD implementation batch.
-
-- [ ] Finalize and implement [authorization consistency contracts](authorization-consistency.md) under [ADR 0045](adr/0045-authorization-consistency-guarantees.md): declare coordinated/external guarantees, reject unsupported requirements without downgrade, define defaults/freshness/deadlines and effective coordination, and test two-host revocation/write ordering, retries and late external decisions.
-
-- [ ] Finalize and implement [authorized query/view contracts](authorization-queries.md) under [ADR 0044](adr/0044-authorized-query-projections-and-pagination.md): preserve separate detail/free-busy, typed groups and no initial totals; review batch constraints, mappings, pagination/cursors, snapshot freshness and two-host behavior before generated schemas.
-
-- [ ] Finalize and implement the accepted host authorization/context boundary under [ADR 0043](adr/0043-host-authorization-context.md) and the [guide](host-authorization.md): trusted actual collection/object/parent context, custom host policies, query visibility, transaction/revision integration, external-policy consistency and two-host enforcement. Preserve the confirmed permission separations and mixed-request checks in the [operation catalog](authorization-operations.md). Do not generate domain endpoints before these dependent contracts are reviewed.
-
-- [ ] Implement the confirmed optional HTTP feed module boundary under [ADR 0042](adr/0042-optional-http-feed-module.md): define calendar publication/policy contracts, keep feed storage/routes/credentials separate, and test installations with and without feeds. Package names and detailed contracts remain pending.
-
-- [ ] Review the [model catalog](models.md) and [ADR 0019](adr/0019-model-contracts.md): finalize logical fields/ownership, component cardinalities, physical schema/IDs, typed changes, uniqueness, retention and generated-client projections before writing model YAML or migrations. Preserve the selected RFC scope and resolve the catalog's explicit lifecycle/temporal review gates.
-
-- [ ] Review the retained ADR implementation proposals against the selected RFC tables. Define exact property contexts/cardinalities, accepted values, native/interchange schemas, limits and diagnostics; keep feature scope separate from implementation approval.
-- [ ] Specify task occurrence/completion/series-edit behavior, known-zone aliases and matching rules, DST/duration semantics, host authorization/publication lifecycle, deletion/identity removal, resource blocking/exclusivity/capacity and client variants.
+- [x] Record the host-owned identity/policy boundary, actual collection/object/parent context, separate permissions, predefined disclosure groups and no-total detail pages under ADRs 0043/0044. Calendar/event enforcement is implemented; see [host authorization](host-authorization.md), [operation catalog](authorization-operations.md) and the service checklists below.
+- [x] Record declared coordinated/external authorization guarantees without silent downgrade under [ADR 0045](adr/0045-authorization-consistency-guarantees.md). Installation capability checks, bounded callbacks and final checks exist; production host coordination and revocation ordering remain open below.
+- [x] Implement the selected native calendar creation/name/storage/deletion slice under [ADRs 0046–0049](adr/0049-first-calendar-crud-implementation.md): explicit named zone, nonempty trimmed single-line name up to 256 Unicode code points, duplicate labels, server UUIDs, separate identity/active rows and dependency-blocked content deletion. [Storage](calendar-storage.md), [schema](calendar-schema.md) and [the implementation guide](calendar-crud-implementation.md) distinguish the selected boundary from reviewable mechanics.
+- [x] Record native/protocol/feed name separation and implement distinct native/protocol calendar metadata, protocol UID/time and scoped event/recurrence contracts under ADRs 0050–0054. This does not implement feed metadata or ICS interchange.
+- [x] Select a separate optional HTTP feed module under [ADR 0042](adr/0042-optional-http-feed-module.md); implementation is tracked under [feeds](#feeds).
+- [ ] Review concrete API/storage/limit mechanics in the [adapter interfaces](authorization-adapter-contract.md), [CRUD contract](calendar-crud-contract.md), [query design](authorization-queries.md) and [consistency guide](authorization-consistency.md) against the implemented slices. Add production coordinated-policy and two-host revocation/commit-order evidence without implying that a final external check closes its residual race.
+- [ ] Decide deletion-marker retention/purge, global cursor/scope cleanup and publication/dependency removal for remaining item families. Existing minimal markers do not select indefinite retention or archive/restore behavior.
+- [ ] Finalize individual/future event edits, range cancellation and task occurrence/completion/history contracts before their storage/endpoints. Core timing support does not settle durable lifecycle or permission semantics.
+- [ ] Review remaining model fields, ownership, component cardinalities, physical constraints, typed changes, identity mappings, limits and diagnostics against [ADR 0019](adr/0019-model-contracts.md) and the selected RFC tables before dependent schema/parser implementation.
+- [ ] Specify imported known-zone VTIMEZONE matching, transactional zone upgrades, publication/scheduling trust, resource blocking/exclusivity/capacity and external client variants. Existing native alias/DST/duration rules are already implemented; do not reopen them as unselected scope.
 - [ ] Finalize structured-component nesting/shared fields, DERIVED update authority, graph/reference scope, cycles/missing/filtered targets and privacy-aware UID mapping. Selected relationships remain metadata; they do not execute workflows.
-- [ ] Define private alarm UID/acknowledgement/snooze wire/lifecycle constraints and notification-port cancellation/retry contracts. Keep requirements, compatibility and implementation issues aligned. Recover earlier discussion only as optional additional evidence.
+- [ ] Define private alarm UID/acknowledgement/snooze wire/lifecycle constraints and notification-port cancellation/retry contracts. Keep requirements, compatibility and implementation acceptance criteria aligned. Recover earlier discussion only as optional additional evidence.
 
 ## Scaffolding
 
-The [scaffolding plan](scaffolding-plan.md) records confirmed walkthrough selections and installed-tool checks. Start with the buildable workspace/authentication/connection milestone; add domain and cross-instance feature checks incrementally. Local checks precede CI configuration, without removing CI release requirements. The initial root workspace, module skeletons, seeded host sign-in and local smoke harness are implemented under [ADR 0021](adr/0021-initial-workspace-scaffold.md); consult the [validation record](scaffold-validation.md) for actual results. The larger checklist below remains incomplete, including domain adapters, parser/recurrence selection and CI.
+The initial workspace/authentication milestone under [ADR 0021](adr/0021-initial-workspace-scaffold.md) is implemented and locally validated. See [the scaffold plan](scaffolding-plan.md), [development guide](development.md) and [validation record](scaffold-validation.md). Notification and iCalendar scaffolds are not evidence of their complete services.
 
-- [ ] Pin compatible Serverpod 4.x-or-later, Dart and Flutter SDKs; verify the selected module template, package layout, parser/recurrence/zone dependencies, licenses and generated-code workflow.
-- [ ] Scaffold independent core, iCalendar adapter, Serverpod module/generated client and authenticated host Flutter example. Establish HTTP feed, scheduling and host mail/notification adapter boundaries without provider dependencies in core.
-- [ ] Establish the example host/Flutter app as the automated test application using actual module/migrations and generated APIs. Add isolated database seed/reset, test-only controlled clocks/adapters and CI launch/teardown for single-instance and at least two-instance host topologies with distinct identities/ports and shared storage.
-- [ ] Integrate host identity/membership/policy adapters, namespaced tables and fresh migrations. Add verified clean-checkout instructions and CI formatting, analysis, tests and generation checks. Keep secrets and production configuration out of source.
+- [x] Pin and validate Serverpod 4.0.4, Flutter 3.47.7 and Dart 3.13.5 with workspace dependencies, the module template and repeatable generated-code workflow. Other SDK versions need separate evidence.
+- [x] Scaffold independent core/iCalendar packages, calendar and notification Serverpod server/client pairs, and the authenticated host/Flutter example. Keep Serverpod/Flutter/provider dependencies out of the pure calendar core.
+- [x] Implement synthetic seeded host authentication using Serverpod JWT, generated-client module connection checks and host-resolved private demo scopes. Calendar stores opaque associations; the host owns users/membership.
+- [x] Supply local setup, synthetic database seed/reset, generation, formatting/analysis, database/upgrade and real generated-client/Flutter checks. Namespaced calendar/event tables and fresh/upgrade migrations are exercised.
+- [x] Run two independent local host processes sharing test storage with distinct ports and real cross-instance operations. This foundation now exercises calendar/event features as well as JWT.
+- [ ] Add CI orchestration for the existing local checks and single-/two-host topologies. CI remains a release requirement, not completed by local execution.
+- [ ] Evaluate and pin the remaining ICS/MIME/parser dependencies, licenses and host mail/notification adapters before implementing those services. Native recurrence and timezone calculation choices already have scoped validation; the optional HTTP feed package still needs scaffolding.
 
 ## Temporal core
 
-Current profile: [ADR 0041](adr/0041-whole-second-1970-2100-profile.md) supersedes earlier precision/range increments below: whole seconds, 1970 inclusive to 2100 exclusive, explicit exclusive endpoints, calculated future IANA transitions and a documented [update procedure](timezone-data.md). Historical checked increments do not restore their older limits.
+The **bounded pure-core calculation milestone is complete** under [ADR 0040](adr/0040-bounded-temporal-core-completion.md), with the current precision/range/data profile defined by [ADR 0041](adr/0041-whole-second-1970-2100-profile.md). [Temporal validation](temporal-core.md) and [timezone data/update guidance](timezone-data.md) contain evidence and historical increments. This is calculation support, not complete service or wire support.
 
-- [x] Apply the accepted unpublished whole-second/range API changes, retarget normal tests to supported dates and retain outside-profile rejection/boundary tests. Generate bounded timezone data with pinned IANA zic, preserve unknown offsets, and validate against an independent all-year/zone reference.
-
-
-Native calendar week numbering and presentation follow the confirmed ISO 8601/Monday convention under [ADR 0032](adr/0032-iso-week-convention.md). The core exposes ISO week fields under [ADR 0034](adr/0034-native-iso-week-fields.md); preserve the convention in future Flutter views; honor explicit RFC WKST values for recurrence and its week numbers, independently of display labels. See [examples](week-conventions.md).
-
-- [x] Implement the isolated UTC query-window foundation with half-open bounds, membership, intersection and boundary tests. See [ADR 0022](adr/0022-utc-query-window-foundation.md) and [validation](temporal-core.md). This does not complete the temporal work package or resolve remaining date/zone/recurrence contracts.
-
-- [x] Add validated Gregorian `CalendarDate` values for ordinary years 1970–2099 under ADR 0041 (superseding the initial broad range), with month/leap-year rules, comparison and boundary tests under [ADR 0023](adr/0023-gregorian-date-only-values.md). Generated values, interchange, event spans and persistence remain future work.
-- [x] Add native ISO week-year, week and weekday projection under [ADR 0034](adr/0034-native-iso-week-fields.md), with independent full-cycle and full-profile year-boundary evidence. Flutter presentation remains pending.
-- [x] Add bounded Gregorian calendar-day addition, signed day distances and weekdays under [ADR 0026](adr/0026-gregorian-calendar-day-arithmetic.md). Recurrence generation and duration semantics remain future work.
-
-- [x] Add validated native `CivilDateTime` fields with selected microsecond precision and leap-second rejection under [ADR 0024](adr/0024-civil-date-time-values.md). Future iCalendar export must reject nonzero fractions; named-zone resolution, DST policy and adapter rejection tests remain pending.
-
-- [x] Add the pinned native named-zone resolver and recurrence-candidate gap helper under [ADR 0025](adr/0025-bounded-named-zone-resolution.md), with RFC explicit gap/fold policy, exact aliases, now superseded by generated 1970–2099 coverage plus exclusive-end padding under ADR 0041, with unknown offsets rejected. VM/Chrome tests pass.
-- [x] Add unit-preserving signed `CalendarDuration` values with whole-second precision under ADR 0041 (superseding native microseconds) under [ADR 0027](adr/0027-calendar-duration-values.md). Property-specific constraints and atomic interchange rejection remain pending.
-- [x] Implement date-only and selected calendar-first zoned duration application plus guarded UTC-to-local projection under [ADR 0028](adr/0028-duration-application.md). Complete span/default/adapter semantics and practical limits separately.
-- [x] Add scoped DATE-only event spans under [ADR 0035](adr/0035-date-only-event-spans.md), with preserved end/duration/default intent, exclusive ends, positive day/week restrictions, one-day defaults and explicit endpoint overflow errors. Timed/task spans follow under ADR 0040; scoped DATE-only series queries follow under ADR 0036.
-- [x] Add the UTC event foundation batch under [ADR 0039](adr/0039-exact-utc-duration-and-event-spans.md): exact signed duration arithmetic, preserved event end/duration/default forms, point-marker versus occupied-interval queries and exact BigInt window lengths with guarded Duration conversion. Timed recurrence and zoned spans follow under ADR 0040; service/wire integration remains pending.
-- [x] Complete bounded native zone snapshots/equal-horizon offset comparison and explicit version invalidation contracts under [ADR 0040](adr/0040-bounded-temporal-core-completion.md). VTIMEZONE validation/acceptance belongs to the adapter; durable upgrades belong to storage/workers.
-- [x] Replace the truncated runtime data with generated coverage for the accepted [1970, 2100) profile under ADR 0041. General all-year coverage remains outside scope; unknown-offset periods still fail explicitly.
-
-- [x] Preserve DATE, explicit UTC and exact named-zone civil meanings in the bounded core, with typed identities, pinned version evidence and guarded coverage under ADR 0040. No floating factory exists.
-- [ ] Adapter/module follow-up: validate/expand known-zone VTIMEZONE definitions before bounded comparison; reject custom/mismatched/floating wire forms atomically and implement transactional upgrade/recalculation.
-- [x] Add DATE-only recurrence parameter values with range/combination validation, immutable canonical lists and equality under [ADR 0029](adr/0029-date-recurrence-rule-values.md). Filter sorting/deduplication is confirmed; timed rules follow under ADR 0040.
-- [x] Add initial bounded DATE-only start-date generation under [ADR 0030](adr/0030-bounded-date-recurrence-generation.md), with selected mismatched-start rejection, COUNT/UNTIL, valid-date skipping, filters/positions and explicit work/result failure. Timed rules/overrides follow under ADR 0040; full service integration remains pending.
-- [x] Add DATE-only yearly BYWEEKNO under [ADR 0031](adr/0031-date-recurrence-week-numbers.md), with all WKST values, positive/negative week-year selectors, missing-week skipping and full-cycle boundary tests. This is native calculation evidence, not wire/client interoperability.
-- [x] Add bounded native DATE-only sets under [ADR 0033](adr/0033-date-recurrence-sets.md), preserving earlier inclusions, exclusion precedence and rule COUNT/UNTIL with explicit input/work/raw-rule/final-result caps. Timed/PERIOD sets and overrides follow under ADR 0040; wire integration remains pending.
-- [x] Add bounded uniform-length DATE-only occurrence overlap queries under [ADR 0036](adr/0036-date-event-series-overlap.md), including earlier starts, full preserved-form spans, widened-range budgets and atomic query failure on endpoint overflow. Timed queries, UTC occupancy and full availability remain pending; native single-occurrence DATE exceptions follow under ADR 0037.
-- [x] Complete the native DATE-only single-occurrence exception batch under [ADR 0037](adr/0037-date-only-single-occurrence-exceptions.md): original identity, cancel/complete replacement, moved-in/out and changed-length overlap, duplicate/target rejection and shared validation/query budgets. Timed event exceptions follow under ADR 0040; task edit lifecycle and service integration remain pending; scoped native DATE timing ranges follow under ADR 0038.
-- [x] Add the native DATE-only THISANDFUTURE timing batch under [ADR 0038](adr/0038-date-only-this-and-future-timing.md): signed original-relative shifts and length/form changes, later-anchor segments, preservation of singles, bounded anchor validation and one shared overlap envelope. Timed event timing edits follow under ADR 0040; range cancellation, task edit lifecycle and service/wire integration remain pending.
-- [x] Implement the selected bounded native recurrence profile under ADR 0040 from [RFC 5545](rfc/rfc-5545.md), including hourly/minutely cadence, selected filters, all WKST values, RDATE/EXDATE and stable original RECURRENCE-ID. SECONDLY/BYSECOND are absent from native types without dropping ordinary seconds or flattening series. Adapter rejection remains a separate gate.
-- [x] Complete immutable native event timing replacement/single cancellation/THISANDFUTURE projections and task start/due recurrence contracts under ADR 0040. Whole-master replacement is possible; task completion/edit lifecycle is not inferred.
-- [ ] Module follow-up: transactional whole-series/single/range edits, task edit/completion lifecycle, durable identities/revisions and alarm invalidation. Keep source/scheduling/publication identities distinct; range cancellation needs a separate contract.
-- [x] Test native Stockholm/Lord Howe/Apia DST gaps/folds and skipped dates, exclusive/point bounds, exact/nominal spans, calendar boundaries, open-ended bounded rules, moved/cancelled/range identities and atomic limit failures under ADR 0040.
-- [ ] Module follow-up: stable authorized pagination and complete/unknown availability results; no core limit failure may be reported free.
-
-The **bounded pure-core calculation milestone is complete** under ADR 0040. Remaining unchecked adapter, service, data-coverage expansion and lifecycle gates above are separate delivery work, not claims of implemented behavior.
+- [x] Validate Gregorian date-only and civil time fields with whole seconds, explicit leap-second/nonzero-fraction rejection and ordinary dates **1970-01-01 inclusive to 2100-01-01 exclusive**. Only approved midnight exclusive endpoints may reach 2100; UTC padding does not extend ordinary storage.
+- [x] Implement calendar-day arithmetic, weekday and ISO week-year/week projection. Native labels/presentation use Monday-first ISO weeks; recurrence honors explicit WKST and its rule-specific week numbers. See [week conventions](week-conventions.md) and ADRs 0023/0026/0032/0034.
+- [x] Generate pinned IANA coverage for the supported horizon, including calculated future transitions and exclusive-end padding. Preserve exact names/aliases, explicit gap/fold policies, generated-gap skipping and unknown-offset rejection; the former 2037 restriction is superseded, not a current limit. Document reproducible updates and independent reference validation.
+- [x] Preserve DATE, UTC and named-zone civil meanings, resolved instants and version evidence; provide no floating-time factory. Support finite zone snapshots and equal-horizon offset-function comparison without claiming to parse VTIMEZONE.
+- [x] Implement half-open UTC windows, exact arithmetic and unit-preserving signed durations. Apply named-zone weeks/days in civil fields before elapsed clock units, retaining P1D versus PT24H semantics across DST.
+- [x] Preserve DATE/UTC/zoned event end/duration/default forms, one-day DATE defaults, omitted timed points, overlap/lookback, explicit DATE-to-zone occupancy and endpoint/coverage failures.
+- [x] Implement the selected bounded DATE/timed recurrence profile, canonical filters, start alignment, COUNT/UNTIL, all WKST values, RDATE/EXDATE and core timed PERIOD additions. Earlier inclusions remain additions and exclusions do not replenish COUNT. SECONDLY/BYSECOND remain outside the native profile.
+- [x] Implement pure-core original occurrence identities, single cancellation/replacement and THISANDFUTURE timing projections with moved-in/out/changed-length overlap and shared validation/query budgets. These are not durable occurrence edit APIs.
+- [x] Implement pure-core DATE/timed task milestones and recurring projections, including undated/start-only/due-only forms and legal due/duration combinations. Task completion, assignment and history remain service work.
+- [x] Test supported boundaries, ISO/WKST, Stockholm/Lord Howe/Apia gaps/folds/skipped dates, nominal/exact durations, recurrence/exception/range projections and atomic limit failures on VM and Chrome.
+- [ ] Adapter follow-up: validate/expand known-zone VTIMEZONE definitions before bounded comparison; reject custom/mismatched/floating wire forms atomically. Calculation evidence alone does not authorize imported zones.
+- [ ] Module follow-up: implement transactional zone-data upgrade/recalculation for durable projections, bookings and future alarm work. No existing version label alone supplies that migration.
+- [ ] Module follow-up: persist individual/future occurrence edits and task lifecycle, with stable identities/revisions and dependent alarm invalidation. Whole-series recurrence definitions/previews are already implemented under ADR 0054; service PERIOD additions and range cancellation remain separate gates.
+- [ ] Query follow-up: add calendar-wide occurrence queries and complete/unknown availability results. Existing UUID detail pagination and per-event previews are scoped services; no limit failure may be reported free.
 
 ## Persistence and authorization
 
-- [ ] Implement durable calendar/event/series/exception CRUD, namespaced constraints and bounded queries. Store opaque external user/group/room/venue/equipment links; distinguish management associations from availability contributors and keep identity directories host-owned.
-- [ ] Enforce current host/tenant/membership authorization on every operation, expected revisions and atomic imports/edits. Masters and valid overrides sharing a UID are not duplicates; existing-series ordinary imports must not silently become scheduling updates.
-- [ ] Enforce transactions/revisions/constraints across active instances and define mutable-cache invalidation/current host policy. Verify writes on one instance through another; process-local locks or sticky routing cannot supply correctness.
-- [ ] Define calendar deletion, identity removal and publication effects. Test isolation, forged references, membership changes, policy failures, concurrent writes, rollback and restart; feeds and interchange use the same policy boundary.
+[Calendar implementation](calendar-crud-implementation.md), [native events](native-single-events.md) and [recurrence/previews](native-event-recurrence.md) now provide the slices below. Requirements FR-02/03/04/07/08/09 remain broader than these completed items.
+
+- [x] Persist namespaced calendar UUID identities/active data, settings and opaque subject links; enforce host-owned identity/membership and separate management associations from availability contributors.
+- [x] Implement calendar CRUD/association permissions, trusted actual object/proposal context, predefined group disclosure, immutable adapter snapshots, expected revisions, final authorization checks and declared no-downgrade capability checks. The shipped demo supplies fresh-check policy, not production coordinated authorization.
+- [x] Implement native/protocol metadata permissions and isolated values, exact authorized category filtering, independently disclosed stable protocol UID and automatic whole-second modification projection using shared database time.
+- [x] Implement DATE/UTC/named-zone event CRUD, optional summary, separate lifecycle authority, cancellation/reopening versus content deletion and actual parent/event policy context. Active events block parent deletion; child edits do not advance parent metadata time.
+- [x] Persist optional recurrence rules/inclusion/exclusion dates in existing event JSON. Preserve and validate explicit dates during pattern edits unless deliberately replaced; preview saved revisions with separate preview/read authority and timing disclosure under ADR 0054.
+- [x] Provide bounded authorized UUID detail pages with no totals and opaque continuations bound to actor/scope/policy/data/query. Per-event overlap previews are complete-or-failure; neither interface establishes free time.
+- [x] Use durable scope-row transaction coordination across independent hosts. Test stale writes, isolation/forged references, immutable callbacks, denied/failing-policy rollback, cursor invalidation, calendar delete/attach and parent delete/event-create races, and competing event/pattern edits. Process-local locks/sticky routing are not correctness mechanisms.
+- [x] Delete active calendar/event payloads while retaining only their approved minimal internal markers. Test dependency-blocked deletion, stable identities through edits and populated upgrades, including prior non-recurring JSON.
+- [ ] Implement individual/future occurrence edit storage, richer event metadata and calendar-wide occurrence queries. Add corresponding permissions, revisions and two-host race/rollback evidence.
+- [ ] Extend durable CRUD/query authorization and active-parent dependency coordination to tasks, availability rules, imports/exports, feeds, scheduling and alarm/worker families. Existing endpoints do not establish those services' enforcement.
+- [ ] Validate real host-coordinated revocation/commit ordering, external-policy residual races/retries and instance-loss recovery for dependent workflows. Database scope serialization coordinates module data, not arbitrary host-policy revokers.
+- [ ] Implement atomic imports and source/scheduling/publication identity mapping. Masters and valid overrides sharing a UID are not duplicates; ordinary imports must not silently become scheduling updates.
+- [ ] Complete marker retention/purge, global cursor/scope cleanup and publication/dependency deletion effects. Scope-local expired-cursor cleanup already exists; no global cleanup worker or archive/restore feature is implied.
 
 ## iCalendar and metadata
 
+Native metadata editing is partial evidence for FR-24, not ICS interoperability. The remaining wire/profile requirements retain their selected [RFC scope](rfc/README.md).
+
+- [x] Implement separate native description/RGB and decoded language-specific NAME/DESCRIPTION/CSS3 COLOR values under ADR 0050; HTTP/HTTPS links, exact categories, URI-only images and unit-preserving refresh hints under ADR 0051; stable native calendar protocol UID/time under ADR 0052. Validate/disclose these through generated APIs and Flutter, without fetching images/URIs or starting polling.
 - [ ] Implement the selected property/parameter/component profiles from the RFC tables and [ADR 0010](adr/0010-rfc5545-property-decisions.md)/[ADR 0014](adr/0014-rfc-extension-decisions.md). Keep native services, standalone interchange, scheduling and feed projections distinct.
 - [ ] Preserve supported metadata through edits and semantic round trips: URI-only attachments/content, host-validated labels/classification, import-only CONTACT, language/display metadata, legal structured nesting and DERIVED read-only behavior. Reject invalid/unknown/inline/over-limit input atomically; do not fetch content, create directory entries or infer bookings/authority from metadata.
 - [ ] Implement selected relationship search/grouping, legal UID/URI forms, allowlisted relations, signed GAP and cross-calendar links. Test private/ambiguous/missing/cyclic targets, independent authorization, collection-scoped LINK UIDs, publication mapping and rejection of XML-REFERENCE. Relationship edits alone cannot change dates, task state, bookings or alarms.
-- [ ] Implement revisioned calendar/feed names, descriptions, identity, persistent updates, color and selected RFC 7986 fields. Aggregate feeds have their own metadata; SOURCE stays private, images stay URI-only and refresh hints do not create polling jobs. Validate language/multiplicity and moderator-link disclosure.
+- [ ] Add ICS round trips/publication for stored calendar metadata and remaining selected RFC 7986 fields, including source/property-parameter preservation and aggregate-feed metadata/identity. SOURCE stays private, images stay URI-only and refresh hints do not create polling jobs. Validate language/multiplicity and moderator-link disclosure; native editing already exists as scoped above.
 - [ ] Emit valid envelopes, UTF-8, CRLF, escaping and octet-aware folding. Test Gregorian defaults/rejection, equal source UIDs in separate calendars, conflicting zone definitions, synthetic negative fixtures and work limits. Defer standalone VFREEBUSY import while retaining generated output and authorized iTIP exchanges.
 
 ## Tasks
+
+Pure-core task timing and recurrence projections are complete; durable task service/lifecycle and standalone VTODO interoperability remain pending.
 
 - [ ] Implement authorized durable recurring/non-recurring task CRUD, external assignment, filtering/pagination, optional typed dates, progress/priority/completion and expected revisions.
 - [ ] Define and test per-occurrence completion/history, exceptions, original occurrence identity, series edits, due/duration semantics, bounded queries, restart and alarm invalidation. Support valid undated tasks and no-loss standalone VTODO interchange using known zones.
 - [ ] Expose generated-client task management in Flutter. Task dates do not automatically block availability; explicit event reservations need the approved booking policy. Reject all VTODO iTIP/mail scheduling without mutation, automatic replies or outbound queueing; native assignment/interchange/alarms remain required.
 
 ## Feeds
+
+The separate optional module boundary is selected under [ADR 0042](adr/0042-optional-http-feed-module.md); feed package scaffolding, storage/routes and installation tests with/without feeds remain pending. Calendar APIs must continue to work without that module.
 
 - [ ] Implement authorized feed/calendar selection and multiple independent URL credentials. Generate at least 256 CSPRNG bits per secret under the proposed token policy, store only digests and management metadata, return raw secrets only on creation and redact URLs through application/proxy/APM logs.
 - [ ] Publish deterministic complete VEVENT/calendar-description projections with stable publication UIDs and zone definitions. Revalidate current publication authority before content or validators; test independent revocation, aggregation, selection edits, tenant isolation, missing calendars, snapshot races and no silent truncation.
@@ -129,6 +139,7 @@ The **bounded pure-core calculation milestone is complete** under ADR 0040. Rema
 
 ## Availability
 
+- [x] Store each calendar's explicit named availability zone and free/unavailable no-rule fallback, with distinct settings authority and opaque subject associations. These are inputs for future calculation, not implemented free/busy or exclusive reservations.
 - [ ] Resolve all host-selected contributing calendars for each person/group/resource independently from detail permissions. Apply recurrence, exceptions, status/transparency and each calendar's all-day zone; test long overlaps, adjacent intervals, point events and tentative/unavailable policy.
 - [ ] Implement authorized rule CRUD/import/export and RFC 7953 priority/range composition under [ADR 0012](adr/0012-calendar-availability-policy.md). Test default/equal priorities, recurring openings, temporary/holiday overrides, DST and bookings; an opening never erases a booking.
 - [ ] Apply per-calendar no-rule fallback (default free, unavailable alternative) only where no rule applies. Return separate calendar results and optional host-selected subject summaries by intersecting each contributor after its rules, fallback and bookings; do not let calendar priorities override one another.
@@ -146,6 +157,9 @@ The **bounded pure-core calculation milestone is complete** under ADR 0040. Rema
 
 ## Alarms and push
 
+[ADR 0020](adr/0020-notification-delivery-scope.md) supersedes direct mobile push implementation: the required example uses authenticated Serverpod server events/streaming. iOS/Android/provider delivery remains illustrative/external, with no FCM/APNs or OS background-delivery gate.
+
+- [x] Scaffold the reusable notification server/client package and authenticated module connection check. Durable delivery, streaming/reconnect and alarm execution remain pending; the package scaffold is not a notification runtime.
 - [ ] Implement authorized personal event/task alarms with selected time triggers, UID/acknowledgement/snooze/DISPLAY and capped REPEAT/DURATION. Define multiple-recipient/reminder rules, legal anchors, date-only/DST, dismissal, expiry and missed/action interactions. Imported alarms require authorized activation; private state stays out of feeds.
 - [ ] Persist generation/occurrence identity, bounded planning/refill, transactional claims, recovery scans and reminder outbox. Recalculate/invalidate on edits, exceptions, cancellation/deletion, task occurrence completion, recipient/access changes and snooze; test races, restart, duplicate/stale work and repeat deduplication.
 - [ ] Revalidate current authorization/generation/expiry before dispatch and retries. Define cancellation/supersession across the notification port. Calendar owns timing/state; the reusable notification module owns generic delivery intent/adapters, while platform device/provider implementation belongs to external integrations. Provider acceptance is distinct from display or acknowledgement.
@@ -155,17 +169,26 @@ The **bounded pure-core calculation milestone is complete** under ADR 0040. Rema
 
 ## Automated deployment tests
 
-- [ ] Implement NFR-14/NFR-15 through the actual example host/Flutter app under [ADR 0018](adr/0018-automated-example-and-multiple-instances.md). Keep core unit tests independent; add real database, generated-client API, HTTP feed and Flutter integration suites in CI as features are implemented.
-- [ ] Run at least two independent Serverpod processes concurrently against shared test storage, with distinct identities/ports and compatible code/configuration. Exercise direct and switched routing, cross-instance reads/stale writes/imports, rule/association changes and warm-cache revocation; one process with two clients is insufficient.
-- [ ] Race scheduling ingress, alarm planners and outbox workers; interrupt/restart claim holders and assert durable recovery, logical uniqueness, idempotent handoff and stale-owner suppression. Specify time/lease/skew boundaries and recovery timeouts; tests use observable state and bounded waits.
-- [ ] Use isolated synthetic host identities/resources, deterministic seed/reset, controlled time and recording mail/notification adapters. Restrict test controls to the harness/build. Automate Flutter CRUD, recurrence, availability/search, scheduling and reminder-action journeys, including restart/reconnection and instance switching.
-- [ ] Record commands, pinned versions, topology, failures and results for single- and multiple-instance runs. Provider doubles are routine CI evidence; retain separate external feed-client evidence; any optional platform delivery needs its own evidence.
+The local harness already satisfies scoped parts of NFR-14/NFR-15 for implemented features. CI and future protocol/worker/recovery coverage remain required. See [the validation record](scaffold-validation.md) for commands, pinned versions and actual results; do not treat unchecked future journeys as unrun existing tests.
+
+- [x] Run stable generation, formatting, fatal-info analysis, core VM/Chrome, module unit, Flutter widget, real database/policy, populated-upgrade and web-release checks through local scripts. Use focused tests during features and broader checks after a complete feature batch.
+- [x] Run two independent Serverpod host processes concurrently against shared synthetic test storage, with distinct ports/identities. Exercise cross-host generated-client reads/cursors, JWT refresh/logout semantics, stale writes and calendar/event/recurrence races.
+- [x] Drive real generated-client APIs and Flutter browser journeys for calendar CRUD/associations, native/protocol metadata, UID/time, event lifecycle/stale edits and recurrence inclusion/exclusion previews. Keep pure core tests independent from Serverpod/Flutter.
+- [x] Provide isolated synthetic identities, database seed/reset and local recording authentication-mail behavior. Keep local controls/credentials/logs outside production endpoints and committed secrets.
+- [ ] Put the real module/migration/generated-client/Flutter and two-host suites in CI, including reliable launch/teardown, clean-checkout setup and recorded topology/version evidence. Extend existing local scripts rather than substituting mocks for actual hosts.
+- [ ] Extend cross-instance checks to occurrence edits, task/rule changes, imports, HTTP feeds and warm-cache revocation/publication changes as each feature arrives. One host with two clients remains insufficient.
+- [ ] Race scheduling ingress, alarm planners and outbox workers; interrupt/restart claim holders and assert durable recovery, logical uniqueness, idempotent handoff and stale-owner suppression. Specify time/lease/skew boundaries and recovery timeouts using controlled clocks/observable state and bounded waits.
+- [ ] Add deterministic scheduling-mail/notification adapters and Flutter availability/search, task completion, scheduling, reminder actions and disconnect/reconnect/instance-switch journeys. Existing authentication-mail recording does not test scheduling mail or reminder delivery.
+- [ ] Gather separate external feed-client and selected scheduling-client evidence. Local browser/native tests do not establish Apple/Google/Outlook interoperability; optional platform delivery needs its own evidence.
 
 ## Release evidence
 
+Local runtime evidence exists for the implemented native slices under [scaffold validation](scaffold-validation.md) and [temporal validation](temporal-core.md). The full release gates below remain open; no full ICS/external-client compatibility or production worker-recovery claim is made.
+
+- [x] Record local SDK pins, executable setup/check instructions and passing scoped unit/database/two-host/Flutter evidence through ADR 0054. This is the current baseline, not complete FR/NFR acceptance.
 - [ ] A clean checkout starts the pinned Serverpod/Flutter host with fresh migrations, synthetic host identities/resources and verified setup. Demonstrate calendars, recurring tasks/events, scheduling, rules/search, secret feeds and connected Flutter notifications through generated clients.
 - [ ] Gather evidence for FR-01 through FR-31 and NFR-01 through NFR-15, including authorization, stale revisions, restart/rollback, protocol/negative fixtures, cache isolation and alarm/mail crash recovery. Automated real-host/Flutter journeys and multiple-active-instance failure/recovery checks are required; feed-subset compatibility and connected notification example evidence remain independent release checks.
-- [ ] Record versions, directions, fixtures, known gaps, operational limits and best-effort delivery/refresh/downloaded-copy limitations. Verify licenses, package metadata, changelog, version policy and publication dry run; publication is a separate decision. No runtime or client evidence exists yet.
+- [ ] Record versions, directions, fixtures, known gaps, operational limits and best-effort delivery/refresh/downloaded-copy limitations. Verify licenses, package metadata, changelog, version policy and publication dry run; publication is a separate decision. Reuse existing local native evidence and supply the missing protocol, worker/recovery, CI and external-client evidence.
 
 ## Later scope
 
@@ -173,7 +196,7 @@ VTODO iTIP/inbound-outbound scheduling mail, CalDAV/CalDAV scheduling, general u
 
 ## First calendar CRUD increment
 
-The first name/settings/association slice is implemented under [ADR 0049](adr/0049-first-calendar-crud-implementation.md), with generated module/host migrations and replaceable host policy. Duplicate labels, private demo scopes and the basic-batch boundary are maintainer-confirmed. [The implementation guide](calendar-crud-implementation.md) records concrete API/storage/limits and remaining work. Broader persistence/authorization checks above remain open for event/task/rule/feed/worker families, production coordinated policy and retention/cleanup. Descriptions/colors and protocol metadata editing follow separately; no availability calculation or interoperability is claimed by storing a fallback/subject link.
+The first name/settings/association slice is implemented under [ADR 0049](adr/0049-first-calendar-crud-implementation.md), with generated module/host migrations and replaceable host policy. Duplicate labels, private demo scopes and the basic-batch boundary are maintainer-confirmed. [The implementation guide](calendar-crud-implementation.md) records concrete API/storage/limits and remaining work. Broader persistence/authorization checks above remain open for remaining event lifecycle/metadata, task/rule/feed/worker families, production coordinated policy and retention/cleanup. Descriptions/colors and scoped protocol metadata editing are now implemented under ADRs 0050–0052 below; no availability calculation or interoperability is claimed by storing a fallback/subject link.
 
 ## Native presentation and protocol text increment
 
@@ -189,7 +212,7 @@ The maintainer confirmed separate generated native calendar protocol UIDs and au
 
 ## First native event increment
 
-The maintainer selected non-recurring CRUD first, optional/empty summary with an example-only placeholder, separate cancellation/content deletion and separate lifecycle permission. [ADR 0053](adr/0053-first-native-single-events.md) and [the guide](native-single-events.md) describe this scoped FR-03/04/08/27 implementation, typed core timing, actual parent/event host context, bounded authorized lists, transactional revisions and minimal deletion markers. Recurring event persistence/occurrence edits, full metadata, free/busy, scheduling, alarms and ICS/feed interoperability remain pending; event changes do not update the parent calendar's metadata time.
+The maintainer selected non-recurring CRUD first, optional/empty summary with an example-only placeholder, separate cancellation/content deletion and separate lifecycle permission. [ADR 0053](adr/0053-first-native-single-events.md) and [the guide](native-single-events.md) describe this scoped FR-03/04/08/27 implementation, typed core timing, actual parent/event host context, bounded authorized lists, transactional revisions and minimal deletion markers. Recurrence definitions and previews now extend this slice under ADR 0054 below; individual/future occurrence edits, full metadata, free/busy, scheduling, alarms and ICS/feed interoperability remain pending; event changes do not update the parent calendar's metadata time.
 
 ## Native event recurrence increment, 2026-10-21
 
