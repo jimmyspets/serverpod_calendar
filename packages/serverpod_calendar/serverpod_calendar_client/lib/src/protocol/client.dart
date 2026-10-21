@@ -15,6 +15,10 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_availability_cre
     as _i2zcamh9;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_receipt.dart'
     as _izuu9p5h;
+import 'package:serverpod_calendar_client/src/protocol/calendar_availability_search_query.dart'
+    as _inwpo91l;
+import 'package:serverpod_calendar_client/src/protocol/calendar_availability_search_view.dart'
+    as _ieqmn71v;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_update_request.dart'
     as _ifcp60op;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_view.dart'
@@ -120,6 +124,23 @@ class EndpointCalendarAvailability extends _isc.EndpointRef {
       'availabilityId': availabilityId,
       'expectedRevision': expectedRevision,
     },
+  );
+}
+
+/// {@category Endpoint}
+class EndpointCalendarAvailabilitySearch extends _isc.EndpointRef {
+  EndpointCalendarAvailabilitySearch(_isc.EndpointCaller caller)
+    : super(caller);
+
+  @override
+  String get name => 'serverpod_calendar.calendarAvailabilitySearch';
+
+  _ida.Future<_ieqmn71v.CalendarAvailabilitySearchView> search(
+    _inwpo91l.CalendarAvailabilitySearchQuery query,
+  ) => caller.callServerEndpoint<_ieqmn71v.CalendarAvailabilitySearchView>(
+    'serverpod_calendar.calendarAvailabilitySearch',
+    'search',
+    {'query': query},
   );
 }
 
@@ -350,12 +371,15 @@ class EndpointCalendarEvent extends _isc.EndpointRef {
 class Caller extends _isc.ModuleEndpointCaller {
   Caller(_isc.ServerpodClientShared client) : super(client) {
     calendarAvailability = EndpointCalendarAvailability(this);
+    calendarAvailabilitySearch = EndpointCalendarAvailabilitySearch(this);
     calendarDiagnostics = EndpointCalendarDiagnostics(this);
     calendar = EndpointCalendar(this);
     calendarEvent = EndpointCalendarEvent(this);
   }
 
   late final EndpointCalendarAvailability calendarAvailability;
+
+  late final EndpointCalendarAvailabilitySearch calendarAvailabilitySearch;
 
   late final EndpointCalendarDiagnostics calendarDiagnostics;
 
@@ -366,6 +390,7 @@ class Caller extends _isc.ModuleEndpointCaller {
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
     'serverpod_calendar.calendarAvailability': calendarAvailability,
+    'serverpod_calendar.calendarAvailabilitySearch': calendarAvailabilitySearch,
     'serverpod_calendar.calendarDiagnostics': calendarDiagnostics,
     'serverpod_calendar.calendar': calendar,
     'serverpod_calendar.calendarEvent': calendarEvent,

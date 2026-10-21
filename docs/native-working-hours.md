@@ -1,6 +1,6 @@
 # Native working-hours definitions
 
-The native module stores recurring opening hours and composes them into per-calendar free/busy under [ADR 0057](adr/0057-native-working-hours.md). This is a scoped RFC 7953 calculation profile; wire import/export, rich rule metadata, opening-occurrence overrides and person/resource/common-slot search remain pending.
+The native module stores recurring opening hours and composes them into per-calendar free/busy under [ADR 0057](adr/0057-native-working-hours.md). This is a scoped RFC 7953 calculation profile; wire import/export, rich rule metadata, opening-occurrence overrides remain pending; [person/resource/common-free search](subject-availability-search.md) now uses these per-calendar results.
 
 ## API and timing
 
@@ -30,7 +30,7 @@ Updates are full configuration replacements, including explicit date lists. Fetc
 4. Apply calendar fallback only where **no definition is effective**. An effective definition with no openings is closed, even if fallback is free.
 5. Overlay opaque confirmed/tentative bookings and occurrence edits/cancellations. Openings never erase bookings. The native final-result order remains **unavailable > busy > tentative > free**, distinct from equal-priority rule BUSYTYPE ordering.
 
-For example, priority-0 weekday hours can be replaced by a priority-5 holiday closure, then by a priority-1 temporary opening over a narrower interval. A booking in that temporary opening still blocks it. Separate calendars retain independent rule priorities; cross-calendar summary/search is not yet implemented. Results describe a snapshot, not an exclusive reservation.
+For example, priority-0 weekday hours can be replaced by a priority-5 holiday closure, then by a priority-1 temporary opening over a narrower interval. A booking in that temporary opening still blocks it. Separate calendars retain independent rule priorities; cross-calendar [summary/search](subject-availability-search.md) intersects complete independently evaluated results. Results describe a snapshot, not an exclusive reservation.
 
 These rules follow [RFC 7953 sections 4–5](https://www.rfc-editor.org/rfc/rfc7953.html#section-4). No external-client rendering or full RFC interchange claim follows from native tests.
 

@@ -14,6 +14,7 @@ import 'availability_values.dart';
 
 part 'calendar_events.dart';
 part 'calendar_free_busy.dart';
+part 'calendar_availability_search.dart';
 part 'calendar_availability.dart';
 
 /// Configuration is per Serverpod instance, never an allow-decision cache.
