@@ -3,6 +3,8 @@ import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
 import 'package:flutter/material.dart';
 
+import 'protocol_metadata_editor.dart';
+
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key, required this.client});
   final Client client;
@@ -97,6 +99,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
           Card(
             child: ListTile(
               key: ValueKey('calendar-${item.id}'),
+              leading: item.color == null
+                  ? null
+                  : CircleAvatar(
+                      backgroundColor: Color(
+                        int.parse('FF${item.color!.substring(1)}', radix: 16),
+                      ),
+                    ),
               title: Text(item.displayName ?? 'Calendar'),
               subtitle: Text(
                 item.availabilityZoneId ?? 'Settings not disclosed',
@@ -125,17 +134,21 @@ class CalendarEditor extends StatefulWidget {
 }
 
 class _CalendarEditorState extends State<CalendarEditor> {
-  late final TextEditingController _name, _zone;
+  late final TextEditingController _name, _zone, _description, _color;
+  final _protocol = GlobalKey<ProtocolMetadataEditorState>();
   cal.CalendarView? _calendar;
   cal.CalendarNoRuleFallback _fallback = cal.CalendarNoRuleFallback.free;
   List<cal.CalendarSubjectView> _subjects = [];
   String? _error;
   bool _busy = false;
+  bool _requiresReload = false;
   @override
   void initState() {
     super.initState();
     _calendar = widget.calendar;
     _name = TextEditingController(text: _calendar?.displayName ?? '');
+    _description = TextEditingController(text: _calendar?.description ?? '');
+    _color = TextEditingController(text: _calendar?.color ?? '');
     _zone = TextEditingController(
       text: _calendar?.availabilityZoneId ?? 'Europe/Stockholm',
     );
@@ -147,6 +160,8 @@ class _CalendarEditorState extends State<CalendarEditor> {
   void dispose() {
     _name.dispose();
     _zone.dispose();
+    _description.dispose();
+    _color.dispose();
     super.dispose();
   }
 
@@ -161,6 +176,10 @@ class _CalendarEditorState extends State<CalendarEditor> {
       if (mounted) {
         setState(() {
           _error = _message(e);
+          if (e is cal.CalendarException &&
+              e.code == cal.CalendarFailureCode.staleRevision) {
+            _requiresReload = true;
+          }
         });
       }
     } finally {
@@ -182,60 +201,104 @@ class _CalendarEditorState extends State<CalendarEditor> {
     }
   }
 
-  Future<void> _refresh() async {
+  Future<void> _refresh({
+    bool presentation = false,
+    bool settings = false,
+    bool protocol = false,
+    int? afterRevision,
+  }) async {
     final view = await widget.client.modules.serverpod_calendar.calendar
         .getCalendar(_calendar!.id, cal.CalendarFieldGroup.values);
     if (mounted) {
       setState(() {
         _calendar = view;
-        _name.text = view.displayName ?? '';
-        _zone.text = view.availabilityZoneId ?? '';
-        _fallback = view.noRuleFallback ?? _fallback;
+        _requiresReload =
+            afterRevision != null && view.revision != afterRevision;
+        if (_requiresReload) {
+          _error =
+              'This calendar changed again. Reload saved values before saving.';
+        }
+        if (presentation && !_requiresReload) {
+          _name.text = view.displayName ?? '';
+          _description.text = view.description ?? '';
+          _color.text = view.color ?? '';
+        }
+        if (settings && !_requiresReload) {
+          _zone.text = view.availabilityZoneId ?? '';
+          _fallback = view.noRuleFallback ?? _fallback;
+        }
       });
+      if (protocol && !_requiresReload && view.protocolMetadata != null) {
+        _protocol.currentState?.reset(view.protocolMetadata!);
+      }
     }
     await _readSubjects();
   }
 
+  Future<void> _reload() =>
+      _refresh(presentation: true, settings: true, protocol: true);
   Future<void> _create() => _run(() async {
     await widget.client.modules.serverpod_calendar.calendar.create(
       cal.CalendarCreateRequest(
         displayName: _name.text,
+        description: _description.text,
+        color: _color.text,
         availabilityZoneId: _zone.text,
         noRuleFallback: _fallback,
       ),
     );
-    if (mounted) Navigator.of(context).pop();
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
   });
-  Future<void> _rename() => _run(() async {
-    await widget.client.modules.serverpod_calendar.calendar.updateMetadata(
-      cal.CalendarMetadataUpdateRequest(
+  Future<void> _presentation() => _run(() async {
+    final expected = _calendar!.revision;
+    await widget.client.modules.serverpod_calendar.calendar.updatePresentation(
+      cal.CalendarPresentationUpdateRequest(
         calendarId: _calendar!.id,
-        expectedRevision: _calendar!.revision,
+        expectedRevision: expected,
         displayName: _name.text,
+        description: _description.text,
+        color: _color.text,
       ),
     );
-    await _refresh();
+    await _refresh(presentation: true, afterRevision: expected + 1);
+  });
+  Future<void> _saveProtocol() => _run(() async {
+    final expected = _calendar!.revision;
+    final metadata = _protocol.currentState!.value;
+    await widget.client.modules.serverpod_calendar.calendar
+        .updateProtocolMetadata(
+          cal.CalendarProtocolMetadataUpdateRequest(
+            calendarId: _calendar!.id,
+            expectedRevision: expected,
+            metadata: metadata,
+          ),
+        );
+    await _refresh(protocol: true, afterRevision: expected + 1);
   });
   Future<void> _settings() => _run(() async {
+    final expected = _calendar!.revision;
     await widget.client.modules.serverpod_calendar.calendar.updateSettings(
       cal.CalendarSettingsUpdateRequest(
         calendarId: _calendar!.id,
-        expectedRevision: _calendar!.revision,
+        expectedRevision: expected,
         availabilityZoneId: _zone.text,
         noRuleFallback: _fallback,
       ),
     );
-    await _refresh();
+    await _refresh(settings: true, afterRevision: expected + 1);
   });
   Future<void> _subject(
     cal.CalendarSubjectAction action, {
     cal.CalendarSubjectView? subject,
   }) => _run(() async {
+    final expected = _calendar!.revision;
     final principal = await widget.client.smoke.whoAmI();
     await widget.client.modules.serverpod_calendar.calendar.changeSubject(
       cal.CalendarSubjectChangeRequest(
         calendarId: _calendar!.id,
-        expectedRevision: _calendar!.revision,
+        expectedRevision: expected,
         action: action,
         namespace: subject?.namespace ?? 'demo',
         kind: subject?.kind ?? 'user',
@@ -245,7 +308,7 @@ class _CalendarEditorState extends State<CalendarEditor> {
             : !subject.contributesAvailability,
       ),
     );
-    await _refresh();
+    await _refresh(afterRevision: expected + 1);
   });
   Future<void> _delete() => _run(() async {
     final confirmed = await showDialog<bool>(
@@ -273,136 +336,187 @@ class _CalendarEditorState extends State<CalendarEditor> {
       _calendar!.id,
       _calendar!.revision,
     );
-    if (mounted) Navigator.of(context).pop();
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
   });
   @override
   Widget build(BuildContext context) {
+    final locked = _busy || _requiresReload;
     final existing = _calendar != null;
+    final presentation =
+        !existing ||
+        _calendar!.disclosedGroups.contains(cal.CalendarFieldGroup.metadata);
+    final settings =
+        !existing ||
+        _calendar!.disclosedGroups.contains(
+          cal.CalendarFieldGroup.availabilitySettings,
+        );
     return Scaffold(
       appBar: AppBar(title: Text(existing ? 'Edit calendar' : 'New calendar')),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 640),
-          child: ListView(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            children: [
-              if (_busy) const LinearProgressIndicator(),
-              if (_error != null)
-                Text(_error!, key: const Key('calendar-error')),
-              if (existing)
-                TextButton(
-                  key: const Key('calendar-reload'),
-                  onPressed: _busy ? null : () => _run(_refresh),
-                  child: const Text('Reload saved values'),
-                ),
-              TextField(
-                key: const Key('calendar-name'),
-                controller: _name,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  helperText:
-                      '1Ã¢â‚¬“256 Unicode code points; duplicate names allowed',
-                ),
-              ),
-              if (existing)
-                FilledButton(
-                  key: const Key('calendar-save-name'),
-                  onPressed: _busy ? null : _rename,
-                  child: const Text('Save name'),
-                ),
-              const SizedBox(height: 16),
-              TextField(
-                key: const Key('calendar-zone'),
-                controller: _zone,
-                decoration: const InputDecoration(
-                  labelText: 'Availability timezone',
-                  helperText: 'Exact IANA name, for example Europe/Stockholm',
-                ),
-              ),
-              DropdownButtonFormField<cal.CalendarNoRuleFallback>(
-                key: ValueKey(_fallback),
-                initialValue: _fallback,
-                decoration: const InputDecoration(
-                  labelText: 'When no availability rule applies',
-                ),
-                items: [
-                  for (final value in cal.CalendarNoRuleFallback.values)
-                    DropdownMenuItem(value: value, child: Text(value.name)),
-                ],
-                onChanged: _busy
-                    ? null
-                    : (v) {
-                        if (v != null) {
-                          setState(() {
-                            _fallback = v;
-                          });
-                        }
-                      },
-              ),
-              if (existing)
-                FilledButton(
-                  key: const Key('calendar-save-settings'),
-                  onPressed: _busy ? null : _settings,
-                  child: const Text('Save availability settings'),
-                ),
-              if (!existing)
-                FilledButton(
-                  key: const Key('calendar-submit-create'),
-                  onPressed: _busy ? null : _create,
-                  child: const Text('Create calendar'),
-                ),
-              if (existing) ...[
-                const SizedBox(height: 24),
-                const Text('Subject associations'),
-                const Text(
-                  'A link identifies whose availability this calendar contributes to; it does not grant permissions. Availability calculation follows in a later batch.',
-                ),
-                for (final subject in _subjects)
-                  Card(
-                    child: Column(
-                      children: [
-                        Text(
-                          '${subject.namespace}:${subject.kind}:${subject.externalId}',
-                        ),
-                        SwitchListTile(
-                          title: const Text('Contributes availability'),
-                          value: subject.contributesAvailability,
-                          onChanged: _busy
-                              ? null
-                              : (_) => _subject(
-                                  cal.CalendarSubjectAction.setContribution,
-                                  subject: subject,
-                                ),
-                        ),
-                        TextButton(
-                          key: const Key('calendar-detach'),
-                          onPressed: _busy
-                              ? null
-                              : () => _subject(
-                                  cal.CalendarSubjectAction.detach,
-                                  subject: subject,
-                                ),
-                          child: const Text('Remove association'),
-                        ),
-                      ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (_busy) const LinearProgressIndicator(),
+                if (_error != null)
+                  Text(_error!, key: const Key('calendar-error')),
+                if (existing)
+                  TextButton(
+                    key: const Key('calendar-reload'),
+                    onPressed: _busy ? null : () => _run(_reload),
+                    child: const Text('Reload saved values'),
+                  ),
+                if (presentation) ...[
+                  TextField(
+                    key: const Key('calendar-name'),
+                    controller: _name,
+                    enabled: !locked,
+                    decoration: const InputDecoration(
+                      labelText: 'Native name',
+                      helperText:
+                          '1-256 Unicode code points; duplicate names allowed',
                     ),
                   ),
-                if (_subjects.isEmpty)
-                  TextButton(
-                    key: const Key('calendar-attach-self'),
-                    onPressed: _busy
-                        ? null
-                        : () => _subject(cal.CalendarSubjectAction.attach),
-                    child: const Text('Associate my availability'),
+                  TextField(
+                    key: const Key('calendar-description'),
+                    controller: _description,
+                    enabled: !locked,
+                    minLines: 3,
+                    maxLines: 6,
+                    decoration: const InputDecoration(
+                      labelText: 'Native description',
+                      helperText: 'Plain text, up to 16,384 Unicode code points; empty clears it',
+                    ),
                   ),
-                const SizedBox(height: 24),
-                OutlinedButton(
-                  key: const Key('calendar-delete'),
-                  onPressed: _busy ? null : _delete,
-                  child: const Text('Delete calendar'),
-                ),
+                  TextField(
+                    key: const Key('calendar-color'),
+                    controller: _color,
+                    enabled: !locked,
+                    decoration: const InputDecoration(
+                      labelText: 'Native color',
+                      helperText: '#RRGGBB; empty clears it',
+                    ),
+                  ),
+                  if (existing)
+                    FilledButton(
+                      key: const Key('calendar-save-name'),
+                      onPressed: locked ? null : _presentation,
+                      child: const Text('Save native presentation'),
+                    ),
+                ],
+                if (settings) ...[
+                  const SizedBox(height: 16),
+                  TextField(
+                    key: const Key('calendar-zone'),
+                    controller: _zone,
+                    enabled: !locked,
+                    decoration: const InputDecoration(
+                      labelText: 'Availability timezone',
+                      helperText:
+                          'Exact IANA name, for example Europe/Stockholm',
+                    ),
+                  ),
+                  DropdownButtonFormField<cal.CalendarNoRuleFallback>(
+                    key: ValueKey(_fallback),
+                    initialValue: _fallback,
+                    decoration: const InputDecoration(
+                      labelText: 'When no availability rule applies',
+                    ),
+                    items: [
+                      for (final value in cal.CalendarNoRuleFallback.values)
+                        DropdownMenuItem(value: value, child: Text(value.name)),
+                    ],
+                    onChanged: locked
+                        ? null
+                        : (v) {
+                            if (v != null) {
+                              setState(() {
+                                _fallback = v;
+                              });
+                            }
+                          },
+                  ),
+                  if (existing)
+                    FilledButton(
+                      key: const Key('calendar-save-settings'),
+                      onPressed: locked ? null : _settings,
+                      child: const Text('Save availability settings'),
+                    ),
+                ],
+                if (!existing)
+                  FilledButton(
+                    key: const Key('calendar-submit-create'),
+                    onPressed: locked ? null : _create,
+                    child: const Text('Create calendar'),
+                  ),
+                if (existing && _calendar!.protocolMetadata != null)
+                  ProtocolMetadataEditor(
+                    key: _protocol,
+                    initial: _calendar!.protocolMetadata!,
+                    busy: locked,
+                    canCopyNative: presentation,
+                    nativeName: () => _name.text,
+                    nativeDescription: () => _description.text,
+                    onSave: _saveProtocol,
+                  ),
+                if (existing) ...[
+                  const SizedBox(height: 24),
+                  const Text('Subject associations'),
+                  const Text(
+                    'A link identifies whose availability this calendar contributes to; it does not grant permissions. Availability calculation follows in a later batch.',
+                  ),
+                  for (final subject in _subjects)
+                    Card(
+                      child: Column(
+                        children: [
+                          Text(
+                            '${subject.namespace}:${subject.kind}:${subject.externalId}',
+                          ),
+                          SwitchListTile(
+                            title: const Text('Contributes availability'),
+                            value: subject.contributesAvailability,
+                            onChanged: locked
+                                ? null
+                                : (_) => _subject(
+                                    cal.CalendarSubjectAction.setContribution,
+                                    subject: subject,
+                                  ),
+                          ),
+                          TextButton(
+                            key: const Key('calendar-detach'),
+                            onPressed: locked
+                                ? null
+                                : () => _subject(
+                                    cal.CalendarSubjectAction.detach,
+                                    subject: subject,
+                                  ),
+                            child: const Text('Remove association'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (_subjects.isEmpty)
+                    TextButton(
+                      key: const Key('calendar-attach-self'),
+                      onPressed: locked
+                          ? null
+                          : () => _subject(cal.CalendarSubjectAction.attach),
+                      child: const Text('Associate my availability'),
+                    ),
+                  const SizedBox(height: 24),
+                  OutlinedButton(
+                    key: const Key('calendar-delete'),
+                    onPressed: locked ? null : _delete,
+                    child: const Text('Delete calendar'),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

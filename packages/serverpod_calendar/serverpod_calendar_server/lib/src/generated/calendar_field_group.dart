@@ -14,7 +14,8 @@ import 'package:serverpod/serverpod.dart' as _is;
 
 enum CalendarFieldGroup implements _is.SerializableModel {
   metadata,
-  availabilitySettings;
+  availabilitySettings,
+  protocolMetadata;
 
   static CalendarFieldGroup fromJson(String name) {
     switch (name) {
@@ -22,6 +23,8 @@ enum CalendarFieldGroup implements _is.SerializableModel {
         return CalendarFieldGroup.metadata;
       case 'availabilitySettings':
         return CalendarFieldGroup.availabilitySettings;
+      case 'protocolMetadata':
+        return CalendarFieldGroup.protocolMetadata;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "CalendarFieldGroup"',

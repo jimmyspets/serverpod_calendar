@@ -49,6 +49,93 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
       (await b.getCalendar(first.calendarId, groups)).displayName == 'Demo',
       'Cross-host create visibility',
     );
+    await a.updatePresentation(
+      cal.CalendarPresentationUpdateRequest(
+        calendarId: second.calendarId,
+        expectedRevision: 1,
+        displayName: 'Native metadata',
+        description: '  Native\nnotes  ',
+        color: '#a0b1c2',
+      ),
+    );
+    await b.updateProtocolMetadata(
+      cal.CalendarProtocolMetadataUpdateRequest(
+        calendarId: second.calendarId,
+        expectedRevision: 2,
+        metadata: cal.CalendarProtocolMetadata(
+          names: [
+            cal.CalendarTextVariant(value: 'Swedish name', language: 'SV'),
+            cal.CalendarTextVariant(value: 'English name', language: 'en'),
+          ],
+          descriptions: [cal.CalendarTextVariant(value: 'Protocol notes')],
+          color: 'Turquoise',
+        ),
+      ),
+    );
+    final protocolView = await a.getCalendar(second.calendarId, [
+      cal.CalendarFieldGroup.protocolMetadata,
+    ]);
+    check(
+      protocolView.displayName == null &&
+          protocolView.description == null &&
+          protocolView.color == null,
+      'Protocol disclosure leaked native presentation',
+    );
+    check(
+      protocolView.protocolMetadata!.names.first.language == 'SV' &&
+          protocolView.protocolMetadata!.color == 'Turquoise',
+      'Cross-host protocol metadata round trip',
+    );
+    final nativeView = await a.getCalendar(second.calendarId, [
+      cal.CalendarFieldGroup.metadata,
+    ]);
+    check(
+      nativeView.protocolMetadata == null &&
+          nativeView.description == '  Native\nnotes  ' &&
+          nativeView.color == '#A0B1C2',
+      'Native disclosure leaked protocol metadata',
+    );
+    await a.updateMetadata(
+      cal.CalendarMetadataUpdateRequest(
+        calendarId: second.calendarId,
+        expectedRevision: 3,
+        displayName: 'Only native name changed',
+      ),
+    );
+    final retained = await b.getCalendar(second.calendarId, groups);
+    check(
+      retained.description == '  Native\nnotes  ' &&
+          retained.protocolMetadata!.names.length == 2,
+      'Name-only edit discarded metadata',
+    );
+    await rejects(
+      () => a.updateProtocolMetadata(
+        cal.CalendarProtocolMetadataUpdateRequest(
+          calendarId: second.calendarId,
+          expectedRevision: 4,
+          metadata: cal.CalendarProtocolMetadata(
+            names: [],
+            descriptions: [],
+            color: '#aabbcc',
+          ),
+        ),
+      ),
+      cal.CalendarFailureCode.validation,
+    );
+    await b.updatePresentation(
+      cal.CalendarPresentationUpdateRequest(
+        calendarId: second.calendarId,
+        expectedRevision: 4,
+        displayName: 'Native cleared',
+      ),
+    );
+    final cleared = await a.getCalendar(second.calendarId, groups);
+    check(
+      cleared.description == null &&
+          cleared.color == null &&
+          cleared.protocolMetadata!.names.length == 2,
+      'Clearing native fields changed protocol metadata',
+    );
     final page = await a.list(pageSize: 1, fieldGroups: groups);
     check(
       page.nextCursor != null && page.calendars.length == 1,
@@ -181,7 +268,7 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
       bob.close();
     }
     print(
-      'PASS: generated calendar CRUD, scope isolation, cursors, stale writes and cross-host delete/attach race.',
+      'PASS: native/protocol metadata isolation, multilingual round trips and generated calendar CRUD, scope isolation, cursors, stale writes and cross-host delete/attach race.',
     );
   } finally {
     for (final id in ids) {

@@ -17,12 +17,16 @@ abstract class CalendarCreateRequest
     implements _isc.SerializableModel, _isc.ProtocolSerialization {
   CalendarCreateRequest._({
     required this.displayName,
+    this.description,
+    this.color,
     required this.availabilityZoneId,
     required this.noRuleFallback,
   });
 
   factory CalendarCreateRequest({
     required String displayName,
+    String? description,
+    String? color,
     required String availabilityZoneId,
     required _itts4qyp.CalendarNoRuleFallback noRuleFallback,
   }) = _CalendarCreateRequestImpl;
@@ -32,6 +36,8 @@ abstract class CalendarCreateRequest
   ) {
     return CalendarCreateRequest(
       displayName: jsonSerialization['displayName'] as String,
+      description: jsonSerialization['description'] as String?,
+      color: jsonSerialization['color'] as String?,
       availabilityZoneId: jsonSerialization['availabilityZoneId'] as String,
       noRuleFallback: _itts4qyp.CalendarNoRuleFallback.fromJson(
         (jsonSerialization['noRuleFallback'] as String),
@@ -40,6 +46,10 @@ abstract class CalendarCreateRequest
   }
 
   String displayName;
+
+  String? description;
+
+  String? color;
 
   String availabilityZoneId;
 
@@ -50,6 +60,8 @@ abstract class CalendarCreateRequest
   @_isc.useResult
   CalendarCreateRequest copyWith({
     String? displayName,
+    String? description,
+    String? color,
     String? availabilityZoneId,
     _itts4qyp.CalendarNoRuleFallback? noRuleFallback,
   });
@@ -58,6 +70,8 @@ abstract class CalendarCreateRequest
     return {
       '__className__': 'serverpod_calendar.CalendarCreateRequest',
       'displayName': displayName,
+      if (description != null) 'description': description,
+      if (color != null) 'color': color,
       'availabilityZoneId': availabilityZoneId,
       'noRuleFallback': noRuleFallback.toJson(),
     };
@@ -68,6 +82,8 @@ abstract class CalendarCreateRequest
     return {
       '__className__': 'serverpod_calendar.CalendarCreateRequest',
       'displayName': displayName,
+      if (description != null) 'description': description,
+      if (color != null) 'color': color,
       'availabilityZoneId': availabilityZoneId,
       'noRuleFallback': noRuleFallback.toJson(),
     };
@@ -79,13 +95,19 @@ abstract class CalendarCreateRequest
   }
 }
 
+class _Undefined {}
+
 class _CalendarCreateRequestImpl extends CalendarCreateRequest {
   _CalendarCreateRequestImpl({
     required String displayName,
+    String? description,
+    String? color,
     required String availabilityZoneId,
     required _itts4qyp.CalendarNoRuleFallback noRuleFallback,
   }) : super._(
          displayName: displayName,
+         description: description,
+         color: color,
          availabilityZoneId: availabilityZoneId,
          noRuleFallback: noRuleFallback,
        );
@@ -96,11 +118,15 @@ class _CalendarCreateRequestImpl extends CalendarCreateRequest {
   @override
   CalendarCreateRequest copyWith({
     String? displayName,
+    Object? description = _Undefined,
+    Object? color = _Undefined,
     String? availabilityZoneId,
     _itts4qyp.CalendarNoRuleFallback? noRuleFallback,
   }) {
     return CalendarCreateRequest(
       displayName: displayName ?? this.displayName,
+      description: description is String? ? description : this.description,
+      color: color is String? ? color : this.color,
       availabilityZoneId: availabilityZoneId ?? this.availabilityZoneId,
       noRuleFallback: noRuleFallback ?? this.noRuleFallback,
     );

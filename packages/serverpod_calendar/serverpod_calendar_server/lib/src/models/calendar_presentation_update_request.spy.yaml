@@ -1,0 +1,7 @@
+class: CalendarPresentationUpdateRequest
+fields:
+  calendarId: UuidValue
+  expectedRevision: int
+  displayName: String
+  description: String?
+  color: String?

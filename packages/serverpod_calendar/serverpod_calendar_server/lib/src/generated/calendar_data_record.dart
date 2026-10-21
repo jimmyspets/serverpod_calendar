@@ -11,7 +11,10 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_calendar_server/src/generated/protocol.dart'
+    as _ix00hwbf;
 import 'calendar_no_rule_fallback.dart' as _itts4qyp;
+import 'calendar_protocol_metadata.dart' as _itchuj1l;
 
 abstract class CalendarDataRecord
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
@@ -19,8 +22,11 @@ abstract class CalendarDataRecord
     this.id,
     required this.calendarId,
     required this.displayName,
+    this.description,
+    this.color,
     required this.availabilityZoneId,
     required this.noRuleFallback,
+    this.protocolMetadata,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -29,8 +35,11 @@ abstract class CalendarDataRecord
     int? id,
     required _is.UuidValue calendarId,
     required String displayName,
+    String? description,
+    String? color,
     required String availabilityZoneId,
     required _itts4qyp.CalendarNoRuleFallback noRuleFallback,
+    _itchuj1l.CalendarProtocolMetadata? protocolMetadata,
     required DateTime createdAt,
     required DateTime updatedAt,
   }) = _CalendarDataRecordImpl;
@@ -42,10 +51,18 @@ abstract class CalendarDataRecord
         jsonSerialization['calendarId'],
       ),
       displayName: jsonSerialization['displayName'] as String,
+      description: jsonSerialization['description'] as String?,
+      color: jsonSerialization['color'] as String?,
       availabilityZoneId: jsonSerialization['availabilityZoneId'] as String,
       noRuleFallback: _itts4qyp.CalendarNoRuleFallback.fromJson(
         (jsonSerialization['noRuleFallback'] as String),
       ),
+      protocolMetadata: jsonSerialization['protocolMetadata'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_itchuj1l.CalendarProtocolMetadata>(
+                  jsonSerialization['protocolMetadata'],
+                ),
       createdAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -66,9 +83,15 @@ abstract class CalendarDataRecord
 
   String displayName;
 
+  String? description;
+
+  String? color;
+
   String availabilityZoneId;
 
   _itts4qyp.CalendarNoRuleFallback noRuleFallback;
+
+  _itchuj1l.CalendarProtocolMetadata? protocolMetadata;
 
   DateTime createdAt;
 
@@ -84,8 +107,11 @@ abstract class CalendarDataRecord
     int? id,
     _is.UuidValue? calendarId,
     String? displayName,
+    String? description,
+    String? color,
     String? availabilityZoneId,
     _itts4qyp.CalendarNoRuleFallback? noRuleFallback,
+    _itchuj1l.CalendarProtocolMetadata? protocolMetadata,
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -96,8 +122,12 @@ abstract class CalendarDataRecord
       if (id != null) 'id': id,
       'calendarId': calendarId.toJson(),
       'displayName': displayName,
+      if (description != null) 'description': description,
+      if (color != null) 'color': color,
       'availabilityZoneId': availabilityZoneId,
       'noRuleFallback': noRuleFallback.toJson(),
+      if (protocolMetadata != null)
+        'protocolMetadata': protocolMetadata?.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
     };
@@ -143,16 +173,22 @@ class _CalendarDataRecordImpl extends CalendarDataRecord {
     int? id,
     required _is.UuidValue calendarId,
     required String displayName,
+    String? description,
+    String? color,
     required String availabilityZoneId,
     required _itts4qyp.CalendarNoRuleFallback noRuleFallback,
+    _itchuj1l.CalendarProtocolMetadata? protocolMetadata,
     required DateTime createdAt,
     required DateTime updatedAt,
   }) : super._(
          id: id,
          calendarId: calendarId,
          displayName: displayName,
+         description: description,
+         color: color,
          availabilityZoneId: availabilityZoneId,
          noRuleFallback: noRuleFallback,
+         protocolMetadata: protocolMetadata,
          createdAt: createdAt,
          updatedAt: updatedAt,
        );
@@ -165,8 +201,11 @@ class _CalendarDataRecordImpl extends CalendarDataRecord {
     Object? id = _Undefined,
     _is.UuidValue? calendarId,
     String? displayName,
+    Object? description = _Undefined,
+    Object? color = _Undefined,
     String? availabilityZoneId,
     _itts4qyp.CalendarNoRuleFallback? noRuleFallback,
+    Object? protocolMetadata = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -174,8 +213,13 @@ class _CalendarDataRecordImpl extends CalendarDataRecord {
       id: id is int? ? id : this.id,
       calendarId: calendarId ?? this.calendarId,
       displayName: displayName ?? this.displayName,
+      description: description is String? ? description : this.description,
+      color: color is String? ? color : this.color,
       availabilityZoneId: availabilityZoneId ?? this.availabilityZoneId,
       noRuleFallback: noRuleFallback ?? this.noRuleFallback,
+      protocolMetadata: protocolMetadata is _itchuj1l.CalendarProtocolMetadata?
+          ? protocolMetadata
+          : this.protocolMetadata?.copyWith(),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -198,6 +242,16 @@ class CalendarDataRecordUpdateTable
     value,
   );
 
+  _is.ColumnValue<String, String> description(String? value) => _is.ColumnValue(
+    table.description,
+    value,
+  );
+
+  _is.ColumnValue<String, String> color(String? value) => _is.ColumnValue(
+    table.color,
+    value,
+  );
+
   _is.ColumnValue<String, String> availabilityZoneId(String value) =>
       _is.ColumnValue(
         table.availabilityZoneId,
@@ -212,6 +266,16 @@ class CalendarDataRecordUpdateTable
     table.noRuleFallback,
     value,
   );
+
+  _is.ColumnValue<
+    _itchuj1l.CalendarProtocolMetadata,
+    _itchuj1l.CalendarProtocolMetadata
+  >
+  protocolMetadata(_itchuj1l.CalendarProtocolMetadata? value) =>
+      _is.ColumnValue(
+        table.protocolMetadata,
+        value,
+      );
 
   _is.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _is.ColumnValue(
@@ -238,6 +302,14 @@ class CalendarDataRecordTable extends _is.Table<int?> {
       'displayName',
       this,
     );
+    description = _is.ColumnString(
+      'description',
+      this,
+    );
+    color = _is.ColumnString(
+      'color',
+      this,
+    );
     availabilityZoneId = _is.ColumnString(
       'availabilityZoneId',
       this,
@@ -247,6 +319,11 @@ class CalendarDataRecordTable extends _is.Table<int?> {
       this,
       _is.EnumSerialization.byName,
     );
+    protocolMetadata =
+        _is.ColumnSerializable<_itchuj1l.CalendarProtocolMetadata>(
+          'protocolMetadata',
+          this,
+        );
     createdAt = _is.ColumnDateTime(
       'createdAt',
       this,
@@ -263,9 +340,16 @@ class CalendarDataRecordTable extends _is.Table<int?> {
 
   late final _is.ColumnString displayName;
 
+  late final _is.ColumnString description;
+
+  late final _is.ColumnString color;
+
   late final _is.ColumnString availabilityZoneId;
 
   late final _is.ColumnEnum<_itts4qyp.CalendarNoRuleFallback> noRuleFallback;
+
+  late final _is.ColumnSerializable<_itchuj1l.CalendarProtocolMetadata>
+  protocolMetadata;
 
   late final _is.ColumnDateTime createdAt;
 
@@ -276,8 +360,11 @@ class CalendarDataRecordTable extends _is.Table<int?> {
     id,
     calendarId,
     displayName,
+    description,
+    color,
     availabilityZoneId,
     noRuleFallback,
+    protocolMetadata,
     createdAt,
     updatedAt,
   ];

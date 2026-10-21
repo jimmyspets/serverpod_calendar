@@ -15,6 +15,7 @@ import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'calendar_field_group.dart' as _i73hgz1s;
 import 'calendar_no_rule_fallback.dart' as _itts4qyp;
+import 'calendar_protocol_metadata.dart' as _itchuj1l;
 
 abstract class CalendarView
     implements _is.SerializableModel, _is.ProtocolSerialization {
@@ -23,8 +24,11 @@ abstract class CalendarView
     required this.revision,
     required this.disclosedGroups,
     this.displayName,
+    this.description,
+    this.color,
     this.availabilityZoneId,
     this.noRuleFallback,
+    this.protocolMetadata,
     this.createdAt,
     this.updatedAt,
   });
@@ -34,8 +38,11 @@ abstract class CalendarView
     required int revision,
     required List<_i73hgz1s.CalendarFieldGroup> disclosedGroups,
     String? displayName,
+    String? description,
+    String? color,
     String? availabilityZoneId,
     _itts4qyp.CalendarNoRuleFallback? noRuleFallback,
+    _itchuj1l.CalendarProtocolMetadata? protocolMetadata,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) = _CalendarViewImpl;
@@ -49,12 +56,20 @@ abstract class CalendarView
             jsonSerialization['disclosedGroups'],
           ),
       displayName: jsonSerialization['displayName'] as String?,
+      description: jsonSerialization['description'] as String?,
+      color: jsonSerialization['color'] as String?,
       availabilityZoneId: jsonSerialization['availabilityZoneId'] as String?,
       noRuleFallback: jsonSerialization['noRuleFallback'] == null
           ? null
           : _itts4qyp.CalendarNoRuleFallback.fromJson(
               (jsonSerialization['noRuleFallback'] as String),
             ),
+      protocolMetadata: jsonSerialization['protocolMetadata'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_itchuj1l.CalendarProtocolMetadata>(
+                  jsonSerialization['protocolMetadata'],
+                ),
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _is.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
@@ -72,9 +87,15 @@ abstract class CalendarView
 
   String? displayName;
 
+  String? description;
+
+  String? color;
+
   String? availabilityZoneId;
 
   _itts4qyp.CalendarNoRuleFallback? noRuleFallback;
+
+  _itchuj1l.CalendarProtocolMetadata? protocolMetadata;
 
   DateTime? createdAt;
 
@@ -88,8 +109,11 @@ abstract class CalendarView
     int? revision,
     List<_i73hgz1s.CalendarFieldGroup>? disclosedGroups,
     String? displayName,
+    String? description,
+    String? color,
     String? availabilityZoneId,
     _itts4qyp.CalendarNoRuleFallback? noRuleFallback,
+    _itchuj1l.CalendarProtocolMetadata? protocolMetadata,
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -101,8 +125,12 @@ abstract class CalendarView
       'revision': revision,
       'disclosedGroups': disclosedGroups.toJson(valueToJson: (v) => v.toJson()),
       if (displayName != null) 'displayName': displayName,
+      if (description != null) 'description': description,
+      if (color != null) 'color': color,
       if (availabilityZoneId != null) 'availabilityZoneId': availabilityZoneId,
       if (noRuleFallback != null) 'noRuleFallback': noRuleFallback?.toJson(),
+      if (protocolMetadata != null)
+        'protocolMetadata': protocolMetadata?.toJson(),
       if (createdAt != null) 'createdAt': createdAt?.toJson(),
       if (updatedAt != null) 'updatedAt': updatedAt?.toJson(),
     };
@@ -116,8 +144,12 @@ abstract class CalendarView
       'revision': revision,
       'disclosedGroups': disclosedGroups.toJson(valueToJson: (v) => v.toJson()),
       if (displayName != null) 'displayName': displayName,
+      if (description != null) 'description': description,
+      if (color != null) 'color': color,
       if (availabilityZoneId != null) 'availabilityZoneId': availabilityZoneId,
       if (noRuleFallback != null) 'noRuleFallback': noRuleFallback?.toJson(),
+      if (protocolMetadata != null)
+        'protocolMetadata': protocolMetadata?.toJsonForProtocol(),
       if (createdAt != null) 'createdAt': createdAt?.toJson(),
       if (updatedAt != null) 'updatedAt': updatedAt?.toJson(),
     };
@@ -137,8 +169,11 @@ class _CalendarViewImpl extends CalendarView {
     required int revision,
     required List<_i73hgz1s.CalendarFieldGroup> disclosedGroups,
     String? displayName,
+    String? description,
+    String? color,
     String? availabilityZoneId,
     _itts4qyp.CalendarNoRuleFallback? noRuleFallback,
+    _itchuj1l.CalendarProtocolMetadata? protocolMetadata,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : super._(
@@ -146,8 +181,11 @@ class _CalendarViewImpl extends CalendarView {
          revision: revision,
          disclosedGroups: disclosedGroups,
          displayName: displayName,
+         description: description,
+         color: color,
          availabilityZoneId: availabilityZoneId,
          noRuleFallback: noRuleFallback,
+         protocolMetadata: protocolMetadata,
          createdAt: createdAt,
          updatedAt: updatedAt,
        );
@@ -161,8 +199,11 @@ class _CalendarViewImpl extends CalendarView {
     int? revision,
     List<_i73hgz1s.CalendarFieldGroup>? disclosedGroups,
     Object? displayName = _Undefined,
+    Object? description = _Undefined,
+    Object? color = _Undefined,
     Object? availabilityZoneId = _Undefined,
     Object? noRuleFallback = _Undefined,
+    Object? protocolMetadata = _Undefined,
     Object? createdAt = _Undefined,
     Object? updatedAt = _Undefined,
   }) {
@@ -172,12 +213,17 @@ class _CalendarViewImpl extends CalendarView {
       disclosedGroups:
           disclosedGroups ?? this.disclosedGroups.map((e0) => e0).toList(),
       displayName: displayName is String? ? displayName : this.displayName,
+      description: description is String? ? description : this.description,
+      color: color is String? ? color : this.color,
       availabilityZoneId: availabilityZoneId is String?
           ? availabilityZoneId
           : this.availabilityZoneId,
       noRuleFallback: noRuleFallback is _itts4qyp.CalendarNoRuleFallback?
           ? noRuleFallback
           : this.noRuleFallback,
+      protocolMetadata: protocolMetadata is _itchuj1l.CalendarProtocolMetadata?
+          ? protocolMetadata
+          : this.protocolMetadata?.copyWith(),
       createdAt: createdAt is DateTime? ? createdAt : this.createdAt,
       updatedAt: updatedAt is DateTime? ? updatedAt : this.updatedAt,
     );
