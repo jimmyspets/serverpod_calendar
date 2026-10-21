@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import 'occurrence_timing_editor.dart';
+
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
@@ -18,13 +21,15 @@ class EventOccurrenceScreen extends StatefulWidget {
 class _EventOccurrenceScreenState extends State<EventOccurrenceScreen> {
   final _from = TextEditingController(), _until = TextEditingController();
   cal.CalendarEventOccurrencePreview? _preview;
-  bool _busy = false;
+  bool _busy = false, _stale = false;
+  late cal.CalendarEventView _event;
   String? _error;
-  bool get _date => widget.event.timing!.kind == cal.CalendarEventTimeKind.date;
+  bool get _date => _event.timing!.kind == cal.CalendarEventTimeKind.date;
   @override
   void initState() {
     super.initState();
-    final c = widget.event.timing!.start;
+    _event = widget.event;
+    final c = _event.timing!.start;
     final year = c.year.toString().padLeft(4, '0');
     final month = c.month.toString().padLeft(2, '0');
     _from.text = '$year-$month-01${_date ? '' : 'T00:00:00Z'}';
@@ -61,7 +66,7 @@ class _EventOccurrenceScreenState extends State<EventOccurrenceScreen> {
     return parsed;
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool refresh = false}) async {
     FocusScope.of(context).unfocus();
     setState(() {
       _busy = true;
@@ -69,9 +74,24 @@ class _EventOccurrenceScreenState extends State<EventOccurrenceScreen> {
       _preview = null;
     });
     try {
+      if (refresh) {
+        final fresh = await widget
+            .client
+            .modules
+            .serverpod_calendar
+            .calendarEvent
+            .getEvent(_event.id, cal.CalendarEventFieldGroup.values);
+        if (!fresh.disclosedGroups.contains(
+          cal.CalendarEventFieldGroup.timing,
+        )) {
+          throw StateError('Timing is no longer disclosed');
+        }
+        _event = fresh;
+        _stale = false;
+      }
       final q = cal.CalendarEventOccurrenceQuery(
-        eventId: widget.event.id,
-        expectedRevision: widget.event.revision,
+        eventId: _event.id,
+        expectedRevision: _event.revision,
         fromDate: _date ? _civil(_from.text) : null,
         untilDate: _date ? _civil(_until.text) : null,
         fromUtc: _date ? null : _utc(_from.text),
@@ -85,6 +105,10 @@ class _EventOccurrenceScreenState extends State<EventOccurrenceScreen> {
           .preview(q);
       if (mounted) setState(() => _preview = result);
     } catch (e) {
+      if (e is cal.CalendarException &&
+          e.code == cal.CalendarFailureCode.staleRevision) {
+        _stale = true;
+      }
       if (mounted) {
         setState(
           () => _error = e is cal.CalendarException
@@ -97,6 +121,60 @@ class _EventOccurrenceScreenState extends State<EventOccurrenceScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  cal.CalendarEventTiming _anchor(cal.CalendarEventCivil c) =>
+      cal.CalendarEventTiming(
+        kind: _event.timing!.kind,
+        zoneId: _event.timing!.zoneId,
+        start: c,
+      );
+  Future<void> _act(
+    cal.CalendarEventTiming anchor,
+    cal.CalendarEventOccurrenceAction action,
+  ) async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await widget.client.modules.serverpod_calendar.calendarEvent
+          .changeOccurrence(
+            cal.CalendarEventOccurrenceChange(
+              eventId: _event.id,
+              expectedRevision: _event.revision,
+              originalStart: anchor,
+              action: action,
+            ),
+          );
+      await _load(refresh: true);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = occurrenceError(e);
+          _stale = true;
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _edit(
+    cal.CalendarEventOccurrence occurrence, {
+    bool future = false,
+  }) async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => OccurrenceTimingEditor(
+          client: widget.client,
+          event: _event,
+          occurrence: occurrence,
+          future: future,
+        ),
+      ),
+    );
+    if (changed == true && mounted) await _load(refresh: true);
   }
 
   String _label(cal.CalendarEventCivil c) =>
@@ -129,9 +207,18 @@ class _EventOccurrenceScreenState extends State<EventOccurrenceScreen> {
         ),
         FilledButton(
           key: const Key('preview-load'),
-          onPressed: _busy ? null : _load,
+          onPressed: _busy || _stale ? null : () => _load(),
           child: const Text('Load occurrences'),
         ),
+        TextButton(
+          key: const Key('preview-reload-series'),
+          onPressed: _busy ? null : () => _load(refresh: true),
+          child: const Text('Reload saved series'),
+        ),
+        if (_stale)
+          const Text(
+            'Saved series changed. Reload it before editing or querying again.',
+          ),
         if (_busy) const LinearProgressIndicator(),
         if (_error != null) Text(_error!, key: const Key('preview-error')),
         if (_preview != null)
@@ -141,12 +228,107 @@ class _EventOccurrenceScreenState extends State<EventOccurrenceScreen> {
           ),
         for (final o
             in _preview?.occurrences ?? <cal.CalendarEventOccurrence>[])
-          ListTile(
-            title: Text(_label(o.start)),
-            subtitle: Text(
-              _date
-                  ? 'End ${_label(o.endDate!)} (exclusive)'
-                  : '${o.startUtc!.toIso8601String()} to ${o.endUtc!.toIso8601String()} UTC; zone ${_preview!.zoneId ?? 'UTC'}',
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListTile(
+                title: Text(_label(o.start)),
+                subtitle: Text(
+                  _date
+                      ? 'End ${_label(o.endDate!)} (exclusive); original ${_label(o.originalStart)}'
+                      : '${o.startUtc!.toIso8601String()} to ${o.endUtc!.toIso8601String()} UTC; original ${_label(o.originalStart)}; zone ${_preview!.zoneId ?? 'UTC'}',
+                ),
+              ),
+              Wrap(
+                children: [
+                  TextButton(
+                    key: ValueKey(
+                      'occurrence-edit-${occurrenceKey(o.originalStart)}',
+                    ),
+                    onPressed: _busy || _stale ? null : () => _edit(o),
+                    child: const Text('Edit this timing'),
+                  ),
+                  TextButton(
+                    key: ValueKey(
+                      'occurrence-future-${occurrenceKey(o.originalStart)}',
+                    ),
+                    onPressed: _busy || _stale
+                        ? null
+                        : () => _edit(o, future: true),
+                    child: const Text('Edit this and future timing'),
+                  ),
+                  TextButton(
+                    key: ValueKey(
+                      'occurrence-cancel-${occurrenceKey(o.originalStart)}',
+                    ),
+                    onPressed: _busy || _stale
+                        ? null
+                        : () => _act(
+                            _anchor(o.originalStart),
+                            cal.CalendarEventOccurrenceAction.cancelSingle,
+                          ),
+                    child: const Text('Cancel this occurrence'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        if (_event.timingOverrides != null)
+          const Text(
+            'Saved timing overrides (including cancelled occurrences)',
+          ),
+        for (final single
+            in _event.timingOverrides?.singles ??
+                <cal.CalendarEventSingleOverride>[])
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Original ${_label(single.originalStart.start)}${single.cancelled ? ' — cancelled' : ''}',
+              ),
+              if (single.cancelled)
+                TextButton(
+                  key: ValueKey(
+                    'occurrence-restore-${occurrenceKey(single.originalStart.start)}',
+                  ),
+                  onPressed: _busy || _stale
+                      ? null
+                      : () => _act(
+                          single.originalStart,
+                          cal.CalendarEventOccurrenceAction.restoreSingle,
+                        ),
+                  child: const Text('Restore occurrence'),
+                ),
+              if (single.replacement != null)
+                TextButton(
+                  key: ValueKey(
+                    'occurrence-clear-single-${occurrenceKey(single.originalStart.start)}',
+                  ),
+                  onPressed: _busy || _stale
+                      ? null
+                      : () => _act(
+                          single.originalStart,
+                          cal.CalendarEventOccurrenceAction.clearSingleTiming,
+                        ),
+                  child: const Text('Clear single timing override'),
+                ),
+            ],
+          ),
+        for (final future
+            in _event.timingOverrides?.future ??
+                <cal.CalendarEventFutureOverride>[])
+          TextButton(
+            key: ValueKey(
+              'occurrence-clear-future-${occurrenceKey(future.originalStart.start)}',
+            ),
+            onPressed: _busy || _stale
+                ? null
+                : () => _act(
+                    future.originalStart,
+                    cal.CalendarEventOccurrenceAction.clearFutureTiming,
+                  ),
+            child: Text(
+              'Clear future timing from ${_label(future.originalStart.start)}',
             ),
           ),
       ],

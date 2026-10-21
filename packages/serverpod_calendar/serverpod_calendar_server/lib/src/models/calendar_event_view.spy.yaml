@@ -13,3 +13,4 @@ fields:
   protocolUid: String?
   lastModified: DateTime?
   recurrence: CalendarEventRecurrence?
+  timingOverrides: CalendarEventTimingOverrides?

@@ -1,0 +1,9 @@
+enum: CalendarEventOccurrenceAction
+serialized: byName
+values:
+  - replaceSingleTiming
+  - clearSingleTiming
+  - cancelSingle
+  - restoreSingle
+  - replaceFutureTiming
+  - clearFutureTiming

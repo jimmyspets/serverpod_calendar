@@ -1,0 +1,5 @@
+class: CalendarEventFutureOverride
+immutable: true
+fields:
+  originalStart: CalendarEventTiming
+  replacement: CalendarEventTiming

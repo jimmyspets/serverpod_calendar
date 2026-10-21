@@ -132,6 +132,8 @@ final class CalendarAuthorizationRequest {
     this.currentEvent,
     this.proposedEvent,
     this.occurrenceQuery,
+    this.occurrenceChange,
+    this.proposedTimingOverrides,
     Iterable<CalendarEventFieldGroup> eventGroups = const [],
     Iterable<CalendarFieldGroup> requestedGroups = const [],
   }) : requestedGroups = Set.unmodifiable(requestedGroups),
@@ -142,6 +144,8 @@ final class CalendarAuthorizationRequest {
   final CalendarEventPolicySnapshot? currentEvent;
   final CalendarEventContent? proposedEvent;
   final CalendarEventOccurrenceQuery? occurrenceQuery;
+  final CalendarEventOccurrenceChange? occurrenceChange;
+  final CalendarEventTimingOverrides? proposedTimingOverrides;
   final Set<CalendarEventFieldGroup> eventGroups;
   final CalendarCategoryQuery? categoryFilter;
 
@@ -257,8 +261,10 @@ final class CalendarEventPolicySnapshot {
     this.revision,
     this.content,
     this.protocolUid,
-    this.updatedAt,
-  );
+    this.updatedAt, {
+    this.timingOverrides,
+  });
+  final CalendarEventTimingOverrides? timingOverrides;
   final UuidValue eventId, calendarId;
   final int revision;
   final CalendarEventContent content;
