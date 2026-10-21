@@ -117,3 +117,5 @@ For focused calendar work, run `dart test test/unit` in `packages/serverpod_cale
 The metadata increment adds pure profile tests in `test/unit/calendar_presentation_test.dart` and scoped real database cases in `calendar_test.dart`. Use `--name` to focus the database cases while developing; the full batch check runs the complete file and all Flutter widget tests.
 
 `python tool/metadata_upgrade_smoke.py` checks the generated pre-metadata-to-text-metadata, text-to-supplemental-metadata and supplemental-to-protocol-identity migrations on a temporary synthetic database using the existing dedicated Compose test service. It preserves fixture rows/revisions and drops only the database it creates. It runs automatically in the complete local sequence.
+
+Native event DTO adapter tests in `test/unit/event_values_test.dart` are VM-only because they import server-generated models. The core remains tested on VM/Chrome; Flutter Web exercises generated event clients. Focus event database cases with `--name "event "`; complete checks include event lifecycle/cursors and two-host write/parent-delete races. The populated upgrade helper also applies the native event schema.

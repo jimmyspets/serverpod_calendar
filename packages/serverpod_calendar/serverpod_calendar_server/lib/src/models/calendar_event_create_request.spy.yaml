@@ -1,0 +1,5 @@
+class: CalendarEventCreateRequest
+immutable: true
+fields:
+  calendarId: UuidValue
+  content: CalendarEventContent

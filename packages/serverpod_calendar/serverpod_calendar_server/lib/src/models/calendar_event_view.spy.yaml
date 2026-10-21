@@ -1,0 +1,14 @@
+class: CalendarEventView
+fields:
+  id: UuidValue
+  calendarId: UuidValue
+  revision: int
+  disclosedGroups: List<CalendarEventFieldGroup>
+  summary: String?
+  description: String?
+  location: String?
+  timing: CalendarEventTiming?
+  status: CalendarEventStatus?
+  transparency: CalendarEventTransparency?
+  protocolUid: String?
+  lastModified: DateTime?

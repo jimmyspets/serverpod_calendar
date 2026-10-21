@@ -1,0 +1,4 @@
+class: CalendarEventPage
+fields:
+  events: List<CalendarEventView>
+  nextCursor: String?

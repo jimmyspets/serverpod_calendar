@@ -1,0 +1,9 @@
+enum: CalendarEventFieldGroup
+serialized: byName
+values:
+  - summary
+  - description
+  - location
+  - timing
+  - state
+  - protocolIdentity
