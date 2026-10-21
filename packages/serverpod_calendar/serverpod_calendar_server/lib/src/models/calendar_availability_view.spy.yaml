@@ -1,0 +1,9 @@
+class: CalendarAvailabilityView
+immutable: true
+fields:
+  id: UuidValue
+  calendarId: UuidValue
+  revision: int
+  protocolUid: UuidValue
+  lastModified: DateTime
+  content: CalendarAvailabilityContent

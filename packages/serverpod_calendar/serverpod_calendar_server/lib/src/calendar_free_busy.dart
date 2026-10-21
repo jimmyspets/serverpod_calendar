@@ -97,12 +97,71 @@ extension CalendarFreeBusyOperations on CalendarService {
             bookings.add(AvailabilityInterval(window: occupied, kind: kind));
           }
         }
+        final ruleRows = await CalendarAvailabilityRecord.db.find(
+          _session,
+          where: (t) =>
+              t.calendarId.equals(parent.identity.id!) &
+              t.deletedAt.equals(null),
+          orderBy: (t) => t.id,
+          limit: availabilityMaxDefinitions + 1,
+          transaction: tx,
+        );
+        if (ruleRows.length > availabilityMaxDefinitions) {
+          throw const AvailabilityLimitException('maxDefinitions');
+        }
+        final definitions = <AvailabilityDefinition>[];
+        var openingCount = 0;
+        var sourceOpenings = 0;
+        // Calculation never uses the permission-filtered management list.
+        for (final row in ruleRows) {
+          final rule = await _availability(
+            c,
+            row.id!,
+            tx,
+            parent: parent,
+            identity: row,
+          );
+          await _decide(
+            c,
+            [
+              _ar(
+                parent,
+                CalendarPermission.projectAvailability,
+                rule: rule,
+                query: query,
+              ),
+            ],
+            tx,
+            CalendarAuthorizationPhase.read,
+          );
+          sourceOpenings += rule.data.content.openings.length;
+          if (sourceOpenings > 64) {
+            throw const AvailabilityLimitException('maxSourceOpenings');
+          }
+          final evaluated = evaluateAvailability(rule.data.content, window);
+          openingCount += evaluated.openings.length;
+          if (openingCount > 5000) {
+            throw const AvailabilityLimitException('maxProjectedOpenings');
+          }
+          definitions.add(evaluated);
+        }
+        final background = composeAvailability(
+          window: window,
+          definitions: definitions,
+          fallbackUnavailable:
+              parent.data.noRuleFallback == CalendarNoRuleFallback.unavailable,
+          maxDefinitions: availabilityMaxDefinitions,
+          maxOpenings: 5000,
+          maxOutputIntervals: 1000,
+        );
+        bookings.addAll(
+          background.where((p) => p.kind != AvailabilityKind.free),
+        );
         final partition = partitionFreeBusy(
           window: window,
           bookings: bookings,
-          fallbackUnavailable:
-              parent.data.noRuleFallback == CalendarNoRuleFallback.unavailable,
-          maxInputIntervals: 5000,
+          fallbackUnavailable: false,
+          maxInputIntervals: 6000,
           maxOutputIntervals: 1000,
         );
         result = response(CalendarFreeBusyCoverage.complete, [

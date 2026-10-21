@@ -1,0 +1,11 @@
+class: CalendarAvailabilityRecord
+serverOnly: true
+table: serverpod_calendar_availability
+fields:
+  id: UuidValue?, defaultPersist=random
+  calendarId: UuidValue, relation(parent=serverpod_calendar_identity)
+  revision: int
+  deletedAt: DateTime?
+indexes:
+  calendar_availability_parent_idx:
+    fields: calendarId, id

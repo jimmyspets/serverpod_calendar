@@ -31,3 +31,5 @@ export 'src/timed_event_series.dart';
 export 'src/task_timing.dart';
 export 'src/zone_rules_snapshot.dart';
 export 'src/free_busy.dart';
+
+export 'src/availability_rules.dart';

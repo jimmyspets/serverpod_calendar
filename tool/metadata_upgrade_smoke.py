@@ -182,6 +182,24 @@ BEGIN
 END;
 $occurrences$;
 """)
+        sql(database, (SERVER / "migrations/20261021121924598-availability-rules/migration.sql").read_text(encoding="utf-8"))
+        sql(database, """
+DO $availability$
+BEGIN
+  IF (SELECT count(*) FROM serverpod_calendar_availability) <> 0
+     OR (SELECT count(*) FROM serverpod_calendar_availability_data) <> 0
+     OR (SELECT count(*) FROM serverpod_calendar_event_data WHERE
+       content->>'summary' = 'Before timing overrides' AND "timingOverrides" IS NULL
+       AND "protocolUid" = '66666666-6666-4666-8666-666666666666'
+       AND "updatedAt" = '2026-01-02 03:04:05.987654') <> 1
+     OR (SELECT revision FROM serverpod_calendar_event WHERE id='55555555-5555-4555-8555-555555555555') <> 9
+     OR (SELECT revision FROM serverpod_calendar_scope WHERE "scopeKey"='metadata-upgrade-test') <> 11
+     OR (SELECT count(*) FROM serverpod_calendar_data WHERE "protocolUid" IS NOT NULL) <> 2 THEN
+    RAISE EXCEPTION 'Availability upgrade changed existing calendars/events, identity, revisions or time';
+  END IF;
+END;
+$availability$;
+""")
         print("PASS: populated schema upgrades preserve identity, revisions, content, associations, unique protocol UIDs and old cursor bindings.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

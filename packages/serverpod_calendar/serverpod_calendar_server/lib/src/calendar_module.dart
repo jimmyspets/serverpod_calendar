@@ -10,9 +10,11 @@ import 'calendar_authorization.dart';
 import 'generated/protocol.dart';
 import 'native_calendar_name.dart';
 import 'event_values.dart';
+import 'availability_values.dart';
 
 part 'calendar_events.dart';
 part 'calendar_free_busy.dart';
+part 'calendar_availability.dart';
 
 /// Configuration is per Serverpod instance, never an allow-decision cache.
 abstract final class CalendarModule {
@@ -746,6 +748,14 @@ final class CalendarService {
       );
       _revision(a, expectedRevision);
       if (a.links.isNotEmpty ||
+          await CalendarAvailabilityRecord.db.count(
+                _session,
+                where: (t) =>
+                    t.calendarId.equals(id) & t.deletedAt.equals(null),
+                transaction: tx,
+                limit: 1,
+              ) >
+              0 ||
           await CalendarEventRecord.db.count(
                 _session,
                 where: (t) =>
