@@ -48,6 +48,12 @@ try {
     if (-not $SkipBrowser) { Invoke-Checked dart @('test', '--platform', 'chrome') }
   }
   finally { Pop-Location }
+  Push-Location (Join-Path $WorkspaceRoot 'packages/serverpod_calendar_icalendar')
+  try {
+    Invoke-Checked dart @('test')
+    if (-not $SkipBrowser) { Invoke-Checked dart @('test', '--platform', 'chrome') }
+  }
+  finally { Pop-Location }
   Push-Location (Join-Path $WorkspaceRoot 'packages/serverpod_calendar/serverpod_calendar_server')
   try {
     Invoke-Checked dart @('test', 'test/unit')
