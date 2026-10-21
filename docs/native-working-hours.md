@@ -55,3 +55,5 @@ The query source cap includes all active definitions/openings, including outside
 The Flutter example offers simple daily/weekly single-opening hours, explicit dates, closures, priority and UTC validity fields. Unsupported advanced native definitions stay readable and cannot be saved through that small form. Stale saves retain the draft and require reopening current values. Full native definitions remain accessible through generated APIs. See [validation evidence](scaffold-validation.md).
 
 Ordinary configuration updates now preserve/revalidate separate occurrence edits on retained opening UIDs, and require additional metadata authority for metadata-signature changes. The timing form preserves unrelated metadata. See [the current editing contract](availability-occurrences-and-metadata.md).
+
+Subsequent native scope: [protocol lifecycle and envelope duration](availability-protocol-lifecycle.md) under [ADR 0061](adr/0061-availability-protocol-lifecycle-and-envelope-duration.md) supersedes earlier pending wording for these native values. Wire/source histories, CONTACT and scheduling remain pending.

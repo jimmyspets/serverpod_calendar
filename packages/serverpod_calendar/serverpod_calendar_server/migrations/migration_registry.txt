@@ -13,3 +13,4 @@
 20261021094604875-event-occurrence-timing
 20261021121921134-availability-rules
 20261021144847729-availability-opening-edits
+20261021192838338-availability-protocol-state

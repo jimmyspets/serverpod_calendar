@@ -33,3 +33,5 @@ Registered IANA extensions remain unavailable until individually profiled. These
 All fields are nullable additions inside existing JSON content. Older rows decode with absent values, without rewriting content, protocol UIDs, revisions, timestamps or opening edits. Pinned generation and module/host migration checks report no relational schema change. The example edits these fields through existing revision-checked metadata endpoints and preserves them through its timing forms.
 
 CONTACT stays import-preserved only; wire property grouping, parser/export, full protocol stamps/SEQUENCE, envelope duration shorthand, per-occurrence text/future cancellation, feeds and external-client evidence remain pending. See [validation evidence](scaffold-validation.md) and [roadmap](roadmap.md).
+
+Subsequent native scope: [protocol lifecycle and envelope duration](availability-protocol-lifecycle.md) under [ADR 0061](adr/0061-availability-protocol-lifecycle-and-envelope-duration.md) supersedes earlier pending wording for these native values. Wire/source histories, CONTACT and scheduling remain pending.

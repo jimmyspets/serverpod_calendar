@@ -32,6 +32,29 @@ DateTime? availabilityBound(CalendarEventTiming? value, {bool end = false}) {
   return span.resolved.endExclusive;
 }
 
+/// Effective envelope end without flattening nominal duration units in storage.
+DateTime? availabilityEnvelopeEnd(CalendarAvailabilityContent input) {
+  final duration = input.validDuration;
+  if (duration == null) return availabilityBound(input.validUntil, end: true);
+  if (input.validUntil != null || input.validFrom == null) {
+    throw ArgumentError(
+      'Envelope duration requires a start and excludes an end',
+    );
+  }
+  final start = input.validFrom!;
+  availabilityBound(start);
+  final span = validateEventTiming(
+    CalendarEventTiming(
+      kind: start.kind,
+      zoneId: start.zoneId,
+      start: start.start,
+      duration: duration,
+    ),
+  ).$2!;
+  if (span.isPoint) throw ArgumentError('Envelope duration must be positive');
+  return span.resolved.endExclusive;
+}
+
 CalendarAvailabilityContent validateAvailabilityContent(
   CalendarAvailabilityContent input,
 ) {
@@ -46,7 +69,7 @@ CalendarAvailabilityContent validateAvailabilityContent(
     throw const AvailabilityLimitException('maxOpeningsPerDefinition');
   }
   final start = availabilityBound(input.validFrom);
-  final end = availabilityBound(input.validUntil, end: true);
+  final end = availabilityEnvelopeEnd(input);
   if (start != null && end != null && !start.isBefore(end)) {
     throw ArgumentError('Validity end must follow start');
   }
@@ -259,7 +282,7 @@ AvailabilityDefinition evaluateAvailability(
   List<CalendarAvailabilityOpeningEdits>? edits,
 }) {
   final start = availabilityBound(input.validFrom);
-  final end = availabilityBound(input.validUntil, end: true);
+  final end = availabilityEnvelopeEnd(input);
   final from = start != null && start.isAfter(window.start)
       ? start
       : window.start;
@@ -411,6 +434,7 @@ Object availabilityMetadata(CalendarAvailabilityContent value) => [
 Object availabilityStructure(CalendarAvailabilityContent value) => [
   value.validFrom?.toJson(),
   value.validUntil?.toJson(),
+  value.validDuration?.toJson(),
   value.priority,
   value.closedKind.name,
   for (final o in value.openings)

@@ -59,3 +59,7 @@ The concrete same-database locking/serialization protocol and external authorita
 ## Implemented availability organizer check
 
 The scoped native extension under [ADR 0060](adr/0060-availability-publication-metadata.md) adds required `CalendarHostPolicy.approveAvailabilityOrganizer(session, context, request, transaction, phase)`, returning `CalendarAuthorizationVerdict`. It is independent of `authorizeBatch` and does not replace operation rights. Existing unpublished host adapters must implement it; absent approval cannot silently accept an organizer. The [native guide](availability-publication-metadata.md) defines current/final proposed context, removal/retention checks, failures and declared guarantee boundaries.
+
+## Availability protocol lifecycle context
+
+[ADR 0061](adr/0061-availability-protocol-lifecycle-and-envelope-duration.md) adds immutable `currentAvailability.protocolState` and final `proposedAvailabilityProtocolState` for native create/content/occurrence writes. The proposal can be absent before server timestamp allocation; final checks receive the exact state to persist, including unchanged versions on identical saves. This grants no additional authority. API revision remains the optimistic-concurrency value; internal updatedAt and scope generation still advance on accepted identical writes, while protocol stamps/SEQUENCE do not. Raw rules retain all-or-nothing disclosure and busy summaries expose none of this metadata. See [native lifecycle guarantees and legacy baseline](availability-protocol-lifecycle.md).

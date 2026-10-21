@@ -222,6 +222,21 @@ BEGIN
 END;
 $opening$;
 """)
+        sql(database, (SERVER / "migrations/20261021192957814-availability-protocol-state/migration.sql").read_text(encoding="utf-8"))
+        sql(database, """
+DO $protocol$
+BEGIN
+  IF (SELECT count(*) FROM serverpod_calendar_availability_data WHERE "protocolState" IS NULL
+      AND "timingOverrides" IS NULL AND content->>'summary'='Before opening edits'
+      AND "protocolUid"='88888888-8888-4888-8888-888888888888'
+      AND "createdAt"='2026-01-01' AND "updatedAt"='2026-01-02 03:04:05.987654')<>1
+     OR (SELECT revision FROM serverpod_calendar_availability WHERE id='77777777-7777-4777-8777-777777777777')<>4
+     OR (SELECT revision FROM serverpod_calendar_scope WHERE "scopeKey"='metadata-upgrade-test')<>11 THEN
+    RAISE EXCEPTION 'Protocol state upgrade changed legacy contents, identity, timestamps or revisions';
+  END IF;
+END;
+$protocol$;
+""")
         print("PASS: populated schema upgrades preserve identity, revisions, content, associations, unique protocol UIDs and old cursor bindings.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

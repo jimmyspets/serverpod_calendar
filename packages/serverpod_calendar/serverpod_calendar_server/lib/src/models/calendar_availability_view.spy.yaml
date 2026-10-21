@@ -8,3 +8,4 @@ fields:
   lastModified: DateTime
   timingOverrides: List<CalendarAvailabilityOpeningEdits>?
   content: CalendarAvailabilityContent
+  protocolState: CalendarAvailabilityProtocolState

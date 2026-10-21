@@ -33,7 +33,9 @@ import 'calendar_availability_occurrence_preview.dart' as _inpm99jj;
 import 'calendar_availability_occurrence_query.dart' as _iv6wf0pl;
 import 'calendar_availability_opening.dart' as _i8tf9h36;
 import 'calendar_availability_opening_edits.dart' as _id5ke9r5;
+import 'calendar_availability_opening_protocol_state.dart' as _ix3hb3ib;
 import 'calendar_availability_organizer.dart' as _i5oc0nlo;
+import 'calendar_availability_protocol_state.dart' as _ib9yzivj;
 import 'calendar_availability_receipt.dart' as _is1luycx;
 import 'calendar_availability_record.dart' as _inwzhb5r;
 import 'calendar_availability_search_mode.dart' as _iam4llos;
@@ -118,7 +120,9 @@ export 'calendar_availability_occurrence_preview.dart';
 export 'calendar_availability_occurrence_query.dart';
 export 'calendar_availability_opening.dart';
 export 'calendar_availability_opening_edits.dart';
+export 'calendar_availability_opening_protocol_state.dart';
 export 'calendar_availability_organizer.dart';
+export 'calendar_availability_protocol_state.dart';
 export 'calendar_availability_receipt.dart';
 export 'calendar_availability_record.dart';
 export 'calendar_availability_search_mode.dart';
@@ -294,6 +298,12 @@ class Protocol extends _is.DatabaseSerializationManager {
           isNullable: false,
           dartType: 'UuidValue',
           columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'protocolState',
+          columnType: _isp.ColumnType.json,
+          isNullable: true,
+          dartType: 'protocol:CalendarAvailabilityProtocolState?',
         ),
         _isp.ColumnDefinition(
           name: 'timingOverrides',
@@ -1013,8 +1023,15 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _id5ke9r5.CalendarAvailabilityOpeningEdits) {
       return _id5ke9r5.CalendarAvailabilityOpeningEdits.fromJson(data) as T;
     }
+    if (t == _ix3hb3ib.CalendarAvailabilityOpeningProtocolState) {
+      return _ix3hb3ib.CalendarAvailabilityOpeningProtocolState.fromJson(data)
+          as T;
+    }
     if (t == _i5oc0nlo.CalendarAvailabilityOrganizer) {
       return _i5oc0nlo.CalendarAvailabilityOrganizer.fromJson(data) as T;
+    }
+    if (t == _ib9yzivj.CalendarAvailabilityProtocolState) {
+      return _ib9yzivj.CalendarAvailabilityProtocolState.fromJson(data) as T;
     }
     if (t == _is1luycx.CalendarAvailabilityReceipt) {
       return _is1luycx.CalendarAvailabilityReceipt.fromJson(data) as T;
@@ -1300,9 +1317,24 @@ class Protocol extends _is.DatabaseSerializationManager {
               : null)
           as T;
     }
+    if (t ==
+        _is.getType<_ix3hb3ib.CalendarAvailabilityOpeningProtocolState?>()) {
+      return (data != null
+              ? _ix3hb3ib.CalendarAvailabilityOpeningProtocolState.fromJson(
+                  data,
+                )
+              : null)
+          as T;
+    }
     if (t == _is.getType<_i5oc0nlo.CalendarAvailabilityOrganizer?>()) {
       return (data != null
               ? _i5oc0nlo.CalendarAvailabilityOrganizer.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ib9yzivj.CalendarAvailabilityProtocolState?>()) {
+      return (data != null
+              ? _ib9yzivj.CalendarAvailabilityProtocolState.fromJson(data)
               : null)
           as T;
     }
@@ -1791,6 +1823,17 @@ class Protocol extends _is.DatabaseSerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_ix3hb3ib.CalendarAvailabilityOpeningProtocolState>) {
+      return (data as List)
+              .map(
+                (e) =>
+                    deserialize<
+                      _ix3hb3ib.CalendarAvailabilityOpeningProtocolState
+                    >(e),
+              )
+              .toList()
+          as T;
+    }
     if (t == List<_iwbqbnec.CalendarAvailabilityTarget>) {
       return (data as List)
               .map((e) => deserialize<_iwbqbnec.CalendarAvailabilityTarget>(e))
@@ -1962,8 +2005,12 @@ class Protocol extends _is.DatabaseSerializationManager {
       _i8tf9h36.CalendarAvailabilityOpening => 'CalendarAvailabilityOpening',
       _id5ke9r5.CalendarAvailabilityOpeningEdits =>
         'CalendarAvailabilityOpeningEdits',
+      _ix3hb3ib.CalendarAvailabilityOpeningProtocolState =>
+        'CalendarAvailabilityOpeningProtocolState',
       _i5oc0nlo.CalendarAvailabilityOrganizer =>
         'CalendarAvailabilityOrganizer',
+      _ib9yzivj.CalendarAvailabilityProtocolState =>
+        'CalendarAvailabilityProtocolState',
       _is1luycx.CalendarAvailabilityReceipt => 'CalendarAvailabilityReceipt',
       _inwzhb5r.CalendarAvailabilityRecord => 'CalendarAvailabilityRecord',
       _iam4llos.CalendarAvailabilitySearchMode =>
@@ -2088,8 +2135,12 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarAvailabilityOpening';
       case _id5ke9r5.CalendarAvailabilityOpeningEdits():
         return 'CalendarAvailabilityOpeningEdits';
+      case _ix3hb3ib.CalendarAvailabilityOpeningProtocolState():
+        return 'CalendarAvailabilityOpeningProtocolState';
       case _i5oc0nlo.CalendarAvailabilityOrganizer():
         return 'CalendarAvailabilityOrganizer';
+      case _ib9yzivj.CalendarAvailabilityProtocolState():
+        return 'CalendarAvailabilityProtocolState';
       case _is1luycx.CalendarAvailabilityReceipt():
         return 'CalendarAvailabilityReceipt';
       case _inwzhb5r.CalendarAvailabilityRecord():
@@ -2294,8 +2345,18 @@ class Protocol extends _is.DatabaseSerializationManager {
         data['data'],
       );
     }
+    if (dataClassName == 'CalendarAvailabilityOpeningProtocolState') {
+      return deserialize<_ix3hb3ib.CalendarAvailabilityOpeningProtocolState>(
+        data['data'],
+      );
+    }
     if (dataClassName == 'CalendarAvailabilityOrganizer') {
       return deserialize<_i5oc0nlo.CalendarAvailabilityOrganizer>(data['data']);
+    }
+    if (dataClassName == 'CalendarAvailabilityProtocolState') {
+      return deserialize<_ib9yzivj.CalendarAvailabilityProtocolState>(
+        data['data'],
+      );
     }
     if (dataClassName == 'CalendarAvailabilityReceipt') {
       return deserialize<_is1luycx.CalendarAvailabilityReceipt>(data['data']);
