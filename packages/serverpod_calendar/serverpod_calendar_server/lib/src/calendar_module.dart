@@ -203,6 +203,17 @@ final class CalendarService {
     if (scope == null) throw _failure(CalendarFailureCode.unavailable);
     return action(tx, scope);
   });
+  // Shared database time avoids ordering changes from independent host clocks.
+  // Revisions distinguish writes within one second and during clock correction.
+  Future<DateTime> _revisionTime(Transaction tx, {DateTime? previous}) async {
+    final rows = await _session.db.unsafeQuery(
+      'SELECT clock_timestamp()',
+      transaction: tx,
+    );
+    final now = (rows.single.single as DateTime).toUtc();
+    return previous != null && now.isBefore(previous) ? previous.toUtc() : now;
+  }
+
   Future<void> _bump(CalendarScopeRecord scope, Transaction tx) async {
     if (scope.revision >= _maxRevision) {
       throw _failure(CalendarFailureCode.limitExceeded);
@@ -322,6 +333,9 @@ final class CalendarService {
           groups.contains(CalendarFieldGroup.supplementalMetadata)
           ? _supplementalModel(a.supplementalMetadata)
           : null,
+      protocolIdentity: groups.contains(CalendarFieldGroup.protocolIdentity)
+          ? a.protocolIdentity
+          : null,
       protocolMetadata: groups.contains(CalendarFieldGroup.protocolMetadata)
           ? _protocolModel(a.protocolMetadata)
           : null,
@@ -371,7 +385,7 @@ final class CalendarService {
         CalendarAuthorizationPhase.preliminaryWrite,
       );
       final decisions = await _final(c, [request], tx);
-      final now = DateTime.now().toUtc();
+      final now = await _revisionTime(tx);
       final identity = await CalendarIdentityRecord.db.insertRow(
         _session,
         CalendarIdentityRecord(scopeKey: c.scopeKey, revision: 1),
@@ -439,21 +453,7 @@ final class CalendarService {
       _revision(a, input.expectedRevision);
       final decisions = await _final(c, [request], tx);
       a.data.displayName = name;
-      a.data.updatedAt = DateTime.now().toUtc();
-      a.identity.revision++;
-      await CalendarDataRecord.db.updateRow(_session, a.data, transaction: tx);
-      await CalendarIdentityRecord.db.updateRow(
-        _session,
-        a.identity,
-        transaction: tx,
-      );
-      await _bump(scope, tx);
-      return _receipt(
-        a.identity.id!,
-        a.identity.revision,
-        false,
-        decisions.values,
-      );
+      return _saveMetadata(a, scope, tx, decisions.values);
     });
   }
 
@@ -565,7 +565,7 @@ final class CalendarService {
     Transaction tx,
     Iterable<CalendarAuthorizationDecision> decisions,
   ) async {
-    a.data.updatedAt = DateTime.now().toUtc();
+    a.data.updatedAt = await _revisionTime(tx, previous: a.data.updatedAt);
     a.identity.revision++;
     await CalendarDataRecord.db.updateRow(_session, a.data, transaction: tx);
     await CalendarIdentityRecord.db.updateRow(
@@ -620,21 +620,7 @@ final class CalendarService {
       final decisions = await _final(c, [request], tx);
       a.data.availabilityZoneId = input.availabilityZoneId;
       a.data.noRuleFallback = input.noRuleFallback;
-      a.data.updatedAt = DateTime.now().toUtc();
-      a.identity.revision++;
-      await CalendarDataRecord.db.updateRow(_session, a.data, transaction: tx);
-      await CalendarIdentityRecord.db.updateRow(
-        _session,
-        a.identity,
-        transaction: tx,
-      );
-      await _bump(scope, tx);
-      return _receipt(
-        a.identity.id!,
-        a.identity.revision,
-        false,
-        decisions.values,
-      );
+      return _saveMetadata(a, scope, tx, decisions.values);
     });
   }
 
@@ -735,21 +721,7 @@ final class CalendarService {
             transaction: tx,
           );
       }
-      a.identity.revision++;
-      a.data.updatedAt = DateTime.now().toUtc();
-      await CalendarIdentityRecord.db.updateRow(
-        _session,
-        a.identity,
-        transaction: tx,
-      );
-      await CalendarDataRecord.db.updateRow(_session, a.data, transaction: tx);
-      await _bump(scope, tx);
-      return _receipt(
-        a.identity.id!,
-        a.identity.revision,
-        false,
-        decisions.values,
-      );
+      return _saveMetadata(a, scope, tx, decisions.values);
     });
   }
 
@@ -1004,6 +976,21 @@ final class _Active {
       throw _failure(CalendarFailureCode.unavailable);
     }
   }
+  CalendarProtocolIdentity get protocolIdentity {
+    final utc = data.updatedAt.toUtc();
+    return CalendarProtocolIdentity(
+      uid: data.protocolUid.toString(),
+      lastModified: DateTime.utc(
+        utc.year,
+        utc.month,
+        utc.day,
+        utc.hour,
+        utc.minute,
+        utc.second,
+      ),
+    );
+  }
+
   late final IcalendarCalendarTextMetadata protocolMetadata;
   late final IcalendarSupplementalMetadata supplementalMetadata;
   final CalendarIdentityRecord identity;
@@ -1015,6 +1002,7 @@ final class _Active {
     displayName: data.displayName,
     description: data.description,
     color: data.color,
+    protocolIdentity: protocolIdentity,
     protocolMetadata: protocolMetadata,
     supplementalMetadata: supplementalMetadata,
     availabilityZoneId: data.availabilityZoneId,

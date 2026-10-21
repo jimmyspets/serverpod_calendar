@@ -56,6 +56,12 @@ void main() {
     await _waitFor(tester, find.text(label));
     await tester.tap(find.text(label));
     await _idle(tester);
+    final initialProtocolLabel = tester
+        .widget<SelectableText>(
+          find.byKey(const Key('calendar-protocol-uid')),
+        )
+        .data!;
+    expect(find.byKey(const Key('calendar-protocol-modified')), findsOneWidget);
     await tester.enterText(
       find.byKey(const Key('calendar-name')),
       renamedLabel,
@@ -85,6 +91,14 @@ void main() {
     final calendar = saved.calendars.singleWhere(
       (v) => v.displayName == renamedLabel,
     );
+    expect(
+      'Protocol UID: ${calendar.protocolIdentity!.uid}',
+      initialProtocolLabel,
+    );
+    expect(calendar.protocolIdentity!.uid, isNot(calendar.id.toString()));
+    expect(calendar.protocolIdentity!.lastModified.isUtc, isTrue);
+    expect(calendar.protocolIdentity!.lastModified.millisecond, 0);
+    expect(calendar.protocolIdentity!.lastModified.microsecond, 0);
     expect(calendar.protocolMetadata!.names.length, 2);
     expect(calendar.protocolMetadata!.names.first.value, renamedLabel);
     expect(calendar.protocolMetadata!.names.last.value, 'Protocol Swedish');
