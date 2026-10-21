@@ -59,6 +59,8 @@ extension CalendarAvailabilityOperations on CalendarService {
     _Availability? rule,
     CalendarAvailabilityContent? proposed,
     CalendarFreeBusyQuery? query,
+    CalendarAvailabilitySearchQuery? search,
+    CalendarAvailabilityTarget? target,
   }) => CalendarAuthorizationRequest(
     key: '${operation.name}:${rule?.identity.id ?? parent.identity.id}',
     operation: operation,
@@ -68,6 +70,8 @@ extension CalendarAvailabilityOperations on CalendarService {
     currentAvailability: rule?.snapshot,
     proposedAvailability: proposed,
     freeBusyQuery: query,
+    availabilitySearchQuery: search,
+    availabilityTarget: target,
   );
 
   Future<_Availability> _availability(

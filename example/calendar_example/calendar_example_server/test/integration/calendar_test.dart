@@ -143,6 +143,294 @@ void main() {
         ),
       ),
     ))!;
+    CalendarAvailabilityTarget target([String id = 'alice']) =>
+        CalendarAvailabilityTarget(
+          namespace: 'test',
+          kind: 'user',
+          externalId: id,
+        );
+    CalendarAvailabilitySearchQuery searchQuery(
+      List<CalendarAvailabilityTarget> targets, {
+      CalendarAvailabilitySearchMode mode =
+          CalendarAvailabilitySearchMode.commonFree,
+      int minimum = 1,
+    }) => CalendarAvailabilitySearchQuery(
+      targets: targets,
+      fromUtc: DateTime.utc(2026, 3, 29),
+      untilUtc: DateTime.utc(2026, 3, 30),
+      mode: mode,
+      minimumSeconds: minimum,
+    );
+    Future<UuidValue> contributor(
+      String name, {
+      bool contributes = true,
+    }) async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      await service.changeSubject(
+        CalendarSubjectChangeRequest(
+          calendarId: calendar,
+          expectedRevision: 1,
+          action: CalendarSubjectAction.attach,
+          namespace: 'test',
+          kind: 'user',
+          externalId: name,
+          contributesAvailability: contributes,
+        ),
+      );
+      return calendar;
+    }
+
+    test('subject search unions bookings from complete contributors independently of direct calendar access', () async {
+      final a = await contributor('alice'), b = await contributor('alice');
+      final admin = await contributor('alice', contributes: false);
+      await booking(a, 9, 10);
+      await booking(b, 10, 11);
+      await booking(admin, 12, 14);
+      policy.denied.addAll([
+        CalendarPermission.readFreeBusy,
+        CalendarPermission.readEvent,
+        CalendarPermission.listEvents,
+        CalendarPermission.read,
+        CalendarPermission.readAssociations,
+      ]);
+      final before = await CalendarScopeRecord.db.findFirstRow(
+        session,
+        where: (t) => t.scopeKey.equals('test:alice'),
+      );
+      final result = await service.searchAvailability(searchQuery([target()]));
+      expect(result.commonCoverage, CalendarFreeBusyCoverage.complete);
+      final periods = result.results.single.periods;
+      expect(periods.map((p) => p.kind), [
+        CalendarFreeBusyKind.free,
+        CalendarFreeBusyKind.busy,
+        CalendarFreeBusyKind.free,
+      ]);
+      expect(periods[1].startUtc, DateTime.utc(2026, 3, 29, 9));
+      expect(periods[1].endUtc, DateTime.utc(2026, 3, 29, 11));
+      final wire = result.toJson().toString();
+      for (final secret in [
+        a.toString(),
+        b.toString(),
+        admin.toString(),
+        'Private booking',
+        'test:alice',
+      ]) {
+        expect(wire, isNot(contains(secret)));
+      }
+      final projected = policy.searchRequests.where(
+        (r) => r.operation == CalendarPermission.projectCalendarAvailability,
+      );
+      expect(projected.map((r) => r.calendarId).toSet(), {a, b});
+      expect(
+        projected.every(
+          (r) =>
+              r.availabilityTarget!.externalId == 'alice' &&
+              r.current!.calendarId == r.calendarId,
+        ),
+        isTrue,
+      );
+      expect(result.calculatedAtUtc.microsecond, 0);
+      expect(result.calculatedAtUtc.millisecond, 0);
+      final after = await CalendarScopeRecord.db.findFirstRow(
+        session,
+        where: (t) => t.scopeKey.equals('test:alice'),
+      );
+      expect(after!.revision, before!.revision);
+    });
+    test('subject search combines targets and deduplicates exact references without changing free semantics', () async {
+      final a = await contributor('alice'), b = await contributor('bob');
+      await booking(a, 9, 10);
+      await booking(b, 10, 11);
+      final query = searchQuery([target(), target('bob'), target()]);
+      final result = await service.searchAvailability(query);
+      expect(result.results.map((r) => r.target.externalId), ['alice', 'bob']);
+      expect(result.commonCoverage, CalendarFreeBusyCoverage.complete);
+      expect(result.commonSlots.map((w) => (w.startUtc, w.endUtc)), [
+        (DateTime.utc(2026, 3, 29), DateTime.utc(2026, 3, 29, 9)),
+        (DateTime.utc(2026, 3, 29, 11), DateTime.utc(2026, 3, 30)),
+      ]);
+      final perTarget = await service.searchAvailability(
+        query.copyWith(mode: CalendarAvailabilitySearchMode.perTarget),
+      );
+      expect(perTarget.commonCoverage, isNull);
+      expect(perTarget.commonSlots, isEmpty);
+      expect(
+        perTarget.results.every(
+          (r) => r.coverage == CalendarFreeBusyCoverage.complete,
+        ),
+        isTrue,
+      );
+      expect(perTarget.snapshotId, isNot(result.snapshotId));
+    });
+    test('subject search denied targets and required projections never establish common free', () async {
+      final a = await contributor('alice');
+      await contributor('bob');
+      await booking(a, 9, 10);
+      policy.deniedSubjects.add('bob');
+      final result = await service.searchAvailability(
+        searchQuery([target(), target('bob')]),
+      );
+      expect(result.results.first.coverage, CalendarFreeBusyCoverage.complete);
+      expect(result.results.last.coverage, CalendarFreeBusyCoverage.unknown);
+      expect(result.results.last.periods, isEmpty);
+      expect(result.results.last.freeSlots, isEmpty);
+      expect(result.commonCoverage, CalendarFreeBusyCoverage.unknown);
+      expect(result.commonSlots, isEmpty);
+      for (final operation in [
+        CalendarPermission.projectCalendarAvailability,
+        CalendarPermission.projectEventBusy,
+      ]) {
+        policy.denied.add(operation);
+        expect(
+          (await service.searchAvailability(searchQuery([target()])))
+              .results
+              .single
+              .coverage,
+          CalendarFreeBusyCoverage.unknown,
+        );
+        policy.denied.remove(operation);
+      }
+    });
+    test('subject search empty incomplete foreign and deleted contributor sets remain unknown', () async {
+      final a = await contributor('alice');
+      final query = searchQuery([target()]);
+      policy.resolveOverride = (_, _) => CalendarSubjectResolution(
+        complete: true,
+        revision: 'v',
+        calendarIds: [],
+      );
+      expect(
+        (await service.searchAvailability(query)).commonCoverage,
+        CalendarFreeBusyCoverage.unknown,
+      );
+      policy.resolveOverride = (_, _) => CalendarSubjectResolution(
+        complete: false,
+        revision: 'v',
+        calendarIds: [a],
+      );
+      expect(
+        (await service.searchAvailability(query)).results.single.periods,
+        isEmpty,
+      );
+      policy.scopeOverride = 'test:foreign';
+      final foreign = (await service.create(createInput()))!.calendarId;
+      policy.scopeOverride = null;
+      policy.resolveOverride = (_, _) => CalendarSubjectResolution(
+        complete: true,
+        revision: 'v',
+        calendarIds: [foreign],
+      );
+      expect(
+        (await service.searchAvailability(query)).commonCoverage,
+        CalendarFreeBusyCoverage.unknown,
+      );
+      final deleted = (await service.create(createInput()))!.calendarId;
+      await service.delete(deleted, 1);
+      policy.resolveOverride = (_, _) => CalendarSubjectResolution(
+        complete: true,
+        revision: 'v',
+        calendarIds: [deleted],
+      );
+      expect(
+        (await service.searchAvailability(query)).commonCoverage,
+        CalendarFreeBusyCoverage.unknown,
+      );
+    });
+    test('subject search rechecks resolver revision set and summary access after calculation', () async {
+      final a = await contributor('alice'), b = await contributor('bob');
+      final query = searchQuery([target()]);
+      for (final changeSet in [false, true]) {
+        policy.resolverCalls.clear();
+        policy.resolveOverride = (_, n) => CalendarSubjectResolution(
+          complete: true,
+          revision: !changeSet && n > 1 ? 'changed' : 'v',
+          calendarIds: [changeSet && n > 1 ? b : a],
+        );
+        final result = await service.searchAvailability(query);
+        expect(result.commonCoverage, CalendarFreeBusyCoverage.unknown);
+        expect(result.results.single.periods, isEmpty);
+      }
+      policy.resolveOverride = null;
+      policy.resolverCalls.clear();
+      var calls = 0;
+      policy.onSearchRead = (r) {
+        if (++calls > 1) policy.deniedSubjects.add('alice');
+      };
+      expect(
+        (await service.searchAvailability(query)).commonCoverage,
+        CalendarFreeBusyCoverage.unknown,
+      );
+    });
+    test('subject search freezes query context and rejects malformed bounds minimums and raw target caps', () async {
+      await contributor('alice');
+      final originals = [target()];
+      policy.onSearchRead = (r) {
+        expect(
+          () => r.availabilitySearchQuery!.targets.clear(),
+          throwsUnsupportedError,
+        );
+        originals.clear();
+      };
+      expect(
+        (await service.searchAvailability(searchQuery(originals))).results,
+        hasLength(1),
+      );
+      policy.onSearchRead = null;
+      for (final query in [
+        searchQuery([]),
+        searchQuery(List.generate(33, (_) => target())),
+        searchQuery([target()], minimum: 0),
+        searchQuery([target()], minimum: 2678401),
+        searchQuery([target()])
+            .copyWith(fromUtc: DateTime.utc(2026, 3, 29, 0, 0, 0, 1)),
+        searchQuery([target()]).copyWith(untilUtc: DateTime.utc(2026, 5, 1)),
+      ]) {
+        await expectLater(
+          service.searchAvailability(query),
+          failure(CalendarFailureCode.validation),
+        );
+      }
+      await expectLater(
+        service.searchAvailability(
+          searchQuery(List.generate(9, (n) => target('$n'))),
+        ),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+    });
+    test('subject search contributor raw caps and whole-query calendar budgets cannot produce partial common slots', () async {
+      final ids = <UuidValue>[];
+      for (var i = 0; i < 8; i++) {
+        ids.add((await service.create(createInput()))!.calendarId);
+      }
+      policy.resolveOverride = (_, _) => CalendarSubjectResolution(
+        complete: true,
+        revision: 'v',
+        calendarIds: ids,
+      );
+      final result = await service.searchAvailability(
+        searchQuery([target(), target('bob'), target('carol')]),
+      );
+      expect(
+        result.results
+            .take(2)
+            .every((r) => r.coverage == CalendarFreeBusyCoverage.complete),
+        isTrue,
+      );
+      expect(result.results.last.coverage, CalendarFreeBusyCoverage.unknown);
+      expect(result.commonCoverage, CalendarFreeBusyCoverage.unknown);
+      expect(result.commonSlots, isEmpty);
+      policy.resolveOverride = (_, _) => CalendarSubjectResolution(
+        complete: true,
+        revision: 'v',
+        calendarIds: List.filled(9, ids.first),
+      );
+      expect(
+        (await service.searchAvailability(searchQuery([target()])))
+            .commonCoverage,
+        CalendarFreeBusyCoverage.unknown,
+      );
+    });
+
     CalendarAvailabilityContent hours({
       int priority = 0,
       bool closed = false,
@@ -176,6 +464,118 @@ void main() {
               ),
             ],
     );
+    test('subject search supports mixed people room and equipment references with the same external identifier', () async {
+      final person = await contributor('shared');
+      final targets = [target('shared')];
+      final calendars = [person];
+      for (final kind in ['room', 'equipment']) {
+        final calendar = (await service.create(createInput()))!.calendarId;
+        await service.changeSubject(
+          CalendarSubjectChangeRequest(
+            calendarId: calendar,
+            expectedRevision: 1,
+            action: CalendarSubjectAction.attach,
+            namespace: 'test',
+            kind: kind,
+            externalId: 'shared',
+            contributesAvailability: true,
+          ),
+        );
+        targets.add(target('shared').copyWith(kind: kind));
+        calendars.add(calendar);
+      }
+      for (var i = 0; i < calendars.length; i++) {
+        await booking(calendars[i], 9 + i, 10 + i);
+      }
+      final result = await service.searchAvailability(searchQuery(targets));
+      expect(result.results.map((r) => r.target.kind), [
+        'user',
+        'room',
+        'equipment',
+      ]);
+      expect(
+        result.results.every(
+          (r) => r.coverage == CalendarFreeBusyCoverage.complete,
+        ),
+        isTrue,
+      );
+      expect(result.commonCoverage, CalendarFreeBusyCoverage.complete);
+      expect(result.commonSlots.first.endUtc, DateTime.utc(2026, 3, 29, 9));
+      expect(result.commonSlots.last.startUtc, DateTime.utc(2026, 3, 29, 12));
+    });
+
+    test('subject search intersects independently prioritized hours and filters minimum after combining', () async {
+      final a = await contributor('alice'), b = await contributor('alice');
+      await service.createAvailability(
+        CalendarAvailabilityCreateRequest(calendarId: a, content: hours()),
+      );
+      await service.createAvailability(
+        CalendarAvailabilityCreateRequest(
+          calendarId: b,
+          content: hours(priority: 1).copyWith(
+            openings: [
+              CalendarAvailabilityOpening(
+                timing: hours().openings.single.timing.copyWith(
+                  start: CalendarEventCivil(
+                    year: 2026,
+                    month: 3,
+                    day: 29,
+                    hour: 10,
+                  ),
+                  end: CalendarEventCivil(
+                    year: 2026,
+                    month: 3,
+                    day: 29,
+                    hour: 18,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      final result = await service.searchAvailability(
+        searchQuery([target()], minimum: 7 * 3600),
+      );
+      expect(result.commonSlots.single.startUtc, DateTime.utc(2026, 3, 29, 10));
+      expect(result.commonSlots.single.endUtc, DateTime.utc(2026, 3, 29, 17));
+      final tooLong = await service.searchAvailability(
+        searchQuery([target()], minimum: 7 * 3600 + 1),
+      );
+      expect(tooLong.commonCoverage, CalendarFreeBusyCoverage.complete);
+      expect(tooLong.commonSlots, isEmpty);
+      expect(tooLong.results.single.periods, hasLength(3));
+      policy.denied.add(CalendarPermission.projectAvailability);
+      expect(
+        (await service.searchAvailability(searchQuery([target()])))
+            .commonCoverage,
+        CalendarFreeBusyCoverage.unknown,
+      );
+    });
+    test('subject search charges duplicate source reads against an aggregate event budget', () async {
+      final a = await contributor('alice');
+      for (var i = 0; i < 33; i++) {
+        await booking(a, 9, 10);
+      }
+      policy.resolveOverride = (_, _) => CalendarSubjectResolution(
+        complete: true,
+        revision: 'v',
+        calendarIds: [a],
+      );
+      final result = await service.searchAvailability(
+        searchQuery(List.generate(8, (i) => target('person$i'))),
+      );
+      expect(
+        result.results
+            .take(7)
+            .every((r) => r.coverage == CalendarFreeBusyCoverage.complete),
+        isTrue,
+      );
+      expect(result.results.last.coverage, CalendarFreeBusyCoverage.unknown);
+      expect(result.commonCoverage, CalendarFreeBusyCoverage.unknown);
+      expect(result.commonSlots, isEmpty);
+    });
+
     test('availability CRUD has stable identities stale protection markers and parent dependencies', () async {
       final calendar = (await service.create(createInput()))!.calendarId;
       final receipt = (await service.createAvailability(
@@ -2519,6 +2919,13 @@ void main() {
 }
 
 final class TestPolicy implements CalendarHostPolicy {
+  final resolverCalls = <String, int>{};
+  CalendarSubjectResolution? Function(CalendarAvailabilityTarget, int)?
+  resolveOverride;
+  CalendarAuthorizationRequest? lastSearchRequest;
+  final searchRequests = <CalendarAuthorizationRequest>[];
+  final deniedSubjects = <String>{};
+  void Function(CalendarAuthorizationRequest)? onSearchRead;
   final denied = <CalendarPermission>{};
   final hidden = <UuidValue>{};
   Set<CalendarFieldGroup> grants = groups.toSet();
@@ -2551,6 +2958,61 @@ final class TestPolicy implements CalendarHostPolicy {
             scopeOverride ?? 'test:${session.authenticated!.userIdentifier}',
         policyRevision: epoch,
       );
+  @override
+  Future<CalendarSubjectResolution> resolveAvailabilitySubject(
+    Session session,
+    CalendarHostContext context,
+    CalendarAvailabilityTarget target,
+    Transaction transaction,
+  ) async {
+    final number = resolverCalls.update(
+      target.externalId,
+      (v) => v + 1,
+      ifAbsent: () => 1,
+    );
+    final override = resolveOverride?.call(target, number);
+    if (override != null) return override;
+    final active = await CalendarIdentityRecord.db.find(
+      session,
+      where: (t) =>
+          t.scopeKey.equals(context.scopeKey) & t.deletedAt.equals(null),
+      orderBy: (t) => t.id,
+      limit: 257,
+      transaction: transaction,
+    );
+    if (active.length > 256) {
+      return CalendarSubjectResolution(
+        complete: false,
+        revision: context.policyRevision,
+        calendarIds: [],
+      );
+    }
+    final links = active.isEmpty
+        ? <CalendarSubjectRecord>[]
+        : await CalendarSubjectRecord.db.find(
+            session,
+            where: (t) =>
+                t.calendarId.inSet(active.map((a) => a.id!).toSet()) &
+                t.namespace.equals(target.namespace) &
+                t.kind.equals(target.kind) &
+                t.externalId.equals(target.externalId) &
+                t.contributesAvailability.equals(true),
+            orderBy: (t) => t.calendarId,
+            limit: 9,
+            transaction: transaction,
+          );
+    final scope = await CalendarScopeRecord.db.findFirstRow(
+      session,
+      where: (t) => t.scopeKey.equals(context.scopeKey),
+      transaction: transaction,
+    );
+    return CalendarSubjectResolution(
+      complete: links.length <= 8,
+      revision: '${context.policyRevision}:${scope?.revision ?? 0}',
+      calendarIds: links.map((l) => l.calendarId),
+    );
+  }
+
   @override
   Future<CalendarEventCandidatePlan> planEventQuery(
     Session s,
@@ -2592,6 +3054,13 @@ final class TestPolicy implements CalendarHostPolicy {
     CalendarAuthorizationRequest r,
     CalendarAuthorizationPhase phase,
   ) {
+    if (r.availabilitySearchQuery != null) {
+      lastSearchRequest = r;
+      searchRequests.add(r);
+      if (r.operation == CalendarPermission.readSubjectAvailability) {
+        onSearchRead?.call(r);
+      }
+    }
     if (r.eventId != null) lastEventRequest = r;
     if (r.categoryFilter != null) {
       sawCategoryFilter = true;
@@ -2613,6 +3082,8 @@ final class TestPolicy implements CalendarHostPolicy {
       key: r.key,
       verdict:
           denied.contains(r.operation) ||
+              (r.operation == CalendarPermission.readSubjectAvailability &&
+                  deniedSubjects.contains(r.availabilityTarget?.externalId)) ||
               (r.operation == CalendarPermission.projectEventBusy &&
                   busyDenied.contains(r.eventId)) ||
               hidden.contains(r.calendarId) ||
