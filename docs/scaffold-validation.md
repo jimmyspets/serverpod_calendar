@@ -123,3 +123,25 @@ Final batch results:
 No ICS parser/serializer, ALTREP/extension-parameter acceptance, source metadata round trip, calendar/feed UID/LAST-MODIFIED implementation, ETag behavior or external-client UI support was verified by these metadata tests. The host example still declares fresh-check authorization; a coordinated production policy and other domain families remain separate work.
 
 The restored hidden development runner applied host migration `20261020150003755-calendar-metadata` to existing development storage. Agent-native Serverpod MCP log access confirmed that exact migration, and a subsequent MCP hot reload completed successfully.
+
+
+## Calendar links, categories, images and refresh batch, 2026-10-21
+
+[ADR 0051](adr/0051-calendar-links-categories-images-refresh.md) and [the implementation guide](calendar-links-and-categories.md) record this limited native editing/storage/query profile. The maintainer confirmed HTTP/HTTPS references without user information, exact category text matching with optional language tags and unit-preserving positive whole-second refresh hints with a one-year editing cap. The implementation defines that cap as a 365-day equivalent; schema, API and numeric limits remain review choices.
+
+Agent source review checked independent replacement/clearing, disclosure and write permissions, immutable nested commands/policy context, filter-bound durable cursors, final-check rollback, scope revisions and minimal deletion markers. Links are not fetched, remote images are not loaded and refresh hints do not schedule work. This is local agent review and execution evidence, not independent human approval or hosted CI.
+
+Commands/checks actually run:
+
+- Pinned module/host `serverpod --no-analytics create-migration --tag calendar-links-categories`: generated nullable supplemental-metadata and cursor-filter JSON columns. Reviewed SQL preserves existing rows and identities; generated files were not hand-edited.
+- Focused unit profile subset: **7 passed**; focused database subset: **4 passed**; supplemental Flutter editor widget test: **passed**. These cover URI rejection/preservation, category text/language, image hint defaults/unknown values, preserved refresh units/bounds, atomic authorization and nested-data immutability.
+- `./tool/check.ps1`: locked dependencies, unchanged regeneration of all three server/client pairs, formatting of **93 authored Dart files**, fatal-info analysis, **443 core tests on VM and 443 on Chrome**, **17 module profile tests on VM and 17 on Chrome**, **3 Flutter widget tests**, **26 database/policy tests**, populated-schema upgrades, compiled hosts and two-host generated-client/JWT checks passed. The complete script then stopped at a browser test assumption, so it is not reported as wholly successful.
+- The browser journey initially assumed the edited UUID would appear on the first visible unfiltered page after clearing search. It now reopens through the already-verified exact category filter. An attempted rerun without resetting synthetic storage encountered leftover fixture matches; after `./tool/reset-test.ps1`, `dart run tool/host_smoke.dart --flutter` **passed**. No broader core rerun was needed for this test-only correction; final `dart analyze --fatal-infos` passed.
+- Final two-host evidence includes unit-preserving metadata round trips, independent projections, filtered cursor use across instances and filter-change rejection, existing native/protocol isolation, stale writes, competing delete/attach and JWT refresh/rotation/local logout/refresh revocation. The Flutter WebDriver journey passed explicit supplemental editing, protocol-text retention, exact case-sensitive category/language search, clear/reapply search and existing revision/association/deletion/sign-out checks.
+- `python tool/metadata_upgrade_smoke.py`, invoked by the batch check: **passed** on a temporary synthetic database on dedicated test storage. It verifies both earlier text-metadata and new supplemental migrations, preserving native/protocol content, revisions, identities, associations and old unfiltered cursor bindings, with new fields null. The helper drops only its temporary database.
+
+- Final `flutter build web --no-pub`: **passed**, including the Wasm dry-run compile; no separate Wasm runtime claim follows.
+- Restored the hidden interactive development runner. Agent-native Serverpod MCP `tail_server_logs` verified application of host migration `20261021051116035-calendar-links-categories`; `hot_reload` succeeded. Current MCP access is verified.
+- Relative documentation links, consecutive ADRs 0001–0051, unchanged Apache 2.0 LICENSE, candidate-file credential exclusion and `git diff --check`: passed. Local logs, fixture credentials and build output remain ignored.
+
+Parsing/serialization, arbitrary property parameters, SOURCE handling, feed bytes/ETags, external-client rendering, remote content verification and polling remain pending. No stronger production authorization or complete calendar interoperability guarantee follows from these tests.

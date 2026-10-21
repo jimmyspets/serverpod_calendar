@@ -9,5 +9,6 @@ fields:
   availabilityZoneId: String?
   noRuleFallback: CalendarNoRuleFallback?
   protocolMetadata: CalendarProtocolMetadata?
+  supplementalMetadata: CalendarSupplementalMetadata?
   createdAt: DateTime?
   updatedAt: DateTime?

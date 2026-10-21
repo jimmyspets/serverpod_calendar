@@ -141,3 +141,7 @@ The maintainer selected an ETag-only initial HTTP feed contract, deferring Last-
 ## Native presentation/text increment
 
 The maintainer selected separate native and protocol description/color, native opaque RGB hex versus RFC CSS3 color names, optional preserved multiline native descriptions capped at 16,384 code points, and NAME/DESCRIPTION language variants plus COLOR before other metadata. [ADR 0050](adr/0050-calendar-presentation-and-protocol-text.md) and [the metadata guide](calendar-metadata.md) record the limited FR-02/08/24 implementation and remaining wire/feed requirements. Field editing/storage alone does not fulfill FR-06/14 interoperability.
+
+## Links, categories, images and refresh increment
+
+The maintainer selected HTTP/HTTPS links without user information, exact case-sensitive category text matching with optional language tags, and positive unit-preserving refresh hints with a one-year editing cap. [ADR 0051](adr/0051-calendar-links-categories-images-refresh.md) defines the cap as 365-day equivalent and keeps schema/limit/query mechanics under review. [The guide](calendar-links-and-categories.md) records this limited native FR-02/08/24 increment, including group-authorized category filtering, no link/image fetching or polling and pending parser/export/feed work.

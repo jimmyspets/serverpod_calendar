@@ -134,6 +134,95 @@ void main() {
     );
     await _tap(tester, 'calendar-reload');
     expect(find.text('External change'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('metadata-url')),
+      'https://example.invalid/calendar',
+    );
+    await _tap(tester, 'metadata-category-add');
+    await tester.enterText(
+      find.byKey(const Key('metadata-category-value-0')),
+      'Work',
+    );
+    await tester.enterText(
+      find.byKey(const Key('metadata-category-language-0')),
+      'sv',
+    );
+    await _tap(tester, 'metadata-image-add');
+    await tester.enterText(
+      find.byKey(const Key('metadata-image-uri-0')),
+      'https://example.invalid/image.png',
+    );
+    await tester.enterText(
+      find.byKey(const Key('metadata-image-display-0')),
+      'BADGE,X-PRIVATE',
+    );
+    await tester.enterText(
+      find.byKey(const Key('metadata-image-type-0')),
+      'image/png',
+    );
+    await _tap(tester, 'metadata-refresh-enabled');
+    await tester.enterText(
+      find.byKey(const Key('metadata-refresh-hours')),
+      '24',
+    );
+    await _tap(tester, 'metadata-save');
+    final links = await client.modules.serverpod_calendar.calendar.getCalendar(
+      calendar.id,
+      cal.CalendarFieldGroup.values,
+    );
+    expect(links.supplementalMetadata!.url, 'https://example.invalid/calendar');
+    expect(links.supplementalMetadata!.refreshHint!.days, 0);
+    expect(links.supplementalMetadata!.refreshHint!.hours, 24);
+    expect(links.supplementalMetadata!.images.single.display, [
+      'BADGE',
+      'X-PRIVATE',
+    ]);
+    expect(
+      links.protocolMetadata!.descriptions.single.value,
+      'External change',
+    );
+    await tester.pageBack();
+    await _idle(tester);
+    await tester.enterText(
+      find.byKey(const Key('calendar-category-search')),
+      'Work',
+    );
+    await tester.enterText(
+      find.byKey(const Key('calendar-category-language')),
+      'SV',
+    );
+    await _tap(tester, 'calendar-category-apply');
+    expect(find.text(renamedLabel), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('calendar-category-search')),
+      'work',
+    );
+    await _tap(tester, 'calendar-category-apply');
+    expect(find.text(renamedLabel), findsNothing);
+    await tester.enterText(
+      find.byKey(const Key('calendar-category-search')),
+      '',
+    );
+    await tester.enterText(
+      find.byKey(const Key('calendar-category-language')),
+      '',
+    );
+    await _tap(tester, 'calendar-category-apply');
+    // Unfiltered results may span pages or lie outside the visible list.
+    // Reopen through the already-verified exact filter instead of assuming
+    // this UUID sorts into the first unfiltered page.
+    await tester.enterText(
+      find.byKey(const Key('calendar-category-search')),
+      'Work',
+    );
+    await tester.enterText(
+      find.byKey(const Key('calendar-category-language')),
+      'SV',
+    );
+    await _tap(tester, 'calendar-category-apply');
+    await tester.ensureVisible(find.text(renamedLabel));
+    await tester.tap(find.text(renamedLabel));
+    await _idle(tester);
     await _tap(tester, 'calendar-attach-self');
     await _tap(tester, 'calendar-delete');
     await _tap(tester, 'calendar-confirm-delete');

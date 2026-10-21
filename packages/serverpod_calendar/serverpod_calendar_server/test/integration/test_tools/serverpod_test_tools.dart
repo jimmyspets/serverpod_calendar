@@ -14,6 +14,8 @@
 import 'dart:async' as _ida;
 import 'dart:io' as _idi;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_calendar_server/src/generated/calendar_category_filter.dart'
+    as _ith8xeb5;
 import 'package:serverpod_calendar_server/src/generated/calendar_create_request.dart'
     as _i287wpc6;
 import 'package:serverpod_calendar_server/src/generated/calendar_field_group.dart'
@@ -34,6 +36,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_subject_change_
     as _ib1wmljm;
 import 'package:serverpod_calendar_server/src/generated/calendar_subject_view.dart'
     as _iwx7nyid;
+import 'package:serverpod_calendar_server/src/generated/calendar_supplemental_metadata_update_request.dart'
+    as _ito4h8gf;
 import 'package:serverpod_calendar_server/src/generated/calendar_view.dart'
     as _id91u9he;
 import 'package:serverpod_test/serverpod_test.dart' as _ist;
@@ -313,6 +317,7 @@ class _CalendarEndpoint {
     required int pageSize,
     required List<_i3d02yxy.CalendarFieldGroup> fieldGroups,
     String? cursor,
+    _ith8xeb5.CalendarCategoryFilter? categoryFilter,
   }) async {
     return _ist.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -329,6 +334,7 @@ class _CalendarEndpoint {
             'pageSize': pageSize,
             'fieldGroups': fieldGroups,
             'cursor': cursor,
+            'categoryFilter': categoryFilter,
           }),
           serializationManager: _serializationManager,
         );
@@ -422,6 +428,37 @@ class _CalendarEndpoint {
           createSessionCallback: (_) => _localUniqueSession,
           endpointPath: 'calendar',
           methodName: 'updateProtocolMetadata',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ied1lssg.CalendarMutationReceipt?> updateSupplementalMetadata(
+    _ist.TestSessionBuilder sessionBuilder,
+    _ito4h8gf.CalendarSupplementalMetadataUpdateRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendar',
+            method: 'updateSupplementalMetadata',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendar',
+          methodName: 'updateSupplementalMetadata',
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );

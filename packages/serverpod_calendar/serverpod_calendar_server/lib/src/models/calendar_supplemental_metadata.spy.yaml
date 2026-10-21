@@ -1,0 +1,6 @@
+class: CalendarSupplementalMetadata
+fields:
+  url: String?
+  categories: List<CalendarCategory>
+  images: List<CalendarImageLink>
+  refreshHint: CalendarRefreshHint?

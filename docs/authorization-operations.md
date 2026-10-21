@@ -89,3 +89,5 @@ These are review gates, not missing runtime checks in an otherwise implemented p
 ## Implemented calendar text-metadata increment
 
 [ADR 0050](adr/0050-calendar-presentation-and-protocol-text.md) adds `updateProtocolMetadata` independently from native `updateMetadata` presentation permission, plus a separate `protocolMetadata` disclosure group. The original name-only endpoint preserves new fields; full native presentation and full protocol-text replacements have explicit clear semantics. Hosts receive immutable current/proposed data and actual calendar identity. See [the metadata API and limits](calendar-metadata.md); broader operation families above remain proposals.
+
+[ADR 0051](adr/0051-calendar-links-categories-images-refresh.md) adds independent supplemental-metadata editing/disclosure and immutable category-query context for scope planning and object reads. Matching requires supplemental disclosure even when output requests other groups; cursors bind the exact filter. See [the query contract](calendar-links-and-categories.md#category-queries).

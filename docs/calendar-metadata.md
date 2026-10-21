@@ -1,6 +1,9 @@
 # Calendar presentation and decoded protocol text
 
-This batch extends [native CRUD](calendar-crud-implementation.md) under [ADR 0050](adr/0050-calendar-presentation-and-protocol-text.md). It implements native description/RGB color and authenticated editing/storage/disclosure of decoded calendar NAME/DESCRIPTION language variants and RFC-compatible COLOR. It does **not** implement ICS parsing/serialization, feed output or external-client interoperability. URLs, categories, images, refresh hints and other metadata remain following work.
+The next native increment adds [links, categories, images and refresh hints](calendar-links-and-categories.md) under [ADR 0051](adr/0051-calendar-links-categories-images-refresh.md), including authorized exact category filtering; wire/feed interoperability remains pending.
+
+
+This batch extends [native CRUD](calendar-crud-implementation.md) under [ADR 0050](adr/0050-calendar-presentation-and-protocol-text.md). It implements native description/RGB color and authenticated editing/storage/disclosure of decoded calendar NAME/DESCRIPTION language variants and RFC-compatible COLOR. It does **not** implement ICS parsing/serialization, feed output or external-client interoperability. Native URLs, categories, images and refresh hints are now covered by the separate ADR 0051 increment linked above; source/property-parameter preservation and wire support remain pending.
 
 ## Independent values
 

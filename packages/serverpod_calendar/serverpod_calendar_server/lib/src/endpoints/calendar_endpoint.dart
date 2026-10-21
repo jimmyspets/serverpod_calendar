@@ -21,9 +21,13 @@ class CalendarEndpoint extends Endpoint {
     required int pageSize,
     required List<CalendarFieldGroup> fieldGroups,
     String? cursor,
-  }) =>
-      CalendarModule.service(session)
-          .list(pageSize: pageSize, fieldGroups: fieldGroups, cursor: cursor);
+    CalendarCategoryFilter? categoryFilter,
+  }) => CalendarModule.service(session).list(
+    pageSize: pageSize,
+    fieldGroups: fieldGroups,
+    cursor: cursor,
+    categoryFilter: categoryFilter,
+  );
   Future<CalendarMutationReceipt?> updateMetadata(
     Session session,
     CalendarMetadataUpdateRequest request,
@@ -36,6 +40,10 @@ class CalendarEndpoint extends Endpoint {
     Session session,
     CalendarProtocolMetadataUpdateRequest request,
   ) => CalendarModule.service(session).updateProtocolMetadata(request);
+  Future<CalendarMutationReceipt?> updateSupplementalMetadata(
+    Session session,
+    CalendarSupplementalMetadataUpdateRequest request,
+  ) => CalendarModule.service(session).updateSupplementalMetadata(request);
   Future<CalendarMutationReceipt?> updateSettings(
     Session session,
     CalendarSettingsUpdateRequest request,

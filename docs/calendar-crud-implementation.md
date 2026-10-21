@@ -1,5 +1,8 @@
 # Native calendar CRUD: first implemented slice
 
+The next native increment adds [links, categories, images and refresh hints](calendar-links-and-categories.md) under [ADR 0051](adr/0051-calendar-links-categories-images-refresh.md), including authorized exact category filtering; wire/feed interoperability remains pending.
+
+
 This slice implements calendar names, availability settings and subject associations. Native descriptions/RGB and protocol text editing now extend this slice under [ADR 0050](adr/0050-calendar-presentation-and-protocol-text.md); see [the metadata guide](calendar-metadata.md). Events, tasks, availability calculation/rules, iCalendar import/export, feeds, scheduling and alarms remain following work. See [ADR 0049](adr/0049-first-calendar-crud-implementation.md) and [validation evidence](scaffold-validation.md).
 
 ## Host integration and authorization
