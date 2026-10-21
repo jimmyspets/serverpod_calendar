@@ -29,6 +29,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_event_update_re
     as _iabs06xo;
 import 'package:serverpod_calendar_server/src/generated/calendar_field_group.dart'
     as _i3d02yxy;
+import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_query.dart'
+    as _imwtl5fr;
 import 'package:serverpod_calendar_server/src/generated/calendar_metadata_update_request.dart'
     as _io29vhgw;
 import 'package:serverpod_calendar_server/src/generated/calendar_presentation_update_request.dart'
@@ -92,6 +94,25 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'calendar',
       endpoint: endpoints['calendar']!,
       methodConnectors: {
+        'freeBusy': _is.MethodConnector(
+          name: 'freeBusy',
+          params: {
+            'query': _is.ParameterDescription(
+              name: 'query',
+              type: _is.getType<_imwtl5fr.CalendarFreeBusyQuery>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['calendar'] as _inx4l1vp.CalendarEndpoint)
+                  .freeBusy(
+                    session,
+                    params['query'],
+                  ),
+        ),
         'create': _is.MethodConnector(
           name: 'create',
           params: {

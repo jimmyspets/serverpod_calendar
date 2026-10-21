@@ -37,6 +37,10 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_event_view.dart'
     as _ixldy3zv;
 import 'package:serverpod_calendar_client/src/protocol/calendar_field_group.dart'
     as _ioi1smgh;
+import 'package:serverpod_calendar_client/src/protocol/calendar_free_busy_query.dart'
+    as _isyn5yvo;
+import 'package:serverpod_calendar_client/src/protocol/calendar_free_busy_view.dart'
+    as _i2cb1v6y;
 import 'package:serverpod_calendar_client/src/protocol/calendar_metadata_update_request.dart'
     as _imfz6psz;
 import 'package:serverpod_calendar_client/src/protocol/calendar_mutation_receipt.dart'
@@ -81,6 +85,14 @@ class EndpointCalendar extends _isc.EndpointRef {
 
   @override
   String get name => 'serverpod_calendar.calendar';
+
+  _ida.Future<_i2cb1v6y.CalendarFreeBusyView> freeBusy(
+    _isyn5yvo.CalendarFreeBusyQuery query,
+  ) => caller.callServerEndpoint<_i2cb1v6y.CalendarFreeBusyView>(
+    'serverpod_calendar.calendar',
+    'freeBusy',
+    {'query': query},
+  );
 
   _ida.Future<_ibyc2v98.CalendarMutationReceipt?> create(
     _i3j5a5bv.CalendarCreateRequest request,

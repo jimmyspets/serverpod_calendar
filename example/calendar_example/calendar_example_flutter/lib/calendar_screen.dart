@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'protocol_metadata_editor.dart';
 import 'event_screen.dart';
+import 'calendar_free_busy_screen.dart';
 import 'supplemental_metadata_editor.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -470,6 +471,21 @@ class _CalendarEditorState extends State<CalendarEditor> {
                             ),
                           ),
                     child: const Text('Events'),
+                  ),
+                if (existing)
+                  OutlinedButton(
+                    key: const Key('calendar-free-busy'),
+                    onPressed: locked
+                        ? null
+                        : () => Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (_) => CalendarFreeBusyScreen(
+                                client: widget.client,
+                                calendarId: _calendar!.id,
+                              ),
+                            ),
+                          ),
+                    child: const Text('Free / busy'),
                   ),
                 if (existing && _calendar!.protocolIdentity != null) ...[
                   SelectableText(
