@@ -85,3 +85,7 @@ The [adapter methods](authorization-adapter-contract.md) and [CRUD contract](cal
 - Calendar deletion behavior, item move semantics, task lifecycle and recurrence mutation rules; a permission does not define their behavior.
 
 These are review gates, not missing runtime checks in an otherwise implemented policy. No domain authorization adapter exists yet. Add tests for the confirmed separations and mixed-request atomic denial, together with the guide's per-object, forged-reference and two-host scenarios, when implementing the services.
+
+## Implemented calendar text-metadata increment
+
+[ADR 0050](adr/0050-calendar-presentation-and-protocol-text.md) adds `updateProtocolMetadata` independently from native `updateMetadata` presentation permission, plus a separate `protocolMetadata` disclosure group. The original name-only endpoint preserves new fields; full native presentation and full protocol-text replacements have explicit clear semantics. Hosts receive immutable current/proposed data and actual calendar identity. See [the metadata API and limits](calendar-metadata.md); broader operation families above remain proposals.

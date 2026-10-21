@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_calendar_core/serverpod_calendar_core.dart';
+import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 
 import 'calendar_authorization.dart';
 import 'generated/protocol.dart';
@@ -313,6 +314,11 @@ final class CalendarService {
       revision: a.identity.revision,
       disclosedGroups: groups,
       displayName: metadata ? a.data.displayName : null,
+      description: metadata ? a.data.description : null,
+      color: metadata ? a.data.color : null,
+      protocolMetadata: groups.contains(CalendarFieldGroup.protocolMetadata)
+          ? _protocolModel(a.protocolMetadata)
+          : null,
       createdAt: metadata ? a.data.createdAt : null,
       updatedAt: metadata ? a.data.updatedAt : null,
       availabilityZoneId: settings ? a.data.availabilityZoneId : null,
@@ -338,12 +344,15 @@ final class CalendarService {
     input = input.copyWith();
     final c = await _context();
     final name = _name(input.displayName);
+    final description = _description(input.description);
+    final color = _color(input.color);
     _zone(input.availabilityZoneId);
     final request = CalendarAuthorizationRequest(
       key: 'create',
       operation: CalendarPermission.create,
       proposed: CalendarProposedChange(
         displayName: name,
+        presentation: CalendarPresentationIntent(name, description, color),
         availabilityZoneId: input.availabilityZoneId,
         noRuleFallback: input.noRuleFallback,
       ),
@@ -367,6 +376,8 @@ final class CalendarService {
         CalendarDataRecord(
           calendarId: identity.id!,
           displayName: name,
+          description: description,
+          color: color,
           availabilityZoneId: input.availabilityZoneId,
           noRuleFallback: input.noRuleFallback,
           createdAt: now,
@@ -438,6 +449,108 @@ final class CalendarService {
         decisions.values,
       );
     });
+  }
+
+  Future<CalendarMutationReceipt?> updatePresentation(
+    CalendarPresentationUpdateRequest input,
+  ) async {
+    input = input.copyWith();
+    final name = _name(input.displayName);
+    final description = _description(input.description);
+    final color = _color(input.color);
+    final c = await _context();
+    return _transaction(c, (tx, scope) async {
+      final a = await _active(c, input.calendarId, tx);
+      final request = _request(
+        CalendarPermission.updateMetadata,
+        a,
+        proposed: CalendarProposedChange(
+          displayName: name,
+          presentation: CalendarPresentationIntent(name, description, color),
+        ),
+      );
+      await _decide(
+        c,
+        [request],
+        tx,
+        CalendarAuthorizationPhase.preliminaryWrite,
+      );
+      _revision(a, input.expectedRevision);
+      final decisions = await _final(c, [request], tx);
+      a.data.displayName = name;
+      a.data.description = description;
+      a.data.color = color;
+      return _saveMetadata(a, scope, tx, decisions.values);
+    });
+  }
+
+  Future<CalendarMutationReceipt?> updateProtocolMetadata(
+    CalendarProtocolMetadataUpdateRequest input,
+  ) async {
+    // Freeze nested lists and values before any asynchronous policy callback.
+    final id = input.calendarId;
+    final expectedRevision = input.expectedRevision;
+    late final IcalendarCalendarTextMetadata metadata;
+    try {
+      metadata = _protocolValue(input.metadata);
+    } on ArgumentError {
+      throw _failure(CalendarFailureCode.validation);
+    }
+    final c = await _context();
+    return _transaction(c, (tx, scope) async {
+      final a = await _active(c, id, tx);
+      final request = _request(
+        CalendarPermission.updateProtocolMetadata,
+        a,
+        proposed: CalendarProposedChange(protocolMetadata: metadata),
+      );
+      await _decide(
+        c,
+        [request],
+        tx,
+        CalendarAuthorizationPhase.preliminaryWrite,
+      );
+      _revision(a, expectedRevision);
+      final decisions = await _final(c, [request], tx);
+      a.data.protocolMetadata = metadata.isEmpty
+          ? null
+          : _protocolModel(metadata);
+      return _saveMetadata(a, scope, tx, decisions.values);
+    });
+  }
+
+  Future<CalendarMutationReceipt?> _saveMetadata(
+    _Active a,
+    CalendarScopeRecord scope,
+    Transaction tx,
+    Iterable<CalendarAuthorizationDecision> decisions,
+  ) async {
+    a.data.updatedAt = DateTime.now().toUtc();
+    a.identity.revision++;
+    await CalendarDataRecord.db.updateRow(_session, a.data, transaction: tx);
+    await CalendarIdentityRecord.db.updateRow(
+      _session,
+      a.identity,
+      transaction: tx,
+    );
+    await _bump(scope, tx);
+    return _receipt(a.identity.id!, a.identity.revision, false, decisions);
+  }
+
+  String? _description(String? value) {
+    try {
+      return normalizeCalendarDescription(value);
+    } on ArgumentError {
+      throw _failure(CalendarFailureCode.validation);
+    }
+  }
+
+  String? _color(String? value) {
+    try {
+      return normalizeCalendarNativeColor(value);
+    } on ArgumentError {
+      throw _failure(CalendarFailureCode.validation);
+    }
   }
 
   Future<CalendarMutationReceipt?> updateSettings(
@@ -795,7 +908,16 @@ final class CalendarService {
 }
 
 final class _Active {
-  _Active(this.identity, this.data, this.links);
+  _Active(this.identity, this.data, this.links) {
+    try {
+      protocolMetadata = data.protocolMetadata == null
+          ? IcalendarCalendarTextMetadata()
+          : _protocolValue(data.protocolMetadata!);
+    } on ArgumentError {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
+  }
+  late final IcalendarCalendarTextMetadata protocolMetadata;
   final CalendarIdentityRecord identity;
   final CalendarDataRecord data;
   final List<CalendarSubjectRecord> links;
@@ -803,6 +925,9 @@ final class _Active {
     calendarId: identity.id!,
     revision: identity.revision,
     displayName: data.displayName,
+    description: data.description,
+    color: data.color,
+    protocolMetadata: protocolMetadata,
     availabilityZoneId: data.availabilityZoneId,
     noRuleFallback: data.noRuleFallback,
     subjects: links.map(
@@ -813,3 +938,26 @@ final class _Active {
     ),
   );
 }
+
+IcalendarCalendarTextMetadata _protocolValue(CalendarProtocolMetadata model) =>
+    IcalendarCalendarTextMetadata(
+      names: model.names.map(
+        (v) => IcalendarTextVariant(v.value, language: v.language),
+      ),
+      descriptions: model.descriptions.map(
+        (v) => IcalendarTextVariant(v.value, language: v.language),
+      ),
+      color: model.color,
+    );
+CalendarProtocolMetadata _protocolModel(IcalendarCalendarTextMetadata value) =>
+    CalendarProtocolMetadata(
+      names: [
+        for (final v in value.names)
+          CalendarTextVariant(value: v.value, language: v.language),
+      ],
+      descriptions: [
+        for (final v in value.descriptions)
+          CalendarTextVariant(value: v.value, language: v.language),
+      ],
+      color: value.color,
+    );

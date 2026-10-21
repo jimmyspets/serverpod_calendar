@@ -28,6 +28,14 @@ class CalendarEndpoint extends Endpoint {
     Session session,
     CalendarMetadataUpdateRequest request,
   ) => CalendarModule.service(session).updateMetadata(request);
+  Future<CalendarMutationReceipt?> updatePresentation(
+    Session session,
+    CalendarPresentationUpdateRequest request,
+  ) => CalendarModule.service(session).updatePresentation(request);
+  Future<CalendarMutationReceipt?> updateProtocolMetadata(
+    Session session,
+    CalendarProtocolMetadataUpdateRequest request,
+  ) => CalendarModule.service(session).updateProtocolMetadata(request);
   Future<CalendarMutationReceipt?> updateSettings(
     Session session,
     CalendarSettingsUpdateRequest request,

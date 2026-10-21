@@ -308,6 +308,257 @@ void main() {
         expect(view.availabilityZoneId, 'Europe/Stockholm');
       },
     );
+    test('native and multilingual protocol values stay independent through unrelated edits', () async {
+      final created = (await service.create(
+        createInput('Native')
+          ..description = '  Native\nnotes  '
+          ..color = '#aabbcc',
+      ))!;
+      final id = created.calendarId;
+      final initial = await service.get(id, groups);
+      expect(initial.description, '  Native\nnotes  ');
+      expect(initial.color, '#AABBCC');
+      expect(initial.protocolMetadata!.names, isEmpty);
+      await service.updateProtocolMetadata(
+        CalendarProtocolMetadataUpdateRequest(
+          calendarId: id,
+          expectedRevision: 1,
+          metadata: CalendarProtocolMetadata(
+            names: [
+              CalendarTextVariant(value: 'Protocol', language: 'en'),
+              CalendarTextVariant(value: 'Protokoll', language: 'SV'),
+            ],
+            descriptions: [CalendarTextVariant(value: 'Protocol notes')],
+            color: 'Blue',
+          ),
+        ),
+      );
+      await service.updateMetadata(
+        CalendarMetadataUpdateRequest(
+          calendarId: id,
+          expectedRevision: 2,
+          displayName: 'Renamed',
+        ),
+      );
+      final renamed = await service.get(id, groups);
+      expect(renamed.description, '  Native\nnotes  ');
+      expect(renamed.color, '#AABBCC');
+      expect(renamed.protocolMetadata!.names.last.language, 'SV');
+      expect(renamed.protocolMetadata!.color, 'Blue');
+      await service.updatePresentation(
+        CalendarPresentationUpdateRequest(
+          calendarId: id,
+          expectedRevision: 3,
+          displayName: 'New native',
+        ),
+      );
+      final cleared = await service.get(id, groups);
+      expect(cleared.description, isNull);
+      expect(cleared.color, isNull);
+      expect(
+        cleared.protocolMetadata!.descriptions.single.value,
+        'Protocol notes',
+      );
+      await service.delete(id, 4);
+      expect(
+        await CalendarDataRecord.db.findFirstRow(
+          session,
+          where: (t) => t.calendarId.equals(id),
+        ),
+        isNull,
+      );
+      final marker = (await CalendarIdentityRecord.db.findById(session, id))!;
+      expect(marker.toJson().keys.toSet(), {
+        '__className__',
+        'id',
+        'scopeKey',
+        'revision',
+        'deletedAt',
+      });
+    });
+    test(
+      'protocol writing and disclosure are separate host capabilities',
+      () async {
+        final id = (await service.create(createInput()))!.calendarId;
+        policy.denied.add(CalendarPermission.updateProtocolMetadata);
+        await service.updatePresentation(
+          CalendarPresentationUpdateRequest(
+            calendarId: id,
+            expectedRevision: 1,
+            displayName: 'Allowed',
+            description: 'Native',
+          ),
+        );
+        await expectLater(
+          service.updateProtocolMetadata(
+            CalendarProtocolMetadataUpdateRequest(
+              calendarId: id,
+              expectedRevision: 2,
+              metadata: CalendarProtocolMetadata(
+                names: [CalendarTextVariant(value: 'Denied')],
+                descriptions: [],
+              ),
+            ),
+          ),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        policy.denied.clear();
+        policy.denied.add(CalendarPermission.updateMetadata);
+        await service.updateProtocolMetadata(
+          CalendarProtocolMetadataUpdateRequest(
+            calendarId: id,
+            expectedRevision: 2,
+            metadata: CalendarProtocolMetadata(
+              names: [CalendarTextVariant(value: 'Protocol')],
+              descriptions: [],
+            ),
+          ),
+        );
+        await expectLater(
+          service.updatePresentation(
+            CalendarPresentationUpdateRequest(
+              calendarId: id,
+              expectedRevision: 3,
+              displayName: 'Denied',
+            ),
+          ),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        policy.grants = {CalendarFieldGroup.metadata};
+        final page = await service.list(pageSize: 10, fieldGroups: groups);
+        expect(page.calendars.single.description, 'Native');
+        expect(page.calendars.single.protocolMetadata, isNull);
+        expect(page.calendars.single.disclosedGroups, [
+          CalendarFieldGroup.metadata,
+        ]);
+      },
+    );
+    test('invalid or stale protocol replacement cannot partially commit or rename native fields', () async {
+      final id = (await service.create(createInput()))!.calendarId;
+      await expectLater(
+        service.updateProtocolMetadata(
+          CalendarProtocolMetadataUpdateRequest(
+            calendarId: id,
+            expectedRevision: 1,
+            metadata: CalendarProtocolMetadata(
+              names: [
+                CalendarTextVariant(value: 'A', language: 'en'),
+                CalendarTextVariant(value: 'B', language: 'EN'),
+              ],
+              descriptions: [],
+              color: 'red',
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      var view = await service.get(id, groups);
+      expect(view.revision, 1);
+      expect(view.protocolMetadata!.names, isEmpty);
+      expect(view.protocolMetadata!.color, isNull);
+      await service.updateProtocolMetadata(
+        CalendarProtocolMetadataUpdateRequest(
+          calendarId: id,
+          expectedRevision: 1,
+          metadata: CalendarProtocolMetadata(
+            names: [CalendarTextVariant(value: 'First')],
+            descriptions: [],
+          ),
+        ),
+      );
+      await expectLater(
+        service.updateProtocolMetadata(
+          CalendarProtocolMetadataUpdateRequest(
+            calendarId: id,
+            expectedRevision: 1,
+            metadata: CalendarProtocolMetadata(names: [], descriptions: []),
+          ),
+        ),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      policy.denyFinal = true;
+      await expectLater(
+        service.updatePresentation(
+          CalendarPresentationUpdateRequest(
+            calendarId: id,
+            expectedRevision: 2,
+            displayName: 'No',
+            description: 'No',
+          ),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denyFinal = false;
+      view = await service.get(id, groups);
+      expect(view.displayName, 'Calendar');
+      expect(view.description, isNull);
+      expect(view.revision, 2);
+      expect(view.protocolMetadata!.names.single.value, 'First');
+    });
+    test('nested protocol commands and policy snapshots are immutable across callbacks', () async {
+      final id = (await service.create(createInput()))!.calendarId;
+      final metadata = CalendarProtocolMetadata(
+        names: [CalendarTextVariant(value: 'Validated', language: 'en')],
+        descriptions: [],
+      );
+      policy.onPreliminary = () {
+        metadata.names.single.value = 'Changed';
+        metadata.names.add(
+          CalendarTextVariant(value: 'Duplicate', language: 'EN'),
+        );
+      };
+      await service.updateProtocolMetadata(
+        CalendarProtocolMetadataUpdateRequest(
+          calendarId: id,
+          expectedRevision: 1,
+          metadata: metadata,
+        ),
+      );
+      policy.onPreliminary = null;
+      final view = await service.get(id, groups);
+      expect(view.protocolMetadata!.names.single.value, 'Validated');
+      expect(
+        policy.lastProtocolIntent!.protocolMetadata!.names.single.value,
+        'Validated',
+      );
+      expect(
+        () => policy.lastProtocolIntent!.protocolMetadata!.names.clear(),
+        throwsUnsupportedError,
+      );
+    });
+    test('protocol edits invalidate old continuations and clearing preserves absence', () async {
+      final id = (await service.create(createInput()))!.calendarId;
+      await service.create(createInput());
+      final page = await service.list(pageSize: 1, fieldGroups: groups);
+      await service.updateProtocolMetadata(
+        CalendarProtocolMetadataUpdateRequest(
+          calendarId: id,
+          expectedRevision: 1,
+          metadata: CalendarProtocolMetadata(
+            names: [],
+            descriptions: [],
+            color: 'red',
+          ),
+        ),
+      );
+      await expectLater(
+        service.list(pageSize: 1, fieldGroups: groups, cursor: page.nextCursor),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+      await service.updateProtocolMetadata(
+        CalendarProtocolMetadataUpdateRequest(
+          calendarId: id,
+          expectedRevision: 2,
+          metadata: CalendarProtocolMetadata(names: [], descriptions: []),
+        ),
+      );
+      expect((await service.get(id, groups)).protocolMetadata!.names, isEmpty);
+      final row = (await CalendarDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.calendarId.equals(id),
+      ))!;
+      expect(row.protocolMetadata, isNull);
+    });
     test('unauthenticated direct service calls fail closed', () {
       expect(
         () => CalendarModule.service(builder.build()),
@@ -412,6 +663,7 @@ final class TestPolicy implements CalendarHostPolicy {
       unavailable = false,
       sawActualSnapshot = false;
   String epoch = 'v1';
+  CalendarProposedChange? lastProtocolIntent;
   void Function()? onPreliminary;
   Duration delay = Duration.zero;
   CalendarAuthorizationGuarantee capability =
@@ -452,6 +704,9 @@ final class TestPolicy implements CalendarHostPolicy {
     CalendarAuthorizationRequest r,
     CalendarAuthorizationPhase phase,
   ) {
+    if (r.proposed?.protocolMetadata != null) {
+      lastProtocolIntent = r.proposed;
+    }
     if (r.current != null) {
       sawActualSnapshot = true;
       if (r.current!.calendarId != r.calendarId) {

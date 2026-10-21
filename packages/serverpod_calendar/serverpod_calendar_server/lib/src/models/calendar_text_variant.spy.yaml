@@ -1,0 +1,4 @@
+class: CalendarTextVariant
+fields:
+  value: String
+  language: String?

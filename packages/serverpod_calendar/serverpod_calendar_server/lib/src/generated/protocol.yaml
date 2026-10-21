@@ -5,6 +5,8 @@ calendar:
   - getCalendar:
   - list:
   - updateMetadata:
+  - updatePresentation:
+  - updateProtocolMetadata:
   - updateSettings:
   - subjects:
   - changeSubject:

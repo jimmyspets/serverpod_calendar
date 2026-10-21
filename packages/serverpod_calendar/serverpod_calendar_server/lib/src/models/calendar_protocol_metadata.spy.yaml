@@ -1,0 +1,5 @@
+class: CalendarProtocolMetadata
+fields:
+  names: List<CalendarTextVariant>
+  descriptions: List<CalendarTextVariant>
+  color: String?
