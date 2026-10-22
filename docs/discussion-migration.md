@@ -151,3 +151,7 @@ The maintainer selected PERIOD-valued RDATE additions as the next dedicated batc
 ## PERIOD wire increment and next occurrence batch, 2026-10-22
 
 The maintainer selected PERIOD-valued RDATE next. [ADR 0067](adr/0067-vevent-period-additions.md) implements pure timed pair adaptation with preserved core forms and existing conflict/profile/limit rules; native storage/import/export remain separate. For the following occurrence-component batch, the maintainer selected single timing changes/cancellation and timing-only THISANDFUTURE mapped to the existing core. Per-occurrence content changes and future cancellation will reject explicitly until separately profiled; that next batch is not implemented here.
+
+## Scoped occurrence-component increment, 2026-10-22
+
+[ADR 0068](adr/0068-vevent-occurrence-components.md) adds pure [single timing/cancellation and timing-only THISANDFUTURE component adaptation](icalendar-occurrence-components.md) to the existing core, preserving original identities, source metadata and bounded rejection. This is the maintainer-approved next feature batch. The maintainer also confirmed the matching in-file master requirement and omission-based content inheritance with supplied differences rejected; API/limit mechanics remain reviewable. It supersedes older blanket occurrence-wire-pending wording only for this subset; per-occurrence content/future cancellation, authenticated database import/export, scheduling/alarms and feeds remain pending. No external-client compatibility is claimed.

@@ -15,3 +15,5 @@ The [first standalone non-recurring VEVENT/VTIMEZONE profile](../../docs/icalend
 [Recurring event masters](../../docs/icalendar-recurring-masters.md) now extend that profile with typed RRULE/start-only RDATE/EXDATE, first-period validation and aggregate work caps. PERIOD additions/override components still reject; source retention is separate from FREQ-first output and authorized native import/export.
 
 [Timed PERIOD additions](../../docs/icalendar-recurring-masters.md#period-valued-rdate-additions) now extend RDATE with preserved end/duration spans under ADR 0067. The older PERIOD-rejection checkpoint above is superseded for this pure adapter subset; native storage and occurrence components remain separate.
+
+[Occurrence timing/cancellation components](../../docs/icalendar-occurrence-components.md) now extend the pure profile under ADR 0068. This supersedes older blanket occurrence-component rejection for the documented subset only; content changes, future cancellation and authenticated import/export remain pending.

@@ -58,11 +58,13 @@ final class TimedRecurrenceSet {
   late final Map<TimedValue, TimedEventSpan> periods;
 
   /// Budgets apply before exclusions and to the final union separately.
+  /// Optional [sharedWorkBudget] also charges rule candidate work across calls.
   List<TimedValue> expand({
     required UtcWindow window,
     required int maxCandidateWork,
     required int maxRuleOccurrences,
     required int maxResults,
+    RecurrenceWorkBudget? sharedWorkBudget,
   }) {
     for (final e in {
       'maxCandidateWork': maxCandidateWork,
@@ -87,6 +89,7 @@ final class TimedRecurrenceSet {
             window: window,
             maxCandidateWork: maxCandidateWork,
             maxResults: maxRuleOccurrences,
+            sharedWorkBudget: sharedWorkBudget,
           ),
         );
       } on RecurrenceLimitException catch (e) {

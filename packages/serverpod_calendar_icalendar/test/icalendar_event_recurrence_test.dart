@@ -484,7 +484,7 @@ void main() {
       rejects(IcalendarComponentError.invalidValue),
     );
   });
-  test('override components, SECONDLY and BYSECOND remain rejected', () {
+  test('detached overrides, SECONDLY and BYSECOND remain rejected', () {
     expect(
       () => dateEvent(['RRULE:FREQ=SECONDLY']),
       rejects(IcalendarComponentError.invalidValue),
@@ -511,7 +511,7 @@ void main() {
           ],
         ),
       ),
-      rejects(IcalendarComponentError.unsupportedProperty),
+      rejects(IcalendarComponentError.missing),
     );
   });
   test('duplicate/malformed rule parts and unsupported parameters reject', () {

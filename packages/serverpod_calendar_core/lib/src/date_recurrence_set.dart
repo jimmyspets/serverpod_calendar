@@ -59,12 +59,14 @@ final class DateRecurrenceSet {
   /// or before DTSTART, without moving it. EXDATE does not replenish COUNT.
   /// [maxRuleOccurrences] bounds raw in-query rule output before exclusions;
   /// [maxResults] bounds final output. Any limit throws without partial output.
+  /// Optional [sharedWorkBudget] also charges rule candidate work across calls.
   List<CalendarDate> expand({
     required CalendarDate from,
     required CalendarDate through,
     required int maxCandidateDays,
     required int maxRuleOccurrences,
     required int maxResults,
+    RecurrenceWorkBudget? sharedWorkBudget,
   }) {
     RangeError.checkValueInInterval(
       maxCandidateDays,
@@ -102,6 +104,7 @@ final class DateRecurrenceSet {
           through: through,
           maxCandidateDays: maxCandidateDays,
           maxResults: maxRuleOccurrences,
+          sharedWorkBudget: sharedWorkBudget,
         );
       } on RecurrenceLimitException catch (error) {
         if (error.limit == 'maxResults') {
