@@ -526,3 +526,12 @@ Relative links, consecutive ADR numbering through 0077, candidate-file credentia
 
 
 Interactive restoration: the owned example starts against the unchanged development schema. Serverpod MCP log access and server hot reload succeeded. The configured Flutter app launched; Dart MCP connected to its DTD/app and Flutter hot reload succeeded. These checks supplement the automated journey; they are not CI or external-client evidence.
+
+
+## Event import/storage contract, 2026-10-22
+
+[ADR 0078](adr/0078-create-only-event-import-and-storage.md) records ten directly confirmed product choices and keeps exact schema/API/component-transition/baseline/migration mechanics proposed. The mapping in [the event import contract](event-import.md) was checked against current event content/data/view/field-group models, native mutation/override/preview/free-busy code and pure event/recurrence/occurrence-component adapters. Availability-specific source-preserving storage is not represented as event support.
+
+Checked current RFC 5545 UID/version/component semantics and Serverpod 4.0 model documentation while preserving the pinned 4.0.4 toolchain. The contract distinguishes decoded component preservation from the explicitly selected envelope/zone regeneration, effective native defaults from source omission, administrative audit time from independent protocol state, and local legacy checkpoint initialization from a genuine imported-source baseline. It requires independent import/create/lifecycle authority, hidden-field-safe projections and final full-batch atomicity evidence before implementation.
+
+This batch changes Markdown only: no Dart/model source/generated file/schema/migration, dependency or timezone payload changed. No database reset, generation, runtime tests or interactive reload is necessary or claimed. Validation covers relative Markdown links, consecutive ADRs through 0078, confirmed-choice/pending-status consistency, changed-file scope, local credential-value scanning, `git diff --check` and unchanged Apache 2.0 LICENSE. Future implementation checks are listed in the contract. The new documentation PR remains draft for concrete schema/API review.
