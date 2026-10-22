@@ -1,6 +1,6 @@
 # Delivery roadmap
 
-Status reconciled **2026-10-22**, through baseline-aware authenticated availability replacement under ADRs 0075/0076. The bounded temporal core and scoped native calendar/event services have local validation evidence; the full first release remains incomplete. The [RFC tables](rfc/README.md) are the latest feature-scope source. [Requirements](requirements.md) define stable FR/NFR acceptance targets; [ADRs](adr/README.md) distinguish confirmed scope from proposed implementation details.
+Status reconciled **2026-10-22**, through authenticated per-calendar VFREEBUSY snapshots under ADR 0077. The bounded temporal core and scoped native calendar/event services have local validation evidence; the full first release remains incomplete. The [RFC tables](rfc/README.md) are the latest feature-scope source. [Requirements](requirements.md) define stable FR/NFR acceptance targets; [ADRs](adr/README.md) distinguish confirmed scope from proposed implementation details.
 
 This roadmap tracks the implementation represented by the current branch, including stacked draft PRs; an implemented checkbox does not mean the change is merged into main, released, or that every ADR mechanic is accepted. Check existing GitHub work before filing issues, and link each implementation issue to the relevant requirements and roadmap section.
 
@@ -173,7 +173,8 @@ The separate optional module boundary is selected under [ADR 0042](adr/0042-opti
 - [x] Return host-selected subject summaries by intersecting independently evaluated contributor calendars after their rules, fallback and bookings; calendar priorities do not override one another. Summary projection has independent authority and no source calendar IDs/counts.
 - [x] Implement bounded list-based per-target/common-free search with elapsed-second minimum, exact target deduplication, response snapshot metadata and complete/unknown coverage. Common-free requires every target complete; shared source/evaluation limits never manufacture free time.
 - [ ] Design cross-scope/group-member expansion and production indexed contributor resolution as needed, preserving complete source coverage and declared policy coordination.
-- [ ] Export authorized privacy-safe VFREEBUSY UTC periods separately from event subscriptions. Keep raw rules authenticated-only and out of bearer feeds; test no private event/participant/location leakage, committed-change invalidation and native Flutter available-room/common-slot journeys. Reads describe snapshots, not exclusive reservations.
+- [x] Export [authorized per-calendar VFREEBUSY UTC snapshots](freebusy-export.md) under ADR 0077, independently of subscriptions and detail/raw-rule reads, with complete-or-failure coverage, final source checks, private-data exclusion, committed cross-host changes and generated-client/Flutter evidence. Reads are not reservations.
+- [ ] Design subject/common-free VFREEBUSY export and scheduling messages separately; raw rules remain authenticated-only and out of bearer event feeds.
 
 ## Scheduling
 

@@ -402,6 +402,25 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'calendar',
       endpoint: endpoints['calendar']!,
       methodConnectors: {
+        'exportFreeBusy': _is.MethodConnector(
+          name: 'exportFreeBusy',
+          params: {
+            'query': _is.ParameterDescription(
+              name: 'query',
+              type: _is.getType<_imwtl5fr.CalendarFreeBusyQuery>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['calendar'] as _inx4l1vp.CalendarEndpoint)
+                  .exportFreeBusy(
+                    session,
+                    params['query'],
+                  ),
+        ),
         'freeBusy': _is.MethodConnector(
           name: 'freeBusy',
           params: {

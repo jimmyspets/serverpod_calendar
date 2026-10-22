@@ -87,3 +87,6 @@ The [recurring VEVENT master adapter](docs/icalendar-recurring-masters.md) exten
 ## Availability replacement contract, 2026-10-22
 
 [ADR 0075](docs/adr/0075-availability-update-reconciliation-contract.md) and [the update guide](docs/availability-update.md) record confirmed explicit replacement choices: only selected existing targets, reject local-edit conflicts, require a recorded import baseline, allow equal/reject lower source SEQUENCE, retain matching opening UUIDs, true authorized no-ops, separate replacement authority, and preserve exact source timestamps/omissions even when they regress. Baseline/schema/API/transaction/receipt mechanics remain proposed; no update endpoint or new storage exists yet. Create-only import and authenticated export remain implemented under ADRs 0073/0074. Overwrite/adoption, mixed upsert, source synchronization, feeds and scheduling remain separate.
+
+
+[Privacy-safe VFREEBUSY export](docs/freebusy-export.md) now provides authenticated per-calendar UTC snapshots with complete coverage and independent export authority. It is separate from event subscriptions, subject/common-free export and scheduling messages.

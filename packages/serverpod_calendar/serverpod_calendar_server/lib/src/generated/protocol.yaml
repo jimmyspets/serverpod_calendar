@@ -15,6 +15,7 @@ calendarAvailabilitySearch:
 calendarDiagnostics:
   - check:
 calendar:
+  - exportFreeBusy:
   - freeBusy:
   - create:
   - getCalendar:

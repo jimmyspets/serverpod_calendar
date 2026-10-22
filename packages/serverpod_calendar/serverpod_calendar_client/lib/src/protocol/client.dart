@@ -237,6 +237,14 @@ class EndpointCalendar extends _isc.EndpointRef {
   @override
   String get name => 'serverpod_calendar.calendar';
 
+  _ida.Future<_idt.ByteData> exportFreeBusy(
+    _isyn5yvo.CalendarFreeBusyQuery query,
+  ) => caller.callServerEndpoint<_idt.ByteData>(
+    'serverpod_calendar.calendar',
+    'exportFreeBusy',
+    {'query': query},
+  );
+
   _ida.Future<_i2cb1v6y.CalendarFreeBusyView> freeBusy(
     _isyn5yvo.CalendarFreeBusyQuery query,
   ) => caller.callServerEndpoint<_i2cb1v6y.CalendarFreeBusyView>(
