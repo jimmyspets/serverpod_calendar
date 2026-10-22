@@ -1,6 +1,6 @@
 # Delivery roadmap
 
-Status reconciled **2026-10-22**, through pure availability publication metadata under ADR 0070. The bounded temporal core and scoped native calendar/event services have local validation evidence; the full first release remains incomplete. The [RFC tables](rfc/README.md) are the latest feature-scope source. [Requirements](requirements.md) define stable FR/NFR acceptance targets; [ADRs](adr/README.md) distinguish confirmed scope from proposed implementation details.
+Status reconciled **2026-10-22**, through the availability import storage decisions under ADR 0071; runtime implementation remains through ADR 0070. The bounded temporal core and scoped native calendar/event services have local validation evidence; the full first release remains incomplete. The [RFC tables](rfc/README.md) are the latest feature-scope source. [Requirements](requirements.md) define stable FR/NFR acceptance targets; [ADRs](adr/README.md) distinguish confirmed scope from proposed implementation details.
 
 This roadmap tracks the implementation represented by the current branch, including stacked draft PRs; an implemented checkbox does not mean the change is merged into main, released, or that every ADR mechanic is accepted. Check existing GitHub work before filing issues, and link each implementation issue to the relevant requirements and roadmap section.
 
@@ -129,7 +129,9 @@ Native metadata editing is partial evidence for FR-24, not ICS interoperability.
 - [ ] Validate supported envelopes/component/property/value profiles above syntax and map native domain data. Emit approved UTF-8/CRLF/escaped/folded output through authorized projections. Test Gregorian defaults/rejection, equal source UIDs in separate calendars, conflicting zone definitions, synthetic negative fixtures and work limits. Defer standalone VFREEBUSY import while retaining generated output and authorized iTIP exchanges.
 
 - [x] Add pure availability publication metadata under [ADR 0070](adr/0070-availability-wire-metadata.md), preserving repeated source groups and legal annotations with a bounded trusted private registry. Organizer syntax is not host approval; CONTACT remains source-only.
-- [ ] Design and implement the selected create-only authenticated availability import; reject existing protocol UIDs, preserve supported source data and enforce host authority/atomicity. Updates/reconciliation remain separately designed.
+- [x] Record the selected create-only import and prerequisite storage choices under [ADR 0071](adr/0071-create-only-availability-import.md): full supported wire shape preservation, destination-calendar active UID conflicts initial source protocol versions distinct from database audit times, separate import/create permissions, and opening UUID/protocol UID separation.
+- [ ] Review and implement [source-preserving availability storage](availability-import.md), including separate opening UUID/protocol UID, typed groups/CONTACT/PERIODs, component protocol state and populated migration/editor retention evidence.
+- [ ] Implement create-only authenticated availability import after storage prerequisites; reject active destination-calendar UID conflicts, enforce host authority and atomically commit the entire file. Source updates/reconciliation remain separately designed.
 
 ## Tasks
 
