@@ -2,9 +2,10 @@ part of 'icalendar_event_calendar.dart';
 
 /// Typed AVAILABLE source. Source addresses/metadata never establish authority.
 final class IcalendarAvailable {
-  IcalendarAvailable._(this._value);
+  IcalendarAvailable._(this._value, this.source, this.metadata);
   final IcalendarEvent _value;
-  IcalendarSyntaxComponent get source => _value.source;
+  final IcalendarSyntaxComponent source;
+  final IcalendarAvailabilityMetadata metadata;
   String get uid => _value.uid;
   DateTime get stamp => _value.stamp;
   DateTime? get created => _value.created;
@@ -19,9 +20,11 @@ final class IcalendarAvailable {
 }
 
 final class IcalendarAvailableSeries {
-  IcalendarAvailableSeries._(IcalendarEventSeries value)
-    : master = IcalendarAvailable._(value.master),
-      overrides = List.unmodifiable(value.overrides.map(IcalendarAvailable._)),
+  IcalendarAvailableSeries._(
+    IcalendarEventSeries value,
+    Map<IcalendarEvent, IcalendarAvailable> parsed,
+  ) : master = parsed[value.master]!,
+      overrides = List.unmodifiable(value.overrides.map((v) => parsed[v]!)),
       timing = value.timedSeries!;
   final IcalendarAvailable master;
   final List<IcalendarAvailable> overrides;
@@ -43,6 +46,7 @@ final class IcalendarAvailabilityDefinition {
     this.duration,
     required this.priority,
     required this.closedKind,
+    required this.metadata,
     this.summary,
     this.description,
     this.location,
@@ -57,6 +61,7 @@ final class IcalendarAvailabilityDefinition {
   final CalendarDuration? duration;
   final int priority;
   final AvailabilityKind closedKind;
+  final IcalendarAvailabilityMetadata metadata;
   final IcalendarEventText? summary, description, location;
   final List<IcalendarAvailableSeries> openings;
   DateTime? get endExclusive =>
@@ -156,18 +161,22 @@ IcalendarAvailabilityCalendar parseIcalendarAvailabilityCalendar(
   List<int> bytes, {
   IcalendarSyntaxLimits syntaxLimits = const IcalendarSyntaxLimits(),
   IcalendarComponentLimits limits = const IcalendarComponentLimits(),
+  IcalendarAvailabilityExtensionRegistry? extensions,
 }) => validateIcalendarAvailabilityCalendar(
   parseIcalendarSyntax(bytes, limits: syntaxLimits),
   syntaxLimits: syntaxLimits,
   limits: limits,
+  extensions: extensions,
 );
 
 IcalendarAvailabilityCalendar validateIcalendarAvailabilityCalendar(
   IcalendarSyntaxDocument source, {
   IcalendarSyntaxLimits syntaxLimits = const IcalendarSyntaxLimits(),
   IcalendarComponentLimits limits = const IcalendarComponentLimits(),
+  IcalendarAvailabilityExtensionRegistry? extensions,
 }) {
   limits.validate();
+  final registry = extensions ?? IcalendarAvailabilityExtensionRegistry();
   serializeIcalendarSyntax(source, limits: syntaxLimits);
   return componentGuard(() {
     if (source.components.length != 1 ||
@@ -218,6 +227,7 @@ IcalendarAvailabilityCalendar validateIcalendarAvailabilityCalendar(
     var components = 0;
     for (final c in raw) {
       final openings = <IcalendarEvent>[];
+      final parsedOpenings = <IcalendarEvent, IcalendarAvailable>{};
       for (final o in c.entries.whereType<IcalendarSyntaxComponent>()) {
         if (o.canonicalName != 'AVAILABLE') {
           componentFail(IcalendarComponentError.unsupportedComponent);
@@ -242,14 +252,33 @@ IcalendarAvailabilityCalendar validateIcalendarAvailabilityCalendar(
             'RRULE',
             'RDATE',
             'EXDATE',
+            ..._availabilityRepeatedMetadata,
+            ...registry._names(IcalendarAvailabilityExtensionContext.opening),
           },
-          repeated: {'RDATE', 'EXDATE'},
+          repeated: {'RDATE', 'EXDATE', ..._availabilityRepeatedMetadata},
         );
-        final parsed = _event(o, zones, budget);
+        final timingSource = IcalendarSyntaxComponent(
+          o.name,
+          o.entries.where(
+            (entry) =>
+                entry is! IcalendarSyntaxProperty ||
+                (!_availabilityRepeatedMetadata.contains(entry.canonicalName) &&
+                    !entry.canonicalName.startsWith('X-')),
+          ),
+        );
+        final parsed = _event(timingSource, zones, budget);
         if (parsed.timedSpan == null || parsed.timedSpan!.isPoint) {
           componentFail(IcalendarComponentError.invalidValue);
         }
         openings.add(parsed);
+        final metadata = _publicationMetadata(
+          o,
+          IcalendarAvailabilityExtensionContext.opening,
+          budget,
+          registry,
+          [parsed.summary, parsed.description, parsed.location],
+        );
+        parsedOpenings[parsed] = IcalendarAvailable._(parsed, o, metadata);
       }
       final masters = <String, IcalendarEvent>{};
       final changes = <String, List<IcalendarEvent>>{};
@@ -270,6 +299,14 @@ IcalendarAvailabilityCalendar validateIcalendarAvailabilityCalendar(
       if (changes.keys.any((uid) => !masters.containsKey(uid))) {
         componentFail(IcalendarComponentError.missing);
       }
+      for (final master in masters.values) {
+        for (final override in changes[master.uid] ?? <IcalendarEvent>[]) {
+          _matchingPublicationMetadata(
+            parsedOpenings[master]!.metadata,
+            parsedOpenings[override]!.metadata,
+          );
+        }
+      }
       final series = [
         for (final m in masters.values)
           IcalendarAvailableSeries._(
@@ -279,9 +316,10 @@ IcalendarAvailabilityCalendar validateIcalendarAvailabilityCalendar(
               budget,
               maxOverrides: limits.maxAvailableOverrides,
             ),
+            parsedOpenings,
           ),
       ];
-      final definition = _availability(c, zones, series);
+      final definition = _availability(c, zones, series, budget, registry);
       if (!ids.add(definition.uid)) {
         componentFail(IcalendarComponentError.duplicate);
       }
@@ -308,6 +346,8 @@ IcalendarAvailabilityDefinition _availability(
   IcalendarSyntaxComponent source,
   Map<String, IcalendarValidatedTimeZone> zones,
   List<IcalendarAvailableSeries> openings,
+  ComponentBudget budget,
+  IcalendarAvailabilityExtensionRegistry registry,
 ) {
   final p = componentProperties(source, {
     'UID',
@@ -323,7 +363,9 @@ IcalendarAvailabilityDefinition _availability(
     'SUMMARY',
     'DESCRIPTION',
     'LOCATION',
-  });
+    ..._availabilityDefinitionMetadata,
+    ...registry._names(IcalendarAvailabilityExtensionContext.definition),
+  }, repeated: _availabilityRepeatedMetadata);
   final uid = componentText(requiredProperty(p, 'UID'));
   if (uid.isEmpty) componentFail(IcalendarComponentError.invalidValue);
   TimedValue? bound(String name, bool end) {
@@ -363,6 +405,16 @@ IcalendarAvailabilityDefinition _availability(
       _ => componentFail(IcalendarComponentError.invalidValue),
     };
   }
+  final summary = _componentTextValue(p['SUMMARY']?.single, 4096);
+  final description = _componentTextValue(p['DESCRIPTION']?.single, 16384);
+  final location = _componentTextValue(p['LOCATION']?.single, 4096);
+  final metadata = _publicationMetadata(
+    source,
+    IcalendarAvailabilityExtensionContext.definition,
+    budget,
+    registry,
+    [summary, description, location],
+  );
   return IcalendarAvailabilityDefinition._(
     source: source,
     uid: uid,
@@ -377,9 +429,10 @@ IcalendarAvailabilityDefinition _availability(
     duration: duration,
     priority: _componentInteger(p['PRIORITY']?.single, maximum: 9) ?? 0,
     closedKind: busy,
-    summary: _componentTextValue(p['SUMMARY']?.single, 4096),
-    description: _componentTextValue(p['DESCRIPTION']?.single, 16384),
-    location: _componentTextValue(p['LOCATION']?.single, 4096),
+    metadata: metadata,
+    summary: summary,
+    description: description,
+    location: location,
     openings: openings,
   );
 }

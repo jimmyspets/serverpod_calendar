@@ -14,6 +14,7 @@ enum IcalendarComponentError {
   limitExceeded,
   zoneMismatch,
   zoneCoverage,
+  extensionValidationUnavailable,
 }
 
 /// Diagnostics omit private source names/values and nested exception payloads.
@@ -74,6 +75,7 @@ final class IcalendarComponentLimits {
     this.maxAvailabilityDefinitions = 64,
     this.maxAvailableComponents = 128,
     this.maxAvailableOverrides = 64,
+    this.maxAvailabilityMetadataCodePoints = 65536,
   });
   final int maxEvents, maxZones, maxObservances, maxOnsets, maxCandidates;
   final int maxExplicitDates,
@@ -84,6 +86,7 @@ final class IcalendarComponentLimits {
   final int maxAvailabilityDefinitions,
       maxAvailableComponents,
       maxAvailableOverrides;
+  final int maxAvailabilityMetadataCodePoints;
   void validate() {
     for (final n in [
       maxEvents,
@@ -100,6 +103,7 @@ final class IcalendarComponentLimits {
       maxAvailabilityDefinitions,
       maxAvailableComponents,
       maxAvailableOverrides,
+      maxAvailabilityMetadataCodePoints,
     ]) {
       if (n < 1 || n > 1000000) throw ArgumentError('Invalid component limit');
     }
@@ -112,6 +116,14 @@ final class ComponentBudget {
   final IcalendarComponentLimits limits;
   final RecurrenceWorkBudget sharedWork;
   int observances = 0, onsets = 0, explicitDates = 0, ruleValues = 0;
+  int metadataCodePoints = 0;
+  void metadata(int amount) {
+    metadataCodePoints += amount;
+    if (metadataCodePoints > limits.maxAvailabilityMetadataCodePoints) {
+      componentFail(IcalendarComponentError.limitExceeded);
+    }
+  }
+
   void observance() {
     if (++observances > limits.maxObservances) {
       componentFail(IcalendarComponentError.limitExceeded);

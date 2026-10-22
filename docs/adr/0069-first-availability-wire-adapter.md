@@ -33,3 +33,7 @@ Query expansion uses a fresh shared RecurrenceWorkBudget across all opening seri
 Flattening openings or durations loses recurrence/original identity and nominal DST behavior. Treating empty definitions as missing manufactures free time. Separate per-opening parser/query work caps multiply total cost; reuse shared core accounting. Accepting metadata without context/authority would imply unimplemented import behavior, so keep the first profile explicit and reject unsupported data.
 
 Test defaults/closures, independent optional bounds, preserved duration/metadata/source, positive opening rejection, recurrence/PERIOD/EXDATE, timing singles/ranges, priority/equal composition and clipping, named DST/full-horizon agreement, context/cardinality/grammar/profile rejection, source/query aggregate caps and sanitized late failure. Run focused affected VM checks during development and complete VM/Chrome/repository checks at batch completion. Rich metadata, authenticated import/export, native PERIOD storage, scheduling/alarms, feeds and external-client interoperability remain pending. No schema, migration, generated protocol/client or dependency changes follow.
+
+## Scoped extension
+
+[ADR 0070](0070-availability-wire-metadata.md) supersedes the metadata rejection boundary for the selected pure source-preserving profile. Other pending transport, authority and storage work remains unchanged.

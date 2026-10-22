@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:serverpod_calendar_core/serverpod_calendar_core.dart';
 
 import 'calendar_text_metadata.dart';
+import 'calendar_supplemental_metadata.dart';
 import 'icalendar_component_support.dart';
 import 'icalendar_syntax.dart';
 import 'icalendar_temporal_values.dart';
@@ -11,6 +12,7 @@ import 'icalendar_event_recurrence.dart';
 
 part 'icalendar_event_series.dart';
 part 'icalendar_availability_calendar.dart';
+part 'icalendar_availability_metadata.dart';
 
 enum IcalendarEventStatus { tentative, confirmed, cancelled }
 

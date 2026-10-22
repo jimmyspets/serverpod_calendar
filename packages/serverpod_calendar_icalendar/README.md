@@ -19,3 +19,7 @@ The [first standalone non-recurring VEVENT/VTIMEZONE profile](../../docs/icalend
 [Occurrence timing/cancellation components](../../docs/icalendar-occurrence-components.md) now extend the pure profile under ADR 0068. This supersedes older blanket occurrence-component rejection for the documented subset only; content changes, future cancellation and authenticated import/export remain pending.
 
 The pure [availability adapter](../../docs/icalendar-availability-adapter.md) now adds standalone VAVAILABILITY/AVAILABLE timing, recurrence/overrides, bounded core projection and source serialization under ADR 0069. Rich metadata and authenticated import/export remain separate.
+
+## Availability metadata
+
+See [the bounded wire metadata profile](../../docs/icalendar-availability-metadata.md) for preserved source groups, trusted private registration and organizer authority boundaries. This pure adapter does not implement database import, authorized export or feeds.
