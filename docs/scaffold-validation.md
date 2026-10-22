@@ -508,3 +508,21 @@ Relative links, consecutive ADRs through 0076, candidate-file credential-value s
 
 
 Interactive restoration: the owned development runner starts against the migrated existing database. Serverpod MCP log access and hot reload succeeded; its configured Flutter app launched, Dart MCP connected to its DTD/app and Flutter hot reload succeeded. These supplement the automated journey and do not imply CI or external-client evidence.
+
+
+## Privacy-safe VFREEBUSY export, 2026-10-22
+
+[ADR 0077](adr/0077-privacy-safe-calendar-freebusy-export.md) implements the maintainer-confirmed per-calendar-first export and independent host export permission. Existing Flutter 3.47.7, Dart 3.13.5, Serverpod 4.0.4, timezone 0.11.2 and IANA 2026e remain pinned. This batch changes no schema, database migration, timezone payload or dependency; no database reset is required.
+
+Ran `./tool/generate.ps1` for the endpoint, generated clients and test tools. Focused `dart test packages/serverpod_calendar_icalendar/test/icalendar_free_busy_output_test.dart` passed **8 tests**. From the example server, `dart test test/integration/calendar_test.dart --plain-name "free busy export"` passed **9 tests**. Logs are ignored at `.local/freebusy-export-wire-focused.log` and `.local/freebusy-export-db-focused.log`. Pinned `dart analyze --fatal-infos` passed. Initial iteration corrected a constructor-boundary test expectation, explicitly converted generated database-clock stamps to whole-second protocol precision, refreshed test service instances after runtime-option installation and fixed analyzer braces. User-supplied fractional calendar timing is still rejected; no rounding policy changed.
+
+The focused suites cover complete partition/ordering/classification/merging, all-free output versus incomplete/empty/overlapping input, UTC/profile/exclusive-2100 bounds, period/byte/window limits, UID escaping and determinism for supplied snapshot metadata. Database tests cover private source exclusion, complete working-hours/bookings/status/transparency, no metadata/revision/audit/generation changes, unrelated snapshot UIDs/stamps, independent export/query rights, denied/over-cap source unknown results, repeated parent/event/rule checks after serialization, final policy context/outage, one-request policy batches, DATE recurrence/moved exceptions/cancellation/DST, and foreign/deleted/missing calendar rejection.
+
+Ran the complete `./tool/check.ps1`: exit 0, `All requested local checks passed.` Ignored `.local/freebusy-export-batch-check.log` records stable generation, formatting, fatal-info analysis, **471 core VM + 471 core Chrome**, **217 iCalendar VM + 217 iCalendar Chrome**, **96 module VM + 17 module Chrome**, **3 Flutter widget** and **145 database/policy** tests. Populated upgrades, native host compilation, two independent host/generated-client/JWT checks, the Flutter WebDriver journey and release web build passed. Wasm dry-run compilation passed; no Wasm runtime claim follows.
+
+New generated-client checks compare occupied intervals across hosts while ignoring intentionally fresh UID/stamp metadata, verify private identity/content exclusion, and confirm committed tentative-to-confirmed and transparency changes appear in remote files. The Flutter journey requests a fresh server snapshot and checks actual output/classification and absent private title/event/calendar IDs. Clipboard behavior is not separately claimed. No subject/common-free export, HTTP feed, scheduling, standalone VFREEBUSY import or external-client interoperability is claimed.
+
+Relative links, consecutive ADR numbering through 0077, candidate-file credential-value scanning, `git diff --check` and unchanged Apache 2.0 LICENSE were checked. The whole feature batch is committed together; the PR remains draft for concrete mechanics review.
+
+
+Interactive restoration: the owned example starts against the unchanged development schema. Serverpod MCP log access and server hot reload succeeded. The configured Flutter app launched; Dart MCP connected to its DTD/app and Flutter hot reload succeeded. These checks supplement the automated journey; they are not CI or external-client evidence.

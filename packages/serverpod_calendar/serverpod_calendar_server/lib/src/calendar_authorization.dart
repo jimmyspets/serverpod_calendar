@@ -9,6 +9,7 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  exportFreeBusy,
   replaceAvailabilityFromImport,
   exportAvailability,
   importAvailability,

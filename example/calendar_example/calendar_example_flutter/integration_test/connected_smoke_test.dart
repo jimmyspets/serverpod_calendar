@@ -453,6 +453,17 @@ void main() {
     await _waitFor(tester, find.byKey(const Key('busy-complete')));
     expect(find.text('tentative'), findsOneWidget);
     expect(find.text('Never show private busy title'), findsNothing);
+    await _tap(tester, 'busy-export');
+    await _waitFor(tester, find.byKey(const Key('busy-export-source')));
+    final freeBusyFile = tester
+        .widget<SelectableText>(find.byKey(const Key('busy-export-source')))
+        .data!;
+    expect(freeBusyFile, contains('BEGIN:VFREEBUSY\r\n'));
+    expect(freeBusyFile, contains('FREEBUSY;FBTYPE=BUSY-TENTATIVE:'));
+    expect(freeBusyFile, isNot(contains('Never show private busy title')));
+    expect(freeBusyFile, isNot(contains(busyExample.eventId.toString())));
+    expect(freeBusyFile, isNot(contains(calendar.id.toString())));
+
     await tester.pageBack();
     await _idle(tester);
     await events.deleteEvent(busyExample.eventId, 1);
