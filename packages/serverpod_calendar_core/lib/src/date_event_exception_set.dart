@@ -14,6 +14,7 @@ import 'date_recurrence_rule.dart';
 final class DateEventExceptionSet {
   /// Checks all targets together with one shared bounded recurrence expansion.
   /// Raw input count is checked before copying; duplicate targets are rejected.
+  /// Optional [sharedWorkBudget] charges membership work to an aggregate ceiling.
   factory DateEventExceptionSet({
     required DateEventSeries series,
     required List<DateEventException> exceptions,
@@ -21,6 +22,7 @@ final class DateEventExceptionSet {
     required int maxValidationCandidateDays,
     required int maxValidationRuleOccurrences,
     required int maxValidationResults,
+    RecurrenceWorkBudget? sharedWorkBudget,
   }) {
     _budget(maxExceptions, 'maxExceptions', minimum: 0);
     _budget(maxValidationCandidateDays, 'maxValidationCandidateDays');
@@ -46,6 +48,7 @@ final class DateEventExceptionSet {
               maxCandidateDays: maxValidationCandidateDays,
               maxRuleOccurrences: maxValidationRuleOccurrences,
               maxResults: maxValidationResults,
+              sharedWorkBudget: sharedWorkBudget,
             )
             .toSet();
       } on RecurrenceLimitException catch (error) {

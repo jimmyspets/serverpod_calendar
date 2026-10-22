@@ -1,0 +1,121 @@
+part of 'icalendar_event_calendar.dart';
+
+/// One complete in-file master and supported timing/cancellation components.
+/// Common content is on [master]; [overrides] retains source omission/versions.
+/// Core projections provide timing only, not status/transparency or authority.
+final class IcalendarEventSeries {
+  IcalendarEventSeries._(
+    this.master,
+    List<IcalendarEvent> overrides,
+    this.dateSeries,
+    this.timedSeries,
+  ) : overrides = List.unmodifiable(overrides);
+  final IcalendarEvent master;
+  final List<IcalendarEvent> overrides;
+  final DateEventRangeSet? dateSeries;
+  final TimedEventSeries? timedSeries;
+}
+
+IcalendarEventSeries _eventSeries(
+  IcalendarEvent master,
+  List<IcalendarEvent> overrides,
+  ComponentBudget budget,
+) {
+  final limits = budget.limits;
+  if (overrides.isNotEmpty && master.recurrence == null) {
+    componentFail(IcalendarComponentError.invalidValue);
+  }
+  bool sameText(IcalendarEventText? a, IcalendarEventText? b) =>
+      a == null ||
+      (b != null &&
+          a.value == b.value &&
+          a.language == b.language &&
+          a.alternativeUri == b.alternativeUri);
+  for (final o in overrides) {
+    if (!sameText(o.summary, master.summary) ||
+        !sameText(o.description, master.description) ||
+        !sameText(o.location, master.location) ||
+        (o.transparency != null && o.isTransparent != master.isTransparent) ||
+        (o.status != null &&
+            o.status != master.status &&
+            o.status != IcalendarEventStatus.cancelled)) {
+      componentFail(IcalendarComponentError.unsupportedProperty);
+    }
+    if (o.isThisAndFuture && o.status == IcalendarEventStatus.cancelled) {
+      componentFail(IcalendarComponentError.unsupportedProperty);
+    }
+    if (master.dateSpan != null) {
+      if (o.recurrenceDate == null || o.dateSpan == null) {
+        componentFail(IcalendarComponentError.invalidValue);
+      }
+    } else if (o.recurrenceTime == null ||
+        o.timedSpan == null ||
+        !master.timedSpan!.start.sameProfile(o.recurrenceTime!) ||
+        !master.timedSpan!.start.sameProfile(o.timedSpan!.start)) {
+      componentFail(IcalendarComponentError.invalidValue);
+    }
+  }
+  if (master.dateSpan != null) {
+    final recurrence =
+        master.recurrence?.dateSet ??
+        DateRecurrenceSet(start: master.dateSpan!.start, maxExplicitDates: 0);
+    final singles = DateEventExceptionSet(
+      series: DateEventSeries(recurrence: recurrence, span: master.dateSpan!),
+      exceptions: [
+        for (final o in overrides.where((o) => !o.isThisAndFuture))
+          o.status == IcalendarEventStatus.cancelled
+              ? DateEventException.cancel(originalStart: o.recurrenceDate!)
+              : DateEventException.replace(
+                  originalStart: o.recurrenceDate!,
+                  replacement: o.dateSpan!,
+                ),
+      ],
+      maxExceptions: limits.maxOverridesPerEvent,
+      maxValidationCandidateDays: limits.maxCandidates,
+      maxValidationRuleOccurrences: limits.maxValidationOccurrences,
+      maxValidationResults: limits.maxValidationOccurrences,
+      sharedWorkBudget: budget.sharedWork,
+    );
+    final ranges = DateEventRangeSet(
+      base: singles,
+      changes: [
+        for (final o in overrides.where((o) => o.isThisAndFuture))
+          DateEventRangeChange(
+            originalStart: o.recurrenceDate!,
+            replacement: o.dateSpan!,
+          ),
+      ],
+      maxRangeChanges: limits.maxOverridesPerEvent,
+      maxValidationCandidateDays: limits.maxCandidates,
+      maxValidationRuleOccurrences: limits.maxValidationOccurrences,
+      maxValidationResults: limits.maxValidationOccurrences,
+      sharedWorkBudget: budget.sharedWork,
+    );
+    return IcalendarEventSeries._(master, overrides, ranges, null);
+  }
+  final recurrence =
+      master.recurrence?.timedSet ??
+      TimedRecurrenceSet(start: master.timedSpan!.start, maxExplicitDates: 0);
+  final timed = TimedEventSeries(
+    recurrence: recurrence,
+    span: master.timedSpan!,
+    exceptions: [
+      for (final o in overrides.where((o) => !o.isThisAndFuture))
+        o.status == IcalendarEventStatus.cancelled
+            ? TimedEventException.cancel(o.recurrenceTime!)
+            : TimedEventException.replace(o.recurrenceTime!, o.timedSpan!),
+    ],
+    changes: [
+      for (final o in overrides.where((o) => o.isThisAndFuture))
+        TimedEventRangeChange(
+          originalStart: o.recurrenceTime!,
+          replacement: o.timedSpan!,
+        ),
+    ],
+    maxChanges: limits.maxOverridesPerEvent,
+    maxValidationCandidateWork: limits.maxCandidates,
+    maxValidationOccurrences: limits.maxValidationOccurrences,
+    sharedWorkBudget: budget.sharedWork,
+  );
+  return IcalendarEventSeries._(master, overrides, null, timed);
+}

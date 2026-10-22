@@ -25,3 +25,7 @@ Charge each raw pair once to the existing combined per-event/calendar explicit-d
 Flattening periods into starts loses their exceptional lengths. Converting all spans to elapsed duration loses nominal units and end/duration identity. Last-value-wins conflicts silently discard data; keep the existing core rejection instead. Expanding native persistence/import now would combine independent authorization, reconciliation and schema work with this pure adapter batch.
 
 Focused VM tests cover RFC examples, round trips/source retention, union/COUNT/exclusion precedence, overlaps with starts before the window, duplicates/conflicts, exact zones/aliases, gap/fold and nominal DST durations, profile endpoints, malformed/context/parameter rejection, combined raw limits and atomic sanitized failure. Run the complete VM/Chrome and repository checks at batch completion. No schema, migration, generated protocol/client or dependency changes are expected. Separate occurrence components, database import/export, scheduling/alarms and HTTP publication remain pending.
+
+## Subsequent scoped extension
+
+[ADR 0068](0068-vevent-occurrence-components.md) adds separate occurrence timing/single-cancellation components and timing-only ranges. It supersedes occurrence-component rejection only for that profile; per-occurrence content/future cancellation and authenticated import/export remain pending.
