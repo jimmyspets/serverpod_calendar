@@ -16,20 +16,37 @@ IcalendarEventRecurrence? componentEventRecurrence(
   Object start,
   Map<String, List<IcalendarSyntaxProperty>> properties,
   ComponentBudget budget,
-  Object Function(IcalendarSyntaxProperty) parseTemporal,
+  Object Function(IcalendarSyntaxProperty, bool exclusiveEnd) parseTemporal,
 ) {
   if (!['RRULE', 'RDATE', 'EXDATE'].any(properties.containsKey)) return null;
   final additions = <Object>[], exclusions = <Object>[];
+  final periods = <TimedEventSpan>[];
   var explicitCount = 0;
   for (final name in ['RDATE', 'EXDATE']) {
     for (final p in properties[name] ?? <IcalendarSyntaxProperty>[]) {
+      final parameters = componentParameters(p, {'VALUE', 'TZID'});
+      final period =
+          parameters['VALUE'] != null &&
+          componentToken(parameters['VALUE']!) == 'PERIOD';
+      if (period && (name != 'RDATE' || start is! TimedValue)) {
+        componentFail(IcalendarComponentError.invalidValue);
+      }
       for (final value in p.value.split(',')) {
         if (++explicitCount > budget.limits.maxExplicitDates) {
           componentFail(IcalendarComponentError.limitExceeded);
         }
         budget.explicitDate();
+        if (period) {
+          final span = _period(p, value, parseTemporal);
+          if (!(start as TimedValue).sameProfile(span.start)) {
+            componentFail(IcalendarComponentError.invalidValue);
+          }
+          periods.add(span);
+          continue;
+        }
         final parsed = parseTemporal(
           IcalendarSyntaxProperty(p.name, value, parameters: p.parameters),
+          false,
         );
         if ((start is CalendarDate && parsed is! CalendarDate) ||
             (start is TimedValue &&
@@ -88,9 +105,42 @@ IcalendarEventRecurrence? componentEventRecurrence(
       rule: rule,
       inclusions: additions.cast<TimedValue>(),
       exclusions: exclusions.cast<TimedValue>(),
+      periods: periods,
       maxExplicitDates: budget.limits.maxExplicitDates,
     ),
   );
+}
+
+TimedEventSpan _period(
+  IcalendarSyntaxProperty property,
+  String value,
+  Object Function(IcalendarSyntaxProperty, bool exclusiveEnd) parseTemporal,
+) {
+  final parts = value.split('/');
+  if (parts.length != 2 || parts.any((p) => p.isEmpty)) {
+    componentFail(IcalendarComponentError.invalidValue);
+  }
+  // VALUE=PERIOD describes the pair. Each endpoint is a DATE-TIME, with the
+  // property's exact TZID independently checked by the existing value adapter.
+  Object endpoint(String raw, bool exclusiveEnd) => parseTemporal(
+    IcalendarSyntaxProperty(
+      property.name,
+      raw,
+      parameters: property.parameters.where((p) => p.canonicalName != 'VALUE'),
+    ),
+    exclusiveEnd,
+  );
+  final start = endpoint(parts[0], false);
+  if (start is! TimedValue) {
+    componentFail(IcalendarComponentError.invalidValue);
+  }
+  final tail = parts[1];
+  if (tail.startsWith('P') || tail.startsWith('+P') || tail.startsWith('-P')) {
+    return TimedEventSpan(start: start, duration: parseIcalendarDuration(tail));
+  }
+  final end = endpoint(tail, true);
+  if (end is! TimedValue) componentFail(IcalendarComponentError.invalidValue);
+  return TimedEventSpan(start: start, end: end);
 }
 
 final class _Parts {

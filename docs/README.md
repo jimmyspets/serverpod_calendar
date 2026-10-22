@@ -69,3 +69,5 @@ See [bounded iCalendar syntax foundations](icalendar-syntax.md) for strict input
 See [typed temporal wire values](icalendar-temporal-values.md) and [the first standalone VEVENT/VTIMEZONE adapter](icalendar-event-adapter.md) for the ADR 0063/0065 pure adaptation increments; authorized import/export and feeds remain pending.
 
 See [recurring VEVENT masters](icalendar-recurring-masters.md) for ADR 0066 rule/set mapping, source/output normalization and shared candidate-work limits.
+
+See [PERIOD-valued event additions](icalendar-recurring-masters.md#period-valued-rdate-additions) for ADR 0067 timed exceptional spans and their native-storage boundary.

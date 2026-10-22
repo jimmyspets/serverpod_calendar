@@ -51,4 +51,4 @@ Pinned tools and local setup/run/check commands are documented in the [developme
 
 ## Recurring event wire profile
 
-The [recurring VEVENT master adapter](docs/icalendar-recurring-masters.md) extends the pure event/zone adapter with RRULE and start-only RDATE/EXDATE. Source retention, native temporal meaning and whole-calendar work limits are explicit. PERIOD additions, separate occurrence components, database import/export and HTTP publication remain pending; this does not establish external-client compatibility.
+The [recurring VEVENT master adapter](docs/icalendar-recurring-masters.md) extends the pure event/zone adapter with RRULE and start-only RDATE/EXDATE. Source retention, native temporal meaning and whole-calendar work limits are explicit. [PERIOD-valued RDATE additions](docs/icalendar-recurring-masters.md#period-valued-rdate-additions) now preserve exceptional timed spans. Separate occurrence components, database import/export and HTTP publication remain pending; this does not establish external-client compatibility.

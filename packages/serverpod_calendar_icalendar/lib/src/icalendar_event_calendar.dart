@@ -320,7 +320,7 @@ IcalendarEvent _event(
       start,
       p,
       budget,
-      (p) => _temporal(p, zones),
+      (p, exclusiveEnd) => _temporal(p, zones, exclusiveEnd: exclusiveEnd),
     ),
     created: p['CREATED'] == null ? null : componentUtc(p['CREATED']!.single),
     lastModified: p['LAST-MODIFIED'] == null
