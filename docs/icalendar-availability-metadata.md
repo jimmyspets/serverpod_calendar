@@ -51,3 +51,7 @@ A new `maxAvailabilityMetadataCodePoints` default of 65536 applies across the en
 Focused tests cover legal contexts, escaping/group preservation, annotations, registry snapshots and failures, override inheritance/differences, aggregate and per-property bounds, sanitized late failure and unchanged composition. See [validation evidence](scaffold-validation.md) for actual broader checks. This adds no tables, migration, generated clients, scheduling, feeds or external-client compatibility.
 
 The maintainer selected create-only authenticated availability import next, rejecting existing protocol UIDs. Import design must settle authority, atomicity, source preservation and reconciliation boundaries before implementation. Updates remain a separate batch.
+
+## Selected storage/import follow-up
+
+The maintainer confirmed extending native storage before import rather than rejecting supported metadata/UID/PERIOD shapes. [ADR 0071](adr/0071-create-only-availability-import.md) and [the proposed contract](availability-import.md) also record destination-calendar active UID conflicts and preserved initial source protocol versions. The pure adapter does not itself provide these storage or import guarantees.

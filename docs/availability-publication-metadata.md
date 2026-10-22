@@ -35,3 +35,7 @@ All fields are nullable additions inside existing JSON content. Older rows decod
 CONTACT stays import-preserved only; wire property grouping, parser/export, full protocol stamps/SEQUENCE, envelope duration shorthand, per-occurrence text/future cancellation, feeds and external-client evidence remain pending. See [validation evidence](scaffold-validation.md) and [roadmap](roadmap.md).
 
 Subsequent native scope: [protocol lifecycle and envelope duration](availability-protocol-lifecycle.md) under [ADR 0061](adr/0061-availability-protocol-lifecycle-and-envelope-duration.md) supersedes earlier pending wording for these native values. Wire/source histories, CONTACT and scheduling remain pending.
+
+## Source-preserving storage follow-up
+
+[ADR 0071](adr/0071-create-only-availability-import.md) confirms extending storage for repeated category groups and annotated CONTACT before create-only import. [The proposed contract](availability-import.md) keeps CONTACT read-only through native edits and preserves grouping/annotations without a new native contact editor. This is a future model change, not an implemented extension of the current DTOs.
