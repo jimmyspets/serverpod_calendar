@@ -174,33 +174,39 @@ void main() {
       throwsArgumentError,
     );
   });
-  test('invalid identities fractional stamps and backwards clock reject', () {
-    final c = content(),
-        baseline = availabilityProtocolBaseline(content(), created, modified);
-    expect(
-      () => validateAvailabilityProtocolState(
-        baseline.copyWith(stamp: modified),
-        c,
-      ),
-      throwsArgumentError,
-    );
-    expect(
-      () =>
-          validateAvailabilityProtocolState(baseline.copyWith(openings: []), c),
-      throwsArgumentError,
-    );
-    expect(
-      () => advanceAvailabilityProtocol(
+  test(
+    'invalid identities and fractional stamps reject; clock correction clamps',
+    () {
+      final c = content(),
+          baseline = availabilityProtocolBaseline(content(), created, modified);
+      expect(
+        () => validateAvailabilityProtocolState(
+          baseline.copyWith(
+            stamp: modified.add(const Duration(microseconds: 1)),
+          ),
+          c,
+        ),
+        throwsArgumentError,
+      );
+      expect(
+        () => validateAvailabilityProtocolState(
+          baseline.copyWith(openings: []),
+          c,
+        ),
+        throwsArgumentError,
+      );
+      final clamped = advanceAvailabilityProtocol(
         baseline,
         c,
         null,
         c.copyWith(summary: 'New'),
         null,
         created,
-      ),
-      throwsArgumentError,
-    );
-  });
+      );
+      expect(clamped.stamp, baseline.stamp);
+      expect(clamped.sequence, 1);
+    },
+  );
   test('envelope duration preserves units and nominal DST days differ from elapsed hours', () {
     final c = content().copyWith(
       validFrom: start(zoned: true),

@@ -7,6 +7,7 @@ environment:
   sdk: '>=3.13.5 <3.14.0'
 dependencies:
   serverpod: 4.0.4
+  crypto: 3.0.7
   serverpod_calendar_core:
     path: ../../serverpod_calendar_core
   serverpod_calendar_icalendar:

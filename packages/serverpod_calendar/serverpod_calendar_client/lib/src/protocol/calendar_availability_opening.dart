@@ -14,7 +14,9 @@ import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+import 'calendar_availability_category_group.dart' as _iywbqexh;
 import 'calendar_availability_extension.dart' as _ip5gybl4;
+import 'calendar_availability_text.dart' as _itw42wa3;
 import 'calendar_availability_text_parameters.dart' as _ipbm7ji7;
 import 'calendar_event_recurrence.dart' as _iqxs44bf;
 import 'calendar_event_timing.dart' as _ieswiaty;
@@ -33,6 +35,10 @@ abstract class CalendarAvailabilityOpening
     this.comments,
     this.textParameters,
     this.extensions,
+    this.categoryGroups,
+    this.contacts,
+    this.protocolUid,
+    this.periods,
   });
 
   const factory CalendarAvailabilityOpening({
@@ -46,6 +52,10 @@ abstract class CalendarAvailabilityOpening
     List<String>? comments,
     _ipbm7ji7.CalendarAvailabilityTextParameters? textParameters,
     List<_ip5gybl4.CalendarAvailabilityExtension>? extensions,
+    List<_iywbqexh.CalendarAvailabilityCategoryGroup>? categoryGroups,
+    List<_itw42wa3.CalendarAvailabilityText>? contacts,
+    String? protocolUid,
+    List<_ieswiaty.CalendarEventTiming>? periods,
   }) = _CalendarAvailabilityOpeningImpl;
 
   factory CalendarAvailabilityOpening.fromJson(
@@ -88,6 +98,25 @@ abstract class CalendarAvailabilityOpening
                 .deserialize<List<_ip5gybl4.CalendarAvailabilityExtension>>(
                   jsonSerialization['extensions'],
                 ),
+      categoryGroups: jsonSerialization['categoryGroups'] == null
+          ? null
+          : _ie4a1wrz.Protocol()
+                .deserialize<List<_iywbqexh.CalendarAvailabilityCategoryGroup>>(
+                  jsonSerialization['categoryGroups'],
+                ),
+      contacts: jsonSerialization['contacts'] == null
+          ? null
+          : _ie4a1wrz.Protocol()
+                .deserialize<List<_itw42wa3.CalendarAvailabilityText>>(
+                  jsonSerialization['contacts'],
+                ),
+      protocolUid: jsonSerialization['protocolUid'] as String?,
+      periods: jsonSerialization['periods'] == null
+          ? null
+          : _ie4a1wrz.Protocol()
+                .deserialize<List<_ieswiaty.CalendarEventTiming>>(
+                  jsonSerialization['periods'],
+                ),
     );
   }
 
@@ -111,6 +140,14 @@ abstract class CalendarAvailabilityOpening
 
   final List<_ip5gybl4.CalendarAvailabilityExtension>? extensions;
 
+  final List<_iywbqexh.CalendarAvailabilityCategoryGroup>? categoryGroups;
+
+  final List<_itw42wa3.CalendarAvailabilityText>? contacts;
+
+  final String? protocolUid;
+
+  final List<_ieswiaty.CalendarEventTiming>? periods;
+
   /// Returns a shallow copy of this [CalendarAvailabilityOpening]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -125,6 +162,10 @@ abstract class CalendarAvailabilityOpening
     List<String>? comments,
     _ipbm7ji7.CalendarAvailabilityTextParameters? textParameters,
     List<_ip5gybl4.CalendarAvailabilityExtension>? extensions,
+    List<_iywbqexh.CalendarAvailabilityCategoryGroup>? categoryGroups,
+    List<_itw42wa3.CalendarAvailabilityText>? contacts,
+    String? protocolUid,
+    List<_ieswiaty.CalendarEventTiming>? periods,
   });
   @override
   bool operator ==(Object other) {
@@ -180,6 +221,23 @@ abstract class CalendarAvailabilityOpening
             const _iss.DeepCollectionEquality().equals(
               other.extensions,
               extensions,
+            ) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.categoryGroups,
+              categoryGroups,
+            ) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.contacts,
+              contacts,
+            ) &&
+            (identical(
+                  other.protocolUid,
+                  protocolUid,
+                ) ||
+                other.protocolUid == protocolUid) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.periods,
+              periods,
             );
   }
 
@@ -197,6 +255,10 @@ abstract class CalendarAvailabilityOpening
       const _iss.DeepCollectionEquality().hash(comments),
       textParameters,
       const _iss.DeepCollectionEquality().hash(extensions),
+      const _iss.DeepCollectionEquality().hash(categoryGroups),
+      const _iss.DeepCollectionEquality().hash(contacts),
+      protocolUid,
+      const _iss.DeepCollectionEquality().hash(periods),
     );
   }
 
@@ -215,6 +277,15 @@ abstract class CalendarAvailabilityOpening
       if (textParameters != null) 'textParameters': textParameters?.toJson(),
       if (extensions != null)
         'extensions': extensions?.toJson(valueToJson: (v) => v.toJson()),
+      if (categoryGroups != null)
+        'categoryGroups': categoryGroups?.toJson(
+          valueToJson: (v) => v.toJson(),
+        ),
+      if (contacts != null)
+        'contacts': contacts?.toJson(valueToJson: (v) => v.toJson()),
+      if (protocolUid != null) 'protocolUid': protocolUid,
+      if (periods != null)
+        'periods': periods?.toJson(valueToJson: (v) => v.toJson()),
     };
   }
 
@@ -236,6 +307,15 @@ abstract class CalendarAvailabilityOpening
         'extensions': extensions?.toJson(
           valueToJson: (v) => v.toJsonForProtocol(),
         ),
+      if (categoryGroups != null)
+        'categoryGroups': categoryGroups?.toJson(
+          valueToJson: (v) => v.toJsonForProtocol(),
+        ),
+      if (contacts != null)
+        'contacts': contacts?.toJson(valueToJson: (v) => v.toJsonForProtocol()),
+      if (protocolUid != null) 'protocolUid': protocolUid,
+      if (periods != null)
+        'periods': periods?.toJson(valueToJson: (v) => v.toJsonForProtocol()),
     };
   }
 
@@ -259,6 +339,10 @@ class _CalendarAvailabilityOpeningImpl extends CalendarAvailabilityOpening {
     List<String>? comments,
     _ipbm7ji7.CalendarAvailabilityTextParameters? textParameters,
     List<_ip5gybl4.CalendarAvailabilityExtension>? extensions,
+    List<_iywbqexh.CalendarAvailabilityCategoryGroup>? categoryGroups,
+    List<_itw42wa3.CalendarAvailabilityText>? contacts,
+    String? protocolUid,
+    List<_ieswiaty.CalendarEventTiming>? periods,
   }) : super._(
          uid: uid,
          timing: timing,
@@ -270,6 +354,10 @@ class _CalendarAvailabilityOpeningImpl extends CalendarAvailabilityOpening {
          comments: comments,
          textParameters: textParameters,
          extensions: extensions,
+         categoryGroups: categoryGroups,
+         contacts: contacts,
+         protocolUid: protocolUid,
+         periods: periods,
        );
 
   /// Returns a shallow copy of this [CalendarAvailabilityOpening]
@@ -287,6 +375,10 @@ class _CalendarAvailabilityOpeningImpl extends CalendarAvailabilityOpening {
     Object? comments = _Undefined,
     Object? textParameters = _Undefined,
     Object? extensions = _Undefined,
+    Object? categoryGroups = _Undefined,
+    Object? contacts = _Undefined,
+    Object? protocolUid = _Undefined,
+    Object? periods = _Undefined,
   }) {
     return CalendarAvailabilityOpening(
       uid: uid is _isc.UuidValue? ? uid : this.uid,
@@ -310,6 +402,17 @@ class _CalendarAvailabilityOpeningImpl extends CalendarAvailabilityOpening {
       extensions: extensions is List<_ip5gybl4.CalendarAvailabilityExtension>?
           ? extensions
           : this.extensions?.map((e0) => e0.copyWith()).toList(),
+      categoryGroups:
+          categoryGroups is List<_iywbqexh.CalendarAvailabilityCategoryGroup>?
+          ? categoryGroups
+          : this.categoryGroups?.map((e0) => e0.copyWith()).toList(),
+      contacts: contacts is List<_itw42wa3.CalendarAvailabilityText>?
+          ? contacts
+          : this.contacts?.map((e0) => e0.copyWith()).toList(),
+      protocolUid: protocolUid is String? ? protocolUid : this.protocolUid,
+      periods: periods is List<_ieswiaty.CalendarEventTiming>?
+          ? periods
+          : this.periods?.map((e0) => e0.copyWith()).toList(),
     );
   }
 }

@@ -3,7 +3,9 @@ serverOnly: true
 table: serverpod_calendar_availability_data
 fields:
   availabilityId: UuidValue, relation(parent=serverpod_calendar_availability)
-  protocolUid: UuidValue, default=random
+  protocolUid: String
+  calendarId: UuidValue, relation(parent=serverpod_calendar_identity)
+  uidDigest: String
   protocolState: CalendarAvailabilityProtocolState?
   timingOverrides: List<CalendarAvailabilityOpeningEdits>?
   content: CalendarAvailabilityContent
@@ -13,6 +15,5 @@ indexes:
   calendar_availability_data_identity_unique:
     fields: availabilityId
     unique: true
-  calendar_availability_data_uid_unique:
-    fields: protocolUid
-    unique: true
+  calendar_availability_data_uid_candidates:
+    fields: calendarId, uidDigest

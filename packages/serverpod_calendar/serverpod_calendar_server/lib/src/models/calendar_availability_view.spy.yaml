@@ -4,8 +4,8 @@ fields:
   id: UuidValue
   calendarId: UuidValue
   revision: int
-  protocolUid: UuidValue
-  lastModified: DateTime
+  protocolUid: String
+  lastModified: DateTime?
   timingOverrides: List<CalendarAvailabilityOpeningEdits>?
   content: CalendarAvailabilityContent
   protocolState: CalendarAvailabilityProtocolState

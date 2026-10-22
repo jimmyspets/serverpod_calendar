@@ -715,7 +715,33 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
           calendarId: second.calendarId,
           content: cal.CalendarAvailabilityContent(
             summary: 'Private rule',
-            openings: [cal.CalendarAvailabilityOpening(timing: opening)],
+            categoryGroups: [
+              cal.CalendarAvailabilityCategoryGroup(
+                values: ['One', 'One'],
+                language: 'en',
+              ),
+              cal.CalendarAvailabilityCategoryGroup(
+                values: ['Två'],
+                language: 'sv',
+              ),
+            ],
+            openings: [
+              cal.CalendarAvailabilityOpening(
+                timing: opening,
+                periods: [
+                  opening.copyWith(
+                    start: cal.CalendarEventCivil(
+                      year: 2026,
+                      month: 4,
+                      day: 5,
+                      hour: 9,
+                    ),
+                    end: null,
+                    duration: cal.CalendarEventDuration(hours: 2),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ))!;
@@ -723,6 +749,37 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
       check(
         remoteRule.content.openings.single.uid != null,
         'Opening identity was not persisted across hosts',
+      );
+      check(
+        remoteRule.content.categoryGroups!.first.values.length == 2 &&
+            remoteRule.content.categoryGroups!.last.language == 'sv' &&
+            remoteRule.content.openings.single.protocolUid != null &&
+            remoteRule
+                    .content
+                    .openings
+                    .single
+                    .periods!
+                    .single
+                    .duration!
+                    .hours ==
+                2,
+        'Remote source-preserving groups, opening protocol UID or PERIOD lost',
+      );
+      final sourcePreview = await ab.preview(
+        cal.CalendarAvailabilityOccurrenceQuery(
+          availabilityId: remoteRule.id,
+          openingUid: remoteRule.content.openings.single.uid!,
+          expectedRevision: 1,
+          fromUtc: DateTime.utc(2026, 4, 5),
+          untilUtc: DateTime.utc(2026, 4, 6),
+        ),
+      );
+      check(
+        sourcePreview.occurrences.single.endUtc!
+                .difference(sourcePreview.occurrences.single.startUtc!)
+                .inHours ==
+            2,
+        'Remote PERIOD projection flattened its exceptional duration',
       );
       final withHours = await b.freeBusy(busyQuery);
       check(

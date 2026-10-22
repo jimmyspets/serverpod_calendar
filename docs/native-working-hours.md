@@ -43,7 +43,7 @@ Writes, parent-dependency checks and free/busy share the durable scope transacti
 | Trusted cap | Value |
 | --- | --- |
 | Active definitions per calendar / management list | 64 |
-| Openings per definition | 16 |
+| Stored opening masters per definition | 128 under ADR 0072; query source caps remain separate |
 | Source openings evaluated per query, combined | 64 |
 | Expanded opening intervals, combined | 5000 |
 | Expansion candidate / raw-base / result budget per opening | 200000 / 10000 / 500 |
@@ -57,3 +57,7 @@ The Flutter example offers simple daily/weekly single-opening hours, explicit da
 Ordinary configuration updates now preserve/revalidate separate occurrence edits on retained opening UIDs, and require additional metadata authority for metadata-signature changes. The timing form preserves unrelated metadata. See [the current editing contract](availability-occurrences-and-metadata.md).
 
 Subsequent native scope: [protocol lifecycle and envelope duration](availability-protocol-lifecycle.md) under [ADR 0061](adr/0061-availability-protocol-lifecycle-and-envelope-duration.md) supersedes earlier pending wording for these native values. Wire/source histories, CONTACT and scheduling remain pending.
+
+## Source-preserving storage extension
+
+[ADR 0072](adr/0072-source-preserving-availability-storage.md) and [the current storage guide](availability-storage.md) extend the native model with exact text protocol UIDs distinct from UUID references, grouped categories/read-only CONTACT, availability-only PERIODs and independent source component versions. Existing single-group/comment representations remain supported. Authenticated import/export and scheduling remain pending. A larger stored definition can exceed the unchanged 64-source-opening query cap and return unknown; storage acceptance never guarantees complete query coverage.

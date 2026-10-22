@@ -35,3 +35,7 @@ The rule list shows the stored duration and read-only definition protocol versio
 ## Imported protocol lifecycle follow-up
 
 [ADR 0071](adr/0071-create-only-availability-import.md) confirms preserving source versions/dates separately from local audit time. [The proposed storage contract](availability-import.md) describes source omission, opening/override state and later native mutation. Imported-state support is not implemented: current local-creation invariants and legacy behavior above remain the runtime baseline until the reviewed storage/migration batch.
+
+## Implemented storage follow-up
+
+[ADR 0072](adr/0072-source-preserving-availability-storage.md) and [the implementation guide](availability-storage.md) supersede storage-pending wording for the scoped prerequisite/native behaviors. They document exact UID/group/CONTACT/PERIOD and component-version representations, retention, policy context, query caps and upgrade behavior. Authenticated import remains pending; conversion is not authorization or publication.

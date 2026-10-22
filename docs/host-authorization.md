@@ -132,3 +132,9 @@ Pattern updates authorize the fully merged and validated proposal: explicit date
 ## Proposed availability import boundary
 
 [The create-only import contract](availability-import.md) records confirmed distinct import authority plus per-definition create authority and proposes actual destination/parent context, source UID/protocol state and full source-preserving validated proposals. Dedicated organizer approval and current private registration remain required at preliminary/final phases. This interface is not implemented. Existing external fresh-check limitations remain unchanged; source metadata and parsed objects never carry authorization.
+
+## Implemented storage follow-up
+
+[ADR 0072](adr/0072-source-preserving-availability-storage.md) and [the implementation guide](availability-storage.md) supersede storage-pending wording for the scoped prerequisite/native behaviors. They document exact UID/group/CONTACT/PERIOD and component-version representations, retention, policy context, query caps and upgrade behavior. Authenticated import remains pending; conversion is not authorization or publication.
+
+Source-preserving native writes under ADR 0072 gate echoed read-only CONTACT/opening protocol UIDs with readAvailability before equality checks and at final write. Correct/incorrect guesses both deny when raw read is unavailable. Write-only clients may omit these fields for server-side retention. Write-operation decisions continue to control receipt disclosure independently.

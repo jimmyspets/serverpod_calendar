@@ -1,0 +1,6 @@
+class: CalendarAvailabilityText
+immutable: true
+fields:
+  value: String
+  language: String?
+  alternativeUri: String?

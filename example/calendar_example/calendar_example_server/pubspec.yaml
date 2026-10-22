@@ -13,6 +13,8 @@ dependencies:
   serverpod_notifications_server:
     path: ../../../packages/serverpod_notifications/serverpod_notifications_server
 dev_dependencies:
+  serverpod_calendar_icalendar:
+    path: ../../../packages/serverpod_calendar_icalendar
   lints: 6.1.0
   serverpod_test: 4.0.4
   test: ^1.25.5

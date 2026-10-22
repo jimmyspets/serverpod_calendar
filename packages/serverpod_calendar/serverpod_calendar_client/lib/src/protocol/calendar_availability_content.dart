@@ -14,10 +14,12 @@ import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+import 'calendar_availability_category_group.dart' as _iywbqexh;
 import 'calendar_availability_class.dart' as _iucw7bzg;
 import 'calendar_availability_extension.dart' as _ip5gybl4;
 import 'calendar_availability_opening.dart' as _i8tf9h36;
 import 'calendar_availability_organizer.dart' as _i5oc0nlo;
+import 'calendar_availability_text.dart' as _itw42wa3;
 import 'calendar_availability_text_parameters.dart' as _ipbm7ji7;
 import 'calendar_event_duration.dart' as _idn2i48l;
 import 'calendar_event_timing.dart' as _ieswiaty;
@@ -43,6 +45,8 @@ abstract class CalendarAvailabilityContent
     this.extensions,
     this.organizer,
     this.validDuration,
+    this.categoryGroups,
+    this.contacts,
   }) : priority = priority ?? 0,
        closedKind = closedKind ?? _izms466b.CalendarFreeBusyKind.unavailable;
 
@@ -63,6 +67,8 @@ abstract class CalendarAvailabilityContent
     List<_ip5gybl4.CalendarAvailabilityExtension>? extensions,
     _i5oc0nlo.CalendarAvailabilityOrganizer? organizer,
     _idn2i48l.CalendarEventDuration? validDuration,
+    List<_iywbqexh.CalendarAvailabilityCategoryGroup>? categoryGroups,
+    List<_itw42wa3.CalendarAvailabilityText>? contacts,
   }) = _CalendarAvailabilityContentImpl;
 
   factory CalendarAvailabilityContent.fromJson(
@@ -131,6 +137,18 @@ abstract class CalendarAvailabilityContent
           : _ie4a1wrz.Protocol().deserialize<_idn2i48l.CalendarEventDuration>(
               jsonSerialization['validDuration'],
             ),
+      categoryGroups: jsonSerialization['categoryGroups'] == null
+          ? null
+          : _ie4a1wrz.Protocol()
+                .deserialize<List<_iywbqexh.CalendarAvailabilityCategoryGroup>>(
+                  jsonSerialization['categoryGroups'],
+                ),
+      contacts: jsonSerialization['contacts'] == null
+          ? null
+          : _ie4a1wrz.Protocol()
+                .deserialize<List<_itw42wa3.CalendarAvailabilityText>>(
+                  jsonSerialization['contacts'],
+                ),
     );
   }
 
@@ -166,6 +184,10 @@ abstract class CalendarAvailabilityContent
 
   final _idn2i48l.CalendarEventDuration? validDuration;
 
+  final List<_iywbqexh.CalendarAvailabilityCategoryGroup>? categoryGroups;
+
+  final List<_itw42wa3.CalendarAvailabilityText>? contacts;
+
   /// Returns a shallow copy of this [CalendarAvailabilityContent]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -186,6 +208,8 @@ abstract class CalendarAvailabilityContent
     List<_ip5gybl4.CalendarAvailabilityExtension>? extensions,
     _i5oc0nlo.CalendarAvailabilityOrganizer? organizer,
     _idn2i48l.CalendarEventDuration? validDuration,
+    List<_iywbqexh.CalendarAvailabilityCategoryGroup>? categoryGroups,
+    List<_itw42wa3.CalendarAvailabilityText>? contacts,
   });
   @override
   bool operator ==(Object other) {
@@ -270,7 +294,15 @@ abstract class CalendarAvailabilityContent
                   other.validDuration,
                   validDuration,
                 ) ||
-                other.validDuration == validDuration);
+                other.validDuration == validDuration) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.categoryGroups,
+              categoryGroups,
+            ) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.contacts,
+              contacts,
+            );
   }
 
   @override
@@ -293,6 +325,8 @@ abstract class CalendarAvailabilityContent
       const _iss.DeepCollectionEquality().hash(extensions),
       organizer,
       validDuration,
+      const _iss.DeepCollectionEquality().hash(categoryGroups),
+      const _iss.DeepCollectionEquality().hash(contacts),
     );
   }
 
@@ -317,6 +351,12 @@ abstract class CalendarAvailabilityContent
         'extensions': extensions?.toJson(valueToJson: (v) => v.toJson()),
       if (organizer != null) 'organizer': organizer?.toJson(),
       if (validDuration != null) 'validDuration': validDuration?.toJson(),
+      if (categoryGroups != null)
+        'categoryGroups': categoryGroups?.toJson(
+          valueToJson: (v) => v.toJson(),
+        ),
+      if (contacts != null)
+        'contacts': contacts?.toJson(valueToJson: (v) => v.toJson()),
     };
   }
 
@@ -345,6 +385,12 @@ abstract class CalendarAvailabilityContent
       if (organizer != null) 'organizer': organizer?.toJsonForProtocol(),
       if (validDuration != null)
         'validDuration': validDuration?.toJsonForProtocol(),
+      if (categoryGroups != null)
+        'categoryGroups': categoryGroups?.toJson(
+          valueToJson: (v) => v.toJsonForProtocol(),
+        ),
+      if (contacts != null)
+        'contacts': contacts?.toJson(valueToJson: (v) => v.toJsonForProtocol()),
     };
   }
 
@@ -374,6 +420,8 @@ class _CalendarAvailabilityContentImpl extends CalendarAvailabilityContent {
     List<_ip5gybl4.CalendarAvailabilityExtension>? extensions,
     _i5oc0nlo.CalendarAvailabilityOrganizer? organizer,
     _idn2i48l.CalendarEventDuration? validDuration,
+    List<_iywbqexh.CalendarAvailabilityCategoryGroup>? categoryGroups,
+    List<_itw42wa3.CalendarAvailabilityText>? contacts,
   }) : super._(
          summary: summary,
          validFrom: validFrom,
@@ -391,6 +439,8 @@ class _CalendarAvailabilityContentImpl extends CalendarAvailabilityContent {
          extensions: extensions,
          organizer: organizer,
          validDuration: validDuration,
+         categoryGroups: categoryGroups,
+         contacts: contacts,
        );
 
   /// Returns a shallow copy of this [CalendarAvailabilityContent]
@@ -414,6 +464,8 @@ class _CalendarAvailabilityContentImpl extends CalendarAvailabilityContent {
     Object? extensions = _Undefined,
     Object? organizer = _Undefined,
     Object? validDuration = _Undefined,
+    Object? categoryGroups = _Undefined,
+    Object? contacts = _Undefined,
   }) {
     return CalendarAvailabilityContent(
       summary: summary is String? ? summary : this.summary,
@@ -451,6 +503,13 @@ class _CalendarAvailabilityContentImpl extends CalendarAvailabilityContent {
       validDuration: validDuration is _idn2i48l.CalendarEventDuration?
           ? validDuration
           : this.validDuration?.copyWith(),
+      categoryGroups:
+          categoryGroups is List<_iywbqexh.CalendarAvailabilityCategoryGroup>?
+          ? categoryGroups
+          : this.categoryGroups?.map((e0) => e0.copyWith()).toList(),
+      contacts: contacts is List<_itw42wa3.CalendarAvailabilityText>?
+          ? contacts
+          : this.contacts?.map((e0) => e0.copyWith()).toList(),
     );
   }
 }

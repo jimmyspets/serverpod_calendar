@@ -10,7 +10,11 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
+    as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+import 'calendar_availability_override_protocol_state.dart' as _i33h9mr5;
 
 @_isc.immutable
 abstract class CalendarAvailabilityOpeningProtocolState
@@ -19,14 +23,16 @@ abstract class CalendarAvailabilityOpeningProtocolState
     required this.openingUid,
     this.created,
     required this.stamp,
-    required this.lastModified,
+    this.lastModified,
+    this.overrides,
   });
 
   const factory CalendarAvailabilityOpeningProtocolState({
     required _isc.UuidValue openingUid,
     DateTime? created,
     required DateTime stamp,
-    required DateTime lastModified,
+    DateTime? lastModified,
+    List<_i33h9mr5.CalendarAvailabilityOverrideProtocolState>? overrides,
   }) = _CalendarAvailabilityOpeningProtocolStateImpl;
 
   factory CalendarAvailabilityOpeningProtocolState.fromJson(
@@ -40,9 +46,16 @@ abstract class CalendarAvailabilityOpeningProtocolState
           ? null
           : _isc.DateTimeJsonExtension.fromJson(jsonSerialization['created']),
       stamp: _isc.DateTimeJsonExtension.fromJson(jsonSerialization['stamp']),
-      lastModified: _isc.DateTimeJsonExtension.fromJson(
-        jsonSerialization['lastModified'],
-      ),
+      lastModified: jsonSerialization['lastModified'] == null
+          ? null
+          : _isc.DateTimeJsonExtension.fromJson(
+              jsonSerialization['lastModified'],
+            ),
+      overrides: jsonSerialization['overrides'] == null
+          ? null
+          : _ie4a1wrz.Protocol().deserialize<
+              List<_i33h9mr5.CalendarAvailabilityOverrideProtocolState>
+            >(jsonSerialization['overrides']),
     );
   }
 
@@ -52,7 +65,9 @@ abstract class CalendarAvailabilityOpeningProtocolState
 
   final DateTime stamp;
 
-  final DateTime lastModified;
+  final DateTime? lastModified;
+
+  final List<_i33h9mr5.CalendarAvailabilityOverrideProtocolState>? overrides;
 
   /// Returns a shallow copy of this [CalendarAvailabilityOpeningProtocolState]
   /// with some or all fields replaced by the given arguments.
@@ -62,6 +77,7 @@ abstract class CalendarAvailabilityOpeningProtocolState
     DateTime? created,
     DateTime? stamp,
     DateTime? lastModified,
+    List<_i33h9mr5.CalendarAvailabilityOverrideProtocolState>? overrides,
   });
   @override
   bool operator ==(Object other) {
@@ -90,7 +106,11 @@ abstract class CalendarAvailabilityOpeningProtocolState
                   other.lastModified,
                   lastModified,
                 ) ||
-                other.lastModified == lastModified);
+                other.lastModified == lastModified) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.overrides,
+              overrides,
+            );
   }
 
   @override
@@ -101,6 +121,7 @@ abstract class CalendarAvailabilityOpeningProtocolState
       created,
       stamp,
       lastModified,
+      const _iss.DeepCollectionEquality().hash(overrides),
     );
   }
 
@@ -112,7 +133,9 @@ abstract class CalendarAvailabilityOpeningProtocolState
       'openingUid': openingUid.toJson(),
       if (created != null) 'created': created?.toJson(),
       'stamp': stamp.toJson(),
-      'lastModified': lastModified.toJson(),
+      if (lastModified != null) 'lastModified': lastModified?.toJson(),
+      if (overrides != null)
+        'overrides': overrides?.toJson(valueToJson: (v) => v.toJson()),
     };
   }
 
@@ -124,7 +147,11 @@ abstract class CalendarAvailabilityOpeningProtocolState
       'openingUid': openingUid.toJson(),
       if (created != null) 'created': created?.toJson(),
       'stamp': stamp.toJson(),
-      'lastModified': lastModified.toJson(),
+      if (lastModified != null) 'lastModified': lastModified?.toJson(),
+      if (overrides != null)
+        'overrides': overrides?.toJson(
+          valueToJson: (v) => v.toJsonForProtocol(),
+        ),
     };
   }
 
@@ -142,12 +169,14 @@ class _CalendarAvailabilityOpeningProtocolStateImpl
     required _isc.UuidValue openingUid,
     DateTime? created,
     required DateTime stamp,
-    required DateTime lastModified,
+    DateTime? lastModified,
+    List<_i33h9mr5.CalendarAvailabilityOverrideProtocolState>? overrides,
   }) : super._(
          openingUid: openingUid,
          created: created,
          stamp: stamp,
          lastModified: lastModified,
+         overrides: overrides,
        );
 
   /// Returns a shallow copy of this [CalendarAvailabilityOpeningProtocolState]
@@ -158,13 +187,21 @@ class _CalendarAvailabilityOpeningProtocolStateImpl
     _isc.UuidValue? openingUid,
     Object? created = _Undefined,
     DateTime? stamp,
-    DateTime? lastModified,
+    Object? lastModified = _Undefined,
+    Object? overrides = _Undefined,
   }) {
     return CalendarAvailabilityOpeningProtocolState(
       openingUid: openingUid ?? this.openingUid,
       created: created is DateTime? ? created : this.created,
       stamp: stamp ?? this.stamp,
-      lastModified: lastModified ?? this.lastModified,
+      lastModified: lastModified is DateTime?
+          ? lastModified
+          : this.lastModified,
+      overrides:
+          overrides
+              is List<_i33h9mr5.CalendarAvailabilityOverrideProtocolState>?
+          ? overrides
+          : this.overrides?.map((e0) => e0.copyWith()).toList(),
     );
   }
 }

@@ -4,4 +4,5 @@ fields:
   openingUid: UuidValue
   created: DateTime?
   stamp: DateTime
-  lastModified: DateTime
+  lastModified: DateTime?
+  overrides: List<CalendarAvailabilityOverrideProtocolState>?
