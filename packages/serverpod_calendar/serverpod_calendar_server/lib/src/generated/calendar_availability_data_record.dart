@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'calendar_availability_content.dart' as _ifxxil5c;
+import 'calendar_availability_import_baseline.dart' as _ivv22qfn;
 import 'calendar_availability_opening_edits.dart' as _id5ke9r5;
 import 'calendar_availability_protocol_state.dart' as _ib9yzivj;
 
@@ -26,6 +27,7 @@ abstract class CalendarAvailabilityDataRecord
     required this.calendarId,
     required this.uidDigest,
     this.protocolState,
+    this.importBaseline,
     this.timingOverrides,
     required this.content,
     required this.createdAt,
@@ -39,6 +41,7 @@ abstract class CalendarAvailabilityDataRecord
     required _is.UuidValue calendarId,
     required String uidDigest,
     _ib9yzivj.CalendarAvailabilityProtocolState? protocolState,
+    _ivv22qfn.CalendarAvailabilityImportBaseline? importBaseline,
     List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
     required _ifxxil5c.CalendarAvailabilityContent content,
     required DateTime createdAt,
@@ -63,6 +66,12 @@ abstract class CalendarAvailabilityDataRecord
           : _ix00hwbf.Protocol()
                 .deserialize<_ib9yzivj.CalendarAvailabilityProtocolState>(
                   jsonSerialization['protocolState'],
+                ),
+      importBaseline: jsonSerialization['importBaseline'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_ivv22qfn.CalendarAvailabilityImportBaseline>(
+                  jsonSerialization['importBaseline'],
                 ),
       timingOverrides: jsonSerialization['timingOverrides'] == null
           ? null
@@ -100,6 +109,8 @@ abstract class CalendarAvailabilityDataRecord
 
   _ib9yzivj.CalendarAvailabilityProtocolState? protocolState;
 
+  _ivv22qfn.CalendarAvailabilityImportBaseline? importBaseline;
+
   List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides;
 
   _ifxxil5c.CalendarAvailabilityContent content;
@@ -121,6 +132,7 @@ abstract class CalendarAvailabilityDataRecord
     _is.UuidValue? calendarId,
     String? uidDigest,
     _ib9yzivj.CalendarAvailabilityProtocolState? protocolState,
+    _ivv22qfn.CalendarAvailabilityImportBaseline? importBaseline,
     List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
     _ifxxil5c.CalendarAvailabilityContent? content,
     DateTime? createdAt,
@@ -136,6 +148,7 @@ abstract class CalendarAvailabilityDataRecord
       'calendarId': calendarId.toJson(),
       'uidDigest': uidDigest,
       if (protocolState != null) 'protocolState': protocolState?.toJson(),
+      if (importBaseline != null) 'importBaseline': importBaseline?.toJson(),
       if (timingOverrides != null)
         'timingOverrides': timingOverrides?.toJson(
           valueToJson: (v) => v.toJson(),
@@ -190,6 +203,7 @@ class _CalendarAvailabilityDataRecordImpl
     required _is.UuidValue calendarId,
     required String uidDigest,
     _ib9yzivj.CalendarAvailabilityProtocolState? protocolState,
+    _ivv22qfn.CalendarAvailabilityImportBaseline? importBaseline,
     List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
     required _ifxxil5c.CalendarAvailabilityContent content,
     required DateTime createdAt,
@@ -201,6 +215,7 @@ class _CalendarAvailabilityDataRecordImpl
          calendarId: calendarId,
          uidDigest: uidDigest,
          protocolState: protocolState,
+         importBaseline: importBaseline,
          timingOverrides: timingOverrides,
          content: content,
          createdAt: createdAt,
@@ -218,6 +233,7 @@ class _CalendarAvailabilityDataRecordImpl
     _is.UuidValue? calendarId,
     String? uidDigest,
     Object? protocolState = _Undefined,
+    Object? importBaseline = _Undefined,
     Object? timingOverrides = _Undefined,
     _ifxxil5c.CalendarAvailabilityContent? content,
     DateTime? createdAt,
@@ -233,6 +249,10 @@ class _CalendarAvailabilityDataRecordImpl
           protocolState is _ib9yzivj.CalendarAvailabilityProtocolState?
           ? protocolState
           : this.protocolState?.copyWith(),
+      importBaseline:
+          importBaseline is _ivv22qfn.CalendarAvailabilityImportBaseline?
+          ? importBaseline
+          : this.importBaseline?.copyWith(),
       timingOverrides:
           timingOverrides is List<_id5ke9r5.CalendarAvailabilityOpeningEdits>?
           ? timingOverrides
@@ -279,6 +299,16 @@ class CalendarAvailabilityDataRecordUpdateTable
   protocolState(_ib9yzivj.CalendarAvailabilityProtocolState? value) =>
       _is.ColumnValue(
         table.protocolState,
+        value,
+      );
+
+  _is.ColumnValue<
+    _ivv22qfn.CalendarAvailabilityImportBaseline,
+    _ivv22qfn.CalendarAvailabilityImportBaseline
+  >
+  importBaseline(_ivv22qfn.CalendarAvailabilityImportBaseline? value) =>
+      _is.ColumnValue(
+        table.importBaseline,
         value,
       );
 
@@ -339,6 +369,11 @@ class CalendarAvailabilityDataRecordTable extends _is.Table<int?> {
           'protocolState',
           this,
         );
+    importBaseline =
+        _is.ColumnSerializable<_ivv22qfn.CalendarAvailabilityImportBaseline>(
+          'importBaseline',
+          this,
+        );
     timingOverrides =
         _is.ColumnSerializable<
           List<_id5ke9r5.CalendarAvailabilityOpeningEdits>
@@ -374,6 +409,11 @@ class CalendarAvailabilityDataRecordTable extends _is.Table<int?> {
   protocolState;
 
   late final _is.ColumnSerializable<
+    _ivv22qfn.CalendarAvailabilityImportBaseline
+  >
+  importBaseline;
+
+  late final _is.ColumnSerializable<
     List<_id5ke9r5.CalendarAvailabilityOpeningEdits>
   >
   timingOverrides;
@@ -393,6 +433,7 @@ class CalendarAvailabilityDataRecordTable extends _is.Table<int?> {
     calendarId,
     uidDigest,
     protocolState,
+    importBaseline,
     timingOverrides,
     content,
     createdAt,

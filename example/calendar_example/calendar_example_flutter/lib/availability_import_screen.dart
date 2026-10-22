@@ -30,9 +30,11 @@ class AvailabilityImportScreen extends StatefulWidget {
     super.key,
     required this.client,
     required this.calendarId,
+    this.replacement,
   });
   final Client client;
   final UuidValue calendarId;
+  final cal.CalendarAvailabilityView? replacement;
   @override
   State<AvailabilityImportScreen> createState() =>
       _AvailabilityImportScreenState();
@@ -97,14 +99,31 @@ class _AvailabilityImportScreenState extends State<AvailabilityImportScreen> {
           .replaceAll('\r', '\n')
           .replaceAll('\n', '\r\n');
       final bytes = Uint8List.fromList(utf8.encode(text));
-      await widget.client.modules.serverpod_calendar.calendarAvailability
-          .importCalendar(
-            cal.CalendarAvailabilityImportRequest(
-              calendarId: widget.calendarId,
-              expectedRevision: _revision!,
-              bytes: ByteData.sublistView(bytes),
-            ),
-          );
+      if (widget.replacement != null) {
+        await widget.client.modules.serverpod_calendar.calendarAvailability
+            .replaceFromImport(
+              cal.CalendarAvailabilityReplaceRequest(
+                calendarId: widget.calendarId,
+                expectedRevision: _revision!,
+                selection: [
+                  cal.CalendarAvailabilityExportSelection(
+                    availabilityId: widget.replacement!.id,
+                    expectedRevision: widget.replacement!.revision,
+                  ),
+                ],
+                bytes: ByteData.sublistView(bytes),
+              ),
+            );
+      } else {
+        await widget.client.modules.serverpod_calendar.calendarAvailability
+            .importCalendar(
+              cal.CalendarAvailabilityImportRequest(
+                calendarId: widget.calendarId,
+                expectedRevision: _revision!,
+                bytes: ByteData.sublistView(bytes),
+              ),
+            );
+      }
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       _failed(e);
@@ -113,12 +132,20 @@ class _AvailabilityImportScreenState extends State<AvailabilityImportScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Import availability')),
+    appBar: AppBar(
+      title: Text(
+        widget.replacement == null
+            ? 'Import availability'
+            : 'Replace availability',
+      ),
+    ),
     body: ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text(
-          'Paste a supported standalone availability calendar. This creates new definitions; an existing UID rejects the whole import. Text line endings are converted to CRLF before sending. No feeds, invitations or reminders are started.',
+        Text(
+          widget.replacement == null
+              ? 'Paste a supported standalone availability calendar. This creates new definitions; an existing UID rejects the whole import. Text line endings are converted to CRLF before sending. No feeds, invitations or reminders are started.'
+              : 'Replace this selected definition from a complete supported source file. A recorded import baseline is required; local edits and stale selections reject. Exact source UIDs must match. Identical updates leave all state unchanged. Text line endings are converted to CRLF.',
         ),
         if (_busy) const LinearProgressIndicator(),
         if (_message != null)
@@ -144,7 +171,11 @@ class _AvailabilityImportScreenState extends State<AvailabilityImportScreen> {
         ElevatedButton(
           key: const Key('availability-import-submit'),
           onPressed: _busy || _revision == null ? null : _import,
-          child: const Text('Import new definitions'),
+          child: Text(
+            widget.replacement == null
+                ? 'Import new definitions'
+                : 'Replace selected definition',
+          ),
         ),
         if (!_busy && _revision == null)
           const Text(

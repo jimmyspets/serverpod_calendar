@@ -279,6 +279,23 @@ END;
 $storage$;
 DROP TABLE availability_before_storage;
 """)
+        sql(database, "CREATE TABLE availability_before_baseline AS SELECT * FROM serverpod_calendar_availability_data;")
+        sql(database, (SERVER / "migrations/20261022203640730-availability-replacement/migration.sql").read_text(encoding="utf-8"))
+        sql(database, """
+DO $baseline$
+BEGIN
+  IF EXISTS (SELECT 1 FROM serverpod_calendar_availability_data WHERE "importBaseline" IS NOT NULL)
+     OR EXISTS (SELECT 1 FROM serverpod_calendar_availability_data current
+       JOIN availability_before_baseline old ON current.id=old.id
+       WHERE (to_jsonb(current)-'importBaseline') IS DISTINCT FROM to_jsonb(old))
+     OR (SELECT is_nullable FROM information_schema.columns WHERE table_schema='public'
+       AND table_name='serverpod_calendar_availability_data' AND column_name='importBaseline') <> 'YES' THEN
+    RAISE EXCEPTION 'Baseline upgrade invented history or changed existing data';
+  END IF;
+END;
+$baseline$;
+DROP TABLE availability_before_baseline;
+""")
         print("PASS: populated schema upgrades preserve identity, revisions, content, associations, protocol UID strings and opening identities and old cursor bindings.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

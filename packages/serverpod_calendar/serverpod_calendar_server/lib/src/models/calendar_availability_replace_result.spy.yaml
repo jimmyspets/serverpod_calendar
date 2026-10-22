@@ -1,0 +1,4 @@
+class: CalendarAvailabilityReplaceResult
+immutable: true
+fields:
+  receipts: List<CalendarAvailabilityReplaceReceipt>
