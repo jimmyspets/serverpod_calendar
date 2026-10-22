@@ -38,3 +38,7 @@ Expansion chooses fresh explicit limits. Candidate work and the total emitted oc
 Rich metadata, source-to-native reconciliation, host organizer/extension approval, authenticated import/export, native PERIOD storage, HTTP feeds, scheduling/alarms, CalDAV and external-client compatibility remain pending. No table/model migration, generated client or dependency change is required for this pure adapter.
 
 Source: [RFC 7953](https://www.rfc-editor.org/rfc/rfc7953.html), sections 3–5.
+
+## Metadata extension
+
+[ADR 0070](adr/0070-availability-wire-metadata.md) and [the metadata guide](icalendar-availability-metadata.md) extend the original timing-only property profile with legal organizer/URL/class, repeated category/comment/contact groups and trusted private extensions. Earlier rejection/pending wording above describes the preceding increment; authenticated import/export remains pending.
