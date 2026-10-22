@@ -41,3 +41,7 @@ Return structured component error kinds without private property names, values, 
 Deferring named zones was offered and not selected. Full observance recurrence was offered and the bounded explicit/yearly profile was selected. Full-horizon comparison is deliberately stricter than accepting event-date-limited VTIMEZONE definitions; many otherwise useful client files will reject. Record real-client evidence separately before compatibility claims.
 
 Test complete historical/yearly and explicit definitions, exotic offset changes, gap/fold fields, aliases, padding, late atomic failures, preserved source/text forms, conflicts, strict numeric grammar and aggregate work caps on VM/Chrome. Database identity/authority/import transactions, editable imported metadata, recurrence wire mapping, scheduling, alarms, RFC 7986 calendar mapping, authorized exports and bearer feeds remain pending.
+
+## Recurring-master extension
+
+[ADR 0066](0066-recurring-vevent-master-adapter.md) extends the original non-recurring checkpoint with RRULE and start-only RDATE/EXDATE. It supersedes recurrence rejection and raw RRULE part-order output below this checkpoint: source syntax is retained, but output emits FREQ first. PERIOD/override components and database import/export remain pending.

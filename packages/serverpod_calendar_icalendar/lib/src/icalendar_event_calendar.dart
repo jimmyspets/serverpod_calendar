@@ -7,6 +7,7 @@ import 'icalendar_component_support.dart';
 import 'icalendar_syntax.dart';
 import 'icalendar_temporal_values.dart';
 import 'icalendar_time_zone.dart';
+import 'icalendar_event_recurrence.dart';
 
 enum IcalendarEventStatus { tentative, confirmed, cancelled }
 
@@ -18,7 +19,7 @@ final class IcalendarEventText {
   final String? language, alternativeUri;
 }
 
-/// Read-only semantic projection of one supported, non-recurring source event.
+/// Read-only semantic projection of one supported source master event.
 /// UID is source protocol identity, never a native UUID or authorization proof.
 final class IcalendarEvent {
   IcalendarEvent._({
@@ -35,6 +36,7 @@ final class IcalendarEvent {
     this.location,
     this.status,
     this.transparency,
+    this.recurrence,
   });
   final IcalendarSyntaxComponent source;
   final String uid;
@@ -43,6 +45,7 @@ final class IcalendarEvent {
   final int? sequence;
   final DateEventSpan? dateSpan;
   final TimedEventSpan? timedSpan;
+  final IcalendarEventRecurrence? recurrence;
   final IcalendarEventText? summary, description, location;
   final IcalendarEventStatus? status;
   final IcalendarEventTransparency? transparency;
@@ -81,7 +84,7 @@ IcalendarEventCalendar parseIcalendarEventCalendar(
 /// Validates a complete supported source before returning any semantic results.
 ///
 /// Unsupported properties/parameters/components fail, including METHOD,
-/// recurrence, alarms and not-yet-profiled calendar metadata/extensions.
+/// override components, alarms and unprofiled calendar metadata/extensions.
 IcalendarEventCalendar validateIcalendarEventCalendar(
   IcalendarSyntaxDocument source, {
   IcalendarSyntaxLimits syntaxLimits = const IcalendarSyntaxLimits(),
@@ -108,7 +111,7 @@ IcalendarEventCalendar validateIcalendarEventCalendar(
     if (p['CALSCALE'] != null) {
       final scale = p['CALSCALE']!.single;
       componentParameters(scale, {});
-      if (scale.value.toUpperCase() != 'GREGORIAN') {
+      if (componentToken(scale.value) != 'GREGORIAN') {
         componentFail(IcalendarComponentError.invalidValue);
       }
     }
@@ -138,7 +141,7 @@ IcalendarEventCalendar validateIcalendarEventCalendar(
     final events = <IcalendarEvent>[];
     final uids = <String>{};
     for (final raw in rawEvents) {
-      final event = _event(raw, zones);
+      final event = _event(raw, zones, budget);
       if (!uids.add(event.uid)) {
         componentFail(IcalendarComponentError.duplicate);
       }
@@ -149,34 +152,69 @@ IcalendarEventCalendar validateIcalendarEventCalendar(
 }
 
 /// Re-emits validated source meaning/spelling/order with deterministic syntax
-/// quoting/folding. This is not an authorized export/feed projection.
+/// quoting/folding and FREQ-first RRULE output. The retained source is unchanged.
+/// This is not an authorized export/feed projection.
 Uint8List serializeIcalendarEventCalendar(
   IcalendarEventCalendar value, {
   IcalendarSyntaxLimits syntaxLimits = const IcalendarSyntaxLimits(),
-}) => serializeIcalendarSyntax(value.source, limits: syntaxLimits);
+}) => serializeIcalendarSyntax(
+  IcalendarSyntaxDocument(value.source.components.map(_outputComponent)),
+  limits: syntaxLimits,
+);
+
+// Consumers accept unordered RECUR parts; RFC 5545 output puts FREQ first.
+// The retained source tree is unchanged, including original part spelling/order.
+IcalendarSyntaxComponent _outputComponent(IcalendarSyntaxComponent c) =>
+    IcalendarSyntaxComponent(
+      c.name,
+      c.entries.map((e) {
+        if (e is IcalendarSyntaxComponent) return _outputComponent(e);
+        final p = e as IcalendarSyntaxProperty;
+        if (p.canonicalName != 'RRULE') return p;
+        final parts = p.value.split(';');
+        final frequency = parts.indexWhere(
+          (v) => v.split('=').first.toUpperCase() == 'FREQ',
+        );
+        if (frequency <= 0) return p;
+        final first = parts.removeAt(frequency);
+        return IcalendarSyntaxProperty(
+          p.name,
+          [first, ...parts].join(';'),
+          parameters: p.parameters,
+        );
+      }),
+    );
 
 IcalendarEvent _event(
   IcalendarSyntaxComponent source,
   Map<String, IcalendarValidatedTimeZone> zones,
+  ComponentBudget budget,
 ) {
   if (source.entries.any((e) => e is IcalendarSyntaxComponent)) {
     componentFail(IcalendarComponentError.unsupportedComponent);
   }
-  final p = componentProperties(source, {
-    'UID',
-    'DTSTAMP',
-    'DTSTART',
-    'DTEND',
-    'DURATION',
-    'SUMMARY',
-    'DESCRIPTION',
-    'LOCATION',
-    'STATUS',
-    'TRANSP',
-    'CREATED',
-    'LAST-MODIFIED',
-    'SEQUENCE',
-  });
+  final p = componentProperties(
+    source,
+    {
+      'UID',
+      'DTSTAMP',
+      'DTSTART',
+      'DTEND',
+      'DURATION',
+      'SUMMARY',
+      'DESCRIPTION',
+      'LOCATION',
+      'STATUS',
+      'TRANSP',
+      'CREATED',
+      'LAST-MODIFIED',
+      'SEQUENCE',
+      'RRULE',
+      'RDATE',
+      'EXDATE',
+    },
+    repeated: {'RDATE', 'EXDATE'},
+  );
   final uid = componentText(requiredProperty(p, 'UID'));
   if (uid.isEmpty) componentFail(IcalendarComponentError.invalidValue);
   final stamp = componentUtc(requiredProperty(p, 'DTSTAMP'));
@@ -238,7 +276,7 @@ IcalendarEvent _event(
     final property = p[name]?.single;
     if (property == null) return null;
     componentParameters(property, {});
-    return property.value.toUpperCase();
+    return componentToken(property.value);
   }
 
   final status = switch (token('STATUS')) {
@@ -278,6 +316,12 @@ IcalendarEvent _event(
     stamp: stamp,
     dateSpan: dateSpan,
     timedSpan: timedSpan,
+    recurrence: componentEventRecurrence(
+      start,
+      p,
+      budget,
+      (p) => _temporal(p, zones),
+    ),
     created: p['CREATED'] == null ? null : componentUtc(p['CREATED']!.single),
     lastModified: p['LAST-MODIFIED'] == null
         ? null
@@ -297,7 +341,9 @@ Object _temporal(
   bool exclusiveEnd = false,
 }) {
   final parameters = componentParameters(p, {'VALUE', 'TZID'});
-  final type = parameters['VALUE']?.toUpperCase() ?? 'DATE-TIME';
+  final type = parameters['VALUE'] == null
+      ? 'DATE-TIME'
+      : componentToken(parameters['VALUE']!);
   final zoneId = parameters['TZID'];
   if (type == 'DATE') {
     if (zoneId != null) componentFail(IcalendarComponentError.invalidValue);

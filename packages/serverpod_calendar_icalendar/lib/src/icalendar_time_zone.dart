@@ -97,7 +97,7 @@ IcalendarValidatedTimeZone validateComponentTimeZone(
     for (final rdate in p['RDATE'] ?? <IcalendarSyntaxProperty>[]) {
       final parameters = componentParameters(rdate, {'VALUE'});
       if (parameters['VALUE'] != null &&
-          parameters['VALUE']!.toUpperCase() != 'DATE-TIME') {
+          componentToken(parameters['VALUE']!) != 'DATE-TIME') {
         componentFail(IcalendarComponentError.invalidValue);
       }
       for (final text in rdate.value.split(',')) {
@@ -224,6 +224,7 @@ void _expandYearly(
   void Function(DateTime) add,
 ) {
   if (value.length > 4096) componentFail(IcalendarComponentError.limitExceeded);
+  componentToken(value);
   final parts = <String, String>{};
   for (final item in value.split(';')) {
     final pair = item.split('=');

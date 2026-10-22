@@ -10,6 +10,29 @@ final class RecurrenceLimitException implements Exception {
   String toString() => 'RecurrenceLimitException: $limit exceeded';
 }
 
+/// Optional trusted aggregate work ceiling shared by separate expansions.
+/// Failed attempts retain consumed work; exhaustion never replenishes it.
+final class RecurrenceWorkBudget {
+  RecurrenceWorkBudget({required this.maxWork}) {
+    RangeError.checkValueInInterval(
+      maxWork,
+      1,
+      DateRecurrenceRule.maxScalar,
+      'maxWork',
+    );
+  }
+  final int maxWork;
+  int _used = 0;
+  int get used => _used;
+  int get remaining => maxWork - _used;
+  void charge() {
+    if (_used >= maxWork) {
+      throw const RecurrenceLimitException('sharedCandidateWork');
+    }
+    _used++;
+  }
+}
+
 /// Bounded DATE-only start-date generation, without event spans or exceptions.
 ///
 /// Yearly week-number filters honor WKST and adjacent week-years. Timed recurrence,
@@ -23,6 +46,8 @@ final class DateRecurrenceGenerator {
   /// work, including dates outside the output range needed for BYSETPOS.
   /// Both budgets must be positive portable integers. Limit failure throws
   /// [RecurrenceLimitException]; no partial result escapes.
+  /// Optional [sharedWorkBudget] charges the same candidate days across calls;
+  /// it does not replace the local ceiling and is not reset after failure.
   List<CalendarDate> expand({
     required CalendarDate start,
     required DateRecurrenceRule rule,
@@ -30,6 +55,7 @@ final class DateRecurrenceGenerator {
     required CalendarDate through,
     required int maxCandidateDays,
     required int maxResults,
+    RecurrenceWorkBudget? sharedWorkBudget,
   }) {
     start.requireOrdinary('DTSTART');
     from.requireOrdinary('from');
@@ -77,6 +103,7 @@ final class DateRecurrenceGenerator {
           throw const RecurrenceLimitException('maxCandidateDays');
         }
         work++;
+        sharedWorkBudget?.charge();
         final date = first.addDays(day);
         if (matchesRecurrenceDate(date, start, rule)) dates.add(day);
       }
