@@ -121,3 +121,8 @@ The metadata increment adds pure profile tests in `test/unit/calendar_presentati
 Native event DTO adapter tests in `test/unit/event_values_test.dart` are VM-only because they import server-generated models. The core remains tested on VM/Chrome; Flutter Web exercises generated event clients. Focus event database cases with `--name "event "`; complete checks include event lifecycle/cursors and two-host write/parent-delete races. The populated upgrade helper also applies the native event schema.
 
 The root batch check also runs the dedicated `serverpod_calendar_icalendar` syntax suite on VM and Chrome under [ADR 0062](adr/0062-bounded-icalendar-syntax-foundations.md). Focused development can run `dart test packages/serverpod_calendar_icalendar/test/icalendar_syntax_test.dart` from the root. This does not imply calendar-profile validation or domain import/export.
+
+
+## Pre-beta database compatibility
+
+Breaking APIs/schema and fresh-database requirements are authorized before beta. A feature may document a reset instead of preserving unpublished compatibility. Use only the identified local development or isolated synthetic test database, and record which reset is required. Existing historical upgrade checks remain evidence of their own batches. ADR 0073 import uses the existing schema and requires no reset.

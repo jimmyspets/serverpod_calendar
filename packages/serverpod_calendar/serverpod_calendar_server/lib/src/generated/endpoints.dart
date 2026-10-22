@@ -13,6 +13,8 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_create_request.dart'
     as _iys46g3v;
+import 'package:serverpod_calendar_server/src/generated/calendar_availability_import_request.dart'
+    as _itxm78f7;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_occurrence_change.dart'
     as _ihzf1dkn;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_occurrence_query.dart'
@@ -100,6 +102,27 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'calendarAvailability',
       endpoint: endpoints['calendarAvailability']!,
       methodConnectors: {
+        'importCalendar': _is.MethodConnector(
+          name: 'importCalendar',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_itxm78f7.CalendarAvailabilityImportRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAvailability']
+                          as _imcvujmp.CalendarAvailabilityEndpoint)
+                      .importCalendar(
+                        session,
+                        params['request'],
+                      ),
+        ),
         'create': _is.MethodConnector(
           name: 'create',
           params: {

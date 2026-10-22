@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_calendar_server/serverpod_calendar_server.dart';
@@ -672,6 +673,476 @@ void main() {
       );
       return service.getAvailability(receipt.availabilityId);
     }
+
+    String importDefinition(
+      String uid, {
+      String extra = '',
+      String opening = '',
+    }) => [
+      'BEGIN:VAVAILABILITY',
+      'UID:$uid',
+      'DTSTAMP:20400101T000000Z',
+      'SEQUENCE:17',
+      'SUMMARY:Imported hours',
+      extra,
+      opening,
+      'END:VAVAILABILITY',
+    ].where((s) => s.isNotEmpty).join('\r\n');
+    String importFile(List<String> definitions) => [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Synthetic//EN',
+      ...definitions,
+      'END:VCALENDAR',
+      '',
+    ].join('\r\n');
+    CalendarAvailabilityImportRequest importRequest(
+      UuidValue parent,
+      List<String> definitions, {
+      int revision = 1,
+      String? raw,
+    }) => CalendarAvailabilityImportRequest(
+      calendarId: parent,
+      expectedRevision: revision,
+      bytes: ByteData.sublistView(
+        Uint8List.fromList(utf8.encode(raw ?? importFile(definitions))),
+      ),
+    );
+    test('availability import honors ByteData views named zones and component overrides', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final opening = [
+        'BEGIN:AVAILABLE',
+        'UID:named-opening',
+        'DTSTAMP:20400101T000000Z',
+        'DTSTART;TZID=UTC:20261022T090000',
+        'DURATION:PT1H',
+        'RRULE:FREQ=DAILY;COUNT=2',
+        'END:AVAILABLE',
+        'BEGIN:AVAILABLE',
+        'UID:named-opening',
+        'DTSTAMP:20390101T000000Z',
+        'RECURRENCE-ID;TZID=UTC:20261023T090000',
+        'DTSTART;TZID=UTC:20261023T110000',
+        'DURATION:PT2H',
+        'END:AVAILABLE',
+      ].join('\r\n');
+      final zone = [
+        'BEGIN:VTIMEZONE',
+        'TZID:UTC',
+        'BEGIN:STANDARD',
+        'DTSTART:19000101T000000',
+        'TZOFFSETFROM:+0000',
+        'TZOFFSETTO:+0000',
+        'END:STANDARD',
+        'END:VTIMEZONE',
+      ].join('\r\n');
+      final raw = importFile([
+        zone,
+        importDefinition('Named', opening: opening),
+      ]);
+      final bytes = Uint8List.fromList([1, 2, ...utf8.encode(raw), 3]);
+      final result = await service.importAvailability(
+        CalendarAvailabilityImportRequest(
+          calendarId: parent,
+          expectedRevision: 1,
+          bytes: ByteData.view(bytes.buffer, 2, bytes.length - 3),
+        ),
+      );
+      final rule = await service.getAvailability(
+        result.receipts.single.availabilityId,
+      );
+      expect(rule.content.openings.single.timing.zoneId, 'UTC');
+      expect(
+        rule
+            .timingOverrides!
+            .single
+            .overrides
+            .singles
+            .single
+            .replacement!
+            .start
+            .hour,
+        11,
+      );
+      expect(
+        rule.protocolState.openings.single.overrides!.single.stamp,
+        DateTime.utc(2039),
+      );
+      final preview = await service.previewAvailabilityOccurrences(
+        CalendarAvailabilityOccurrenceQuery(
+          availabilityId: rule.id,
+          openingUid: rule.content.openings.single.uid!,
+          expectedRevision: 1,
+          fromUtc: DateTime.utc(2026, 10, 23),
+          untilUtc: DateTime.utc(2026, 10, 24),
+        ),
+      );
+      expect(
+        preview.occurrences.single.startUtc,
+        DateTime.utc(2026, 10, 23, 11),
+      );
+      expect(preview.occurrences.single.endUtc, DateTime.utc(2026, 10, 23, 13));
+    });
+    test('availability import revalidates required coordination guarantee before commit', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      policy.capability = CalendarAuthorizationGuarantee.coordinated;
+      CalendarModule.install(
+        session.serverpod,
+        policy: policy,
+        options: const CalendarModuleOptions(
+          requiredWriteGuarantee: CalendarAuthorizationGuarantee.coordinated,
+        ),
+      );
+      service = CalendarModule.service(session);
+      policy.onPreliminary = () {
+        policy.capability = CalendarAuthorizationGuarantee.freshCheck;
+      };
+      await expectLater(
+        service.importAvailability(
+          importRequest(parent, [importDefinition('Guarantee')]),
+        ),
+        failure(CalendarFailureCode.unavailable),
+      );
+      expect(await CalendarAvailabilityDataRecord.db.count(session), 0);
+    });
+    Future<int> generation() async =>
+        (await CalendarScopeRecord.db.findFirstRow(
+          session,
+          where: (t) => t.scopeKey.equals('test:alice'),
+        ))!.revision;
+
+    test('availability import retains source identity version groups contacts and PERIODs atomically', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final before = await generation();
+      final result = await service.importAvailability(
+        importRequest(parent, [
+          importDefinition(
+            '來源@example.invalid',
+            extra: 'CATEGORIES;LANGUAGE=en:One,One\r\nCATEGORIES;LANGUAGE=sv:Två\r\nCONTACT;LANGUAGE=sv:Desk',
+            opening: [
+              'BEGIN:AVAILABLE',
+              'UID:opening-not-a-uuid',
+              'DTSTAMP:20390101T000000Z',
+              'DTSTART:20261022T090000Z',
+              'DURATION:PT1H',
+              'RDATE;VALUE=PERIOD:20261023T090000Z/PT2H',
+              'END:AVAILABLE',
+            ].join('\r\n'),
+          ),
+          importDefinition('Second definition'),
+        ]),
+      );
+      final importPolicyRequest = policy.lastAvailabilityRequest!;
+      expect(result.receipts, hasLength(2));
+      expect(await generation(), before + 1);
+      final parentView = await service.get(parent, groups);
+      expect(parentView.revision, 1);
+      final rule = await service.getAvailability(
+        result.receipts.first.availabilityId,
+      );
+      expect(rule.protocolUid, '來源@example.invalid');
+      expect(rule.protocolState.sequence, 17);
+      expect(rule.protocolState.stamp, DateTime.utc(2040));
+      expect(rule.protocolState.created, isNull);
+      expect(rule.lastModified, isNull);
+      expect(rule.content.categoryGroups!.first.values, ['One', 'One']);
+      expect(rule.content.contacts!.single.language, 'sv');
+      expect(rule.content.openings.single.protocolUid, 'opening-not-a-uuid');
+      expect(rule.content.openings.single.uid, isNotNull);
+      expect(rule.content.openings.single.periods!.single.duration!.hours, 2);
+      final request = importPolicyRequest;
+      expect(request.availabilityImport!.members, hasLength(2));
+      expect(
+        () => request.availabilityImport!.members.clear(),
+        throwsUnsupportedError,
+      );
+      expect(
+        () => request
+            .availabilityImport!
+            .members
+            .first
+            .content
+            .categoryGroups!
+            .first
+            .values
+            .clear(),
+        throwsUnsupportedError,
+      );
+      final row = (await CalendarAvailabilityDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.availabilityId.equals(rule.id),
+      ))!;
+      expect(row.createdAt.year, 2026);
+      await service.updateAvailabilityMetadata(
+        CalendarAvailabilityUpdateRequest(
+          availabilityId: rule.id,
+          expectedRevision: 1,
+          content: rule.content.copyWith(summary: 'Local edit'),
+        ),
+      );
+      final edited = await service.getAvailability(rule.id);
+      expect(edited.protocolState.sequence, 18);
+      expect(edited.content.contacts!.single.value, 'Desk');
+    });
+
+    for (final permission in [
+      CalendarPermission.importAvailability,
+      CalendarPermission.createAvailability,
+    ]) {
+      test(
+        'availability import independently requires ${permission.name}',
+        () async {
+          final parent = (await service.create(createInput()))!.calendarId;
+          final before = await generation();
+          policy.denied.add(permission);
+          await expectLater(
+            service.importAvailability(
+              importRequest(parent, [importDefinition('Denied')]),
+            ),
+            failure(CalendarFailureCode.accessDenied),
+          );
+          expect(await CalendarAvailabilityDataRecord.db.count(session), 0);
+          expect(await generation(), before);
+        },
+      );
+    }
+    test('availability import final member denial rolls back entire file and generation', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final before = await generation();
+      policy.denyImportUid = 'Last';
+      await expectLater(
+        service.importAvailability(
+          importRequest(parent, [
+            importDefinition('First'),
+            importDefinition('Last'),
+          ]),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(await CalendarAvailabilityDataRecord.db.count(session), 0);
+      expect(await CalendarAvailabilityRecord.db.count(session), 0);
+      expect(await generation(), before);
+    });
+    test('availability import receipts use final import and member disclosure independently of read rights', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      policy.denied.add(CalendarPermission.readAvailability);
+      policy.hideImportReceiptUid = 'Hidden receipt';
+      var result = await service.importAvailability(
+        importRequest(parent, [
+          importDefinition('Visible receipt'),
+          importDefinition('Hidden receipt'),
+        ]),
+      );
+      expect(result.receipts, hasLength(1));
+      expect(await CalendarAvailabilityDataRecord.db.count(session), 2);
+      policy.hideImportBatchReceipt = true;
+      result = await service.importAvailability(
+        importRequest(parent, [importDefinition('No batch receipt')]),
+      );
+      expect(result.receipts, isEmpty);
+      expect(await CalendarAvailabilityDataRecord.db.count(session), 3);
+    });
+    test('availability import UID conflicts are exact active and destination-local', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final other = (await service.create(createInput()))!.calendarId;
+      final receipt = (await service.importAvailability(
+        importRequest(parent, [importDefinition('UID')]),
+      )).receipts.single;
+      final before = await generation();
+      await expectLater(
+        service.importAvailability(
+          importRequest(parent, [
+            importDefinition('new'),
+            importDefinition('UID'),
+          ]),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      expect(await generation(), before);
+      expect(await CalendarAvailabilityDataRecord.db.count(session), 1);
+      await service.importAvailability(
+        importRequest(other, [importDefinition('UID')]),
+      );
+      await service.importAvailability(
+        importRequest(parent, [importDefinition('uid')]),
+      );
+      await service.deleteAvailability(receipt.availabilityId, 1);
+      final fresh = (await service.importAvailability(
+        importRequest(parent, [importDefinition('UID')]),
+      )).receipts.single;
+      expect(fresh.availabilityId, isNot(receipt.availabilityId));
+    });
+    test(
+      'availability import rejects stale foreign and deleted parents',
+      () async {
+        final parent = (await service.create(createInput()))!.calendarId;
+        await expectLater(
+          service.importAvailability(
+            importRequest(parent, [importDefinition('Stale')], revision: 2),
+          ),
+          failure(CalendarFailureCode.staleRevision),
+        );
+        policy.scopeOverride = 'foreign';
+        await expectLater(
+          service.importAvailability(
+            importRequest(parent, [importDefinition('Foreign')]),
+          ),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        policy.scopeOverride = null;
+        await service.delete(parent, 1);
+        await expectLater(
+          service.importAvailability(
+            importRequest(parent, [importDefinition('Deleted')]),
+          ),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        expect(await CalendarAvailabilityDataRecord.db.count(session), 0);
+      },
+    );
+    test(
+      'availability import rechecks policy epoch after parsing preflight',
+      () async {
+        final parent = (await service.create(createInput()))!.calendarId;
+        policy.onImportBatch = (s, request, tx, phase) async {
+          if (request.availabilityImport != null) policy.epoch = 'changed';
+        };
+        await expectLater(
+          service.importAvailability(
+            importRequest(parent, [importDefinition('Epoch')]),
+          ),
+          failure(CalendarFailureCode.unavailable),
+        );
+        expect(await CalendarAvailabilityDataRecord.db.count(session), 0);
+      },
+    );
+    test('availability import organizer approval runs both phases with complete source proposal', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      policy.denyFinalOrganizer = true;
+      await expectLater(
+        service.importAvailability(
+          importRequest(parent, [
+            importDefinition(
+              'Organizer',
+              extra: 'ORGANIZER:mailto:source@example.invalid',
+            ),
+          ]),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(policy.organizerPhases, [
+        CalendarAuthorizationPhase.preliminaryWrite,
+        CalendarAuthorizationPhase.finalWrite,
+      ]);
+      expect(
+        policy.organizerRequest!.availabilityImport!.members.single.protocolUid,
+        'Organizer',
+      );
+      expect(await CalendarAvailabilityDataRecord.db.count(session), 0);
+    });
+    test('availability import trusted extension validators run again at final write and fail closed', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      var validations = 0;
+      CalendarModule.install(
+        session.serverpod,
+        policy: policy,
+        options: const CalendarModuleOptions(
+          requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+        ),
+        availabilityExtensions: [
+          CalendarAvailabilityExtensionRegistration(
+            name: 'X-TEST',
+            contexts: CalendarAvailabilityExtensionContext.values,
+            validate: (_) {
+              if (++validations == 2) {
+                throw StateError('Synthetic registry failure');
+              }
+              return true;
+            },
+          ),
+        ],
+      );
+      service = CalendarModule.service(session);
+      await expectLater(
+        service.importAvailability(
+          importRequest(parent, [
+            importDefinition('Extension', extra: 'X-TEST:Private value'),
+          ]),
+        ),
+        failure(CalendarFailureCode.unavailable),
+      );
+      expect(validations, 2);
+      expect(await CalendarAvailabilityDataRecord.db.count(session), 0);
+    });
+    test('availability import preserves omitted source sequence without inventing dates', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final definition = importDefinition('Omitted')
+          .replaceAll('SEQUENCE:17\r\n', '');
+      final result = await service.importAvailability(
+        importRequest(parent, [definition]),
+      );
+      final rule = await service.getAvailability(
+        result.receipts.single.availabilityId,
+      );
+      expect(rule.protocolState.sequence, isNull);
+      expect(rule.protocolState.created, isNull);
+      expect(rule.lastModified, isNull);
+    });
+    for (final malformed in [
+      'bare LF',
+      'unsupported component',
+      'duplicate master',
+      'unknown extension',
+      'fraction',
+    ]) {
+      test('availability import rejects $malformed without rows', () async {
+        final parent = (await service.create(createInput()))!.calendarId;
+        var raw = importFile([importDefinition('Invalid')]);
+        raw = switch (malformed) {
+          'bare LF' => raw.replaceAll('\r\n', '\n'),
+          'unsupported component' => raw.replaceAll('VAVAILABILITY', 'VEVENT'),
+          'duplicate master' => importFile([
+            importDefinition('Invalid'),
+            importDefinition('Invalid'),
+          ]),
+          'unknown extension' => importFile([
+            importDefinition('Invalid', extra: 'X-UNREGISTERED:No'),
+          ]),
+          _ => raw.replaceAll('20400101T000000Z', '20400101T000000.1Z'),
+        };
+        await expectLater(
+          service.importAvailability(importRequest(parent, [], raw: raw)),
+          failure(CalendarFailureCode.validation),
+        );
+        expect(await CalendarAvailabilityDataRecord.db.count(session), 0);
+      });
+    }
+    test(
+      'availability import bounds bytes and destination capacity atomically',
+      () async {
+        final parent = (await service.create(createInput()))!.calendarId;
+        await expectLater(
+          service.importAvailability(
+            importRequest(parent, [], raw: 'x' * 1048577),
+          ),
+          failure(CalendarFailureCode.limitExceeded),
+        );
+        await service.importAvailability(
+          importRequest(parent, [
+            for (var i = 0; i < 64; i++) importDefinition('capacity-$i'),
+          ]),
+        );
+        final before = await generation();
+        await expectLater(
+          service.importAvailability(
+            importRequest(parent, [importDefinition('overflow')]),
+          ),
+          failure(CalendarFailureCode.limitExceeded),
+        );
+        expect(await generation(), before);
+        expect(await CalendarAvailabilityDataRecord.db.count(session), 64);
+      },
+    );
 
     test('source storage preserves protocol dates metadata PERIOD calculation and native edit retention', () async {
       var rule = await storedSource();
@@ -4161,6 +4632,15 @@ final class TestPolicy implements CalendarHostPolicy {
   final searchRequests = <CalendarAuthorizationRequest>[];
   final deniedSubjects = <String>{};
   void Function(CalendarAuthorizationRequest)? onSearchRead;
+  String? denyImportUid, hideImportReceiptUid;
+  bool hideImportBatchReceipt = false;
+  Future<void> Function(
+    Session,
+    CalendarAuthorizationRequest,
+    Transaction,
+    CalendarAuthorizationPhase,
+  )?
+  onImportBatch;
   final denied = <CalendarPermission>{};
   final hidden = <UuidValue>{};
   Set<CalendarFieldGroup> grants = groups.toSet();
@@ -4271,6 +4751,9 @@ final class TestPolicy implements CalendarHostPolicy {
     CalendarAuthorizationPhase phase,
   ) async {
     for (final request in requests) {
+      if (request.operation == CalendarPermission.importAvailability) {
+        await onImportBatch?.call(s, request, tx, phase);
+      }
       if (request.availabilityId != null ||
           request.proposedAvailability != null) {
         lastAvailabilityRequest = request;
@@ -4319,7 +4802,15 @@ final class TestPolicy implements CalendarHostPolicy {
     return CalendarAuthorizationDecision(
       key: r.key,
       verdict:
-          denied.contains(r.operation) ||
+          (r.availabilityImport != null &&
+                  r.operation == CalendarPermission.createAvailability &&
+                  r.availabilityImport!.members.any(
+                    (m) =>
+                        m.availabilityId == r.availabilityId &&
+                        m.protocolUid == denyImportUid,
+                  ) &&
+                  phase == CalendarAuthorizationPhase.finalWrite) ||
+              denied.contains(r.operation) ||
               (r.operation == CalendarPermission.readSubjectAvailability &&
                   deniedSubjects.contains(r.availabilityTarget?.externalId)) ||
               (r.operation == CalendarPermission.projectEventBusy &&
@@ -4331,7 +4822,15 @@ final class TestPolicy implements CalendarHostPolicy {
       disclosedGroups: grants,
       eventDisclosedGroups: eventGrants,
       discloseMutationReceipt:
-          r.operation != CalendarPermission.readAvailability,
+          r.operation != CalendarPermission.readAvailability &&
+          !(r.operation == CalendarPermission.importAvailability &&
+              hideImportBatchReceipt) &&
+          !(r.availabilityImport?.members.any(
+                (m) =>
+                    m.availabilityId == r.availabilityId &&
+                    m.protocolUid == hideImportReceiptUid,
+              ) ??
+              false),
     );
   }
 }

@@ -5,6 +5,7 @@ import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
 
 import 'availability_opening_screen.dart';
 import 'availability_metadata_editor.dart';
+import 'availability_import_screen.dart';
 import 'occurrence_timing_editor.dart' show occurrenceLabel;
 
 String _error(Object e) => e is cal.CalendarException
@@ -132,6 +133,23 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
           key: const Key('availability-create'),
           onPressed: _busy ? null : () => _edit(),
           child: const Text('Add working-hours definition'),
+        ),
+        TextButton(
+          key: const Key('availability-import'),
+          onPressed: _busy
+              ? null
+              : () async {
+                  await Navigator.of(context).push<void>(
+                    MaterialPageRoute(
+                      builder: (_) => AvailabilityImportScreen(
+                        client: widget.client,
+                        calendarId: widget.calendarId,
+                      ),
+                    ),
+                  );
+                  if (mounted) await _load();
+                },
+          child: const Text('Import availability'),
         ),
         for (final rule in _rules)
           Card(

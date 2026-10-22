@@ -131,7 +131,8 @@ Native metadata editing is partial evidence for FR-24, not ICS interoperability.
 - [x] Add pure availability publication metadata under [ADR 0070](adr/0070-availability-wire-metadata.md), preserving repeated source groups and legal annotations with a bounded trusted private registry. Organizer syntax is not host approval; CONTACT remains source-only.
 - [x] Record the selected create-only import and prerequisite storage choices under [ADR 0071](adr/0071-create-only-availability-import.md): full supported wire shape preservation, destination-calendar active UID conflicts initial source protocol versions distinct from database audit times, separate import/create permissions, and opening UUID/protocol UID separation.
 - [x] Implement [source-preserving availability storage](availability-storage.md) under ADR 0072, including separate opening UUID/protocol UID, grouped categories/read-only CONTACT/PERIODs, source component protocol state, populated migration and native editor retention. Detailed representations remain under draft review.
-- [ ] Implement create-only authenticated availability import after storage prerequisites; reject active destination-calendar UID conflicts, enforce host authority and atomically commit the entire file. Source updates/reconciliation remain separately designed.
+- [x] Implement [create-only authenticated availability import](availability-import.md#implemented-create-only-operation) under ADR 0073: full-file atomic writes, separate import/create and organizer authority, exact destination-active UID conflict checks, source version retention, authorized minimal receipts and example import journey.
+- [ ] Implement authorized availability export, then design source updates/reconciliation separately; other component import/export and feeds remain pending.
 
 ## Tasks
 
