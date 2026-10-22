@@ -343,7 +343,8 @@ final class CalendarAvailabilityPolicySnapshot {
   });
   final List<CalendarAvailabilityOpeningEdits>? timingOverrides;
   final CalendarAvailabilityProtocolState protocolState;
-  final UuidValue availabilityId, calendarId, protocolUid;
+  final UuidValue availabilityId, calendarId;
+  final String protocolUid;
   final int revision;
   final CalendarAvailabilityContent content;
   final DateTime updatedAt;

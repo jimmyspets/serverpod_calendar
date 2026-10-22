@@ -1,8 +1,8 @@
 class: CalendarAvailabilityProtocolState
 immutable: true
 fields:
-  sequence: int
-  created: DateTime
+  sequence: int?
+  created: DateTime?
   stamp: DateTime
-  lastModified: DateTime
+  lastModified: DateTime?
   openings: List<CalendarAvailabilityOpeningProtocolState>

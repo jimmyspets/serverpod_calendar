@@ -55,3 +55,7 @@ The maintainer selected create-only authenticated availability import next, reje
 ## Selected storage/import follow-up
 
 The maintainer confirmed extending native storage before import rather than rejecting supported metadata/UID/PERIOD shapes. [ADR 0071](adr/0071-create-only-availability-import.md) and [the proposed contract](availability-import.md) also record destination-calendar active UID conflicts and preserved initial source protocol versions. The pure adapter does not itself provide these storage or import guarantees.
+
+## Implemented storage follow-up
+
+[ADR 0072](adr/0072-source-preserving-availability-storage.md) and [the implementation guide](availability-storage.md) supersede storage-pending wording for the scoped prerequisite/native behaviors. They document exact UID/group/CONTACT/PERIOD and component-version representations, retention, policy context, query caps and upgrade behavior. Authenticated import remains pending; conversion is not authorization or publication.

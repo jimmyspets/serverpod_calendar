@@ -12,6 +12,7 @@ import 'native_calendar_name.dart';
 import 'event_values.dart';
 import 'availability_values.dart';
 import 'availability_protocol_values.dart';
+import 'availability_storage_values.dart';
 
 part 'calendar_events.dart';
 part 'calendar_free_busy.dart';

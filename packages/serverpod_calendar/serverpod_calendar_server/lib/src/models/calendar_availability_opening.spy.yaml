@@ -11,3 +11,7 @@ fields:
   comments: List<String>?
   textParameters: CalendarAvailabilityTextParameters?
   extensions: List<CalendarAvailabilityExtension>?
+  categoryGroups: List<CalendarAvailabilityCategoryGroup>?
+  contacts: List<CalendarAvailabilityText>?
+  protocolUid: String?
+  periods: List<CalendarEventTiming>?
