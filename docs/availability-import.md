@@ -1,6 +1,6 @@
 # Create-only availability import and storage contract
 
-Status: **scoped create-only import implemented under ADR 0073; concrete mechanics under draft review**. Date: 2026-10-22. [ADR 0071](adr/0071-create-only-availability-import.md) records accepted product decisions, [ADR 0072](adr/0072-source-preserving-availability-storage.md) implements the storage prerequisite and [ADR 0073](adr/0073-authenticated-create-only-availability-import.md) implements the endpoint. Earlier design sections below record the proposal that led to this implementation; the [implemented operation](#implemented-create-only-operation) is the current API/transaction reference. Export and source reconciliation remain pending.
+Status: **scoped create-only import implemented under ADR 0073; concrete mechanics under draft review**. Date: 2026-10-22. [ADR 0071](adr/0071-create-only-availability-import.md) records accepted product decisions, [ADR 0072](adr/0072-source-preserving-availability-storage.md) implements the storage prerequisite and [ADR 0073](adr/0073-authenticated-create-only-availability-import.md) implements the endpoint. Earlier design sections below record the proposal that led to this implementation; the [implemented operation](#implemented-create-only-operation) is the current API/transaction reference. Authenticated export is implemented under ADR 0074; source replacement is now designed under ADR 0075 and remains unimplemented.
 
 ## Confirmed scope
 
@@ -138,3 +138,8 @@ No schema change/reset is required by this batch. For future pre-beta changes th
 ## Authenticated export follow-up
 
 [ADR 0074](adr/0074-authenticated-availability-export.md) and [the export guide](availability-export.md) now add current-state output for explicitly selected authorized definitions from one calendar, superseding blanket export-pending wording for that scoped operation. Import remains create-only; exporting data is not source reconciliation or permission to update an existing UID. Unsupported native state and aggregate profile limits reject rather than lose information.
+
+
+## Explicit replacement follow-up
+
+[ADR 0075](adr/0075-availability-update-reconciliation-contract.md) and [the update contract](availability-update.md) record confirmed choices for a separate existing-definition replacement API. Baseline storage and runtime are not implemented. The current create-only endpoint still rejects active UID conflicts; it does not silently become an upsert or establish import baselines retroactively.

@@ -1,6 +1,6 @@
 # Delivery roadmap
 
-Status reconciled **2026-10-22**, through source-preserving availability storage under ADR 0072; authenticated import remains pending. The bounded temporal core and scoped native calendar/event services have local validation evidence; the full first release remains incomplete. The [RFC tables](rfc/README.md) are the latest feature-scope source. [Requirements](requirements.md) define stable FR/NFR acceptance targets; [ADRs](adr/README.md) distinguish confirmed scope from proposed implementation details.
+Status reconciled **2026-10-22**, through authenticated availability import/export under ADRs 0073/0074 and the proposed update contract under ADR 0075. Availability replacement remains unimplemented. The bounded temporal core and scoped native calendar/event services have local validation evidence; the full first release remains incomplete. The [RFC tables](rfc/README.md) are the latest feature-scope source. [Requirements](requirements.md) define stable FR/NFR acceptance targets; [ADRs](adr/README.md) distinguish confirmed scope from proposed implementation details.
 
 This roadmap tracks the implementation represented by the current branch, including stacked draft PRs; an implemented checkbox does not mean the change is merged into main, released, or that every ADR mechanic is accepted. Check existing GitHub work before filing issues, and link each implementation issue to the relevant requirements and roadmap section.
 
@@ -133,7 +133,9 @@ Native metadata editing is partial evidence for FR-24, not ICS interoperability.
 - [x] Implement [source-preserving availability storage](availability-storage.md) under ADR 0072, including separate opening UUID/protocol UID, grouped categories/read-only CONTACT/PERIODs, source component protocol state, populated migration and native editor retention. Detailed representations remain under draft review.
 - [x] Implement [create-only authenticated availability import](availability-import.md#implemented-create-only-operation) under ADR 0073: full-file atomic writes, separate import/create and organizer authority, exact destination-active UID conflict checks, source version retention, authorized minimal receipts and example import journey.
 - [x] Implement [authenticated current-state availability export](availability-export.md) under ADR 0074: explicit single-calendar selection, independent export/raw-read rights, complete-or-failure output, source versions/metadata and generated full-horizon VTIMEZONE. Unsupported native state rejects rather than losing data.
-- [ ] Design source updates/reconciliation separately; other component import/export and feeds remain pending.
+- [x] Record the confirmed [explicit availability replacement choices](availability-update.md) under ADR 0075: revision-bound existing targets, local-conflict rejection, recorded import baselines, source sequence checks, stable matching opening identities, true no-ops, separate replacement authority and exact source timestamps.
+- [ ] Review baseline canonicalization/storage/retention, final permission/receipt and native-identity remapping mechanics, then implement explicit replacement with baseline-aware imports and end-to-end evidence. This contract is not an update endpoint.
+- [ ] Design adoption/overwrite, mixed upsert and broader source reconciliation separately; other component import/export and feeds remain pending.
 
 ## Tasks
 
