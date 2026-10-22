@@ -10,6 +10,7 @@ import 'icalendar_time_zone.dart';
 import 'icalendar_event_recurrence.dart';
 
 part 'icalendar_event_series.dart';
+part 'icalendar_availability_calendar.dart';
 
 enum IcalendarEventStatus { tentative, confirmed, cancelled }
 
@@ -314,22 +315,8 @@ IcalendarEvent _event(
       duration: duration,
     );
   }
-  IcalendarEventText? text(String name, int limit) {
-    final property = p[name]?.single;
-    if (property == null) return null;
-    const allowed = {'LANGUAGE', 'ALTREP'};
-    final parameters = componentParameters(property, allowed);
-    final decoded = componentText(
-      property,
-      maxPoints: limit,
-      parameters: allowed,
-    );
-    final language = parameters['LANGUAGE'];
-    final alternative = parameters['ALTREP'];
-    if (language != null) validateCalendarLanguageTag(language);
-    if (alternative != null) componentUri(alternative);
-    return IcalendarEventText._(decoded, language, alternative);
-  }
+  IcalendarEventText? text(String name, int limit) =>
+      _componentTextValue(p[name]?.single, limit);
 
   String? token(String name) {
     final property = p[name]?.single;
@@ -351,24 +338,7 @@ IcalendarEvent _event(
     'TRANSPARENT' => IcalendarEventTransparency.transparent,
     _ => componentFail(IcalendarComponentError.invalidValue),
   };
-  int? sequence;
-  if (p['SEQUENCE'] != null) {
-    final property = p['SEQUENCE']!.single;
-    componentParameters(property, {});
-    final value = property.value;
-    final match = RegExp(r'\+?[0-9]+').firstMatch(value);
-    if (value.length > 16 ||
-        match == null ||
-        match.start != 0 ||
-        match.end != value.length) {
-      componentFail(IcalendarComponentError.invalidValue);
-    }
-    final n = BigInt.parse(value);
-    if (n > BigInt.from(2147483647)) {
-      componentFail(IcalendarComponentError.invalidValue);
-    }
-    sequence = n.toInt();
-  }
+  final sequence = _componentInteger(p['SEQUENCE']?.single);
   return IcalendarEvent._(
     source: source,
     uid: uid,
@@ -420,4 +390,44 @@ Object _temporal(
     zoneId: zoneId,
     exclusiveEnd: exclusiveEnd,
   );
+}
+
+IcalendarEventText? _componentTextValue(
+  IcalendarSyntaxProperty? property,
+  int limit,
+) {
+  if (property == null) return null;
+  const allowed = {'LANGUAGE', 'ALTREP'};
+  final parameters = componentParameters(property, allowed);
+  final decoded = componentText(
+    property,
+    maxPoints: limit,
+    parameters: allowed,
+  );
+  final language = parameters['LANGUAGE'];
+  final alternative = parameters['ALTREP'];
+  if (language != null) validateCalendarLanguageTag(language);
+  if (alternative != null) componentUri(alternative);
+  return IcalendarEventText._(decoded, language, alternative);
+}
+
+int? _componentInteger(
+  IcalendarSyntaxProperty? property, {
+  int maximum = 2147483647,
+}) {
+  if (property == null) return null;
+  componentParameters(property, {});
+  final value = property.value;
+  final match = RegExp(r'\+?[0-9]+').firstMatch(value);
+  if (value.length > 16 ||
+      match == null ||
+      match.start != 0 ||
+      match.end != value.length) {
+    componentFail(IcalendarComponentError.invalidValue);
+  }
+  final number = BigInt.parse(value);
+  if (number > BigInt.from(maximum)) {
+    componentFail(IcalendarComponentError.invalidValue);
+  }
+  return number.toInt();
 }

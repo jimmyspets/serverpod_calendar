@@ -4,6 +4,45 @@ import 'package:test/test.dart';
 void main() {
   final day = CalendarDate(year: 2026, month: 10, day: 22);
   test(
+    'timed overlap queries share aggregate candidate work without refund',
+    () {
+      final start = TimedValue.utc(DateTime.utc(2026, 10, 22, 12));
+      final series = TimedEventSeries(
+        recurrence: TimedRecurrenceSet(
+          start: start,
+          rule: TimedRecurrenceRule(
+            frequency: TimedRecurrenceFrequency.daily,
+            count: 2,
+          ),
+          maxExplicitDates: 0,
+        ),
+        span: TimedEventSpan(
+          start: start,
+          duration: CalendarDuration(hours: 1),
+        ),
+        maxChanges: 0,
+        maxValidationCandidateWork: 20,
+        maxValidationOccurrences: 10,
+      );
+      final budget = RecurrenceWorkBudget(maxWork: 7);
+      List<TimedEventOccurrence> query() => series.expandOverlapping(
+        window: UtcWindow(
+          start: DateTime.utc(2026, 10, 22),
+          end: DateTime.utc(2026, 10, 24),
+        ),
+        maxCandidateWork: 20,
+        maxRuleOccurrences: 10,
+        maxBaseOccurrences: 10,
+        maxResults: 10,
+        sharedWorkBudget: budget,
+      );
+      expect(query().length, 2);
+      expect(budget.used, 4);
+      expect(query, throwsA(isA<RecurrenceLimitException>()));
+      expect(budget.used, 7);
+    },
+  );
+  test(
     'DATE single/range membership shares retained work across validations',
     () {
       final budget = RecurrenceWorkBudget(maxWork: 4);
