@@ -57,3 +57,7 @@ The iOS/Google/Outlook subscription matrix is required only for the declared fee
 CalDAV (RFC 4791), CalDAV Scheduling (RFC 6638), general upstream synchronization and VJOURNAL remain outside the initial profile; VTODO task services/interchange are now in scope; time-based VALARM/native alarm execution and a connected Flutter streaming notification example are now required under [ADR 0020](adr/0020-notification-delivery-scope.md), with detailed trigger/action and RFC 9074 mappings proposed under ADR 0009. Identity directories, mail providers and resource catalogs are host integration boundaries.
 
 [The RFC 6868 parameter encoding update](rfc/rfc-6868.md) is implemented in the bounded [syntax foundation](icalendar-syntax.md) under ADR 0062. It enables no additional calendar properties, vCard/XML adapters, imports, scheduling or publication.
+
+## Typed iCalendar temporal values, 2026-10-22
+
+[ADR 0063](adr/0063-icalendar-temporal-value-codecs.md) adds scoped pure DATE, UTC/named-zone DATE-TIME and DURATION wire-to-core codecs; [the guide](icalendar-temporal-values.md) records strict forms, endpoint gating, exact integer/resource bounds and normalization. Existing temporal policy is unchanged. Complete component/property validation, VTIMEZONE matching, recurrence wire mapping, source-preserving database import, authorized export and HTTP feeds remain pending. Value acceptance alone establishes no domain authorization or client interoperability.

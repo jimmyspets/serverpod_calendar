@@ -49,3 +49,5 @@ Failure is atomic: no partial document or output is returned. `IcalendarSyntaxEx
 Synthetic tests cover strict malformed/late-failing input, balanced trees, immutable ordering, quoted/repeated/unknown parameters, TEXT versus parameter escaping, budgets and boundary-safe folds. Generated Unicode cases verify parse/serialize meaning and deterministic output, plus folds at arbitrary octet positions on VM/Chrome. The root check script now runs the dedicated package suite on both platforms. See [recorded commands/results](scaffold-validation.md).
 
 Next, build explicit semantic validators and typed wire-value adapters for the selected component/property profiles. Retaining unknown syntax is not permission to silently import it or publish unfiltered data. No complete iCalendar/client compatibility, source-history preservation, database import, authenticated export or HTTP subscription capability is claimed by this foundation.
+
+Typed temporal conversion is now available separately in [the value codecs](icalendar-temporal-values.md) under ADR 0063. Pass raw values explicitly; generic parsing still does not guess value types or approve properties/components.

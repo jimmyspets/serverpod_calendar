@@ -1,6 +1,6 @@
 # Local example development
 
-Status: **scaffold plus temporal value foundations**. See [temporal core](temporal-core.md) for the implemented pure-Dart UTC/date/civil values and bounded pinned named-zone resolver. Full calendar semantics, iCalendar interchange, tasks, feeds, availability, scheduling and alarm/notification delivery are not implemented. The example verifies normal host-owned authentication and generated-client wiring for both reusable modules. CI configuration and the optional Flutter GUI package follow later.
+Status: **scoped native calendar/event/availability implementation plus pure iCalendar foundations**. See [the roadmap](roadmap.md) and [validation evidence](scaffold-validation.md) for implemented native increments, and [temporal core](temporal-core.md) for pure date/time/recurrence semantics. The iCalendar package has [generic syntax](icalendar-syntax.md) and [typed temporal value codecs](icalendar-temporal-values.md); complete component mapping/import/export, tasks, HTTP feeds, scheduling and alarm/notification delivery remain pending. The example exercises host-owned authentication, generated clients and scoped native journeys. CI configuration and the optional Flutter GUI package follow later.
 
 ## Pinned tools and packages
 
