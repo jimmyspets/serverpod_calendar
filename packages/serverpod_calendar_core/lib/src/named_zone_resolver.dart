@@ -20,6 +20,20 @@ import 'civil_date_time.dart';
 /// How explicit wall-clock fields map to an instant under RFC 5545.
 enum ZoneResolutionKind { unique, fold, gap }
 
+/// Publication evidence from pinned IANA data, including daylight labels.
+/// The initial item is a seed at the calculation horizon's start.
+final class ZoneObservance {
+  const ZoneObservance({
+    required this.instant,
+    required this.offsetFrom,
+    required this.offsetTo,
+    required this.isDaylight,
+  });
+  final DateTime instant;
+  final Duration offsetFrom, offsetTo;
+  final bool isDaylight;
+}
+
 /// Known-zone calculations lack enough verified offset coverage.
 ///
 /// Callers must propagate unknown coverage, never interpret it as free time.
@@ -371,6 +385,52 @@ final class NamedZoneResolver {
     );
   }
 
+  /// Pinned observances for publication over the same calculation-only horizon.
+  /// This does not extend ordinary storage or preserve source timezone syntax.
+  List<ZoneObservance> calendarProfileObservances({
+    required String zoneId,
+    required int maxObservances,
+  }) {
+    final snapshot = calendarProfileSnapshot(
+      zoneId: zoneId,
+      maxTransitions: maxObservances,
+    );
+    final rules = _rules[zoneId]!;
+    var previous = rules.at(snapshot.horizon.start.microsecondsSinceEpoch);
+    final values = <ZoneObservance>[
+      ZoneObservance(
+        instant: snapshot.horizon.start,
+        offsetFrom: Duration(microseconds: previous.micros),
+        offsetTo: Duration(microseconds: previous.micros),
+        isDaylight: previous.isDaylight,
+      ),
+    ];
+    for (final at in rules.transitions) {
+      if (at <= snapshot.horizon.start.microsecondsSinceEpoch ||
+          at >= snapshot.horizon.end.microsecondsSinceEpoch) {
+        continue;
+      }
+      final current = rules.at(at);
+      if (current.micros == previous.micros &&
+          current.isDaylight == previous.isDaylight) {
+        continue;
+      }
+      values.add(
+        ZoneObservance(
+          instant: DateTime.fromMicrosecondsSinceEpoch(at, isUtc: true),
+          offsetFrom: Duration(microseconds: previous.micros),
+          offsetTo: Duration(microseconds: current.micros),
+          isDaylight: current.isDaylight,
+        ),
+      );
+      previous = current;
+    }
+    if (values.length > maxObservances) {
+      throw const RecurrenceLimitException('maxObservances');
+    }
+    return List.unmodifiable(values);
+  }
+
   /// Known-zone matching is limited to the supplied, fully expanded horizon.
   /// This does not parse or trust an imported VTIMEZONE component.
   bool matchesDefinition(
@@ -392,9 +452,11 @@ final class NamedZoneResolver {
 final class _Offset {
   _Offset(tz.TimeZone value)
     : micros = value.offset.inMicroseconds,
+      isDaylight = value.isDst,
       known = value.abbreviation != '-00';
   final int micros;
   final bool known;
+  final bool isDaylight;
 }
 
 final class _Rules {

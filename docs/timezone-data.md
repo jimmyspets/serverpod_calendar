@@ -47,3 +47,8 @@ Source archives are available from [IANA releases](https://data.iana.org/time-zo
 The first [VEVENT/VTIMEZONE adapter](icalendar-event-adapter.md) under [ADR 0065](adr/0065-first-vevent-wire-adapter.md) compares entire normalized offset functions through NamedZoneResolver.calendarProfileSnapshot over fixed UTC [1969-12-31, 2100-01-02). This is calculation-only edge padding; ordinary event dates stay [1970-01-01, 2100-01-01), with the existing explicit endpoint exception. Validation-only earlier seeds do not widen storage. Unknown rules still fail, and a correct modern/event-date-limited definition may reject because full-history agreement is required. Metadata labels do not determine offsets; imported rules never update the database automatically.
 
 After a pinned-data update, revalidate accepted source definitions and recalculate derived projections before trusting their old version evidence. The update/generation procedure above is unchanged; do not hand-edit the generated payload. Database persistence/import upgrade coordination remains a later layer.
+
+
+## Availability export observances
+
+[ADR 0074](adr/0074-authenticated-availability-export.md) exposes immutable pinned observance evidence, preserving IANA daylight flags independently of offset increases. Availability export groups explicit onsets into bounded VTIMEZONE definitions and revalidates their full offset function through calculation-only UTC [1969-12-31, 2100-01-02). This adds no generated payload edits, dependency change, wider date support or indefinite future rules. The update procedure above remains required; generated export evidence changes with pinned data and must be retested. Original imported timezone syntax/labels are not archived by native storage.

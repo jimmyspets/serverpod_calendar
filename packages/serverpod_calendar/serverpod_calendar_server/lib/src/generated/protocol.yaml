@@ -1,4 +1,5 @@
 calendarAvailability:
+  - exportCalendar:
   - importCalendar:
   - create:
   - getRule:
