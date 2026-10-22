@@ -1,0 +1,4 @@
+class: CalendarAvailabilityImportResult
+immutable: true
+fields:
+  receipts: List<CalendarAvailabilityReceipt>

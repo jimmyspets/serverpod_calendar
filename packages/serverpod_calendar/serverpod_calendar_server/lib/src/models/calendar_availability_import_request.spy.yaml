@@ -1,0 +1,6 @@
+class: CalendarAvailabilityImportRequest
+immutable: true
+fields:
+  calendarId: UuidValue
+  expectedRevision: int
+  bytes: ByteData

@@ -133,7 +133,7 @@ CalendarEventRecurrence? _recurrence(TimedRecurrenceSet? set) {
 }
 
 /// Source is accepted by the pure adapter; current host import/organizer/extension
-/// authority must still be checked in the future authenticated import service.
+/// authority is checked independently by the authenticated import service.
 AvailabilityStorageProposal availabilityStorageProposal(
   IcalendarAvailabilityDefinition source, {
   UuidValue Function()? newOpeningId,

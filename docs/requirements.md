@@ -225,3 +225,8 @@ The maintainer selected the timing/composition-first slice and positive opening 
 ## Availability storage prerequisite increment, 2026-10-22
 
 [ADR 0072](adr/0072-source-preserving-availability-storage.md) and [the storage guide](availability-storage.md) implement source-preserving availability prerequisites: text protocol UIDs with native UUID separation, grouped categories/read-only CONTACT, availability PERIODs, source component versions and data-preserving upgrades. Native edits/calculation enforce the expanded state; pure conversion supplies no host authority or database import. Authenticated create-only import remains the next batch under ADR 0071.
+
+
+## Create-only availability import, 2026-10-22
+
+[ADR 0073](adr/0073-authenticated-create-only-availability-import.md) and [the import guide](availability-import.md) now implement the bounded authenticated availability import profile after ADR 0072 storage. This supersedes earlier import-pending wording only for standalone supported VAVAILABILITY files: separate import/create authority, current organizer/private-extension checks, source versions, destination-active UID conflicts and full-file atomicity with authorized minimal receipts. FR-06/07/08/18 gain this scoped increment; authorized export, source reconciliation, other component import, HTTP feeds and external-client interoperability remain pending.
