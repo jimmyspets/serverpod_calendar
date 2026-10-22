@@ -73,3 +73,5 @@ See [recurring VEVENT masters](icalendar-recurring-masters.md) for ADR 0066 rule
 See [PERIOD-valued event additions](icalendar-recurring-masters.md#period-valued-rdate-additions) for ADR 0067 timed exceptional spans and their native-storage boundary.
 
 See [occurrence timing and cancellation components](icalendar-occurrence-components.md) for ADR 0068 grouped master/override source-to-core adaptation and its proposed snapshot/inheritance profile.
+
+See [standalone availability wire adaptation](icalendar-availability-adapter.md) for ADR 0069 source/profile validation, positive openings and bounded core composition inputs.
