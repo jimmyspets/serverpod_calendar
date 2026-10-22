@@ -41,6 +41,9 @@ import 'calendar_availability_organizer.dart' as _i5oc0nlo;
 import 'calendar_availability_override_protocol_state.dart' as _i33h9mr5;
 import 'calendar_availability_protocol_state.dart' as _ib9yzivj;
 import 'calendar_availability_receipt.dart' as _is1luycx;
+import 'calendar_availability_replace_receipt.dart' as _iiw2d6as;
+import 'calendar_availability_replace_request.dart' as _ir631vai;
+import 'calendar_availability_replace_result.dart' as _itahk50i;
 import 'calendar_availability_search_mode.dart' as _iam4llos;
 import 'calendar_availability_search_query.dart' as _idixoqjq;
 import 'calendar_availability_search_view.dart' as _i99fx1rw;
@@ -127,6 +130,9 @@ export 'calendar_availability_organizer.dart';
 export 'calendar_availability_override_protocol_state.dart';
 export 'calendar_availability_protocol_state.dart';
 export 'calendar_availability_receipt.dart';
+export 'calendar_availability_replace_receipt.dart';
+export 'calendar_availability_replace_request.dart';
+export 'calendar_availability_replace_result.dart';
 export 'calendar_availability_search_mode.dart';
 export 'calendar_availability_search_query.dart';
 export 'calendar_availability_search_view.dart';
@@ -300,6 +306,15 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _is1luycx.CalendarAvailabilityReceipt) {
       return _is1luycx.CalendarAvailabilityReceipt.fromJson(data) as T;
+    }
+    if (t == _iiw2d6as.CalendarAvailabilityReplaceReceipt) {
+      return _iiw2d6as.CalendarAvailabilityReplaceReceipt.fromJson(data) as T;
+    }
+    if (t == _ir631vai.CalendarAvailabilityReplaceRequest) {
+      return _ir631vai.CalendarAvailabilityReplaceRequest.fromJson(data) as T;
+    }
+    if (t == _itahk50i.CalendarAvailabilityReplaceResult) {
+      return _itahk50i.CalendarAvailabilityReplaceResult.fromJson(data) as T;
     }
     if (t == _iam4llos.CalendarAvailabilitySearchMode) {
       return _iam4llos.CalendarAvailabilitySearchMode.fromJson(data) as T;
@@ -621,6 +636,24 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_is1luycx.CalendarAvailabilityReceipt?>()) {
       return (data != null
               ? _is1luycx.CalendarAvailabilityReceipt.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_iiw2d6as.CalendarAvailabilityReplaceReceipt?>()) {
+      return (data != null
+              ? _iiw2d6as.CalendarAvailabilityReplaceReceipt.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ir631vai.CalendarAvailabilityReplaceRequest?>()) {
+      return (data != null
+              ? _ir631vai.CalendarAvailabilityReplaceRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_itahk50i.CalendarAvailabilityReplaceResult?>()) {
+      return (data != null
+              ? _itahk50i.CalendarAvailabilityReplaceResult.fromJson(data)
               : null)
           as T;
     }
@@ -1156,6 +1189,17 @@ class Protocol extends _isc.SerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_iiw2d6as.CalendarAvailabilityReplaceReceipt>) {
+      return (data as List)
+              .map(
+                (e) =>
+                    deserialize<_iiw2d6as.CalendarAvailabilityReplaceReceipt>(
+                      e,
+                    ),
+              )
+              .toList()
+          as T;
+    }
     if (t == List<_iwbqbnec.CalendarAvailabilityTarget>) {
       return (data as List)
               .map((e) => deserialize<_iwbqbnec.CalendarAvailabilityTarget>(e))
@@ -1348,6 +1392,12 @@ class Protocol extends _isc.SerializationManager {
       _ib9yzivj.CalendarAvailabilityProtocolState =>
         'CalendarAvailabilityProtocolState',
       _is1luycx.CalendarAvailabilityReceipt => 'CalendarAvailabilityReceipt',
+      _iiw2d6as.CalendarAvailabilityReplaceReceipt =>
+        'CalendarAvailabilityReplaceReceipt',
+      _ir631vai.CalendarAvailabilityReplaceRequest =>
+        'CalendarAvailabilityReplaceRequest',
+      _itahk50i.CalendarAvailabilityReplaceResult =>
+        'CalendarAvailabilityReplaceResult',
       _iam4llos.CalendarAvailabilitySearchMode =>
         'CalendarAvailabilitySearchMode',
       _idixoqjq.CalendarAvailabilitySearchQuery =>
@@ -1484,6 +1534,12 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarAvailabilityProtocolState';
       case _is1luycx.CalendarAvailabilityReceipt():
         return 'CalendarAvailabilityReceipt';
+      case _iiw2d6as.CalendarAvailabilityReplaceReceipt():
+        return 'CalendarAvailabilityReplaceReceipt';
+      case _ir631vai.CalendarAvailabilityReplaceRequest():
+        return 'CalendarAvailabilityReplaceRequest';
+      case _itahk50i.CalendarAvailabilityReplaceResult():
+        return 'CalendarAvailabilityReplaceResult';
       case _iam4llos.CalendarAvailabilitySearchMode():
         return 'CalendarAvailabilitySearchMode';
       case _idixoqjq.CalendarAvailabilitySearchQuery():
@@ -1710,6 +1766,21 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'CalendarAvailabilityReceipt') {
       return deserialize<_is1luycx.CalendarAvailabilityReceipt>(data['data']);
+    }
+    if (dataClassName == 'CalendarAvailabilityReplaceReceipt') {
+      return deserialize<_iiw2d6as.CalendarAvailabilityReplaceReceipt>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarAvailabilityReplaceRequest') {
+      return deserialize<_ir631vai.CalendarAvailabilityReplaceRequest>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarAvailabilityReplaceResult') {
+      return deserialize<_itahk50i.CalendarAvailabilityReplaceResult>(
+        data['data'],
+      );
     }
     if (dataClassName == 'CalendarAvailabilitySearchMode') {
       return deserialize<_iam4llos.CalendarAvailabilitySearchMode>(

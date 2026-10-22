@@ -1,0 +1,7 @@
+class: CalendarAvailabilityReplaceRequest
+immutable: true
+fields:
+  calendarId: UuidValue
+  expectedRevision: int
+  selection: List<CalendarAvailabilityExportSelection>
+  bytes: ByteData

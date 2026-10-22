@@ -1157,7 +1157,90 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
                 2,
         'Authenticated cross-host export/import did not preserve source state',
       );
-      await aa.deleteRule(restored.id, restored.revision);
+
+      cal.CalendarAvailabilityReplaceRequest replacement(
+        cal.CalendarAvailabilityView rule,
+        String label,
+      ) => cal.CalendarAvailabilityReplaceRequest(
+        calendarId: rule.calendarId,
+        expectedRevision: 1,
+        selection: [
+          cal.CalendarAvailabilityExportSelection(
+            availabilityId: rule.id,
+            expectedRevision: rule.revision,
+          ),
+        ],
+        bytes: ByteData.sublistView(
+          Uint8List.fromList(
+            utf8.encode(
+              utf8
+                  .decode(bytesA)
+                  .replaceAll('CONTACT:Source desk', 'CONTACT:$label'),
+            ),
+          ),
+        ),
+      );
+      Future<Object?> replaceOutcome(
+        cal.EndpointCalendarAvailability api,
+        cal.CalendarAvailabilityReplaceRequest request,
+      ) => api
+          .replaceFromImport(request)
+          .then<Object?>((v) => v, onError: (Object e) => e);
+      final replacementRace = await Future.wait([
+        replaceOutcome(aa, replacement(restored, 'First source update')),
+        replaceOutcome(ab, replacement(restored, 'Second source update')),
+      ]);
+      check(
+        replacementRace
+                    .whereType<cal.CalendarAvailabilityReplaceResult>()
+                    .length ==
+                1 &&
+            replacementRace.whereType<cal.CalendarException>().single.code ==
+                cal.CalendarFailureCode.staleRevision,
+        'Competing replacements must have one revision winner',
+      );
+      var winner = await ab.getRule(restored.id);
+      check(
+        winner.revision == 2 &&
+            winner.content.openings.single.uid ==
+                restored.content.openings.single.uid,
+        'Cross-host replacement lost revision or opening identity',
+      );
+      final contact = winner.content.contacts!.single.value;
+      final noop = await aa.replaceFromImport(replacement(winner, contact));
+      check(
+        !noop.receipts.single.changed &&
+            noop.receipts.single.receipt.revision == 2,
+        'Cross-host replay was not a no-op',
+      );
+      final nativeRace = await Future.wait<Object?>([
+        aa
+            .updateMetadata(
+              cal.CalendarAvailabilityUpdateRequest(
+                availabilityId: winner.id,
+                expectedRevision: 2,
+                content: winner.content.copyWith(summary: 'Native race edit'),
+              ),
+            )
+            .then<Object?>((v) => v, onError: (Object e) => e),
+        replaceOutcome(ab, replacement(winner, 'Third source update')),
+      ]);
+      check(
+        nativeRace.whereType<cal.CalendarException>().length == 1 &&
+            nativeRace.whereType<cal.CalendarException>().single.code ==
+                cal.CalendarFailureCode.staleRevision,
+        'Native edit/replacement race had an invalid outcome',
+      );
+      winner = await aa.getRule(restored.id);
+      check(
+        winner.revision == 3,
+        'Native edit/replacement winner was not visible remotely',
+      );
+      await ab.deleteRule(winner.id, winner.revision);
+      await rejects(
+        () => aa.replaceFromImport(replacement(winner, 'After deletion')),
+        cal.CalendarFailureCode.accessDenied,
+      );
 
       await ab.deleteRule(imported.availabilityId, 1);
       await aa.deleteRule(copied.availabilityId, 1);

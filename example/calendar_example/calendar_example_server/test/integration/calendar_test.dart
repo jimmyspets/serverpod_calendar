@@ -1425,6 +1425,500 @@ void main() {
       },
     );
 
+    Future<CalendarAvailabilityView> importedRule({
+      UuidValue? parent,
+      String uid = 'update-source',
+      String? definition,
+    }) async {
+      parent ??= (await service.create(createInput()))!.calendarId;
+      final result = await service.importAvailability(
+        importRequest(parent, [definition ?? importDefinition(uid)]),
+      );
+      return service.getAvailability(result.receipts.single.availabilityId);
+    }
+
+    CalendarAvailabilityReplaceRequest replaceInput(
+      List<CalendarAvailabilityView> rules,
+      List<String> definitions, {
+      int parentRevision = 1,
+    }) => CalendarAvailabilityReplaceRequest(
+      calendarId: rules.first.calendarId,
+      expectedRevision: parentRevision,
+      selection: [
+        for (final rule in rules)
+          CalendarAvailabilityExportSelection(
+            availabilityId: rule.id,
+            expectedRevision: rule.revision,
+          ),
+      ],
+      bytes: importRequest(rules.first.calendarId, definitions).bytes,
+    );
+    String replaceOpening(String uid, {int hour = 9, String extra = ''}) => [
+      'BEGIN:AVAILABLE',
+      'UID:$uid',
+      'DTSTAMP:20500101T000000Z',
+      'DTSTART:20261022T${hour.toString().padLeft(2, '0')}0000Z',
+      'DURATION:PT1H',
+      extra,
+      'END:AVAILABLE',
+    ].where((s) => s.isNotEmpty).join('\r\n');
+    test('availability replacement exact replay is a true no-op including private baseline and audit time', () async {
+      final rule = await importedRule();
+      final before = (await CalendarAvailabilityDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.availabilityId.equals(rule.id),
+      ))!;
+      expect(before.importBaseline, isNotNull);
+      final gen = await generation();
+      final result = await service.replaceAvailabilityFromImport(
+        replaceInput([rule], [importDefinition('update-source')]),
+      );
+      expect(result.receipts.single.changed, isFalse);
+      expect(result.receipts.single.receipt.revision, 1);
+      final after = (await CalendarAvailabilityDataRecord.db.findById(
+        session,
+        before.id!,
+      ))!;
+      expect(after.toJson(), before.toJson());
+      expect(await generation(), gen);
+      expect(rule.toJson().containsKey('importBaseline'), isFalse);
+    });
+    test('availability replacement equal sequence changed content and timestamp regressions retain source state', () async {
+      final initial = importDefinition(
+        'update-source',
+        extra: 'CREATED:20410101T000000Z\r\nLAST-MODIFIED:20420101T000000Z',
+        opening: replaceOpening('A'),
+      );
+      final rule = await importedRule(definition: initial);
+      final originalId = rule.content.openings.single.uid;
+      final next =
+          importDefinition(
+                'update-source',
+                extra: 'CONTACT:New source contact',
+                opening: replaceOpening('A')
+                    .replaceAll('20500101T000000Z', '20190101T000000Z'),
+              )
+              .replaceAll('Imported hours', 'New title')
+              .replaceAll('20400101T000000Z', '20200101T000000Z');
+      final gen = await generation();
+      final result = await service.replaceAvailabilityFromImport(
+        replaceInput([rule], [next]),
+      );
+      expect(result.receipts.single.changed, isTrue);
+      expect(result.receipts.single.receipt.revision, 2);
+      final after = await service.getAvailability(rule.id);
+      expect(after.protocolState.sequence, 17);
+      expect(after.protocolState.stamp, DateTime.utc(2020));
+      expect(after.protocolState.created, isNull);
+      expect(after.lastModified, isNull);
+      expect(after.protocolState.openings.single.stamp, DateTime.utc(2019));
+      expect(after.content.contacts!.single.value, 'New source contact');
+      expect(after.content.openings.single.uid, originalId);
+      expect(await generation(), gen + 1);
+      expect((await service.get(rule.calendarId, groups)).revision, 1);
+      await service.updateAvailabilityMetadata(
+        CalendarAvailabilityUpdateRequest(
+          availabilityId: rule.id,
+          expectedRevision: 2,
+          content: after.content.copyWith(summary: 'Native later'),
+        ),
+      );
+      expect(
+        (await service.getAvailability(rule.id)).protocolState.stamp
+            .isBefore(DateTime.utc(2020)),
+        isFalse,
+      );
+    });
+    test('availability replacement mixed no-op and changed members bump generation once', () async {
+      final first = await importedRule(uid: 'A');
+      final second = await importedRule(parent: first.calendarId, uid: 'B');
+      final gen = await generation();
+      final result = await service.replaceAvailabilityFromImport(
+        replaceInput(
+          [first, second],
+          [
+            importDefinition('B').replaceAll('Imported hours', 'Changed B'),
+            importDefinition('A'),
+          ],
+        ),
+      );
+      expect(result.receipts.map((r) => r.changed), [false, true]);
+      expect((await service.getAvailability(first.id)).revision, 1);
+      expect((await service.getAvailability(second.id)).revision, 2);
+      expect(await generation(), gen + 1);
+    });
+    test('availability replacement rejects local edits and never adopts an identical local export', () async {
+      var rule = await importedRule();
+      await service.updateAvailabilityMetadata(
+        CalendarAvailabilityUpdateRequest(
+          availabilityId: rule.id,
+          expectedRevision: 1,
+          content: rule.content.copyWith(summary: 'Local edit'),
+        ),
+      );
+      rule = await service.getAvailability(rule.id);
+      final changed = importDefinition('update-source')
+          .replaceAll('SEQUENCE:17', 'SEQUENCE:99');
+      await expectLater(
+        service.replaceAvailabilityFromImport(replaceInput([rule], [changed])),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      final export = await service.exportAvailability(exportRequest([rule]));
+      final noop = await service.replaceAvailabilityFromImport(
+        replaceInput([rule], []).copyWith(bytes: export),
+      );
+      expect(noop.receipts.single.changed, isFalse);
+      await expectLater(
+        service.replaceAvailabilityFromImport(replaceInput([rule], [changed])),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      expect((await service.getAvailability(rule.id)).revision, 2);
+    });
+    test('availability replacement native accepted no-op saves do not create a local conflict', () async {
+      var rule = await importedRule();
+      await service.updateAvailabilityMetadata(
+        CalendarAvailabilityUpdateRequest(
+          availabilityId: rule.id,
+          expectedRevision: 1,
+          content: rule.content,
+        ),
+      );
+      rule = await service.getAvailability(rule.id);
+      final result = await service.replaceAvailabilityFromImport(
+        replaceInput(
+          [rule],
+          [
+            importDefinition('update-source')
+                .replaceAll('Imported hours', 'Source change'),
+          ],
+        ),
+      );
+      expect(result.receipts.single.receipt.revision, 3);
+    });
+    test('availability replacement lower source sequence and absent baseline reject without changes', () async {
+      final rule = await importedRule();
+      await expectLater(
+        service.replaceAvailabilityFromImport(
+          replaceInput(
+            [rule],
+            [
+              importDefinition('update-source')
+                  .replaceAll('SEQUENCE:17', 'SEQUENCE:16'),
+            ],
+          ),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      await expectLater(
+        service.replaceAvailabilityFromImport(
+          replaceInput(
+            [rule],
+            [
+              importDefinition('update-source')
+                  .replaceAll('SEQUENCE:17\r\n', ''),
+            ],
+          ),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      final native = await editableHours();
+      await expectLater(
+        service.replaceAvailabilityFromImport(
+          replaceInput([native], [importDefinition(native.protocolUid)]),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      final row = (await CalendarAvailabilityDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.availabilityId.equals(rule.id),
+      ))!;
+      await CalendarAvailabilityDataRecord.db.updateRow(
+        session,
+        row.copyWith(importBaseline: null),
+      );
+      await expectLater(
+        service.replaceAvailabilityFromImport(
+          replaceInput([rule], [importDefinition('update-source')]),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+    });
+    test('availability replacement omitted source sequence permits equal omitted sequence updates', () async {
+      final first = importDefinition('update-source')
+          .replaceAll('SEQUENCE:17\r\n', '');
+      final rule = await importedRule(definition: first);
+      await service.replaceAvailabilityFromImport(
+        replaceInput(
+          [rule],
+          [first.replaceAll('Imported hours', 'Omitted version change')],
+        ),
+      );
+      expect(
+        (await service.getAvailability(rule.id)).protocolState.sequence,
+        isNull,
+      );
+    });
+    test('availability replacement preserves current opening identities and allocates fresh identities after removal', () async {
+      final rule = await importedRule(
+        definition: importDefinition(
+          'update-source',
+          opening: '${replaceOpening('A')}\r\n${replaceOpening('B', hour: 12)}',
+        ),
+      );
+      final a = rule.content.openings.first.uid,
+          b = rule.content.openings.last.uid;
+      await service.replaceAvailabilityFromImport(
+        replaceInput(
+          [rule],
+          [
+            importDefinition(
+              'update-source',
+              opening:
+                  '${replaceOpening('B', hour: 13)}\r\n${replaceOpening('C', hour: 15)}',
+            ),
+          ],
+        ),
+      );
+      var current = await service.getAvailability(rule.id);
+      expect(current.content.openings.first.uid, b);
+      expect(current.content.openings.last.uid, isNot(a));
+      await service.replaceAvailabilityFromImport(
+        replaceInput(
+          [current],
+          [importDefinition('update-source', opening: replaceOpening('A'))],
+        ),
+      );
+      current = await service.getAvailability(rule.id);
+      expect(current.content.openings.single.uid, isNot(a));
+    });
+    for (final permission in [
+      CalendarPermission.importAvailability,
+      CalendarPermission.replaceAvailabilityFromImport,
+      CalendarPermission.readAvailability,
+      CalendarPermission.updateAvailabilityMetadata,
+    ]) {
+      test(
+        'availability replacement requires ${permission.name} independently',
+        () async {
+          final rule = await importedRule();
+          policy.denied.add(permission);
+          await expectLater(
+            service.replaceAvailabilityFromImport(
+              replaceInput(
+                [rule],
+                [
+                  importDefinition('update-source')
+                      .replaceAll('Imported hours', 'Changed'),
+                ],
+              ),
+            ),
+            failure(CalendarFailureCode.accessDenied),
+          );
+        },
+      );
+    }
+    test('availability replacement structural and occurrence changes require independent rights', () async {
+      final original = importDefinition(
+        'update-source',
+        opening: replaceOpening('A', extra: 'RRULE:FREQ=DAILY;COUNT=3'),
+      );
+      final rule = await importedRule(definition: original);
+      policy.denied.add(CalendarPermission.updateAvailability);
+      await expectLater(
+        service.replaceAvailabilityFromImport(
+          replaceInput([rule], [original.replaceAll('PT1H', 'PT2H')]),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denied.clear();
+      policy.denied.add(CalendarPermission.changeAvailabilityOccurrence);
+      final override = [
+        'BEGIN:AVAILABLE',
+        'UID:A',
+        'DTSTAMP:20400101T000000Z',
+        'RECURRENCE-ID:20261023T090000Z',
+        'DTSTART:20261023T110000Z',
+        'DURATION:PT1H',
+        'END:AVAILABLE',
+      ].join('\r\n');
+      final next = original.replaceAll(
+        'END:VAVAILABILITY',
+        '$override\r\nEND:VAVAILABILITY',
+      );
+      await expectLater(
+        service.replaceAvailabilityFromImport(replaceInput([rule], [next])),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+    test('availability replacement late member denial and conflict roll back all rows baselines and generation', () async {
+      final first = await importedRule(uid: 'A');
+      final second = await importedRule(parent: first.calendarId, uid: 'B');
+      final gen = await generation();
+      policy.denyReplacementId = second.id;
+      final input = replaceInput(
+        [first, second],
+        [
+          importDefinition('A').replaceAll('Imported hours', 'Changed A'),
+          importDefinition('B').replaceAll('Imported hours', 'Changed B'),
+        ],
+      );
+      await expectLater(
+        service.replaceAvailabilityFromImport(input),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(await generation(), gen);
+      expect((await service.getAvailability(first.id)).revision, 1);
+      policy.denyReplacementId = null;
+      await service.updateAvailabilityMetadata(
+        CalendarAvailabilityUpdateRequest(
+          availabilityId: second.id,
+          expectedRevision: 1,
+          content: second.content.copyWith(summary: 'Local B'),
+        ),
+      );
+      final changedSecond = await service.getAvailability(second.id);
+      await expectLater(
+        service.replaceAvailabilityFromImport(
+          replaceInput(
+            [first, changedSecond],
+            [
+              importDefinition('A').replaceAll('Imported hours', 'Changed A'),
+              importDefinition('B'),
+            ],
+          ),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      expect((await service.getAvailability(first.id)).revision, 1);
+    });
+    test('availability replacement final organizer removal approval and policy epoch changes fail closed', () async {
+      final rule = await importedRule(
+        definition: importDefinition(
+          'update-source',
+          extra: 'ORGANIZER:mailto:source@example.invalid',
+        ),
+      );
+      policy.denyFinalOrganizer = true;
+      await expectLater(
+        service.replaceAvailabilityFromImport(
+          replaceInput([rule], [importDefinition('update-source')]),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(
+        policy.organizerRequest!.currentAvailability!.content.organizer,
+        isNotNull,
+      );
+      expect(policy.organizerRequest!.proposedAvailability!.organizer, isNull);
+      policy.denyFinalOrganizer = false;
+      policy.onFinal = () => policy.epoch = 'changed';
+      await expectLater(
+        service.replaceAvailabilityFromImport(
+          replaceInput([rule], [importDefinition('update-source')]),
+        ),
+        failure(CalendarFailureCode.unavailable),
+      );
+    });
+    test('availability replacement stale and exact file/selection mismatch requests reject', () async {
+      final rule = await importedRule();
+      await expectLater(
+        service.replaceAvailabilityFromImport(
+          replaceInput(
+            [rule],
+            [importDefinition('update-source')],
+            parentRevision: 2,
+          ),
+        ),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      await expectLater(
+        service.replaceAvailabilityFromImport(
+          replaceInput(
+            [rule.copyWith(revision: 2)],
+            [importDefinition('update-source')],
+          ),
+        ),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      await expectLater(
+        service.replaceAvailabilityFromImport(
+          replaceInput([rule], [importDefinition('Other')]),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      await expectLater(
+        service.replaceAvailabilityFromImport(
+          replaceInput(
+            [rule],
+            [importDefinition('update-source'), importDefinition('Extra')],
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      final other = (await service.create(createInput()))!.calendarId;
+      await expectLater(
+        service.replaceAvailabilityFromImport(
+          replaceInput(
+            [rule],
+            [importDefinition('update-source')],
+          ).copyWith(calendarId: other),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+    test('availability replacement receipts use final decisions and no-op snapshots exclude baseline payload', () async {
+      final rule = await importedRule();
+      CalendarAuthorizationRequest? finalRequest;
+      policy.onReplacement = (request, phase) {
+        if (request.availabilityReplacement != null &&
+            phase == CalendarAuthorizationPhase.finalWrite) {
+          finalRequest = request;
+          expect(
+            () => request.availabilityReplacement!.members.clear(),
+            throwsUnsupportedError,
+          );
+        }
+      };
+      policy.hideReplacementReceipt = true;
+      final result = await service.replaceAvailabilityFromImport(
+        replaceInput([rule], [importDefinition('update-source')]),
+      );
+      expect(result.receipts, isEmpty);
+      final member = finalRequest!.availabilityReplacement!.members.single;
+      expect(member.changed, isFalse);
+      expect(member.localChanges, isFalse);
+      expect(member.baselineProfile, isNotNull);
+    });
+    test('availability replacement deletion scrubs private baseline and incompatible baselines reject', () async {
+      final rule = await importedRule();
+      final row = (await CalendarAvailabilityDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.availabilityId.equals(rule.id),
+      ))!;
+      await CalendarAvailabilityDataRecord.db.updateRow(
+        session,
+        row.copyWith(
+          importBaseline: row.importBaseline!.copyWith(profile: 'unknown'),
+        ),
+      );
+      await expectLater(
+        service.replaceAvailabilityFromImport(
+          replaceInput([rule], [importDefinition('update-source')]),
+        ),
+        failure(CalendarFailureCode.unavailable),
+      );
+      await service.deleteAvailability(rule.id, 1);
+      expect(
+        await CalendarAvailabilityDataRecord.db.findById(session, row.id!),
+        isNull,
+      );
+      final marker = (await CalendarAvailabilityRecord.db.findById(
+        session,
+        rule.id,
+      ))!;
+      expect(marker.deletedAt, isNotNull);
+    });
+
     test('source storage preserves protocol dates metadata PERIOD calculation and native edit retention', () async {
       var rule = await storedSource();
       final initial = rule.protocolState.toJson();
@@ -4913,6 +5407,10 @@ final class TestPolicy implements CalendarHostPolicy {
   final searchRequests = <CalendarAuthorizationRequest>[];
   final deniedSubjects = <String>{};
   void Function(CalendarAuthorizationRequest)? onSearchRead;
+  UuidValue? denyReplacementId;
+  bool hideReplacementReceipt = false;
+  void Function(CalendarAuthorizationRequest, CalendarAuthorizationPhase)?
+  onReplacement;
   final deniedExportIds = <UuidValue>{};
   void Function(CalendarAuthorizationRequest)? onExportBatch;
   String? denyImportUid, hideImportReceiptUid;
@@ -5034,6 +5532,10 @@ final class TestPolicy implements CalendarHostPolicy {
     CalendarAuthorizationPhase phase,
   ) async {
     for (final request in requests) {
+      if (request.operation ==
+          CalendarPermission.replaceAvailabilityFromImport) {
+        onReplacement?.call(request, phase);
+      }
       if (request.operation == CalendarPermission.exportAvailability &&
           request.availabilityId == null) {
         onExportBatch?.call(request);
@@ -5099,6 +5601,11 @@ final class TestPolicy implements CalendarHostPolicy {
                   phase == CalendarAuthorizationPhase.finalWrite) ||
               (r.operation == CalendarPermission.exportAvailability &&
                   deniedExportIds.contains(r.availabilityId)) ||
+              (phase == CalendarAuthorizationPhase.finalWrite &&
+                  r.operation ==
+                      CalendarPermission.replaceAvailabilityFromImport &&
+                  r.availabilityId != null &&
+                  r.availabilityId == denyReplacementId) ||
               denied.contains(r.operation) ||
               (r.operation == CalendarPermission.readSubjectAvailability &&
                   deniedSubjects.contains(r.availabilityTarget?.externalId)) ||
@@ -5111,6 +5618,9 @@ final class TestPolicy implements CalendarHostPolicy {
       disclosedGroups: grants,
       eventDisclosedGroups: eventGrants,
       discloseMutationReceipt:
+          !(hideReplacementReceipt &&
+              r.operation ==
+                  CalendarPermission.replaceAvailabilityFromImport) &&
           r.operation != CalendarPermission.readAvailability &&
           !(r.operation == CalendarPermission.importAvailability &&
               hideImportBatchReceipt) &&

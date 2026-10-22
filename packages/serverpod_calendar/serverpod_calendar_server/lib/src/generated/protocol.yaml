@@ -1,4 +1,5 @@
 calendarAvailability:
+  - replaceFromImport:
   - exportCalendar:
   - importCalendar:
   - create:
