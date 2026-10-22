@@ -25,3 +25,7 @@ Use a pure component adapter above generic syntax and the individual value codec
 Full-horizon matching provides one clear pinned-rule guarantee but rejects otherwise usable date-limited definitions. Earlier seed inputs permit common historical rule descriptions without widening stored-event dates. Limited observance syntax or inadequate bounds must cause explicit rejection, never replacement by guessed rules or partial approval.
 
 Test matching/mismatching and insufficient-coverage definitions, earlier seeds without out-of-profile event storage, aliases, DST transitions/gaps/folds, conflict/duplicate handling, resource exhaustion and atomic component rejection. Preserve separate evidence for pure semantic mapping, authorized database import/export and external clients. This record confirms the next batch's scope; no VEVENT or VTIMEZONE parser implementation is claimed here.
+
+## Scoped implementation update
+
+[ADR 0065](0065-first-vevent-wire-adapter.md) now implements the first pure non-recurring event/zone adapter and the subsequently selected bounded explicit/yearly observance grammar. The original implementation-pending statements above record the decision checkpoint; authenticated database import/export and broader component coverage remain pending.
