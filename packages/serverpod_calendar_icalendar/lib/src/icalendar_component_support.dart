@@ -27,6 +27,14 @@ final class IcalendarComponentException implements Exception {
 Never componentFail(IcalendarComponentError kind) =>
     throw IcalendarComponentException(kind);
 
+/// Protocol tokens use ASCII case folding; Unicode text remains separate.
+String componentToken(String value) {
+  if (value.codeUnits.any((v) => v <= 32 || v >= 127)) {
+    componentFail(IcalendarComponentError.invalidValue);
+  }
+  return value.toUpperCase();
+}
+
 T componentGuard<T>(T Function() action) {
   try {
     return action();
@@ -57,8 +65,16 @@ final class IcalendarComponentLimits {
     this.maxObservances = 128,
     this.maxOnsets = 8192,
     this.maxCandidates = 200000,
+    this.maxExplicitDates = 256,
+    this.maxRuleValues = 512,
+    this.maxCalendarExplicitDates = 4096,
+    this.maxCalendarRuleValues = 4096,
   });
   final int maxEvents, maxZones, maxObservances, maxOnsets, maxCandidates;
+  final int maxExplicitDates,
+      maxRuleValues,
+      maxCalendarExplicitDates,
+      maxCalendarRuleValues;
   void validate() {
     for (final n in [
       maxEvents,
@@ -66,6 +82,10 @@ final class IcalendarComponentLimits {
       maxObservances,
       maxOnsets,
       maxCandidates,
+      maxExplicitDates,
+      maxRuleValues,
+      maxCalendarExplicitDates,
+      maxCalendarRuleValues,
     ]) {
       if (n < 1 || n > 1000000) throw ArgumentError('Invalid component limit');
     }
@@ -73,9 +93,11 @@ final class IcalendarComponentLimits {
 }
 
 final class ComponentBudget {
-  ComponentBudget(this.limits);
+  ComponentBudget(this.limits)
+    : sharedWork = RecurrenceWorkBudget(maxWork: limits.maxCandidates);
   final IcalendarComponentLimits limits;
-  int observances = 0, onsets = 0, candidates = 0;
+  final RecurrenceWorkBudget sharedWork;
+  int observances = 0, onsets = 0, explicitDates = 0, ruleValues = 0;
   void observance() {
     if (++observances > limits.maxObservances) {
       componentFail(IcalendarComponentError.limitExceeded);
@@ -89,7 +111,17 @@ final class ComponentBudget {
   }
 
   void candidate() {
-    if (++candidates > limits.maxCandidates) {
+    sharedWork.charge();
+  }
+
+  void explicitDate() {
+    if (++explicitDates > limits.maxCalendarExplicitDates) {
+      componentFail(IcalendarComponentError.limitExceeded);
+    }
+  }
+
+  void ruleValue() {
+    if (++ruleValues > limits.maxCalendarRuleValues) {
       componentFail(IcalendarComponentError.limitExceeded);
     }
   }

@@ -13,4 +13,5 @@ export 'src/icalendar_component_support.dart'
         IcalendarComponentException,
         IcalendarComponentLimits;
 export 'src/icalendar_event_calendar.dart';
+export 'src/icalendar_event_recurrence.dart' show IcalendarEventRecurrence;
 export 'src/icalendar_time_zone.dart' show IcalendarValidatedTimeZone;

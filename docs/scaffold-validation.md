@@ -357,3 +357,16 @@ After a review-discovered numeric-grammar correction, one complete `./tool/check
 Relative Markdown links, consecutive ADR numbering through 0065, candidate credential scanning, changed-file review and unchanged Apache 2.0 LICENSE were checked. Complete source-preserving database import/reconciliation, authorized export, recurrence/override wire mapping, scheduling/alarms, full calendar metadata and HTTP feeds remain pending. Synthetic unit/browser fixtures establish this bounded profile only, not Apple/Google/Outlook interoperability.
 
 The owned interactive development runner was restored. Serverpod MCP log inspection/hot reload succeeded; the configured Flutter example was launched, its own DTD/app connection verified, and Dart MCP hot reload succeeded.
+
+
+## Recurring VEVENT masters, 2026-10-22
+
+[ADR 0066](adr/0066-recurring-vevent-master-adapter.md) and [the recurrence profile](icalendar-recurring-masters.md) document one RRULE and repeated start-only RDATE/EXDATE adaptation to immutable core sets. Focused root command `dart test packages/serverpod_calendar_icalendar/test/icalendar_event_recurrence_test.dart packages/serverpod_calendar_icalendar/test/icalendar_event_calendar_test.dart packages/serverpod_calendar_core/test/recurrence_work_budget_test.dart --reporter expanded` passed **57 VM tests**; focused fatal-info analysis passed. Ignored `.local/recurring-master-focused.log` retains results.
+
+Coverage includes COUNT/UNTIL, earlier/duplicate inclusions, EXDATE precedence, WKST/BYWEEKNO, BYSETPOS start alignment, generated DST gaps and nominal duration, exact profiles, numeric/scalar bounds, Unicode text versus ASCII protocol tokens, source retention/FREQ-first output and aggregate exhaustion across masters and VTIMEZONE. The optional shared core work budget retains consumption on failed attempts without changing existing callers' recurrence semantics.
+
+After focused review fixes, one complete `./tool/check.ps1` passed stable generation, formatting, fatal-info analysis, **465 core VM + 465 core Chrome**, **125 iCalendar VM + 125 iCalendar Chrome**, **62 module VM + 17 module Chrome**, **3 Flutter widget** and **81 database/policy** tests, populated upgrades, host compilation, two independent host/generated-client/JWT checks, the Flutter WebDriver journey and web release build. It exited 0 with `All requested local checks passed.`; ignored `.local/recurring-master-batch-check.log` retains details. Wasm dry-run compilation passed; no Wasm runtime claim follows. No schema, migration, generated protocol/client or dependency changes were required.
+
+Relative Markdown links, consecutive ADR numbering through 0066, candidate credential scanning, changed-file scope and unchanged Apache 2.0 LICENSE were checked. PERIOD additions are the maintainer-selected next batch; separate occurrence components, authenticated database import/export, scheduling/alarms, HTTP feeds and external-client compatibility remain pending.
+
+The owned interactive development runner was restored. Serverpod MCP log inspection/hot reload succeeded; its configured Flutter example was launched, its own DTD/app connection verified, and Dart MCP hot reload succeeded.
