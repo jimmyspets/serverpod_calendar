@@ -11,8 +11,11 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
+import 'dart:typed_data' as _idt;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_create_request.dart'
     as _i2zcamh9;
+import 'package:serverpod_calendar_client/src/protocol/calendar_availability_export_request.dart'
+    as _izvtbziu;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_import_request.dart'
     as _ilq73ar1;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_import_result.dart'
@@ -91,6 +94,14 @@ class EndpointCalendarAvailability extends _isc.EndpointRef {
 
   @override
   String get name => 'serverpod_calendar.calendarAvailability';
+
+  _ida.Future<_idt.ByteData> exportCalendar(
+    _izvtbziu.CalendarAvailabilityExportRequest request,
+  ) => caller.callServerEndpoint<_idt.ByteData>(
+    'serverpod_calendar.calendarAvailability',
+    'exportCalendar',
+    {'request': request},
+  );
 
   _ida.Future<_iraz2mny.CalendarAvailabilityImportResult> importCalendar(
     _ilq73ar1.CalendarAvailabilityImportRequest request,

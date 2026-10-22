@@ -1144,6 +1144,287 @@ void main() {
       },
     );
 
+    CalendarAvailabilityExportRequest exportRequest(
+      List<CalendarAvailabilityView> rules, {
+      UuidValue? parent,
+      int revision = 1,
+    }) => CalendarAvailabilityExportRequest(
+      calendarId: parent ?? rules.first.calendarId,
+      expectedRevision: revision,
+      selection: [
+        for (final rule in rules)
+          CalendarAvailabilityExportSelection(
+            availabilityId: rule.id,
+            expectedRevision: rule.revision,
+          ),
+      ],
+    );
+    List<int> exportedBytes(ByteData data) =>
+        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+    test('availability export preserves imported source and current edits without changing audit or revisions', () async {
+      final original = await storedSource();
+      final before = await generation();
+      final bytes = await service.exportAvailability(exportRequest([original]));
+      final parsed = parseIcalendarAvailabilityCalendar(exportedBytes(bytes));
+      final source = parsed.definitions.single;
+      expect(source.uid, original.protocolUid);
+      expect(source.stamp, DateTime.utc(2040));
+      expect(source.sequence, 17);
+      expect(source.created, isNull);
+      expect(source.lastModified, isNull);
+      expect(source.metadata.categoryGroups.first.values, ['One', 'One']);
+      expect(source.metadata.contacts.single.value, 'Desk');
+      expect(
+        source
+            .openings
+            .single
+            .master
+            .recurrence!
+            .periods
+            .values
+            .single
+            .duration!
+            .hours,
+        2,
+      );
+      expect(await generation(), before);
+      expect((await service.getAvailability(original.id)).revision, 1);
+      expect((await service.get(original.calendarId, groups)).revision, 1);
+      await service.updateAvailabilityMetadata(
+        CalendarAvailabilityUpdateRequest(
+          availabilityId: original.id,
+          expectedRevision: 1,
+          content: original.content.copyWith(summary: 'Current export'),
+        ),
+      );
+      final edited = await service.getAvailability(original.id);
+      final current = parseIcalendarAvailabilityCalendar(
+        exportedBytes(
+          await service.exportAvailability(exportRequest([edited])),
+        ),
+      );
+      expect(current.definitions.single.summary!.value, 'Current export');
+      expect(current.definitions.single.sequence, 18);
+    });
+    for (final permission in [
+      CalendarPermission.exportAvailability,
+      CalendarPermission.readAvailability,
+    ]) {
+      test(
+        'availability export independently requires ${permission.name}',
+        () async {
+          final original = await storedSource();
+          policy.denied.add(permission);
+          await expectLater(
+            service.exportAvailability(exportRequest([original])),
+            failure(CalendarFailureCode.accessDenied),
+          );
+        },
+      );
+    }
+    test('availability export is explicit all-or-nothing and freezes full host selection', () async {
+      final first = await storedSource(uid: 'First source');
+      final second = await storedSource(
+        parent: first.calendarId,
+        uid: 'Second source',
+      );
+      final selection = [
+        CalendarAvailabilityExportSelection(
+          availabilityId: first.id,
+          expectedRevision: 1,
+        ),
+        CalendarAvailabilityExportSelection(
+          availabilityId: second.id,
+          expectedRevision: 1,
+        ),
+      ];
+      CalendarAuthorizationRequest? last;
+      policy.onExportBatch = (r) {
+        if (r.availabilityExport == null) return;
+        last = r;
+        selection.clear();
+        expect(
+          () => r.availabilityExport!.members.clear(),
+          throwsUnsupportedError,
+        );
+        expect(
+          () => r.availabilityExport!.members.first.content.contacts!.clear(),
+          throwsUnsupportedError,
+        );
+      };
+      policy.deniedExportIds.add(second.id);
+      await expectLater(
+        service.exportAvailability(
+          CalendarAvailabilityExportRequest(
+            calendarId: first.calendarId,
+            expectedRevision: 1,
+            selection: selection,
+          ),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(last!.availabilityExport!.members, hasLength(2));
+      expect(selection, isEmpty);
+      expect(await CalendarAvailabilityDataRecord.db.count(session), 2);
+    });
+    test('availability export reauthorizes every selected source after serialization', () async {
+      final original = await storedSource();
+      var fullChecks = 0;
+      policy.onExportBatch = (r) {
+        if (r.availabilityExport != null && ++fullChecks == 2) {
+          policy.denied.add(CalendarPermission.readAvailability);
+        }
+      };
+      await expectLater(
+        service.exportAvailability(exportRequest([original])),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(fullChecks, 2);
+    });
+    test('availability export rejects stale missing foreign and mismatched selections', () async {
+      final original = await storedSource();
+      await expectLater(
+        service.exportAvailability(exportRequest([original], revision: 2)),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      await expectLater(
+        service.exportAvailability(
+          exportRequest([original.copyWith(revision: 2)]),
+        ),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      final other = (await service.create(createInput()))!.calendarId;
+      await expectLater(
+        service.exportAvailability(exportRequest([original], parent: other)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      await expectLater(
+        service.exportAvailability(
+          exportRequest([original.copyWith(id: const Uuid().v4obj())]),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.scopeOverride = 'foreign';
+      await expectLater(
+        service.exportAvailability(exportRequest([original])),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+    test('availability export rejects duplicate opening source UIDs in combined selection but permits individual export', () async {
+      final first = await storedSource(uid: 'First source');
+      final second = await storedSource(
+        parent: first.calendarId,
+        uid: 'Second source',
+      );
+      await service.exportAvailability(exportRequest([first]));
+      await expectLater(
+        service.exportAvailability(exportRequest([first, second])),
+        failure(CalendarFailureCode.validation),
+      );
+    });
+    test('availability export order is deterministic and selected deleted members never disappear silently', () async {
+      final first = await editableHours();
+      final secondReceipt = (await service.createAvailability(
+        CalendarAvailabilityCreateRequest(
+          calendarId: first.calendarId,
+          content: CalendarAvailabilityContent(openings: []),
+        ),
+      ))!;
+      final second = await service.getAvailability(
+        secondReceipt.availabilityId,
+      );
+      expect(
+        exportedBytes(
+          await service.exportAvailability(exportRequest([first, second])),
+        ),
+        exportedBytes(
+          await service.exportAvailability(exportRequest([second, first])),
+        ),
+      );
+      await service.deleteAvailability(second.id, second.revision);
+      await expectLater(
+        service.exportAvailability(exportRequest([first, second])),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+    test('availability export current extension failure yields no result and no mutations', () async {
+      final original = await storedSource();
+      final receipt = (await service.createAvailability(
+        CalendarAvailabilityCreateRequest(
+          calendarId: original.calendarId,
+          content: CalendarAvailabilityContent(openings: []),
+        ),
+      ))!;
+      final data = (await CalendarAvailabilityDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.availabilityId.equals(receipt.availabilityId),
+      ))!;
+      await CalendarAvailabilityDataRecord.db.updateRow(
+        session,
+        data.copyWith(
+          content: data.content.copyWith(
+            extensions: [
+              CalendarAvailabilityExtension(name: 'X-TEST', value: 'Private'),
+            ],
+          ),
+        ),
+      );
+      final before = await generation();
+      CalendarModule.install(
+        session.serverpod,
+        policy: policy,
+        options: const CalendarModuleOptions(
+          requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+        ),
+        availabilityExtensions: [
+          CalendarAvailabilityExtensionRegistration(
+            name: 'X-TEST',
+            contexts: CalendarAvailabilityExtensionContext.values,
+            validate: (_) => throw StateError('Synthetic registry outage'),
+          ),
+        ],
+      );
+      service = CalendarModule.service(session);
+      final rule = await service.getAvailability(receipt.availabilityId);
+      await expectLater(
+        service.exportAvailability(exportRequest([rule])),
+        failure(CalendarFailureCode.unavailable),
+      );
+      expect(await generation(), before);
+    });
+    test(
+      'availability export selection limits reject before producing output',
+      () async {
+        final original = await storedSource();
+        final empty = exportRequest([original]).copyWith(selection: []);
+        await expectLater(
+          service.exportAvailability(empty),
+          failure(CalendarFailureCode.limitExceeded),
+        );
+        final duplicate = exportRequest([original]).copyWith(
+          selection: [
+            ...exportRequest([original]).selection,
+            ...exportRequest([original]).selection,
+          ],
+        );
+        await expectLater(
+          service.exportAvailability(duplicate),
+          failure(CalendarFailureCode.validation),
+        );
+        await expectLater(
+          service.exportAvailability(
+            empty.copyWith(
+              selection: List.filled(
+                65,
+                exportRequest([original]).selection.single,
+              ),
+            ),
+          ),
+          failure(CalendarFailureCode.limitExceeded),
+        );
+      },
+    );
+
     test('source storage preserves protocol dates metadata PERIOD calculation and native edit retention', () async {
       var rule = await storedSource();
       final initial = rule.protocolState.toJson();
@@ -4632,6 +4913,8 @@ final class TestPolicy implements CalendarHostPolicy {
   final searchRequests = <CalendarAuthorizationRequest>[];
   final deniedSubjects = <String>{};
   void Function(CalendarAuthorizationRequest)? onSearchRead;
+  final deniedExportIds = <UuidValue>{};
+  void Function(CalendarAuthorizationRequest)? onExportBatch;
   String? denyImportUid, hideImportReceiptUid;
   bool hideImportBatchReceipt = false;
   Future<void> Function(
@@ -4751,6 +5034,10 @@ final class TestPolicy implements CalendarHostPolicy {
     CalendarAuthorizationPhase phase,
   ) async {
     for (final request in requests) {
+      if (request.operation == CalendarPermission.exportAvailability &&
+          request.availabilityId == null) {
+        onExportBatch?.call(request);
+      }
       if (request.operation == CalendarPermission.importAvailability) {
         await onImportBatch?.call(s, request, tx, phase);
       }
@@ -4810,6 +5097,8 @@ final class TestPolicy implements CalendarHostPolicy {
                         m.protocolUid == denyImportUid,
                   ) &&
                   phase == CalendarAuthorizationPhase.finalWrite) ||
+              (r.operation == CalendarPermission.exportAvailability &&
+                  deniedExportIds.contains(r.availabilityId)) ||
               denied.contains(r.operation) ||
               (r.operation == CalendarPermission.readSubjectAvailability &&
                   deniedSubjects.contains(r.availabilityTarget?.externalId)) ||

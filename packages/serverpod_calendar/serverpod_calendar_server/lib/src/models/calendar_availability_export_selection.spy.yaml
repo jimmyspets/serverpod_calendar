@@ -1,0 +1,5 @@
+class: CalendarAvailabilityExportSelection
+immutable: true
+fields:
+  availabilityId: UuidValue
+  expectedRevision: int

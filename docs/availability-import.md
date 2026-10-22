@@ -133,3 +133,8 @@ The result contains `receipts`, an ordered list of minimal member receipts appro
 The example Working hours screen offers an explicit import paste form and synthetic example. It converts text-area newlines to CRLF before UTF-8 encoding and retains a failed input for correction; this conversion is an example UI behavior, not byte-API leniency. No network metadata fetch, scheduling or alarm activation follows import.
 
 No schema change/reset is required by this batch. For future pre-beta changes the maintainer permits breaking models requiring a fresh database; this supersedes any implication above that preserving every unpublished database upgrade is mandatory. Historical migration evidence is retained. Source updates/reconciliation, authorized export, event/task import and HTTP publication remain pending.
+
+
+## Authenticated export follow-up
+
+[ADR 0074](adr/0074-authenticated-availability-export.md) and [the export guide](availability-export.md) now add current-state output for explicitly selected authorized definitions from one calendar, superseding blanket export-pending wording for that scoped operation. Import remains create-only; exporting data is not source reconciliation or permission to update an existing UID. Unsupported native state and aggregate profile limits reject rather than lose information.

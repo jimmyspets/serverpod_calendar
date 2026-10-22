@@ -1113,6 +1113,52 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
                 2,
         'Cross-host import lost source protocol or metadata state',
       );
+
+      final exportRequest = cal.CalendarAvailabilityExportRequest(
+        calendarId: importParent.calendarId,
+        expectedRevision: 1,
+        selection: [
+          cal.CalendarAvailabilityExportSelection(
+            availabilityId: remoteImport.id,
+            expectedRevision: remoteImport.revision,
+          ),
+        ],
+      );
+      final exportA = await aa.exportCalendar(exportRequest);
+      final exportB = await ab.exportCalendar(exportRequest);
+      final bytesA = exportA.buffer.asUint8List(
+        exportA.offsetInBytes,
+        exportA.lengthInBytes,
+      );
+      final bytesB = exportB.buffer.asUint8List(
+        exportB.offsetInBytes,
+        exportB.lengthInBytes,
+      );
+      check(
+        utf8.decode(bytesA) == utf8.decode(bytesB),
+        'Hosts produced different availability exports',
+      );
+      final exportedParent = await create();
+      final reimported = (await ab.importCalendar(
+        cal.CalendarAvailabilityImportRequest(
+          calendarId: exportedParent.calendarId,
+          expectedRevision: 1,
+          bytes: exportA,
+        ),
+      )).receipts.single;
+      final restored = await aa.getRule(reimported.availabilityId);
+      check(
+        restored.protocolUid == remoteImport.protocolUid &&
+            restored.id != remoteImport.id &&
+            restored.protocolState.stamp == remoteImport.protocolState.stamp &&
+            restored.content.contacts!.single.value == 'Source desk' &&
+            restored.content.categoryGroups!.single.values.length == 2 &&
+            restored.content.openings.single.periods!.single.duration!.hours ==
+                2,
+        'Authenticated cross-host export/import did not preserve source state',
+      );
+      await aa.deleteRule(restored.id, restored.revision);
+
       await ab.deleteRule(imported.availabilityId, 1);
       await aa.deleteRule(copied.availabilityId, 1);
       final importDeleteParent = await create();
