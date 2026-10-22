@@ -3,6 +3,102 @@ import 'package:test/test.dart';
 
 void main() {
   final resolver = NamedZoneResolver();
+  test(
+    'calendar profile snapshots cover padding without relaxing civil dates',
+    () {
+      for (final zone in ['UTC', 'Etc/GMT-14', 'America/New_York']) {
+        final snapshot = resolver.calendarProfileSnapshot(
+          zoneId: zone,
+          maxTransitions: 1000,
+        );
+        expect(snapshot.horizon.start, DateTime.utc(1969, 12, 31));
+        expect(snapshot.horizon.end, DateTime.utc(2100, 1, 2));
+        expect(snapshot.dataVersion, NamedZoneResolver.dataVersion);
+        expect(() => snapshot.changes.clear(), throwsUnsupportedError);
+      }
+      expect(
+        () => CalendarDate(year: 1969, month: 12, day: 31),
+        throwsRangeError,
+      );
+      expect(
+        () => CalendarDate(year: 2100, month: 1, day: 1),
+        throwsRangeError,
+      );
+      expect(
+        () => resolver.localAt(DateTime.utc(1969, 12, 31), zoneId: 'UTC'),
+        throwsRangeError,
+      );
+    },
+  );
+  test(
+    'calendar profile snapshot still rejects unknown coverage and raw caps',
+    () {
+      expect(
+        () => resolver.calendarProfileSnapshot(
+          zoneId: 'Factory',
+          maxTransitions: 1000,
+        ),
+        throwsA(isA<ZoneCoverageException>()),
+      );
+      expect(
+        () => resolver.calendarProfileSnapshot(
+          zoneId: 'unknown',
+          maxTransitions: 1000,
+        ),
+        throwsArgumentError,
+      );
+      expect(
+        () =>
+            resolver.calendarProfileSnapshot(zoneId: 'UTC', maxTransitions: -1),
+        throwsRangeError,
+      );
+      expect(
+        () => resolver.calendarProfileSnapshot(
+          zoneId: 'America/New_York',
+          maxTransitions: 0,
+        ),
+        throwsA(isA<RecurrenceLimitException>()),
+      );
+    },
+  );
+  test(
+    'calendar profile agrees with ordinary snapshots over an interior horizon',
+    () {
+      final inner = UtcWindow(
+        start: DateTime.utc(2020),
+        end: DateTime.utc(2030),
+      );
+      for (final zone in [
+        'Europe/Stockholm',
+        'Australia/Lord_Howe',
+        'Pacific/Apia',
+      ]) {
+        final padded = resolver.calendarProfileSnapshot(
+          zoneId: zone,
+          maxTransitions: 1000,
+        );
+        final normal = resolver.snapshot(
+          zoneId: zone,
+          horizon: inner,
+          maxTransitions: 1000,
+        );
+        var initial = padded.initialOffset;
+        for (final change in padded.changes) {
+          if (!change.instant.isAfter(inner.start)) {
+            initial = change.offset;
+          }
+        }
+        expect(initial, normal.initialOffset);
+        expect(
+          padded.changes.where(
+            (c) =>
+                c.instant.isAfter(inner.start) && c.instant.isBefore(inner.end),
+          ),
+          normal.changes,
+        );
+      }
+    },
+  );
   final horizon = UtcWindow(start: DateTime.utc(2026), end: DateTime.utc(2027));
   test('bounded snapshot captures both Stockholm transitions exactly', () {
     final s = resolver.snapshot(

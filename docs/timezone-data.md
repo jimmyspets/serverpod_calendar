@@ -41,3 +41,9 @@ The reference fixture covers January and July of all 130 supported years across 
 7. Persist the version used for derived data, coordinate recalculation across hosts, and define rollback of projections/pending work if deployment is reverted. Already delivered notifications or exported calendar data cannot simply be recalled. Durable upgrade/recalculation and these module workflows remain required future implementation, not functionality supplied by the core package.
 
 Source archives are available from [IANA releases](https://data.iana.org/time-zones/releases/). [RFC 9636](https://www.rfc-editor.org/rfc/rfc9636.html#section-3.3) describes future-rule information in TZif. This repository retains its Apache 2.0 LICENSE; IANA source/data provenance is recorded in the pins and generated header.
+
+## Imported definition comparison
+
+The first [VEVENT/VTIMEZONE adapter](icalendar-event-adapter.md) under [ADR 0065](adr/0065-first-vevent-wire-adapter.md) compares entire normalized offset functions through NamedZoneResolver.calendarProfileSnapshot over fixed UTC [1969-12-31, 2100-01-02). This is calculation-only edge padding; ordinary event dates stay [1970-01-01, 2100-01-01), with the existing explicit endpoint exception. Validation-only earlier seeds do not widen storage. Unknown rules still fail, and a correct modern/event-date-limited definition may reject because full-history agreement is required. Metadata labels do not determine offsets; imported rules never update the database automatically.
+
+After a pinned-data update, revalidate accepted source definitions and recalculate derived projections before trusting their old version evidence. The update/generation procedure above is unchanged; do not hand-edit the generated payload. Database persistence/import upgrade coordination remains a later layer.

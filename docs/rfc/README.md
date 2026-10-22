@@ -12,7 +12,7 @@ All listed feature rows have selected statuses: none remain Undecided or Propose
 
 | First-release plan | Meaning |
 | --- | --- |
-| Yes — planned | Required feature or necessary part of its selected component; no working implementation yet |
+| Yes — planned | Required complete feature or selected component scope; only explicitly documented increments are implemented |
 | Undecided | Considered or legal optional field with no selected support policy; not accepted implicitly |
 | No — deferred | Outside the current release or execution scope |
 | No — outside contract | Not provided by this interface/product, even if infrastructure has unrelated support |
@@ -56,3 +56,5 @@ The selected RFC profiles must hold with multiple active Serverpod instances. [A
 Use [requirements](../requirements.md), [standards scope](../standards.md), and proposed [ADRs](../adr/README.md). The tables make existing scope and unresolved choices reviewable; they do not accept ADRs or invent verified behavior. Link implementation/test evidence to individual rows when code exists, then change the current implementation statement based on that evidence.
 
 [Bounded syntax foundations](../icalendar-syntax.md) under [ADR 0062](../adr/0062-bounded-icalendar-syntax-foundations.md) preserve unknown syntax without approving it for import/export. Semantic profile validation and domain mapping remain pending.
+
+The [first standalone VEVENT/VTIMEZONE wire-to-core adapter](../icalendar-event-adapter.md) now has scoped implementation under ADR 0065. It does not complete any broader RFC row, import transaction or client interoperability gate.

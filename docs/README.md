@@ -1,6 +1,6 @@
 # Documentation
 
-The maintainer has specified first-release capabilities in [requirements](requirements.md). The workspace/authentication scaffold and scoped native calendar CRUD/metadata increments have local implementation evidence. Broader domain designs remain proposals; no wire or external-client compatibility is claimed.
+The maintainer has specified first-release capabilities in [requirements](requirements.md). The workspace/authentication scaffold and scoped native calendar CRUD/metadata increments have local implementation evidence. Broader domain designs remain proposals; pure wire adapters are limited to the explicitly documented profile and no external-client compatibility is claimed.
 
 | Document | Purpose |
 | --- | --- |
@@ -65,3 +65,5 @@ See [native availability organizer, text parameters and private extensions](avai
 See [native availability versions, timestamps and envelope duration](availability-protocol-lifecycle.md) for ADR 0061, legacy baselines and unchanged-save behavior.
 
 See [bounded iCalendar syntax foundations](icalendar-syntax.md) for strict input, immutable syntax, separate escaping and serialization limits under ADR 0062.
+
+See [typed temporal wire values](icalendar-temporal-values.md) and [the first standalone VEVENT/VTIMEZONE adapter](icalendar-event-adapter.md) for the ADR 0063/0065 pure adaptation increments; authorized import/export and feeds remain pending.

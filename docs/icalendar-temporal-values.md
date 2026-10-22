@@ -33,3 +33,5 @@ IcalendarValueException exposes only a structured IcalendarValueError kind: inva
 A valid value is not an approved property or import. Component adapters must validate VALUE/TZID multiplicity/context, mandatory fields, end/duration pairing, span ordering, recurrence and zone definitions, supported metadata/extensions and source identities before mutation. Serialize only authorized projections. Database import, authenticated export, HTTP feeds and external-client interoperability remain pending; this increment changes no generated protocols or tables.
 
 Source grammar: [RFC 5545 sections 3.3.4–3.3.6](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.3.4).
+
+The [first event component adapter](icalendar-event-adapter.md) now enforces the documented subset of those component/parameter/zone constraints under ADR 0065. Recurrence, additional properties and authenticated database import/export remain pending.
