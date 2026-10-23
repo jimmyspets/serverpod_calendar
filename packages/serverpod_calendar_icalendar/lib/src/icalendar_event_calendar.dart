@@ -13,6 +13,7 @@ import 'icalendar_event_recurrence.dart';
 part 'icalendar_event_series.dart';
 part 'icalendar_task_calendar.dart';
 part 'icalendar_task_series.dart';
+part 'icalendar_task_metadata.dart';
 part 'icalendar_availability_calendar.dart';
 part 'icalendar_availability_metadata.dart';
 

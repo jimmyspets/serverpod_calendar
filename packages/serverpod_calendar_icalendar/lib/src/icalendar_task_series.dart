@@ -27,6 +27,8 @@ final class IcalendarTaskOccurrenceComponent {
       component.description ?? master.description;
   IcalendarTaskText? get location => component.location ?? master.location;
   int? get priority => component.priority ?? master.priority;
+  IcalendarTaskMetadata get metadata =>
+      _inheritedTaskMetadata(master.metadata, component.metadata);
 }
 
 IcalendarTaskSeries _taskSeries(
@@ -53,6 +55,7 @@ IcalendarTaskSeries _taskSeries(
       .whereType<IcalendarSyntaxProperty>()
       .any((p) => p.canonicalName == name);
   for (final o in overrides) {
+    _matchingTaskMetadata(master.metadata, o.metadata);
     if (!sameText(o.summary, master.summary) ||
         !sameText(o.description, master.description) ||
         !sameText(o.location, master.location) ||
