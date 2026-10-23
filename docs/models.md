@@ -540,3 +540,11 @@ Generated additions are `CalendarEventTextParameters`, `CalendarEventProtocolVer
 ## Create-only task import models
 
 [ADR 0099](adr/0099-authenticated-create-only-task-import.md) profiles immutable `CalendarTaskImportRequest` (calendar UUID, expected parent revision, byte slice), minimal `CalendarTaskImportResult` receipts, and server host-context `CalendarTaskImportIntent`/`CalendarTaskImportMember` with complete current source proposals. The historical baseline is excluded from these contexts/responses. Existing ADR 0098 storage is reused without table changes. Import creates no history/assignments/alarm activation and keeps prior progress unknown.
+
+## Current task export models
+
+[ADR 0100](adr/0100-authenticated-current-task-export.md) profiles immutable `CalendarTaskExportRequest` (calendar UUID, expected revision, explicit selection), `CalendarTaskExportSelection` (task UUID, expected revision) and trusted immutable current `CalendarTaskExportIntent`/members. Complete source state is independently gated by `readTaskSource`; historical baselines are excluded. No table changes.
+
+## Current task export increment, 2026-10-23
+
+[ADR 0100](adr/0100-authenticated-current-task-export.md) and [the task export guide](task-export.md) add read-only current-state standalone VTODO output with explicit revision-bound complete-series selection. Export requires independent export, full ordinary task disclosure and rich-source-read authority, checked again after serialization. Preserve supported source metadata/progress/versions; exclude private baselines, native assignments/history and alarm activation. Native exceptions, source replacement/adoption, feeds/runtime and external-client evidence remain separate. This supersedes older task-export-pending wording only for this bounded profile.

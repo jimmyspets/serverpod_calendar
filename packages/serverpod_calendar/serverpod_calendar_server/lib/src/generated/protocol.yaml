@@ -40,6 +40,7 @@ calendarEvent:
   - changeOccurrence:
   - deleteEvent:
 calendarTask:
+  - exportTasks:
   - importTasks:
   - create:
   - getTask:

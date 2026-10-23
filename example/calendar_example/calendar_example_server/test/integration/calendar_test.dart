@@ -3377,6 +3377,336 @@ void main() {
     String exported(ByteData bytes) => utf8.decode(
       bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
     );
+    CalendarTaskExportRequest taskExport(
+      List<CalendarTaskReceipt> tasks, {
+      UuidValue? parent,
+      int parentRevision = 1,
+    }) => CalendarTaskExportRequest(
+      calendarId: parent ?? tasks.first.calendarId,
+      expectedRevision: parentRevision,
+      selection: [
+        for (final t in tasks)
+          CalendarTaskExportSelection(
+            taskId: t.taskId,
+            expectedRevision: t.revision,
+          ),
+      ],
+    );
+    test('task export preserves current rich source and sparse progress with no private or native state', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final t = (await service.importTasks(
+        taskImportRequest(
+          parent,
+          text: taskCalendar([
+            ...importedTask(
+              'export@example.invalid',
+              properties: [
+                'SUMMARY;LANGUAGE=sv:Before',
+                'PERCENT-COMPLETE:37',
+                'COMPLETED:20260302T000000Z',
+                'RRULE:FREQ=DAILY;COUNT=3',
+                'CATEGORIES;LANGUAGE=sv:one,one',
+                'CONTACT:Private source contact',
+                'ORGANIZER:mailto:source@example.invalid',
+                'ATTENDEE;ROLE=CHAIR:mailto:guest@example.invalid',
+                'RELATED-TO:unresolved',
+                'ATTACH;VALUE=URI;FMTTYPE=text/plain:cid:example',
+                'BEGIN:VALARM',
+                'ACTION:DISPLAY',
+                'TRIGGER:-PT5M',
+                'DESCRIPTION:Unarmed',
+                'UID:alarm',
+                'ACKNOWLEDGED:20260301T000000Z',
+                'END:VALARM',
+                'BEGIN:VALARM',
+                'ACTION:DISPLAY',
+                'TRIGGER;VALUE=DATE-TIME:20260329T000000Z',
+                'DESCRIPTION:Snoozed source',
+                'UID:snooze',
+                'RELATED-TO;RELTYPE=SNOOZE:alarm',
+                'END:VALARM',
+              ],
+            ),
+            ...importedTask(
+              'export@example.invalid',
+              timing: [],
+              properties: [
+                'RECURRENCE-ID;VALUE=DATE:20260329',
+                'SEQUENCE:9',
+                'STATUS:CANCELLED',
+              ],
+            ),
+          ]),
+        ),
+      )).receipts.single;
+      final before = (await CalendarTaskDataRecord.db.findFirstRow(
+        session,
+        where: (r) => r.taskId.equals(t.taskId),
+      ))!;
+      await service.updateTask(
+        CalendarTaskUpdateRequest(
+          taskId: t.taskId,
+          expectedRevision: 1,
+          content: before.content.copyWith(summary: 'Current'),
+        ),
+      );
+      final current = (await CalendarTaskDataRecord.db.findFirstRow(
+        session,
+        where: (r) => r.taskId.equals(t.taskId),
+      ))!;
+      final gen = await generation();
+      final req = taskExport([t.copyWith(revision: 2)]);
+      final bytes = await service.exportTasks(req), text = exported(bytes);
+      expect(text, contains('SUMMARY;LANGUAGE=sv:Current'));
+      expect(text, isNot(contains('Before')));
+      expect(text, contains('CONTACT:Private source contact'));
+      expect(text, contains('RELATED-TO;RELTYPE=SNOOZE:alarm'));
+      expect(text, isNot(contains(t.taskId.toString())));
+      for (final hidden in [
+        'importBaseline',
+        'hasRecordedProgress',
+        'assignees',
+        'scopeKey',
+      ]) {
+        expect(text, isNot(contains(hidden)));
+      }
+      final parsed = parseIcalendarTaskCalendar(
+        bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+      ).series.single;
+      expect(parsed.master.status, isNull);
+      expect(parsed.master.percentComplete, 37);
+      expect(parsed.master.sequence, 1);
+      expect(parsed.overrides.single.component.sequence, 9);
+      expect(parsed.overrides.single.component.percentComplete, isNull);
+      expect(parsed.master.alarms, hasLength(2));
+      expect(exported(await service.exportTasks(req)), text);
+      expect(
+        (await CalendarTaskDataRecord.db.findFirstRow(
+          session,
+          where: (r) => r.taskId.equals(t.taskId),
+        ))!.toJson(),
+        current.toJson(),
+      );
+      expect(await generation(), gen);
+    });
+    for (final permission in [
+      CalendarPermission.exportTasks,
+      CalendarPermission.readTask,
+      CalendarPermission.readTaskSource,
+    ]) {
+      test('task export independently requires ${permission.name}', () async {
+        final parent = (await service.create(createInput()))!.calendarId;
+        final t = await taskCreate(parent);
+        policy.denied.add(permission);
+        await expectLater(
+          service.exportTasks(taskExport([t])),
+          failure(CalendarFailureCode.accessDenied),
+        );
+      });
+    }
+    for (final group in CalendarTaskFieldGroup.values) {
+      test('task export requires disclosure of ${group.name}', () async {
+        final parent = (await service.create(createInput()))!.calendarId;
+        final t = await taskCreate(parent);
+        policy.taskGrants.remove(group);
+        await expectLater(
+          service.exportTasks(taskExport([t])),
+          failure(CalendarFailureCode.accessDenied),
+        );
+      });
+    }
+    test('task export native recurrence has independent occurrence progress versions and no assignment mapping', () async {
+      final t = await recurringTask();
+      final original = (await service.previewTaskOccurrences(taskPreview(t)))
+          .occurrences
+          .first
+          .originalStart;
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(t, original, 1, CalendarTaskProgressAction.complete),
+      );
+      await service.changeTaskAssignments(
+        CalendarTaskAssignmentsRequest(
+          taskId: t.taskId,
+          expectedRevision: 2,
+          assignees: [
+            CalendarTaskAssignee(
+              namespace: 'test',
+              kind: 'user',
+              externalId: 'private-assignee',
+            ),
+          ],
+        ),
+      );
+      final bytes = await service.exportTasks(
+        taskExport([t.copyWith(revision: 3)]),
+      );
+      final parsed = parseIcalendarTaskCalendar(
+        bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+      ).series.single;
+      expect(parsed.master.sequence, 0);
+      expect(parsed.overrides.single.component.sequence, 0);
+      expect(parsed.overrides.single.component.percentComplete, 100);
+      expect(exported(bytes), isNot(contains('private-assignee')));
+      expect(exported(bytes), isNot(contains('ATTENDEE')));
+    });
+    test('task export final checks contain immutable full current selection and reject member revocation', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final tasks = [await taskCreate(parent), await taskCreate(parent)];
+      var batches = 0;
+      policy.onTaskExport = (r) {
+        expect(r.taskExport!.members, hasLength(2));
+        expect(() => r.taskExport!.members.clear(), throwsUnsupportedError);
+        expect(
+          () => r
+              .taskExport!
+              .members
+              .first
+              .sourceState
+              .master
+              .metadata
+              .attendees
+              .clear(),
+          throwsUnsupportedError,
+        );
+        if (r.taskId == null) {
+          batches++;
+          if (batches == 2) policy.deniedTaskExports.add(tasks.last.taskId);
+        }
+      };
+      final gen = await generation();
+      await expectLater(
+        service.exportTasks(taskExport(tasks)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(batches, 2);
+      expect(await generation(), gen);
+    });
+    test('task export rejects stale duplicate empty invalid foreign missing and deleted selection', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final t = await taskCreate(parent);
+      final other = (await service.create(createInput()))!.calendarId;
+      await expectLater(
+        service.exportTasks(taskExport([t], parentRevision: 2)),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      await expectLater(
+        service.exportTasks(taskExport([t.copyWith(revision: 2)])),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      await expectLater(
+        service.exportTasks(taskExport([t, t])),
+        failure(CalendarFailureCode.validation),
+      );
+      await expectLater(
+        service.exportTasks(taskExport([], parent: parent)),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      await expectLater(
+        service.exportTasks(taskExport([t.copyWith(revision: 0)])),
+        failure(CalendarFailureCode.validation),
+      );
+      await expectLater(
+        service.exportTasks(taskExport([t], parent: other)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      await expectLater(
+        service.exportTasks(
+          taskExport([t.copyWith(taskId: const Uuid().v4obj())]),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      await expectLater(
+        CalendarModule.service(
+          builder
+              .copyWith(
+                authentication: AuthenticationOverride.authenticationInfo(
+                  'bob',
+                  {},
+                ),
+              )
+              .build(),
+        ).exportTasks(taskExport([t])),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      await service.deleteTask(t.taskId, 1);
+      await expectLater(
+        service.exportTasks(taskExport([t])),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+    test('task export supports single-request policy batches and fails closed on policy outage', () async {
+      CalendarModule.install(
+        session.serverpod,
+        policy: policy,
+        options: const CalendarModuleOptions(
+          requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+          policyBatchSize: 1,
+        ),
+      );
+      service = CalendarModule.service(session);
+      final parent = (await service.create(createInput()))!.calendarId;
+      final t = await taskCreate(parent);
+      expect(
+        exported(await service.exportTasks(taskExport([t]))),
+        contains('BEGIN:VTODO'),
+      );
+      policy.unavailable = true;
+      await expectLater(
+        service.exportTasks(taskExport([t])),
+        failure(CalendarFailureCode.unavailable),
+      );
+    });
+    test('task export context revocation after serialization fails without mutations', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final t = await taskCreate(parent);
+      var batches = 0;
+      policy.onTaskExport = (r) {
+        if (r.taskId == null && ++batches == 2) policy.epoch = 'changed';
+      };
+      await expectLater(
+        service.exportTasks(taskExport([t])),
+        failure(CalendarFailureCode.unavailable),
+      );
+      expect(batches, 2);
+    });
+    test('task export rejects missing legacy component versions and aggregate limits without repair', () async {
+      final t = await recurringTask();
+      final original = (await service.previewTaskOccurrences(taskPreview(t)))
+          .occurrences
+          .first
+          .originalStart;
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(t, original, 1, CalendarTaskProgressAction.complete),
+      );
+      final row = (await CalendarTaskOccurrenceRecord.db.findFirstRow(
+        session,
+        where: (r) => r.taskId.equals(t.taskId),
+      ))!;
+      await CalendarTaskOccurrenceRecord.db.updateRow(
+        session,
+        row.copyWith(protocolVersion: null),
+      );
+      await expectLater(
+        service.exportTasks(taskExport([t.copyWith(revision: 2)])),
+        failure(CalendarFailureCode.validation),
+      );
+      expect(
+        (await CalendarTaskOccurrenceRecord.db.findById(
+          session,
+          row.id!,
+        ))!.protocolVersion,
+        isNull,
+      );
+      final tooMany = List.generate(
+        129,
+        (_) => t.copyWith(taskId: const Uuid().v4obj()),
+      );
+      await expectLater(
+        service.exportTasks(taskExport(tooMany)),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+    });
+
     test('event export emits current authorized state and leaves all stored values unchanged', () async {
       final parent = (await service.create(createInput()))!.calendarId;
       final imported = await service.importEvents(
@@ -8874,6 +9204,8 @@ final class TestPolicy implements CalendarHostPolicy {
   final deniedExportIds = <UuidValue>{};
   void Function(CalendarAuthorizationRequest)? onExportBatch;
   void Function(CalendarAuthorizationRequest)? onFreeBusyRequest;
+  final deniedTaskExports = <UuidValue>{};
+  void Function(CalendarAuthorizationRequest)? onTaskExport;
   final deniedEventExports = <UuidValue>{};
   void Function(CalendarAuthorizationRequest)? onEventExport;
   String? denyTaskImportUid, hideTaskImportUid;
@@ -9028,6 +9360,7 @@ final class TestPolicy implements CalendarHostPolicy {
     CalendarAuthorizationPhase phase,
   ) async {
     for (final request in requests) {
+      if (request.taskExport != null) onTaskExport?.call(request);
       if (request.operation == CalendarPermission.exportEvents) {
         onEventExport?.call(request);
       }
@@ -9103,7 +9436,9 @@ final class TestPolicy implements CalendarHostPolicy {
     return CalendarAuthorizationDecision(
       key: r.key,
       verdict:
-          (r.taskImport != null &&
+          (r.operation == CalendarPermission.exportTasks &&
+                  deniedTaskExports.contains(r.taskId)) ||
+              (r.taskImport != null &&
                   r.operation == CalendarPermission.createTask &&
                   phase == CalendarAuthorizationPhase.finalWrite &&
                   r.taskImport!.members.any(
