@@ -16,12 +16,15 @@ import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'calendar_event_civil.dart' as _i1bb5k1r;
 import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_task_progress.dart' as _ikcsq95s;
+import 'calendar_task_timing.dart' as _i9h8y8lg;
 
 @_isc.immutable
 abstract class CalendarTaskOccurrence
     implements _isc.SerializableModel, _isc.ProtocolSerialization {
   const CalendarTaskOccurrence._({
     required this.originalStart,
+    this.actualStart,
+    this.replacementTiming,
     this.startUtc,
     this.dueDate,
     this.dueUtc,
@@ -30,6 +33,8 @@ abstract class CalendarTaskOccurrence
 
   const factory CalendarTaskOccurrence({
     required _ieswiaty.CalendarEventTiming originalStart,
+    _ieswiaty.CalendarEventTiming? actualStart,
+    _i9h8y8lg.CalendarTaskTiming? replacementTiming,
     DateTime? startUtc,
     _i1bb5k1r.CalendarEventCivil? dueDate,
     DateTime? dueUtc,
@@ -44,6 +49,16 @@ abstract class CalendarTaskOccurrence
           .deserialize<_ieswiaty.CalendarEventTiming>(
             jsonSerialization['originalStart'],
           ),
+      actualStart: jsonSerialization['actualStart'] == null
+          ? null
+          : _ie4a1wrz.Protocol().deserialize<_ieswiaty.CalendarEventTiming>(
+              jsonSerialization['actualStart'],
+            ),
+      replacementTiming: jsonSerialization['replacementTiming'] == null
+          ? null
+          : _ie4a1wrz.Protocol().deserialize<_i9h8y8lg.CalendarTaskTiming>(
+              jsonSerialization['replacementTiming'],
+            ),
       startUtc: jsonSerialization['startUtc'] == null
           ? null
           : _isc.DateTimeJsonExtension.fromJson(jsonSerialization['startUtc']),
@@ -64,6 +79,10 @@ abstract class CalendarTaskOccurrence
 
   final _ieswiaty.CalendarEventTiming originalStart;
 
+  final _ieswiaty.CalendarEventTiming? actualStart;
+
+  final _i9h8y8lg.CalendarTaskTiming? replacementTiming;
+
   final DateTime? startUtc;
 
   final _i1bb5k1r.CalendarEventCivil? dueDate;
@@ -77,6 +96,8 @@ abstract class CalendarTaskOccurrence
   @_isc.useResult
   CalendarTaskOccurrence copyWith({
     _ieswiaty.CalendarEventTiming? originalStart,
+    _ieswiaty.CalendarEventTiming? actualStart,
+    _i9h8y8lg.CalendarTaskTiming? replacementTiming,
     DateTime? startUtc,
     _i1bb5k1r.CalendarEventCivil? dueDate,
     DateTime? dueUtc,
@@ -95,6 +116,16 @@ abstract class CalendarTaskOccurrence
                   originalStart,
                 ) ||
                 other.originalStart == originalStart) &&
+            (identical(
+                  other.actualStart,
+                  actualStart,
+                ) ||
+                other.actualStart == actualStart) &&
+            (identical(
+                  other.replacementTiming,
+                  replacementTiming,
+                ) ||
+                other.replacementTiming == replacementTiming) &&
             (identical(
                   other.startUtc,
                   startUtc,
@@ -122,6 +153,8 @@ abstract class CalendarTaskOccurrence
     return Object.hash(
       runtimeType,
       originalStart,
+      actualStart,
+      replacementTiming,
       startUtc,
       dueDate,
       dueUtc,
@@ -134,6 +167,9 @@ abstract class CalendarTaskOccurrence
     return {
       '__className__': 'serverpod_calendar.CalendarTaskOccurrence',
       'originalStart': originalStart.toJson(),
+      if (actualStart != null) 'actualStart': actualStart?.toJson(),
+      if (replacementTiming != null)
+        'replacementTiming': replacementTiming?.toJson(),
       if (startUtc != null) 'startUtc': startUtc?.toJson(),
       if (dueDate != null) 'dueDate': dueDate?.toJson(),
       if (dueUtc != null) 'dueUtc': dueUtc?.toJson(),
@@ -146,6 +182,9 @@ abstract class CalendarTaskOccurrence
     return {
       '__className__': 'serverpod_calendar.CalendarTaskOccurrence',
       'originalStart': originalStart.toJsonForProtocol(),
+      if (actualStart != null) 'actualStart': actualStart?.toJsonForProtocol(),
+      if (replacementTiming != null)
+        'replacementTiming': replacementTiming?.toJsonForProtocol(),
       if (startUtc != null) 'startUtc': startUtc?.toJson(),
       if (dueDate != null) 'dueDate': dueDate?.toJsonForProtocol(),
       if (dueUtc != null) 'dueUtc': dueUtc?.toJson(),
@@ -164,12 +203,16 @@ class _Undefined {}
 class _CalendarTaskOccurrenceImpl extends CalendarTaskOccurrence {
   const _CalendarTaskOccurrenceImpl({
     required _ieswiaty.CalendarEventTiming originalStart,
+    _ieswiaty.CalendarEventTiming? actualStart,
+    _i9h8y8lg.CalendarTaskTiming? replacementTiming,
     DateTime? startUtc,
     _i1bb5k1r.CalendarEventCivil? dueDate,
     DateTime? dueUtc,
     required _ikcsq95s.CalendarTaskProgress progress,
   }) : super._(
          originalStart: originalStart,
+         actualStart: actualStart,
+         replacementTiming: replacementTiming,
          startUtc: startUtc,
          dueDate: dueDate,
          dueUtc: dueUtc,
@@ -182,6 +225,8 @@ class _CalendarTaskOccurrenceImpl extends CalendarTaskOccurrence {
   @override
   CalendarTaskOccurrence copyWith({
     _ieswiaty.CalendarEventTiming? originalStart,
+    Object? actualStart = _Undefined,
+    Object? replacementTiming = _Undefined,
     Object? startUtc = _Undefined,
     Object? dueDate = _Undefined,
     Object? dueUtc = _Undefined,
@@ -189,6 +234,12 @@ class _CalendarTaskOccurrenceImpl extends CalendarTaskOccurrence {
   }) {
     return CalendarTaskOccurrence(
       originalStart: originalStart ?? this.originalStart.copyWith(),
+      actualStart: actualStart is _ieswiaty.CalendarEventTiming?
+          ? actualStart
+          : this.actualStart?.copyWith(),
+      replacementTiming: replacementTiming is _i9h8y8lg.CalendarTaskTiming?
+          ? replacementTiming
+          : this.replacementTiming?.copyWith(),
       startUtc: startUtc is DateTime? ? startUtc : this.startUtc,
       dueDate: dueDate is _i1bb5k1r.CalendarEventCivil?
           ? dueDate

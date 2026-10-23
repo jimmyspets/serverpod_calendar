@@ -207,3 +207,16 @@ CalendarTaskProtocolVersion advanceTaskVersion(
     lastModified: stamp,
   );
 }
+
+CalendarTaskTiming validateTaskReplacement(
+  CalendarTaskContent master,
+  CalendarTaskTiming replacement,
+) {
+  validateTaskContent(CalendarTaskContent(timing: replacement));
+  if (replacement.start == null ||
+      replacement.kind != master.timing.kind ||
+      replacement.zoneId != master.timing.zoneId) {
+    throw ArgumentError('Task replacement profile mismatch');
+  }
+  return replacement;
+}

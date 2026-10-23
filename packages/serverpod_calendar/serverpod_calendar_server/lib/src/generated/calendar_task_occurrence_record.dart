@@ -16,6 +16,7 @@ import 'package:serverpod_calendar_server/src/generated/protocol.dart'
 import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_task_progress.dart' as _ikcsq95s;
 import 'calendar_task_protocol_version.dart' as _iz9t6x1i;
+import 'calendar_task_timing.dart' as _i9h8y8lg;
 
 abstract class CalendarTaskOccurrenceRecord
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
@@ -24,6 +25,7 @@ abstract class CalendarTaskOccurrenceRecord
     required this.taskId,
     required this.originalKey,
     required this.originalStart,
+    this.replacementTiming,
     required this.progress,
     this.protocolVersion,
   });
@@ -33,6 +35,7 @@ abstract class CalendarTaskOccurrenceRecord
     required _is.UuidValue taskId,
     required String originalKey,
     required _ieswiaty.CalendarEventTiming originalStart,
+    _i9h8y8lg.CalendarTaskTiming? replacementTiming,
     required _ikcsq95s.CalendarTaskProgress progress,
     _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion,
   }) = _CalendarTaskOccurrenceRecordImpl;
@@ -48,6 +51,11 @@ abstract class CalendarTaskOccurrenceRecord
           .deserialize<_ieswiaty.CalendarEventTiming>(
             jsonSerialization['originalStart'],
           ),
+      replacementTiming: jsonSerialization['replacementTiming'] == null
+          ? null
+          : _ix00hwbf.Protocol().deserialize<_i9h8y8lg.CalendarTaskTiming>(
+              jsonSerialization['replacementTiming'],
+            ),
       progress: _ix00hwbf.Protocol()
           .deserialize<_ikcsq95s.CalendarTaskProgress>(
             jsonSerialization['progress'],
@@ -74,6 +82,8 @@ abstract class CalendarTaskOccurrenceRecord
 
   _ieswiaty.CalendarEventTiming originalStart;
 
+  _i9h8y8lg.CalendarTaskTiming? replacementTiming;
+
   _ikcsq95s.CalendarTaskProgress progress;
 
   _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion;
@@ -89,6 +99,7 @@ abstract class CalendarTaskOccurrenceRecord
     _is.UuidValue? taskId,
     String? originalKey,
     _ieswiaty.CalendarEventTiming? originalStart,
+    _i9h8y8lg.CalendarTaskTiming? replacementTiming,
     _ikcsq95s.CalendarTaskProgress? progress,
     _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion,
   });
@@ -100,6 +111,8 @@ abstract class CalendarTaskOccurrenceRecord
       'taskId': taskId.toJson(),
       'originalKey': originalKey,
       'originalStart': originalStart.toJson(),
+      if (replacementTiming != null)
+        'replacementTiming': replacementTiming?.toJson(),
       'progress': progress.toJson(),
       if (protocolVersion != null) 'protocolVersion': protocolVersion?.toJson(),
     };
@@ -146,6 +159,7 @@ class _CalendarTaskOccurrenceRecordImpl extends CalendarTaskOccurrenceRecord {
     required _is.UuidValue taskId,
     required String originalKey,
     required _ieswiaty.CalendarEventTiming originalStart,
+    _i9h8y8lg.CalendarTaskTiming? replacementTiming,
     required _ikcsq95s.CalendarTaskProgress progress,
     _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion,
   }) : super._(
@@ -153,6 +167,7 @@ class _CalendarTaskOccurrenceRecordImpl extends CalendarTaskOccurrenceRecord {
          taskId: taskId,
          originalKey: originalKey,
          originalStart: originalStart,
+         replacementTiming: replacementTiming,
          progress: progress,
          protocolVersion: protocolVersion,
        );
@@ -166,6 +181,7 @@ class _CalendarTaskOccurrenceRecordImpl extends CalendarTaskOccurrenceRecord {
     _is.UuidValue? taskId,
     String? originalKey,
     _ieswiaty.CalendarEventTiming? originalStart,
+    Object? replacementTiming = _Undefined,
     _ikcsq95s.CalendarTaskProgress? progress,
     Object? protocolVersion = _Undefined,
   }) {
@@ -174,6 +190,9 @@ class _CalendarTaskOccurrenceRecordImpl extends CalendarTaskOccurrenceRecord {
       taskId: taskId ?? this.taskId,
       originalKey: originalKey ?? this.originalKey,
       originalStart: originalStart ?? this.originalStart.copyWith(),
+      replacementTiming: replacementTiming is _i9h8y8lg.CalendarTaskTiming?
+          ? replacementTiming
+          : this.replacementTiming?.copyWith(),
       progress: progress ?? this.progress.copyWith(),
       protocolVersion: protocolVersion is _iz9t6x1i.CalendarTaskProtocolVersion?
           ? protocolVersion
@@ -200,6 +219,12 @@ class CalendarTaskOccurrenceRecordUpdateTable
   _is.ColumnValue<_ieswiaty.CalendarEventTiming, _ieswiaty.CalendarEventTiming>
   originalStart(_ieswiaty.CalendarEventTiming value) => _is.ColumnValue(
     table.originalStart,
+    value,
+  );
+
+  _is.ColumnValue<_i9h8y8lg.CalendarTaskTiming, _i9h8y8lg.CalendarTaskTiming>
+  replacementTiming(_i9h8y8lg.CalendarTaskTiming? value) => _is.ColumnValue(
+    table.replacementTiming,
     value,
   );
 
@@ -239,6 +264,10 @@ class CalendarTaskOccurrenceRecordTable extends _is.Table<int?> {
       'originalStart',
       this,
     );
+    replacementTiming = _is.ColumnSerializable<_i9h8y8lg.CalendarTaskTiming>(
+      'replacementTiming',
+      this,
+    );
     progress = _is.ColumnSerializable<_ikcsq95s.CalendarTaskProgress>(
       'progress',
       this,
@@ -259,6 +288,9 @@ class CalendarTaskOccurrenceRecordTable extends _is.Table<int?> {
   late final _is.ColumnSerializable<_ieswiaty.CalendarEventTiming>
   originalStart;
 
+  late final _is.ColumnSerializable<_i9h8y8lg.CalendarTaskTiming>
+  replacementTiming;
+
   late final _is.ColumnSerializable<_ikcsq95s.CalendarTaskProgress> progress;
 
   late final _is.ColumnSerializable<_iz9t6x1i.CalendarTaskProtocolVersion>
@@ -270,6 +302,7 @@ class CalendarTaskOccurrenceRecordTable extends _is.Table<int?> {
     taskId,
     originalKey,
     originalStart,
+    replacementTiming,
     progress,
     protocolVersion,
   ];

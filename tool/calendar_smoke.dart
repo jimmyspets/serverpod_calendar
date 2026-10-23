@@ -2369,6 +2369,91 @@ Future<void> taskImportSmoke(List<Client> clients) async {
           .contains('PERCENT-COMPLETE:37'),
       'Task export checks the latest committed revision across independent hosts',
     );
+    final original = preview.occurrences[1].originalStart;
+    cal.CalendarTaskOccurrenceTimingRequest timingRequest(
+      int revision, {
+      bool clear = false,
+    }) => cal.CalendarTaskOccurrenceTimingRequest(
+      taskId: first.taskId,
+      expectedRevision: revision,
+      originalStart: original,
+      replacement: clear
+          ? null
+          : cal.CalendarTaskTiming(
+              kind: cal.CalendarTaskTimeKind.date,
+              start: cal.CalendarEventCivil(year: 2026, month: 3, day: 31),
+              duration: cal.CalendarEventDuration(days: 1),
+            ),
+    );
+    cal.CalendarTaskOccurrenceProgressRequest progressRequest(int revision) =>
+        cal.CalendarTaskOccurrenceProgressRequest(
+          taskId: first.taskId,
+          expectedRevision: revision,
+          originalStart: original,
+          action: cal.CalendarTaskProgressAction.complete,
+        );
+    Future<bool> compete(Future<dynamic> Function() f) async {
+      try {
+        await f();
+        return true;
+      } on cal.CalendarException catch (e) {
+        if (e.code == cal.CalendarFailureCode.staleRevision) return false;
+        rethrow;
+      }
+    }
+
+    final winners = await Future.wait([
+      compete(() => a.changeOccurrenceTiming(timingRequest(2))),
+      compete(() => b.changeOccurrenceProgress(progressRequest(2))),
+    ]);
+    check(
+      winners.where((v) => v).length == 1,
+      'Exactly one competing timing/progress write wins across hosts',
+    );
+    if (winners.first) {
+      await b.changeOccurrenceProgress(progressRequest(3));
+    } else {
+      await a.changeOccurrenceTiming(timingRequest(3));
+    }
+    final moved = (await b.previewOccurrences(
+      cal.CalendarTaskOccurrenceQuery(
+        taskId: first.taskId,
+        expectedRevision: 4,
+        fromDate: cal.CalendarEventCivil(year: 2026, month: 3, day: 31),
+        untilDate: cal.CalendarEventCivil(year: 2026, month: 4, day: 1),
+      ),
+    )).occurrences.single;
+    check(
+      moved.originalStart == original &&
+          moved.progress.percentComplete == 100 &&
+          moved.replacementTiming != null,
+      'Explicit retry preserves original timing and completed progress from both hosts',
+    );
+    final evidence = await a.occurrenceHistory(
+      cal.CalendarTaskHistoryQuery(
+        taskId: first.taskId,
+        expectedRevision: 4,
+        originalStart: original,
+        pageSize: 10,
+      ),
+    );
+    check(
+      evidence.entries.length == 1,
+      'Timing writes invent no progress history',
+    );
+    await a.changeOccurrenceTiming(timingRequest(4, clear: true));
+    final retained = await b.occurrenceHistory(
+      cal.CalendarTaskHistoryQuery(
+        taskId: first.taskId,
+        expectedRevision: 5,
+        originalStart: original,
+        pageSize: 10,
+      ),
+    );
+    check(
+      retained.entries.length == 1,
+      'Clearing timing retains completion history across hosts',
+    );
 
     await rejects(
       () => b.importTasks(request(p, 'two-host-task')),

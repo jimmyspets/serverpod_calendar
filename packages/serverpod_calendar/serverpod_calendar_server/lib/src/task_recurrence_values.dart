@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:serverpod_calendar_core/serverpod_calendar_core.dart';
 
 import 'event_values.dart';
+import 'task_values.dart';
 import 'generated/protocol.dart';
 
 CalendarEventTiming taskAnchor(CalendarTaskTiming t) {
@@ -174,10 +175,14 @@ void requireTaskOriginals(
 
 List<CalendarTaskOccurrence> previewTaskValues(
   CalendarTaskContent content,
-  CalendarTaskOccurrenceQuery query,
-) {
+  CalendarTaskOccurrenceQuery query, {
+  Map<CalendarEventTiming, CalendarTaskTiming> replacements = const {},
+}) {
   if (content.recurrence == null) throw ArgumentError('Task is not recurring');
   final t = content.timing, anchor = taskAnchor(t);
+  for (final v in replacements.values) {
+    validateTaskReplacement(content, v);
+  }
   if (anchor.kind == CalendarEventTimeKind.date) {
     if (query.fromDate == null ||
         query.untilDate == null ||
@@ -203,6 +208,14 @@ List<CalendarTaskOccurrence> previewTaskValues(
     return List.unmodifiable([
       for (final o in master.expandStarts(
         _dates(content),
+        replacements: {
+          for (final e in replacements.entries)
+            _date(e.key.start): DateTaskTiming(
+              start: _date(e.value.start!),
+              due: e.value.due == null ? null : _date(e.value.due!),
+              duration: _duration(e.value.duration),
+            ),
+        },
         from: _date(query.fromDate!),
         through: _date(query.untilDate!).addDays(-1),
         maxCandidateDays: eventMaxCandidateWork,
@@ -211,6 +224,9 @@ List<CalendarTaskOccurrence> previewTaskValues(
       ))
         CalendarTaskOccurrence(
           originalStart: anchor.copyWith(start: eventDate(o.originalStart)),
+          actualStart: anchor.copyWith(start: eventDate(o.timing.start!)),
+          replacementTiming:
+              replacements[anchor.copyWith(start: eventDate(o.originalStart))],
           dueDate: o.timing.effectiveDue == null
               ? null
               : eventDate(o.timing.effectiveDue!),
@@ -240,6 +256,16 @@ List<CalendarTaskOccurrence> previewTaskValues(
   return List.unmodifiable([
     for (final o in master.expandStarts(
       _times(content),
+      replacements: {
+        for (final e in replacements.entries)
+          _timed(e.key): TimedTaskTiming(
+            start: _timed(taskAnchor(e.value)),
+            due: e.value.due == null
+                ? null
+                : _timed(taskAnchor(e.value).copyWith(start: e.value.due!)),
+            duration: _duration(e.value.duration),
+          ),
+      },
       window: UtcWindow(start: query.fromUtc!, end: query.untilUtc!),
       maxCandidateWork: eventMaxCandidateWork,
       maxRuleOccurrences: eventMaxRuleOccurrences,
@@ -249,7 +275,12 @@ List<CalendarTaskOccurrence> previewTaskValues(
         originalStart: anchor.copyWith(
           start: eventCivil(o.originalStart.civil),
         ),
-        startUtc: o.originalStart.instant,
+        actualStart: anchor.copyWith(start: eventCivil(o.timing.start.civil)),
+        replacementTiming:
+            replacements[anchor.copyWith(
+              start: eventCivil(o.originalStart.civil),
+            )],
+        startUtc: o.timing.start.instant,
         dueUtc: o.timing.dueInstant,
         progress: CalendarTaskProgress(
           status: CalendarTaskStatus.needsAction,

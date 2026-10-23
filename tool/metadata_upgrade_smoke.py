@@ -409,6 +409,26 @@ BEGIN
 END;
 $task_source_absence$;
 """)
+        sql(database, """
+INSERT INTO serverpod_calendar_task_occurrence ("taskId", "originalKey", "originalStart", progress)
+VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'synthetic-upgrade-original', '{"kind":"date","start":{"year":2026,"month":3,"day":1}}', '{"status":"completed","percentComplete":100,"completedAt":"2026-03-01T00:00:00Z"}');
+""")
+        for table in source_preserved:
+            sql(database, f"CREATE TABLE {table}_before_task_timing AS SELECT * FROM {table};")
+        sql(database, (SERVER / "migrations/20261023170429702-task-occurrence-timing/migration.sql").read_text(encoding="utf-8"))
+        for table in source_preserved:
+            strip = "-'replacementTiming'" if table == "serverpod_calendar_task_occurrence" else ""
+            sql(database, f"""
+DO $task_timing$
+BEGIN
+ IF (SELECT count(*) FROM {table}) <> (SELECT count(*) FROM {table}_before_task_timing)
+ OR EXISTS (SELECT 1 FROM {table} current JOIN {table}_before_task_timing old ON current.id=old.id
+ WHERE (to_jsonb(current){strip}) IS DISTINCT FROM to_jsonb(old))
+ THEN RAISE EXCEPTION 'Task timing migration changed {table}'; END IF;
+END;
+$task_timing$;
+DROP TABLE {table}_before_task_timing;
+""")
         print("PASS: populated schema upgrades preserve identity, revisions, content, associations, protocol UID strings and opening identities and old cursor bindings.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

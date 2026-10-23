@@ -2,6 +2,8 @@ class: CalendarTaskOccurrence
 immutable: true
 fields:
   originalStart: CalendarEventTiming
+  actualStart: CalendarEventTiming?
+  replacementTiming: CalendarTaskTiming?
   startUtc: DateTime?
   dueDate: CalendarEventCivil?
   dueUtc: DateTime?

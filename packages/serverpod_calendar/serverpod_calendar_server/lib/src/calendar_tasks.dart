@@ -96,6 +96,7 @@ extension CalendarTaskOperations on CalendarService {
     CalendarTaskProgressRequest? change,
     CalendarTaskOccurrenceQuery? occurrenceQuery,
     CalendarTaskOccurrenceProgressRequest? occurrenceChange,
+    CalendarTaskOccurrenceTimingRequest? timingChange,
     CalendarTaskHistoryQuery? historyQuery,
     CalendarTaskOccurrence? currentOccurrence,
     CalendarTaskOccurrence? proposedOccurrence,
@@ -117,6 +118,7 @@ extension CalendarTaskOperations on CalendarService {
     taskProgressChange: change,
     taskOccurrenceQuery: occurrenceQuery,
     taskOccurrenceProgressChange: occurrenceChange,
+    taskOccurrenceTimingChange: timingChange,
     taskHistoryQuery: historyQuery,
     currentTaskOccurrence: currentOccurrence,
     proposedTaskOccurrence: proposedOccurrence,
@@ -394,6 +396,13 @@ extension CalendarTaskOperations on CalendarService {
         throw _failure(CalendarFailureCode.validation);
       }
       if (content != null) {
+        _taskValue(() {
+          for (final r in recorded) {
+            if (r.replacementTiming != null) {
+              validateTaskReplacement(content, r.replacementTiming!);
+            }
+          }
+        });
         if (task.data.content.recurrence == null &&
             content.recurrence != null &&
             (task.data.hasRecordedProgress != false ||
