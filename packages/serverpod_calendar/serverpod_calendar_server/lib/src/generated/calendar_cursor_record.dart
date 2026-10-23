@@ -16,6 +16,7 @@ import 'package:serverpod_calendar_server/src/generated/protocol.dart'
 import 'calendar_category_filter.dart' as _i9j129by;
 import 'calendar_event_field_group.dart' as _iftiwkuj;
 import 'calendar_field_group.dart' as _i73hgz1s;
+import 'calendar_task_field_group.dart' as _isemqyyv;
 
 abstract class CalendarCursorRecord
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
@@ -29,6 +30,8 @@ abstract class CalendarCursorRecord
     required this.afterId,
     required this.pageSize,
     required this.fieldGroups,
+    this.taskCalendarId,
+    this.taskFieldGroups,
     this.eventCalendarId,
     this.eventFieldGroups,
     this.categoryFilter,
@@ -45,6 +48,8 @@ abstract class CalendarCursorRecord
     required _is.UuidValue afterId,
     required int pageSize,
     required List<_i73hgz1s.CalendarFieldGroup> fieldGroups,
+    _is.UuidValue? taskCalendarId,
+    List<_isemqyyv.CalendarTaskFieldGroup>? taskFieldGroups,
     _is.UuidValue? eventCalendarId,
     List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups,
     _i9j129by.CalendarCategoryFilter? categoryFilter,
@@ -69,6 +74,17 @@ abstract class CalendarCursorRecord
           .deserialize<List<_i73hgz1s.CalendarFieldGroup>>(
             jsonSerialization['fieldGroups'],
           ),
+      taskCalendarId: jsonSerialization['taskCalendarId'] == null
+          ? null
+          : _is.UuidValueJsonExtension.fromJson(
+              jsonSerialization['taskCalendarId'],
+            ),
+      taskFieldGroups: jsonSerialization['taskFieldGroups'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<List<_isemqyyv.CalendarTaskFieldGroup>>(
+                  jsonSerialization['taskFieldGroups'],
+                ),
       eventCalendarId: jsonSerialization['eventCalendarId'] == null
           ? null
           : _is.UuidValueJsonExtension.fromJson(
@@ -114,6 +130,10 @@ abstract class CalendarCursorRecord
 
   List<_i73hgz1s.CalendarFieldGroup> fieldGroups;
 
+  _is.UuidValue? taskCalendarId;
+
+  List<_isemqyyv.CalendarTaskFieldGroup>? taskFieldGroups;
+
   _is.UuidValue? eventCalendarId;
 
   List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups;
@@ -138,6 +158,8 @@ abstract class CalendarCursorRecord
     _is.UuidValue? afterId,
     int? pageSize,
     List<_i73hgz1s.CalendarFieldGroup>? fieldGroups,
+    _is.UuidValue? taskCalendarId,
+    List<_isemqyyv.CalendarTaskFieldGroup>? taskFieldGroups,
     _is.UuidValue? eventCalendarId,
     List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups,
     _i9j129by.CalendarCategoryFilter? categoryFilter,
@@ -156,6 +178,11 @@ abstract class CalendarCursorRecord
       'afterId': afterId.toJson(),
       'pageSize': pageSize,
       'fieldGroups': fieldGroups.toJson(valueToJson: (v) => v.toJson()),
+      if (taskCalendarId != null) 'taskCalendarId': taskCalendarId?.toJson(),
+      if (taskFieldGroups != null)
+        'taskFieldGroups': taskFieldGroups?.toJson(
+          valueToJson: (v) => v.toJson(),
+        ),
       if (eventCalendarId != null) 'eventCalendarId': eventCalendarId?.toJson(),
       if (eventFieldGroups != null)
         'eventFieldGroups': eventFieldGroups?.toJson(
@@ -212,6 +239,8 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
     required _is.UuidValue afterId,
     required int pageSize,
     required List<_i73hgz1s.CalendarFieldGroup> fieldGroups,
+    _is.UuidValue? taskCalendarId,
+    List<_isemqyyv.CalendarTaskFieldGroup>? taskFieldGroups,
     _is.UuidValue? eventCalendarId,
     List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups,
     _i9j129by.CalendarCategoryFilter? categoryFilter,
@@ -226,6 +255,8 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
          afterId: afterId,
          pageSize: pageSize,
          fieldGroups: fieldGroups,
+         taskCalendarId: taskCalendarId,
+         taskFieldGroups: taskFieldGroups,
          eventCalendarId: eventCalendarId,
          eventFieldGroups: eventFieldGroups,
          categoryFilter: categoryFilter,
@@ -246,6 +277,8 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
     _is.UuidValue? afterId,
     int? pageSize,
     List<_i73hgz1s.CalendarFieldGroup>? fieldGroups,
+    Object? taskCalendarId = _Undefined,
+    Object? taskFieldGroups = _Undefined,
     Object? eventCalendarId = _Undefined,
     Object? eventFieldGroups = _Undefined,
     Object? categoryFilter = _Undefined,
@@ -261,6 +294,13 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
       afterId: afterId ?? this.afterId,
       pageSize: pageSize ?? this.pageSize,
       fieldGroups: fieldGroups ?? this.fieldGroups.map((e0) => e0).toList(),
+      taskCalendarId: taskCalendarId is _is.UuidValue?
+          ? taskCalendarId
+          : this.taskCalendarId,
+      taskFieldGroups:
+          taskFieldGroups is List<_isemqyyv.CalendarTaskFieldGroup>?
+          ? taskFieldGroups
+          : this.taskFieldGroups?.map((e0) => e0).toList(),
       eventCalendarId: eventCalendarId is _is.UuidValue?
           ? eventCalendarId
           : this.eventCalendarId,
@@ -325,6 +365,23 @@ class CalendarCursorRecordUpdateTable
     table.fieldGroups,
     value,
   );
+
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> taskCalendarId(
+    _is.UuidValue? value,
+  ) => _is.ColumnValue(
+    table.taskCalendarId,
+    value,
+  );
+
+  _is.ColumnValue<
+    List<_isemqyyv.CalendarTaskFieldGroup>,
+    List<_isemqyyv.CalendarTaskFieldGroup>
+  >
+  taskFieldGroups(List<_isemqyyv.CalendarTaskFieldGroup>? value) =>
+      _is.ColumnValue(
+        table.taskFieldGroups,
+        value,
+      );
 
   _is.ColumnValue<_is.UuidValue, _is.UuidValue> eventCalendarId(
     _is.UuidValue? value,
@@ -395,6 +452,15 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
       'fieldGroups',
       this,
     );
+    taskCalendarId = _is.ColumnUuid(
+      'taskCalendarId',
+      this,
+    );
+    taskFieldGroups =
+        _is.ColumnSerializable<List<_isemqyyv.CalendarTaskFieldGroup>>(
+          'taskFieldGroups',
+          this,
+        );
     eventCalendarId = _is.ColumnUuid(
       'eventCalendarId',
       this,
@@ -433,6 +499,11 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
   late final _is.ColumnSerializable<List<_i73hgz1s.CalendarFieldGroup>>
   fieldGroups;
 
+  late final _is.ColumnUuid taskCalendarId;
+
+  late final _is.ColumnSerializable<List<_isemqyyv.CalendarTaskFieldGroup>>
+  taskFieldGroups;
+
   late final _is.ColumnUuid eventCalendarId;
 
   late final _is.ColumnSerializable<List<_iftiwkuj.CalendarEventFieldGroup>>
@@ -454,6 +525,8 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
     afterId,
     pageSize,
     fieldGroups,
+    taskCalendarId,
+    taskFieldGroups,
     eventCalendarId,
     eventFieldGroups,
     categoryFilter,

@@ -39,3 +39,11 @@ calendarEvent:
   - changeStatus:
   - changeOccurrence:
   - deleteEvent:
+calendarTask:
+  - create:
+  - getTask:
+  - list:
+  - update:
+  - changeProgress:
+  - changeAssignments:
+  - deleteTask:

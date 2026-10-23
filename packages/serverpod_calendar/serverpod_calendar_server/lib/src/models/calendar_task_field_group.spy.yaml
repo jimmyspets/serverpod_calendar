@@ -1,0 +1,11 @@
+enum: CalendarTaskFieldGroup
+serialized: byName
+values:
+  - summary
+  - description
+  - location
+  - timing
+  - priority
+  - progress
+  - assignments
+  - protocolIdentity

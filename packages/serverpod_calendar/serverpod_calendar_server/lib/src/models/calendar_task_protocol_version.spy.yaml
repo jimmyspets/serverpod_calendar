@@ -1,0 +1,7 @@
+class: CalendarTaskProtocolVersion
+immutable: true
+fields:
+  sequence: int?
+  stamp: DateTime
+  created: DateTime?
+  lastModified: DateTime?
