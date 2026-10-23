@@ -1530,6 +1530,12 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'protocol:CalendarTaskTiming?',
         ),
         _isp.ColumnDefinition(
+          name: 'futureTiming',
+          columnType: _isp.ColumnType.json,
+          isNullable: true,
+          dartType: 'protocol:CalendarTaskTiming?',
+        ),
+        _isp.ColumnDefinition(
           name: 'progress',
           columnType: _isp.ColumnType.json,
           isNullable: false,

@@ -4,7 +4,9 @@ fields:
   originalStart: CalendarEventTiming
   actualStart: CalendarEventTiming?
   replacementTiming: CalendarTaskTiming?
+  futureTiming: CalendarTaskTiming?
   startUtc: DateTime?
+  duration: CalendarEventDuration?
   dueDate: CalendarEventCivil?
   dueUtc: DateTime?
   progress: CalendarTaskProgress

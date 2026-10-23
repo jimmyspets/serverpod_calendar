@@ -24,13 +24,15 @@ abstract class CalendarTaskOccurrenceTimingRequest
     required this.expectedRevision,
     required this.originalStart,
     this.replacement,
-  });
+    bool? thisAndFuture,
+  }) : thisAndFuture = thisAndFuture ?? false;
 
   const factory CalendarTaskOccurrenceTimingRequest({
     required _isc.UuidValue taskId,
     required int expectedRevision,
     required _ieswiaty.CalendarEventTiming originalStart,
     _i9h8y8lg.CalendarTaskTiming? replacement,
+    bool? thisAndFuture,
   }) = _CalendarTaskOccurrenceTimingRequestImpl;
 
   factory CalendarTaskOccurrenceTimingRequest.fromJson(
@@ -48,6 +50,9 @@ abstract class CalendarTaskOccurrenceTimingRequest
           : _ie4a1wrz.Protocol().deserialize<_i9h8y8lg.CalendarTaskTiming>(
               jsonSerialization['replacement'],
             ),
+      thisAndFuture: jsonSerialization['thisAndFuture'] == null
+          ? null
+          : _isc.BoolJsonExtension.fromJson(jsonSerialization['thisAndFuture']),
     );
   }
 
@@ -59,6 +64,8 @@ abstract class CalendarTaskOccurrenceTimingRequest
 
   final _i9h8y8lg.CalendarTaskTiming? replacement;
 
+  final bool thisAndFuture;
+
   /// Returns a shallow copy of this [CalendarTaskOccurrenceTimingRequest]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -67,6 +74,7 @@ abstract class CalendarTaskOccurrenceTimingRequest
     int? expectedRevision,
     _ieswiaty.CalendarEventTiming? originalStart,
     _i9h8y8lg.CalendarTaskTiming? replacement,
+    bool? thisAndFuture,
   });
   @override
   bool operator ==(Object other) {
@@ -95,7 +103,12 @@ abstract class CalendarTaskOccurrenceTimingRequest
                   other.replacement,
                   replacement,
                 ) ||
-                other.replacement == replacement);
+                other.replacement == replacement) &&
+            (identical(
+                  other.thisAndFuture,
+                  thisAndFuture,
+                ) ||
+                other.thisAndFuture == thisAndFuture);
   }
 
   @override
@@ -106,6 +119,7 @@ abstract class CalendarTaskOccurrenceTimingRequest
       expectedRevision,
       originalStart,
       replacement,
+      thisAndFuture,
     );
   }
 
@@ -117,6 +131,7 @@ abstract class CalendarTaskOccurrenceTimingRequest
       'expectedRevision': expectedRevision,
       'originalStart': originalStart.toJson(),
       if (replacement != null) 'replacement': replacement?.toJson(),
+      'thisAndFuture': thisAndFuture,
     };
   }
 
@@ -128,6 +143,7 @@ abstract class CalendarTaskOccurrenceTimingRequest
       'expectedRevision': expectedRevision,
       'originalStart': originalStart.toJsonForProtocol(),
       if (replacement != null) 'replacement': replacement?.toJsonForProtocol(),
+      'thisAndFuture': thisAndFuture,
     };
   }
 
@@ -146,11 +162,13 @@ class _CalendarTaskOccurrenceTimingRequestImpl
     required int expectedRevision,
     required _ieswiaty.CalendarEventTiming originalStart,
     _i9h8y8lg.CalendarTaskTiming? replacement,
+    bool? thisAndFuture,
   }) : super._(
          taskId: taskId,
          expectedRevision: expectedRevision,
          originalStart: originalStart,
          replacement: replacement,
+         thisAndFuture: thisAndFuture,
        );
 
   /// Returns a shallow copy of this [CalendarTaskOccurrenceTimingRequest]
@@ -162,6 +180,7 @@ class _CalendarTaskOccurrenceTimingRequestImpl
     int? expectedRevision,
     _ieswiaty.CalendarEventTiming? originalStart,
     Object? replacement = _Undefined,
+    bool? thisAndFuture,
   }) {
     return CalendarTaskOccurrenceTimingRequest(
       taskId: taskId ?? this.taskId,
@@ -170,6 +189,7 @@ class _CalendarTaskOccurrenceTimingRequestImpl
       replacement: replacement is _i9h8y8lg.CalendarTaskTiming?
           ? replacement
           : this.replacement?.copyWith(),
+      thisAndFuture: thisAndFuture ?? this.thisAndFuture,
     );
   }
 }

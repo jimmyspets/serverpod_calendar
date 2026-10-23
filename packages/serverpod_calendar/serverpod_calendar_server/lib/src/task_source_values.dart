@@ -201,6 +201,7 @@ CalendarEventRecurrence? _recurrence(IcalendarTaskRecurrence? v) {
 CalendarTaskSourceComponent _component(IcalendarTask t) =>
     CalendarTaskSourceComponent(
       originalStart: t.originalStart == null ? null : _anchor(t.originalStart!),
+      thisAndFuture: t.thisAndFuture ? true : null,
       version: validateTaskVersion(
         CalendarTaskProtocolVersion(
           sequence: t.sequence,
@@ -449,7 +450,11 @@ final class _TaskWriter {
       if (c.version.sequence != null)
         property('SEQUENCE', '${c.version.sequence}'),
       if (c.originalStart != null)
-        values.time('RECURRENCE-ID', c.originalStart!),
+        values.time(
+          'RECURRENCE-ID',
+          c.originalStart!,
+          future: c.thisAndFuture == true,
+        ),
       if (t.start != null)
         values.time('DTSTART', anchor!.copyWith(start: t.start)),
       if (t.due != null) values.time('DUE', anchor!.copyWith(start: t.due)),
@@ -621,7 +626,9 @@ List<int> taskExportBytes(
 }
 
 CalendarTaskTiming? taskSourceReplacement(CalendarTaskSourceComponent c) =>
-    c.content.timing.start == null ? null : c.content.timing;
+    c.thisAndFuture == true || c.content.timing.start == null
+    ? null
+    : c.content.timing;
 
 CalendarTaskSourceState changeTaskSourceTiming(
   String uid,
@@ -629,17 +636,20 @@ CalendarTaskSourceState changeTaskSourceTiming(
   CalendarEventTiming original,
   CalendarTaskTiming? replacement,
   CalendarTaskProgress progress,
-  CalendarTaskProtocolVersion version,
-) {
+  CalendarTaskProtocolVersion version, {
+  bool thisAndFuture = false,
+}) {
   final key = taskOriginalKey(original);
   final existing = before.occurrences
       .where((o) => taskOriginalKey(o.originalStart!) == key)
       .firstOrNull;
   final timing =
       replacement ?? CalendarTaskTiming(kind: CalendarTaskTimeKind.undated);
+  final rangeFlag = thisAndFuture && replacement != null ? true : null;
   final next = existing == null
       ? CalendarTaskSourceComponent(
           originalStart: original,
+          thisAndFuture: rangeFlag,
           version: version,
           content: CalendarTaskContent(timing: timing),
           progress: progress,
@@ -647,6 +657,7 @@ CalendarTaskSourceState changeTaskSourceTiming(
           metadata: emptyTaskSourceMetadata(),
         )
       : existing.copyWith(
+          thisAndFuture: rangeFlag,
           version: version,
           content: existing.content.copyWith(timing: timing),
         );
@@ -661,3 +672,6 @@ CalendarTaskSourceState changeTaskSourceTiming(
     ),
   );
 }
+
+CalendarTaskTiming? taskSourceFuture(CalendarTaskSourceComponent c) =>
+    c.thisAndFuture == true ? c.content.timing : null;

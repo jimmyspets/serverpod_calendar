@@ -54,11 +54,13 @@ extension CalendarTaskExportOperations on CalendarService {
                 for (final row in rows)
                   CalendarTaskSourceComponent(
                     originalStart: row.originalStart,
+                    thisAndFuture: row.futureTiming != null ? true : null,
                     version:
                         row.protocolVersion ??
                         (throw _failure(CalendarFailureCode.validation)),
                     content: CalendarTaskContent(
                       timing:
+                          row.futureTiming ??
                           row.replacementTiming ??
                           CalendarTaskTiming(
                             kind: CalendarTaskTimeKind.undated,
