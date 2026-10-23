@@ -33,6 +33,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_create_request.
     as _i287wpc6;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_create_request.dart'
     as _ixcfd9h0;
+import 'package:serverpod_calendar_server/src/generated/calendar_event_export_request.dart'
+    as _i6dxskz2;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_field_group.dart'
     as _il5gdr09;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_import_request.dart'
@@ -691,6 +693,27 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'calendarEvent',
       endpoint: endpoints['calendarEvent']!,
       methodConnectors: {
+        'exportEvents': _is.MethodConnector(
+          name: 'exportEvents',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i6dxskz2.CalendarEventExportRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .exportEvents(
+                        session,
+                        params['request'],
+                      ),
+        ),
         'importEvents': _is.MethodConnector(
           name: 'importEvents',
           params: {

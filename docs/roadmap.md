@@ -1,6 +1,6 @@
 # Delivery roadmap
 
-Status reconciled **2026-10-23**, through authenticated create-only VEVENT import under ADR 0080 following source-preserving storage and the confirmed ADR 0078 contract. Authenticated event export and replacement remain pending. The bounded temporal core and scoped native calendar/event services have local validation evidence; the full first release remains incomplete. The [RFC tables](rfc/README.md) are the latest feature-scope source. [Requirements](requirements.md) define stable FR/NFR acceptance targets; [ADRs](adr/README.md) distinguish confirmed scope from proposed implementation details.
+Status reconciled **2026-10-23**, through authenticated current-state VEVENT export under ADR 0082 following create-only import/storage. Source replacement remains separate; native tasks are the next major implementation area. The bounded temporal core and scoped native calendar/event services have local validation evidence; the full first release remains incomplete. The [RFC tables](rfc/README.md) are the latest feature-scope source. [Requirements](requirements.md) define stable FR/NFR acceptance targets; [ADRs](adr/README.md) distinguish confirmed scope from proposed implementation details.
 
 This roadmap tracks the implementation represented by the current branch, including stacked draft PRs; an implemented checkbox does not mean the change is merged into main, released, or that every ADR mechanic is accepted. Check existing GitHub work before filing issues, and link each implementation issue to the relevant requirements and roadmap section.
 
@@ -20,7 +20,7 @@ Checked items describe only the stated implemented slice or explicitly selected 
 | Scheduling and alarms | Selected scope; notification package scaffold | Scheduling/mail state and outbox; alarm workers/actions and connected Flutter delivery |
 | Validation and release | Local unit/browser/database/upgrade checks, two real hosts and Flutter journeys for implemented features | CI, remaining protocol/worker/recovery journeys, interoperability and publication readiness |
 
-The timing-only single/future batch is implemented under [ADR 0055](adr/0055-native-occurrence-timing-edits.md). The first per-calendar booking/fallback free/busy increment is implemented under [ADR 0056](adr/0056-first-calendar-free-busy.md), including the accepted tentative-blocking classification. Scoped RFC 7953 working-hours rules and host-resolved person/resource/common-slot search are implemented under ADRs 0057–0058; source-preserving wire adaptation follows under ADRs 0069–0070. Scoped availability create/export/replacement APIs now exist; event import and remaining profiles still need implementation and concrete mechanics review. Review and merge the draft PR stack separately; passing local checks does not approve unresolved design mechanics.
+The timing-only single/future batch is implemented under [ADR 0055](adr/0055-native-occurrence-timing-edits.md). The first per-calendar booking/fallback free/busy increment is implemented under [ADR 0056](adr/0056-first-calendar-free-busy.md), including the accepted tentative-blocking classification. Scoped RFC 7953 working-hours rules and host-resolved person/resource/common-slot search are implemented under ADRs 0057–0058; source-preserving wire adaptation follows under ADRs 0069–0070. Scoped availability create/export/replacement APIs now exist; scoped event import/export now exist; remaining profiles and concrete mechanics still need implementation/review. Review and merge the draft PR stack separately; passing local checks does not approve unresolved design mechanics.
 
 ## Work packages and dependencies
 
@@ -140,13 +140,13 @@ Native metadata editing is partial evidence for FR-24, not ICS interoperability.
 - [x] Implement source-preserving event storage under [ADR 0079](adr/0079-source-preserving-event-storage.md): exact text UID candidates, PERIODs/annotations, independent component versions/presence, private baseline representation and data-preserving upgrades.
 - [x] Implement [authenticated create-only VEVENT import](event-import.md#implemented-create-only-operation) under ADR 0080 with independent import/create/lifecycle authority, exact destination UID conflicts, private baseline persistence and full-batch atomicity.
 - [x] Record the confirmed [event export boundary](adr/0081-authenticated-event-export-contract.md): explicit complete series from one calendar, all-or-nothing availability/authorization, separate export permission and full supported field disclosure.
-- [ ] Implement current-state event export under ADR 0081; review exact output mapping and nonrepresentable native state before adding the endpoint. Event replacement/adoption remains separate.
+- [x] Implement [current-state event export](event-export.md) under ADR 0082 with full disclosure, atomic selection, current semantic validation, regenerated zones and explicit unrepresentable-state rejection. Event replacement/adoption remains separate.
 - [ ] Review the concrete ADR 0079 representation, limits and migration mechanics in the draft PR before accepting them as final contracts.
 
 
 ## Tasks
 
-Pure-core task timing and recurrence projections are complete; durable task service/lifecycle and standalone VTODO interoperability remain pending.
+Pure-core task timing and recurrence projections are complete. [ADR 0083](adr/0083-first-native-task-contract.md) now confirms non-recurring task CRUD/assignments first, completion at 100 percent with server UTC time, reopening at 0 percent, and cancellation preserving percentage while clearing active completion time. Durable task implementation, recurrence/history and VTODO interchange remain pending.
 
 - [ ] Implement authorized durable recurring/non-recurring task CRUD, external assignment, filtering/pagination, optional typed dates, progress/priority/completion and expected revisions.
 - [ ] Define and test per-occurrence completion/history, exceptions, original occurrence identity, series edits, due/duration semantics, bounded queries, restart and alarm invalidation. Support valid undated tasks and no-loss standalone VTODO interchange using known zones.
@@ -276,3 +276,8 @@ The maintainer selected recurrence storage/bounded API and example previews firs
 ## Event import increment, 2026-10-23
 
 [ADR 0080](adr/0080-authenticated-create-only-event-import.md) implements the [create-only event endpoint](event-import.md#implemented-create-only-operation), preserving supported source state and private baselines under independent full-batch authority. Two-host UID/delete races and the Flutter import workflow are scoped integration gates. Event export/replacement, richer content, scheduling, feeds, tasks and alarm execution remain pending.
+
+
+## Event export increment, 2026-10-23
+
+[ADR 0082](adr/0082-authenticated-current-event-export.md) implements the confirmed explicit complete-series export boundary and the selected cancellation-restoration rejection. Read-only current-state output rechecks complete authority after serialization and excludes historical baselines. Native tasks and their progress/assignment/recurrence contracts are the next recommended major area; source replacement remains a separate reconciliation increment.

@@ -1,0 +1,6 @@
+class: CalendarEventExportRequest
+immutable: true
+fields:
+  calendarId: UuidValue
+  expectedRevision: int
+  selection: List<CalendarEventExportSelection>

@@ -1,6 +1,6 @@
 # Source-preserving event storage
 
-Status: **implemented prerequisite under ADR 0078; concrete storage mechanics under draft review**. [ADR 0079](adr/0079-source-preserving-event-storage.md) records this batch. Authenticated create-only VEVENT import now follows under ADR 0080; event export remains pending. Pure conversion is not an import permission or database operation.
+Status: **implemented prerequisite under ADR 0078; concrete storage mechanics under draft review**. [ADR 0079](adr/0079-source-preserving-event-storage.md) records this batch. Authenticated create-only VEVENT import now follows under ADR 0080; current-state event export now follows under ADR 0082; source replacement remains separate. Pure conversion is not an import permission or database operation.
 
 Native UUIDs, actual parent calendars and optimistic API revisions remain independent of protocol UIDs and versions. Active rows now store exact TEXT protocol UIDs (up to the existing 4,096-code-point profile), their actual calendar UUID and a SHA-256 candidate digest. The non-unique calendar/digest index narrows candidates; exact case-sensitive strings decide conflicts under the shared scope lock. Native creation generates its UID. A source UID never grants ownership or chooses a native identity.
 
