@@ -7,6 +7,7 @@ fields:
   originalStart: CalendarEventTiming
   replacementTiming: CalendarTaskTiming?
   futureTiming: CalendarTaskTiming?
+  contentOverrides: CalendarTaskOccurrenceContent?
   progress: CalendarTaskProgress
   protocolVersion: CalendarTaskProtocolVersion?
 indexes:

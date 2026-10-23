@@ -113,6 +113,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_task_import_req
     as _in2ug0m6;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_import_result.dart'
     as _imwandrw;
+import 'package:serverpod_calendar_server/src/generated/calendar_task_occurrence_content_request.dart'
+    as _ien69b9c;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_occurrence_preview.dart'
     as _i8v6r7o6;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_occurrence_progress_request.dart'
@@ -1906,6 +1908,37 @@ class _CalendarTaskEndpoint {
           createSessionCallback: (_) => _localUniqueSession,
           endpointPath: 'calendarTask',
           methodName: 'changeOccurrenceProgress',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ix5y5076.CalendarTaskReceipt?> changeOccurrenceContent(
+    _ist.TestSessionBuilder sessionBuilder,
+    _ien69b9c.CalendarTaskOccurrenceContentRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarTask',
+            method: 'changeOccurrenceContent',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarTask',
+          methodName: 'changeOccurrenceContent',
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );

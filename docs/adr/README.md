@@ -110,6 +110,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0101](0101-single-task-occurrence-timing.md) | Single task occurrence timing | Confirmed single scope, complete replacements and completed-history preservation; captured progress and complete explicit timing confirmed |
 
 | [0102](0102-task-future-timing.md) | Task this-and-future timing | Scoped implementation of confirmed range timing and anchor-only progress; concrete mechanics under draft review |
+| [0103](0103-single-task-content-overrides.md) | Selected single-task content overrides | Scoped implementation of confirmed per-field/anchor-local content; mechanics under draft review |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

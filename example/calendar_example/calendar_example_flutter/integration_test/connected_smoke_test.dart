@@ -648,6 +648,57 @@ void main() {
           .data,
       contains('2026-03-28'),
     );
+    await _tap(tester, 'task-occurrence-0-content');
+    await _tap(tester, 'task-content-action-summary');
+    await tester.tap(find.text('Set own value').last);
+    await _idle(tester);
+    await tester.enterText(
+      find.byKey(const Key('task-content-value-summary')),
+      'Occurrence only',
+    );
+    await _tap(tester, 'task-content-save');
+    expect(
+      tester
+          .widget<Text>(
+            find.byKey(const Key('task-occurrence-content-summary-0')),
+          )
+          .data,
+      'Summary: Occurrence only',
+    );
+    expect(
+      tester
+          .widget<Text>(
+            find.byKey(const Key('task-occurrence-content-summary-1')),
+          )
+          .data,
+      'Summary: Recurring example task',
+    );
+    await _tap(tester, 'task-occurrence-0-content');
+    await _tap(tester, 'task-content-action-summary');
+    await tester.tap(find.text('Clear value').last);
+    await _idle(tester);
+    await _tap(tester, 'task-content-save');
+    expect(
+      tester
+          .widget<Text>(
+            find.byKey(const Key('task-occurrence-content-summary-0')),
+          )
+          .data,
+      'Summary: (cleared)',
+    );
+    await _tap(tester, 'task-occurrence-0-content');
+    await _tap(tester, 'task-content-action-summary');
+    await tester.tap(find.text('Follow series').last);
+    await _idle(tester);
+    await _tap(tester, 'task-content-save');
+    expect(
+      tester
+          .widget<Text>(
+            find.byKey(const Key('task-occurrence-content-summary-0')),
+          )
+          .data,
+      'Summary: Recurring example task',
+    );
     await _tap(tester, 'task-occurrence-1-complete');
     await _tap(tester, 'task-occurrence-0-history');
     expect(find.byKey(const Key('task-history-2')), findsOneWidget);

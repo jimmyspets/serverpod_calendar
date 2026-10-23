@@ -3,6 +3,7 @@ immutable: true
 fields:
   taskId: UuidValue
   expectedRevision: int
+  fieldGroups: List<CalendarTaskFieldGroup>?
   fromDate: CalendarEventCivil?
   untilDate: CalendarEventCivil?
   fromUtc: DateTime?

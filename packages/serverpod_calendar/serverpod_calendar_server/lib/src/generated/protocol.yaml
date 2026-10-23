@@ -52,4 +52,5 @@ calendarTask:
   - previewOccurrences:
   - changeOccurrenceTiming:
   - changeOccurrenceProgress:
+  - changeOccurrenceContent:
   - occurrenceHistory:

@@ -205,6 +205,7 @@ extension CalendarTaskImportOperations on CalendarService {
               originalKey: taskOriginalKey(o.originalStart!),
               replacementTiming: taskSourceReplacement(o),
               futureTiming: taskSourceFuture(o),
+              contentOverrides: taskSourceContentOverrides(o),
               progress: o.progress,
               protocolVersion: o.version,
             ),
