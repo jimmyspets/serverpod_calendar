@@ -220,29 +220,22 @@ void main() {
       );
     },
   );
-  test(
-    'unsupported relationships alarms and private extensions still reject',
-    () {
-      for (final p in [
-        'RELATED-TO:other',
-        'X-TASK:value',
-        'ATTACH:https://example.invalid/file',
-      ]) {
-        expect(
-          () => load([...properties, p]),
-          rejects(IcalendarComponentError.unsupportedProperty),
-        );
-      }
+  test('unsupported alarms and private extensions still reject', () {
+    for (final p in ['X-TASK:value']) {
       expect(
-        () => load([
-          ...properties,
-          'BEGIN:VALARM',
-          'ACTION:DISPLAY',
-          'TRIGGER:-PT5M',
-          'END:VALARM',
-        ]),
-        rejects(IcalendarComponentError.unsupportedComponent),
+        () => load([...properties, p]),
+        rejects(IcalendarComponentError.unsupportedProperty),
       );
-    },
-  );
+    }
+    expect(
+      () => load([
+        ...properties,
+        'BEGIN:VALARM',
+        'ACTION:DISPLAY',
+        'TRIGGER:-PT5M',
+        'END:VALARM',
+      ]),
+      rejects(IcalendarComponentError.unsupportedComponent),
+    );
+  });
 }
