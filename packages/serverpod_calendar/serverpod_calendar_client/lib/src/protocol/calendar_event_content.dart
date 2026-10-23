@@ -13,8 +13,10 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
 import 'calendar_event_recurrence.dart' as _iqxs44bf;
 import 'calendar_event_status.dart' as _ivzxk9bc;
+import 'calendar_event_text_parameters.dart' as _isfojy12;
 import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_event_transparency.dart' as _iwjkdwy7;
 
@@ -29,6 +31,8 @@ abstract class CalendarEventContent
     _ivzxk9bc.CalendarEventStatus? status,
     _iwjkdwy7.CalendarEventTransparency? transparency,
     this.recurrence,
+    this.periods,
+    this.textParameters,
   }) : status = status ?? _ivzxk9bc.CalendarEventStatus.confirmed,
        transparency =
            transparency ?? _iwjkdwy7.CalendarEventTransparency.opaque;
@@ -41,6 +45,8 @@ abstract class CalendarEventContent
     _ivzxk9bc.CalendarEventStatus? status,
     _iwjkdwy7.CalendarEventTransparency? transparency,
     _iqxs44bf.CalendarEventRecurrence? recurrence,
+    List<_ieswiaty.CalendarEventTiming>? periods,
+    _isfojy12.CalendarEventTextParameters? textParameters,
   }) = _CalendarEventContentImpl;
 
   factory CalendarEventContent.fromJson(
@@ -68,6 +74,18 @@ abstract class CalendarEventContent
           : _ie4a1wrz.Protocol().deserialize<_iqxs44bf.CalendarEventRecurrence>(
               jsonSerialization['recurrence'],
             ),
+      periods: jsonSerialization['periods'] == null
+          ? null
+          : _ie4a1wrz.Protocol()
+                .deserialize<List<_ieswiaty.CalendarEventTiming>>(
+                  jsonSerialization['periods'],
+                ),
+      textParameters: jsonSerialization['textParameters'] == null
+          ? null
+          : _ie4a1wrz.Protocol()
+                .deserialize<_isfojy12.CalendarEventTextParameters>(
+                  jsonSerialization['textParameters'],
+                ),
     );
   }
 
@@ -85,6 +103,10 @@ abstract class CalendarEventContent
 
   final _iqxs44bf.CalendarEventRecurrence? recurrence;
 
+  final List<_ieswiaty.CalendarEventTiming>? periods;
+
+  final _isfojy12.CalendarEventTextParameters? textParameters;
+
   /// Returns a shallow copy of this [CalendarEventContent]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -96,6 +118,8 @@ abstract class CalendarEventContent
     _ivzxk9bc.CalendarEventStatus? status,
     _iwjkdwy7.CalendarEventTransparency? transparency,
     _iqxs44bf.CalendarEventRecurrence? recurrence,
+    List<_ieswiaty.CalendarEventTiming>? periods,
+    _isfojy12.CalendarEventTextParameters? textParameters,
   });
   @override
   bool operator ==(Object other) {
@@ -139,7 +163,16 @@ abstract class CalendarEventContent
                   other.recurrence,
                   recurrence,
                 ) ||
-                other.recurrence == recurrence);
+                other.recurrence == recurrence) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.periods,
+              periods,
+            ) &&
+            (identical(
+                  other.textParameters,
+                  textParameters,
+                ) ||
+                other.textParameters == textParameters);
   }
 
   @override
@@ -153,6 +186,8 @@ abstract class CalendarEventContent
       status,
       transparency,
       recurrence,
+      const _iss.DeepCollectionEquality().hash(periods),
+      textParameters,
     );
   }
 
@@ -167,6 +202,9 @@ abstract class CalendarEventContent
       'status': status.toJson(),
       'transparency': transparency.toJson(),
       if (recurrence != null) 'recurrence': recurrence?.toJson(),
+      if (periods != null)
+        'periods': periods?.toJson(valueToJson: (v) => v.toJson()),
+      if (textParameters != null) 'textParameters': textParameters?.toJson(),
     };
   }
 
@@ -181,6 +219,10 @@ abstract class CalendarEventContent
       'status': status.toJson(),
       'transparency': transparency.toJson(),
       if (recurrence != null) 'recurrence': recurrence?.toJsonForProtocol(),
+      if (periods != null)
+        'periods': periods?.toJson(valueToJson: (v) => v.toJsonForProtocol()),
+      if (textParameters != null)
+        'textParameters': textParameters?.toJsonForProtocol(),
     };
   }
 
@@ -201,6 +243,8 @@ class _CalendarEventContentImpl extends CalendarEventContent {
     _ivzxk9bc.CalendarEventStatus? status,
     _iwjkdwy7.CalendarEventTransparency? transparency,
     _iqxs44bf.CalendarEventRecurrence? recurrence,
+    List<_ieswiaty.CalendarEventTiming>? periods,
+    _isfojy12.CalendarEventTextParameters? textParameters,
   }) : super._(
          summary: summary,
          description: description,
@@ -209,6 +253,8 @@ class _CalendarEventContentImpl extends CalendarEventContent {
          status: status,
          transparency: transparency,
          recurrence: recurrence,
+         periods: periods,
+         textParameters: textParameters,
        );
 
   /// Returns a shallow copy of this [CalendarEventContent]
@@ -223,6 +269,8 @@ class _CalendarEventContentImpl extends CalendarEventContent {
     _ivzxk9bc.CalendarEventStatus? status,
     _iwjkdwy7.CalendarEventTransparency? transparency,
     Object? recurrence = _Undefined,
+    Object? periods = _Undefined,
+    Object? textParameters = _Undefined,
   }) {
     return CalendarEventContent(
       summary: summary is String? ? summary : this.summary,
@@ -234,6 +282,12 @@ class _CalendarEventContentImpl extends CalendarEventContent {
       recurrence: recurrence is _iqxs44bf.CalendarEventRecurrence?
           ? recurrence
           : this.recurrence?.copyWith(),
+      periods: periods is List<_ieswiaty.CalendarEventTiming>?
+          ? periods
+          : this.periods?.map((e0) => e0.copyWith()).toList(),
+      textParameters: textParameters is _isfojy12.CalendarEventTextParameters?
+          ? textParameters
+          : this.textParameters?.copyWith(),
     );
   }
 }

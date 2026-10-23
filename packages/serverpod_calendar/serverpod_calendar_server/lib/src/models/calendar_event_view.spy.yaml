@@ -14,3 +14,9 @@ fields:
   lastModified: DateTime?
   recurrence: CalendarEventRecurrence?
   timingOverrides: CalendarEventTimingOverrides?
+  periods: List<CalendarEventTiming>?
+  textParameters: CalendarEventTextParameters?
+  statusPresent: bool?
+  transparencyPresent: bool?
+  protocolVersion: CalendarEventProtocolVersion?
+  occurrenceProtocolVersions: List<CalendarEventOccurrenceProtocolVersion>?

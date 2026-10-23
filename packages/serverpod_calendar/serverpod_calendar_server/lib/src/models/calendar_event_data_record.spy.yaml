@@ -3,7 +3,11 @@ serverOnly: true
 table: serverpod_calendar_event_data
 fields:
   eventId: UuidValue, relation(parent=serverpod_calendar_event)
-  protocolUid: UuidValue, default=random
+  calendarId: UuidValue
+  protocolUid: String
+  uidDigest: String
+  protocolState: CalendarEventProtocolState?
+  importBaseline: CalendarEventImportBaseline?
   timingOverrides: CalendarEventTimingOverrides?
   content: CalendarEventContent
   createdAt: DateTime
@@ -12,6 +16,5 @@ indexes:
   calendar_event_data_identity_unique:
     fields: eventId
     unique: true
-  calendar_event_data_uid_unique:
-    fields: protocolUid
-    unique: true
+  calendar_event_data_uid_candidates:
+    fields: calendarId, uidDigest
