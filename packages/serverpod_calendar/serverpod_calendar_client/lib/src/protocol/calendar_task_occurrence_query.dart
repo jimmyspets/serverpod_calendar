@@ -13,7 +13,9 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
 import 'calendar_event_civil.dart' as _i1bb5k1r;
+import 'calendar_task_field_group.dart' as _isemqyyv;
 
 @_isc.immutable
 abstract class CalendarTaskOccurrenceQuery
@@ -21,6 +23,7 @@ abstract class CalendarTaskOccurrenceQuery
   const CalendarTaskOccurrenceQuery._({
     required this.taskId,
     required this.expectedRevision,
+    this.fieldGroups,
     this.fromDate,
     this.untilDate,
     this.fromUtc,
@@ -30,6 +33,7 @@ abstract class CalendarTaskOccurrenceQuery
   const factory CalendarTaskOccurrenceQuery({
     required _isc.UuidValue taskId,
     required int expectedRevision,
+    List<_isemqyyv.CalendarTaskFieldGroup>? fieldGroups,
     _i1bb5k1r.CalendarEventCivil? fromDate,
     _i1bb5k1r.CalendarEventCivil? untilDate,
     DateTime? fromUtc,
@@ -42,6 +46,12 @@ abstract class CalendarTaskOccurrenceQuery
     return CalendarTaskOccurrenceQuery(
       taskId: _isc.UuidValueJsonExtension.fromJson(jsonSerialization['taskId']),
       expectedRevision: jsonSerialization['expectedRevision'] as int,
+      fieldGroups: jsonSerialization['fieldGroups'] == null
+          ? null
+          : _ie4a1wrz.Protocol()
+                .deserialize<List<_isemqyyv.CalendarTaskFieldGroup>>(
+                  jsonSerialization['fieldGroups'],
+                ),
       fromDate: jsonSerialization['fromDate'] == null
           ? null
           : _ie4a1wrz.Protocol().deserialize<_i1bb5k1r.CalendarEventCivil>(
@@ -65,6 +75,8 @@ abstract class CalendarTaskOccurrenceQuery
 
   final int expectedRevision;
 
+  final List<_isemqyyv.CalendarTaskFieldGroup>? fieldGroups;
+
   final _i1bb5k1r.CalendarEventCivil? fromDate;
 
   final _i1bb5k1r.CalendarEventCivil? untilDate;
@@ -79,6 +91,7 @@ abstract class CalendarTaskOccurrenceQuery
   CalendarTaskOccurrenceQuery copyWith({
     _isc.UuidValue? taskId,
     int? expectedRevision,
+    List<_isemqyyv.CalendarTaskFieldGroup>? fieldGroups,
     _i1bb5k1r.CalendarEventCivil? fromDate,
     _i1bb5k1r.CalendarEventCivil? untilDate,
     DateTime? fromUtc,
@@ -102,6 +115,10 @@ abstract class CalendarTaskOccurrenceQuery
                   expectedRevision,
                 ) ||
                 other.expectedRevision == expectedRevision) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.fieldGroups,
+              fieldGroups,
+            ) &&
             (identical(
                   other.fromDate,
                   fromDate,
@@ -130,6 +147,7 @@ abstract class CalendarTaskOccurrenceQuery
       runtimeType,
       taskId,
       expectedRevision,
+      const _iss.DeepCollectionEquality().hash(fieldGroups),
       fromDate,
       untilDate,
       fromUtc,
@@ -143,6 +161,8 @@ abstract class CalendarTaskOccurrenceQuery
       '__className__': 'serverpod_calendar.CalendarTaskOccurrenceQuery',
       'taskId': taskId.toJson(),
       'expectedRevision': expectedRevision,
+      if (fieldGroups != null)
+        'fieldGroups': fieldGroups?.toJson(valueToJson: (v) => v.toJson()),
       if (fromDate != null) 'fromDate': fromDate?.toJson(),
       if (untilDate != null) 'untilDate': untilDate?.toJson(),
       if (fromUtc != null) 'fromUtc': fromUtc?.toJson(),
@@ -156,6 +176,8 @@ abstract class CalendarTaskOccurrenceQuery
       '__className__': 'serverpod_calendar.CalendarTaskOccurrenceQuery',
       'taskId': taskId.toJson(),
       'expectedRevision': expectedRevision,
+      if (fieldGroups != null)
+        'fieldGroups': fieldGroups?.toJson(valueToJson: (v) => v.toJson()),
       if (fromDate != null) 'fromDate': fromDate?.toJsonForProtocol(),
       if (untilDate != null) 'untilDate': untilDate?.toJsonForProtocol(),
       if (fromUtc != null) 'fromUtc': fromUtc?.toJson(),
@@ -175,6 +197,7 @@ class _CalendarTaskOccurrenceQueryImpl extends CalendarTaskOccurrenceQuery {
   const _CalendarTaskOccurrenceQueryImpl({
     required _isc.UuidValue taskId,
     required int expectedRevision,
+    List<_isemqyyv.CalendarTaskFieldGroup>? fieldGroups,
     _i1bb5k1r.CalendarEventCivil? fromDate,
     _i1bb5k1r.CalendarEventCivil? untilDate,
     DateTime? fromUtc,
@@ -182,6 +205,7 @@ class _CalendarTaskOccurrenceQueryImpl extends CalendarTaskOccurrenceQuery {
   }) : super._(
          taskId: taskId,
          expectedRevision: expectedRevision,
+         fieldGroups: fieldGroups,
          fromDate: fromDate,
          untilDate: untilDate,
          fromUtc: fromUtc,
@@ -195,6 +219,7 @@ class _CalendarTaskOccurrenceQueryImpl extends CalendarTaskOccurrenceQuery {
   CalendarTaskOccurrenceQuery copyWith({
     _isc.UuidValue? taskId,
     int? expectedRevision,
+    Object? fieldGroups = _Undefined,
     Object? fromDate = _Undefined,
     Object? untilDate = _Undefined,
     Object? fromUtc = _Undefined,
@@ -203,6 +228,9 @@ class _CalendarTaskOccurrenceQueryImpl extends CalendarTaskOccurrenceQuery {
     return CalendarTaskOccurrenceQuery(
       taskId: taskId ?? this.taskId,
       expectedRevision: expectedRevision ?? this.expectedRevision,
+      fieldGroups: fieldGroups is List<_isemqyyv.CalendarTaskFieldGroup>?
+          ? fieldGroups
+          : this.fieldGroups?.map((e0) => e0).toList(),
       fromDate: fromDate is _i1bb5k1r.CalendarEventCivil?
           ? fromDate
           : this.fromDate?.copyWith(),

@@ -44,17 +44,26 @@ List<String> occurrence([List<String> extra = const []]) => [
   'END:VTODO',
 ];
 void main() {
-  test('future source range survives progress and master edits without changing old v2 JSON', () {
+  test('future source range survives progress and master edits with sparse canonical v3 JSON', () {
     final legacy = source(
       properties: ['RRULE:FREQ=DAILY;COUNT=3'],
       overrides: occurrence(),
     );
-    expect(legacy.importBaseline.profile, startsWith('task-source-v2/'));
+    expect(legacy.importBaseline.profile, startsWith('task-source-v3/'));
     expect(
       legacy.importBaseline.canonicalValue,
       isNot(contains('thisAndFuture')),
     );
     validateTaskImportBaseline(legacy.importBaseline, legacy.protocolUid);
+    expect(
+      () => validateTaskImportBaseline(
+        legacy.importBaseline.copyWith(
+          profile: legacy.importBaseline.profile.replaceFirst('v3/', 'v2/'),
+        ),
+        legacy.protocolUid,
+      ),
+      throwsStateError,
+    );
     final p = source(
       properties: [
         'RRULE:FREQ=DAILY;COUNT=3',
@@ -152,6 +161,81 @@ void main() {
       ),
       throwsStateError,
     );
+  });
+  test('native content captures inherited annotations and preserves component order on no-op', () {
+    final p = source(
+      properties: [
+        'RRULE:FREQ=DAILY;COUNT=3',
+        'SUMMARY;LANGUAGE=sv:Hej',
+        'PERCENT-COMPLETE:37',
+      ],
+      overrides: [
+        ...occurrence(),
+        ...occurrence().map(
+          (s) => s.replaceFirst(
+            'RECURRENCE-ID:20261024T120000Z',
+            'RECURRENCE-ID:20261025T120000Z',
+          ),
+        ),
+      ],
+    );
+    final original = p.state.occurrences.first.originalStart!;
+    final changes = [
+      CalendarTaskOccurrenceContentChange(
+        field: CalendarTaskContentField.summary,
+        action: CalendarTaskContentAction.setValue,
+        text: 'Own',
+      ),
+    ];
+    final own = CalendarTaskOccurrenceContent(summary: 'Own');
+    final version = advanceTaskVersion(p.state.occurrences.first.version, now);
+    final after = changeTaskSourceContent(
+      p.protocolUid,
+      p.state,
+      original,
+      own,
+      changes,
+      p.state.master.progress,
+      version,
+    );
+    expect(after.occurrences.first.textParameters!.summary!.language, 'sv');
+    expect(after.occurrences.first.content.summary, 'Own');
+    final same = changeTaskSourceContent(
+      p.protocolUid,
+      after,
+      original,
+      own,
+      changes,
+      after.occurrences.first.progress,
+      version,
+    );
+    expect(after.occurrences.last, p.state.occurrences.last);
+    expect(same, after);
+    expect(taskSourceJson(same), taskSourceJson(after));
+  });
+  test('explicit clear removes annotations even when imported own text is already empty', () {
+    final p = source(
+      properties: ['RRULE:FREQ=DAILY;COUNT=3'],
+      overrides: occurrence(['SUMMARY;LANGUAGE=en:']),
+    );
+    final own = taskSourceContentOverrides(p.state.occurrences.single);
+    final after = changeTaskSourceContent(
+      p.protocolUid,
+      p.state,
+      p.state.occurrences.single.originalStart!,
+      own,
+      [
+        CalendarTaskOccurrenceContentChange(
+          field: CalendarTaskContentField.summary,
+          action: CalendarTaskContentAction.clearValue,
+        ),
+      ],
+      p.state.occurrences.single.progress,
+      advanceTaskVersion(p.state.occurrences.single.version, now),
+    );
+    expect(taskSourceContentOverrides(after.occurrences.single), own);
+    expect(after.occurrences.single.textParameters!.summary, isNull);
+    expect(taskSourceJson(after), isNot(taskSourceJson(p.state)));
   });
   test('grouped multilingual text participants unresolved references and inert URI attachments', () {
     final p = source(
@@ -285,9 +369,7 @@ void main() {
     );
     expect(after.master.content.summary, 'HallÃ¥');
     expect(after.master.textParameters!.summary!.language, 'sv');
-    expect(after.occurrences.single.content.summary, 'HallÃ¥');
-    expect(after.occurrences.single.version.sequence, 1);
-    expect(after.occurrences.single.version.created, isNull);
+    expect(after.occurrences.single, p.state.occurrences.single);
     expect(p.importBaseline.canonicalValue, before);
     final unchanged = changeTaskSourceMaster(
       p.protocolUid,

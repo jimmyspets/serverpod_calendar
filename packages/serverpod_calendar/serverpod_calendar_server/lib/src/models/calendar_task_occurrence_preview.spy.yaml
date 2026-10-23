@@ -3,4 +3,5 @@ immutable: true
 fields:
   taskId: UuidValue
   revision: int
+  disclosedGroups: List<CalendarTaskFieldGroup>
   occurrences: List<CalendarTaskOccurrence>

@@ -1,0 +1,7 @@
+class: CalendarTaskOccurrenceContentChange
+immutable: true
+fields:
+  field: CalendarTaskContentField
+  action: CalendarTaskContentAction
+  text: String?
+  priority: int?

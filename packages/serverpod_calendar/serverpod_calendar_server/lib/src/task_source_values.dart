@@ -8,11 +8,12 @@ import 'event_protocol_values.dart';
 import 'event_wire_output.dart';
 import 'generated/protocol.dart';
 import 'task_values.dart';
+import 'task_content_values.dart';
 import 'task_recurrence_values.dart';
 
 const taskBaselineMaxBytes = 2097152;
 String get taskBaselineProfile =>
-    'task-source-v2/${NamedZoneResolver.dataVersion}';
+    'task-source-v3/${NamedZoneResolver.dataVersion}';
 
 /// A pure, validated proposal. It grants no authority and persists nothing.
 final class TaskStorageProposal {
@@ -512,31 +513,6 @@ CalendarTaskSourceState changeTaskSourceMaster(
       progress: progress,
       version: version,
     ),
-    occurrences: [
-      for (final o in before.occurrences)
-        (() {
-          final c = o.content;
-          final next = c.copyWith(
-            summary: c.summary == null ? null : content.summary,
-            description: c.description == null ? null : content.description,
-            location: c.location == null ? null : content.location,
-            priority: c.priority == null ? null : content.priority ?? 0,
-          );
-          final parameters = o.textParameters!.copyWith(
-            summary: next.summary == null ? null : o.textParameters!.summary,
-            description: next.description == null
-                ? null
-                : o.textParameters!.description,
-            location: next.location == null ? null : o.textParameters!.location,
-          );
-          final changed = next != c || parameters != o.textParameters;
-          return o.copyWith(
-            content: next,
-            textParameters: parameters,
-            version: changed ? advanceTaskVersion(o.version, now) : o.version,
-          );
-        })(),
-    ],
   );
   return validateTaskSourceState(uid, result);
 }
@@ -666,8 +642,8 @@ CalendarTaskSourceState changeTaskSourceTiming(
     before.copyWith(
       occurrences: [
         for (final o in before.occurrences)
-          if (taskOriginalKey(o.originalStart!) != key) o,
-        next,
+          if (taskOriginalKey(o.originalStart!) == key) next else o,
+        if (existing == null) next,
       ],
     ),
   );
@@ -675,3 +651,100 @@ CalendarTaskSourceState changeTaskSourceTiming(
 
 CalendarTaskTiming? taskSourceFuture(CalendarTaskSourceComponent c) =>
     c.thisAndFuture == true ? c.content.timing : null;
+
+CalendarTaskOccurrenceContent? taskSourceContentOverrides(
+  CalendarTaskSourceComponent c,
+) => validateTaskOccurrenceContent(
+  CalendarTaskOccurrenceContent(
+    summary: c.content.summary,
+    description: c.content.description,
+    location: c.content.location,
+    priority: c.content.priority,
+  ),
+);
+
+CalendarTaskSourceState changeTaskSourceContent(
+  String uid,
+  CalendarTaskSourceState before,
+  CalendarEventTiming original,
+  CalendarTaskOccurrenceContent? overrides,
+  List<CalendarTaskOccurrenceContentChange> changes,
+  CalendarTaskProgress progress,
+  CalendarTaskProtocolVersion version,
+) {
+  final key = taskOriginalKey(original);
+  final existing = before.occurrences
+      .where((o) => taskOriginalKey(o.originalStart!) == key)
+      .firstOrNull;
+  if (existing == null && overrides == null) return before;
+  final actions = {for (final c in changes) c.field: c.action};
+  CalendarTextParameters? parameters(
+    CalendarTaskContentField field,
+    String? old,
+    CalendarTextParameters? own,
+    CalendarTextParameters? master,
+  ) => switch (actions[field]) {
+    CalendarTaskContentAction.clearValue ||
+    CalendarTaskContentAction.inheritSeries => null,
+    CalendarTaskContentAction.setValue => old == null ? master : own,
+    null => own,
+  };
+  final content =
+      (existing?.content ??
+              CalendarTaskContent(
+                timing: CalendarTaskTiming(kind: CalendarTaskTimeKind.undated),
+              ))
+          .copyWith(
+            summary: overrides?.summary,
+            description: overrides?.description,
+            location: overrides?.location,
+            priority: overrides?.priority,
+          );
+  final old = existing?.content,
+      own = existing?.textParameters,
+      master = before.master.textParameters;
+  final textParameters = CalendarEventTextParameters(
+    summary: parameters(
+      CalendarTaskContentField.summary,
+      old?.summary,
+      own?.summary,
+      master?.summary,
+    ),
+    description: parameters(
+      CalendarTaskContentField.description,
+      old?.description,
+      own?.description,
+      master?.description,
+    ),
+    location: parameters(
+      CalendarTaskContentField.location,
+      old?.location,
+      own?.location,
+      master?.location,
+    ),
+  );
+  final next = existing == null
+      ? CalendarTaskSourceComponent(
+          originalStart: original,
+          version: version,
+          content: content,
+          progress: progress,
+          textParameters: textParameters,
+          metadata: emptyTaskSourceMetadata(),
+        )
+      : existing.copyWith(
+          content: content,
+          textParameters: textParameters,
+          version: version,
+        );
+  return validateTaskSourceState(
+    uid,
+    before.copyWith(
+      occurrences: [
+        for (final o in before.occurrences)
+          if (taskOriginalKey(o.originalStart!) == key) next else o,
+        if (existing == null) next,
+      ],
+    ),
+  );
+}

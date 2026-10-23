@@ -1,0 +1,6 @@
+enum: CalendarTaskContentAction
+serialized: byName
+values:
+  - setValue
+  - clearValue
+  - inheritSeries

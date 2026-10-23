@@ -5,6 +5,8 @@ fields:
   actualStart: CalendarEventTiming?
   replacementTiming: CalendarTaskTiming?
   futureTiming: CalendarTaskTiming?
+  content: CalendarTaskOccurrenceContent?
+  contentOverrides: CalendarTaskOccurrenceContent?
   startUtc: DateTime?
   duration: CalendarEventDuration?
   dueDate: CalendarEventCivil?

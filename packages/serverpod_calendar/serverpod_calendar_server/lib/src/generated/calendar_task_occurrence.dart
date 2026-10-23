@@ -16,6 +16,7 @@ import 'package:serverpod_calendar_server/src/generated/protocol.dart'
 import 'calendar_event_civil.dart' as _i1bb5k1r;
 import 'calendar_event_duration.dart' as _idn2i48l;
 import 'calendar_event_timing.dart' as _ieswiaty;
+import 'calendar_task_occurrence_content.dart' as _irmu5f0n;
 import 'calendar_task_progress.dart' as _ikcsq95s;
 import 'calendar_task_timing.dart' as _i9h8y8lg;
 
@@ -27,6 +28,8 @@ abstract class CalendarTaskOccurrence
     this.actualStart,
     this.replacementTiming,
     this.futureTiming,
+    this.content,
+    this.contentOverrides,
     this.startUtc,
     this.duration,
     this.dueDate,
@@ -39,6 +42,8 @@ abstract class CalendarTaskOccurrence
     _ieswiaty.CalendarEventTiming? actualStart,
     _i9h8y8lg.CalendarTaskTiming? replacementTiming,
     _i9h8y8lg.CalendarTaskTiming? futureTiming,
+    _irmu5f0n.CalendarTaskOccurrenceContent? content,
+    _irmu5f0n.CalendarTaskOccurrenceContent? contentOverrides,
     DateTime? startUtc,
     _idn2i48l.CalendarEventDuration? duration,
     _i1bb5k1r.CalendarEventCivil? dueDate,
@@ -69,6 +74,18 @@ abstract class CalendarTaskOccurrence
           : _ix00hwbf.Protocol().deserialize<_i9h8y8lg.CalendarTaskTiming>(
               jsonSerialization['futureTiming'],
             ),
+      content: jsonSerialization['content'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_irmu5f0n.CalendarTaskOccurrenceContent>(
+                  jsonSerialization['content'],
+                ),
+      contentOverrides: jsonSerialization['contentOverrides'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_irmu5f0n.CalendarTaskOccurrenceContent>(
+                  jsonSerialization['contentOverrides'],
+                ),
       startUtc: jsonSerialization['startUtc'] == null
           ? null
           : _is.DateTimeJsonExtension.fromJson(jsonSerialization['startUtc']),
@@ -100,6 +117,10 @@ abstract class CalendarTaskOccurrence
 
   final _i9h8y8lg.CalendarTaskTiming? futureTiming;
 
+  final _irmu5f0n.CalendarTaskOccurrenceContent? content;
+
+  final _irmu5f0n.CalendarTaskOccurrenceContent? contentOverrides;
+
   final DateTime? startUtc;
 
   final _idn2i48l.CalendarEventDuration? duration;
@@ -118,6 +139,8 @@ abstract class CalendarTaskOccurrence
     _ieswiaty.CalendarEventTiming? actualStart,
     _i9h8y8lg.CalendarTaskTiming? replacementTiming,
     _i9h8y8lg.CalendarTaskTiming? futureTiming,
+    _irmu5f0n.CalendarTaskOccurrenceContent? content,
+    _irmu5f0n.CalendarTaskOccurrenceContent? contentOverrides,
     DateTime? startUtc,
     _idn2i48l.CalendarEventDuration? duration,
     _i1bb5k1r.CalendarEventCivil? dueDate,
@@ -153,6 +176,16 @@ abstract class CalendarTaskOccurrence
                 ) ||
                 other.futureTiming == futureTiming) &&
             (identical(
+                  other.content,
+                  content,
+                ) ||
+                other.content == content) &&
+            (identical(
+                  other.contentOverrides,
+                  contentOverrides,
+                ) ||
+                other.contentOverrides == contentOverrides) &&
+            (identical(
                   other.startUtc,
                   startUtc,
                 ) ||
@@ -187,6 +220,8 @@ abstract class CalendarTaskOccurrence
       actualStart,
       replacementTiming,
       futureTiming,
+      content,
+      contentOverrides,
       startUtc,
       duration,
       dueDate,
@@ -204,6 +239,9 @@ abstract class CalendarTaskOccurrence
       if (replacementTiming != null)
         'replacementTiming': replacementTiming?.toJson(),
       if (futureTiming != null) 'futureTiming': futureTiming?.toJson(),
+      if (content != null) 'content': content?.toJson(),
+      if (contentOverrides != null)
+        'contentOverrides': contentOverrides?.toJson(),
       if (startUtc != null) 'startUtc': startUtc?.toJson(),
       if (duration != null) 'duration': duration?.toJson(),
       if (dueDate != null) 'dueDate': dueDate?.toJson(),
@@ -222,6 +260,9 @@ abstract class CalendarTaskOccurrence
         'replacementTiming': replacementTiming?.toJsonForProtocol(),
       if (futureTiming != null)
         'futureTiming': futureTiming?.toJsonForProtocol(),
+      if (content != null) 'content': content?.toJsonForProtocol(),
+      if (contentOverrides != null)
+        'contentOverrides': contentOverrides?.toJsonForProtocol(),
       if (startUtc != null) 'startUtc': startUtc?.toJson(),
       if (duration != null) 'duration': duration?.toJsonForProtocol(),
       if (dueDate != null) 'dueDate': dueDate?.toJsonForProtocol(),
@@ -244,6 +285,8 @@ class _CalendarTaskOccurrenceImpl extends CalendarTaskOccurrence {
     _ieswiaty.CalendarEventTiming? actualStart,
     _i9h8y8lg.CalendarTaskTiming? replacementTiming,
     _i9h8y8lg.CalendarTaskTiming? futureTiming,
+    _irmu5f0n.CalendarTaskOccurrenceContent? content,
+    _irmu5f0n.CalendarTaskOccurrenceContent? contentOverrides,
     DateTime? startUtc,
     _idn2i48l.CalendarEventDuration? duration,
     _i1bb5k1r.CalendarEventCivil? dueDate,
@@ -254,6 +297,8 @@ class _CalendarTaskOccurrenceImpl extends CalendarTaskOccurrence {
          actualStart: actualStart,
          replacementTiming: replacementTiming,
          futureTiming: futureTiming,
+         content: content,
+         contentOverrides: contentOverrides,
          startUtc: startUtc,
          duration: duration,
          dueDate: dueDate,
@@ -270,6 +315,8 @@ class _CalendarTaskOccurrenceImpl extends CalendarTaskOccurrence {
     Object? actualStart = _Undefined,
     Object? replacementTiming = _Undefined,
     Object? futureTiming = _Undefined,
+    Object? content = _Undefined,
+    Object? contentOverrides = _Undefined,
     Object? startUtc = _Undefined,
     Object? duration = _Undefined,
     Object? dueDate = _Undefined,
@@ -287,6 +334,13 @@ class _CalendarTaskOccurrenceImpl extends CalendarTaskOccurrence {
       futureTiming: futureTiming is _i9h8y8lg.CalendarTaskTiming?
           ? futureTiming
           : this.futureTiming?.copyWith(),
+      content: content is _irmu5f0n.CalendarTaskOccurrenceContent?
+          ? content
+          : this.content?.copyWith(),
+      contentOverrides:
+          contentOverrides is _irmu5f0n.CalendarTaskOccurrenceContent?
+          ? contentOverrides
+          : this.contentOverrides?.copyWith(),
       startUtc: startUtc is DateTime? ? startUtc : this.startUtc,
       duration: duration is _idn2i48l.CalendarEventDuration?
           ? duration

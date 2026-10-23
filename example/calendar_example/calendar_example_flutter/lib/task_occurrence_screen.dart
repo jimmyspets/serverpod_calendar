@@ -6,6 +6,7 @@ import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
 import 'task_screen.dart' show taskError;
 import 'task_progress_label.dart';
 import 'task_timing_editor.dart';
+import 'task_content_editor.dart';
 
 class TaskOccurrenceScreen extends StatefulWidget {
   const TaskOccurrenceScreen({
@@ -20,6 +21,12 @@ class TaskOccurrenceScreen extends StatefulWidget {
 }
 
 class _TaskOccurrenceScreenState extends State<TaskOccurrenceScreen> {
+  static const _contentGroups = {
+    cal.CalendarTaskFieldGroup.summary,
+    cal.CalendarTaskFieldGroup.description,
+    cal.CalendarTaskFieldGroup.location,
+    cal.CalendarTaskFieldGroup.priority,
+  };
   final _from = TextEditingController(),
       _until = TextEditingController(),
       _percentage = TextEditingController(text: '50');
@@ -105,6 +112,10 @@ class _TaskOccurrenceScreenState extends State<TaskOccurrenceScreen> {
           cal.CalendarTaskOccurrenceQuery(
             taskId: _task.id,
             expectedRevision: _task.revision,
+            fieldGroups: [
+              for (final g in _contentGroups)
+                if (_task.disclosedGroups.contains(g)) g,
+            ],
             fromDate: _date ? _day(_from.text) : null,
             untilDate: _date ? _day(_until.text) : null,
             fromUtc: _date ? null : _utc(_from.text),
@@ -197,6 +208,39 @@ class _TaskOccurrenceScreenState extends State<TaskOccurrenceScreen> {
     if (replacement != null && mounted) {
       await _timing(occurrence, replacement, thisAndFuture: future);
     }
+  }
+
+  Future<void> _editContent(cal.CalendarTaskOccurrence occurrence) async {
+    final changes =
+        await showDialog<List<cal.CalendarTaskOccurrenceContentChange>>(
+          context: context,
+          builder: (_) => TaskContentEditor(occurrence: occurrence),
+        );
+    if (changes == null || !mounted) return;
+    await _run(() async {
+      final expected = _task.revision;
+      await widget.client.modules.serverpod_calendar.calendarTask
+          .changeOccurrenceContent(
+            cal.CalendarTaskOccurrenceContentRequest(
+              taskId: _task.id,
+              expectedRevision: expected,
+              originalStart: occurrence.originalStart,
+              changes: changes,
+            ),
+          );
+      if (!mounted) return;
+      final fresh = await widget.client.modules.serverpod_calendar.calendarTask
+          .getTask(_task.id, cal.CalendarTaskFieldGroup.values);
+      if (!mounted) return;
+      if (fresh.revision != expected + 1) {
+        setState(() => _stale = true);
+        throw const FormatException(
+          'Another change was observed; reload before editing.',
+        );
+      }
+      _task = fresh;
+      await _load();
+    });
   }
 
   Future<void> _timing(
@@ -302,6 +346,31 @@ class _TaskOccurrenceScreenState extends State<TaskOccurrenceScreen> {
             ),
           ),
           for (var i = 0; i < (_preview?.occurrences.length ?? 0); i++) ...[
+            if (_preview!.disclosedGroups.contains(
+              cal.CalendarTaskFieldGroup.summary,
+            ))
+              Text(
+                'Summary: ${_preview!.occurrences[i].content?.summary == '' ? '(cleared)' : _preview!.occurrences[i].content?.summary ?? '(none)'}',
+                key: ValueKey('task-occurrence-content-summary-$i'),
+              ),
+            if (_preview!.disclosedGroups.contains(
+              cal.CalendarTaskFieldGroup.description,
+            ))
+              Text(
+                'Description: ${_preview!.occurrences[i].content?.description ?? '(none)'}',
+              ),
+            if (_preview!.disclosedGroups.contains(
+              cal.CalendarTaskFieldGroup.location,
+            ))
+              Text(
+                'Location: ${_preview!.occurrences[i].content?.location ?? '(none)'}',
+              ),
+            if (_preview!.disclosedGroups.contains(
+              cal.CalendarTaskFieldGroup.priority,
+            ))
+              Text(
+                'Priority: ${_preview!.occurrences[i].content?.priority ?? '(none)'}',
+              ),
             Text(
               'Original: ${_civil(_preview!.occurrences[i].originalStart.start)}',
             ),
@@ -319,6 +388,18 @@ class _TaskOccurrenceScreenState extends State<TaskOccurrenceScreen> {
               Text('Due UTC: ${_preview!.occurrences[i].dueUtc}'),
             Wrap(
               children: [
+                TextButton(
+                  key: ValueKey('task-occurrence-$i-content'),
+                  onPressed:
+                      _busy ||
+                          _stale ||
+                          !_preview!.disclosedGroups.toSet().containsAll(
+                            _contentGroups,
+                          )
+                      ? null
+                      : () => _editContent(_preview!.occurrences[i]),
+                  child: const Text('Edit occurrence content'),
+                ),
                 TextButton(
                   key: ValueKey('task-occurrence-$i-timing'),
                   onPressed:
