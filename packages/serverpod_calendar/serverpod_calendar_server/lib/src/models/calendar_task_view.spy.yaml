@@ -1,0 +1,16 @@
+class: CalendarTaskView
+immutable: true
+fields:
+  id: UuidValue
+  calendarId: UuidValue
+  revision: int
+  disclosedGroups: List<CalendarTaskFieldGroup>
+  summary: String?
+  description: String?
+  location: String?
+  timing: CalendarTaskTiming?
+  priority: int?
+  progress: CalendarTaskProgress?
+  assignees: List<CalendarTaskAssignee>?
+  protocolUid: String?
+  protocolVersion: CalendarTaskProtocolVersion?

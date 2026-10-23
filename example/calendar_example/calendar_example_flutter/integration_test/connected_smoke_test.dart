@@ -491,6 +491,75 @@ void main() {
     await tester.pageBack();
     await _idle(tester);
     await events.deleteEvent(busyExample.eventId, 1);
+    await _tap(tester, 'calendar-tasks');
+    await _tap(tester, 'task-create');
+    await _tap(tester, 'task-save');
+    await _waitFor(tester, find.text('Untitled task'));
+    await tester.tap(find.text('Untitled task'));
+    await _idle(tester);
+    await tester.enterText(
+      find.byKey(const Key('task-summary')),
+      'Example durable task',
+    );
+    await tester.enterText(find.byKey(const Key('task-priority')), '3');
+    await _tap(tester, 'task-save');
+    await _tap(tester, 'task-assign-me');
+    expect(find.text('1 assignee(s)'), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('task-percentage')), '65');
+    await _tap(tester, 'task-progress-setPercentage');
+    expect(find.text('Status: inProcess; 65%'), findsOneWidget);
+    await _tap(tester, 'task-progress-complete');
+    expect(find.text('Status: completed; 100%'), findsOneWidget);
+    await _tap(tester, 'task-progress-cancel');
+    expect(find.text('Status: cancelled; 100%'), findsOneWidget);
+    expect(find.textContaining('Completed:'), findsNothing);
+    await _tap(tester, 'task-progress-reopen');
+    expect(find.text('Status: needsAction; 0%'), findsOneWidget);
+    final tasks = client.modules.serverpod_calendar.calendarTask;
+    final task = (await tasks.list(
+      calendar.id,
+      pageSize: 10,
+      fieldGroups: cal.CalendarTaskFieldGroup.values,
+    )).tasks.single;
+    await tester.enterText(
+      find.byKey(const Key('task-summary')),
+      'Unsaved task draft',
+    );
+    await tasks.update(
+      cal.CalendarTaskUpdateRequest(
+        taskId: task.id,
+        expectedRevision: task.revision,
+        content: cal.CalendarTaskContent(
+          summary: 'Changed task elsewhere',
+          timing: task.timing!,
+          priority: task.priority,
+        ),
+      ),
+    );
+    await _tap(tester, 'task-save');
+    await _waitFor(tester, find.byKey(const Key('task-error')));
+    expect(find.text('Unsaved task draft'), findsOneWidget);
+    expect(
+      tester.widget<FilledButton>(find.byKey(const Key('task-save'))).onPressed,
+      isNull,
+    );
+    await _tap(tester, 'task-reload');
+    await _waitFor(tester, find.text('Changed task elsewhere'));
+    await _tap(tester, 'task-clear-assignees');
+    expect(find.text('0 assignee(s)'), findsOneWidget);
+    await _tap(tester, 'task-delete');
+    await _tap(tester, 'task-confirm-delete');
+    expect(
+      (await tasks.list(
+        calendar.id,
+        pageSize: 10,
+        fieldGroups: cal.CalendarTaskFieldGroup.values,
+      )).tasks,
+      isEmpty,
+    );
+    await tester.pageBack();
+    await _idle(tester);
+
     await _tap(tester, 'calendar-availability');
     await _tap(tester, 'availability-create');
     await tester.enterText(

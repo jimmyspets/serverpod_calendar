@@ -715,6 +715,8 @@ extension CalendarEventOperations on CalendarService {
           transaction: tx,
         );
         if (saved == null ||
+            saved.taskCalendarId != null ||
+            saved.taskFieldGroups != null ||
             saved.eventCalendarId != calendarId ||
             saved.scopeKey != c.scopeKey ||
             saved.principalId != c.principalId ||
