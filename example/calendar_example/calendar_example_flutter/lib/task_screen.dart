@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'task_occurrence_screen.dart';
+import 'task_import_screen.dart';
 import 'task_progress_label.dart';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
@@ -86,6 +87,24 @@ class _TaskScreenState extends State<TaskScreen> {
       title: const Text('Tasks'),
       actions: [
         IconButton(
+          key: const Key('task-import'),
+          tooltip: 'Import tasks',
+          onPressed: _busy
+              ? null
+              : () async {
+                  await Navigator.of(context).push<void>(
+                    MaterialPageRoute(
+                      builder: (_) => TaskImportScreen(
+                        client: widget.client,
+                        calendarId: widget.calendarId,
+                      ),
+                    ),
+                  );
+                  if (mounted) await _load();
+                },
+          icon: const Icon(Icons.file_upload_outlined),
+        ),
+        IconButton(
           key: const Key('tasks-refresh'),
           onPressed: _busy ? null : _load,
           icon: const Icon(Icons.refresh),
@@ -102,7 +121,7 @@ class _TaskScreenState extends State<TaskScreen> {
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 96),
       children: [
         const Text(
-          'Task dates and assignments do not reserve calendar time. Recurring tasks follow in a separate increment.',
+          'Task dates and assignments do not reserve calendar time. Imported source participants and alarms remain inert.',
         ),
         if (_busy) const LinearProgressIndicator(),
         if (_error != null) Text(_error!, key: const Key('task-error')),
