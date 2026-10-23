@@ -98,3 +98,7 @@ The [recurring VEVENT master adapter](docs/icalendar-recurring-masters.md) exten
 
 
 [Privacy-safe VFREEBUSY export](docs/freebusy-export.md) now provides authenticated per-calendar UTC snapshots with complete coverage and independent export authority. It is separate from event subscriptions, subject/common-free export and scheduling messages.
+
+## Task source storage prerequisite
+
+[Source-preserving task storage](docs/task-source-storage.md) now retains supported decoded metadata, inert participants/references/attachments, unarmed alarms/snoozes and independent component versions. Native edits retain source values or reject incompatible changes; assignment-only edits preserve protocol versions. Historical baselines are private and scrubbed at deletion. Authenticated task import/export and rich metadata editors remain separate.

@@ -12,6 +12,7 @@ import 'generated/protocol.dart';
 import 'native_calendar_name.dart';
 import 'event_values.dart';
 import 'task_values.dart';
+import 'task_source_values.dart';
 import 'task_recurrence_values.dart';
 import 'event_protocol_values.dart';
 import 'event_wire_storage.dart';

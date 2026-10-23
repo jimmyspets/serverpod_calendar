@@ -30,7 +30,7 @@ Uint8List eventExportBytes(List<CalendarEventPolicySnapshot> selection) {
   if (count > const IcalendarComponentLimits().maxEvents) {
     throw const RecurrenceLimitException('exportComponents');
   }
-  final writer = _EventWriter();
+  final writer = EventComponentWriter();
   final components = <IcalendarSyntaxComponent>[];
   for (final source in selection) {
     final content = validateEventContent(source.content);
@@ -80,7 +80,7 @@ Uint8List eventExportBytes(List<CalendarEventPolicySnapshot> selection) {
   return serializeIcalendarEventCalendar(validated);
 }
 
-final class _EventWriter {
+final class EventComponentWriter {
   final zones = <String>{};
   IcalendarSyntaxProperty property(
     String name,
