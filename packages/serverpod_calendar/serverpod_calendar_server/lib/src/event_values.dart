@@ -113,7 +113,7 @@ CalendarEventContent validateEventContent(CalendarEventContent value) {
     final master = validateEventTiming(value.timing).$2!;
     TimedRecurrenceSet(
       start: master.start,
-      rule: _timedRule(recurrence?.rule),
+      rule: eventTimedRule(recurrence?.rule),
       inclusions: [
         for (final v in recurrence?.inclusions ?? <CalendarEventTiming>[])
           validateEventTiming(v).$2!.start,
@@ -197,7 +197,7 @@ CalendarDate _date(CalendarEventCivil c, {bool end = false}) {
   return end ? span.endExclusive : span.start;
 }
 
-DateRecurrenceRule? _dateRule(CalendarEventRule? r) {
+DateRecurrenceRule? eventDateRule(CalendarEventRule? r) {
   if (r == null) return null;
   if (r.frequency.index < CalendarEventFrequency.daily.index ||
       r.untilUtc != null ||
@@ -223,7 +223,7 @@ DateRecurrenceRule? _dateRule(CalendarEventRule? r) {
   );
 }
 
-TimedRecurrenceRule? _timedRule(CalendarEventRule? r) {
+TimedRecurrenceRule? eventTimedRule(CalendarEventRule? r) {
   if (r == null) return null;
   if (r.untilDate != null) throw ArgumentError('Timed UNTIL must be UTC');
   if (r.untilUtc != null) TimedValue.utc(r.untilUtc!);
@@ -292,7 +292,7 @@ CalendarEventRecurrence? validateEventRecurrence(
   late final DateRecurrenceRule? selection;
   TimedRecurrenceRule? tr;
   if (date != null) {
-    selection = _dateRule(r);
+    selection = eventDateRule(r);
     DateRecurrenceSet(
       start: date.start,
       rule: selection,
@@ -307,7 +307,7 @@ CalendarEventRecurrence? validateEventRecurrence(
       maxResults: eventMaxPreviewResults,
     );
   } else {
-    tr = _timedRule(r);
+    tr = eventTimedRule(r);
     selection = tr?.dateSelection;
     TimedRecurrenceSet(
       start: timed!.start,

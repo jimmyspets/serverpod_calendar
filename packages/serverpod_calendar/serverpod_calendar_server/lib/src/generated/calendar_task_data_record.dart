@@ -32,6 +32,7 @@ abstract class CalendarTaskDataRecord
     required this.assignees,
     required this.createdAt,
     required this.updatedAt,
+    this.hasRecordedProgress,
   });
 
   factory CalendarTaskDataRecord({
@@ -46,6 +47,7 @@ abstract class CalendarTaskDataRecord
     required List<_ih5e3u6u.CalendarTaskAssignee> assignees,
     required DateTime createdAt,
     required DateTime updatedAt,
+    bool? hasRecordedProgress,
   }) = _CalendarTaskDataRecordImpl;
 
   factory CalendarTaskDataRecord.fromJson(
@@ -80,6 +82,11 @@ abstract class CalendarTaskDataRecord
       updatedAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['updatedAt'],
       ),
+      hasRecordedProgress: jsonSerialization['hasRecordedProgress'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(
+              jsonSerialization['hasRecordedProgress'],
+            ),
     );
   }
 
@@ -110,6 +117,8 @@ abstract class CalendarTaskDataRecord
 
   DateTime updatedAt;
 
+  bool? hasRecordedProgress;
+
   @override
   _is.Table<int?> get table => t;
 
@@ -128,6 +137,7 @@ abstract class CalendarTaskDataRecord
     List<_ih5e3u6u.CalendarTaskAssignee>? assignees,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? hasRecordedProgress,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -144,6 +154,8 @@ abstract class CalendarTaskDataRecord
       'assignees': assignees.toJson(valueToJson: (v) => v.toJson()),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
+      if (hasRecordedProgress != null)
+        'hasRecordedProgress': hasRecordedProgress,
     };
   }
 
@@ -195,6 +207,7 @@ class _CalendarTaskDataRecordImpl extends CalendarTaskDataRecord {
     required List<_ih5e3u6u.CalendarTaskAssignee> assignees,
     required DateTime createdAt,
     required DateTime updatedAt,
+    bool? hasRecordedProgress,
   }) : super._(
          id: id,
          taskId: taskId,
@@ -207,6 +220,7 @@ class _CalendarTaskDataRecordImpl extends CalendarTaskDataRecord {
          assignees: assignees,
          createdAt: createdAt,
          updatedAt: updatedAt,
+         hasRecordedProgress: hasRecordedProgress,
        );
 
   /// Returns a shallow copy of this [CalendarTaskDataRecord]
@@ -225,6 +239,7 @@ class _CalendarTaskDataRecordImpl extends CalendarTaskDataRecord {
     List<_ih5e3u6u.CalendarTaskAssignee>? assignees,
     DateTime? createdAt,
     DateTime? updatedAt,
+    Object? hasRecordedProgress = _Undefined,
   }) {
     return CalendarTaskDataRecord(
       id: id is int? ? id : this.id,
@@ -239,6 +254,9 @@ class _CalendarTaskDataRecordImpl extends CalendarTaskDataRecord {
           assignees ?? this.assignees.map((e0) => e0.copyWith()).toList(),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      hasRecordedProgress: hasRecordedProgress is bool?
+          ? hasRecordedProgress
+          : this.hasRecordedProgress,
     );
   }
 }
@@ -315,6 +333,12 @@ class CalendarTaskDataRecordUpdateTable
         table.updatedAt,
         value,
       );
+
+  _is.ColumnValue<bool, bool> hasRecordedProgress(bool? value) =>
+      _is.ColumnValue(
+        table.hasRecordedProgress,
+        value,
+      );
 }
 
 class CalendarTaskDataRecordTable extends _is.Table<int?> {
@@ -362,6 +386,10 @@ class CalendarTaskDataRecordTable extends _is.Table<int?> {
       'updatedAt',
       this,
     );
+    hasRecordedProgress = _is.ColumnBool(
+      'hasRecordedProgress',
+      this,
+    );
   }
 
   late final CalendarTaskDataRecordUpdateTable updateTable;
@@ -388,6 +416,8 @@ class CalendarTaskDataRecordTable extends _is.Table<int?> {
 
   late final _is.ColumnDateTime updatedAt;
 
+  late final _is.ColumnBool hasRecordedProgress;
+
   @override
   List<_is.Column> get columns => [
     id,
@@ -401,6 +431,7 @@ class CalendarTaskDataRecordTable extends _is.Table<int?> {
     assignees,
     createdAt,
     updatedAt,
+    hasRecordedProgress,
   ];
 }
 

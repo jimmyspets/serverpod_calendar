@@ -47,3 +47,6 @@ calendarTask:
   - changeProgress:
   - changeAssignments:
   - deleteTask:
+  - previewOccurrences:
+  - changeOccurrenceProgress:
+  - occurrenceHistory:

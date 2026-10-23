@@ -1,0 +1,6 @@
+class: CalendarTaskOccurrencePreview
+immutable: true
+fields:
+  taskId: UuidValue
+  revision: int
+  occurrences: List<CalendarTaskOccurrence>

@@ -89,6 +89,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0083](0083-first-native-task-contract.md) | First durable native task contract | Accepted non-recurring CRUD/assignments first and completion/reopen/cancellation rules; schema/API/query mechanics proposed |
 | [0084](0084-first-native-task-implementation.md) | First native task implementation | Scoped ADR 0083 choices; concrete schema/API/query mechanics under draft review |
 | [0085](0085-recurring-task-progress-and-history.md) | Recurring task progress and history | Accepted independent original-occurrence progress and preservation/rejection of orphaning rule edits; mechanics proposed |
+| [0086](0086-durable-task-recurrence-implementation.md) | Durable task recurrence implementation | Scoped ADR 0085 recurrence/progress/history implementation; concrete mechanics under draft review |
+| [0087](0087-vtodo-wire-master-contract.md) | Standalone VTODO wire master contract | Accepted independent source progress values; first pure master adapter mechanics proposed |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
