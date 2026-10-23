@@ -101,7 +101,7 @@ TimedEventSeries _timedOverrides(
               .toList() ??
           [],
       periods: [
-        for (final p in periods ?? <CalendarEventTiming>[])
+        for (final p in periods ?? c.periods ?? <CalendarEventTiming>[])
           validateEventTiming(p).$2!,
       ],
       maxExplicitDates: eventMaxExplicitDates,

@@ -1,0 +1,6 @@
+class: CalendarEventOccurrenceProtocolVersion
+immutable: true
+fields:
+  originalStart: CalendarEventTiming
+  isThisAndFuture: bool, default=false
+  version: CalendarEventProtocolVersion

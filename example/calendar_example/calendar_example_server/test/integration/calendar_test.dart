@@ -7,6 +7,8 @@ import 'package:test/test.dart';
 import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 import 'package:serverpod_calendar_server/src/availability_storage_values.dart';
 import 'package:serverpod_calendar_server/src/availability_wire_storage.dart';
+import 'package:serverpod_calendar_server/src/event_wire_storage.dart';
+import 'package:serverpod_calendar_server/src/event_protocol_values.dart';
 
 import 'test_tools/serverpod_test_tools.dart';
 
@@ -3978,6 +3980,238 @@ void main() {
         ),
       );
       expect((await service.getEvent(id, eventGroups)).timingOverrides, isNull);
+    });
+    test('event storage source fields retain through native edits and explicit clears', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final id = (await service.createEvent(
+        CalendarEventCreateRequest(calendarId: parent, content: eventInput()),
+      ))!.eventId;
+      final source = eventStorageProposal(
+        parseIcalendarEventCalendar(
+          utf8.encode(
+            [
+              'BEGIN:VCALENDAR',
+              'VERSION:2.0',
+              'PRODID:-//Synthetic//EN',
+              'BEGIN:VEVENT',
+              'UID:source-text@example.invalid',
+              'DTSTAMP:20261022T100000Z',
+              'DTSTART:20261022T120000Z',
+              'DURATION:PT1H',
+              'SUMMARY;LANGUAGE=sv;ALTREP="cid:synthetic@example.invalid":Hej',
+              'RDATE;VALUE=PERIOD:20261024T120000Z/PT2H',
+              'END:VEVENT',
+              'END:VCALENDAR',
+              '',
+            ].join('\r\n'),
+          ),
+        ).series.single,
+      );
+      final data = (await CalendarEventDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.eventId.equals(id),
+      ))!;
+      data.protocolUid = source.protocolUid;
+      data.uidDigest = eventUidDigest(source.protocolUid);
+      data.content = source.content;
+      data.timingOverrides = source.edits;
+      data.protocolState = source.protocolState;
+      data.importBaseline = source.importBaseline;
+      await CalendarEventDataRecord.db.updateRow(session, data);
+      final old = await service.getEvent(id, eventGroups);
+      expect(old.statusPresent, isFalse);
+      expect(old.protocolVersion!.sequence, isNull);
+      await service.updateEvent(
+        CalendarEventUpdateRequest(
+          eventId: id,
+          expectedRevision: 1,
+          content: source.content.copyWith(
+            summary: 'Changed',
+            periods: null,
+            textParameters: null,
+          ),
+        ),
+      );
+      final after = await service.getEvent(id, eventGroups);
+      expect(after.periods!.single.duration!.hours, 2);
+      expect(after.textParameters!.summary!.language, 'sv');
+      expect(after.protocolVersion!.sequence, 1);
+      expect(after.statusPresent, isFalse);
+      expect(after.protocolUid, source.protocolUid);
+      expect(jsonEncode(after.toJson()), isNot(contains('canonicalValue')));
+      final stored = (await CalendarEventDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.eventId.equals(id),
+      ))!;
+      expect(
+        stored.importBaseline!.canonicalValue,
+        source.importBaseline.canonicalValue,
+      );
+      expect(policy.lastEventRequest!.currentEvent!.protocolState, isNotNull);
+      policy.eventGrants = {CalendarEventFieldGroup.summary};
+      final limited = await service.getEvent(id, eventGroups);
+      expect(limited.periods, isNull);
+      expect(limited.protocolVersion, isNull);
+      expect(limited.statusPresent, isNull);
+      expect(limited.textParameters!.summary!.language, 'sv');
+      expect(limited.occurrenceProtocolVersions, isNull);
+      policy.eventGrants = {CalendarEventFieldGroup.timing};
+      final timingOnly = await service.getEvent(id, eventGroups);
+      expect(timingOnly.textParameters, isNull);
+      expect(timingOnly.protocolVersion, isNull);
+      policy.eventGrants = eventGroups.toSet();
+      await service.updateEvent(
+        CalendarEventUpdateRequest(
+          eventId: id,
+          expectedRevision: 2,
+          content: source.content.copyWith(
+            summary: 'Changed',
+            periods: null,
+            textParameters: null,
+          ),
+          replacePeriods: true,
+          replaceTextParameters: true,
+        ),
+      );
+      final cleared = await service.getEvent(id, eventGroups);
+      expect(cleared.periods, isNull);
+      expect(cleared.textParameters?.summary, isNull);
+      await service.deleteEvent(id, 3);
+      expect(
+        await CalendarEventDataRecord.db.findFirstRow(
+          session,
+          where: (t) => t.eventId.equals(id),
+        ),
+        isNull,
+      );
+    });
+    test('event storage no-op and occurrence writes keep independent protocol state', () async {
+      final id = await recurringEvent();
+      final before = await service.getEvent(id, eventGroups);
+      expect(before.protocolVersion!.sequence, 0);
+      final data = (await CalendarEventDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.eventId.equals(id),
+      ))!;
+      expect(data.importBaseline, isNull);
+      await service.updateEvent(
+        CalendarEventUpdateRequest(
+          eventId: id,
+          expectedRevision: 1,
+          content: data.content,
+        ),
+      );
+      final noOp = await service.getEvent(id, eventGroups);
+      expect(noOp.revision, 2);
+      expect(noOp.protocolVersion!.toJson(), before.protocolVersion!.toJson());
+      await service.changeOccurrence(
+        occurrenceChange(
+          id,
+          CalendarEventOccurrenceAction.cancelSingle,
+          revision: 2,
+        ),
+      );
+      final cancelled = await service.getEvent(id, eventGroups);
+      expect(
+        cancelled.protocolVersion!.toJson(),
+        before.protocolVersion!.toJson(),
+      );
+      expect(cancelled.occurrenceProtocolVersions!.single.version.sequence, 0);
+      expect(
+        cancelled.occurrenceProtocolVersions!.single.version.created,
+        isNotNull,
+      );
+      await service.changeOccurrence(
+        occurrenceChange(
+          id,
+          CalendarEventOccurrenceAction.restoreSingle,
+          revision: 3,
+        ),
+      );
+      final restored = await service.getEvent(id, eventGroups);
+      expect(restored.protocolVersion!.sequence, 0);
+      // A cancellation-only exception is removed when restored.
+      expect(restored.occurrenceProtocolVersions, isEmpty);
+    });
+    test('event storage denial stale and sequence overflow leave payload baseline and revision unchanged', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      await expectLater(
+        service.createEvent(
+          CalendarEventCreateRequest(
+            calendarId: parent,
+            content: eventInput(summary: 'Bad URI').copyWith(
+              textParameters: CalendarEventTextParameters(
+                summary: CalendarTextParameters(
+                  alternativeUri: 'http://[broken',
+                ),
+              ),
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      final id = (await service.createEvent(
+        CalendarEventCreateRequest(
+          calendarId: parent,
+          content: eventInput(summary: 'Before'),
+        ),
+      ))!.eventId;
+      final data = (await CalendarEventDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.eventId.equals(id),
+      ))!;
+      data.protocolState = data.protocolState!.copyWith(
+        version: data.protocolState!.version.copyWith(
+          sequence: eventMaxSequence,
+        ),
+      );
+      await CalendarEventDataRecord.db.updateRow(session, data);
+      final request = CalendarEventUpdateRequest(
+        eventId: id,
+        expectedRevision: 1,
+        content: data.content.copyWith(summary: 'After'),
+      );
+      policy.denied.add(CalendarPermission.updateEvent);
+      await expectLater(
+        service.updateEvent(request),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denied.clear();
+      await expectLater(
+        service.updateEvent(request.copyWith(expectedRevision: 2)),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      await expectLater(
+        service.updateEvent(request),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      final after = await service.getEvent(id, eventGroups);
+      expect(after.revision, 1);
+      expect(after.summary, 'Before');
+      expect(after.protocolVersion!.sequence, eventMaxSequence);
+      await service.updateEvent(request.copyWith(content: data.content));
+      expect((await service.getEvent(id, eventGroups)).revision, 2);
+    });
+    test('event storage legacy read initializes local checkpoint without inventing stored history', () async {
+      final id = await recurringEvent();
+      await service.changeOccurrence(
+        occurrenceChange(id, CalendarEventOccurrenceAction.cancelSingle),
+      );
+      final data = (await CalendarEventDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.eventId.equals(id),
+      ))!;
+      data.protocolState = null;
+      await CalendarEventDataRecord.db.updateRow(session, data);
+      final view = await service.getEvent(id, eventGroups);
+      expect(view.protocolVersion!.sequence, 0);
+      expect(view.occurrenceProtocolVersions!.single.version.created, isNull);
+      final stored = (await CalendarEventDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.eventId.equals(id),
+      ))!;
+      expect(stored.protocolState, isNull);
+      expect(stored.importBaseline, isNull);
     });
     test('occurrence stale final-denied and post-write failures roll back timing content revision and time', () async {
       final id = await recurringEvent();

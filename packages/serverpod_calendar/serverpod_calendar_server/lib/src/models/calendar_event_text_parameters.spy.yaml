@@ -1,0 +1,6 @@
+class: CalendarEventTextParameters
+immutable: true
+fields:
+  summary: CalendarTextParameters?
+  description: CalendarTextParameters?
+  location: CalendarTextParameters?

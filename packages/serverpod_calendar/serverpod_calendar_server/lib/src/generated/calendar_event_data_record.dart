@@ -14,6 +14,8 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'calendar_event_content.dart' as _id4cvk34;
+import 'calendar_event_import_baseline.dart' as _iblybidp;
+import 'calendar_event_protocol_state.dart' as _i8iqsbco;
 import 'calendar_event_timing_overrides.dart' as _ijijze99;
 
 abstract class CalendarEventDataRecord
@@ -21,17 +23,25 @@ abstract class CalendarEventDataRecord
   CalendarEventDataRecord._({
     this.id,
     required this.eventId,
-    _is.UuidValue? protocolUid,
+    required this.calendarId,
+    required this.protocolUid,
+    required this.uidDigest,
+    this.protocolState,
+    this.importBaseline,
     this.timingOverrides,
     required this.content,
     required this.createdAt,
     required this.updatedAt,
-  }) : protocolUid = protocolUid ?? const _is.Uuid().v4obj();
+  });
 
   factory CalendarEventDataRecord({
     int? id,
     required _is.UuidValue eventId,
-    _is.UuidValue? protocolUid,
+    required _is.UuidValue calendarId,
+    required String protocolUid,
+    required String uidDigest,
+    _i8iqsbco.CalendarEventProtocolState? protocolState,
+    _iblybidp.CalendarEventImportBaseline? importBaseline,
     _ijijze99.CalendarEventTimingOverrides? timingOverrides,
     required _id4cvk34.CalendarEventContent content,
     required DateTime createdAt,
@@ -46,11 +56,23 @@ abstract class CalendarEventDataRecord
       eventId: _is.UuidValueJsonExtension.fromJson(
         jsonSerialization['eventId'],
       ),
-      protocolUid: jsonSerialization['protocolUid'] == null
+      calendarId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['calendarId'],
+      ),
+      protocolUid: jsonSerialization['protocolUid'] as String,
+      uidDigest: jsonSerialization['uidDigest'] as String,
+      protocolState: jsonSerialization['protocolState'] == null
           ? null
-          : _is.UuidValueJsonExtension.fromJson(
-              jsonSerialization['protocolUid'],
-            ),
+          : _ix00hwbf.Protocol()
+                .deserialize<_i8iqsbco.CalendarEventProtocolState>(
+                  jsonSerialization['protocolState'],
+                ),
+      importBaseline: jsonSerialization['importBaseline'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_iblybidp.CalendarEventImportBaseline>(
+                  jsonSerialization['importBaseline'],
+                ),
       timingOverrides: jsonSerialization['timingOverrides'] == null
           ? null
           : _ix00hwbf.Protocol()
@@ -78,7 +100,15 @@ abstract class CalendarEventDataRecord
 
   _is.UuidValue eventId;
 
-  _is.UuidValue protocolUid;
+  _is.UuidValue calendarId;
+
+  String protocolUid;
+
+  String uidDigest;
+
+  _i8iqsbco.CalendarEventProtocolState? protocolState;
+
+  _iblybidp.CalendarEventImportBaseline? importBaseline;
 
   _ijijze99.CalendarEventTimingOverrides? timingOverrides;
 
@@ -97,7 +127,11 @@ abstract class CalendarEventDataRecord
   CalendarEventDataRecord copyWith({
     int? id,
     _is.UuidValue? eventId,
-    _is.UuidValue? protocolUid,
+    _is.UuidValue? calendarId,
+    String? protocolUid,
+    String? uidDigest,
+    _i8iqsbco.CalendarEventProtocolState? protocolState,
+    _iblybidp.CalendarEventImportBaseline? importBaseline,
     _ijijze99.CalendarEventTimingOverrides? timingOverrides,
     _id4cvk34.CalendarEventContent? content,
     DateTime? createdAt,
@@ -109,7 +143,11 @@ abstract class CalendarEventDataRecord
       '__className__': 'serverpod_calendar.CalendarEventDataRecord',
       if (id != null) 'id': id,
       'eventId': eventId.toJson(),
-      'protocolUid': protocolUid.toJson(),
+      'calendarId': calendarId.toJson(),
+      'protocolUid': protocolUid,
+      'uidDigest': uidDigest,
+      if (protocolState != null) 'protocolState': protocolState?.toJson(),
+      if (importBaseline != null) 'importBaseline': importBaseline?.toJson(),
       if (timingOverrides != null) 'timingOverrides': timingOverrides?.toJson(),
       'content': content.toJson(),
       'createdAt': createdAt.toJson(),
@@ -156,7 +194,11 @@ class _CalendarEventDataRecordImpl extends CalendarEventDataRecord {
   _CalendarEventDataRecordImpl({
     int? id,
     required _is.UuidValue eventId,
-    _is.UuidValue? protocolUid,
+    required _is.UuidValue calendarId,
+    required String protocolUid,
+    required String uidDigest,
+    _i8iqsbco.CalendarEventProtocolState? protocolState,
+    _iblybidp.CalendarEventImportBaseline? importBaseline,
     _ijijze99.CalendarEventTimingOverrides? timingOverrides,
     required _id4cvk34.CalendarEventContent content,
     required DateTime createdAt,
@@ -164,7 +206,11 @@ class _CalendarEventDataRecordImpl extends CalendarEventDataRecord {
   }) : super._(
          id: id,
          eventId: eventId,
+         calendarId: calendarId,
          protocolUid: protocolUid,
+         uidDigest: uidDigest,
+         protocolState: protocolState,
+         importBaseline: importBaseline,
          timingOverrides: timingOverrides,
          content: content,
          createdAt: createdAt,
@@ -178,7 +224,11 @@ class _CalendarEventDataRecordImpl extends CalendarEventDataRecord {
   CalendarEventDataRecord copyWith({
     Object? id = _Undefined,
     _is.UuidValue? eventId,
-    _is.UuidValue? protocolUid,
+    _is.UuidValue? calendarId,
+    String? protocolUid,
+    String? uidDigest,
+    Object? protocolState = _Undefined,
+    Object? importBaseline = _Undefined,
     Object? timingOverrides = _Undefined,
     _id4cvk34.CalendarEventContent? content,
     DateTime? createdAt,
@@ -187,7 +237,15 @@ class _CalendarEventDataRecordImpl extends CalendarEventDataRecord {
     return CalendarEventDataRecord(
       id: id is int? ? id : this.id,
       eventId: eventId ?? this.eventId,
+      calendarId: calendarId ?? this.calendarId,
       protocolUid: protocolUid ?? this.protocolUid,
+      uidDigest: uidDigest ?? this.uidDigest,
+      protocolState: protocolState is _i8iqsbco.CalendarEventProtocolState?
+          ? protocolState
+          : this.protocolState?.copyWith(),
+      importBaseline: importBaseline is _iblybidp.CalendarEventImportBaseline?
+          ? importBaseline
+          : this.importBaseline?.copyWith(),
       timingOverrides:
           timingOverrides is _ijijze99.CalendarEventTimingOverrides?
           ? timingOverrides
@@ -209,12 +267,41 @@ class CalendarEventDataRecordUpdateTable
         value,
       );
 
-  _is.ColumnValue<_is.UuidValue, _is.UuidValue> protocolUid(
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> calendarId(
     _is.UuidValue value,
   ) => _is.ColumnValue(
+    table.calendarId,
+    value,
+  );
+
+  _is.ColumnValue<String, String> protocolUid(String value) => _is.ColumnValue(
     table.protocolUid,
     value,
   );
+
+  _is.ColumnValue<String, String> uidDigest(String value) => _is.ColumnValue(
+    table.uidDigest,
+    value,
+  );
+
+  _is.ColumnValue<
+    _i8iqsbco.CalendarEventProtocolState,
+    _i8iqsbco.CalendarEventProtocolState
+  >
+  protocolState(_i8iqsbco.CalendarEventProtocolState? value) => _is.ColumnValue(
+    table.protocolState,
+    value,
+  );
+
+  _is.ColumnValue<
+    _iblybidp.CalendarEventImportBaseline,
+    _iblybidp.CalendarEventImportBaseline
+  >
+  importBaseline(_iblybidp.CalendarEventImportBaseline? value) =>
+      _is.ColumnValue(
+        table.importBaseline,
+        value,
+      );
 
   _is.ColumnValue<
     _ijijze99.CalendarEventTimingOverrides,
@@ -256,11 +343,28 @@ class CalendarEventDataRecordTable extends _is.Table<int?> {
       'eventId',
       this,
     );
-    protocolUid = _is.ColumnUuid(
+    calendarId = _is.ColumnUuid(
+      'calendarId',
+      this,
+    );
+    protocolUid = _is.ColumnString(
       'protocolUid',
       this,
-      hasDefault: true,
     );
+    uidDigest = _is.ColumnString(
+      'uidDigest',
+      this,
+    );
+    protocolState =
+        _is.ColumnSerializable<_i8iqsbco.CalendarEventProtocolState>(
+          'protocolState',
+          this,
+        );
+    importBaseline =
+        _is.ColumnSerializable<_iblybidp.CalendarEventImportBaseline>(
+          'importBaseline',
+          this,
+        );
     timingOverrides =
         _is.ColumnSerializable<_ijijze99.CalendarEventTimingOverrides>(
           'timingOverrides',
@@ -284,7 +388,17 @@ class CalendarEventDataRecordTable extends _is.Table<int?> {
 
   late final _is.ColumnUuid eventId;
 
-  late final _is.ColumnUuid protocolUid;
+  late final _is.ColumnUuid calendarId;
+
+  late final _is.ColumnString protocolUid;
+
+  late final _is.ColumnString uidDigest;
+
+  late final _is.ColumnSerializable<_i8iqsbco.CalendarEventProtocolState>
+  protocolState;
+
+  late final _is.ColumnSerializable<_iblybidp.CalendarEventImportBaseline>
+  importBaseline;
 
   late final _is.ColumnSerializable<_ijijze99.CalendarEventTimingOverrides>
   timingOverrides;
@@ -299,7 +413,11 @@ class CalendarEventDataRecordTable extends _is.Table<int?> {
   List<_is.Column> get columns => [
     id,
     eventId,
+    calendarId,
     protocolUid,
+    uidDigest,
+    protocolState,
+    importBaseline,
     timingOverrides,
     content,
     createdAt,

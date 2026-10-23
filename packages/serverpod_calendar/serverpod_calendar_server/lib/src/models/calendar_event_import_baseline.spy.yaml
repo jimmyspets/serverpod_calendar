@@ -1,0 +1,7 @@
+class: CalendarEventImportBaseline
+serverOnly: true
+immutable: true
+fields:
+  profile: String
+  canonicalValue: String
+  sourceSequence: int?

@@ -1,5 +1,15 @@
 part of 'calendar_module.dart';
 
+T _eventProtocolValue<T>(T Function() action) {
+  try {
+    return action();
+  } on RecurrenceLimitException {
+    throw _failure(CalendarFailureCode.limitExceeded);
+  } on ArgumentError {
+    throw _failure(CalendarFailureCode.validation);
+  }
+}
+
 CalendarEventContent _validatedEvent(CalendarEventContent input) {
   try {
     return validateEventContent(input);
@@ -30,8 +40,24 @@ CalendarEventTimingOverrides? _validatedOverrides(
 final class _Event {
   _Event(this.identity, this.data, this.parent) {
     try {
+      validateEventUid(data.protocolUid);
+      if (data.calendarId != identity.calendarId) {
+        throw ArgumentError('Wrong active parent');
+      }
       data.content = validateEventContent(data.content);
       data.timingOverrides = validateEventOverrides(
+        data.content,
+        data.timingOverrides,
+      );
+      data.protocolState = validateEventProtocolState(
+        data.protocolState ??
+            eventProtocolBaseline(
+              data.content,
+              data.timingOverrides,
+              data.createdAt,
+              data.updatedAt,
+              legacy: true,
+            ),
         data.content,
         data.timingOverrides,
       );
@@ -50,6 +76,7 @@ final class _Event {
     data.protocolUid.toString(),
     data.updatedAt,
     timingOverrides: data.timingOverrides,
+    protocolState: data.protocolState,
   );
 }
 
@@ -66,6 +93,7 @@ extension CalendarEventOperations on CalendarService {
     CalendarPermission op, {
     _Event? event,
     CalendarEventContent? proposed,
+    CalendarEventProtocolState? proposedState,
     CalendarEventOccurrenceQuery? query,
     CalendarFreeBusyQuery? freeBusy,
     CalendarAvailabilitySearchQuery? search,
@@ -81,6 +109,7 @@ extension CalendarEventOperations on CalendarService {
     eventId: event?.identity.id,
     currentEvent: event?.snapshot,
     proposedEvent: proposed,
+    proposedEventProtocolState: proposedState,
     occurrenceQuery: query,
     freeBusyQuery: freeBusy,
     availabilitySearchQuery: search,
@@ -165,6 +194,44 @@ extension CalendarEventOperations on CalendarService {
       timingOverrides: has(CalendarEventFieldGroup.timing)
           ? e.data.timingOverrides
           : null,
+      periods: has(CalendarEventFieldGroup.timing) ? v.periods : null,
+      textParameters:
+          has(CalendarEventFieldGroup.summary) ||
+              has(CalendarEventFieldGroup.description) ||
+              has(CalendarEventFieldGroup.location)
+          ? CalendarEventTextParameters(
+              summary: has(CalendarEventFieldGroup.summary)
+                  ? v.textParameters?.summary
+                  : null,
+              description: has(CalendarEventFieldGroup.description)
+                  ? v.textParameters?.description
+                  : null,
+              location: has(CalendarEventFieldGroup.location)
+                  ? v.textParameters?.location
+                  : null,
+            )
+          : null,
+      statusPresent: has(CalendarEventFieldGroup.state)
+          ? e.data.protocolState!.statusPresent
+          : null,
+      transparencyPresent: has(CalendarEventFieldGroup.state)
+          ? e.data.protocolState!.transparencyPresent
+          : null,
+      protocolVersion: has(CalendarEventFieldGroup.protocolIdentity)
+          ? e.data.protocolState!.version
+          : null,
+      occurrenceProtocolVersions:
+          has(CalendarEventFieldGroup.protocolIdentity) &&
+              has(CalendarEventFieldGroup.timing)
+          ? [
+              for (final p in e.data.protocolState!.overrides)
+                CalendarEventOccurrenceProtocolVersion(
+                  originalStart: p.originalStart,
+                  isThisAndFuture: p.isThisAndFuture,
+                  version: p.version,
+                ),
+            ]
+          : null,
       status: has(CalendarEventFieldGroup.state) ? v.status : null,
       transparency: has(CalendarEventFieldGroup.state) ? v.transparency : null,
       protocolUid: has(CalendarEventFieldGroup.protocolIdentity)
@@ -183,6 +250,27 @@ extension CalendarEventOperations on CalendarService {
     );
   }
 
+  Future<String> _newEventUid(UuidValue calendar, Transaction tx) async {
+    for (var attempt = 0; attempt < 3; attempt++) {
+      final uid = const Uuid().v4();
+      final candidates = await CalendarEventDataRecord.db.find(
+        _session,
+        where: (t) =>
+            t.calendarId.equals(calendar) &
+            t.uidDigest.equals(eventUidDigest(uid)),
+        limit: _options.maxScannedEvents + 1,
+        transaction: tx,
+      );
+      if (candidates.length > _options.maxScannedEvents) {
+        throw _failure(CalendarFailureCode.limitExceeded);
+      }
+      if (!eventUidConflicts(uid, candidates.map((v) => v.protocolUid))) {
+        return uid;
+      }
+    }
+    throw _failure(CalendarFailureCode.unavailable);
+  }
+
   Future<CalendarEventReceipt?> createEvent(
     CalendarEventCreateRequest input,
   ) async {
@@ -190,10 +278,23 @@ extension CalendarEventOperations on CalendarService {
     final c = await _context();
     return _transaction(c, (tx, scope) async {
       final parent = await _active(c, input.calendarId, tx);
+      final now = await _revisionTime(tx);
+      final state = eventProtocolBaseline(content, null, now, now);
+      final protocolUid = await _newEventUid(input.calendarId, tx);
       final requests = [
-        _er(parent, CalendarPermission.createEvent, proposed: content),
+        _er(
+          parent,
+          CalendarPermission.createEvent,
+          proposed: content,
+          proposedState: state,
+        ),
         if (content.status == CalendarEventStatus.cancelled)
-          _er(parent, CalendarPermission.changeEventStatus, proposed: content),
+          _er(
+            parent,
+            CalendarPermission.changeEventStatus,
+            proposed: content,
+            proposedState: state,
+          ),
       ];
       await _decide(
         c,
@@ -202,7 +303,6 @@ extension CalendarEventOperations on CalendarService {
         CalendarAuthorizationPhase.preliminaryWrite,
       );
       final decisions = await _final(c, requests, tx);
-      final now = await _revisionTime(tx);
       final identity = await CalendarEventRecord.db.insertRow(
         _session,
         CalendarEventRecord(calendarId: input.calendarId, revision: 1),
@@ -212,6 +312,10 @@ extension CalendarEventOperations on CalendarService {
         _session,
         CalendarEventDataRecord(
           eventId: identity.id!,
+          calendarId: input.calendarId,
+          protocolUid: protocolUid,
+          uidDigest: eventUidDigest(protocolUid),
+          protocolState: state,
           content: content,
           createdAt: now,
           updatedAt: now,
@@ -256,6 +360,8 @@ extension CalendarEventOperations on CalendarService {
       input.expectedRevision,
       content: input.content,
       replaceRecurrenceDates: input.replaceRecurrenceDates,
+      replacePeriods: input.replacePeriods,
+      replaceTextParameters: input.replaceTextParameters,
     );
   }
 
@@ -269,6 +375,8 @@ extension CalendarEventOperations on CalendarService {
     CalendarEventContent? content,
     CalendarEventStatus? status,
     bool replaceRecurrenceDates = false,
+    bool replacePeriods = false,
+    bool replaceTextParameters = false,
   }) async {
     if (content != null) content = _validatedEvent(content);
     final c = await _context();
@@ -301,14 +409,37 @@ extension CalendarEventOperations on CalendarService {
           );
         }
       }
+      if (content != null) {
+        if (!replacePeriods) {
+          if (content.periods != null &&
+              jsonEncode(content.periods!.map((p) => p.toJson()).toList()) !=
+                  jsonEncode(
+                    e.data.content.periods?.map((p) => p.toJson()).toList(),
+                  )) {
+            throw _failure(CalendarFailureCode.validation);
+          }
+          value = value.copyWith(periods: e.data.content.periods);
+        }
+        if (!replaceTextParameters) {
+          if (content.textParameters != null &&
+              jsonEncode(content.textParameters?.toJson()) !=
+                  jsonEncode(e.data.content.textParameters?.toJson())) {
+            throw _failure(CalendarFailureCode.validation);
+          }
+          value = value.copyWith(textParameters: e.data.content.textParameters);
+        }
+      }
       value = _validatedEvent(value);
-      final requests = [
+      List<CalendarAuthorizationRequest> requests([
+        CalendarEventProtocolState? state,
+      ]) => [
         if (content != null)
           _er(
             e.parent,
             CalendarPermission.updateEvent,
             event: e,
             proposed: value,
+            proposedState: state,
             proposedOverrides: e.data.timingOverrides,
           ),
         if (status != null || value.status != e.data.content.status)
@@ -317,21 +448,40 @@ extension CalendarEventOperations on CalendarService {
             CalendarPermission.changeEventStatus,
             event: e,
             proposed: value,
+            proposedState: state,
             proposedOverrides: e.data.timingOverrides,
           ),
       ];
       await _decide(
         c,
-        requests,
+        requests(),
         tx,
         CalendarAuthorizationPhase.preliminaryWrite,
       );
       _eventRevision(e, expected);
       final overrides = _validatedOverrides(value, e.data.timingOverrides);
-      final decisions = await _final(c, requests, tx);
+      final now = await _revisionTime(tx, previous: e.data.updatedAt);
+      final state = _eventProtocolValue(
+        () => advanceEventProtocol(
+          e.data.protocolState!,
+          e.data.content,
+          e.data.timingOverrides,
+          value,
+          overrides,
+          now,
+        ),
+      );
+      await _decide(
+        c,
+        requests(state),
+        tx,
+        CalendarAuthorizationPhase.preliminaryWrite,
+      );
+      final decisions = await _final(c, requests(state), tx);
+      e.data.protocolState = state;
       e.data.timingOverrides = overrides;
       e.data.content = value;
-      e.data.updatedAt = await _revisionTime(tx, previous: e.data.updatedAt);
+      e.data.updatedAt = now;
       e.identity.revision++;
       await CalendarEventDataRecord.db.updateRow(
         _session,
@@ -362,13 +512,15 @@ extension CalendarEventOperations on CalendarService {
           ? CalendarPermission.changeEventStatus
           : CalendarPermission.updateEvent;
       CalendarAuthorizationRequest request(
-        CalendarEventTimingOverrides? proposed,
-      ) => _er(
+        CalendarEventTimingOverrides? proposed, [
+        CalendarEventProtocolState? state,
+      ]) => _er(
         e.parent,
         operation,
         event: e,
         change: input,
         proposedOverrides: proposed,
+        proposedState: state,
       );
       await _decide(
         c,
@@ -391,9 +543,27 @@ extension CalendarEventOperations on CalendarService {
       } on ZoneCoverageException {
         throw _failure(CalendarFailureCode.validation);
       }
-      final decisions = await _final(c, [request(proposed)], tx);
+      final now = await _revisionTime(tx, previous: e.data.updatedAt);
+      final state = _eventProtocolValue(
+        () => advanceEventProtocol(
+          e.data.protocolState!,
+          e.data.content,
+          e.data.timingOverrides,
+          e.data.content,
+          proposed,
+          now,
+        ),
+      );
+      await _decide(
+        c,
+        [request(proposed, state)],
+        tx,
+        CalendarAuthorizationPhase.preliminaryWrite,
+      );
+      final decisions = await _final(c, [request(proposed, state)], tx);
+      e.data.protocolState = state;
       e.data.timingOverrides = proposed;
-      e.data.updatedAt = await _revisionTime(tx, previous: e.data.updatedAt);
+      e.data.updatedAt = now;
       e.identity.revision++;
       await CalendarEventDataRecord.db.updateRow(
         _session,

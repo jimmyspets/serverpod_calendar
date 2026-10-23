@@ -1,0 +1,8 @@
+class: CalendarEventProtocolState
+serverOnly: true
+immutable: true
+fields:
+  version: CalendarEventProtocolVersion
+  statusPresent: bool, default=true
+  transparencyPresent: bool, default=true
+  overrides: List<CalendarEventOverrideProtocolState>
