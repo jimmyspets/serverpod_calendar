@@ -18,3 +18,4 @@
 20261022203640730-availability-replacement
 20261023050029245-event-source-storage
 20261023065425278-native-tasks
+20261023101136436-task-recurrence

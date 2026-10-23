@@ -1,0 +1,8 @@
+class: CalendarTaskHistoryPage
+immutable: true
+fields:
+  taskId: UuidValue
+  revision: int
+  originalStart: CalendarEventTiming
+  entries: List<CalendarTaskHistoryEntry>
+  nextCursor: String?

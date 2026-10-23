@@ -1,0 +1,8 @@
+class: CalendarTaskOccurrenceProgressRequest
+immutable: true
+fields:
+  taskId: UuidValue
+  expectedRevision: int
+  originalStart: CalendarEventTiming
+  action: CalendarTaskProgressAction
+  percentComplete: int?

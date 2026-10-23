@@ -2,6 +2,8 @@
 
 The first durable task increment implements the confirmed choices in [ADR 0083](adr/0083-first-native-task-contract.md), with concrete mechanics under draft review in [ADR 0084](adr/0084-first-native-task-implementation.md). It adds module storage, authenticated generated-client APIs, replaceable host authorization and an example Flutter task screen. Recurrence, occurrence completion/history, VTODO interchange, scheduling and alarms remain separate work. Pure-core recurring task calculations do not establish durable recurring task support.
 
+Follow-up: [recurring tasks](recurring-tasks.md) now extend this initial increment under ADR 0086. The non-recurring-only descriptions below record ADR 0084 boundaries; the newer guide supplies the implemented extension.
+
 ## Timing and content
 
 Task content has optional summary, description, location and priority, plus explicit undated, DATE, UTC or named-zone timing. Undated tasks carry no milestones or zone. Other forms require a start or due value; start-only and due-only tasks are valid. A duration requires a start and cannot coexist with explicit due. Preserve nominal weeks/days versus elapsed clock units through the existing temporal core. DATE durations cannot contain clock units. The server validates chronology, zone coverage and the whole-second [1970, 2100) profile. **Task DUE and an effective due calculated from duration are ordinary values before 2100, not exclusive event endpoints.** No due date is inferred. Floating, fractional, mixed-profile and recurring input rejects explicitly.

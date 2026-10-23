@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import 'task_occurrence_screen.dart';
+
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
@@ -156,6 +159,10 @@ class _TaskEditorState extends State<TaskEditor> {
       _priority = TextEditingController(),
       _percent = TextEditingController();
   final _duration = List.generate(5, (_) => TextEditingController());
+  final _interval = TextEditingController(text: '1'),
+      _count = TextEditingController(),
+      _weekStart = TextEditingController(text: '1');
+  cal.CalendarEventFrequency? _frequency;
   cal.CalendarTaskView? _view;
   cal.CalendarTaskTimeKind _kind = cal.CalendarTaskTimeKind.undated;
   bool _durationForm = false, _busy = false, _stale = false, _dirty = false;
@@ -201,6 +208,10 @@ class _TaskEditorState extends State<TaskEditor> {
     for (var i = 0; i < 5; i++) {
       _duration[i].text = units[i].toString();
     }
+    _frequency = _view?.recurrence?.rule?.frequency;
+    _interval.text = (_view?.recurrence?.rule?.interval ?? 1).toString();
+    _count.text = _view?.recurrence?.rule?.count?.toString() ?? '';
+    _weekStart.text = (_view?.recurrence?.rule?.weekStart ?? 1).toString();
     _percent.text = (_view?.progress?.percentComplete ?? 0).toString();
     _dirty = false;
     _stale = false;
@@ -217,6 +228,9 @@ class _TaskEditorState extends State<TaskEditor> {
       _zone,
       _priority,
       _percent,
+      _interval,
+      _count,
+      _weekStart,
       ..._duration,
     ]) {
       c.dispose();
@@ -304,6 +318,7 @@ class _TaskEditorState extends State<TaskEditor> {
       description: _description.text.isEmpty ? null : _description.text,
       location: _location.text.isEmpty ? null : _location.text,
       priority: _priority.text.isEmpty ? null : _number(_priority.text),
+      recurrence: _recurrence(),
       timing: cal.CalendarTaskTiming(
         kind: _kind,
         start: _kind == cal.CalendarTaskTimeKind.undated
@@ -324,6 +339,52 @@ class _TaskEditorState extends State<TaskEditor> {
         zoneId: _kind == cal.CalendarTaskTimeKind.zoned ? _zone.text : null,
       ),
     );
+  }
+
+  cal.CalendarEventRecurrence? _recurrence() {
+    final previous = _view?.recurrence;
+    cal.CalendarEventRule? rule;
+    if (_frequency != null) {
+      final template =
+          previous?.rule ??
+          cal.CalendarEventRule(
+            frequency: _frequency!,
+            byDay: [],
+            byMonthDay: [],
+            byYearDay: [],
+            byWeekNo: [],
+            byMonth: [],
+            byHour: [],
+            byMinute: [],
+            bySetPosition: [],
+          );
+      rule = template.copyWith(
+        frequency: _frequency!,
+        interval: _number(_interval.text),
+        count: _count.text.isEmpty ? null : _number(_count.text),
+        weekStart: _number(_weekStart.text),
+      );
+    }
+    if (rule == null &&
+        (previous?.inclusions.isEmpty ?? true) &&
+        (previous?.exclusions.isEmpty ?? true)) {
+      return null;
+    }
+    return cal.CalendarEventRecurrence(
+      rule: rule,
+      inclusions: previous?.inclusions ?? [],
+      exclusions: previous?.exclusions ?? [],
+    );
+  }
+
+  Future<void> _occurrences() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) =>
+            TaskOccurrenceScreen(client: widget.client, task: _view!),
+      ),
+    );
+    if (mounted) await _run(_reload);
   }
 
   Future<void> _save() => _run(() async {
@@ -454,7 +515,7 @@ class _TaskEditorState extends State<TaskEditor> {
               field('task-location', 'Location', _location),
               field('task-priority', 'Priority (0–9, optional)', _priority),
               DropdownButtonFormField<cal.CalendarTaskTimeKind>(
-                key: ValueKey('task-kind-$_kind'),
+                key: ValueKey('task-kind-${_kind.name}'),
                 initialValue: _kind,
                 decoration: const InputDecoration(labelText: 'Time meaning'),
                 items: [
@@ -495,6 +556,43 @@ class _TaskEditorState extends State<TaskEditor> {
                   'Dates use YYYY-MM-DD; times use YYYY-MM-DDTHH:MM:SS. A due time is never inferred.',
                 ),
               ],
+              DropdownButtonFormField<cal.CalendarEventFrequency?>(
+                key: ValueKey('task-frequency-${_frequency?.name ?? 'none'}'),
+                initialValue: _frequency,
+                decoration: const InputDecoration(
+                  labelText: 'Recurrence frequency',
+                ),
+                items: [
+                  const DropdownMenuItem(
+                    value: null,
+                    child: Text('Non-recurring'),
+                  ),
+                  for (final f in cal.CalendarEventFrequency.values)
+                    DropdownMenuItem(value: f, child: Text(f.name)),
+                ],
+                onChanged: _locked
+                    ? null
+                    : (value) => setState(() {
+                        _frequency = value;
+                        _dirty = true;
+                      }),
+              ),
+              if (_frequency != null) ...[
+                field('task-interval', 'Repeat interval', _interval),
+                field('task-count', 'Occurrence count (optional)', _count),
+                field(
+                  'task-week-start',
+                  'Recurrence WKST (1 Monday through 7 Sunday)',
+                  _weekStart,
+                ),
+                const Text(
+                  'Calendar display uses ISO weeks. Explicit WKST changes recurrence grouping and rule week numbers. A recurring task needs a start.',
+                ),
+              ],
+              if (_view?.recurrence != null)
+                const Text(
+                  'Existing rule filters, UNTIL and explicit inclusion/exclusion dates are retained by this basic editor. Recorded originals/history cannot be removed by pattern edits.',
+                ),
               FilledButton(
                 key: const Key('task-save'),
                 onPressed: _locked ? null : _save,
@@ -504,7 +602,13 @@ class _TaskEditorState extends State<TaskEditor> {
               const Text(
                 'Some content is withheld. Full content editing is unavailable.',
               ),
-            if (_view?.progress != null) ...[
+            if (_view?.recurrence != null)
+              TextButton(
+                key: const Key('task-occurrences'),
+                onPressed: _locked || _dirty ? null : _occurrences,
+                child: const Text('Occurrence progress and history'),
+              ),
+            if (_view?.progress != null && _view?.recurrence == null) ...[
               Text(
                 'Status: ${_view!.progress!.status.name}; ${_view!.progress!.percentComplete}%',
                 key: const Key('task-progress-state'),

@@ -44,4 +44,16 @@ class CalendarTaskEndpoint extends Endpoint {
     UuidValue taskId,
     int expectedRevision,
   ) => CalendarModule.service(session).deleteTask(taskId, expectedRevision);
+  Future<CalendarTaskOccurrencePreview> previewOccurrences(
+    Session session,
+    CalendarTaskOccurrenceQuery query,
+  ) => CalendarModule.service(session).previewTaskOccurrences(query);
+  Future<CalendarTaskReceipt?> changeOccurrenceProgress(
+    Session session,
+    CalendarTaskOccurrenceProgressRequest request,
+  ) => CalendarModule.service(session).changeTaskOccurrenceProgress(request);
+  Future<CalendarTaskHistoryPage> occurrenceHistory(
+    Session session,
+    CalendarTaskHistoryQuery query,
+  ) => CalendarModule.service(session).taskOccurrenceHistory(query);
 }

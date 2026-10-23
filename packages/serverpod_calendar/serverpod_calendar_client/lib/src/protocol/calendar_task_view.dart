@@ -14,6 +14,7 @@ import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+import 'calendar_event_recurrence.dart' as _iqxs44bf;
 import 'calendar_task_assignee.dart' as _ih5e3u6u;
 import 'calendar_task_field_group.dart' as _isemqyyv;
 import 'calendar_task_progress.dart' as _ikcsq95s;
@@ -37,6 +38,7 @@ abstract class CalendarTaskView
     this.assignees,
     this.protocolUid,
     this.protocolVersion,
+    this.recurrence,
   });
 
   const factory CalendarTaskView({
@@ -53,6 +55,7 @@ abstract class CalendarTaskView
     List<_ih5e3u6u.CalendarTaskAssignee>? assignees,
     String? protocolUid,
     _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion,
+    _iqxs44bf.CalendarEventRecurrence? recurrence,
   }) = _CalendarTaskViewImpl;
 
   factory CalendarTaskView.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -93,6 +96,11 @@ abstract class CalendarTaskView
                 .deserialize<_iz9t6x1i.CalendarTaskProtocolVersion>(
                   jsonSerialization['protocolVersion'],
                 ),
+      recurrence: jsonSerialization['recurrence'] == null
+          ? null
+          : _ie4a1wrz.Protocol().deserialize<_iqxs44bf.CalendarEventRecurrence>(
+              jsonSerialization['recurrence'],
+            ),
     );
   }
 
@@ -122,6 +130,8 @@ abstract class CalendarTaskView
 
   final _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion;
 
+  final _iqxs44bf.CalendarEventRecurrence? recurrence;
+
   /// Returns a shallow copy of this [CalendarTaskView]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -139,6 +149,7 @@ abstract class CalendarTaskView
     List<_ih5e3u6u.CalendarTaskAssignee>? assignees,
     String? protocolUid,
     _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion,
+    _iqxs44bf.CalendarEventRecurrence? recurrence,
   });
   @override
   bool operator ==(Object other) {
@@ -210,7 +221,12 @@ abstract class CalendarTaskView
                   other.protocolVersion,
                   protocolVersion,
                 ) ||
-                other.protocolVersion == protocolVersion);
+                other.protocolVersion == protocolVersion) &&
+            (identical(
+                  other.recurrence,
+                  recurrence,
+                ) ||
+                other.recurrence == recurrence);
   }
 
   @override
@@ -230,6 +246,7 @@ abstract class CalendarTaskView
       const _iss.DeepCollectionEquality().hash(assignees),
       protocolUid,
       protocolVersion,
+      recurrence,
     );
   }
 
@@ -251,6 +268,7 @@ abstract class CalendarTaskView
         'assignees': assignees?.toJson(valueToJson: (v) => v.toJson()),
       if (protocolUid != null) 'protocolUid': protocolUid,
       if (protocolVersion != null) 'protocolVersion': protocolVersion?.toJson(),
+      if (recurrence != null) 'recurrence': recurrence?.toJson(),
     };
   }
 
@@ -275,6 +293,7 @@ abstract class CalendarTaskView
       if (protocolUid != null) 'protocolUid': protocolUid,
       if (protocolVersion != null)
         'protocolVersion': protocolVersion?.toJsonForProtocol(),
+      if (recurrence != null) 'recurrence': recurrence?.toJsonForProtocol(),
     };
   }
 
@@ -301,6 +320,7 @@ class _CalendarTaskViewImpl extends CalendarTaskView {
     List<_ih5e3u6u.CalendarTaskAssignee>? assignees,
     String? protocolUid,
     _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion,
+    _iqxs44bf.CalendarEventRecurrence? recurrence,
   }) : super._(
          id: id,
          calendarId: calendarId,
@@ -315,6 +335,7 @@ class _CalendarTaskViewImpl extends CalendarTaskView {
          assignees: assignees,
          protocolUid: protocolUid,
          protocolVersion: protocolVersion,
+         recurrence: recurrence,
        );
 
   /// Returns a shallow copy of this [CalendarTaskView]
@@ -335,6 +356,7 @@ class _CalendarTaskViewImpl extends CalendarTaskView {
     Object? assignees = _Undefined,
     Object? protocolUid = _Undefined,
     Object? protocolVersion = _Undefined,
+    Object? recurrence = _Undefined,
   }) {
     return CalendarTaskView(
       id: id ?? this.id,
@@ -359,6 +381,9 @@ class _CalendarTaskViewImpl extends CalendarTaskView {
       protocolVersion: protocolVersion is _iz9t6x1i.CalendarTaskProtocolVersion?
           ? protocolVersion
           : this.protocolVersion?.copyWith(),
+      recurrence: recurrence is _iqxs44bf.CalendarEventRecurrence?
+          ? recurrence
+          : this.recurrence?.copyWith(),
     );
   }
 }

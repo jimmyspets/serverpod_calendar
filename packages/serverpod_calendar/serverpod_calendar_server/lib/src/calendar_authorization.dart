@@ -9,6 +9,8 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  previewTaskOccurrences,
+  readTaskHistory,
   listTasks,
   readTask,
   createTask,
@@ -162,6 +164,12 @@ final class CalendarAuthorizationRequest {
     this.proposedTaskAssignees,
     this.proposedTaskVersion,
     this.taskProgressChange,
+    this.taskOccurrenceQuery,
+    this.taskOccurrenceProgressChange,
+    this.taskHistoryQuery,
+    this.currentTaskOccurrence,
+    this.proposedTaskOccurrence,
+    Iterable<CalendarTaskOccurrence> recordedTaskOccurrences = const [],
     this.currentEvent,
     this.proposedEvent,
     this.proposedEventProtocolState,
@@ -187,7 +195,8 @@ final class CalendarAuthorizationRequest {
     Iterable<CalendarTaskFieldGroup> taskGroups = const [],
     Iterable<CalendarEventFieldGroup> eventGroups = const [],
     Iterable<CalendarFieldGroup> requestedGroups = const [],
-  }) : taskGroups = Set.unmodifiable(taskGroups),
+  }) : recordedTaskOccurrences = List.unmodifiable(recordedTaskOccurrences),
+       taskGroups = Set.unmodifiable(taskGroups),
        requestedGroups = Set.unmodifiable(requestedGroups),
        eventGroups = Set.unmodifiable(eventGroups);
   final String key;
@@ -200,6 +209,11 @@ final class CalendarAuthorizationRequest {
   final List<CalendarTaskAssignee>? proposedTaskAssignees;
   final CalendarTaskProtocolVersion? proposedTaskVersion;
   final CalendarTaskProgressRequest? taskProgressChange;
+  final CalendarTaskOccurrenceQuery? taskOccurrenceQuery;
+  final CalendarTaskOccurrenceProgressRequest? taskOccurrenceProgressChange;
+  final CalendarTaskHistoryQuery? taskHistoryQuery;
+  final CalendarTaskOccurrence? currentTaskOccurrence, proposedTaskOccurrence;
+  final List<CalendarTaskOccurrence> recordedTaskOccurrences;
   final Set<CalendarTaskFieldGroup> taskGroups;
   final CalendarEventPolicySnapshot? currentEvent;
   final CalendarEventContent? proposedEvent;
@@ -539,9 +553,11 @@ final class CalendarTaskPolicySnapshot {
     required this.protocolUid,
     required this.protocolVersion,
     required this.updatedAt,
+    required this.hasRecordedProgress,
   }) : assignees = List.unmodifiable(assignees);
   final UuidValue taskId, calendarId;
   final int revision;
+  final bool? hasRecordedProgress;
   final CalendarTaskContent content;
   final CalendarTaskProgress progress;
   final List<CalendarTaskAssignee> assignees;

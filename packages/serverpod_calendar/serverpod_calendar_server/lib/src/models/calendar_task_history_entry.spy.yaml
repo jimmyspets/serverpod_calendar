@@ -1,0 +1,8 @@
+class: CalendarTaskHistoryEntry
+immutable: true
+fields:
+  revision: int
+  action: CalendarTaskProgressAction
+  before: CalendarTaskProgress
+  after: CalendarTaskProgress
+  recordedAt: DateTime
