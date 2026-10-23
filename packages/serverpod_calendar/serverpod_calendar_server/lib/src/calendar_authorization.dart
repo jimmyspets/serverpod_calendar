@@ -9,6 +9,7 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  importEvents,
   exportFreeBusy,
   replaceAvailabilityFromImport,
   exportAvailability,
@@ -162,6 +163,7 @@ final class CalendarAuthorizationRequest {
     this.proposedAvailabilityProtocolState,
     this.availabilityCategoryFilter,
     this.availabilityImport,
+    this.eventImport,
     this.availabilityExport,
     this.availabilityReplacement,
     this.occurrenceChange,
@@ -191,6 +193,7 @@ final class CalendarAuthorizationRequest {
 
   /// Full immutable batch, absent on the cheap pre-parse authority check.
   final CalendarAvailabilityImportIntent? availabilityImport;
+  final CalendarEventImportIntent? eventImport;
   final CalendarAvailabilityExportIntent? availabilityExport;
   final CalendarAvailabilityReplacementIntent? availabilityReplacement;
   final CalendarEventOccurrenceChange? occurrenceChange;
@@ -226,6 +229,31 @@ final class CalendarAvailabilityImportIntent {
     Iterable<CalendarAvailabilityImportMember> members,
   ) : members = List.unmodifiable(members);
   final List<CalendarAvailabilityImportMember> members;
+}
+
+/// Complete validated source proposal; source identifiers grant no authority.
+final class CalendarEventImportMember {
+  const CalendarEventImportMember({
+    required this.eventId,
+    required this.protocolUid,
+    required this.content,
+    required this.protocolState,
+    required this.timingOverrides,
+  });
+  final UuidValue eventId;
+  final String protocolUid;
+  final CalendarEventContent content;
+  final CalendarEventProtocolState protocolState;
+  final CalendarEventTimingOverrides? timingOverrides;
+  bool get requiresLifecycle =>
+      content.status == CalendarEventStatus.cancelled ||
+      (timingOverrides?.singles.any((v) => v.cancelled) ?? false);
+}
+
+final class CalendarEventImportIntent {
+  CalendarEventImportIntent(Iterable<CalendarEventImportMember> members)
+    : members = List.unmodifiable(members);
+  final List<CalendarEventImportMember> members;
 }
 
 /// Complete current selection, never a visibility-filtered management list.

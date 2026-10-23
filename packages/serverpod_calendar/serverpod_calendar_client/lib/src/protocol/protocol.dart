@@ -65,6 +65,8 @@ import 'calendar_event_duration.dart' as _idn2i48l;
 import 'calendar_event_field_group.dart' as _iftiwkuj;
 import 'calendar_event_frequency.dart' as _i2q54gr5;
 import 'calendar_event_future_override.dart' as _imbjv41e;
+import 'calendar_event_import_request.dart' as _ixo47kyf;
+import 'calendar_event_import_result.dart' as _iduchdjm;
 import 'calendar_event_occurrence.dart' as _isyqnyev;
 import 'calendar_event_occurrence_action.dart' as _icnciyzp;
 import 'calendar_event_occurrence_change.dart' as _i7imxrlz;
@@ -157,6 +159,8 @@ export 'calendar_event_duration.dart';
 export 'calendar_event_field_group.dart';
 export 'calendar_event_frequency.dart';
 export 'calendar_event_future_override.dart';
+export 'calendar_event_import_request.dart';
+export 'calendar_event_import_result.dart';
 export 'calendar_event_occurrence.dart';
 export 'calendar_event_occurrence_action.dart';
 export 'calendar_event_occurrence_change.dart';
@@ -384,6 +388,12 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _imbjv41e.CalendarEventFutureOverride) {
       return _imbjv41e.CalendarEventFutureOverride.fromJson(data) as T;
+    }
+    if (t == _ixo47kyf.CalendarEventImportRequest) {
+      return _ixo47kyf.CalendarEventImportRequest.fromJson(data) as T;
+    }
+    if (t == _iduchdjm.CalendarEventImportResult) {
+      return _iduchdjm.CalendarEventImportResult.fromJson(data) as T;
     }
     if (t == _isyqnyev.CalendarEventOccurrence) {
       return _isyqnyev.CalendarEventOccurrence.fromJson(data) as T;
@@ -790,6 +800,18 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_imbjv41e.CalendarEventFutureOverride?>()) {
       return (data != null
               ? _imbjv41e.CalendarEventFutureOverride.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ixo47kyf.CalendarEventImportRequest?>()) {
+      return (data != null
+              ? _ixo47kyf.CalendarEventImportRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_iduchdjm.CalendarEventImportResult?>()) {
+      return (data != null
+              ? _iduchdjm.CalendarEventImportResult.fromJson(data)
               : null)
           as T;
     }
@@ -1292,6 +1314,12 @@ class Protocol extends _isc.SerializationManager {
               : null)
           as T;
     }
+    if (t == List<_i500bvo7.CalendarEventReceipt>) {
+      return (data as List)
+              .map((e) => deserialize<_i500bvo7.CalendarEventReceipt>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_iqr733fy.CalendarEventView>) {
       return (data as List)
               .map((e) => deserialize<_iqr733fy.CalendarEventView>(e))
@@ -1488,6 +1516,8 @@ class Protocol extends _isc.SerializationManager {
       _iftiwkuj.CalendarEventFieldGroup => 'CalendarEventFieldGroup',
       _i2q54gr5.CalendarEventFrequency => 'CalendarEventFrequency',
       _imbjv41e.CalendarEventFutureOverride => 'CalendarEventFutureOverride',
+      _ixo47kyf.CalendarEventImportRequest => 'CalendarEventImportRequest',
+      _iduchdjm.CalendarEventImportResult => 'CalendarEventImportResult',
       _isyqnyev.CalendarEventOccurrence => 'CalendarEventOccurrence',
       _icnciyzp.CalendarEventOccurrenceAction =>
         'CalendarEventOccurrenceAction',
@@ -1649,6 +1679,10 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarEventFrequency';
       case _imbjv41e.CalendarEventFutureOverride():
         return 'CalendarEventFutureOverride';
+      case _ixo47kyf.CalendarEventImportRequest():
+        return 'CalendarEventImportRequest';
+      case _iduchdjm.CalendarEventImportResult():
+        return 'CalendarEventImportResult';
       case _isyqnyev.CalendarEventOccurrence():
         return 'CalendarEventOccurrence';
       case _icnciyzp.CalendarEventOccurrenceAction():
@@ -1929,6 +1963,12 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'CalendarEventFutureOverride') {
       return deserialize<_imbjv41e.CalendarEventFutureOverride>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventImportRequest') {
+      return deserialize<_ixo47kyf.CalendarEventImportRequest>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventImportResult') {
+      return deserialize<_iduchdjm.CalendarEventImportResult>(data['data']);
     }
     if (dataClassName == 'CalendarEventOccurrence') {
       return deserialize<_isyqnyev.CalendarEventOccurrence>(data['data']);
