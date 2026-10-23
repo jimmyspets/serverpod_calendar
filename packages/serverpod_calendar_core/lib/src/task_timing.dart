@@ -1,5 +1,6 @@
 import 'calendar_date.dart';
 import 'calendar_duration.dart';
+import 'named_zone_resolver.dart';
 import 'date_recurrence_set.dart';
 import 'date_recurrence_generator.dart';
 import 'date_recurrence_rule.dart';
@@ -30,7 +31,52 @@ final class DateTaskTiming {
   final CalendarDate? start, due;
   final CalendarDuration? duration;
   CalendarDate? get effectiveDue => due ?? duration?.addToDate(start!);
-  DateTaskTiming at(CalendarDate occurrenceStart) {
+  DateTaskTiming at(
+    CalendarDate occurrenceStart, {
+    Map<CalendarDate, DateTaskTiming> replacements = const {},
+    Map<CalendarDate, DateTaskTiming> futureChanges = const {},
+    int maxChanges = 1000,
+  }) {
+    occurrenceStart.requireOrdinary('occurrenceStart');
+    if (start == null) {
+      throw StateError('Recurrence requires DTSTART');
+    }
+    if (replacements.isNotEmpty || futureChanges.isNotEmpty) {
+      _taskReplacementLimits(
+        replacements.length + futureChanges.length,
+        maxChanges,
+        1,
+      );
+      if (replacements.keys.any(futureChanges.containsKey) ||
+          [
+            ...replacements.values,
+            ...futureChanges.values,
+          ].any((v) => v.start == null)) {
+        throw ArgumentError('Invalid task timing maps');
+      }
+      for (final a in {...replacements.keys, ...futureChanges.keys}) {
+        a.requireOrdinary('originalStart');
+      }
+      final single = replacements[occurrenceStart];
+      if (single != null) {
+        return single;
+      }
+      final anchors = futureChanges.keys.toList()..sort();
+      CalendarDate? active;
+      for (final a in anchors) {
+        if (a.compareTo(occurrenceStart) > 0) {
+          break;
+        }
+        active = a;
+      }
+      if (active != null) {
+        return futureChanges[active]!.at(
+          occurrenceStart.addDays(
+            active.daysUntil(futureChanges[active]!.start!),
+          ),
+        );
+      }
+    }
     if (start == null) throw StateError('Recurrence requires DTSTART');
     return DateTaskTiming(
       start: occurrenceStart,
@@ -48,16 +94,18 @@ final class DateTaskTiming {
     required int maxRuleOccurrences,
     required int maxResults,
     Map<CalendarDate, DateTaskTiming> replacements = const {},
+    Map<CalendarDate, DateTaskTiming> futureChanges = const {},
     int maxReplacements = 1000,
   }) {
     if (start == null || recurrence.start != start) {
       throw ArgumentError('Recurring task needs matching DTSTART');
     }
-    if (replacements.isNotEmpty) {
+    if (replacements.isNotEmpty || futureChanges.isNotEmpty) {
       return _dateTaskReplacements(
         this,
         recurrence,
         replacements,
+        futureChanges,
         from: from,
         through: through,
         maxCandidateDays: maxCandidateDays,
@@ -130,11 +178,65 @@ final class TimedTaskTiming {
 
   /// Original explicit DUE propagates exact elapsed length; duration units stay
   /// nominal. The resolved due instant can retain a later-fold identity.
-  TimedTaskProjection at(TimedValue occurrenceStart) {
+  TimedTaskProjection at(
+    TimedValue occurrenceStart, {
+    Map<TimedValue, TimedTaskTiming> replacements = const {},
+    Map<TimedValue, TimedTaskTiming> futureChanges = const {},
+    int maxChanges = 1000,
+  }) {
     occurrenceStart.civil.date.requireOrdinary("occurrenceStart");
     if (start == null) throw StateError('Recurrence requires DTSTART');
     if (!start!.sameProfile(occurrenceStart)) {
       throw ArgumentError('Recurrence profile mismatch');
+    }
+    if (replacements.isNotEmpty || futureChanges.isNotEmpty) {
+      _taskReplacementLimits(
+        replacements.length + futureChanges.length,
+        maxChanges,
+        1,
+      );
+      if (replacements.keys.any(futureChanges.containsKey)) {
+        throw ArgumentError('Ambiguous timing anchor');
+      }
+      for (final e in [...replacements.entries, ...futureChanges.entries]) {
+        e.key.civil.date.requireOrdinary('originalStart');
+        if (e.value.start == null ||
+            !start!.sameProfile(e.key) ||
+            !start!.sameProfile(e.value.start!)) {
+          throw ArgumentError('Timing map profile mismatch');
+        }
+      }
+      final single = replacements[occurrenceStart];
+      if (single != null) {
+        return TimedTaskProjection(
+          single.start!,
+          single.effectiveDue,
+          duration: single.duration,
+        );
+      }
+      final anchors = futureChanges.keys.toList()..sort();
+      TimedValue? active;
+      for (final a in anchors) {
+        if (a.compareTo(occurrenceStart) > 0) {
+          break;
+        }
+        active = a;
+      }
+      if (active != null) {
+        final template = futureChanges[active]!;
+        final shift =
+            utcMicroseconds(civilEncoding(template.start!.civil)) -
+            utcMicroseconds(civilEncoding(active.civil));
+        return template.at(
+          occurrenceStart.at(
+            civilFields(
+              utcFromMicroseconds(
+                utcMicroseconds(civilEncoding(occurrenceStart.civil)) + shift,
+              ),
+            ),
+          ),
+        );
+      }
     }
     final finish = duration != null
         ? occurrenceStart.add(duration!)
@@ -156,7 +258,7 @@ final class TimedTaskTiming {
         TimedValue.utc(finish);
       }
     }
-    return TimedTaskProjection(occurrenceStart, finish);
+    return TimedTaskProjection(occurrenceStart, finish, duration: duration);
   }
 
   List<TimedTaskOccurrence> expandStarts(
@@ -166,6 +268,7 @@ final class TimedTaskTiming {
     required int maxRuleOccurrences,
     required int maxResults,
     Map<TimedValue, TimedTaskTiming> replacements = const {},
+    Map<TimedValue, TimedTaskTiming> futureChanges = const {},
     int maxReplacements = 1000,
   }) {
     if (start == null || recurrence.start != start) {
@@ -176,11 +279,12 @@ final class TimedTaskTiming {
         'PERIOD RDATE is an event profile; not a task due override',
       );
     }
-    if (replacements.isNotEmpty) {
+    if (replacements.isNotEmpty || futureChanges.isNotEmpty) {
       return _timedTaskReplacements(
         this,
         recurrence,
         replacements,
+        futureChanges,
         window: window,
         maxCandidateWork: maxCandidateWork,
         maxRuleOccurrences: maxRuleOccurrences,
@@ -211,7 +315,8 @@ final class TimedTaskTiming {
 }
 
 final class TimedTaskProjection {
-  const TimedTaskProjection(this.start, this.dueInstant);
+  const TimedTaskProjection(this.start, this.dueInstant, {this.duration});
+  final CalendarDuration? duration;
   final TimedValue start;
   final DateTime? dueInstant;
 }
@@ -243,7 +348,8 @@ void _taskReplacementLimits(int size, int maxReplacements, int maxResults) {
 List<DateTaskOccurrence> _dateTaskReplacements(
   DateTaskTiming master,
   DateRecurrenceSet recurrence,
-  Map<CalendarDate, DateTaskTiming> input, {
+  Map<CalendarDate, DateTaskTiming> input,
+  Map<CalendarDate, DateTaskTiming> rangeInput, {
   required CalendarDate from,
   required CalendarDate through,
   required int maxCandidateDays,
@@ -251,10 +357,23 @@ List<DateTaskOccurrence> _dateTaskReplacements(
   required int maxResults,
   required int maxReplacements,
 }) {
-  _taskReplacementLimits(input.length, maxReplacements, maxResults);
+  from.requireOrdinary('from');
+  through.requireOrdinary('through');
+  if (from.compareTo(through) > 0) {
+    throw ArgumentError('from must not follow through');
+  }
+  _taskReplacementLimits(
+    input.length + rangeInput.length,
+    maxReplacements,
+    maxResults,
+  );
   final replacements = Map<CalendarDate, DateTaskTiming>.unmodifiable(input);
-  final anchors = replacements.keys.toList()..sort();
-  if (replacements.values.any((v) => v.start == null)) {
+  final ranges = Map<CalendarDate, DateTaskTiming>.unmodifiable(rangeInput);
+  if (replacements.keys.any(ranges.containsKey)) {
+    throw ArgumentError('Ambiguous task timing anchor');
+  }
+  final anchors = {...replacements.keys, ...ranges.keys}.toList()..sort();
+  if ([...replacements.values, ...ranges.values].any((v) => v.start == null)) {
     throw ArgumentError('Replacement requires start');
   }
   final budget = RecurrenceWorkBudget(maxWork: maxCandidateDays);
@@ -271,27 +390,66 @@ List<DateTaskOccurrence> _dateTaskReplacements(
   if (!found.containsAll(anchors)) {
     throw ArgumentError('Orphan task timing replacement');
   }
+  final rangeAnchors = ranges.keys.toList()..sort();
+  var minShift = 0, maxShift = 0;
+  for (final e in ranges.entries) {
+    final shift = e.key.daysUntil(e.value.start!);
+    if (shift < minShift) {
+      minShift = shift;
+    }
+    if (shift > maxShift) {
+      maxShift = shift;
+    }
+  }
+  final epoch = CalendarDate(year: 1970, month: 1, day: 1),
+      last = CalendarDate(year: 2099, month: 12, day: 31);
+  final fromIndex = epoch.daysUntil(from),
+      throughIndex = epoch.daysUntil(through),
+      lastIndex = epoch.daysUntil(last);
   final base = recurrence.expand(
-    from: from,
-    through: through,
+    from: epoch.addDays((fromIndex - maxShift).clamp(0, lastIndex)),
+    through: epoch.addDays((throughIndex - minShift).clamp(0, lastIndex)),
     maxCandidateDays: maxCandidateDays,
     maxRuleOccurrences: maxRuleOccurrences,
     maxResults: maxRuleOccurrences,
     sharedWorkBudget: budget,
   );
-  final result =
-      <DateTaskOccurrence>[
-        for (final original in base)
-          if (!replacements.containsKey(original))
-            DateTaskOccurrence(original, master.at(original)),
-        for (final entry in replacements.entries)
-          if (entry.value.start!.compareTo(from) >= 0 &&
-              entry.value.start!.compareTo(through) <= 0)
-            DateTaskOccurrence(entry.key, entry.value),
-      ]..sort((a, b) {
-        final c = a.timing.start!.compareTo(b.timing.start!);
-        return c == 0 ? a.originalStart.compareTo(b.originalStart) : c;
-      });
+  final result = <DateTaskOccurrence>[];
+  for (final original in base) {
+    if (replacements.containsKey(original)) {
+      continue;
+    }
+    CalendarDate? active;
+    for (final a in rangeAnchors) {
+      if (a.compareTo(original) > 0) {
+        break;
+      }
+      active = a;
+    }
+    final shift = active == null ? 0 : active.daysUntil(ranges[active]!.start!);
+    final actualIndex = epoch.daysUntil(original) + shift;
+    if (actualIndex < fromIndex || actualIndex > throughIndex) {
+      continue;
+    }
+    result.add(
+      DateTaskOccurrence(
+        original,
+        (active == null ? master : ranges[active]!).at(
+          epoch.addDays(actualIndex),
+        ),
+      ),
+    );
+  }
+  for (final e in replacements.entries) {
+    if (e.value.start!.compareTo(from) >= 0 &&
+        e.value.start!.compareTo(through) <= 0) {
+      result.add(DateTaskOccurrence(e.key, e.value));
+    }
+  }
+  result.sort((a, b) {
+    final c = a.timing.start!.compareTo(b.timing.start!);
+    return c == 0 ? a.originalStart.compareTo(b.originalStart) : c;
+  });
   if (result.length > maxResults) {
     throw const RecurrenceLimitException('maxResults');
   }
@@ -301,23 +459,32 @@ List<DateTaskOccurrence> _dateTaskReplacements(
 List<TimedTaskOccurrence> _timedTaskReplacements(
   TimedTaskTiming master,
   TimedRecurrenceSet recurrence,
-  Map<TimedValue, TimedTaskTiming> input, {
+  Map<TimedValue, TimedTaskTiming> input,
+  Map<TimedValue, TimedTaskTiming> rangeInput, {
   required UtcWindow window,
   required int maxCandidateWork,
   required int maxRuleOccurrences,
   required int maxResults,
   required int maxReplacements,
 }) {
-  _taskReplacementLimits(input.length, maxReplacements, maxResults);
+  _taskReplacementLimits(
+    input.length + rangeInput.length,
+    maxReplacements,
+    maxResults,
+  );
   final replacements = Map<TimedValue, TimedTaskTiming>.unmodifiable(input);
-  for (final e in replacements.entries) {
+  final ranges = Map<TimedValue, TimedTaskTiming>.unmodifiable(rangeInput);
+  if (replacements.keys.any(ranges.containsKey)) {
+    throw ArgumentError('Ambiguous task timing anchor');
+  }
+  for (final e in [...replacements.entries, ...ranges.entries]) {
     if (e.value.start == null ||
         !master.start!.sameProfile(e.key) ||
         !master.start!.sameProfile(e.value.start!)) {
       throw ArgumentError('Replacement profile mismatch');
     }
   }
-  final anchors = replacements.keys.toList()
+  final anchors = {...replacements.keys, ...ranges.keys}.toList()
     ..sort((a, b) => a.instant.compareTo(b.instant));
   final budget = RecurrenceWorkBudget(maxWork: maxCandidateWork);
   final found = recurrence
@@ -335,29 +502,100 @@ List<TimedTaskOccurrence> _timedTaskReplacements(
   if (!found.containsAll(anchors)) {
     throw ArgumentError('Orphan task timing replacement');
   }
+  final rangeAnchors = ranges.keys.toList()..sort();
+  BigInt shift(TimedValue a) =>
+      utcMicroseconds(civilEncoding(ranges[a]!.start!.civil)) -
+      utcMicroseconds(civilEncoding(a.civil));
+  var minShift = BigInt.zero, maxShift = BigInt.zero;
+  for (final a in rangeAnchors) {
+    final d = shift(a);
+    if (d < minShift) {
+      minShift = d;
+    }
+    if (d > maxShift) {
+      maxShift = d;
+    }
+  }
+  final guard = ranges.isEmpty || master.start!.zoneId == null
+      ? BigInt.zero
+      : BigInt.from(
+          NamedZoneResolver()
+              .offsetRange(zoneId: master.start!.zoneId!)
+              .inMicroseconds,
+        );
+  var lower = utcMicroseconds(window.start) - maxShift - guard,
+      upper = utcMicroseconds(window.end) - minShift + guard;
+  final low = utcMicroseconds(DateTime.utc(1969, 12, 30)),
+      high = utcMicroseconds(DateTime.utc(2100, 1, 3));
+  if (lower < low) {
+    lower = low;
+  }
+  if (upper > high) {
+    upper = high;
+  }
   final base = recurrence.expand(
-    window: window,
+    window: UtcWindow(
+      start: utcFromMicroseconds(lower),
+      end: utcFromMicroseconds(upper),
+    ),
     maxCandidateWork: maxCandidateWork,
     maxRuleOccurrences: maxRuleOccurrences,
     maxResults: maxRuleOccurrences,
     sharedWorkBudget: budget,
   );
-  final result =
-      <TimedTaskOccurrence>[
-        for (final original in base)
-          if (!replacements.containsKey(original))
-            TimedTaskOccurrence(original, master.at(original)),
-        for (final e in replacements.entries)
-          if (!e.value.start!.instant.isBefore(window.start) &&
-              e.value.start!.instant.isBefore(window.end))
-            TimedTaskOccurrence(
-              e.key,
-              TimedTaskProjection(e.value.start!, e.value.effectiveDue),
-            ),
-      ]..sort((a, b) {
-        final c = a.timing.start.instant.compareTo(b.timing.start.instant);
-        return c == 0 ? a.originalStart.compareTo(b.originalStart) : c;
-      });
+  final result = <TimedTaskOccurrence>[];
+  final civilLow = utcMicroseconds(DateTime.utc(1970)),
+      civilHigh = utcMicroseconds(DateTime.utc(2100));
+  for (final original in base) {
+    if (replacements.containsKey(original)) {
+      continue;
+    }
+    TimedValue? active;
+    for (final a in rangeAnchors) {
+      if (a.compareTo(original) > 0) {
+        break;
+      }
+      active = a;
+    }
+    var actual = original;
+    if (active != null) {
+      final encoded =
+          utcMicroseconds(civilEncoding(original.civil)) + shift(active);
+      if (encoded < civilLow || encoded >= civilHigh) {
+        continue;
+      }
+      actual = original.at(civilFields(utcFromMicroseconds(encoded)));
+    }
+    if (actual.instant.isBefore(window.start) ||
+        !actual.instant.isBefore(window.end)) {
+      continue;
+    }
+    result.add(
+      TimedTaskOccurrence(
+        original,
+        (active == null ? master : ranges[active]!).at(actual),
+      ),
+    );
+  }
+  for (final e in replacements.entries) {
+    if (!e.value.start!.instant.isBefore(window.start) &&
+        e.value.start!.instant.isBefore(window.end)) {
+      result.add(
+        TimedTaskOccurrence(
+          e.key,
+          TimedTaskProjection(
+            e.value.start!,
+            e.value.effectiveDue,
+            duration: e.value.duration,
+          ),
+        ),
+      );
+    }
+  }
+  result.sort((a, b) {
+    final c = a.timing.start.instant.compareTo(b.timing.start.instant);
+    return c == 0 ? a.originalStart.compareTo(b.originalStart) : c;
+  });
   if (result.length > maxResults) {
     throw const RecurrenceLimitException('maxResults');
   }

@@ -3,10 +3,13 @@ part of 'calendar_module.dart';
 CalendarTaskOccurrence _taskRecordValue(CalendarTaskOccurrenceRecord r) =>
     CalendarTaskOccurrence(
       originalStart: r.originalStart,
-      actualStart: r.replacementTiming == null
-          ? r.originalStart
-          : taskAnchor(r.replacementTiming!),
+      actualStart: r.replacementTiming != null
+          ? taskAnchor(r.replacementTiming!)
+          : r.futureTiming != null
+          ? taskAnchor(r.futureTiming!)
+          : null,
       replacementTiming: r.replacementTiming,
+      futureTiming: r.futureTiming,
       progress: r.progress,
     );
 
@@ -32,6 +35,12 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
         if (row.replacementTiming != null) {
           validateTaskReplacement(task.data.content, row.replacementTiming!);
         }
+        if (row.futureTiming != null) {
+          validateTaskReplacement(task.data.content, row.futureTiming!);
+        }
+        if (row.replacementTiming != null && row.futureTiming != null) {
+          throw ArgumentError('Ambiguous stored timing');
+        }
         if (row.protocolVersion != null) {
           validateTaskVersion(row.protocolVersion!);
         }
@@ -50,7 +59,8 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
                 components[r.originalKey]?.progress != r.progress ||
                 components[r.originalKey]?.version != r.protocolVersion ||
                 taskSourceReplacement(components[r.originalKey]!) !=
-                    r.replacementTiming,
+                    r.replacementTiming ||
+                taskSourceFuture(components[r.originalKey]!) != r.futureTiming,
           )) {
         throw _failure(CalendarFailureCode.unavailable);
       }
@@ -138,6 +148,10 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
         () => previewTaskValues(
           task.data.content,
           query,
+          futureChanges: {
+            for (final r in stored)
+              if (r.futureTiming != null) r.originalStart: r.futureTiming!,
+          },
           replacements: {
             for (final r in stored)
               if (r.replacementTiming != null)
@@ -183,15 +197,50 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
                 input.replacement!,
               ),
             );
-      CalendarTaskOccurrence value(CalendarTaskTiming? timing) =>
-          CalendarTaskOccurrence(
-            originalStart: input.originalStart,
-            actualStart: timing == null
-                ? input.originalStart
-                : taskAnchor(timing),
-            replacementTiming: timing,
-            progress: progress,
+      if (replacement != null &&
+          (input.thisAndFuture ? row?.replacementTiming : row?.futureTiming) !=
+              null) {
+        throw _failure(CalendarFailureCode.validation);
+      }
+      final singles = {
+            for (final r in rows)
+              if (r.replacementTiming != null)
+                r.originalStart: r.replacementTiming!,
+          },
+          future = {
+            for (final r in rows)
+              if (r.futureTiming != null) r.originalStart: r.futureTiming!,
+          };
+      final proposedSingles = Map<CalendarEventTiming, CalendarTaskTiming>.of(
+            singles,
+          ),
+          proposedFuture = Map<CalendarEventTiming, CalendarTaskTiming>.of(
+            future,
           );
+      final selected = input.thisAndFuture ? proposedFuture : proposedSingles;
+      if (replacement == null) {
+        selected.remove(input.originalStart);
+      } else {
+        selected[input.originalStart] = replacement;
+      }
+      final currentValue = _taskValue(
+        () => taskTimingAt(
+          task.data.content,
+          input.originalStart,
+          progress,
+          replacements: singles,
+          futureChanges: future,
+        ),
+      );
+      final proposedValue = _taskValue(
+        () => taskTimingAt(
+          task.data.content,
+          input.originalStart,
+          progress,
+          replacements: proposedSingles,
+          futureChanges: proposedFuture,
+        ),
+      );
       CalendarAuthorizationRequest request(
         CalendarTaskProtocolVersion? version,
         CalendarTaskSourceState? sourceState,
@@ -200,8 +249,8 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
         CalendarPermission.updateTask,
         task: task,
         timingChange: input,
-        currentOccurrence: value(row?.replacementTiming),
-        proposedOccurrence: value(replacement),
+        currentOccurrence: currentValue,
+        proposedOccurrence: proposedValue,
         recordedOccurrences: [for (final r in rows) _taskRecordValue(r)],
         content: task.data.content,
         progress: task.data.progress,
@@ -223,7 +272,9 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
           if (row == null) input.originalStart,
         ]),
       );
-      final changed = row?.replacementTiming != replacement;
+      final changed =
+          (input.thisAndFuture ? row?.futureTiming : row?.replacementTiming) !=
+          replacement;
       if (changed && row == null && rows.length >= 1000) {
         throw _failure(CalendarFailureCode.limitExceeded);
       }
@@ -251,6 +302,7 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
                 replacement,
                 progress,
                 version!,
+                thisAndFuture: input.thisAndFuture,
               ),
             )
           : task.data.sourceState;
@@ -269,14 +321,19 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
               taskId: input.taskId,
               originalKey: key,
               originalStart: input.originalStart,
-              replacementTiming: replacement,
+              replacementTiming: input.thisAndFuture ? null : replacement,
+              futureTiming: input.thisAndFuture ? replacement : null,
               progress: progress,
               protocolVersion: version,
             ),
             transaction: tx,
           );
         } else {
-          row.replacementTiming = replacement;
+          if (input.thisAndFuture) {
+            row.futureTiming = replacement;
+          } else {
+            row.replacementTiming = replacement;
+          }
           row.protocolVersion = version;
           await CalendarTaskOccurrenceRecord.db.updateRow(
             _session,
@@ -325,21 +382,37 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
         CalendarPermission.changeTaskProgress,
         task: task,
         occurrenceChange: input,
-        currentOccurrence: CalendarTaskOccurrence(
-          originalStart: input.originalStart,
-          actualStart: row?.replacementTiming == null
-              ? input.originalStart
-              : taskAnchor(row!.replacementTiming!),
-          replacementTiming: row?.replacementTiming,
-          progress: before,
+        currentOccurrence: _taskValue(
+          () => taskTimingAt(
+            task.data.content,
+            input.originalStart,
+            before,
+            replacements: {
+              for (final r in rows)
+                if (r.replacementTiming != null)
+                  r.originalStart: r.replacementTiming!,
+            },
+            futureChanges: {
+              for (final r in rows)
+                if (r.futureTiming != null) r.originalStart: r.futureTiming!,
+            },
+          ),
         ),
-        proposedOccurrence: CalendarTaskOccurrence(
-          originalStart: input.originalStart,
-          actualStart: row?.replacementTiming == null
-              ? input.originalStart
-              : taskAnchor(row!.replacementTiming!),
-          replacementTiming: row?.replacementTiming,
-          progress: after,
+        proposedOccurrence: _taskValue(
+          () => taskTimingAt(
+            task.data.content,
+            input.originalStart,
+            after,
+            replacements: {
+              for (final r in rows)
+                if (r.replacementTiming != null)
+                  r.originalStart: r.replacementTiming!,
+            },
+            futureChanges: {
+              for (final r in rows)
+                if (r.futureTiming != null) r.originalStart: r.futureTiming!,
+            },
+          ),
         ),
         content: task.data.content,
         progress: task.data.progress,

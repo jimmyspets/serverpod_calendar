@@ -1,6 +1,6 @@
 # Single task occurrence timing
 
-Status: scoped native/wire/example implementation under [ADR 0101](adr/0101-single-task-occurrence-timing.md); concrete mechanics remain under draft review. The maintainer confirmed single-occurrence scope, complete timing replacements, completed-history preservation, progress capture and complete explicit wire timing. This-and-future timing and per-occurrence text remain separate.
+Status: scoped native/wire/example implementation under [ADR 0101](adr/0101-single-task-occurrence-timing.md); concrete mechanics remain under draft review. The maintainer confirmed single-occurrence scope, complete timing replacements, completed-history preservation, progress capture and complete explicit wire timing. [This-and-future timing](task-future-timing.md) now extends this slice under ADR 0102; per-occurrence text remains separate.
 
 ## Native action and identity
 
@@ -20,7 +20,7 @@ Pure core expansion validates all replacement anchors collectively and charges m
 
 ## Wire presence and pre-beta transition
 
-An occurrence component with **explicit DTSTART supplies its complete timing**. Omitted DUE/DURATION means no deadline, even when the master has one. Omitting all timing follows the master projection. Matching DUE-only repetitions from the earlier profile remain source-preserved following projections; a different DUE without DTSTART rejects. RANGE=THISANDFUTURE and content differences still reject. Master/original membership and exact profile must match; original identities never become moved starts. This is the selected bounded application profile, not a claim that RFC 5545 defines these inheritance choices or that external clients handle every form identically.
+An occurrence component with **explicit DTSTART supplies its complete timing**. Omitted DUE/DURATION means no deadline, even when the master has one. Omitting all timing follows the master projection. Matching DUE-only repetitions from the earlier profile remain source-preserved following projections; a different DUE without DTSTART rejects. RANGE=THISANDFUTURE now follows the [future timing profile](task-future-timing.md); content differences still reject. Master/original membership and exact profile must match; original identities never become moved starts. This is the selected bounded application profile, not a claim that RFC 5545 defines these inheritance choices or that external clients handle every form identically.
 
 Source timing writes retain metadata/annotations, raw progress and private import baselines. Full generated round trips validate current state and pinned full-horizon zones. Source alarms remain unarmed; reject a timing change that removes an inherited/retained relative END anchor instead of discarding or activating the alarm. Absolute source alarms remain inert values. Native task assignments still never become source participants.
 

@@ -398,6 +398,9 @@ extension CalendarTaskOperations on CalendarService {
       if (content != null) {
         _taskValue(() {
           for (final r in recorded) {
+            if (r.futureTiming != null) {
+              validateTaskReplacement(content, r.futureTiming!);
+            }
             if (r.replacementTiming != null) {
               validateTaskReplacement(content, r.replacementTiming!);
             }

@@ -3407,6 +3407,461 @@ void main() {
       kind: CalendarTaskTimeKind.date,
       start: CalendarEventCivil(year: 2026, month: 3, day: day),
     );
+    CalendarTaskOccurrenceTimingRequest taskFuture(
+      CalendarTaskReceipt t,
+      CalendarEventTiming original,
+      CalendarTaskTiming? replacement, [
+      int? revision,
+    ]) => taskTiming(
+      t,
+      original,
+      replacement,
+      revision,
+    ).copyWith(thisAndFuture: true);
+
+    for (final kind in [CalendarTaskTimeKind.utc, CalendarTaskTimeKind.zoned]) {
+      test(
+        'task future ${kind.name} persists nominal deadlines across DST and export',
+        () async {
+          final parent = (await service.create(createInput()))!.calendarId;
+          final timing = CalendarTaskTiming(
+            kind: kind,
+            zoneId: kind == CalendarTaskTimeKind.zoned
+                ? 'Europe/Stockholm'
+                : null,
+            start: CalendarEventCivil(year: 2026, month: 3, day: 27, hour: 9),
+            duration: CalendarEventDuration(days: 1),
+          );
+          final t = (await service.createTask(
+            CalendarTaskCreateRequest(
+              calendarId: parent,
+              content: CalendarTaskContent(
+                timing: timing,
+                recurrence: CalendarEventRecurrence(
+                  rule: daily(),
+                  inclusions: [],
+                  exclusions: [],
+                ),
+              ),
+              assignees: [],
+            ),
+          ))!;
+          CalendarTaskOccurrenceQuery query(int rev) =>
+              CalendarTaskOccurrenceQuery(
+                taskId: t.taskId,
+                expectedRevision: rev,
+                fromUtc: DateTime.utc(2026, 3, 27),
+                untilUtc: DateTime.utc(2026, 4, 1),
+              );
+          final original = (await service.previewTaskOccurrences(query(1)))
+              .occurrences
+              .first
+              .originalStart;
+          await service.changeTaskOccurrenceTiming(
+            taskFuture(
+              t,
+              original,
+              timing.copyWith(
+                start: CalendarEventCivil(
+                  year: 2026,
+                  month: 3,
+                  day: 28,
+                  hour: 9,
+                ),
+              ),
+            ),
+          );
+          final values = (await service.previewTaskOccurrences(query(2)))
+              .occurrences;
+          expect(values.map((o) => o.actualStart!.start.day), [28, 29, 30]);
+          expect(
+            values.first.dueUtc!.difference(values.first.startUtc!).inHours,
+            kind == CalendarTaskTimeKind.zoned ? 23 : 24,
+          );
+          expect(values.map((o) => o.duration!.days), [1, 1, 1]);
+          final bytes = await service.exportTasks(
+            taskExport([t.copyWith(revision: 2)]),
+          );
+          final other = (await service.create(createInput()))!.calendarId;
+          final copy = (await service.importTasks(
+            CalendarTaskImportRequest(
+              calendarId: other,
+              expectedRevision: 1,
+              bytes: bytes,
+            ),
+          )).receipts.single;
+          final again = (await service.previewTaskOccurrences(
+            query(1).copyWith(taskId: copy.taskId),
+          )).occurrences;
+          expect(again.map((o) => o.startUtc), values.map((o) => o.startUtc));
+          expect(again.map((o) => o.dueUtc), values.map((o) => o.dueUtc));
+          expect(again.first.futureTiming, values.first.futureTiming);
+        },
+      );
+    }
+
+    test('task future captures source master progress and rejects lost END alarm anchors', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final t = (await service.importTasks(
+        taskImportRequest(
+          parent,
+          text: taskCalendar(
+            importedTask(
+              'future-capture',
+              properties: ['RRULE:FREQ=DAILY;COUNT=3', 'PERCENT-COMPLETE:37'],
+            ),
+          ),
+        ),
+      )).receipts.single;
+      final original = (await service.previewTaskOccurrences(taskPreview(t)))
+          .occurrences
+          .first
+          .originalStart;
+      final baseline = (await CalendarTaskDataRecord.db.find(session))
+          .single
+          .importBaseline;
+      policy.denied.addAll([
+        CalendarPermission.changeTaskProgress,
+        CalendarPermission.changeTaskAssignments,
+      ]);
+      await service.changeTaskOccurrenceTiming(
+        taskFuture(t, original, movedTask(29)),
+      );
+      policy.denied.clear();
+      final data = (await CalendarTaskDataRecord.db.find(session)).single;
+      expect(data.importBaseline, baseline);
+      expect(data.sourceState!.occurrences.single.thisAndFuture, isTrue);
+      expect(data.sourceState!.occurrences.single.progress.percentComplete, 37);
+      expect(await CalendarTaskHistoryRecord.db.find(session), isEmpty);
+      final alarmTask = (await service.importTasks(
+        taskImportRequest(
+          parent,
+          text: taskCalendar(
+            importedTask(
+              'future-alarm',
+              properties: [
+                'RRULE:FREQ=DAILY;COUNT=3',
+                'DURATION:P1D',
+                'BEGIN:VALARM',
+                'ACTION:DISPLAY',
+                'DESCRIPTION:Due',
+                'TRIGGER;RELATED=END:-PT5M',
+                'END:VALARM',
+              ],
+            ),
+          ),
+        ),
+      )).receipts.single;
+      final alarmOriginal = (await service.previewTaskOccurrences(
+        taskPreview(alarmTask),
+      )).occurrences.first.originalStart;
+      await expectLater(
+        service.changeTaskOccurrenceTiming(
+          taskFuture(alarmTask, alarmOriginal, movedTask()),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      expect(await CalendarTaskOccurrenceRecord.db.count(session), 1);
+    });
+
+    test('task future absolute ranges preserve completed history and independent singles', () async {
+      final t = await recurringTask();
+      final originals = (await service.previewTaskOccurrences(taskPreview(t)))
+          .occurrences
+          .map((o) => o.originalStart)
+          .toList();
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(
+          t,
+          originals[0],
+          1,
+          CalendarTaskProgressAction.complete,
+        ),
+      );
+      final history = (await CalendarTaskHistoryRecord.db.find(session)).single
+          .toJson();
+      final master = (await CalendarTaskDataRecord.db.find(session))
+          .single
+          .protocolVersion;
+      await service.changeTaskOccurrenceTiming(
+        taskFuture(t, originals[0], movedTask(29), 2),
+      );
+      var preview = (await service.previewTaskOccurrences(taskPreview(t, 3)))
+          .occurrences;
+      expect(preview.map((o) => o.actualStart!.start.day), [29, 30, 31]);
+      expect(preview.first.progress.status, CalendarTaskStatus.completed);
+      expect(preview.skip(1).map((o) => o.progress.percentComplete), [0, 0]);
+      expect(preview.map((o) => o.dueDate), everyElement(isNull));
+      await service.changeTaskOccurrenceTiming(
+        taskTiming(t, originals[1], movedTask(28), 3),
+      );
+      await service.changeTaskOccurrenceTiming(
+        taskFuture(t, originals[2], movedTask(29), 4),
+      );
+      preview = (await service.previewTaskOccurrences(taskPreview(t, 5)))
+          .occurrences;
+      expect(preview.map((o) => o.originalStart), [
+        originals[1],
+        originals[0],
+        originals[2],
+      ]);
+      expect(preview.map((o) => o.actualStart!.start.day), [28, 29, 29]);
+      final anchor = (await CalendarTaskOccurrenceRecord.db.find(session))
+          .singleWhere((r) => r.originalStart == originals[2]);
+      await service.changeTaskOccurrenceTiming(
+        taskFuture(t, originals[2], movedTask(29), 5),
+      );
+      expect(
+        (await CalendarTaskOccurrenceRecord.db.find(session))
+            .singleWhere((r) => r.originalStart == originals[2])
+            .protocolVersion,
+        anchor.protocolVersion,
+      );
+      policy.onFinal = () {
+        final q = policy.lastTaskRequest!;
+        expect(q.taskOccurrenceTimingChange!.thisAndFuture, isTrue);
+        expect(q.currentTaskOccurrence!.actualStart!.start.day, 29);
+        expect(q.proposedTaskOccurrence!.actualStart!.start.day, 31);
+        expect(q.proposedTaskOccurrence!.futureTiming, isNull);
+        expect(() => q.recordedTaskOccurrences.clear(), throwsUnsupportedError);
+      };
+      await service.changeTaskOccurrenceTiming(
+        taskFuture(t, originals[2], null, 6),
+      );
+      policy.onFinal = null;
+      expect(
+        (await service.previewTaskOccurrences(taskPreview(t, 7)))
+            .occurrences
+            .last
+            .actualStart!
+            .start
+            .day,
+        31,
+      );
+      expect(
+        (await CalendarTaskHistoryRecord.db.find(session)).single.toJson(),
+        history,
+      );
+      expect(
+        (await CalendarTaskDataRecord.db.find(session)).single.protocolVersion,
+        master,
+      );
+    });
+
+    test('task future scope collisions and orphaning pattern edits reject atomically', () async {
+      final t = await recurringTask();
+      final original = (await service.previewTaskOccurrences(taskPreview(t)))
+          .occurrences[1]
+          .originalStart;
+      await service.changeTaskOccurrenceTiming(
+        taskFuture(t, original, movedTask(30)),
+      );
+      await expectLater(
+        service.changeTaskOccurrenceTiming(
+          taskTiming(t, original, movedTask(), 2),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      final data = (await CalendarTaskDataRecord.db.find(session)).single;
+      await expectLater(
+        service.updateTask(
+          CalendarTaskUpdateRequest(
+            taskId: t.taskId,
+            expectedRevision: 2,
+            content: data.content.copyWith(
+              recurrence: CalendarEventRecurrence(
+                rule: daily(count: 1),
+                inclusions: [],
+                exclusions: [],
+              ),
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      await service.changeTaskOccurrenceTiming(
+        taskFuture(t, original, null, 2),
+      );
+      await service.changeTaskOccurrenceTiming(
+        taskTiming(t, original, movedTask(), 3),
+      );
+      await expectLater(
+        service.changeTaskOccurrenceTiming(
+          taskFuture(t, original, movedTask(30), 4),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      expect(
+        (await CalendarTaskOccurrenceRecord.db.find(session))
+            .single
+            .replacementTiming,
+        movedTask(),
+      );
+    });
+
+    test('task future authorization stale final denial and late rollback retain storage', () async {
+      final t = await recurringTask();
+      final original = (await service.previewTaskOccurrences(taskPreview(t)))
+          .occurrences
+          .first
+          .originalStart;
+      await expectLater(
+        service.changeTaskOccurrenceTiming(
+          taskFuture(t, original, movedTask(), 2),
+        ),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      policy.denied.add(CalendarPermission.updateTask);
+      await expectLater(
+        service.changeTaskOccurrenceTiming(
+          taskFuture(t, original, movedTask()),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denied.clear();
+      policy.denyFinal = true;
+      await expectLater(
+        service.changeTaskOccurrenceTiming(
+          taskFuture(t, original, movedTask()),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denyFinal = false;
+      final scope = (await CalendarScopeRecord.db.find(session)).single;
+      scope.revision = 9007199254740991;
+      await CalendarScopeRecord.db.updateRow(session, scope);
+      await expectLater(
+        service.changeTaskOccurrenceTiming(
+          taskFuture(t, original, movedTask()),
+        ),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      expect(await CalendarTaskOccurrenceRecord.db.find(session), isEmpty);
+      expect(
+        (await CalendarTaskRecord.db.findById(session, t.taskId))!.revision,
+        1,
+      );
+    });
+
+    test('task future imports anchor progress only and round trips ranges with source baseline', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final t = (await service.importTasks(
+        taskImportRequest(
+          parent,
+          text: taskCalendar([
+            ...importedTask(
+              'future',
+              properties: [
+                'RRULE:FREQ=DAILY;COUNT=4',
+                'DURATION:P1D',
+                'PERCENT-COMPLETE:37',
+              ],
+            ),
+            ...importedTask(
+              'future',
+              timing: ['DTSTART;VALUE=DATE:20260402'],
+              properties: [
+                'RECURRENCE-ID;VALUE=DATE;RANGE=THISANDFUTURE:20260329',
+                'STATUS:COMPLETED',
+                'PERCENT-COMPLETE:100',
+              ],
+            ),
+            ...importedTask(
+              'future',
+              timing: [],
+              properties: [
+                'RECURRENCE-ID;VALUE=DATE:20260330',
+                'PERCENT-COMPLETE:12',
+              ],
+            ),
+          ]),
+        ),
+      )).receipts.single;
+      CalendarTaskOccurrenceQuery query(int rev) =>
+          taskPreview(t, rev).copyWith(
+            fromDate: CalendarEventCivil(year: 2026, month: 4, day: 1),
+            untilDate: CalendarEventCivil(year: 2026, month: 4, day: 5),
+          );
+      var preview = (await service.previewTaskOccurrences(query(1)))
+          .occurrences;
+      expect(preview.map((o) => o.actualStart!.start.day), [2, 3, 4]);
+      expect(preview.map((o) => o.progress.percentComplete), [100, 12, 37]);
+      expect(preview.map((o) => o.progress.status), [
+        CalendarTaskStatus.completed,
+        null,
+        null,
+      ]);
+      expect(preview.map((o) => o.dueDate), everyElement(isNull));
+      final data = (await CalendarTaskDataRecord.db.find(session)).single;
+      expect(data.sourceState!.occurrences.first.thisAndFuture, isTrue);
+      expect(await CalendarTaskHistoryRecord.db.find(session), isEmpty);
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(
+          t,
+          preview.first.originalStart,
+          1,
+          CalendarTaskProgressAction.reopen,
+        ),
+      );
+      preview = (await service.previewTaskOccurrences(query(2))).occurrences;
+      expect(preview.map((o) => o.progress.percentComplete), [0, 12, 37]);
+      expect(
+        (await CalendarTaskDataRecord.db.find(session)).single.importBaseline,
+        data.importBaseline,
+      );
+      final bytes = await service.exportTasks(
+        taskExport([t.copyWith(revision: 2)]),
+      );
+      expect(exported(bytes), contains('RANGE=THISANDFUTURE'));
+      final other = (await service.create(createInput()))!.calendarId;
+      final copy = (await service.importTasks(
+        CalendarTaskImportRequest(
+          calendarId: other,
+          expectedRevision: 1,
+          bytes: bytes,
+        ),
+      )).receipts.single;
+      final again = (await service.previewTaskOccurrences(
+        query(1).copyWith(taskId: copy.taskId),
+      )).occurrences;
+      expect(
+        again.map((o) => o.actualStart),
+        preview.map((o) => o.actualStart),
+      );
+      expect(again.map((o) => o.progress), preview.map((o) => o.progress));
+    });
+
+    test(
+      'task future DATE preview permits only the explicit 2100 query boundary',
+      () async {
+        final t = await recurringTask();
+        final original = (await service.previewTaskOccurrences(taskPreview(t)))
+            .occurrences
+            .first
+            .originalStart;
+        await service.changeTaskOccurrenceTiming(
+          taskFuture(
+            t,
+            original,
+            CalendarTaskTiming(
+              kind: CalendarTaskTimeKind.date,
+              start: CalendarEventCivil(year: 2099, month: 12, day: 31),
+            ),
+          ),
+        );
+        final q = taskPreview(t, 2).copyWith(
+          fromDate: CalendarEventCivil(year: 2099, month: 12, day: 31),
+          untilDate: CalendarEventCivil(year: 2100, month: 1, day: 1),
+        );
+        expect(
+          (await service.previewTaskOccurrences(q))
+              .occurrences
+              .single
+              .originalStart,
+          original,
+        );
+      },
+    );
     for (final kind in [CalendarTaskTimeKind.utc, CalendarTaskTimeKind.zoned]) {
       test(
         'task timing ${kind.name} persists DST gap replacements and wire versions',
