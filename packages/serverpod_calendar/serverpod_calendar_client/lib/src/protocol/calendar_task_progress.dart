@@ -17,11 +17,10 @@ import 'calendar_task_status.dart' as _iiahrdev;
 abstract class CalendarTaskProgress
     implements _isc.SerializableModel, _isc.ProtocolSerialization {
   const CalendarTaskProgress._({
-    _iiahrdev.CalendarTaskStatus? status,
-    int? percentComplete,
+    this.status,
+    this.percentComplete,
     this.completedAt,
-  }) : status = status ?? _iiahrdev.CalendarTaskStatus.needsAction,
-       percentComplete = percentComplete ?? 0;
+  });
 
   const factory CalendarTaskProgress({
     _iiahrdev.CalendarTaskStatus? status,
@@ -47,9 +46,9 @@ abstract class CalendarTaskProgress
     );
   }
 
-  final _iiahrdev.CalendarTaskStatus status;
+  final _iiahrdev.CalendarTaskStatus? status;
 
-  final int percentComplete;
+  final int? percentComplete;
 
   final DateTime? completedAt;
 
@@ -100,8 +99,8 @@ abstract class CalendarTaskProgress
   Map<String, dynamic> toJson() {
     return {
       '__className__': 'serverpod_calendar.CalendarTaskProgress',
-      'status': status.toJson(),
-      'percentComplete': percentComplete,
+      if (status != null) 'status': status?.toJson(),
+      if (percentComplete != null) 'percentComplete': percentComplete,
       if (completedAt != null) 'completedAt': completedAt?.toJson(),
     };
   }
@@ -110,8 +109,8 @@ abstract class CalendarTaskProgress
   Map<String, dynamic> toJsonForProtocol() {
     return {
       '__className__': 'serverpod_calendar.CalendarTaskProgress',
-      'status': status.toJson(),
-      'percentComplete': percentComplete,
+      if (status != null) 'status': status?.toJson(),
+      if (percentComplete != null) 'percentComplete': percentComplete,
       if (completedAt != null) 'completedAt': completedAt?.toJson(),
     };
   }
@@ -140,13 +139,15 @@ class _CalendarTaskProgressImpl extends CalendarTaskProgress {
   @_isc.useResult
   @override
   CalendarTaskProgress copyWith({
-    _iiahrdev.CalendarTaskStatus? status,
-    int? percentComplete,
+    Object? status = _Undefined,
+    Object? percentComplete = _Undefined,
     Object? completedAt = _Undefined,
   }) {
     return CalendarTaskProgress(
-      status: status ?? this.status,
-      percentComplete: percentComplete ?? this.percentComplete,
+      status: status is _iiahrdev.CalendarTaskStatus? ? status : this.status,
+      percentComplete: percentComplete is int?
+          ? percentComplete
+          : this.percentComplete,
       completedAt: completedAt is DateTime? ? completedAt : this.completedAt,
     );
   }

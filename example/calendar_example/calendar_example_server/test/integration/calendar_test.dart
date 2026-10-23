@@ -276,6 +276,131 @@ void main() {
       cursor: cursor,
     );
 
+    test('source progress optional fields survive reads content writes and disclosure', () async {
+      final parent = (await service.create(createInput()))!.calendarId,
+          t = await taskCreate(parent);
+      final data = (await CalendarTaskDataRecord.db.find(session)).single;
+      data.progress = CalendarTaskProgress(completedAt: DateTime.utc(2020));
+      await CalendarTaskDataRecord.db.updateRow(session, data);
+      var view = await taskRead(t.taskId);
+      expect(view.progress!.status, isNull);
+      expect(view.progress!.percentComplete, isNull);
+      expect(view.progress!.completedAt, DateTime.utc(2020));
+      await service.updateTask(
+        CalendarTaskUpdateRequest(
+          taskId: t.taskId,
+          expectedRevision: 1,
+          content: taskContent('Changed text'),
+        ),
+      );
+      view = await taskRead(t.taskId);
+      expect(view.progress!.status, isNull);
+      expect(view.progress!.percentComplete, isNull);
+      expect(view.progress!.completedAt, DateTime.utc(2020));
+      expect(await CalendarTaskHistoryRecord.db.count(session), 0);
+      policy.taskGrants.remove(CalendarTaskFieldGroup.progress);
+      expect((await taskRead(t.taskId)).progress, isNull);
+      policy.taskGrants.add(CalendarTaskFieldGroup.progress);
+      await service.changeTaskProgress(
+        progressRequest(t.taskId, 2, CalendarTaskProgressAction.cancel),
+      );
+      view = await taskRead(t.taskId);
+      expect(view.progress!.status, CalendarTaskStatus.cancelled);
+      expect(view.progress!.percentComplete, isNull);
+      expect(view.progress!.completedAt, isNull);
+    });
+    test('source recurring master defaults and sparse explicit originals remain independent', () async {
+      final t = await recurringTask(),
+          data = (await CalendarTaskDataRecord.db.find(session)).single;
+      data.progress = CalendarTaskProgress(
+        status: CalendarTaskStatus.completed,
+        percentComplete: 37,
+      );
+      await CalendarTaskDataRecord.db.updateRow(session, data);
+      final preview = (await service.previewTaskOccurrences(taskPreview(t)))
+          .occurrences;
+      expect(
+        preview.every(
+          (o) =>
+              o.progress.status == CalendarTaskStatus.completed &&
+              o.progress.percentComplete == 37 &&
+              o.progress.completedAt == null,
+        ),
+        isTrue,
+      );
+      final first = preview.first.originalStart,
+          second = preview[1].originalStart;
+      await CalendarTaskOccurrenceRecord.db.insertRow(
+        session,
+        CalendarTaskOccurrenceRecord(
+          taskId: t.taskId,
+          originalKey: taskOriginalKey(second),
+          originalStart: second,
+          progress: CalendarTaskProgress(percentComplete: 12),
+        ),
+      );
+      var values = (await service.previewTaskOccurrences(taskPreview(t)))
+          .occurrences;
+      expect(values[1].progress.status, isNull);
+      expect(values[1].progress.percentComplete, 12);
+      expect(await CalendarTaskHistoryRecord.db.count(session), 0);
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(t, first, 1, CalendarTaskProgressAction.complete),
+      );
+      values = (await service.previewTaskOccurrences(taskPreview(t, 2)))
+          .occurrences;
+      expect(values.first.progress.percentComplete, 100);
+      expect(values.first.progress.completedAt, isNotNull);
+      expect(values[1].progress.status, isNull);
+      expect(values[1].progress.percentComplete, 12);
+      expect(values.last.progress.percentComplete, 37);
+      expect(values.last.progress.completedAt, isNull);
+      final history = (await service.taskOccurrenceHistory(
+        taskHistory(t, first, 2),
+      )).entries.single;
+      expect(history.before.status, CalendarTaskStatus.completed);
+      expect(history.before.percentComplete, 37);
+      expect(history.before.completedAt, isNull);
+      expect(history.after.percentComplete, 100);
+      expect(policy.lastTaskRequest!.currentTask!.progress.percentComplete, 37);
+      await expectLater(
+        service.changeTaskProgress(
+          progressRequest(t.taskId, 2, CalendarTaskProgressAction.reopen),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+    });
+    test('source completion timestamp still blocks supposedly clean native recurrence conversion', () async {
+      final parent = (await service.create(createInput()))!.calendarId,
+          t = await taskCreate(parent),
+          data = (await CalendarTaskDataRecord.db.find(session)).single;
+      data.progress = CalendarTaskProgress(
+        status: CalendarTaskStatus.needsAction,
+        percentComplete: 0,
+        completedAt: DateTime.utc(2020),
+      );
+      await CalendarTaskDataRecord.db.updateRow(session, data);
+      await expectLater(
+        service.updateTask(
+          CalendarTaskUpdateRequest(
+            taskId: t.taskId,
+            expectedRevision: 1,
+            content: CalendarTaskContent(
+              timing: CalendarTaskTiming(
+                kind: CalendarTaskTimeKind.date,
+                start: CalendarEventCivil(year: 2026, month: 3, day: 28),
+              ),
+              recurrence: CalendarEventRecurrence(
+                rule: daily(),
+                inclusions: [],
+                exclusions: [],
+              ),
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+    });
     test('recurring task progress is independent with retained history and true transition no-ops', () async {
       final t = await recurringTask(),
           initial = await service.previewTaskOccurrences(taskPreview(t));

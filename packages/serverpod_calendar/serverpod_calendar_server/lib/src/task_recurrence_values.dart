@@ -214,7 +214,10 @@ List<CalendarTaskOccurrence> previewTaskValues(
           dueDate: o.timing.effectiveDue == null
               ? null
               : eventDate(o.timing.effectiveDue!),
-          progress: CalendarTaskProgress(),
+          progress: CalendarTaskProgress(
+            status: CalendarTaskStatus.needsAction,
+            percentComplete: 0,
+          ),
         ),
     ]);
   }
@@ -248,7 +251,10 @@ List<CalendarTaskOccurrence> previewTaskValues(
         ),
         startUtc: o.originalStart.instant,
         dueUtc: o.timing.dueInstant,
-        progress: CalendarTaskProgress(),
+        progress: CalendarTaskProgress(
+          status: CalendarTaskStatus.needsAction,
+          percentComplete: 0,
+        ),
       ),
   ]);
 }

@@ -175,7 +175,10 @@ void main() {
         action: action,
         percentComplete: percent,
       );
-      final initial = CalendarTaskProgress();
+      final initial = CalendarTaskProgress(
+        status: CalendarTaskStatus.needsAction,
+        percentComplete: 0,
+      );
       final progress = changeTaskProgressValue(
         initial,
         request(CalendarTaskProgressAction.setPercentage, percent: 63),
@@ -246,25 +249,95 @@ void main() {
       );
     },
   );
-  test(
-    'progress constraints never accept forged incomplete completion values',
-    () {
-      for (final p in [
-        CalendarTaskProgress(percentComplete: 1),
-        CalendarTaskProgress(
-          status: CalendarTaskStatus.completed,
-          percentComplete: 100,
-        ),
-        CalendarTaskProgress(
-          status: CalendarTaskStatus.inProcess,
-          percentComplete: 100,
-        ),
-        CalendarTaskProgress(completedAt: DateTime.utc(2026)),
-      ]) {
-        expect(() => validateTaskProgress(p), throwsArgumentError);
+  test('source progress retains independently optional fields and unusual combinations', () {
+    for (final status in <CalendarTaskStatus?>[
+      null,
+      ...CalendarTaskStatus.values,
+    ]) {
+      for (final percent in <int?>[null, 0, 37, 100]) {
+        for (final completion in <DateTime?>[null, DateTime.utc(2026)]) {
+          final source = CalendarTaskProgress(
+            status: status,
+            percentComplete: percent,
+            completedAt: completion,
+          );
+          final value = validateTaskProgress(
+            CalendarTaskProgress.fromJson(source.toJson()),
+          );
+          expect(value.status, status);
+          expect(value.percentComplete, percent);
+          expect(value.completedAt, completion);
+        }
       }
-    },
-  );
+    }
+    final absent = CalendarTaskProgress.fromJson({});
+    expect(absent.status, isNull);
+    expect(absent.percentComplete, isNull);
+    expect(absent.completedAt, isNull);
+    for (final p in [
+      CalendarTaskProgress(percentComplete: -1),
+      CalendarTaskProgress(percentComplete: 101),
+      CalendarTaskProgress(completedAt: DateTime(2026)),
+      CalendarTaskProgress(completedAt: DateTime.utc(2100)),
+      CalendarTaskProgress(
+        completedAt: DateTime.utc(2026).add(const Duration(microseconds: 1)),
+      ),
+    ]) {
+      expect(() => validateTaskProgress(p), throwsArgumentError);
+    }
+  });
+  test('native commands explicitly replace unusual source progress without fabricated past history', () {
+    final now = DateTime.utc(2026, 10, 23, 12),
+        id = UuidValue.fromString('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+    CalendarTaskProgress change(
+      CalendarTaskProgress before,
+      CalendarTaskProgressAction action, {
+      int? percent,
+    }) => changeTaskProgressValue(
+      before,
+      CalendarTaskProgressRequest(
+        taskId: id,
+        expectedRevision: 1,
+        action: action,
+        percentComplete: percent,
+      ),
+      now,
+    );
+    final sparse = CalendarTaskProgress(
+      status: CalendarTaskStatus.completed,
+      percentComplete: 37,
+    );
+    final completed = change(sparse, CalendarTaskProgressAction.complete);
+    expect(completed.status, CalendarTaskStatus.completed);
+    expect(completed.percentComplete, 100);
+    expect(completed.completedAt, now);
+    expect(
+      identical(
+        change(completed, CalendarTaskProgressAction.complete),
+        completed,
+      ),
+      isTrue,
+    );
+    final cancelled = change(
+      CalendarTaskProgress(completedAt: DateTime.utc(2020)),
+      CalendarTaskProgressAction.cancel,
+    );
+    expect(cancelled.status, CalendarTaskStatus.cancelled);
+    expect(cancelled.percentComplete, isNull);
+    expect(cancelled.completedAt, isNull);
+    final reopened = change(sparse, CalendarTaskProgressAction.reopen);
+    expect(reopened.status, CalendarTaskStatus.needsAction);
+    expect(reopened.percentComplete, 0);
+    expect(reopened.completedAt, isNull);
+    final percentage = change(
+      CalendarTaskProgress(completedAt: DateTime.utc(2020)),
+      CalendarTaskProgressAction.setPercentage,
+      percent: 25,
+    );
+    expect(percentage.status, CalendarTaskStatus.inProcess);
+    expect(percentage.percentComplete, 25);
+    expect(percentage.completedAt, isNull);
+  });
   test('opaque assignments canonicalize exactly after charging raw limits', () {
     final a = CalendarTaskAssignee(
           namespace: 'host',
