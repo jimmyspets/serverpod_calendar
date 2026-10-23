@@ -508,3 +508,11 @@ Generated additions are `CalendarEventTextParameters`, `CalendarEventProtocolVer
 ## VTODO DISPLAY alarm wire increment, 2026-10-23
 
 [ADR 0094](adr/0094-vtodo-display-alarm-source-profile.md) and [the task adapter](icalendar-task-adapter.md#unarmed-display-alarm-definitions) now preserve unarmed DISPLAY source alarms, relative task start/due or absolute UTC triggers, bounded paired repeats and optional source UID/ACKNOWLEDGED. Validate typed anchor presence and matching occurrence inheritance, with shared file/text budgets and exact portable duration bounds. No native recipient/consent/action/history or delivery is inferred; no firing instants are generated. Snooze relationships, event alarms, activation authorization, native storage/runtime and notification integration remain separate. This supersedes older blanket task-VALARM rejection only for this source slice; no runtime/client interoperability follows.
+
+## VTODO snooze source model proposal
+
+[ADR 0095](adr/0095-vtodo-snooze-source-profile.md) proposes optional decoded `snoozeTargetUid` and `isSnooze` on the immutable DISPLAY source alarm. Resolve exact sibling source UIDs within one raw VTODO for structural validation only; require acknowledged original, own UID and absolute UTC trigger without repeats. This is not a native personal snooze, verified acknowledgement or delivery record.
+
+## VTODO sibling snooze source increment, 2026-10-23
+
+[ADR 0095](adr/0095-vtodo-snooze-source-profile.md) and [the task adapter](icalendar-task-adapter.md#bounded-source-snooze-links) extend unarmed DISPLAY definitions with exact same-VTODO sibling SNOOZE links: own UID, absolute UTC trigger, acknowledged original and no repeats/chains/detached borrowing. Preserve source state/order and occurrence inheritance without native actions, consent, delivery or history. This supersedes older blanket snooze-wire rejection only for this structural source slice; event/native snooze, activation/privacy/runtime and notification integration remain pending.

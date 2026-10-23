@@ -26,6 +26,7 @@ final class IcalendarDisplayAlarm {
     this.acknowledged,
     this.repeat,
     this.repeatInterval,
+    this.snoozeTargetUid,
   );
   final IcalendarSyntaxComponent source;
   final IcalendarEventText description;
@@ -34,6 +35,8 @@ final class IcalendarDisplayAlarm {
   final DateTime? acknowledged;
   final int? repeat;
   final CalendarDuration? repeatInterval;
+  final String? snoozeTargetUid;
+  bool get isSnooze => snoozeTargetUid != null;
 }
 
 List<IcalendarDisplayAlarm> _displayAlarms(
@@ -59,6 +62,7 @@ List<IcalendarDisplayAlarm> _displayAlarms(
       'ACKNOWLEDGED',
       'REPEAT',
       'DURATION',
+      'RELATED-TO',
     });
     final action = requiredProperty(p, 'ACTION');
     componentParameters(action, {});
@@ -121,11 +125,28 @@ List<IcalendarDisplayAlarm> _displayAlarms(
       _alarmDurationBound(interval, budget.limits);
       _alarmDurationBound(interval, budget.limits, multiplier: repeat);
     }
+    String? snoozeTarget;
+    if (p['RELATED-TO'] != null) {
+      final relation = p['RELATED-TO']!.single;
+      final parameters = componentParameters(relation, {'RELTYPE'});
+      if (parameters['RELTYPE'] == null ||
+          componentToken(parameters['RELTYPE']!) != 'SNOOZE') {
+        componentFail(IcalendarComponentError.unsupportedParameter);
+      }
+      snoozeTarget = componentText(relation, parameters: {'RELTYPE'});
+      if (snoozeTarget.isEmpty ||
+          uid == null ||
+          absolute == null ||
+          repeat != null) {
+        componentFail(IcalendarComponentError.invalidValue);
+      }
+    }
     budget.taskMetadata(
       description.value.runes.length +
           (description.language?.runes.length ?? 0) +
           (description.alternativeUri?.runes.length ?? 0) +
-          (uid?.runes.length ?? 0),
+          (uid?.runes.length ?? 0) +
+          (snoozeTarget?.runes.length ?? 0),
     );
     result.add(
       IcalendarDisplayAlarm._(
@@ -136,8 +157,22 @@ List<IcalendarDisplayAlarm> _displayAlarms(
         acknowledged,
         repeat,
         interval,
+        snoozeTarget,
       ),
     );
+  }
+  final byUid = {
+    for (final alarm in result)
+      if (alarm.uid != null) alarm.uid!: alarm,
+  };
+  for (final alarm in result.where((a) => a.isSnooze)) {
+    final original = byUid[alarm.snoozeTargetUid];
+    if (original == null) componentFail(IcalendarComponentError.missing);
+    if (identical(original, alarm) ||
+        original.isSnooze ||
+        original.acknowledged == null) {
+      componentFail(IcalendarComponentError.invalidValue);
+    }
   }
   return List.unmodifiable(result);
 }
@@ -185,7 +220,8 @@ void _matchingDisplayAlarms(
   }
   for (var i = 0; i < override.length; i++) {
     final a = override[i], b = master[i];
-    if (a.uid != b.uid ||
+    if (a.snoozeTargetUid != b.snoozeTargetUid ||
+        a.uid != b.uid ||
         a.acknowledged != b.acknowledged ||
         a.repeat != b.repeat ||
         a.repeatInterval != b.repeatInterval ||
