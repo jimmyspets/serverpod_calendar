@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 
 import 'generated/protocol.dart';
+import 'task_source_values.dart';
 
 /// The guarantee supplied by a host adapter, not inferred from its storage.
 enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
@@ -163,6 +164,8 @@ final class CalendarAuthorizationRequest {
     this.proposedTaskProgress,
     this.proposedTaskAssignees,
     this.proposedTaskVersion,
+    this.proposedTaskOccurrenceVersion,
+    this.proposedTaskSourceState,
     this.taskProgressChange,
     this.taskOccurrenceQuery,
     this.taskOccurrenceProgressChange,
@@ -207,7 +210,9 @@ final class CalendarAuthorizationRequest {
   final CalendarTaskContent? proposedTaskContent;
   final CalendarTaskProgress? proposedTaskProgress;
   final List<CalendarTaskAssignee>? proposedTaskAssignees;
-  final CalendarTaskProtocolVersion? proposedTaskVersion;
+  final CalendarTaskProtocolVersion? proposedTaskVersion,
+      proposedTaskOccurrenceVersion;
+  final CalendarTaskSourceState? proposedTaskSourceState;
   final CalendarTaskProgressRequest? taskProgressChange;
   final CalendarTaskOccurrenceQuery? taskOccurrenceQuery;
   final CalendarTaskOccurrenceProgressRequest? taskOccurrenceProgressChange;
@@ -554,10 +559,15 @@ final class CalendarTaskPolicySnapshot {
     required this.protocolVersion,
     required this.updatedAt,
     required this.hasRecordedProgress,
-  }) : assignees = List.unmodifiable(assignees);
+    CalendarTaskSourceState? sourceState,
+  }) : sourceState = sourceState == null
+           ? null
+           : validateTaskSourceState(protocolUid, sourceState),
+       assignees = List.unmodifiable(assignees);
   final UuidValue taskId, calendarId;
   final int revision;
   final bool? hasRecordedProgress;
+  final CalendarTaskSourceState? sourceState;
   final CalendarTaskContent content;
   final CalendarTaskProgress progress;
   final List<CalendarTaskAssignee> assignees;

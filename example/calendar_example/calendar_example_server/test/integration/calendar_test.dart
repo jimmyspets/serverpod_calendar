@@ -10,6 +10,7 @@ import 'package:serverpod_calendar_server/src/availability_wire_storage.dart';
 import 'package:serverpod_calendar_server/src/event_wire_storage.dart';
 import 'package:serverpod_calendar_server/src/event_protocol_values.dart';
 import 'package:serverpod_calendar_server/src/task_recurrence_values.dart';
+import 'package:serverpod_calendar_server/src/task_source_values.dart';
 
 import 'test_tools/serverpod_test_tools.dart';
 
@@ -275,6 +276,362 @@ void main() {
       pageSize: size,
       cursor: cursor,
     );
+
+    // Synthetic storage fixture only; no import endpoint is exercised here.
+    Future<CalendarTaskReceipt> storedSourceTask({
+      bool recurring = false,
+      bool alarm = false,
+    }) async {
+      final parent = (await service.create(createInput()))!.calendarId,
+          task = await taskCreate(parent);
+      final p = taskStorageProposal(
+        parseIcalendarTaskCalendar(
+          utf8.encode(
+            [
+              'BEGIN:VCALENDAR',
+              'VERSION:2.0',
+              'PRODID:Synthetic',
+              'BEGIN:VTODO',
+              'UID:source-task@example.invalid',
+              'DTSTAMP:20260301T000000Z',
+              'SUMMARY;LANGUAGE=sv:Hej',
+              'CONTACT:Private source contact',
+              'ORGANIZER:mailto:source@example.invalid',
+              'ATTENDEE:mailto:guest@example.invalid',
+              'ATTACH:cid:synthetic@example.invalid',
+              'STATUS:NEEDS-ACTION',
+              'PERCENT-COMPLETE:0',
+              'DTSTART;VALUE=DATE:20260328',
+              if (recurring) 'RRULE:FREQ=DAILY;COUNT=4',
+              if (alarm) ...[
+                'BEGIN:VALARM',
+                'ACTION:DISPLAY',
+                'DESCRIPTION:Private reminder',
+                'TRIGGER:-PT5M',
+                'END:VALARM',
+              ],
+              'END:VTODO',
+              if (recurring) ...[
+                'BEGIN:VTODO',
+                'UID:source-task@example.invalid',
+                'DTSTAMP:20260302T000000Z',
+                'RECURRENCE-ID;VALUE=DATE:20260329',
+                'SUMMARY;LANGUAGE=sv:Hej',
+                'PERCENT-COMPLETE:12',
+                'END:VTODO',
+              ],
+              'END:VCALENDAR',
+              '',
+            ].join('\r\n'),
+          ),
+        ).series.single,
+      );
+      final d = (await CalendarTaskDataRecord.db.find(session)).single;
+      d.protocolUid = p.protocolUid;
+      d.uidDigest = eventUidDigest(p.protocolUid);
+      d.content = p.state.master.content;
+      d.progress = p.state.master.progress;
+      d.protocolVersion = p.state.master.version;
+      d.sourceState = p.state;
+      d.importBaseline = p.importBaseline;
+      d.hasRecordedProgress = null;
+      await CalendarTaskDataRecord.db.updateRow(session, d);
+      for (final o in p.state.occurrences) {
+        await CalendarTaskOccurrenceRecord.db.insertRow(
+          session,
+          CalendarTaskOccurrenceRecord(
+            taskId: task.taskId,
+            originalKey: taskOriginalKey(o.originalStart!),
+            originalStart: o.originalStart!,
+            progress: o.progress,
+            protocolVersion: o.version,
+          ),
+        );
+      }
+      return task;
+    }
+
+    test('task source storage retains metadata baseline and immutable policy context across edits', () async {
+      final task = await storedSourceTask(recurring: true),
+          before = (await CalendarTaskDataRecord.db.find(session)).single;
+      await service.updateTask(
+        CalendarTaskUpdateRequest(
+          taskId: task.taskId,
+          expectedRevision: 1,
+          content: before.content.copyWith(summary: 'Changed'),
+        ),
+      );
+      final proposal = policy.lastTaskRequest!.proposedTaskSourceState!;
+      expect(
+        proposal.master.metadata.contacts.single.value,
+        'Private source contact',
+      );
+      expect(proposal.master.metadata.attendees, hasLength(1));
+      expect(proposal.master.textParameters!.summary!.language, 'sv');
+      expect(
+        () => proposal.master.metadata.attendees.clear(),
+        throwsUnsupportedError,
+      );
+      expect(
+        () => policy
+            .lastTaskRequest!
+            .currentTask!
+            .sourceState!
+            .master
+            .metadata
+            .contacts
+            .clear(),
+        throwsUnsupportedError,
+      );
+      final after = (await CalendarTaskDataRecord.db.find(session)).single;
+      expect(after.importBaseline, before.importBaseline);
+      expect(after.sourceState!.occurrences.single.content.summary, 'Changed');
+      expect(after.sourceState!.occurrences.single.version.sequence, 1);
+      expect(
+        (await CalendarTaskOccurrenceRecord.db.find(session))
+            .single
+            .protocolVersion!
+            .sequence,
+        1,
+      );
+      expect(after.protocolVersion.sequence, 1);
+      final view = await taskRead(task.taskId);
+      expect(view.assignees, isEmpty);
+      expect(view.toJson().containsKey('sourceState'), isFalse);
+      expect(view.toJson().containsKey('importBaseline'), isFalse);
+      expect(await CalendarTaskHistoryRecord.db.count(session), 0);
+      await service.updateTask(
+        CalendarTaskUpdateRequest(
+          taskId: task.taskId,
+          expectedRevision: 2,
+          content: after.content,
+        ),
+      );
+      final noOp = (await CalendarTaskDataRecord.db.find(session)).single;
+      expect(noOp.protocolVersion, after.protocolVersion);
+      expect(noOp.sourceState, after.sourceState);
+    });
+    test('task source storage rejects lost alarm anchors unknown conversion and final denial atomically', () async {
+      final task = await storedSourceTask(alarm: true),
+          before = (await CalendarTaskDataRecord.db.find(session)).single;
+      await expectLater(
+        service.updateTask(
+          CalendarTaskUpdateRequest(
+            taskId: task.taskId,
+            expectedRevision: 1,
+            content: before.content.copyWith(
+              timing: CalendarTaskTiming(kind: CalendarTaskTimeKind.undated),
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      await expectLater(
+        service.updateTask(
+          CalendarTaskUpdateRequest(
+            taskId: task.taskId,
+            expectedRevision: 1,
+            content: before.content.copyWith(
+              recurrence: CalendarEventRecurrence(
+                rule: daily(),
+                inclusions: [],
+                exclusions: [],
+              ),
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      await expectLater(
+        service.updateTask(
+          CalendarTaskUpdateRequest(
+            taskId: task.taskId,
+            expectedRevision: 1,
+            content: before.content.copyWith(
+              description: String.fromCharCode(0x1f600) * 16384,
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      policy.denyFinal = true;
+      await expectLater(
+        service.updateTask(
+          CalendarTaskUpdateRequest(
+            taskId: task.taskId,
+            expectedRevision: 1,
+            content: before.content.copyWith(summary: 'Denied'),
+          ),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denyFinal = false;
+      final after = (await CalendarTaskDataRecord.db.find(session)).single;
+      expect(after.toJson(), before.toJson());
+      expect((await taskRead(task.taskId)).revision, 1);
+      expect(await CalendarTaskHistoryRecord.db.count(session), 0);
+    });
+    test('task source storage occurrence actions own versions without changing the master', () async {
+      final task = await storedSourceTask(recurring: true),
+          before = (await CalendarTaskDataRecord.db.find(session)).single;
+      final values = await service.previewTaskOccurrences(taskPreview(task)),
+          original = values.occurrences[1].originalStart;
+      expect(values.occurrences[1].progress.status, isNull);
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(
+          task,
+          original,
+          1,
+          CalendarTaskProgressAction.complete,
+        ),
+      );
+      expect(
+        policy.lastTaskRequest!.proposedTaskOccurrenceVersion!.sequence,
+        1,
+      );
+      expect(
+        policy.lastTaskRequest!.proposedTaskVersion,
+        before.protocolVersion,
+      );
+      var after = (await CalendarTaskDataRecord.db.find(session)).single;
+      expect(after.protocolVersion, before.protocolVersion);
+      expect(after.importBaseline, before.importBaseline);
+      expect(after.sourceState!.occurrences.single.version.created, isNull);
+      expect(
+        after.sourceState!.occurrences.single.content.timing.kind,
+        CalendarTaskTimeKind.undated,
+      );
+      expect(await CalendarTaskHistoryRecord.db.count(session), 1);
+      final version = after.sourceState!.occurrences.single.version;
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(
+          task,
+          original,
+          2,
+          CalendarTaskProgressAction.complete,
+        ),
+      );
+      after = (await CalendarTaskDataRecord.db.find(session)).single;
+      expect(after.sourceState!.occurrences.single.version, version);
+      expect(await CalendarTaskHistoryRecord.db.count(session), 1);
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(
+          task,
+          values.occurrences.first.originalStart,
+          3,
+          CalendarTaskProgressAction.complete,
+        ),
+      );
+      after = (await CalendarTaskDataRecord.db.find(session)).single;
+      expect(after.sourceState!.occurrences, hasLength(2));
+      expect(after.sourceState!.occurrences.last.version.sequence, 0);
+      expect(after.sourceState!.occurrences.last.version.created, isNotNull);
+      expect(after.protocolVersion, before.protocolVersion);
+    });
+    test('task source storage assignments preserve protocol state and keep stale final checks', () async {
+      final task = await storedSourceTask(),
+          before = (await CalendarTaskDataRecord.db.find(session)).single;
+      CalendarTaskAssignmentsRequest request(int revision) =>
+          CalendarTaskAssignmentsRequest(
+            taskId: task.taskId,
+            expectedRevision: revision,
+            assignees: [
+              CalendarTaskAssignee(
+                namespace: 'test',
+                kind: 'user',
+                externalId: 'alice',
+              ),
+            ],
+          );
+      await service.changeTaskAssignments(request(1));
+      final after = (await CalendarTaskDataRecord.db.find(session)).single;
+      expect(after.protocolVersion, before.protocolVersion);
+      expect(after.sourceState, before.sourceState);
+      expect(after.importBaseline, before.importBaseline);
+      expect((await taskRead(task.taskId)).revision, 2);
+      await expectLater(
+        service.changeTaskAssignments(request(1)),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      policy.denyFinal = true;
+      await expectLater(
+        service.changeTaskAssignments(request(2)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denyFinal = false;
+      expect((await taskRead(task.taskId)).revision, 2);
+    });
+    test('task source storage corrupt projections and private baseline profiles fail closed', () async {
+      final task = await storedSourceTask(recurring: true),
+          data = (await CalendarTaskDataRecord.db.find(session)).single;
+      final original = data.content;
+      data.content = original.copyWith(summary: 'Corrupt shadow');
+      await CalendarTaskDataRecord.db.updateRow(session, data);
+      await expectLater(
+        taskRead(task.taskId),
+        failure(CalendarFailureCode.unavailable),
+      );
+      data.content = original;
+      await CalendarTaskDataRecord.db.updateRow(session, data);
+      final row = (await CalendarTaskOccurrenceRecord.db.find(session)).single;
+      row.progress = CalendarTaskProgress(percentComplete: 99);
+      await CalendarTaskOccurrenceRecord.db.updateRow(session, row);
+      await expectLater(
+        service.previewTaskOccurrences(taskPreview(task)),
+        failure(CalendarFailureCode.unavailable),
+      );
+      data.importBaseline = data.importBaseline!.copyWith(profile: 'unknown');
+      await CalendarTaskDataRecord.db.updateRow(session, data);
+      await expectLater(
+        taskRead(task.taskId),
+        failure(CalendarFailureCode.unavailable),
+      );
+    });
+    test('task source storage deletion scrubs active data source history and baseline', () async {
+      final task = await storedSourceTask(recurring: true),
+          first = (await service.previewTaskOccurrences(taskPreview(task)))
+              .occurrences
+              .first
+              .originalStart;
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(task, first, 1, CalendarTaskProgressAction.complete),
+      );
+      await service.deleteTask(task.taskId, 2);
+      expect(await CalendarTaskDataRecord.db.count(session), 0);
+      expect(await CalendarTaskOccurrenceRecord.db.count(session), 0);
+      expect(await CalendarTaskHistoryRecord.db.count(session), 0);
+      final marker = (await CalendarTaskRecord.db.find(session)).single;
+      expect(marker.deletedAt, isNotNull);
+      expect(marker.revision, 3);
+      expect(marker.toJson().containsKey('sourceState'), isFalse);
+    });
+    test('task source storage legacy occurrence initialization invents no creation or import baseline', () async {
+      final task = await recurringTask(),
+          first = (await service.previewTaskOccurrences(taskPreview(task)))
+              .occurrences
+              .first
+              .originalStart;
+      await CalendarTaskOccurrenceRecord.db.insertRow(
+        session,
+        CalendarTaskOccurrenceRecord(
+          taskId: task.taskId,
+          originalKey: taskOriginalKey(first),
+          originalStart: first,
+          progress: CalendarTaskProgress(percentComplete: 12),
+        ),
+      );
+      final before = (await CalendarTaskDataRecord.db.find(session)).single;
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(task, first, 1, CalendarTaskProgressAction.complete),
+      );
+      final row = (await CalendarTaskOccurrenceRecord.db.find(session)).single;
+      expect(row.protocolVersion!.sequence, 1);
+      expect(row.protocolVersion!.created, isNull);
+      final after = (await CalendarTaskDataRecord.db.find(session)).single;
+      expect(after.importBaseline, isNull);
+      expect(after.sourceState, isNull);
+      expect(after.protocolVersion, before.protocolVersion);
+    });
 
     test('source progress optional fields survive reads content writes and disclosure', () async {
       final parent = (await service.create(createInput()))!.calendarId,
@@ -975,6 +1332,8 @@ void main() {
       );
       final created = await taskCreate(parent, assignees: [member, member]);
       final request = policy.lastTaskRequest!;
+      final assignmentVersion = (await taskRead(created.taskId))
+          .protocolVersion;
       expect(request.taskId, created.taskId);
       expect(request.calendarId, parent);
       expect(request.current!.calendarId, parent);
@@ -993,6 +1352,10 @@ void main() {
       );
       expect(policy.lastTaskRequest!.currentTask!.assignees, hasLength(1));
       expect((await taskRead(created.taskId)).assignees, isEmpty);
+      expect(
+        (await taskRead(created.taskId)).protocolVersion,
+        assignmentVersion,
+      );
     });
     for (final op in [
       CalendarPermission.updateTask,

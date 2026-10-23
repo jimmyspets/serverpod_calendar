@@ -1,0 +1,6 @@
+class: CalendarTaskSourceState
+serverOnly: true
+immutable: true
+fields:
+  master: CalendarTaskSourceComponent
+  occurrences: List<CalendarTaskSourceComponent>

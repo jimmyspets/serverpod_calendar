@@ -1,0 +1,14 @@
+class: CalendarTaskSourceMetadata
+serverOnly: true
+immutable: true
+fields:
+  url: String?
+  classification: String?
+  categoryGroups: List<CalendarTaskSourceCategoryGroup>
+  comments: List<CalendarTaskSourceText>
+  contacts: List<CalendarTaskSourceText>
+  organizer: CalendarTaskSourceParticipant?
+  attendees: List<CalendarTaskSourceParticipant>
+  relationships: List<CalendarTaskSourceRelationship>
+  attachments: List<CalendarTaskSourceAttachment>
+  alarms: List<CalendarTaskSourceAlarm>
