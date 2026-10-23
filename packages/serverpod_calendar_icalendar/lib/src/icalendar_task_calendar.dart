@@ -28,6 +28,7 @@ final class IcalendarTask {
     required this.stamp,
     required this.metadata,
     required this.participants,
+    required this.references,
     this.created,
     this.lastModified,
     this.sequence,
@@ -56,6 +57,7 @@ final class IcalendarTask {
   final IcalendarTaskText? summary, description, location;
   final IcalendarTaskMetadata metadata;
   final IcalendarTaskParticipants participants;
+  final IcalendarTaskReferences references;
   final CalendarDate? recurrenceDate;
   final TimedValue? recurrenceTime;
   Object? get originalStart => recurrenceDate ?? recurrenceTime;
@@ -213,10 +215,19 @@ IcalendarTask _taskComponent(
       'EXDATE',
       'RECURRENCE-ID',
       ..._taskMetadataProperties,
+      'RELATED-TO',
+      'ATTACH',
       'ORGANIZER',
       'ATTENDEE',
     },
-    repeated: {'RDATE', 'EXDATE', ..._taskRepeatedMetadata, 'ATTENDEE'},
+    repeated: {
+      'RDATE',
+      'EXDATE',
+      ..._taskRepeatedMetadata,
+      'ATTENDEE',
+      'RELATED-TO',
+      'ATTACH',
+    },
   );
   final uid = componentText(requiredProperty(p, 'UID'));
   if (uid.isEmpty) componentFail(IcalendarComponentError.invalidValue);
@@ -305,6 +316,7 @@ IcalendarTask _taskComponent(
   return IcalendarTask._(
     source: source,
     metadata: _taskMetadata(source, budget),
+    references: _taskReferences(source, budget),
     participants: _taskParticipants(
       source,
       budget,
