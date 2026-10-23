@@ -282,50 +282,46 @@ void main() {
       );
     },
   );
-  test(
-    'unsupported task data and occurrence components reject the whole file',
-    () {
-      for (final property in [
-        'RECURRENCE-ID:20261022T120000Z',
-        'ATTENDEE:mailto:a@example.invalid',
-        'ORGANIZER:mailto:a@example.invalid',
-        'CATEGORIES:Work',
-        'URL:https://example.invalid',
-        'CLASS:PRIVATE',
-        'X-PRIVATE:data',
-        'RDATE;VALUE=PERIOD:20261023T120000Z/PT1H',
-      ]) {
-        expect(
-          () => load(['DTSTART:20261022T120000Z', property]),
-          rejects(IcalendarComponentError.unsupportedProperty),
-        );
-      }
+  test('unsupported task data rejects the whole file', () {
+    for (final property in [
+      'ATTENDEE:mailto:a@example.invalid',
+      'ORGANIZER:mailto:a@example.invalid',
+      'CATEGORIES:Work',
+      'URL:https://example.invalid',
+      'CLASS:PRIVATE',
+      'X-PRIVATE:data',
+      'RDATE;VALUE=PERIOD:20261023T120000Z/PT1H',
+    ]) {
       expect(
-        () => load([
-          'BEGIN:VALARM',
-          'ACTION:DISPLAY',
-          'TRIGGER:-PT5M',
-          'END:VALARM',
-        ]),
-        rejects(IcalendarComponentError.unsupportedComponent),
-      );
-      final scheduling = file(events: [task()], envelope: ['METHOD:PUBLISH']);
-      expect(
-        () => parseIcalendarTaskCalendar(utf8.encode(scheduling)),
+        () => load(['DTSTART:20261022T120000Z', property]),
         rejects(IcalendarComponentError.unsupportedProperty),
       );
-      final mixed = file(
-        events: [
-          task(),
-          task(uid: 'other', properties: ['URL:https://example.invalid']),
-        ],
-      );
-      expect(
-        () => parseIcalendarTaskCalendar(utf8.encode(mixed)),
-        rejects(IcalendarComponentError.unsupportedProperty),
-      );
-    },
-  );
+    }
+    expect(
+      () => load([
+        'BEGIN:VALARM',
+        'ACTION:DISPLAY',
+        'TRIGGER:-PT5M',
+        'END:VALARM',
+      ]),
+      rejects(IcalendarComponentError.unsupportedComponent),
+    );
+    final scheduling = file(events: [task()], envelope: ['METHOD:PUBLISH']);
+    expect(
+      () => parseIcalendarTaskCalendar(utf8.encode(scheduling)),
+      rejects(IcalendarComponentError.unsupportedProperty),
+    );
+    final mixed = file(
+      events: [
+        task(),
+        task(uid: 'other', properties: ['URL:https://example.invalid']),
+      ],
+    );
+    expect(
+      () => parseIcalendarTaskCalendar(utf8.encode(mixed)),
+      rejects(IcalendarComponentError.unsupportedProperty),
+    );
+  });
   test('duplicate UID properties parameter values and envelope components fail explicitly', () {
     expect(
       () => load(['UID:second']),

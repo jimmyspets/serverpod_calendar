@@ -468,3 +468,11 @@ Generated additions are `CalendarEventTextParameters`, `CalendarEventProtocolVer
 ## Standalone VTODO master wire increment, 2026-10-23
 
 [ADR 0088](adr/0088-vtodo-wire-master-implementation.md) and [the pure task adapter](icalendar-task-adapter.md) add bounded undated/DATE/UTC/named-zone VTODO masters with recurrence, basic annotated text/priority and independently optional source progress/checkpoints. Preserve source values rather than imposing native progress defaults; validate exact full-horizon zones and reject unsupported occurrence components, PERIODs, alarms, scheduling and unprofiled metadata. This is a pure parser/serializer, without native database import/export or assignment/history inference. Those services and richer task wire profiles remain pending.
+
+## VTODO occurrence model proposal
+
+[ADR 0090](adr/0090-vtodo-occurrence-component-implementation.md) proposes immutable `IcalendarTaskSeries` and linked `IcalendarTaskOccurrenceComponent` values with raw original source/progress/checkpoints, resolved task milestones and inherited text/priority. Calendar `.tasks` remains masters only; `.series` holds linked occurrences. Original DATE/timed identity remains separate from completion time. These pure models add no native import/history/assignment authority.
+
+## VTODO progress occurrence wire increment, 2026-10-23
+
+[ADR 0090](adr/0090-vtodo-occurrence-component-implementation.md) implements the confirmed [ADR 0089](adr/0089-vtodo-occurrence-component-contract.md) same-file-master and progress-only profile. The [pure task adapter](icalendar-task-adapter.md) links exact retained original identities to projected milestones and inherited text/priority while preserving raw source omissions, independent optional progress/checkpoints and component order. Reject detached, duplicate, excluded/absent/profile-mismatched originals, timing/content differences and RANGE. Aggregate membership work is bounded per master and shared across the file. This supersedes older blanket occurrence-wire-pending notes only for this slice; richer task metadata, native exceptions, authenticated database import/export, alarms and scheduling remain separate. No native history is invented and no external-client interoperability is claimed.
