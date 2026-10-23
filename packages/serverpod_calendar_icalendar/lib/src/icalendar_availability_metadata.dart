@@ -145,7 +145,7 @@ IcalendarAvailabilityMetadata _publicationMetadata(
         if (language != null) validateCalendarLanguageTag(language);
         charge(language);
         final values = <String>[];
-        for (final raw in _availabilityTextList(p.value)) {
+        for (final raw in _componentTextList(p.value)) {
           if (++categoryCount > 64) {
             componentFail(IcalendarComponentError.limitExceeded);
           }
@@ -250,7 +250,7 @@ IcalendarAvailabilityMetadata _publicationMetadata(
   );
 }
 
-Iterable<String> _availabilityTextList(String raw) sync* {
+Iterable<String> _componentTextList(String raw) sync* {
   var start = 0;
   for (var i = 0; i < raw.length; i++) {
     if (raw.codeUnitAt(i) == 92) {
