@@ -63,6 +63,7 @@ final class IcalendarComponentLimits {
   const IcalendarComponentLimits({
     this.maxEvents = 128,
     this.maxTasks = 128,
+    this.maxOverridesPerTask = 64,
     this.maxTaskMetadataCodePoints = 65536,
     this.maxZones = 32,
     this.maxObservances = 128,
@@ -79,7 +80,7 @@ final class IcalendarComponentLimits {
     this.maxAvailableOverrides = 64,
     this.maxAvailabilityMetadataCodePoints = 65536,
   });
-  final int maxTasks, maxTaskMetadataCodePoints;
+  final int maxTasks, maxOverridesPerTask, maxTaskMetadataCodePoints;
   final int maxEvents, maxZones, maxObservances, maxOnsets, maxCandidates;
   final int maxExplicitDates,
       maxRuleValues,
@@ -94,6 +95,7 @@ final class IcalendarComponentLimits {
     for (final n in [
       maxEvents,
       maxTasks,
+      maxOverridesPerTask,
       maxTaskMetadataCodePoints,
       maxZones,
       maxObservances,

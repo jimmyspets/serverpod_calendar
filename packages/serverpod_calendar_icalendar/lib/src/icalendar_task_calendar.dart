@@ -39,6 +39,8 @@ final class IcalendarTask {
     this.status,
     this.percentComplete,
     this.completed,
+    this.recurrenceDate,
+    this.recurrenceTime,
   });
   final IcalendarSyntaxComponent source;
   final String uid;
@@ -50,21 +52,28 @@ final class IcalendarTask {
   final TimedTaskTiming? timedTiming;
   final IcalendarTaskRecurrence? recurrence;
   final IcalendarTaskText? summary, description, location;
-  bool get isUndated => dateTiming == null && timedTiming == null;
+  final CalendarDate? recurrenceDate;
+  final TimedValue? recurrenceTime;
+  Object? get originalStart => recurrenceDate ?? recurrenceTime;
+  bool get isOverride => originalStart != null;
+  bool get isUndated =>
+      !isOverride && dateTiming == null && timedTiming == null;
 }
 
-/// Complete bounded standalone masters; no database or scheduling authority.
+/// Bounded standalone masters and progress components; no database authority.
 final class IcalendarTaskCalendar {
   IcalendarTaskCalendar._(
     this.source,
     this.productId,
-    Iterable<IcalendarTask> tasks,
+    Iterable<IcalendarTaskSeries> series,
     Map<String, IcalendarValidatedTimeZone> zones,
-  ) : tasks = List.unmodifiable(tasks),
+  ) : series = List.unmodifiable(series),
+      tasks = List.unmodifiable(series.map((s) => s.master)),
       timeZones = Map.unmodifiable(zones);
   final IcalendarSyntaxDocument source;
   final String productId;
   final List<IcalendarTask> tasks;
+  final List<IcalendarTaskSeries> series;
   final Map<String, IcalendarValidatedTimeZone> timeZones;
 }
 
@@ -134,15 +143,30 @@ IcalendarTaskCalendar validateIcalendarTaskCalendar(
       }
     }
     if (raw.isEmpty) componentFail(IcalendarComponentError.missing);
-    final tasks = <String, IcalendarTask>{};
+    final tasks = <String, IcalendarTask>{},
+        overrides = <String, List<IcalendarTask>>{};
     for (final component in raw) {
       final task = _taskComponent(component, zones, budget);
-      if (tasks.containsKey(task.uid)) {
-        componentFail(IcalendarComponentError.duplicate);
+      if (task.isOverride) {
+        final group = overrides.putIfAbsent(task.uid, () => []);
+        if (group.length >= limits.maxOverridesPerTask) {
+          componentFail(IcalendarComponentError.limitExceeded);
+        }
+        group.add(task);
+      } else {
+        if (tasks.containsKey(task.uid)) {
+          componentFail(IcalendarComponentError.duplicate);
+        }
+        tasks[task.uid] = task;
       }
-      tasks[task.uid] = task;
     }
-    return IcalendarTaskCalendar._(source, producer, tasks.values, zones);
+    if (overrides.keys.any((uid) => !tasks.containsKey(uid))) {
+      componentFail(IcalendarComponentError.missing);
+    }
+    return IcalendarTaskCalendar._(source, producer, [
+      for (final master in tasks.values)
+        _taskSeries(master, overrides[master.uid] ?? [], budget),
+    ], zones);
   });
 }
 
@@ -183,6 +207,7 @@ IcalendarTask _taskComponent(
       'RRULE',
       'RDATE',
       'EXDATE',
+      'RECURRENCE-ID',
     },
     repeated: {'RDATE', 'EXDATE'},
   );
@@ -192,6 +217,10 @@ IcalendarTask _taskComponent(
   final stamp = componentUtc(requiredProperty(p, 'DTSTAMP'));
   Object? temporal(String name) =>
       p[name] == null ? null : _temporal(p[name]!.single, zones);
+  final original = temporal('RECURRENCE-ID');
+  if (original != null && ['RRULE', 'RDATE', 'EXDATE'].any(p.containsKey)) {
+    componentFail(IcalendarComponentError.unsupportedProperty);
+  }
   final start = temporal('DTSTART'), due = temporal('DUE');
   CalendarDuration? duration;
   if (p['DURATION'] != null) {
@@ -268,6 +297,8 @@ IcalendarTask _taskComponent(
   }
   return IcalendarTask._(
     source: source,
+    recurrenceDate: original is CalendarDate ? original : null,
+    recurrenceTime: original is TimedValue ? original : null,
     uid: uid,
     stamp: stamp,
     dateTiming: dateTiming,
