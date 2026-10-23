@@ -294,10 +294,10 @@ void main() {
     }
     expect(
       () => load([
-        'BEGIN:VALARM',
+        'BEGIN:VLOCATION',
         'ACTION:DISPLAY',
         'TRIGGER:-PT5M',
-        'END:VALARM',
+        'END:VLOCATION',
       ]),
       rejects(IcalendarComponentError.unsupportedComponent),
     );

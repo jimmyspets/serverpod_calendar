@@ -220,7 +220,7 @@ void main() {
       );
     },
   );
-  test('unsupported alarms and private extensions still reject', () {
+  test('unsupported nested components and private extensions still reject', () {
     for (final p in ['X-TASK:value']) {
       expect(
         () => load([...properties, p]),
@@ -230,10 +230,10 @@ void main() {
     expect(
       () => load([
         ...properties,
-        'BEGIN:VALARM',
+        'BEGIN:VLOCATION',
         'ACTION:DISPLAY',
         'TRIGGER:-PT5M',
-        'END:VALARM',
+        'END:VLOCATION',
       ]),
       rejects(IcalendarComponentError.unsupportedComponent),
     );
