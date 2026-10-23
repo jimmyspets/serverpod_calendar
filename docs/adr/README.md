@@ -99,6 +99,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0093](0093-vtodo-source-references.md) | VTODO source relationships and attachments | Scoped confirmed inert source-reference implementation; concrete profile under draft review |
 | [0094](0094-vtodo-display-alarm-source-profile.md) | VTODO DISPLAY alarm source profile | Scoped confirmed DISPLAY source-profile implementation; concrete mechanics under draft review |
 | [0095](0095-vtodo-snooze-source-profile.md) | VTODO snooze source profile | Scoped confirmed bounded sibling snooze implementation; concrete mechanics under draft review |
+| [0096](0096-source-preserving-native-task-progress.md) | Source-preserving native task progress | Scoped confirmed optional progress/master-default implementation; concrete mechanics under draft review |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

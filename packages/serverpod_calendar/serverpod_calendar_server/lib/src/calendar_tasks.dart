@@ -21,12 +21,6 @@ final class _Task {
       validateEventUid(data.protocolUid);
       data.content = validateTaskContent(data.content);
       data.progress = validateTaskProgress(data.progress);
-      if (data.content.recurrence != null &&
-          (data.progress.status != CalendarTaskStatus.needsAction ||
-              data.progress.percentComplete != 0 ||
-              data.progress.completedAt != null)) {
-        throw ArgumentError('Recurring master progress must stay neutral');
-      }
       data.assignees = validateTaskAssignees(data.assignees);
       validateTaskVersion(data.protocolVersion);
     } catch (_) {
@@ -219,7 +213,10 @@ extension CalendarTaskOperations on CalendarService {
             created: stamp,
             lastModified: stamp,
           ),
-          progress = CalendarTaskProgress();
+          progress = CalendarTaskProgress(
+            status: CalendarTaskStatus.needsAction,
+            percentComplete: 0,
+          );
       final requests = [
         for (final op in [
           CalendarPermission.createTask,
@@ -365,7 +362,8 @@ extension CalendarTaskOperations on CalendarService {
             content.recurrence != null &&
             (task.data.hasRecordedProgress != false ||
                 task.data.progress.status != CalendarTaskStatus.needsAction ||
-                task.data.progress.percentComplete != 0)) {
+                task.data.progress.percentComplete != 0 ||
+                task.data.progress.completedAt != null)) {
           throw _failure(CalendarFailureCode.validation);
         }
         _taskValue(

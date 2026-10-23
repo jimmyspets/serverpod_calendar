@@ -4,6 +4,7 @@ import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
 
 import 'task_screen.dart' show taskError;
+import 'task_progress_label.dart';
 
 class TaskOccurrenceScreen extends StatefulWidget {
   const TaskOccurrenceScreen({
@@ -256,7 +257,7 @@ class _TaskOccurrenceScreenState extends State<TaskOccurrenceScreen> {
               'Original: ${_civil(_preview!.occurrences[i].originalStart.start)}',
             ),
             Text(
-              '${_preview!.occurrences[i].progress.status.name}; ${_preview!.occurrences[i].progress.percentComplete}%',
+              taskProgressLabel(_preview!.occurrences[i].progress),
               key: ValueKey('task-occurrence-state-$i'),
             ),
             if (_preview!.occurrences[i].dueDate != null)
@@ -289,7 +290,7 @@ class _TaskOccurrenceScreenState extends State<TaskOccurrenceScreen> {
             Text('History for ${_civil(_historyOriginal!.start)}'),
             for (final h in _history)
               Text(
-                '${h.action.name}: ${h.before.status.name}/${h.before.percentComplete}% → ${h.after.status.name}/${h.after.percentComplete}%; recorded ${h.recordedAt.toIso8601String()}',
+                '${h.action.name}: ${taskProgressLabel(h.before)} → ${taskProgressLabel(h.after)}; recorded ${h.recordedAt.toIso8601String()}',
                 key: ValueKey('task-history-${h.revision}'),
               ),
             if (_history.isEmpty)

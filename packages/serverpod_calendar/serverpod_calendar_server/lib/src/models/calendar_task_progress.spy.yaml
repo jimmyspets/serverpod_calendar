@@ -1,6 +1,6 @@
 class: CalendarTaskProgress
 immutable: true
 fields:
-  status: CalendarTaskStatus, default=needsAction
-  percentComplete: int, default=0
+  status: CalendarTaskStatus?
+  percentComplete: int?
   completedAt: DateTime?

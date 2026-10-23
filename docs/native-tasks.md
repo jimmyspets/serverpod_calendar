@@ -1,5 +1,6 @@
 # Native non-recurring tasks
 
+> Progress follow-up: [source-preserving native progress](task-source-progress.md) under ADR 0096 supersedes earlier mandatory status/percentage and neutral-recurring-master read rules. Native create/reopen defaults and command separation remain; imported source-shaped fields stay independently optional, and unrecorded occurrences use the master value. Full task source import remains separate.
 The first durable task increment implements the confirmed choices in [ADR 0083](adr/0083-first-native-task-contract.md), with concrete mechanics under draft review in [ADR 0084](adr/0084-first-native-task-implementation.md). It adds module storage, authenticated generated-client APIs, replaceable host authorization and an example Flutter task screen. Recurrence, occurrence completion/history, VTODO interchange, scheduling and alarms remain separate work. Pure-core recurring task calculations do not establish durable recurring task support.
 
 Follow-up: [recurring tasks](recurring-tasks.md) now extend this initial increment under ADR 0086. The non-recurring-only descriptions below record ADR 0084 boundaries; the newer guide supplies the implemented extension.
