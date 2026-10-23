@@ -1823,6 +1823,7 @@ Future<void> eventImportSmoke(List<Client> clients) async {
 }
 
 Future<void> taskSmoke(List<Client> clients) async {
+  await taskImportSmoke(clients);
   final calendars = clients.first.modules.serverpod_calendar.calendar;
   final tasks = clients.first.modules.serverpod_calendar.calendarTask;
   final remote = clients.last.modules.serverpod_calendar.calendarTask;
@@ -2204,6 +2205,176 @@ Future<void> taskSmoke(List<Client> clients) async {
     }
     for (final id in parents) {
       await calendars.delete(id, 1);
+    }
+  }
+}
+
+Future<void> taskImportSmoke(List<Client> clients) async {
+  final ca = clients.first.modules.serverpod_calendar.calendar,
+      cb = clients.last.modules.serverpod_calendar.calendar;
+  final a = clients.first.modules.serverpod_calendar.calendarTask,
+      b = clients.last.modules.serverpod_calendar.calendarTask;
+  final parents = <UuidValue>[], ids = <UuidValue>[];
+  Future<UuidValue> parent() async {
+    final p = (await ca.create(
+      cal.CalendarCreateRequest(
+        displayName: 'Task import smoke',
+        availabilityZoneId: 'UTC',
+        noRuleFallback: cal.CalendarNoRuleFallback.free,
+      ),
+    ))!.calendarId;
+    parents.add(p);
+    return p;
+  }
+
+  cal.CalendarTaskImportRequest request(UuidValue p, String uid) =>
+      cal.CalendarTaskImportRequest(
+        calendarId: p,
+        expectedRevision: 1,
+        bytes: ByteData.sublistView(
+          Uint8List.fromList(
+            utf8.encode(
+              [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:Synthetic two-host task import',
+                'BEGIN:VTODO',
+                'UID:$uid',
+                'DTSTAMP:20260301T000000Z',
+                'DTSTART;VALUE=DATE:20260328',
+                'RRULE:FREQ=DAILY;COUNT=3',
+                'SUMMARY:Imported two-host task',
+                'PERCENT-COMPLETE:37',
+                'ORGANIZER:mailto:source@example.invalid',
+                'ATTENDEE:mailto:guest@example.invalid',
+                'BEGIN:VALARM',
+                'ACTION:DISPLAY',
+                'DESCRIPTION:Unarmed source alarm',
+                'TRIGGER:-PT5M',
+                'END:VALARM',
+                'END:VTODO',
+                'BEGIN:VTODO',
+                'UID:$uid',
+                'DTSTAMP:20260302T000000Z',
+                'RECURRENCE-ID;VALUE=DATE:20260329',
+                'PERCENT-COMPLETE:12',
+                'END:VTODO',
+                'END:VCALENDAR',
+                '',
+              ].join('\r\n'),
+            ),
+          ),
+        ),
+      );
+  try {
+    final p = await parent(), other = await parent();
+    final first = (await a.importTasks(request(p, 'two-host-task')))
+        .receipts
+        .single;
+    ids.add(first.taskId);
+    final view = await b.getTask(
+      first.taskId,
+      cal.CalendarTaskFieldGroup.values,
+    );
+    check(
+      view.progress!.status == null &&
+          view.progress!.percentComplete == 37 &&
+          view.assignees!.isEmpty &&
+          view.protocolVersion!.sequence == null,
+      'Imported task preserves source progress/versions and assigns nobody across hosts',
+    );
+    final preview = await b.previewOccurrences(
+      cal.CalendarTaskOccurrenceQuery(
+        taskId: first.taskId,
+        expectedRevision: 1,
+        fromDate: cal.CalendarEventCivil(year: 2026, month: 3, day: 27),
+        untilDate: cal.CalendarEventCivil(year: 2026, month: 3, day: 31),
+      ),
+    );
+    check(
+      preview.occurrences[0].progress.percentComplete == 37 &&
+          preview.occurrences[1].progress.percentComplete == 12 &&
+          preview.occurrences[1].progress.status == null,
+      'Imported raw sparse progress survives cross-host preview',
+    );
+    final history = await b.occurrenceHistory(
+      cal.CalendarTaskHistoryQuery(
+        taskId: first.taskId,
+        expectedRevision: 1,
+        originalStart: preview.occurrences[1].originalStart,
+        pageSize: 10,
+      ),
+    );
+    check(history.entries.isEmpty, 'Import invents no history');
+    await rejects(
+      () => b.importTasks(request(p, 'two-host-task')),
+      cal.CalendarFailureCode.dependencyConflict,
+    );
+    final copy = (await b.importTasks(request(other, 'two-host-task')))
+        .receipts
+        .single;
+    ids.add(copy.taskId);
+    check(
+      copy.taskId != first.taskId,
+      'Independent destination copy gets a new native UUID',
+    );
+    final race = await Future.wait(
+      [a, b].map((api) async {
+        try {
+          final result = await api.importTasks(request(p, 'race-task'));
+          ids.add(result.receipts.single.taskId);
+          return true;
+        } on cal.CalendarException catch (e) {
+          if (e.code == cal.CalendarFailureCode.dependencyConflict) {
+            return false;
+          }
+          rethrow;
+        }
+      }),
+    );
+    check(
+      race.where((v) => v).length == 1,
+      'Exactly one competing task UID import wins across hosts',
+    );
+    final raceParent = await parent();
+    final parentRace = await Future.wait([
+      () async {
+        try {
+          final r = await a.importTasks(request(raceParent, 'parent-race'));
+          ids.add(r.receipts.single.taskId);
+          return true;
+        } on cal.CalendarException catch (e) {
+          if (e.code == cal.CalendarFailureCode.accessDenied) return false;
+          rethrow;
+        }
+      }(),
+      () async {
+        try {
+          await cb.delete(raceParent, 1);
+          parents.remove(raceParent);
+          return true;
+        } on cal.CalendarException catch (e) {
+          if (e.code == cal.CalendarFailureCode.dependencyConflict) {
+            return false;
+          }
+          rethrow;
+        }
+      }(),
+    ]);
+    check(
+      parentRace.where((v) => v).length == 1,
+      'Task import and parent deletion serialize across hosts',
+    );
+    print(
+      'PASS: create-only task import source progress, no assignments/history, independent copies and cross-host UID/parent races.',
+    );
+  } finally {
+    for (final id in ids) {
+      final current = await b.getTask(id, cal.CalendarTaskFieldGroup.values);
+      await b.deleteTask(id, current.revision);
+    }
+    for (final id in parents) {
+      await ca.delete(id, 1);
     }
   }
 }

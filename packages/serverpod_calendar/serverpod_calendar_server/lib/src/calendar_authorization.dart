@@ -10,6 +10,7 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  importTasks,
   previewTaskOccurrences,
   readTaskHistory,
   listTasks,
@@ -190,6 +191,7 @@ final class CalendarAuthorizationRequest {
     this.availabilityCategoryFilter,
     this.availabilityImport,
     this.eventImport,
+    this.taskImport,
     this.eventExport,
     this.availabilityExport,
     this.availabilityReplacement,
@@ -239,6 +241,7 @@ final class CalendarAuthorizationRequest {
   /// Full immutable batch, absent on the cheap pre-parse authority check.
   final CalendarAvailabilityImportIntent? availabilityImport;
   final CalendarEventImportIntent? eventImport;
+  final CalendarTaskImportIntent? taskImport;
   final CalendarEventExportIntent? eventExport;
   final CalendarAvailabilityExportIntent? availabilityExport;
   final CalendarAvailabilityReplacementIntent? availabilityReplacement;
@@ -278,6 +281,30 @@ final class CalendarAvailabilityImportIntent {
 }
 
 /// Complete validated source proposal; source identifiers grant no authority.
+final class CalendarTaskImportMember {
+  CalendarTaskImportMember({
+    required this.taskId,
+    required this.protocolUid,
+    required CalendarTaskSourceState sourceState,
+  }) : sourceState = validateTaskSourceState(protocolUid, sourceState);
+  final UuidValue taskId;
+  final String protocolUid;
+  final CalendarTaskSourceState sourceState;
+  bool get requiresProgress =>
+      [sourceState.master, ...sourceState.occurrences].any(
+        (c) =>
+            c.progress.status != null ||
+            c.progress.percentComplete != null ||
+            c.progress.completedAt != null,
+      );
+}
+
+final class CalendarTaskImportIntent {
+  CalendarTaskImportIntent(Iterable<CalendarTaskImportMember> members)
+    : members = List.unmodifiable(members);
+  final List<CalendarTaskImportMember> members;
+}
+
 final class CalendarEventImportMember {
   const CalendarEventImportMember({
     required this.eventId,

@@ -102,3 +102,7 @@ The [recurring VEVENT master adapter](docs/icalendar-recurring-masters.md) exten
 ## Task source storage prerequisite
 
 [Source-preserving task storage](docs/task-source-storage.md) now retains supported decoded metadata, inert participants/references/attachments, unarmed alarms/snoozes and independent component versions. Native edits retain source values or reject incompatible changes; assignment-only edits preserve protocol versions. Historical baselines are private and scrubbed at deletion. Authenticated task import/export and rich metadata editors remain separate.
+
+## Authenticated task import
+
+[Create-only task import](docs/task-import.md#implemented-create-only-operation) now preserves the supported VTODO profile atomically under separate import/create/progress permissions, with destination-local UID conflicts, private baselines and source versions. Source participants assign nobody, alarms stay unarmed and no history is invented. The Flutter example explicitly normalizes pasted line endings while the byte API stays strict. Task export, source updates, native metadata editors and alarm runtime remain separate.
