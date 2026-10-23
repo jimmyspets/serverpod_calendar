@@ -440,3 +440,8 @@ Generated additions are `CalendarEventTextParameters`, `CalendarEventProtocolVer
 | `CalendarEventImportRequest` | Immutable destination `calendarId`, expected parent API `expectedRevision`, and `bytes: ByteData`; the server copies the bounded byte view before awaiting policy. No actor, native event identity, source checkpoint or baseline is accepted as client authority. |
 | `CalendarEventImportResult` | Immutable `receipts: List<CalendarEventReceipt>`; only final-disclosed native IDs/revisions/deletion flag, with no totals or source metadata. |
 | `CalendarEventImportIntent` / `CalendarEventImportMember` | Server-only host-adapter classes rather than generated wire models; a frozen full proposal with assigned native IDs, exact source UID, validated content, overrides and protocol state. The private source baseline is excluded. |
+
+
+## Current-state event export, 2026-10-23
+
+[ADR 0082](adr/0082-authenticated-current-event-export.md) and [the export guide](event-export.md) implement explicit revision-bound complete series from one calendar. Require separate export permission and all supported read-disclosure groups, with complete selection context and repeated post-serialization checks. Generate current supported semantics and pinned zones, excluding historical baseline/native storage metadata. Reject unrepresentable cancellation restoration state and any decoded current-state mismatch; never silently normalize or redact. Export is read-only; source replacement, feeds, scheduling and alarms remain separate.

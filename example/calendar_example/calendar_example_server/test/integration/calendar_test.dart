@@ -1236,6 +1236,256 @@ void main() {
       expect(await CalendarEventRecord.db.count(session), 1);
     });
 
+    CalendarEventExportRequest eventExport(
+      List<CalendarEventReceipt> events, {
+      UuidValue? parent,
+      int parentRevision = 1,
+    }) => CalendarEventExportRequest(
+      calendarId: parent ?? events.first.calendarId,
+      expectedRevision: parentRevision,
+      selection: [
+        for (final e in events)
+          CalendarEventExportSelection(
+            eventId: e.eventId,
+            expectedRevision: e.revision,
+          ),
+      ],
+    );
+    String exported(ByteData bytes) => utf8.decode(
+      bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+    );
+    test('event export emits current authorized state and leaves all stored values unchanged', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final imported = await service.importEvents(
+        eventImport(parent, [
+          eventSource(
+            'wire',
+            extra: [
+              'SUMMARY;LANGUAGE=sv:Before',
+              'DURATION:PT1H',
+              'RRULE:FREQ=DAILY;COUNT=2',
+              'RDATE;VALUE=PERIOD:20260402T090000Z/PT2H',
+            ],
+          ),
+        ]),
+      );
+      final receipt = imported.receipts.single;
+      final row = (await CalendarEventDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.eventId.equals(receipt.eventId),
+      ))!;
+      await service.updateEvent(
+        CalendarEventUpdateRequest(
+          eventId: receipt.eventId,
+          expectedRevision: 1,
+          content: row.content.copyWith(summary: 'Current'),
+        ),
+      );
+      final dataBefore = (await CalendarEventDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.eventId.equals(receipt.eventId),
+      ))!;
+      final gen = await generation();
+      final request = eventExport([receipt.copyWith(revision: 2)]);
+      final bytes = await service.exportEvents(request), text = exported(bytes);
+      expect(text, contains('SUMMARY;LANGUAGE=sv:Current'));
+      expect(text, isNot(contains('Before')));
+      expect(text, isNot(contains('importBaseline')));
+      expect(text, isNot(contains(receipt.eventId.toString())));
+      final parsed = parseIcalendarEventCalendar(
+        bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+      ).series.single;
+      expect(parsed.master.sequence, 1);
+      expect(parsed.master.stamp, DateTime.utc(2040));
+      expect(
+        parsed
+            .master
+            .recurrence!
+            .timedSet!
+            .periods
+            .values
+            .single
+            .duration!
+            .hours,
+        2,
+      );
+      expect(exported(await service.exportEvents(request)), text);
+      final after = (await CalendarEventDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.eventId.equals(receipt.eventId),
+      ))!;
+      expect(jsonEncode(after.toJson()), jsonEncode(dataBefore.toJson()));
+      expect(await generation(), gen);
+    });
+    for (final permission in [
+      CalendarPermission.exportEvents,
+      CalendarPermission.readEvent,
+    ]) {
+      test('event export independently requires ${permission.name}', () async {
+        final parent = (await service.create(createInput()))!.calendarId;
+        final e = (await service.importEvents(
+          eventImport(parent, [eventSource('rights')]),
+        )).receipts;
+        policy.denied.add(permission);
+        await expectLater(
+          service.exportEvents(eventExport(e)),
+          failure(CalendarFailureCode.accessDenied),
+        );
+      });
+    }
+    for (final group in CalendarEventFieldGroup.values) {
+      test('event export requires disclosure of ${group.name}', () async {
+        final parent = (await service.create(createInput()))!.calendarId;
+        final e = (await service.importEvents(
+          eventImport(parent, [eventSource('disclosure')]),
+        )).receipts;
+        policy.eventGrants.remove(group);
+        await expectLater(
+          service.exportEvents(eventExport(e)),
+          failure(CalendarFailureCode.accessDenied),
+        );
+      });
+    }
+    test('event export repeats complete immutable source checks after serialization', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final e = (await service.importEvents(
+        eventImport(parent, [eventSource('first'), eventSource('second')]),
+      )).receipts;
+      var batches = 0;
+      policy.onEventExport = (request) {
+        if (request.eventExport != null && request.eventId == null) {
+          batches++;
+          expect(request.eventExport!.members, hasLength(2));
+          expect(
+            () => request.eventExport!.members.clear(),
+            throwsUnsupportedError,
+          );
+          if (batches == 2) policy.deniedEventExports.add(e.last.eventId);
+        }
+      };
+      final gen = await generation();
+      await expectLater(
+        service.exportEvents(eventExport(e)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(batches, 2);
+      expect(await generation(), gen);
+      expect(await CalendarEventRecord.db.count(session), 2);
+    });
+    test('event export rejects stale duplicate missing foreign deleted and wrong-parent selection', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final other = (await service.create(createInput()))!.calendarId;
+      final e = (await service.importEvents(
+        eventImport(parent, [eventSource('target')]),
+      )).receipts.single;
+      await expectLater(
+        service.exportEvents(eventExport([e], parentRevision: 2)),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      await expectLater(
+        service.exportEvents(eventExport([e.copyWith(revision: 2)])),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      await expectLater(
+        service.exportEvents(eventExport([e, e])),
+        failure(CalendarFailureCode.validation),
+      );
+      await expectLater(
+        service.exportEvents(eventExport([e], parent: other)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      final bob = builder
+          .copyWith(
+            authentication: AuthenticationOverride.authenticationInfo(
+              'bob',
+              {},
+            ),
+          )
+          .build();
+      await expectLater(
+        CalendarModule.service(bob).exportEvents(eventExport([e])),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      await service.deleteEvent(e.eventId, 1);
+      await expectLater(
+        service.exportEvents(eventExport([e])),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      await expectLater(
+        service.exportEvents(
+          eventExport([e.copyWith(eventId: const Uuid().v4obj())]),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+    test('event export honors single-request policy batches and current context failure', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final e = (await service.importEvents(
+        eventImport(parent, [eventSource('chunk')]),
+      )).receipts;
+      CalendarModule.install(
+        session.serverpod,
+        policy: policy,
+        options: const CalendarModuleOptions(
+          requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+          policyBatchSize: 1,
+        ),
+      );
+      service = CalendarModule.service(session);
+      expect(
+        exported(await service.exportEvents(eventExport(e))),
+        contains('BEGIN:VEVENT'),
+      );
+      policy.onEventExport = (r) {
+        if (r.eventExport != null) policy.epoch = 'changed';
+      };
+      await expectLater(
+        service.exportEvents(eventExport(e)),
+        failure(CalendarFailureCode.unavailable),
+      );
+    });
+    test('event export rejects unrepresentable restoration state without a partial file', () async {
+      final id = await recurringEvent();
+      final before = await service.getEvent(id, eventGroups);
+      await service.changeOccurrence(
+        occurrenceChange(id, CalendarEventOccurrenceAction.cancelSingle),
+      );
+      final other = (await service.importEvents(
+        eventImport(before.calendarId, [eventSource('other')]),
+      )).receipts.single;
+      final bad = CalendarEventReceipt(
+        eventId: id,
+        calendarId: before.calendarId,
+        revision: 2,
+        deleted: false,
+      );
+      await expectLater(
+        service.exportEvents(eventExport([other, bad])),
+        failure(CalendarFailureCode.validation),
+      );
+      final data = (await CalendarEventDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.eventId.equals(id),
+      ))!;
+      expect(data.timingOverrides!.singles.single.cancelled, isTrue);
+    });
+    test('event export rejects aggregate component limits without changing source state', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final e = (await service.importEvents(
+        eventImport(parent, [
+          for (var i = 0; i < 128; i++) eventSource('cap-$i'),
+        ]),
+      )).receipts;
+      final extra = (await service.createEvent(
+        CalendarEventCreateRequest(calendarId: parent, content: eventInput()),
+      ))!;
+      await expectLater(
+        service.exportEvents(eventExport([...e, extra])),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      expect(await CalendarEventRecord.db.count(session), 129);
+    });
+
     CalendarAvailabilityImportRequest importRequest(
       UuidValue parent,
       List<String> definitions, {
@@ -6501,6 +6751,8 @@ final class TestPolicy implements CalendarHostPolicy {
   final deniedExportIds = <UuidValue>{};
   void Function(CalendarAuthorizationRequest)? onExportBatch;
   void Function(CalendarAuthorizationRequest)? onFreeBusyRequest;
+  final deniedEventExports = <UuidValue>{};
+  void Function(CalendarAuthorizationRequest)? onEventExport;
   String? denyEventImportUid, hideEventImportUid;
   bool hideEventImportBatch = false, hideEventLifecycleReceipt = false;
   final eventImportRequests =
@@ -6631,6 +6883,9 @@ final class TestPolicy implements CalendarHostPolicy {
     CalendarAuthorizationPhase phase,
   ) async {
     for (final request in requests) {
+      if (request.operation == CalendarPermission.exportEvents) {
+        onEventExport?.call(request);
+      }
       if (request.eventImport != null) {
         eventImportRequests.add((request, phase));
       }
@@ -6697,7 +6952,9 @@ final class TestPolicy implements CalendarHostPolicy {
     return CalendarAuthorizationDecision(
       key: r.key,
       verdict:
-          (r.eventImport != null &&
+          (r.operation == CalendarPermission.exportEvents &&
+                  deniedEventExports.contains(r.eventId)) ||
+              (r.eventImport != null &&
                   r.operation == CalendarPermission.createEvent &&
                   phase == CalendarAuthorizationPhase.finalWrite &&
                   r.eventImport!.members.any(

@@ -1713,6 +1713,51 @@ Future<void> eventImportSmoke(List<Client> clients) async {
           view.textParameters!.summary!.language == 'sv',
       'Imported source state differed across hosts',
     );
+    cal.CalendarEventExportRequest exportRequest(int revision) =>
+        cal.CalendarEventExportRequest(
+          calendarId: first,
+          expectedRevision: 1,
+          selection: [
+            cal.CalendarEventExportSelection(
+              eventId: id,
+              expectedRevision: revision,
+            ),
+          ],
+        );
+    String text(ByteData data) => utf8.decode(
+      data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+    );
+    final exportedA = text(await ea.exportEvents(exportRequest(1))),
+        exportedB = text(await eb.exportEvents(exportRequest(1)));
+    check(
+      exportedA == exportedB &&
+          !exportedA.contains(id.toString()) &&
+          !exportedA.contains('importBaseline'),
+      'Cross-host event export differs or leaked private storage',
+    );
+    await eb.update(
+      cal.CalendarEventUpdateRequest(
+        eventId: id,
+        expectedRevision: 1,
+        content: cal.CalendarEventContent(
+          summary: 'Current exported event',
+          timing: view.timing!,
+          recurrence: view.recurrence,
+          status: view.status!,
+          transparency: view.transparency!,
+        ),
+      ),
+    );
+    await rejects(
+      () => ea.exportEvents(exportRequest(1)),
+      cal.CalendarFailureCode.staleRevision,
+    );
+    final current = text(await ea.exportEvents(exportRequest(2)));
+    check(
+      current.contains('Current exported event') &&
+          current.contains('SEQUENCE:8'),
+      'Export returned an old source snapshot',
+    );
     final copy = await eb.importEvents(
       request(second, 'same-source@example.invalid'),
     );
@@ -1767,7 +1812,8 @@ Future<void> eventImportSmoke(List<Client> clients) async {
     );
   } finally {
     for (final id in objects) {
-      await eb.deleteEvent(id, 1);
+      final current = await eb.getEvent(id, cal.CalendarEventFieldGroup.values);
+      await eb.deleteEvent(id, current.revision);
     }
     for (final id in parents) {
       await b.delete(id, 1);

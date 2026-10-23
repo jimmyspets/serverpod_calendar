@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'event_occurrence_screen.dart';
 import 'event_import_screen.dart';
+import 'event_export_screen.dart';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
@@ -741,6 +742,21 @@ class _EventEditorState extends State<EventEditor> {
                         if (mounted) await _run(_reload);
                       },
                 child: const Text('Preview saved occurrences'),
+              ),
+            if (_view != null)
+              TextButton(
+                key: const Key('event-export'),
+                onPressed: locked || _dirty
+                    ? null
+                    : () => Navigator.of(context).push<void>(
+                        MaterialPageRoute(
+                          builder: (_) => EventExportScreen(
+                            client: widget.client,
+                            event: _view!,
+                          ),
+                        ),
+                      ),
+                child: const Text('Export event series'),
               ),
             if (_view?.status != null) ...[
               Text(

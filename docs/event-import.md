@@ -1,6 +1,6 @@
 # Create-only VEVENT import and source-preserving storage contract
 
-Status: **create-only authenticated import implemented under [ADR 0080](adr/0080-authenticated-create-only-event-import.md), following storage under [ADR 0079](adr/0079-source-preserving-event-storage.md) and confirmed choices in [ADR 0078](adr/0078-create-only-event-import-and-storage.md)**. Concrete API/transaction mechanics remain under draft review. Event export, replacement/adoption and scheduling remain pending.
+Status: **create-only authenticated import implemented under [ADR 0080](adr/0080-authenticated-create-only-event-import.md), following storage under [ADR 0079](adr/0079-source-preserving-event-storage.md) and confirmed choices in [ADR 0078](adr/0078-create-only-event-import-and-storage.md)**. Concrete API/transaction mechanics remain under draft review. Current-state event export now follows under ADR 0082; replacement/adoption and scheduling remain pending.
 
 ## Implemented create-only operation
 
