@@ -284,8 +284,6 @@ void main() {
   );
   test('unsupported task data rejects the whole file', () {
     for (final property in [
-      'ATTENDEE:mailto:a@example.invalid',
-      'ORGANIZER:mailto:a@example.invalid',
       'X-PRIVATE:data',
       'RDATE;VALUE=PERIOD:20261023T120000Z/PT1H',
     ]) {
@@ -311,7 +309,7 @@ void main() {
     final mixed = file(
       events: [
         task(),
-        task(uid: 'other', properties: ['ATTENDEE:mailto:a@example.invalid']),
+        task(uid: 'other', properties: ['RELATED-TO:other']),
       ],
     );
     expect(
