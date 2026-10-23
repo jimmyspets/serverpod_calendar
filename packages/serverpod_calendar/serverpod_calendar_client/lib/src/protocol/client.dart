@@ -98,6 +98,8 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_task_assignments
     as _i5f9hv45;
 import 'package:serverpod_calendar_client/src/protocol/calendar_task_create_request.dart'
     as _iy2jl335;
+import 'package:serverpod_calendar_client/src/protocol/calendar_task_export_request.dart'
+    as _i3mct00g;
 import 'package:serverpod_calendar_client/src/protocol/calendar_task_field_group.dart'
     as _i6s1er1y;
 import 'package:serverpod_calendar_client/src/protocol/calendar_task_history_page.dart'
@@ -504,6 +506,14 @@ class EndpointCalendarTask extends _isc.EndpointRef {
 
   @override
   String get name => 'serverpod_calendar.calendarTask';
+
+  _ida.Future<_idt.ByteData> exportTasks(
+    _i3mct00g.CalendarTaskExportRequest request,
+  ) => caller.callServerEndpoint<_idt.ByteData>(
+    'serverpod_calendar.calendarTask',
+    'exportTasks',
+    {'request': request},
+  );
 
   _ida.Future<_i0rbroow.CalendarTaskImportResult> importTasks(
     _iiqxekdw.CalendarTaskImportRequest request,

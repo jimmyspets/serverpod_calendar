@@ -140,3 +140,7 @@ The [ADR 0056 per-calendar free/busy service](calendar-free-busy.md) requires `r
 ## Create-only task import operations
 
 [ADR 0099](adr/0099-authenticated-create-only-task-import.md) implements `importTasks` on the actual destination, `createTask` for every complete proposed series and `changeTaskProgress` whenever any master/occurrence includes a source progress property. Preliminary/final immutable intent contains all members and current source state, never a historical baseline. Require every final batch/member decision to disclose a mutation receipt; no implied read access follows. Source attendees assign nobody and alarms stay unarmed; see [the import guide](task-import.md).
+
+## Current task export operations
+
+[ADR 0100](adr/0100-authenticated-current-task-export.md) requires `exportTasks` on actual parent and members, `readTask` with every task group, and independent `readTaskSource` on each member. Full immutable `taskExport` intent contains current source components, never historical baseline payloads. Recheck trusted context and every gate after serialization; fail the whole selection without partial bytes. See [task export](task-export.md).

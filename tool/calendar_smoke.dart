@@ -2306,6 +2306,70 @@ Future<void> taskImportSmoke(List<Client> clients) async {
       ),
     );
     check(history.entries.isEmpty, 'Import invents no history');
+    cal.CalendarTaskExportRequest exportRequest(int revision) =>
+        cal.CalendarTaskExportRequest(
+          calendarId: p,
+          expectedRevision: 1,
+          selection: [
+            cal.CalendarTaskExportSelection(
+              taskId: first.taskId,
+              expectedRevision: revision,
+            ),
+          ],
+        );
+    final wire = await b.exportTasks(exportRequest(1));
+    final wireText = utf8.decode(
+      wire.buffer.asUint8List(wire.offsetInBytes, wire.lengthInBytes),
+    );
+    check(
+      wireText.contains('BEGIN:VALARM') &&
+          wireText.contains('PERCENT-COMPLETE:12') &&
+          !wireText.contains('STATUS:') &&
+          !wireText.contains(first.taskId.toString()),
+      'Cross-host task export retains sparse progress and inert rich source metadata',
+    );
+    final exportCopy = (await a.importTasks(
+      cal.CalendarTaskImportRequest(
+        calendarId: other,
+        expectedRevision: 1,
+        bytes: wire,
+      ),
+    )).receipts.single;
+    ids.add(exportCopy.taskId);
+    final copied = await b.getTask(
+      exportCopy.taskId,
+      cal.CalendarTaskFieldGroup.values,
+    );
+    check(
+      copied.progress!.percentComplete == 37 && copied.assignees!.isEmpty,
+      'Exported task reimports without invented assignments or progress',
+    );
+    await a.deleteTask(exportCopy.taskId, 1);
+    ids.remove(exportCopy.taskId);
+    await b.changeAssignments(
+      cal.CalendarTaskAssignmentsRequest(
+        taskId: first.taskId,
+        expectedRevision: 1,
+        assignees: [],
+      ),
+    );
+    await rejects(
+      () => a.exportTasks(exportRequest(1)),
+      cal.CalendarFailureCode.staleRevision,
+    );
+    final changed = await a.exportTasks(exportRequest(2));
+    check(
+      utf8
+          .decode(
+            changed.buffer.asUint8List(
+              changed.offsetInBytes,
+              changed.lengthInBytes,
+            ),
+          )
+          .contains('PERCENT-COMPLETE:37'),
+      'Task export checks the latest committed revision across independent hosts',
+    );
+
     await rejects(
       () => b.importTasks(request(p, 'two-host-task')),
       cal.CalendarFailureCode.dependencyConflict,

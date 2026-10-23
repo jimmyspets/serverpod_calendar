@@ -580,3 +580,42 @@ CalendarTaskSourceState changeTaskSourceOccurrence(
   }
   return validateTaskSourceState(uid, before.copyWith(occurrences: components));
 }
+
+/// Serialize complete current series, never historical import snapshots.
+List<int> taskExportBytes(
+  List<({String uid, CalendarTaskSourceState state})> members,
+) {
+  if (members.isEmpty ||
+      members.map((m) => m.uid).toSet().length != members.length) {
+    throw ArgumentError('Empty or duplicate task selection');
+  }
+  final writer = _TaskWriter();
+  final components = [
+    for (final m in members) ...[
+      writer.component(m.uid, m.state.master),
+      for (final o in m.state.occurrences) writer.component(m.uid, o),
+    ],
+  ];
+  final zones = writer.values.zones.toList()..sort();
+  final parsed = validateIcalendarTaskCalendar(
+    IcalendarSyntaxDocument([
+      IcalendarSyntaxComponent('VCALENDAR', [
+        IcalendarSyntaxProperty('VERSION', '2.0'),
+        IcalendarSyntaxProperty('PRODID', '-//Serverpod Calendar//Tasks//EN'),
+        for (final zone in zones) createIcalendarTimeZone(zone),
+        ...components,
+      ]),
+    ]),
+  );
+  if (parsed.series.length != members.length) {
+    throw ArgumentError('Task count mismatch');
+  }
+  final expected = {for (final m in members) m.uid: m.state};
+  for (final series in parsed.series) {
+    if (taskSourceJson(_state(series)) !=
+        taskSourceJson(expected[series.master.uid]!)) {
+      throw ArgumentError('Current task state is not faithfully representable');
+    }
+  }
+  return serializeIcalendarTaskCalendar(parsed);
+}

@@ -10,6 +10,8 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  exportTasks,
+  readTaskSource,
   importTasks,
   previewTaskOccurrences,
   readTaskHistory,
@@ -192,6 +194,7 @@ final class CalendarAuthorizationRequest {
     this.availabilityImport,
     this.eventImport,
     this.taskImport,
+    this.taskExport,
     this.eventExport,
     this.availabilityExport,
     this.availabilityReplacement,
@@ -242,6 +245,7 @@ final class CalendarAuthorizationRequest {
   final CalendarAvailabilityImportIntent? availabilityImport;
   final CalendarEventImportIntent? eventImport;
   final CalendarTaskImportIntent? taskImport;
+  final CalendarTaskExportIntent? taskExport;
   final CalendarEventExportIntent? eventExport;
   final CalendarAvailabilityExportIntent? availabilityExport;
   final CalendarAvailabilityReplacementIntent? availabilityReplacement;
@@ -327,6 +331,22 @@ final class CalendarEventImportIntent {
   CalendarEventImportIntent(Iterable<CalendarEventImportMember> members)
     : members = List.unmodifiable(members);
   final List<CalendarEventImportMember> members;
+}
+
+/// Complete current selection, detached from ORM state and private baselines.
+final class CalendarTaskExportMember {
+  CalendarTaskExportMember({
+    required this.current,
+    required CalendarTaskSourceState sourceState,
+  }) : sourceState = validateTaskSourceState(current.protocolUid, sourceState);
+  final CalendarTaskPolicySnapshot current;
+  final CalendarTaskSourceState sourceState;
+}
+
+final class CalendarTaskExportIntent {
+  CalendarTaskExportIntent(Iterable<CalendarTaskExportMember> members)
+    : members = List.unmodifiable(members);
+  final List<CalendarTaskExportMember> members;
 }
 
 final class CalendarEventExportIntent {
