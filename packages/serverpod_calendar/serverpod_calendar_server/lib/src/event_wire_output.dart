@@ -332,6 +332,8 @@ final class EventComponentWriter {
           transparency: checkpoint.transparencyPresent,
           cancelled: cancelled,
         ),
+        for (final a in metadata?.alarms ?? <CalendarEventSourceAlarm>[])
+          eventAlarmSyntax(a),
       ]);
     }
 
@@ -347,6 +349,9 @@ final class EventComponentWriter {
           status: state.statusPresent,
           transparency: state.transparencyPresent,
         ),
+        for (final a
+            in state.sourceMetadata?.alarms ?? <CalendarEventSourceAlarm>[])
+          eventAlarmSyntax(a),
       ]),
       for (final s in edits?.singles ?? <CalendarEventSingleOverride>[])
         override(

@@ -122,6 +122,7 @@ CalendarEventSourceMetadata? _metadata(IcalendarEvent event) =>
     validateEventSourceMetadata(
       CalendarEventSourceMetadata(
         url: event.metadata.url,
+        alarms: event.alarms.map(eventSourceAlarm).toList(),
         relationships: event.references.relationships
             .map(
               (r) => CalendarEventSourceRelationship(

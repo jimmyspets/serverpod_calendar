@@ -1,0 +1,13 @@
+class: CalendarEventSourceAlarm
+serverOnly: true
+immutable: true
+fields:
+  description: CalendarEventSourceText
+  relativeDuration: CalendarEventSourceDuration?
+  absoluteUtc: DateTime?
+  related: String?
+  uid: String?
+  acknowledged: DateTime?
+  repeat: int?
+  repeatInterval: CalendarEventSourceDuration?
+  snoozeTargetUid: String?

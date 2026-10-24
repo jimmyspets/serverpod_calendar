@@ -64,6 +64,7 @@ final class IcalendarComponentLimits {
     this.maxEvents = 128,
     this.maxTasks = 128,
     this.maxAlarmsPerTask = 16,
+    this.maxAlarmsPerEvent = 16,
     this.maxCalendarAlarms = 256,
     this.maxAlarmRepeat = 100,
     this.maxAlarmDurationDays = 366,
@@ -86,6 +87,7 @@ final class IcalendarComponentLimits {
     this.maxAvailabilityMetadataCodePoints = 65536,
   });
   final int maxAlarmsPerTask,
+      maxAlarmsPerEvent,
       maxCalendarAlarms,
       maxAlarmRepeat,
       maxAlarmDurationDays;
@@ -106,6 +108,7 @@ final class IcalendarComponentLimits {
       maxEvents,
       maxTasks,
       maxAlarmsPerTask,
+      maxAlarmsPerEvent,
       maxCalendarAlarms,
       maxAlarmRepeat,
       maxAlarmDurationDays,
