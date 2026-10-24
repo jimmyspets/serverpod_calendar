@@ -355,6 +355,434 @@ void main() {
         ),
       ],
     );
+
+    test(
+      'personal alarms hidden mutation receipts do not disclose private state',
+      () async {
+        final calendar = (await service.create(createInput()))!.calendarId;
+        final event = await booking(calendar, 10, 11);
+        final parent = CalendarAlarmParent(
+          kind: CalendarAlarmParentKind.event,
+          id: event.eventId,
+        );
+        policy.hideAlarmReceipt = true;
+        expect(
+          await service.createPersonalAlarm(
+            CalendarAlarmCreateRequest(
+              parent: parent,
+              definition: CalendarAlarmDefinition(
+                absoluteUtc: DateTime.utc(2026, 3, 29),
+              ),
+            ),
+          ),
+          isNull,
+        );
+        final row = (await service.listPersonalAlarms(parent)).single;
+        expect(
+          await service.updatePersonalAlarm(
+            CalendarAlarmUpdateRequest(
+              parent: parent,
+              alarmId: row.id,
+              expectedRevision: 1,
+              definition: CalendarAlarmDefinition(
+                absoluteUtc: DateTime.utc(2026, 3, 30),
+              ),
+            ),
+          ),
+          isNull,
+        );
+        expect((await service.listPersonalAlarms(parent)).single.revision, 2);
+      },
+    );
+
+    test(
+      'personal alarms revision exhaustion rejects even with a hidden receipt',
+      () async {
+        final calendar = (await service.create(createInput()))!.calendarId;
+        final event = await booking(calendar, 10, 11);
+        final parent = CalendarAlarmParent(
+          kind: CalendarAlarmParentKind.event,
+          id: event.eventId,
+        );
+        final created = (await service.createPersonalAlarm(
+          CalendarAlarmCreateRequest(
+            parent: parent,
+            definition: CalendarAlarmDefinition(
+              absoluteUtc: DateTime.utc(2026, 3, 29),
+            ),
+          ),
+        ))!;
+        final row = (await CalendarAlarmRecord.db.findById(
+          session,
+          created.id,
+        ))!;
+        row.revision = 9007199254740991;
+        await CalendarAlarmRecord.db.updateRow(session, row);
+        policy.hideAlarmReceipt = true;
+        await expectLater(
+          service.updatePersonalAlarm(
+            CalendarAlarmUpdateRequest(
+              parent: parent,
+              alarmId: created.id,
+              expectedRevision: row.revision,
+              definition: CalendarAlarmDefinition(
+                absoluteUtc: DateTime.utc(2026, 3, 30),
+              ),
+            ),
+          ),
+          failure(CalendarFailureCode.limitExceeded),
+        );
+        expect(
+          (await service.listPersonalAlarms(parent)).single.revision,
+          row.revision,
+        );
+      },
+    );
+
+    CalendarAlarmParent eventAlarmParent(UuidValue id) =>
+        CalendarAlarmParent(kind: CalendarAlarmParentKind.event, id: id);
+    CalendarAlarmDefinition relativeAlarm({
+      bool end = false,
+      String? zone = 'Europe/Stockholm',
+    }) => CalendarAlarmDefinition(
+      relativeDuration: CalendarAlarmDuration(sign: -1, minutes: 5),
+      anchor: end ? CalendarAlarmAnchor.end : CalendarAlarmAnchor.start,
+      dateZoneId: zone,
+    );
+    CalendarAlarmDefinition absoluteAlarm() =>
+        CalendarAlarmDefinition(absoluteUtc: DateTime.utc(2026, 3, 29, 12));
+
+    test('personal alarms CRUD leaves item protocol, source and scope generation unchanged', () async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      final event = await booking(calendar, 10, 11);
+      final parent = eventAlarmParent(event.eventId);
+      final before = (await service.getEvent(
+        event.eventId,
+        eventGroups,
+      )).toJson();
+      final scope = (await CalendarScopeRecord.db.findFirstRow(session))!
+          .revision;
+      final created = (await service.createPersonalAlarm(
+        CalendarAlarmCreateRequest(parent: parent, definition: relativeAlarm()),
+      ))!;
+      expect(created.revision, 1);
+      expect(created.anchorCompatible, isTrue);
+      expect(policy.lastEventRequest!.alarmRecipient!.key, 'alice');
+      expect(policy.lastEventRequest!.currentEvent!.eventId, event.eventId);
+      expect((await service.listPersonalAlarms(parent)).single.id, created.id);
+      final updated = (await service.updatePersonalAlarm(
+        CalendarAlarmUpdateRequest(
+          parent: parent,
+          alarmId: created.id,
+          expectedRevision: 1,
+          definition: absoluteAlarm(),
+        ),
+      ))!;
+      expect(updated.revision, 2);
+      expect(updated.updatedAt.isBefore(updated.createdAt), isFalse);
+      expect(
+        (await service.getEvent(event.eventId, eventGroups)).toJson(),
+        before,
+      );
+      expect(
+        (await CalendarScopeRecord.db.findFirstRow(session))!.revision,
+        scope,
+      );
+      await service.deletePersonalAlarm(parent, created.id, 2);
+      expect(await service.listPersonalAlarms(parent), isEmpty);
+      expect(await CalendarAlarmRecord.db.count(session), 0);
+    });
+
+    test(
+      'personal alarms isolate recipients even in one shared host scope',
+      () async {
+        policy.scopeOverride = 'shared-personal-alarms';
+        final calendar = (await service.create(createInput()))!.calendarId;
+        final event = await booking(calendar, 10, 11);
+        final parent = eventAlarmParent(event.eventId);
+        final created = (await service.createPersonalAlarm(
+          CalendarAlarmCreateRequest(
+            parent: parent,
+            definition: absoluteAlarm(),
+          ),
+        ))!;
+        final bobSession = builder
+            .copyWith(
+              authentication: AuthenticationOverride.authenticationInfo(
+                'bob',
+                {},
+              ),
+            )
+            .build();
+        final bob = CalendarModule.service(bobSession);
+        expect(await bob.listPersonalAlarms(parent), isEmpty);
+        await expectLater(
+          bob.updatePersonalAlarm(
+            CalendarAlarmUpdateRequest(
+              parent: parent,
+              alarmId: created.id,
+              expectedRevision: 1,
+              definition: absoluteAlarm(),
+            ),
+          ),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        await expectLater(
+          bob.deletePersonalAlarm(parent, created.id, 1),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        await bob.createPersonalAlarm(
+          CalendarAlarmCreateRequest(
+            parent: parent,
+            definition: absoluteAlarm(),
+          ),
+        );
+        expect(
+          (await service.listPersonalAlarms(parent)).single.id,
+          created.id,
+        );
+        policy.scopeOverride = 'foreign';
+        await expectLater(
+          service.listPersonalAlarms(parent),
+          failure(CalendarFailureCode.accessDenied),
+        );
+      },
+    );
+
+    test('personal alarms stale, final-denied and changed recipient writes are atomic', () async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      final event = await booking(calendar, 10, 11);
+      final parent = eventAlarmParent(event.eventId);
+      final created = (await service.createPersonalAlarm(
+        CalendarAlarmCreateRequest(parent: parent, definition: absoluteAlarm()),
+      ))!;
+      policy.denyFinal = true;
+      await expectLater(
+        service.updatePersonalAlarm(
+          CalendarAlarmUpdateRequest(
+            parent: parent,
+            alarmId: created.id,
+            expectedRevision: 1,
+            definition: relativeAlarm(),
+          ),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      await expectLater(
+        service.deletePersonalAlarm(parent, created.id, 1),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denyFinal = false;
+      await expectLater(
+        service.updatePersonalAlarm(
+          CalendarAlarmUpdateRequest(
+            parent: parent,
+            alarmId: created.id,
+            expectedRevision: 0,
+            definition: relativeAlarm(),
+          ),
+        ),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      await expectLater(
+        service.deletePersonalAlarm(parent, created.id, 0),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      policy.alarmRecipientOverride = (phase) => CalendarAlarmRecipient(
+        'demo',
+        phase == CalendarAuthorizationPhase.finalWrite ? 'changed' : 'alice',
+      );
+      await expectLater(
+        service.createPersonalAlarm(
+          CalendarAlarmCreateRequest(
+            parent: parent,
+            definition: absoluteAlarm(),
+          ),
+        ),
+        failure(CalendarFailureCode.unavailable),
+      );
+      policy.alarmRecipientOverride = null;
+      expect((await service.listPersonalAlarms(parent)).single.revision, 1);
+      policy.denied.add(CalendarPermission.readPersonalAlarms);
+      await expectLater(
+        service.listPersonalAlarms(parent),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+
+    test('personal alarms require valid initial anchors but cannot block later shared edits', () async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      final event = await booking(calendar, 10, 11);
+      final parent = eventAlarmParent(event.eventId);
+      final alarm = (await service.createPersonalAlarm(
+        CalendarAlarmCreateRequest(
+          parent: parent,
+          definition: relativeAlarm(end: true, zone: null),
+        ),
+      ))!;
+      await service.updateEvent(
+        CalendarEventUpdateRequest(
+          eventId: event.eventId,
+          expectedRevision: 1,
+          content: eventInput().copyWith(
+            timing: CalendarEventTiming(
+              kind: CalendarEventTimeKind.utc,
+              start: CalendarEventCivil(
+                year: 2026,
+                month: 3,
+                day: 29,
+                hour: 10,
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(
+        (await service.listPersonalAlarms(parent)).single.anchorCompatible,
+        isFalse,
+      );
+      expect(
+        (await service.listPersonalAlarms(parent)).single.revision,
+        alarm.revision,
+      );
+      await expectLater(
+        service.createPersonalAlarm(
+          CalendarAlarmCreateRequest(
+            parent: parent,
+            definition: relativeAlarm(end: true),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      await service.updatePersonalAlarm(
+        CalendarAlarmUpdateRequest(
+          parent: parent,
+          alarmId: alarm.id,
+          expectedRevision: 1,
+          definition: absoluteAlarm(),
+        ),
+      );
+      final dateEvent = (await service.createEvent(
+        CalendarEventCreateRequest(calendarId: calendar, content: eventInput()),
+      ))!.eventId;
+      await expectLater(
+        service.createPersonalAlarm(
+          CalendarAlarmCreateRequest(
+            parent: eventAlarmParent(dateEvent),
+            definition: relativeAlarm(zone: null),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      expect(
+        (await service.createPersonalAlarm(
+          CalendarAlarmCreateRequest(
+            parent: eventAlarmParent(dateEvent),
+            definition: relativeAlarm(),
+          ),
+        ))!.anchorCompatible,
+        isTrue,
+      );
+    });
+
+    test('personal alarms absolute triggers support undated tasks and parent deletion scrubs every recipient', () async {
+      policy.scopeOverride = 'shared-delete-alarms';
+      final calendar = (await service.create(createInput()))!.calendarId;
+      final task = await taskCreate(calendar);
+      final parent = CalendarAlarmParent(
+        kind: CalendarAlarmParentKind.task,
+        id: task.taskId,
+      );
+      await expectLater(
+        service.createPersonalAlarm(
+          CalendarAlarmCreateRequest(
+            parent: parent,
+            definition: relativeAlarm(),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      await service.createPersonalAlarm(
+        CalendarAlarmCreateRequest(parent: parent, definition: absoluteAlarm()),
+      );
+      final bobSession = builder
+          .copyWith(
+            authentication: AuthenticationOverride.authenticationInfo(
+              'bob',
+              {},
+            ),
+          )
+          .build();
+      await CalendarModule.service(bobSession).createPersonalAlarm(
+        CalendarAlarmCreateRequest(parent: parent, definition: absoluteAlarm()),
+      );
+      policy.denied.add(CalendarPermission.deletePersonalAlarm);
+      policy.denyFinal = true;
+      await expectLater(
+        service.deleteTask(task.taskId, 1),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(await CalendarAlarmRecord.db.count(session), 2);
+      policy.denyFinal = false;
+      await service.deleteTask(task.taskId, 1);
+      expect(await CalendarAlarmRecord.db.count(session), 0);
+      final event = await booking(calendar, 10, 11);
+      await service.createPersonalAlarm(
+        CalendarAlarmCreateRequest(
+          parent: eventAlarmParent(event.eventId),
+          definition: absoluteAlarm(),
+        ),
+      );
+      await service.deleteEvent(event.eventId, 1);
+      expect(await CalendarAlarmRecord.db.count(session), 0);
+    });
+
+    test(
+      'personal alarms enforce the private cap and reject parent spoofing',
+      () async {
+        final calendar = (await service.create(createInput()))!.calendarId;
+        final event = await booking(calendar, 10, 11);
+        final parent = eventAlarmParent(event.eventId);
+        for (var i = 0; i < 15; i++) {
+          await service.createPersonalAlarm(
+            CalendarAlarmCreateRequest(
+              parent: parent,
+              definition: absoluteAlarm(),
+            ),
+          );
+        }
+        await service.createPersonalAlarm(
+          CalendarAlarmCreateRequest(
+            parent: parent,
+            definition: absoluteAlarm(),
+          ),
+        );
+        await expectLater(
+          service.createPersonalAlarm(
+            CalendarAlarmCreateRequest(
+              parent: parent,
+              definition: absoluteAlarm(),
+            ),
+          ),
+          failure(CalendarFailureCode.limitExceeded),
+        );
+        final rows = await service.listPersonalAlarms(parent);
+        expect(rows, hasLength(16));
+        final other = await booking(calendar, 12, 13);
+        await expectLater(
+          service.updatePersonalAlarm(
+            CalendarAlarmUpdateRequest(
+              parent: eventAlarmParent(other.eventId),
+              alarmId: rows.first.id,
+              expectedRevision: 1,
+              definition: absoluteAlarm(),
+            ),
+          ),
+          failure(CalendarFailureCode.accessDenied),
+        );
+      },
+    );
+
     test('event content preserves timing and occupancy while content follows selected groups', () async {
       final e = await contentEvent();
       final baseline = await service.previewOccurrences(preview(e.eventId));
@@ -12453,7 +12881,20 @@ void main() {
 }
 
 final class TestPolicy implements CalendarHostPolicy {
+  @override
+  Future<CalendarAlarmRecipient> resolveAlarmRecipient(
+    Session session,
+    CalendarHostContext context,
+    Transaction transaction,
+    CalendarAuthorizationPhase phase,
+  ) async =>
+      alarmRecipientOverride?.call(phase) ??
+      CalendarAlarmRecipient('demo', context.principalId);
+  CalendarAlarmRecipient? Function(CalendarAuthorizationPhase)?
+  alarmRecipientOverride;
+
   Duration organizerDelay = Duration.zero;
+  bool hideAlarmReceipt = false;
   bool denyOrganizer = false, denyFinalOrganizer = false;
   bool organizerUnavailable = false;
   CalendarAuthorizationRequest? organizerRequest;
@@ -12783,6 +13224,7 @@ final class TestPolicy implements CalendarHostPolicy {
       taskDisclosedGroups: taskGrants,
       eventDisclosedGroups: eventGrants,
       discloseMutationReceipt:
+          !hideAlarmReceipt &&
           !(r.taskImport != null &&
               r.operation == CalendarPermission.changeTaskProgress &&
               hideTaskProgressReceipt) &&

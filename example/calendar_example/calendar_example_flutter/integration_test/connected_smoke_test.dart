@@ -589,6 +589,19 @@ void main() {
     await _waitFor(tester, find.text('Changed task elsewhere'));
     await _tap(tester, 'task-clear-assignees');
     expect(find.text('0 assignee(s)'), findsOneWidget);
+    await tester.pageBack();
+    await _idle(tester);
+    await _personalAlarmJourney(
+      tester,
+      client,
+      cal.CalendarAlarmParent(
+        kind: cal.CalendarAlarmParentKind.task,
+        id: task.id,
+      ),
+    );
+    await tester.tap(find.byKey(ValueKey('task-${task.id}')));
+    await _idle(tester);
+
     await _tap(tester, 'task-delete');
     await _tap(tester, 'task-confirm-delete');
     expect(
@@ -1101,6 +1114,14 @@ void main() {
     expect(find.byKey(const Key('calendar-error')), findsOneWidget);
     await _tap(tester, 'calendar-events');
     await _waitFor(tester, find.text(eventLabel));
+    await _personalAlarmJourney(
+      tester,
+      client,
+      cal.CalendarAlarmParent(
+        kind: cal.CalendarAlarmParentKind.event,
+        id: event.id,
+      ),
+    );
     await tester.tap(find.text(eventLabel));
     await _idle(tester);
     await _tap(tester, 'event-status-confirmed');
@@ -1332,4 +1353,53 @@ Future<void> _showOccurrence(WidgetTester tester, Finder finder) async {
     maxScrolls: 30,
   );
   await tester.pump();
+}
+
+Future<void> _personalAlarmJourney(
+  WidgetTester tester,
+  Client client,
+  cal.CalendarAlarmParent parent,
+) async {
+  final prefix = parent.kind.name;
+  await _tap(tester, '$prefix-alarms-${parent.id}');
+  await _waitFor(tester, find.text('No personal alarm definitions.'));
+  await _tap(tester, 'alarm-create');
+  if (parent.kind == cal.CalendarAlarmParentKind.task) {
+    await _tap(tester, 'alarm-relative');
+    await tester.enterText(
+      find.byKey(const Key('alarm-absolute')),
+      '2026-03-29T12:00:00Z',
+    );
+  }
+  await _tap(tester, 'alarm-save');
+  final api = client.modules.serverpod_calendar.calendarAlarm;
+  await _waitFor(
+    tester,
+    find.textContaining('Unarmed: current master anchor available'),
+  );
+  final alarm = (await api.list(parent)).single;
+  expect(alarm.revision, 1);
+  expect(alarm.anchorCompatible, isTrue);
+  await _tap(tester, 'alarm-${alarm.id}');
+  if (parent.kind == cal.CalendarAlarmParentKind.event) {
+    await tester.enterText(find.byKey(const Key('alarm-offset-3')), '10');
+  } else {
+    await tester.enterText(
+      find.byKey(const Key('alarm-absolute')),
+      '2026-03-29T12:30:00Z',
+    );
+  }
+  await _tap(tester, 'alarm-save');
+  await _waitFor(
+    tester,
+    parent.kind == cal.CalendarAlarmParentKind.event
+        ? find.textContaining('10m')
+        : find.textContaining('12:30:00'),
+  );
+  expect((await api.list(parent)).single.revision, 2);
+  await _tap(tester, 'alarm-delete-${alarm.id}');
+  await _waitFor(tester, find.text('No personal alarm definitions.'));
+  expect(await api.list(parent), isEmpty);
+  await tester.pageBack();
+  await _idle(tester);
 }

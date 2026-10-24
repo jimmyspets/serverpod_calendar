@@ -12,6 +12,14 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
 import 'dart:typed_data' as _idt;
+import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_create_request.dart'
+    as _i5ky5yg6;
+import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_parent.dart'
+    as _ihgvrd5l;
+import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_update_request.dart'
+    as _iqdswnia;
+import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_view.dart'
+    as _i39h9w7l;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_create_request.dart'
     as _i2zcamh9;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_export_request.dart'
@@ -143,6 +151,52 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_task_view.dart'
 import 'package:serverpod_calendar_client/src/protocol/calendar_view.dart'
     as _i6qyw4e7;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
+/// {@category Endpoint}
+class EndpointCalendarAlarm extends _isc.EndpointRef {
+  EndpointCalendarAlarm(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'serverpod_calendar.calendarAlarm';
+
+  _ida.Future<List<_i39h9w7l.CalendarAlarmView>> list(
+    _ihgvrd5l.CalendarAlarmParent parent,
+  ) => caller.callServerEndpoint<List<_i39h9w7l.CalendarAlarmView>>(
+    'serverpod_calendar.calendarAlarm',
+    'list',
+    {'parent': parent},
+  );
+
+  _ida.Future<_i39h9w7l.CalendarAlarmView?> create(
+    _i5ky5yg6.CalendarAlarmCreateRequest request,
+  ) => caller.callServerEndpoint<_i39h9w7l.CalendarAlarmView?>(
+    'serverpod_calendar.calendarAlarm',
+    'create',
+    {'request': request},
+  );
+
+  _ida.Future<_i39h9w7l.CalendarAlarmView?> update(
+    _iqdswnia.CalendarAlarmUpdateRequest request,
+  ) => caller.callServerEndpoint<_i39h9w7l.CalendarAlarmView?>(
+    'serverpod_calendar.calendarAlarm',
+    'update',
+    {'request': request},
+  );
+
+  _ida.Future<void> delete(
+    _ihgvrd5l.CalendarAlarmParent parent,
+    _isc.UuidValue alarmId,
+    int expectedRevision,
+  ) => caller.callServerEndpoint<void>(
+    'serverpod_calendar.calendarAlarm',
+    'delete',
+    {
+      'parent': parent,
+      'alarmId': alarmId,
+      'expectedRevision': expectedRevision,
+    },
+  );
+}
 
 /// {@category Endpoint}
 class EndpointCalendarAvailability extends _isc.EndpointRef {
@@ -676,6 +730,7 @@ class EndpointCalendarTask extends _isc.EndpointRef {
 
 class Caller extends _isc.ModuleEndpointCaller {
   Caller(_isc.ServerpodClientShared client) : super(client) {
+    calendarAlarm = EndpointCalendarAlarm(this);
     calendarAvailability = EndpointCalendarAvailability(this);
     calendarAvailabilitySearch = EndpointCalendarAvailabilitySearch(this);
     calendarDiagnostics = EndpointCalendarDiagnostics(this);
@@ -683,6 +738,8 @@ class Caller extends _isc.ModuleEndpointCaller {
     calendarEvent = EndpointCalendarEvent(this);
     calendarTask = EndpointCalendarTask(this);
   }
+
+  late final EndpointCalendarAlarm calendarAlarm;
 
   late final EndpointCalendarAvailability calendarAvailability;
 
@@ -698,6 +755,7 @@ class Caller extends _isc.ModuleEndpointCaller {
 
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
+    'serverpod_calendar.calendarAlarm': calendarAlarm,
     'serverpod_calendar.calendarAvailability': calendarAvailability,
     'serverpod_calendar.calendarAvailabilitySearch': calendarAvailabilitySearch,
     'serverpod_calendar.calendarDiagnostics': calendarDiagnostics,

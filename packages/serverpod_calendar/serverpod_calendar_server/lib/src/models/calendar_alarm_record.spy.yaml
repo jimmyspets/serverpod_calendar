@@ -1,0 +1,18 @@
+class: CalendarAlarmRecord
+serverOnly: true
+table: serverpod_calendar_alarm
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  calendarId: UuidValue, relation(parent=serverpod_calendar_identity)
+  parentKind: CalendarAlarmParentKind
+  parentId: UuidValue
+  recipientNamespace: String
+  recipientKey: String
+  revision: int
+  definition: CalendarAlarmDefinition
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  calendar_alarm_private_parent_idx:
+    fields: scopeKey, parentKind, parentId, recipientNamespace, recipientKey

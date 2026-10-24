@@ -1,3 +1,8 @@
+calendarAlarm:
+  - list:
+  - create:
+  - update:
+  - delete:
 calendarAvailability:
   - replaceFromImport:
   - exportCalendar:

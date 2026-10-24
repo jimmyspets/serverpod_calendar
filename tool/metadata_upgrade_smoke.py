@@ -477,6 +477,35 @@ BEGIN
 END;
 $task_future_absence$;
 """)
+        # This increment adds one empty private table. Every pre-existing row
+        # must survive byte-equivalent JSON projection, including source state.
+        sql(database, """
+CREATE TABLE personal_alarm_upgrade_guard (table_name text PRIMARY KEY, rows jsonb NOT NULL);
+DO $snapshot$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+   AND tablename NOT IN ('serverpod_migrations', 'personal_alarm_upgrade_guard') LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s', item.tablename) INTO contents;
+  INSERT INTO personal_alarm_upgrade_guard VALUES (item.tablename, contents);
+ END LOOP;
+END;
+$snapshot$;
+""")
+        sql(database, (SERVER / "migrations/20261024195955583-personal-alarm-definitions/migration.sql").read_text(encoding="utf-8"))
+        sql(database, """
+DO $verify_personal$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT * FROM personal_alarm_upgrade_guard LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s', item.table_name) INTO contents;
+  IF contents IS DISTINCT FROM item.rows THEN RAISE EXCEPTION 'Personal alarm migration changed %', item.table_name; END IF;
+ END LOOP;
+ IF (SELECT count(*) FROM serverpod_calendar_alarm) <> 0 THEN RAISE EXCEPTION 'Invented personal alarms'; END IF;
+END;
+$verify_personal$;
+DROP TABLE personal_alarm_upgrade_guard;
+""")
         print("PASS: populated schema upgrades preserve identity, revisions, content, associations, protocol UID strings and opening identities and old cursor bindings.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

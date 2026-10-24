@@ -1,0 +1,4 @@
+enum: CalendarAlarmAnchor
+values:
+  - start
+  - end
