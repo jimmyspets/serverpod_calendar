@@ -4628,6 +4628,8 @@ void main() {
       bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
     );
     const richEventMetadata = [
+      'ORGANIZER;CN=Inert source:mailto:source-organizer@example.invalid',
+      'ATTENDEE;PARTSTAT=DECLINED;RSVP=TRUE:mailto:source-attendee@example.invalid',
       'URL:https://example.invalid/event',
       'CLASS:PRIVATE',
       'CATEGORIES;LANGUAGE=en:Work,Work',
@@ -4714,6 +4716,21 @@ void main() {
       };
       final text = exported(await service.exportEvents(eventExport(e)));
       expect('CONTACT'.allMatches(text).length, 2);
+      expect('source-attendee@example.invalid'.allMatches(text).length, 2);
+      expect(
+        row
+            .protocolState!
+            .sourceMetadata!
+            .attendees!
+            .single
+            .parameters['PARTSTAT'],
+        ['DECLINED'],
+      );
+      expect(row.content.status, CalendarEventStatus.confirmed);
+      expect(
+        jsonEncode(view.toJsonForProtocol()),
+        isNot(contains('source-attendee@example.invalid')),
+      );
       expect(text, contains('CLASS:PRIVATE'));
       final round = eventStorageProposal(
         parseIcalendarEventCalendar(utf8.encode(text)).series.single,
@@ -4724,6 +4741,37 @@ void main() {
       );
       expect(await generation(), gen);
     });
+    test(
+      'event source participants reject late invalid event states atomically',
+      () async {
+        final parent = (await service.create(createInput()))!.calendarId;
+        final before = await generation();
+        await expectLater(
+          service.importEvents(
+            eventImport(parent, [
+              eventSource('participant-good', extra: richEventMetadata),
+              eventSource(
+                'participant-bad',
+                extra: [
+                  'ORGANIZER:mailto:org@example.invalid',
+                  'ATTENDEE;PARTSTAT=COMPLETED:mailto:worker@example.invalid',
+                ],
+              ),
+            ]),
+          ),
+          failure(CalendarFailureCode.validation),
+        );
+        expect(
+          (await service.listEvents(
+            parent,
+            pageSize: 20,
+            fieldGroups: eventGroups,
+          )).events,
+          isEmpty,
+        );
+        expect(await generation(), before);
+      },
+    );
     test('event source metadata survives native edits without rewriting source history', () async {
       final parent = (await service.create(createInput()))!.calendarId;
       final id = (await service.importEvents(eventImport(parent, richEvent())))
