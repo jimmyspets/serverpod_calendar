@@ -1,0 +1,13 @@
+# ADR 0108: Inert event source participants
+
+Status: **confirmed source participant preservation and separation from host identities; concrete mechanics under draft review**. Date: 2026-10-24.
+
+The maintainer selected the existing task policy for VEVENT ORGANIZER/ATTENDEE: preserve source calendar addresses and claims, without authority, host identity mapping, assignment or invitations. Native participant editors and scheduling follow separately. METHOD continues rejecting; a source RSVP, delegation or SENT-BY claim is not verified host authority.
+
+Reuse the bounded task parameter profile: organizer CN/LANGUAGE/DIR/SENT-BY; attendees additionally CUTYPE/MEMBER/ROLE/PARTSTAT/RSVP/DELEGATED-TO/DELEGATED-FROM. Preserve decoded source spelling/order/duplicates/parameter presence in immutable types. A master with attendees requires an organizer; omitted own participant data inherits, while explicit own claims must match the master, including ordered parameter lists and presence (token case insignificant). Differing occurrence participation remains unsupported. LANGUAGE requires CN; unknown parameters reject.
+
+Apply event-specific PARTSTAT semantics: NEEDS-ACTION, ACCEPTED, DECLINED, TENTATIVE and DELEGATED; task-only COMPLETED/IN-PROCESS reject. Preserve other well-formed unknown tokens using RFC fallback projections, without inserting absent defaults into source output. Bound addresses to 1,024 ASCII characters, tokens to 64, CN to 4,096 code points, attendees to 64/component and list parameters to 16. Share the existing event metadata code-point budget across the file/series. Validate syntax only; never fetch directories or resolve groups.
+
+Store optional organizer/attendee claims inside existing server-only source metadata, preserving omissions and old metadata-only v2 baseline compatibility. Existing readEventSource gates cover complete source export/replacement; ordinary views expose no participant claims or hidden metadata-only nodes. Native edits preserve claims; source replacement compares them under existing baseline/no-op/conflict rules. No new table columns or migration are proposed.
+
+Test typed preservation/defaults/immutability, event participation states, invalid/mismatched claims, shared budgets, raw response privacy, storage/native retention/export/replacement and two-host/example paths. See [RFC 5545 participation status](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.2.12), [attendee](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.4.1), [organizer](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.4.3) and [task source policy](0092-vtodo-source-participants.md). Read-only source preservation is not scheduling interoperability.

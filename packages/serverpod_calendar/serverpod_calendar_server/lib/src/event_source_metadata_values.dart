@@ -61,7 +61,39 @@ CalendarEventSourceMetadata? validateEventSourceMetadata(
           return v.copyWith(parameters: p);
         }),
       );
+  CalendarEventSourceParticipant participant(
+    CalendarEventSourceParticipant v,
+    bool organizer,
+  ) {
+    final decoded = decodeIcalendarEventParticipant(
+      IcalendarSyntaxProperty(
+        organizer ? 'ORGANIZER' : 'ATTENDEE',
+        v.address,
+        parameters: [
+          for (final p in v.parameters.entries)
+            IcalendarSyntaxParameter(p.key, p.value),
+        ],
+      ),
+    );
+    budget!.charge(decoded.address);
+    for (final values in decoded.parameters.values) {
+      for (final v in values) {
+        budget.charge(v);
+      }
+    }
+    return v.copyWith(parameters: decoded.parameters);
+  }
+
+  if ((value.attendees?.length ?? 0) > 64) {
+    throw const RecurrenceLimitException('eventAttendees');
+  }
   final result = value.copyWith(
+    organizer: value.organizer == null
+        ? null
+        : participant(value.organizer!, true),
+    attendees: value.attendees == null || value.attendees!.isEmpty
+        ? null
+        : List.unmodifiable(value.attendees!.map((v) => participant(v, false))),
     categoryGroups: List.unmodifiable(groups),
     comments: texts(value.comments),
     contacts: texts(value.contacts),
@@ -70,7 +102,9 @@ CalendarEventSourceMetadata? validateEventSourceMetadata(
           result.classification == null &&
           result.categoryGroups.isEmpty &&
           result.comments.isEmpty &&
-          result.contacts.isEmpty
+          result.contacts.isEmpty &&
+          result.organizer == null &&
+          result.attendees == null
       ? null
       : result;
 }
@@ -85,7 +119,41 @@ void validateEventMetadataInheritance(
       (b != null &&
           a.length == b.length &&
           List.generate(a.length, (i) => a[i] == b[i]).every((v) => v));
-  if (own.url != null && own.url != master?.url ||
+  bool participantMatches(
+    CalendarEventSourceParticipant a,
+    CalendarEventSourceParticipant? b,
+  ) {
+    if (b == null ||
+        a.address != b.address ||
+        a.parameters.length != b.parameters.length) {
+      return false;
+    }
+    for (final e in a.parameters.entries) {
+      final other = b.parameters[e.key];
+      if (other == null || other.length != e.value.length) return false;
+      for (var i = 0; i < other.length; i++) {
+        String token(String v) =>
+            {'CUTYPE', 'ROLE', 'PARTSTAT', 'RSVP'}.contains(e.key)
+            ? v.toUpperCase()
+            : v;
+        if (token(e.value[i]) != token(other[i])) return false;
+      }
+    }
+    return true;
+  }
+
+  final attendees = own.attendees ?? <CalendarEventSourceParticipant>[];
+  final masterAttendees =
+      master?.attendees ?? <CalendarEventSourceParticipant>[];
+  if (own.organizer != null &&
+          !participantMatches(own.organizer!, master?.organizer) ||
+      attendees.isNotEmpty &&
+          (attendees.length != masterAttendees.length ||
+              List.generate(
+                attendees.length,
+                (i) => !participantMatches(attendees[i], masterAttendees[i]),
+              ).any((v) => v)) ||
+      own.url != null && own.url != master?.url ||
       own.classification != null &&
           own.classification != (master?.classification ?? 'PUBLIC') ||
       !same(own.categoryGroups, master?.categoryGroups) ||

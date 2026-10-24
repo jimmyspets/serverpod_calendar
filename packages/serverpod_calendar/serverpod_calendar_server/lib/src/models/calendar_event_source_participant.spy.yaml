@@ -1,0 +1,6 @@
+class: CalendarEventSourceParticipant
+serverOnly: true
+immutable: true
+fields:
+  address: String
+  parameters: Map<String, List<String>>

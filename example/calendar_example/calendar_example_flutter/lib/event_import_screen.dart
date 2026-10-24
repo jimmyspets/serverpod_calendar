@@ -17,6 +17,8 @@ DURATION:PT1H
 SUMMARY;LANGUAGE=en:Imported example event
 URL:https://example.invalid/events/example
 CLASS:PRIVATE
+ORGANIZER;CN=Synthetic organizer:mailto:source-organizer@example.invalid
+ATTENDEE;PARTSTAT=ACCEPTED:mailto:source-attendee@example.invalid
 CATEGORIES;LANGUAGE=en:Demo,Demo
 CATEGORIES;LANGUAGE=sv:Exempel
 COMMENT;LANGUAGE=en:Read-only source metadata
@@ -117,7 +119,7 @@ class _EventImportScreenState extends State<EventImportScreen> {
       padding: const EdgeInsets.all(16),
       children: [
         const Text(
-          'Paste a supported standalone event calendar. This creates new series; an existing UID rejects the whole import. Text line endings are converted to CRLF before sending. Imported text/link metadata stays read-only in native event editors and requires separate source-read permission for export. CLASS does not grant access; links and contact references are never fetched. No invitations, feeds or reminders are started.',
+          'Paste a supported standalone event calendar. This creates new series; an existing UID rejects the whole import. Text line endings are converted to CRLF before sending. Imported text/link metadata and organizer/attendee claims stay read-only in native event editors and requires separate source-read permission for export. Source participants map to no host users and send no invitations. CLASS does not grant access; links and contact references are never fetched. No invitations, feeds or reminders are started.',
         ),
         if (_busy) const LinearProgressIndicator(),
         if (_error != null) Text(_error!, key: const Key('event-import-error')),
