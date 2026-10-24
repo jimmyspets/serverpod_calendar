@@ -39,6 +39,7 @@ calendarEvent:
   - update:
   - changeStatus:
   - changeOccurrence:
+  - changeOccurrenceContent:
   - deleteEvent:
 calendarTask:
   - replaceFromImport:

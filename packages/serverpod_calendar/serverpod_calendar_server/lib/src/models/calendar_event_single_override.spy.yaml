@@ -4,3 +4,4 @@ fields:
   originalStart: CalendarEventTiming
   replacement: CalendarEventTiming?
   cancelled: bool, default=false
+  contentOverrides: CalendarEventOccurrenceContent?

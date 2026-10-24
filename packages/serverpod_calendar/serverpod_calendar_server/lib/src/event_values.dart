@@ -4,6 +4,7 @@ import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 import 'generated/protocol.dart';
 
 part 'event_override_values.dart';
+part 'event_occurrence_content_values.dart';
 
 /// Native DTO conversion only; temporal rules remain in the independent core.
 (DateEventSpan?, TimedEventSpan?) validateEventTiming(CalendarEventTiming v) {
@@ -81,6 +82,31 @@ part 'event_override_values.dart';
   );
 }
 
+CalendarTextParameters? _eventTextParameter(
+  CalendarTextParameters? p,
+  String? text,
+) {
+  if (p == null) return null;
+  if (text == null) throw ArgumentError('Text parameters require a property');
+  if (p.language != null) validateCalendarLanguageTag(p.language!);
+  final uri = p.alternativeUri;
+  Uri? parsed;
+  try {
+    parsed = uri == null ? null : Uri.parse(uri);
+  } on FormatException {
+    throw ArgumentError('Malformed ALTREP URI');
+  }
+  if (uri != null &&
+      (uri.isEmpty ||
+          uri.length > 4096 ||
+          !RegExp(r'^[A-Za-z][A-Za-z0-9+.-]*:').hasMatch(uri) ||
+          uri.codeUnits.any((v) => v <= 32 || v >= 127) ||
+          !parsed!.isAbsolute)) {
+    throw ArgumentError('Absolute ASCII ALTREP required');
+  }
+  return p.language == null && uri == null ? null : p;
+}
+
 CalendarEventContent validateEventContent(CalendarEventContent value) {
   if (value.summary != null) {
     validateCalendarPlainText(value.summary!, maxCodePoints: 4096);
@@ -129,31 +155,13 @@ CalendarEventContent validateEventContent(CalendarEventContent value) {
       canonical[_anchorKey(period)] = period;
     }
   }
-  CalendarTextParameters? parameter(CalendarTextParameters? p, String? text) {
-    if (p == null) return null;
-    if (text == null) throw ArgumentError('Text parameters require a property');
-    if (p.language != null) validateCalendarLanguageTag(p.language!);
-    final uri = p.alternativeUri;
-    Uri? parsed;
-    try {
-      parsed = uri == null ? null : Uri.parse(uri);
-    } on FormatException {
-      throw ArgumentError('Malformed ALTREP URI');
-    }
-    if (uri != null &&
-        (uri.isEmpty ||
-            uri.length > 4096 ||
-            !RegExp(r'^[A-Za-z][A-Za-z0-9+.-]*:').hasMatch(uri) ||
-            uri.codeUnits.any((v) => v <= 32 || v >= 127) ||
-            !parsed!.isAbsolute)) {
-      throw ArgumentError('Absolute ASCII ALTREP required');
-    }
-    return p.language == null && uri == null ? null : p;
-  }
 
-  final a = parameter(value.textParameters?.summary, value.summary),
-      b = parameter(value.textParameters?.description, value.description),
-      c = parameter(value.textParameters?.location, value.location);
+  final a = _eventTextParameter(value.textParameters?.summary, value.summary),
+      b = _eventTextParameter(
+        value.textParameters?.description,
+        value.description,
+      ),
+      c = _eventTextParameter(value.textParameters?.location, value.location);
   return value.copyWith(
     recurrence: recurrence,
     periods: canonical.isEmpty
@@ -375,6 +383,11 @@ CalendarEventOccurrencePreview previewEventOccurrences(
   List<CalendarEventTiming>? periods,
 }) {
   periods ??= content.periods;
+  final extra = q.fieldGroups ?? const <CalendarEventFieldGroup>[];
+  if (extra.length > 3 || !eventOccurrenceContentGroups.containsAll(extra)) {
+    throw ArgumentError('Only content preview groups may be added');
+  }
+  final groups = {CalendarEventFieldGroup.timing, ...extra};
   final (date, _) = validateEventTiming(content.timing);
   final result = <CalendarEventOccurrence>[];
   if (date != null) {
@@ -447,7 +460,26 @@ CalendarEventOccurrencePreview previewEventOccurrences(
     revision: q.expectedRevision,
     kind: content.timing.kind,
     zoneId: content.timing.zoneId,
-    occurrences: result,
+    disclosedGroups: groups.toList()
+      ..sort((a, b) => a.index.compareTo(b.index)),
+    occurrences: [
+      for (final row in result)
+        (() {
+          final original = CalendarEventTiming(
+            kind: content.timing.kind,
+            zoneId: content.timing.zoneId,
+            start: row.originalStart,
+          );
+          final own = eventOriginalContent(overrides, original);
+          return row.copyWith(
+            content: eventDisclosedOccurrenceContent(
+              eventEffectiveOccurrenceContent(content, own),
+              groups,
+            ),
+            contentOverrides: eventDisclosedOccurrenceContent(own, groups),
+          );
+        })(),
+    ],
   );
 }
 

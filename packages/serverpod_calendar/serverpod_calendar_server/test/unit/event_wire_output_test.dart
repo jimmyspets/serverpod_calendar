@@ -71,6 +71,8 @@ void main() {
               'DURATION:PT3H',
               'STATUS:CANCELLED',
               'SEQUENCE:8',
+              'SUMMARY;LANGUAGE=en:Own',
+              'DESCRIPTION:',
             ],
           ),
         ]).series.single,
@@ -83,6 +85,14 @@ void main() {
       final parsed = parseIcalendarEventCalendar(bytes).series.single;
       expect(parsed.master.sequence, 7);
       expect(parsed.overrides.single.sequence, 8);
+      expect(parsed.overrides.single.summary!.value, 'Own');
+      expect(parsed.overrides.single.summary!.language, 'en');
+      expect(parsed.overrides.single.description!.value, '');
+      final restored = eventStorageProposal(parsed);
+      expect(
+        restored.importBaseline.canonicalValue,
+        proposal.importBaseline.canonicalValue,
+      );
       expect(parsed.master.status, isNull);
       expect(parsed.master.created, isNull);
       expect(parsed.master.summary!.language, 'sv');

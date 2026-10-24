@@ -26,6 +26,7 @@ import 'availability_wire_output.dart';
 import 'availability_import_baseline.dart';
 
 part 'calendar_events.dart';
+part 'calendar_event_occurrence_content.dart';
 part 'calendar_tasks.dart';
 part 'calendar_task_occurrences.dart';
 part 'calendar_task_occurrence_content.dart';

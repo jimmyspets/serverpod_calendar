@@ -115,6 +115,19 @@ CalendarEventRecurrence? _recurrence(IcalendarEventRecurrence? v) {
 
 EventStorageProposal eventStorageProposal(IcalendarEventSeries source) {
   final m = source.master;
+  CalendarEventOccurrenceContent? own(IcalendarEvent value) =>
+      validateEventOccurrenceContent(
+        CalendarEventOccurrenceContent(
+          summary: value.summary?.value,
+          description: value.description?.value,
+          location: value.location?.value,
+          textParameters: CalendarEventTextParameters(
+            summary: _parameters(value.summary),
+            description: _parameters(value.description),
+            location: _parameters(value.location),
+          ),
+        ),
+      );
   validateEventUid(m.uid);
   final content = validateEventContent(
     CalendarEventContent(
@@ -146,6 +159,7 @@ EventStorageProposal eventStorageProposal(IcalendarEventSeries source) {
             originalStart: _value(v.originalStart!),
             replacement: _span(v),
             cancelled: v.status == IcalendarEventStatus.cancelled,
+            contentOverrides: own(v),
           ),
       ],
       future: [
@@ -153,6 +167,7 @@ EventStorageProposal eventStorageProposal(IcalendarEventSeries source) {
           CalendarEventFutureOverride(
             originalStart: _value(v.originalStart!),
             replacement: _span(v),
+            contentOverrides: own(v),
           ),
       ],
     ),

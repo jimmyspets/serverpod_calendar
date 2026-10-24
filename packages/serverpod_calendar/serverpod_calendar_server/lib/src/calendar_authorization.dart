@@ -205,6 +205,7 @@ final class CalendarAuthorizationRequest {
     this.availabilityExport,
     this.availabilityReplacement,
     this.occurrenceChange,
+    this.eventOccurrenceContentChange,
     this.proposedTimingOverrides,
     Iterable<CalendarTaskFieldGroup> taskGroups = const [],
     Iterable<CalendarEventFieldGroup> eventGroups = const [],
@@ -260,6 +261,7 @@ final class CalendarAuthorizationRequest {
   final CalendarAvailabilityExportIntent? availabilityExport;
   final CalendarAvailabilityReplacementIntent? availabilityReplacement;
   final CalendarEventOccurrenceChange? occurrenceChange;
+  final CalendarEventOccurrenceContentRequest? eventOccurrenceContentChange;
   final CalendarEventTimingOverrides? proposedTimingOverrides;
   final Set<CalendarEventFieldGroup> eventGroups;
   final CalendarCategoryQuery? categoryFilter;

@@ -3,3 +3,4 @@ immutable: true
 fields:
   originalStart: CalendarEventTiming
   replacement: CalendarEventTiming
+  contentOverrides: CalendarEventOccurrenceContent?

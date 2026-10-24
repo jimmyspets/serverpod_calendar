@@ -44,17 +44,19 @@ DateEventSeries _dateMaster(CalendarEventContent c) => DateEventSeries(
 
 DateEventRangeSet _dateOverrides(
   CalendarEventContent c,
-  CalendarEventTimingOverrides? v,
-) => DateEventRangeSet(
+  CalendarEventTimingOverrides? v, {
+  bool validateContentOnly = false,
+}) => DateEventRangeSet(
   base: DateEventExceptionSet(
     series: _dateMaster(c),
     exceptions: [
       for (final item in v?.singles ?? <CalendarEventSingleOverride>[])
-        if (item.cancelled)
+        // Validation-only cancellation proves membership without inventing time.
+        if (item.cancelled || (validateContentOnly && item.replacement == null))
           DateEventException.cancel(
             originalStart: _date(item.originalStart.start),
           )
-        else
+        else if (item.replacement != null)
           DateEventException.replace(
             originalStart: _date(item.originalStart.start),
             replacement: validateEventTiming(item.replacement!).$1!,
@@ -83,6 +85,7 @@ TimedEventSeries _timedOverrides(
   CalendarEventTimingOverrides? v, {
   List<CalendarEventTiming>? periods,
   RecurrenceWorkBudget? sharedWorkBudget,
+  bool validateContentOnly = false,
 }) {
   final span = validateEventTiming(c.timing).$2!;
   return TimedEventSeries(
@@ -108,11 +111,11 @@ TimedEventSeries _timedOverrides(
     ),
     exceptions: [
       for (final item in v?.singles ?? <CalendarEventSingleOverride>[])
-        if (item.cancelled)
+        if (item.cancelled || (validateContentOnly && item.replacement == null))
           TimedEventException.cancel(
             validateEventTiming(item.originalStart).$2!.start,
           )
-        else
+        else if (item.replacement != null)
           TimedEventException.replace(
             validateEventTiming(item.originalStart).$2!.start,
             validateEventTiming(item.replacement!).$2!,
@@ -151,35 +154,52 @@ CalendarEventTimingOverrides? validateEventOverrides(
     }
   }
 
+  final singles = <CalendarEventSingleOverride>[],
+      future = <CalendarEventFutureOverride>[];
   for (final item in input.singles) {
     anchor(item.originalStart);
-    if (item.replacement == null && !item.cancelled) {
+    final own = validateEventOccurrenceContent(item.contentOverrides);
+    if (own != null && c.recurrence == null && (c.periods?.isEmpty ?? true)) {
+      throw ArgumentError('Content exceptions require recurrence');
+    }
+    if (item.replacement == null && !item.cancelled && own == null) {
       throw ArgumentError('Empty single override');
     }
     if (item.replacement != null) _profile(c.timing, item.replacement!);
+    singles.add(item.copyWith(contentOverrides: own));
   }
   for (final item in input.future) {
     anchor(item.originalStart);
     _profile(c.timing, item.replacement);
+    if (item.contentOverrides != null &&
+        c.recurrence == null &&
+        (c.periods?.isEmpty ?? true)) {
+      throw ArgumentError('Content exceptions require recurrence');
+    }
+    future.add(
+      item.copyWith(
+        contentOverrides: validateEventOccurrenceContent(item.contentOverrides),
+      ),
+    );
   }
   final result = CalendarEventTimingOverrides(
     singles: List.unmodifiable(
-      input.singles.toList()..sort(
+      singles..sort(
         (a, b) =>
             _anchorKey(a.originalStart).compareTo(_anchorKey(b.originalStart)),
       ),
     ),
     future: List.unmodifiable(
-      input.future.toList()..sort(
+      future..sort(
         (a, b) =>
             _anchorKey(a.originalStart).compareTo(_anchorKey(b.originalStart)),
       ),
     ),
   );
   if (c.timing.kind == CalendarEventTimeKind.date) {
-    _dateOverrides(c, result);
+    _dateOverrides(c, result, validateContentOnly: true);
   } else {
-    _timedOverrides(c, result, periods: periods);
+    _timedOverrides(c, result, periods: periods, validateContentOnly: true);
   }
   return result;
 }
@@ -235,18 +255,21 @@ CalendarEventTimingOverrides? changeEventOverrides(
         CalendarEventOccurrenceAction.restoreSingle => false,
         _ => previous?.cancelled ?? false,
       };
-      if (replacement != null || cancelled) {
+      if (replacement != null ||
+          cancelled ||
+          previous?.contentOverrides != null) {
         singles.add(
           CalendarEventSingleOverride(
             originalStart: request.originalStart,
             replacement: replacement,
             cancelled: cancelled,
+            contentOverrides: previous?.contentOverrides,
           ),
         );
       }
     case CalendarEventOccurrenceAction.replaceFutureTiming:
     case CalendarEventOccurrenceAction.clearFutureTiming:
-      if (index >= 0) {
+      if (index >= 0 && (previous!.replacement != null || previous.cancelled)) {
         throw ArgumentError(
           'Clear the single anchor explicitly before adding a future override there',
         );
@@ -254,12 +277,24 @@ CalendarEventTimingOverrides? changeEventOverrides(
       if (rangeIndex < 0 && !replace) {
         throw ArgumentError('No future change to remove');
       }
+      final own = rangeIndex >= 0
+          ? future[rangeIndex].contentOverrides
+          : previous?.contentOverrides;
       if (rangeIndex >= 0) future.removeAt(rangeIndex);
+      if (index >= 0) singles.removeAt(index);
       if (replace) {
         future.add(
           CalendarEventFutureOverride(
             originalStart: request.originalStart,
             replacement: request.replacement!,
+            contentOverrides: own,
+          ),
+        );
+      } else if (own != null) {
+        singles.add(
+          CalendarEventSingleOverride(
+            originalStart: request.originalStart,
+            contentOverrides: own,
           ),
         );
       }

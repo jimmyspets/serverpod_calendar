@@ -359,6 +359,45 @@ void main() {
     expect(find.text('2026-03-27'), findsOneWidget);
     expect(find.text('2026-03-29'), findsOneWidget);
     expect(find.text('2026-03-31'), findsOneWidget);
+    // Use the supported simulated keyboard for dialogs and later source editors.
+    tester.testTextInput.register();
+    addTearDown(tester.testTextInput.unregister);
+    await _tap(tester, 'event-content-2026-03-29T00:00:00');
+    await _tap(tester, 'event-content-action-summary');
+    await tester.tap(find.text('Set own value').last);
+    await _idle(tester);
+    await tester.enterText(
+      find.byKey(const Key('event-content-value-summary')),
+      'Occurrence title',
+    );
+    await _tap(tester, 'event-content-save');
+    await _showOccurrence(
+      tester,
+      find.textContaining('Summary: Occurrence title'),
+    );
+    await _waitFor(tester, find.textContaining('Summary: Occurrence title'));
+    final contentSaved = await events.getEvent(
+      event.id,
+      cal.CalendarEventFieldGroup.values,
+    );
+    expect(contentSaved.timingOverrides!.singles.single.replacement, isNull);
+    expect(
+      contentSaved.timingOverrides!.singles.single.contentOverrides!.summary,
+      'Occurrence title',
+    );
+    await _tap(tester, 'event-content-2026-03-29T00:00:00');
+    await _tap(tester, 'event-content-action-summary');
+    await tester.tap(find.text('Follow series').last);
+    await _idle(tester);
+    await _tap(tester, 'event-content-save');
+    await _waitFor(tester, find.text('3 occurrences'));
+    expect(
+      (await events.getEvent(
+        event.id,
+        cal.CalendarEventFieldGroup.values,
+      )).timingOverrides,
+      isNull,
+    );
     final untilField = find.byKey(const Key('preview-until'));
     await _enabledField(tester, untilField);
     await tester.tap(untilField);
@@ -755,9 +794,6 @@ void main() {
     await _idle(tester);
     await _tap(tester, 'task-replace-submit');
     await _waitFor(tester, find.text('Identical source; nothing changed.'));
-    // Synthetic multiline typing must not compete with the browser's real IME.
-    tester.testTextInput.register();
-    addTearDown(tester.testTextInput.unregister);
     await tester.enterText(
       find.byKey(const Key('task-replace-source')),
       taskExportText.replaceFirst(
@@ -1230,7 +1266,9 @@ Future<void> _waitFor(WidgetTester tester, Finder finder) async {
 
 Future<void> _tap(WidgetTester tester, String key) async {
   final finder = find.byKey(Key(key));
-  if (key.startsWith('occurrence-') || key.startsWith('preview-')) {
+  if (key.startsWith('occurrence-') ||
+      key.startsWith('preview-') ||
+      key.startsWith('event-content-2026-')) {
     await _showOccurrence(tester, finder);
   } else {
     await _waitFor(tester, finder);

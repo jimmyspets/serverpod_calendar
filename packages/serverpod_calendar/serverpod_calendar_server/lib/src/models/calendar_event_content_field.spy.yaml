@@ -1,0 +1,6 @@
+enum: CalendarEventContentField
+serialized: byName
+values:
+  - summary
+  - description
+  - location

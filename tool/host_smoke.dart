@@ -159,7 +159,9 @@ Future<void> main(List<String> args) async {
         '-d',
         'web-server',
         '--driver=test_driver/integration_test.dart',
-        args.contains('--task-replacement')
+        args.contains('--event-content')
+            ? '--target=integration_test/event_content_smoke_test.dart'
+            : args.contains('--task-replacement')
             ? '--target=integration_test/task_replace_smoke_test.dart'
             : args.contains('--event-replacement')
             ? '--target=integration_test/event_replace_smoke_test.dart'
@@ -177,8 +179,14 @@ Future<void> main(List<String> args) async {
       );
       final output = result.stdout.transform(utf8.decoder).listen(stdout.write);
       final error = result.stderr.transform(utf8.decoder).listen(stderr.write);
+      final focused =
+          args.contains('--task-replacement') ||
+          args.contains('--event-replacement') ||
+          args.contains('--event-content');
+      // The full journey includes all delivered features and process shutdown.
+      // Keep the focused feature targets short; per-action waits stay bounded.
       final browserCode = await result.exitCode.timeout(
-        const Duration(minutes: 4),
+        Duration(minutes: focused ? 4 : 6),
         onTimeout: () {
           unawaited(stop(result));
           throw TimeoutException('Flutter browser smoke timed out.');

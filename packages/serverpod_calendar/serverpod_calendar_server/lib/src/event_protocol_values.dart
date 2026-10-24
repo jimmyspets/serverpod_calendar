@@ -10,7 +10,7 @@ import 'generated/protocol.dart';
 const eventMaxSequence = 2147483647;
 const eventBaselineMaxBytes = 2097152;
 String get eventBaselineProfile =>
-    'event-source-v1/${NamedZoneResolver.dataVersion}';
+    'event-source-v2/${NamedZoneResolver.dataVersion}';
 void validateEventUid(String uid) {
   if (uid.isEmpty) throw ArgumentError('Protocol UID required');
   validateCalendarPlainText(uid, maxCodePoints: 4096);
@@ -63,6 +63,9 @@ CalendarEventProtocolState eventProtocolBaseline(
           originalStart: v.$1,
           isThisAndFuture: v.$2,
           statusPresent: _cancelled(v.$3),
+          summaryPresent: eventComponentContent(v.$3)?.summary != null,
+          descriptionPresent: eventComponentContent(v.$3)?.description != null,
+          locationPresent: eventComponentContent(v.$3)?.location != null,
           version: _initial(modified, legacy: legacy),
         ),
     ],
@@ -106,9 +109,10 @@ CalendarEventProtocolState validateEventProtocolState(
       throw ArgumentError('Orphan component checkpoint');
     }
     validateEventProtocolVersion(state.version);
-    if (state.summaryPresent && content.summary == null ||
-        state.descriptionPresent && content.description == null ||
-        state.locationPresent && content.location == null ||
+    final own = eventComponentContent(component.$3);
+    if (state.summaryPresent != (own?.summary != null) ||
+        state.descriptionPresent != (own?.description != null) ||
+        state.locationPresent != (own?.location != null) ||
         _cancelled(component.$3) && !state.statusPresent) {
       throw ArgumentError('Invalid component property presence');
     }
@@ -150,11 +154,20 @@ Object _payload(
       ? change.toJson()
       : (change as CalendarEventFutureOverride).toJson()),
   if (mask.summaryPresent)
-    'summary': [c.summary, c.textParameters?.summary?.toJson()],
+    'summary': [
+      eventComponentContent(change)?.summary,
+      eventComponentContent(change)?.textParameters?.summary?.toJson(),
+    ],
   if (mask.descriptionPresent)
-    'description': [c.description, c.textParameters?.description?.toJson()],
+    'description': [
+      eventComponentContent(change)?.description,
+      eventComponentContent(change)?.textParameters?.description?.toJson(),
+    ],
   if (mask.locationPresent)
-    'location': [c.location, c.textParameters?.location?.toJson()],
+    'location': [
+      eventComponentContent(change)?.location,
+      eventComponentContent(change)?.textParameters?.location?.toJson(),
+    ],
   if (mask.statusPresent)
     'status': _cancelled(change) ? 'cancelled' : c.status.name,
   if (mask.transparencyPresent) 'transparency': c.transparency.name,
@@ -173,29 +186,48 @@ CalendarEventProtocolState advanceEventProtocol(
   final states = <CalendarEventOverrideProtocolState>[];
   for (final entry in components.entries) {
     final v = entry.value;
-    final old = current.overrides
+    var old = current.overrides
         .where(
           (s) =>
               eventComponentKey(s.originalStart, s.isThisAndFuture) ==
               entry.key,
         )
         .firstOrNull;
-    final oldValue = oldComponents[entry.key];
+    var oldValue = oldComponents[entry.key];
+    // Timing scope transfers retain the same original's component history.
+    if (old == null || oldValue == null) {
+      final retained = current.overrides
+          .where((s) => s.originalStart == v.$1)
+          .firstOrNull;
+      if (retained != null) {
+        old = retained;
+        oldValue =
+            oldComponents[eventComponentKey(
+              retained.originalStart,
+              retained.isThisAndFuture,
+            )];
+      }
+    }
     if (old == null || oldValue == null) {
       states.add(
         CalendarEventOverrideProtocolState(
           originalStart: v.$1,
           isThisAndFuture: v.$2,
           statusPresent: _cancelled(v.$3),
+          summaryPresent: eventComponentContent(v.$3)?.summary != null,
+          descriptionPresent: eventComponentContent(v.$3)?.description != null,
+          locationPresent: eventComponentContent(v.$3)?.location != null,
           version: _initial(now),
         ),
       );
       continue;
     }
     final state = old.copyWith(
-      summaryPresent: old.summaryPresent && after.summary != null,
-      descriptionPresent: old.descriptionPresent && after.description != null,
-      locationPresent: old.locationPresent && after.location != null,
+      originalStart: v.$1,
+      isThisAndFuture: v.$2,
+      summaryPresent: eventComponentContent(v.$3)?.summary != null,
+      descriptionPresent: eventComponentContent(v.$3)?.description != null,
+      locationPresent: eventComponentContent(v.$3)?.location != null,
       statusPresent:
           _cancelled(v.$3) ||
           (_cancelled(oldValue.$3) ? false : old.statusPresent),

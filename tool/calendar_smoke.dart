@@ -382,6 +382,7 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
     }
     await eventImportSmoke(clients);
     await eventReplacementSmoke(clients);
+    await eventContentSmoke(clients);
     await taskSmoke(clients);
     final ea = clients.first.modules.serverpod_calendar.calendarEvent;
     final eb = clients.last.modules.serverpod_calendar.calendarEvent;
@@ -1627,6 +1628,120 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
       final v = await b.getCalendar(id, groups);
       await b.delete(id, v.revision);
     }
+  }
+}
+
+Future<void> eventContentSmoke(List<Client> clients) async {
+  final calendars = clients.first.modules.serverpod_calendar.calendar;
+  final a = clients.first.modules.serverpod_calendar.calendarEvent,
+      b = clients.last.modules.serverpod_calendar.calendarEvent;
+  final parent = (await calendars.create(
+    cal.CalendarCreateRequest(
+      displayName: 'Event content smoke',
+      availabilityZoneId: 'UTC',
+      noRuleFallback: cal.CalendarNoRuleFallback.free,
+    ),
+  ))!.calendarId;
+  UuidValue? id;
+  cal.CalendarEventTiming timing(int d) => cal.CalendarEventTiming(
+    kind: cal.CalendarEventTimeKind.date,
+    start: cal.CalendarEventCivil(year: 2026, month: 10, day: d),
+  );
+  try {
+    id = (await a.create(
+      cal.CalendarEventCreateRequest(
+        calendarId: parent,
+        content: cal.CalendarEventContent(
+          summary: 'Master',
+          timing: timing(22),
+          recurrence: cal.CalendarEventRecurrence(
+            rule: cal.CalendarEventRule(
+              frequency: cal.CalendarEventFrequency.daily,
+              count: 3,
+              byDay: [],
+              byMonthDay: [],
+              byYearDay: [],
+              byWeekNo: [],
+              byMonth: [],
+              byHour: [],
+              byMinute: [],
+              bySetPosition: [],
+            ),
+            inclusions: [],
+            exclusions: [],
+          ),
+        ),
+      ),
+    ))!.eventId;
+    cal.CalendarEventOccurrenceContentRequest request(String text, int rev) =>
+        cal.CalendarEventOccurrenceContentRequest(
+          eventId: id!,
+          expectedRevision: rev,
+          originalStart: timing(23),
+          changes: [
+            cal.CalendarEventOccurrenceContentChange(
+              field: cal.CalendarEventContentField.summary,
+              action: cal.CalendarEventContentAction.setValue,
+              text: text,
+            ),
+          ],
+        );
+    final results = await Future.wait([
+      a
+          .changeOccurrenceContent(request('A', 1))
+          .then<Object?>((v) => v)
+          .catchError((Object e) => e),
+      b
+          .changeOccurrenceContent(request('B', 1))
+          .then<Object?>((v) => v)
+          .catchError((Object e) => e),
+    ]);
+    check(
+      results.whereType<cal.CalendarException>().length == 1 &&
+          results.whereType<cal.CalendarException>().single.code ==
+              cal.CalendarFailureCode.staleRevision,
+      'Cross-host content race admits one writer',
+    );
+    await b.changeOccurrenceContent(request('Reviewed', 2));
+    final preview = await a.preview(
+      cal.CalendarEventOccurrenceQuery(
+        eventId: id,
+        expectedRevision: 3,
+        fromDate: timing(22).start,
+        untilDate: timing(25).start,
+        fieldGroups: [cal.CalendarEventFieldGroup.summary],
+      ),
+    );
+    check(
+      preview.occurrences[1].content!.summary == 'Reviewed' &&
+          preview.occurrences[2].content!.summary == 'Master',
+      'Remote content stays local to original',
+    );
+    check(
+      preview.occurrences[1].start.day == 23,
+      'Content edit preserves timing inheritance',
+    );
+    await rejects(
+      () => a.exportEvents(
+        cal.CalendarEventExportRequest(
+          calendarId: parent,
+          expectedRevision: 1,
+          selection: [
+            cal.CalendarEventExportSelection(eventId: id!, expectedRevision: 3),
+          ],
+        ),
+      ),
+      cal.CalendarFailureCode.validation,
+    );
+    print(
+      'PASS: event content cross-host stale race, original-local disclosure, unchanged timing and lossy export rejection.',
+    );
+  } finally {
+    if (id != null) {
+      final current = await a.getEvent(id, []);
+      await a.deleteEvent(id, current.revision);
+    }
+    await calendars.delete(parent, 1);
   }
 }
 

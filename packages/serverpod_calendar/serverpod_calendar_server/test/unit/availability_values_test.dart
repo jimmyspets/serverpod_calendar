@@ -2,6 +2,7 @@
 library;
 
 import 'package:test/test.dart';
+import 'package:serverpod/serverpod.dart' show UuidValue;
 import 'package:serverpod_calendar_core/serverpod_calendar_core.dart';
 import 'package:serverpod_calendar_server/serverpod_calendar_server.dart';
 import 'package:serverpod_calendar_server/src/availability_values.dart';
@@ -32,6 +33,43 @@ CalendarEventRule daily() => CalendarEventRule(
   bySetPosition: [],
 );
 void main() {
+  test('availability rejects injected event occurrence content', () {
+    final c = validateAvailabilityContent(
+      CalendarAvailabilityContent(
+        openings: [
+          CalendarAvailabilityOpening(
+            uid: UuidValue.fromString('11111111-1111-4111-8111-111111111111'),
+            timing: timing(endHour: 17),
+            recurrence: CalendarEventRecurrence(
+              rule: daily(),
+              inclusions: [],
+              exclusions: [],
+            ),
+          ),
+        ],
+      ),
+    );
+    expect(
+      () => validateAvailabilityEdits(c, [
+        CalendarAvailabilityOpeningEdits(
+          openingUid: c.openings.single.uid!,
+          overrides: CalendarEventTimingOverrides(
+            singles: [
+              CalendarEventSingleOverride(
+                originalStart: timing(day: 29),
+                replacement: timing(day: 29, endHour: 17),
+                contentOverrides: CalendarEventOccurrenceContent(
+                  summary: 'Unsupported',
+                ),
+              ),
+            ],
+            future: [],
+          ),
+        ),
+      ]),
+      throwsArgumentError,
+    );
+  });
   test('explicit named-zone recurring hours cross DST without calendar-zone inference', () {
     final c = validateAvailabilityContent(
       CalendarAvailabilityContent(

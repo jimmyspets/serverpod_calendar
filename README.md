@@ -118,3 +118,5 @@ Authenticated [task export](docs/task-export.md) now complements create-only tas
 [Explicit task source replacement](docs/task-source-replacement.md) now follows create-only import and export: replace selected imported series with baseline/local-conflict protection, preserved assignments and true no-op retries. Adoption/overwrite and broader synchronization remain separate.
 
 [Explicit event source replacement](docs/event-source-replacement.md) now applies the same recorded-baseline/local-conflict and true no-op policy to selected imported event series, with independent lifecycle checks for status and cancellation changes. This is ordinary import replacement; scheduling reconciliation and adoption remain separate.
+
+Selected event occurrence content is implemented under [ADR 0106](docs/adr/0106-single-event-content-overrides.md); [the guide](docs/event-occurrence-content.md) explains timing inheritance, explicit export rejection and the pre-beta v2 source-baseline boundary.
