@@ -58,3 +58,8 @@ Sources: [RFC 5545 sections 3.6.1 and 3.6.5](https://www.rfc-editor.org/rfc/rfc5
 
 
 The later [source metadata](event-source-metadata.md) and [inert participant](event-source-participants.md) increments under ADRs 0107–0108 extend the original pure profile and authenticated storage/import/export/replacement. They preserve declared decoded source semantics; native metadata/participant editors, scheduling, alarms and other unprofiled properties remain separate.
+
+
+### Inert event source references — ADR 0109
+
+[The bounded source-reference profile](event-source-references.md) preserves unresolved RELATED-TO UIDs and URI-only ATTACH values through storage, native edits and authenticated import/export/replacement. Existing source-read authority protects disclosure; no native graph, target/file access, fetching, mail copying or scheduling follows. Extended relationships and native editors remain separate. Nullable source JSON adds no table columns/migration and preserves prior v2 snapshots; a narrow decoder correction handles omitted empty participant parameter maps without changing canonical bytes.

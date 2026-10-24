@@ -14,8 +14,10 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+import 'calendar_event_source_attachment.dart' as _i20i9qxn;
 import 'calendar_event_source_category_group.dart' as _iui013s0;
 import 'calendar_event_source_participant.dart' as _iypom7ai;
+import 'calendar_event_source_relationship.dart' as _iksc4ly9;
 import 'calendar_event_source_text.dart' as _iwa6orjz;
 
 @_is.immutable
@@ -29,6 +31,8 @@ abstract class CalendarEventSourceMetadata
     required this.contacts,
     this.organizer,
     this.attendees,
+    this.relationships,
+    this.attachments,
   });
 
   const factory CalendarEventSourceMetadata({
@@ -39,6 +43,8 @@ abstract class CalendarEventSourceMetadata
     required List<_iwa6orjz.CalendarEventSourceText> contacts,
     _iypom7ai.CalendarEventSourceParticipant? organizer,
     List<_iypom7ai.CalendarEventSourceParticipant>? attendees,
+    List<_iksc4ly9.CalendarEventSourceRelationship>? relationships,
+    List<_i20i9qxn.CalendarEventSourceAttachment>? attachments,
   }) = _CalendarEventSourceMetadataImpl;
 
   factory CalendarEventSourceMetadata.fromJson(
@@ -71,6 +77,18 @@ abstract class CalendarEventSourceMetadata
                 .deserialize<List<_iypom7ai.CalendarEventSourceParticipant>>(
                   jsonSerialization['attendees'],
                 ),
+      relationships: jsonSerialization['relationships'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<List<_iksc4ly9.CalendarEventSourceRelationship>>(
+                  jsonSerialization['relationships'],
+                ),
+      attachments: jsonSerialization['attachments'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<List<_i20i9qxn.CalendarEventSourceAttachment>>(
+                  jsonSerialization['attachments'],
+                ),
     );
   }
 
@@ -88,6 +106,10 @@ abstract class CalendarEventSourceMetadata
 
   final List<_iypom7ai.CalendarEventSourceParticipant>? attendees;
 
+  final List<_iksc4ly9.CalendarEventSourceRelationship>? relationships;
+
+  final List<_i20i9qxn.CalendarEventSourceAttachment>? attachments;
+
   /// Returns a shallow copy of this [CalendarEventSourceMetadata]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -99,6 +121,8 @@ abstract class CalendarEventSourceMetadata
     List<_iwa6orjz.CalendarEventSourceText>? contacts,
     _iypom7ai.CalendarEventSourceParticipant? organizer,
     List<_iypom7ai.CalendarEventSourceParticipant>? attendees,
+    List<_iksc4ly9.CalendarEventSourceRelationship>? relationships,
+    List<_i20i9qxn.CalendarEventSourceAttachment>? attachments,
   });
   @override
   bool operator ==(Object other) {
@@ -138,6 +162,14 @@ abstract class CalendarEventSourceMetadata
             const _iss.DeepCollectionEquality().equals(
               other.attendees,
               attendees,
+            ) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.relationships,
+              relationships,
+            ) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.attachments,
+              attachments,
             );
   }
 
@@ -152,6 +184,8 @@ abstract class CalendarEventSourceMetadata
       const _iss.DeepCollectionEquality().hash(contacts),
       organizer,
       const _iss.DeepCollectionEquality().hash(attendees),
+      const _iss.DeepCollectionEquality().hash(relationships),
+      const _iss.DeepCollectionEquality().hash(attachments),
     );
   }
 
@@ -167,6 +201,10 @@ abstract class CalendarEventSourceMetadata
       if (organizer != null) 'organizer': organizer?.toJson(),
       if (attendees != null)
         'attendees': attendees?.toJson(valueToJson: (v) => v.toJson()),
+      if (relationships != null)
+        'relationships': relationships?.toJson(valueToJson: (v) => v.toJson()),
+      if (attachments != null)
+        'attachments': attachments?.toJson(valueToJson: (v) => v.toJson()),
     };
   }
 
@@ -192,6 +230,8 @@ class _CalendarEventSourceMetadataImpl extends CalendarEventSourceMetadata {
     required List<_iwa6orjz.CalendarEventSourceText> contacts,
     _iypom7ai.CalendarEventSourceParticipant? organizer,
     List<_iypom7ai.CalendarEventSourceParticipant>? attendees,
+    List<_iksc4ly9.CalendarEventSourceRelationship>? relationships,
+    List<_i20i9qxn.CalendarEventSourceAttachment>? attachments,
   }) : super._(
          url: url,
          classification: classification,
@@ -200,6 +240,8 @@ class _CalendarEventSourceMetadataImpl extends CalendarEventSourceMetadata {
          contacts: contacts,
          organizer: organizer,
          attendees: attendees,
+         relationships: relationships,
+         attachments: attachments,
        );
 
   /// Returns a shallow copy of this [CalendarEventSourceMetadata]
@@ -214,6 +256,8 @@ class _CalendarEventSourceMetadataImpl extends CalendarEventSourceMetadata {
     List<_iwa6orjz.CalendarEventSourceText>? contacts,
     Object? organizer = _Undefined,
     Object? attendees = _Undefined,
+    Object? relationships = _Undefined,
+    Object? attachments = _Undefined,
   }) {
     return CalendarEventSourceMetadata(
       url: url is String? ? url : this.url,
@@ -231,6 +275,13 @@ class _CalendarEventSourceMetadataImpl extends CalendarEventSourceMetadata {
       attendees: attendees is List<_iypom7ai.CalendarEventSourceParticipant>?
           ? attendees
           : this.attendees?.map((e0) => e0.copyWith()).toList(),
+      relationships:
+          relationships is List<_iksc4ly9.CalendarEventSourceRelationship>?
+          ? relationships
+          : this.relationships?.map((e0) => e0.copyWith()).toList(),
+      attachments: attachments is List<_i20i9qxn.CalendarEventSourceAttachment>?
+          ? attachments
+          : this.attachments?.map((e0) => e0.copyWith()).toList(),
     );
   }
 }

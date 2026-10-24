@@ -1,0 +1,6 @@
+class: CalendarEventSourceRelationship
+serverOnly: true
+immutable: true
+fields:
+  targetUid: String
+  relationType: String?

@@ -87,7 +87,63 @@ CalendarEventSourceMetadata? validateEventSourceMetadata(
   if ((value.attendees?.length ?? 0) > 64) {
     throw const RecurrenceLimitException('eventAttendees');
   }
+  if ((value.relationships?.length ?? 0) > 64 ||
+      (value.attachments?.length ?? 0) > 64) {
+    throw const RecurrenceLimitException('eventSourceReferences');
+  }
+  final references = decodeIcalendarEventReferences([
+    for (final r in value.relationships ?? <CalendarEventSourceRelationship>[])
+      IcalendarSyntaxProperty(
+        'RELATED-TO',
+        encodeIcalendarText(r.targetUid),
+        parameters: [
+          if (r.relationType != null)
+            IcalendarSyntaxParameter('RELTYPE', [r.relationType!]),
+        ],
+      ),
+    for (final a in value.attachments ?? <CalendarEventSourceAttachment>[])
+      IcalendarSyntaxProperty(
+        'ATTACH',
+        a.uri,
+        parameters: [
+          if (a.explicitUri) IcalendarSyntaxParameter('VALUE', ['URI']),
+          if (a.mediaType != null)
+            IcalendarSyntaxParameter('FMTTYPE', [a.mediaType!]),
+        ],
+      ),
+  ]);
+  for (final r in references.relationships) {
+    budget.charge(r.targetUid);
+    budget.charge(r.relationType);
+  }
+  for (final a in references.attachments) {
+    budget.charge(a.uri);
+    budget.charge(a.mediaType);
+  }
   final result = value.copyWith(
+    relationships: references.relationships.isEmpty
+        ? null
+        : List.unmodifiable(
+            references.relationships.map(
+              (r) => CalendarEventSourceRelationship(
+                targetUid: r.targetUid,
+                relationType: r.relationType,
+              ),
+            ),
+          ),
+    attachments: references.attachments.isEmpty
+        ? null
+        : List.unmodifiable(
+            references.attachments.map(
+              (a) => CalendarEventSourceAttachment(
+                uri: a.uri,
+                mediaType: a.mediaType,
+                explicitUri: a.source.parameters.any(
+                  (p) => p.canonicalName == 'VALUE',
+                ),
+              ),
+            ),
+          ),
     organizer: value.organizer == null
         ? null
         : participant(value.organizer!, true),
@@ -104,7 +160,9 @@ CalendarEventSourceMetadata? validateEventSourceMetadata(
           result.comments.isEmpty &&
           result.contacts.isEmpty &&
           result.organizer == null &&
-          result.attendees == null
+          result.attendees == null &&
+          result.relationships == null &&
+          result.attachments == null
       ? null
       : result;
 }
@@ -142,10 +200,37 @@ void validateEventMetadataInheritance(
     return true;
   }
 
+  bool sameReferences<T>(
+    List<T>? own,
+    List<T>? master,
+    bool Function(T, T) matches,
+  ) =>
+      own == null ||
+      own.isEmpty ||
+      (master != null &&
+          own.length == master.length &&
+          List.generate(
+            own.length,
+            (i) => matches(own[i], master[i]),
+          ).every((v) => v));
   final attendees = own.attendees ?? <CalendarEventSourceParticipant>[];
   final masterAttendees =
       master?.attendees ?? <CalendarEventSourceParticipant>[];
-  if (own.organizer != null &&
+  if (!sameReferences<CalendarEventSourceRelationship>(
+        own.relationships,
+        master?.relationships,
+        (a, b) =>
+            a.targetUid == b.targetUid &&
+            (a.relationType ?? 'PARENT') == (b.relationType ?? 'PARENT'),
+      ) ||
+      !sameReferences<CalendarEventSourceAttachment>(
+        own.attachments,
+        master?.attachments,
+        (a, b) =>
+            a.uri == b.uri &&
+            a.mediaType?.toLowerCase() == b.mediaType?.toLowerCase(),
+      ) ||
+      own.organizer != null &&
           !participantMatches(own.organizer!, master?.organizer) ||
       attendees.isNotEmpty &&
           (attendees.length != masterAttendees.length ||
