@@ -126,6 +126,10 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_task_progress_re
     as _ic7kx71o;
 import 'package:serverpod_calendar_client/src/protocol/calendar_task_receipt.dart'
     as _igkgk3pi;
+import 'package:serverpod_calendar_client/src/protocol/calendar_task_replace_request.dart'
+    as _iuoot210;
+import 'package:serverpod_calendar_client/src/protocol/calendar_task_replace_result.dart'
+    as _ifqle8yh;
 import 'package:serverpod_calendar_client/src/protocol/calendar_task_update_request.dart'
     as _i3qqxpb2;
 import 'package:serverpod_calendar_client/src/protocol/calendar_task_view.dart'
@@ -510,6 +514,14 @@ class EndpointCalendarTask extends _isc.EndpointRef {
 
   @override
   String get name => 'serverpod_calendar.calendarTask';
+
+  _ida.Future<_ifqle8yh.CalendarTaskReplaceResult> replaceFromImport(
+    _iuoot210.CalendarTaskReplaceRequest request,
+  ) => caller.callServerEndpoint<_ifqle8yh.CalendarTaskReplaceResult>(
+    'serverpod_calendar.calendarTask',
+    'replaceFromImport',
+    {'request': request},
+  );
 
   _ida.Future<_idt.ByteData> exportTasks(
     _i3mct00g.CalendarTaskExportRequest request,
