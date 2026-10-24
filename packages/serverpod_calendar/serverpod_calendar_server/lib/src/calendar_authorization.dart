@@ -10,6 +10,10 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  readPersonalAlarms,
+  createPersonalAlarm,
+  updatePersonalAlarm,
+  deletePersonalAlarm,
   replaceEventsFromImport,
   replaceTasksFromImport,
   exportTasks,
@@ -159,6 +163,10 @@ final class CalendarAuthorizationRequest {
   CalendarAuthorizationRequest({
     required this.key,
     required this.operation,
+    this.alarmRecipient,
+    this.alarmId,
+    this.currentAlarm,
+    this.proposedAlarmDefinition,
     this.current,
     this.proposed,
     this.calendarId,
@@ -217,6 +225,10 @@ final class CalendarAuthorizationRequest {
        eventGroups = Set.unmodifiable(eventGroups);
   final String key;
   final CalendarPermission operation;
+  final CalendarAlarmRecipient? alarmRecipient;
+  final UuidValue? alarmId;
+  final CalendarAlarmView? currentAlarm;
+  final CalendarAlarmDefinition? proposedAlarmDefinition;
   final UuidValue? eventId;
   final UuidValue? taskId;
   final CalendarTaskPolicySnapshot? currentTask;
@@ -479,11 +491,26 @@ final class CalendarCandidatePlan {
   final Set<UuidValue>? calendarIds;
 }
 
+/// Trusted current recipient, never accepted from generated-client requests.
+final class CalendarAlarmRecipient {
+  const CalendarAlarmRecipient(this.namespace, this.key);
+  final String namespace, key;
+}
+
 /// Hosts supply rules and a truthful guarantee. All methods must be side-effect
 /// free except transactional locking; no notification/mail/business writes.
 abstract interface class CalendarHostPolicy {
   CalendarAuthorizationGuarantee get guarantee;
   Future<CalendarHostContext> resolveContext(Session session);
+
+  /// Resolve only the authenticated current recipient. Coordinate revocation at
+  /// finalWrite under the same declared guarantee as ordinary policy checks.
+  Future<CalendarAlarmRecipient> resolveAlarmRecipient(
+    Session session,
+    CalendarHostContext context,
+    Transaction transaction,
+    CalendarAuthorizationPhase phase,
+  );
   Future<CalendarCandidatePlan> planQuery(
     Session session,
     CalendarHostContext context,

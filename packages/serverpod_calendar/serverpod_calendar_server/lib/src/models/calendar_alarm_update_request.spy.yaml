@@ -1,0 +1,7 @@
+class: CalendarAlarmUpdateRequest
+immutable: true
+fields:
+  parent: CalendarAlarmParent
+  alarmId: UuidValue
+  expectedRevision: int
+  definition: CalendarAlarmDefinition

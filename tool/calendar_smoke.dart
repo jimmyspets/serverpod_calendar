@@ -384,6 +384,7 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
     await eventReplacementSmoke(clients);
     await eventContentSmoke(clients);
     await eventMetadataSmoke(clients);
+    await personalAlarmSmoke(clients);
     await taskSmoke(clients);
     final ea = clients.first.modules.serverpod_calendar.calendarEvent;
     final eb = clients.last.modules.serverpod_calendar.calendarEvent;
@@ -3226,4 +3227,135 @@ final class _Storage implements ClientAuthSuccessStorage {
   Future<void> set(AuthSuccess? data) async {
     value = data;
   }
+}
+
+Future<void> personalAlarmSmoke(List<Client> clients) async {
+  final a = clients.first.modules.serverpod_calendar;
+  final b = clients.last.modules.serverpod_calendar;
+  final calendar = (await a.calendar.create(
+    cal.CalendarCreateRequest(
+      displayName: 'Private alarm two-host fixture',
+      availabilityZoneId: 'Europe/Stockholm',
+      noRuleFallback: cal.CalendarNoRuleFallback.free,
+    ),
+  ))!.calendarId;
+  final event = (await a.calendarEvent.create(
+    cal.CalendarEventCreateRequest(
+      calendarId: calendar,
+      content: cal.CalendarEventContent(
+        timing: cal.CalendarEventTiming(
+          kind: cal.CalendarEventTimeKind.utc,
+          start: cal.CalendarEventCivil(year: 2026, month: 3, day: 29),
+        ),
+      ),
+    ),
+  ))!;
+  final parent = cal.CalendarAlarmParent(
+    kind: cal.CalendarAlarmParentKind.event,
+    id: event.eventId,
+  );
+  cal.CalendarAlarmDefinition definition(int minute) =>
+      cal.CalendarAlarmDefinition(
+        absoluteUtc: DateTime.utc(2026, 3, 29, 12, minute),
+      );
+  for (var i = 0; i < 15; i++) {
+    await a.calendarAlarm.create(
+      cal.CalendarAlarmCreateRequest(parent: parent, definition: definition(i)),
+    );
+  }
+  Future<Object> create(dynamic api) async {
+    try {
+      return await api.create(
+        cal.CalendarAlarmCreateRequest(
+          parent: parent,
+          definition: definition(16),
+        ),
+      ) as Object;
+    } on cal.CalendarException catch (e) {
+      return e;
+    }
+  }
+
+  final results = await Future.wait([
+    create(a.calendarAlarm),
+    create(b.calendarAlarm),
+  ]);
+  check(
+    results.whereType<cal.CalendarAlarmView>().length == 1 &&
+        results.whereType<cal.CalendarException>().single.code ==
+            cal.CalendarFailureCode.limitExceeded,
+    'Cross-host personal alarm cap race failed',
+  );
+  final rows = await b.calendarAlarm.list(parent);
+  check(rows.length == 16, 'Cross-host private alarm persistence failed');
+  Future<Object> update(dynamic api) async {
+    try {
+      return await api.update(
+        cal.CalendarAlarmUpdateRequest(
+          parent: parent,
+          alarmId: rows.first.id,
+          expectedRevision: 1,
+          definition: definition(30),
+        ),
+      ) as Object;
+    } on cal.CalendarException catch (e) {
+      return e;
+    }
+  }
+
+  final writes = await Future.wait([
+    update(a.calendarAlarm),
+    update(b.calendarAlarm),
+  ]);
+  check(
+    writes.whereType<cal.CalendarAlarmView>().length == 1 &&
+        writes.whereType<cal.CalendarException>().single.code ==
+            cal.CalendarFailureCode.staleRevision,
+    'Cross-host personal alarm revision race failed',
+  );
+  check(
+    (await b.calendarEvent.getEvent(
+          event.eventId,
+          cal.CalendarEventFieldGroup.values,
+        )).revision ==
+        1,
+    'Private alarm writes changed shared event revision',
+  );
+  await b.calendarEvent.deleteEvent(event.eventId, 1);
+  await rejects(
+    () => a.calendarAlarm.list(parent),
+    cal.CalendarFailureCode.accessDenied,
+  );
+  final task = (await a.calendarTask.create(
+    cal.CalendarTaskCreateRequest(
+      calendarId: calendar,
+      content: cal.CalendarTaskContent(
+        timing: cal.CalendarTaskTiming(kind: cal.CalendarTaskTimeKind.undated),
+      ),
+      assignees: [],
+    ),
+  ))!;
+  final taskParent = cal.CalendarAlarmParent(
+    kind: cal.CalendarAlarmParentKind.task,
+    id: task.taskId,
+  );
+  await a.calendarAlarm.create(
+    cal.CalendarAlarmCreateRequest(
+      parent: taskParent,
+      definition: definition(1),
+    ),
+  );
+  check(
+    (await b.calendarAlarm.list(taskParent)).length == 1,
+    'Undated task absolute alarm missing across hosts',
+  );
+  await b.calendarTask.deleteTask(task.taskId, 1);
+  await rejects(
+    () => a.calendarAlarm.list(taskParent),
+    cal.CalendarFailureCode.accessDenied,
+  );
+  await a.calendar.delete(calendar, 1);
+  print(
+    'PASS: private personal alarm definitions across two hosts, competing cap/revision writes, unchanged item versions and parent deletion. No planning or delivery.',
+  );
 }

@@ -4,6 +4,14 @@ import 'package:serverpod_calendar_server/serverpod_calendar_server.dart';
 /// Example policy only: production hosts replace this adapter with their rules.
 final class DemoCalendarPolicy implements CalendarHostPolicy {
   @override
+  Future<CalendarAlarmRecipient> resolveAlarmRecipient(
+    Session session,
+    CalendarHostContext context,
+    Transaction transaction,
+    CalendarAuthorizationPhase phase,
+  ) async => CalendarAlarmRecipient('demo', context.principalId);
+
+  @override
   CalendarAuthorizationGuarantee get guarantee =>
       CalendarAuthorizationGuarantee.freshCheck;
 

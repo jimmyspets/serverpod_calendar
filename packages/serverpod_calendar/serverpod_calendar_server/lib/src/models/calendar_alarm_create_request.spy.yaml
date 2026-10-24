@@ -1,0 +1,5 @@
+class: CalendarAlarmCreateRequest
+immutable: true
+fields:
+  parent: CalendarAlarmParent
+  definition: CalendarAlarmDefinition

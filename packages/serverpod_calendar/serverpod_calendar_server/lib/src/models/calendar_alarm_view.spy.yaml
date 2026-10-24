@@ -1,0 +1,10 @@
+class: CalendarAlarmView
+immutable: true
+fields:
+  id: UuidValue
+  parent: CalendarAlarmParent
+  revision: int
+  definition: CalendarAlarmDefinition
+  anchorCompatible: bool
+  createdAt: DateTime
+  updatedAt: DateTime

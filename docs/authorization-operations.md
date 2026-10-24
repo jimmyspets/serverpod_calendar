@@ -179,3 +179,8 @@ ADR 0101 uses `updateTask` for `changeOccurrenceTiming`, independently of progre
 ## Implemented event source alarm disclosure
 
 Under [ADR 0110](adr/0110-unarmed-event-source-alarms.md), the existing independent `readEventSource` gate now includes retained unarmed DISPLAY alarm descriptions, triggers, repeats, UID/ACKNOWLEDGED and sibling snooze claims. Export/replacement require this gate and existing complete-detail/import/replacement authority, including final/no-op checks. Ordinary event detail groups do not disclose source alarms. No native alarm recipient, create/action permission or delivery is inferred; those operations remain separate design work. See [the bounded profile](event-source-alarms.md).
+
+
+## Native personal alarm definitions, 2026-10-24
+
+[ADR 0111](adr/0111-native-personal-alarm-definitions.md) adds [private native event/task timing definitions and example editors](native-personal-alarms.md). The host resolves the current recipient; requests cannot select another. Independent alarm permissions, actual parent/current/proposed context, final recipient checks and revisions protect one bounded private table. Shared edits retain incompatible definitions as needing attention; parent deletion scrubs all recipients atomically. Private writes leave item/protocol versions, source baselines and public scope generation unchanged. All definitions remain unarmed; imported-alarm adoption, actions, planning and delivery remain required separate work. Concrete mechanics remain draft review material.
