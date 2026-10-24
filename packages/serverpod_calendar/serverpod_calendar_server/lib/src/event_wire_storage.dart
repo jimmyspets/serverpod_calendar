@@ -113,6 +113,29 @@ CalendarEventRecurrence? _recurrence(IcalendarEventRecurrence? v) {
   );
 }
 
+CalendarEventSourceMetadata? _metadata(IcalendarEvent event) =>
+    validateEventSourceMetadata(
+      CalendarEventSourceMetadata(
+        url: event.metadata.url,
+        classification: event.metadata.classification,
+        categoryGroups: [
+          for (final g in event.metadata.categoryGroups)
+            CalendarEventSourceCategoryGroup(
+              values: List.unmodifiable(g.values),
+              language: g.language,
+            ),
+        ],
+        comments: [
+          for (final v in event.metadata.comments)
+            CalendarEventSourceText(value: v.value, parameters: _parameters(v)),
+        ],
+        contacts: [
+          for (final v in event.metadata.contacts)
+            CalendarEventSourceText(value: v.value, parameters: _parameters(v)),
+        ],
+      ),
+    );
+
 EventStorageProposal eventStorageProposal(IcalendarEventSeries source) {
   final m = source.master;
   CalendarEventOccurrenceContent? own(IcalendarEvent value) =>
@@ -160,6 +183,7 @@ EventStorageProposal eventStorageProposal(IcalendarEventSeries source) {
             replacement: _span(v),
             cancelled: v.status == IcalendarEventStatus.cancelled,
             contentOverrides: own(v),
+            sourceMetadata: _metadata(v),
           ),
       ],
       future: [
@@ -168,6 +192,7 @@ EventStorageProposal eventStorageProposal(IcalendarEventSeries source) {
             originalStart: _value(v.originalStart!),
             replacement: _span(v),
             contentOverrides: own(v),
+            sourceMetadata: _metadata(v),
           ),
       ],
     ),
@@ -175,6 +200,7 @@ EventStorageProposal eventStorageProposal(IcalendarEventSeries source) {
   final state = validateEventProtocolState(
     CalendarEventProtocolState(
       version: _version(m),
+      sourceMetadata: _metadata(m),
       statusPresent: m.status != null,
       transparencyPresent: m.transparency != null,
       overrides: [

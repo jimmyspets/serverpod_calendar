@@ -1,0 +1,9 @@
+class: CalendarEventSourceMetadata
+serverOnly: true
+immutable: true
+fields:
+  url: String?
+  classification: String?
+  categoryGroups: List<CalendarEventSourceCategoryGroup>
+  comments: List<CalendarEventSourceText>
+  contacts: List<CalendarEventSourceText>

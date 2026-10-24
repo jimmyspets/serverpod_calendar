@@ -248,6 +248,23 @@ final class EventComponentWriter {
       property('STATUS', cancelled ? 'CANCELLED' : v.status.name.toUpperCase()),
     if (transparency) property('TRANSP', v.transparency.name.toUpperCase()),
   ];
+  List<IcalendarSyntaxEntry> sourceMetadata(
+    CalendarEventSourceMetadata? value,
+  ) => [
+    if (value?.url != null) property('URL', value!.url!),
+    if (value?.classification != null)
+      property('CLASS', value!.classification!),
+    for (final g
+        in value?.categoryGroups ?? <CalendarEventSourceCategoryGroup>[])
+      property('CATEGORIES', g.values.map(encodeIcalendarText).join(','), [
+        if (g.language != null) parameter('LANGUAGE', g.language!),
+      ]),
+    for (final t in value?.comments ?? <CalendarEventSourceText>[])
+      text('COMMENT', t.value, t.parameters),
+    for (final t in value?.contacts ?? <CalendarEventSourceText>[])
+      text('CONTACT', t.value, t.parameters),
+  ];
+
   List<IcalendarSyntaxComponent> components(
     String uid,
     CalendarEventContent v,
@@ -260,6 +277,7 @@ final class EventComponentWriter {
       bool future,
       bool cancelled,
       CalendarEventOccurrenceContent? own,
+      CalendarEventSourceMetadata? metadata,
     ) {
       if (replacement == null) {
         throw ArgumentError(
@@ -276,6 +294,7 @@ final class EventComponentWriter {
         ...version(checkpoint.version),
         time('RECURRENCE-ID', original, future: future),
         ...span(replacement),
+        ...sourceMetadata(metadata),
         ...content(
           v.copyWith(
             summary: own?.summary,
@@ -297,6 +316,7 @@ final class EventComponentWriter {
       IcalendarSyntaxComponent('VEVENT', [
         text('UID', uid),
         ...version(state.version),
+        ...sourceMetadata(state.sourceMetadata),
         ...span(v.timing),
         ...recurrence(v),
         ...content(
@@ -312,6 +332,7 @@ final class EventComponentWriter {
           false,
           s.cancelled,
           s.contentOverrides,
+          s.sourceMetadata,
         ),
       for (final s in edits?.future ?? <CalendarEventFutureOverride>[])
         override(
@@ -320,6 +341,7 @@ final class EventComponentWriter {
           true,
           false,
           s.contentOverrides,
+          s.sourceMetadata,
         ),
     ];
   }

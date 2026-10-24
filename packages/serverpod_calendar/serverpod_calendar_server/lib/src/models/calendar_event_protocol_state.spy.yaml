@@ -6,3 +6,4 @@ fields:
   statusPresent: bool, default=true
   transparencyPresent: bool, default=true
   overrides: List<CalendarEventOverrideProtocolState>
+  sourceMetadata: CalendarEventSourceMetadata?

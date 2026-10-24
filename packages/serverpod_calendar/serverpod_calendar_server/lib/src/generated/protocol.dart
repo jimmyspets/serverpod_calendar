@@ -102,6 +102,9 @@ import 'calendar_event_replace_request.dart' as _ikx66n5r;
 import 'calendar_event_replace_result.dart' as _ipzyec4h;
 import 'calendar_event_rule.dart' as _iovyzq1q;
 import 'calendar_event_single_override.dart' as _iq1kxi25;
+import 'calendar_event_source_category_group.dart' as _iui013s0;
+import 'calendar_event_source_metadata.dart' as _ic57ts5d;
+import 'calendar_event_source_text.dart' as _iwa6orjz;
 import 'calendar_event_status.dart' as _ivzxk9bc;
 import 'calendar_event_status_request.dart' as _i3kbbl30;
 import 'calendar_event_text_parameters.dart' as _isfojy12;
@@ -270,6 +273,9 @@ export 'calendar_event_replace_request.dart';
 export 'calendar_event_replace_result.dart';
 export 'calendar_event_rule.dart';
 export 'calendar_event_single_override.dart';
+export 'calendar_event_source_category_group.dart';
+export 'calendar_event_source_metadata.dart';
+export 'calendar_event_source_text.dart';
 export 'calendar_event_status.dart';
 export 'calendar_event_status_request.dart';
 export 'calendar_event_text_parameters.dart';
@@ -1894,6 +1900,15 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _iq1kxi25.CalendarEventSingleOverride) {
       return _iq1kxi25.CalendarEventSingleOverride.fromJson(data) as T;
     }
+    if (t == _iui013s0.CalendarEventSourceCategoryGroup) {
+      return _iui013s0.CalendarEventSourceCategoryGroup.fromJson(data) as T;
+    }
+    if (t == _ic57ts5d.CalendarEventSourceMetadata) {
+      return _ic57ts5d.CalendarEventSourceMetadata.fromJson(data) as T;
+    }
+    if (t == _iwa6orjz.CalendarEventSourceText) {
+      return _iwa6orjz.CalendarEventSourceText.fromJson(data) as T;
+    }
     if (t == _ivzxk9bc.CalendarEventStatus) {
       return _ivzxk9bc.CalendarEventStatus.fromJson(data) as T;
     }
@@ -2623,6 +2638,24 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_iq1kxi25.CalendarEventSingleOverride?>()) {
       return (data != null
               ? _iq1kxi25.CalendarEventSingleOverride.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iui013s0.CalendarEventSourceCategoryGroup?>()) {
+      return (data != null
+              ? _iui013s0.CalendarEventSourceCategoryGroup.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ic57ts5d.CalendarEventSourceMetadata?>()) {
+      return (data != null
+              ? _ic57ts5d.CalendarEventSourceMetadata.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iwa6orjz.CalendarEventSourceText?>()) {
+      return (data != null
+              ? _iwa6orjz.CalendarEventSourceText.fromJson(data)
               : null)
           as T;
     }
@@ -3464,6 +3497,21 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
     }
+    if (t == List<_iui013s0.CalendarEventSourceCategoryGroup>) {
+      return (data as List)
+              .map(
+                (e) =>
+                    deserialize<_iui013s0.CalendarEventSourceCategoryGroup>(e),
+              )
+              .toList()
+          as T;
+    }
+    if (t == List<_iwa6orjz.CalendarEventSourceText>) {
+      return (data as List)
+              .map((e) => deserialize<_iwa6orjz.CalendarEventSourceText>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_iq1kxi25.CalendarEventSingleOverride>) {
       return (data as List)
               .map((e) => deserialize<_iq1kxi25.CalendarEventSingleOverride>(e))
@@ -3805,6 +3853,10 @@ class Protocol extends _is.DatabaseSerializationManager {
       _ipzyec4h.CalendarEventReplaceResult => 'CalendarEventReplaceResult',
       _iovyzq1q.CalendarEventRule => 'CalendarEventRule',
       _iq1kxi25.CalendarEventSingleOverride => 'CalendarEventSingleOverride',
+      _iui013s0.CalendarEventSourceCategoryGroup =>
+        'CalendarEventSourceCategoryGroup',
+      _ic57ts5d.CalendarEventSourceMetadata => 'CalendarEventSourceMetadata',
+      _iwa6orjz.CalendarEventSourceText => 'CalendarEventSourceText',
       _ivzxk9bc.CalendarEventStatus => 'CalendarEventStatus',
       _i3kbbl30.CalendarEventStatusRequest => 'CalendarEventStatusRequest',
       _isfojy12.CalendarEventTextParameters => 'CalendarEventTextParameters',
@@ -4082,6 +4134,12 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarEventRule';
       case _iq1kxi25.CalendarEventSingleOverride():
         return 'CalendarEventSingleOverride';
+      case _iui013s0.CalendarEventSourceCategoryGroup():
+        return 'CalendarEventSourceCategoryGroup';
+      case _ic57ts5d.CalendarEventSourceMetadata():
+        return 'CalendarEventSourceMetadata';
+      case _iwa6orjz.CalendarEventSourceText():
+        return 'CalendarEventSourceText';
       case _ivzxk9bc.CalendarEventStatus():
         return 'CalendarEventStatus';
       case _i3kbbl30.CalendarEventStatusRequest():
@@ -4568,6 +4626,17 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'CalendarEventSingleOverride') {
       return deserialize<_iq1kxi25.CalendarEventSingleOverride>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventSourceCategoryGroup') {
+      return deserialize<_iui013s0.CalendarEventSourceCategoryGroup>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarEventSourceMetadata') {
+      return deserialize<_ic57ts5d.CalendarEventSourceMetadata>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventSourceText') {
+      return deserialize<_iwa6orjz.CalendarEventSourceText>(data['data']);
     }
     if (dataClassName == 'CalendarEventStatus') {
       return deserialize<_ivzxk9bc.CalendarEventStatus>(data['data']);

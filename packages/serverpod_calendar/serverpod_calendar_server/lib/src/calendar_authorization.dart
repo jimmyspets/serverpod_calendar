@@ -14,6 +14,7 @@ enum CalendarPermission {
   replaceTasksFromImport,
   exportTasks,
   readTaskSource,
+  readEventSource,
   importTasks,
   previewTaskOccurrences,
   readTaskHistory,
