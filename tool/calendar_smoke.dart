@@ -383,6 +383,7 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
     await eventImportSmoke(clients);
     await eventReplacementSmoke(clients);
     await eventContentSmoke(clients);
+    await eventMetadataSmoke(clients);
     await taskSmoke(clients);
     final ea = clients.first.modules.serverpod_calendar.calendarEvent;
     final eb = clients.last.modules.serverpod_calendar.calendarEvent;
@@ -1628,6 +1629,131 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
       final v = await b.getCalendar(id, groups);
       await b.delete(id, v.revision);
     }
+  }
+}
+
+Future<void> eventMetadataSmoke(List<Client> clients) async {
+  final calendars = clients.first.modules.serverpod_calendar.calendar;
+  final a = clients.first.modules.serverpod_calendar.calendarEvent,
+      b = clients.last.modules.serverpod_calendar.calendarEvent;
+  final parent = (await calendars.create(
+    cal.CalendarCreateRequest(
+      displayName: 'Event metadata smoke',
+      availabilityZoneId: 'UTC',
+      noRuleFallback: cal.CalendarNoRuleFallback.free,
+    ),
+  ))!.calendarId;
+  UuidValue? id;
+  final properties = [
+    'CLASS:PRIVATE',
+    'URL:https://example.invalid/event',
+    'CATEGORIES;LANGUAGE=en:Work,Work',
+    'COMMENT;LANGUAGE=sv:Source note',
+    'CONTACT;ALTREP="cid:desk@example.invalid":Cross-host source desk',
+  ];
+  final source = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:Synthetic',
+    'BEGIN:VEVENT',
+    'UID:metadata@example.invalid',
+    'DTSTAMP:20261023T120000Z',
+    'DTSTART:20261026T090000Z',
+    'RRULE:FREQ=DAILY;COUNT=3',
+    ...properties,
+    'END:VEVENT',
+    'BEGIN:VEVENT',
+    'UID:metadata@example.invalid',
+    'DTSTAMP:20261023T120000Z',
+    'RECURRENCE-ID:20261027T090000Z',
+    'DTSTART:20261027T110000Z',
+    ...properties,
+    'END:VEVENT',
+    'END:VCALENDAR',
+    '',
+  ].join('\r\n');
+  final original = cal.CalendarEventTiming(
+    kind: cal.CalendarEventTimeKind.utc,
+    start: cal.CalendarEventCivil(year: 2026, month: 10, day: 27, hour: 9),
+  );
+  cal.CalendarEventExportRequest selection(int revision) =>
+      cal.CalendarEventExportRequest(
+        calendarId: parent,
+        expectedRevision: 1,
+        selection: [
+          cal.CalendarEventExportSelection(
+            eventId: id!,
+            expectedRevision: revision,
+          ),
+        ],
+      );
+  String decode(ByteData data) => utf8.decode(
+    data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+  );
+  try {
+    id = (await a.importEvents(
+      cal.CalendarEventImportRequest(
+        calendarId: parent,
+        expectedRevision: 1,
+        bytes: ByteData.sublistView(Uint8List.fromList(utf8.encode(source))),
+      ),
+    )).receipts.single.eventId;
+    final text = decode(await b.exportEvents(selection(1)));
+    check(
+      'Cross-host source desk'.allMatches(text).length == 2 &&
+          text.contains('CATEGORIES;LANGUAGE=en:Work,Work'),
+      'Cross-host metadata export preserves grouped own and master source',
+    );
+    check(
+      !jsonEncode(
+        (await b.getEvent(id, cal.CalendarEventFieldGroup.values)).toJson(),
+      ).contains('Cross-host source desk'),
+      'Ordinary event views exclude source metadata',
+    );
+    await b.changeOccurrence(
+      cal.CalendarEventOccurrenceChange(
+        eventId: id,
+        expectedRevision: 1,
+        originalStart: original,
+        action: cal.CalendarEventOccurrenceAction.clearSingleTiming,
+      ),
+    );
+    final hidden = await a.getEvent(id, cal.CalendarEventFieldGroup.values);
+    check(
+      hidden.timingOverrides == null &&
+          hidden.occurrenceProtocolVersions!.isEmpty,
+      'Metadata-only original is hidden from ordinary event projections',
+    );
+    await rejects(
+      () => a.exportEvents(selection(2)),
+      cal.CalendarFailureCode.validation,
+    );
+    await b.changeOccurrence(
+      cal.CalendarEventOccurrenceChange(
+        eventId: id,
+        expectedRevision: 2,
+        originalStart: original,
+        action: cal.CalendarEventOccurrenceAction.replaceFutureTiming,
+        replacement: original.copyWith(
+          start: original.start.copyWith(hour: 10),
+        ),
+      ),
+    );
+    final ranged = decode(await a.exportEvents(selection(3)));
+    check(
+      'Cross-host source desk'.allMatches(ranged).length == 2 &&
+          ranged.contains('RANGE=THISANDFUTURE'),
+      'Timing scope transfer preserves source metadata across hosts',
+    );
+    print(
+      'PASS: event source metadata cross-host storage/export, ordinary projection privacy, inherited timing and range-transfer preservation.',
+    );
+  } finally {
+    if (id != null) {
+      final current = await a.getEvent(id, []);
+      await a.deleteEvent(id, current.revision);
+    }
+    await calendars.delete(parent, 1);
   }
 }
 

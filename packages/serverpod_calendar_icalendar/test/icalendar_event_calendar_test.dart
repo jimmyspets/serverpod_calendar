@@ -172,7 +172,6 @@ void main() {
   test('unsupported properties never disappear from a semantic import', () {
     for (final line in [
       'ATTENDEE:mailto:person@example.invalid',
-      'CONTACT:Unmapped',
       'X-PRIVATE:Unregistered',
       'COLOR:red',
     ]) {

@@ -5,3 +5,4 @@ fields:
   replacement: CalendarEventTiming?
   cancelled: bool, default=false
   contentOverrides: CalendarEventOccurrenceContent?
+  sourceMetadata: CalendarEventSourceMetadata?, scope=serverOnly

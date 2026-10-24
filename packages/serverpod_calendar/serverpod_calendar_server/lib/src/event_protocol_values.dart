@@ -97,6 +97,11 @@ CalendarEventProtocolState validateEventProtocolState(
           content.transparency != CalendarEventTransparency.opaque) {
     throw ArgumentError('Source omission contradicts native defaults');
   }
+  final metadataBudget = EventMetadataBudget();
+  final sourceMetadata = validateEventSourceMetadata(
+    value.sourceMetadata,
+    budget: metadataBudget,
+  );
   final components = _components(edits), seen = <String>{};
   if (components.length != value.overrides.length) {
     throw ArgumentError('Missing component checkpoint');
@@ -110,6 +115,11 @@ CalendarEventProtocolState validateEventProtocolState(
     }
     validateEventProtocolVersion(state.version);
     final own = eventComponentContent(component.$3);
+    final metadata = validateEventSourceMetadata(
+      eventComponentMetadata(component.$3),
+      budget: metadataBudget,
+    );
+    validateEventMetadataInheritance(sourceMetadata, metadata);
     if (state.summaryPresent != (own?.summary != null) ||
         state.descriptionPresent != (own?.description != null) ||
         state.locationPresent != (own?.location != null) ||
@@ -124,7 +134,10 @@ CalendarEventProtocolState validateEventProtocolState(
       a.isThisAndFuture,
     ).compareTo(eventComponentKey(b.originalStart, b.isThisAndFuture)),
   );
-  return value.copyWith(overrides: List.unmodifiable(frozen));
+  return value.copyWith(
+    overrides: List.unmodifiable(frozen),
+    sourceMetadata: sourceMetadata,
+  );
 }
 
 CalendarEventProtocolVersion _advance(

@@ -159,19 +159,25 @@ CalendarEventTimingOverrides? validateEventOverrides(
   for (final item in input.singles) {
     anchor(item.originalStart);
     final own = validateEventOccurrenceContent(item.contentOverrides);
-    if (own != null && c.recurrence == null && (c.periods?.isEmpty ?? true)) {
+    final metadata = validateEventSourceMetadata(item.sourceMetadata);
+    if ((own != null || metadata != null) &&
+        c.recurrence == null &&
+        (c.periods?.isEmpty ?? true)) {
       throw ArgumentError('Content exceptions require recurrence');
     }
-    if (item.replacement == null && !item.cancelled && own == null) {
+    if (item.replacement == null &&
+        !item.cancelled &&
+        own == null &&
+        metadata == null) {
       throw ArgumentError('Empty single override');
     }
     if (item.replacement != null) _profile(c.timing, item.replacement!);
-    singles.add(item.copyWith(contentOverrides: own));
+    singles.add(item.copyWith(contentOverrides: own, sourceMetadata: metadata));
   }
   for (final item in input.future) {
     anchor(item.originalStart);
     _profile(c.timing, item.replacement);
-    if (item.contentOverrides != null &&
+    if ((item.contentOverrides != null || item.sourceMetadata != null) &&
         c.recurrence == null &&
         (c.periods?.isEmpty ?? true)) {
       throw ArgumentError('Content exceptions require recurrence');
@@ -179,6 +185,7 @@ CalendarEventTimingOverrides? validateEventOverrides(
     future.add(
       item.copyWith(
         contentOverrides: validateEventOccurrenceContent(item.contentOverrides),
+        sourceMetadata: validateEventSourceMetadata(item.sourceMetadata),
       ),
     );
   }
@@ -257,13 +264,15 @@ CalendarEventTimingOverrides? changeEventOverrides(
       };
       if (replacement != null ||
           cancelled ||
-          previous?.contentOverrides != null) {
+          previous?.contentOverrides != null ||
+          previous?.sourceMetadata != null) {
         singles.add(
           CalendarEventSingleOverride(
             originalStart: request.originalStart,
             replacement: replacement,
             cancelled: cancelled,
             contentOverrides: previous?.contentOverrides,
+            sourceMetadata: previous?.sourceMetadata,
           ),
         );
       }
@@ -280,6 +289,9 @@ CalendarEventTimingOverrides? changeEventOverrides(
       final own = rangeIndex >= 0
           ? future[rangeIndex].contentOverrides
           : previous?.contentOverrides;
+      final metadata = rangeIndex >= 0
+          ? future[rangeIndex].sourceMetadata
+          : previous?.sourceMetadata;
       if (rangeIndex >= 0) future.removeAt(rangeIndex);
       if (index >= 0) singles.removeAt(index);
       if (replace) {
@@ -288,13 +300,15 @@ CalendarEventTimingOverrides? changeEventOverrides(
             originalStart: request.originalStart,
             replacement: request.replacement!,
             contentOverrides: own,
+            sourceMetadata: metadata,
           ),
         );
-      } else if (own != null) {
+      } else if (own != null || metadata != null) {
         singles.add(
           CalendarEventSingleOverride(
             originalStart: request.originalStart,
             contentOverrides: own,
+            sourceMetadata: metadata,
           ),
         );
       }

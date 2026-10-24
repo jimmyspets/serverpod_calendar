@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'calendar_event_occurrence_content.dart' as _io4uvjqi;
+import 'calendar_event_source_metadata.dart' as _ic57ts5d;
 import 'calendar_event_timing.dart' as _ieswiaty;
 
 @_is.immutable
@@ -23,12 +24,14 @@ abstract class CalendarEventFutureOverride
     required this.originalStart,
     required this.replacement,
     this.contentOverrides,
+    this.sourceMetadata,
   });
 
   const factory CalendarEventFutureOverride({
     required _ieswiaty.CalendarEventTiming originalStart,
     required _ieswiaty.CalendarEventTiming replacement,
     _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides,
+    _ic57ts5d.CalendarEventSourceMetadata? sourceMetadata,
   }) = _CalendarEventFutureOverrideImpl;
 
   factory CalendarEventFutureOverride.fromJson(
@@ -49,6 +52,12 @@ abstract class CalendarEventFutureOverride
                 .deserialize<_io4uvjqi.CalendarEventOccurrenceContent>(
                   jsonSerialization['contentOverrides'],
                 ),
+      sourceMetadata: jsonSerialization['sourceMetadata'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_ic57ts5d.CalendarEventSourceMetadata>(
+                  jsonSerialization['sourceMetadata'],
+                ),
     );
   }
 
@@ -58,6 +67,8 @@ abstract class CalendarEventFutureOverride
 
   final _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides;
 
+  final _ic57ts5d.CalendarEventSourceMetadata? sourceMetadata;
+
   /// Returns a shallow copy of this [CalendarEventFutureOverride]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -65,6 +76,7 @@ abstract class CalendarEventFutureOverride
     _ieswiaty.CalendarEventTiming? originalStart,
     _ieswiaty.CalendarEventTiming? replacement,
     _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides,
+    _ic57ts5d.CalendarEventSourceMetadata? sourceMetadata,
   });
   @override
   bool operator ==(Object other) {
@@ -88,7 +100,12 @@ abstract class CalendarEventFutureOverride
                   other.contentOverrides,
                   contentOverrides,
                 ) ||
-                other.contentOverrides == contentOverrides);
+                other.contentOverrides == contentOverrides) &&
+            (identical(
+                  other.sourceMetadata,
+                  sourceMetadata,
+                ) ||
+                other.sourceMetadata == sourceMetadata);
   }
 
   @override
@@ -98,6 +115,7 @@ abstract class CalendarEventFutureOverride
       originalStart,
       replacement,
       contentOverrides,
+      sourceMetadata,
     );
   }
 
@@ -109,6 +127,7 @@ abstract class CalendarEventFutureOverride
       'replacement': replacement.toJson(),
       if (contentOverrides != null)
         'contentOverrides': contentOverrides?.toJson(),
+      if (sourceMetadata != null) 'sourceMetadata': sourceMetadata?.toJson(),
     };
   }
 
@@ -136,10 +155,12 @@ class _CalendarEventFutureOverrideImpl extends CalendarEventFutureOverride {
     required _ieswiaty.CalendarEventTiming originalStart,
     required _ieswiaty.CalendarEventTiming replacement,
     _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides,
+    _ic57ts5d.CalendarEventSourceMetadata? sourceMetadata,
   }) : super._(
          originalStart: originalStart,
          replacement: replacement,
          contentOverrides: contentOverrides,
+         sourceMetadata: sourceMetadata,
        );
 
   /// Returns a shallow copy of this [CalendarEventFutureOverride]
@@ -150,6 +171,7 @@ class _CalendarEventFutureOverrideImpl extends CalendarEventFutureOverride {
     _ieswiaty.CalendarEventTiming? originalStart,
     _ieswiaty.CalendarEventTiming? replacement,
     Object? contentOverrides = _Undefined,
+    Object? sourceMetadata = _Undefined,
   }) {
     return CalendarEventFutureOverride(
       originalStart: originalStart ?? this.originalStart.copyWith(),
@@ -158,6 +180,9 @@ class _CalendarEventFutureOverrideImpl extends CalendarEventFutureOverride {
           contentOverrides is _io4uvjqi.CalendarEventOccurrenceContent?
           ? contentOverrides
           : this.contentOverrides?.copyWith(),
+      sourceMetadata: sourceMetadata is _ic57ts5d.CalendarEventSourceMetadata?
+          ? sourceMetadata
+          : this.sourceMetadata?.copyWith(),
     );
   }
 }
