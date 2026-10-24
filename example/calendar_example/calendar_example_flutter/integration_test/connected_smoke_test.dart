@@ -1099,6 +1099,44 @@ void main() {
     expect(exportedEvent, isNot(contains(imported.id.toString())));
     await tester.pageBack();
     await _idle(tester);
+    await _tap(tester, 'event-replace');
+    await _idle(tester);
+    await _tap(tester, 'event-replace-submit');
+    expect(find.text('Identical source; nothing changed.'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('event-replace-source')),
+      exportedEvent.replaceFirst(
+        'END:VEVENT',
+        'DESCRIPTION:Replacement event example\r\nEND:VEVENT',
+      ),
+    );
+    await tester.pump();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('event-replace-source')))
+          .controller!
+          .text,
+      contains('DESCRIPTION:Replacement event example'),
+    );
+    await _tap(tester, 'event-replace-submit');
+    final eventReplacementError = find.byKey(const Key('event-replace-error'));
+    expect(
+      eventReplacementError,
+      findsNothing,
+      reason: eventReplacementError.evaluate().isEmpty
+          ? null
+          : tester.widget<Text>(eventReplacementError).data,
+    );
+    expect(find.text('Event replaced.'), findsOneWidget);
+    expect(
+      (await events.getEvent(
+        imported.id,
+        cal.CalendarEventFieldGroup.values,
+      )).description,
+      'Replacement event example',
+    );
+    await tester.pageBack();
+    await _idle(tester);
     await tester.pageBack();
     await _idle(tester);
 
@@ -1124,7 +1162,9 @@ void main() {
     await _waitFor(tester, find.byKey(const Key('event-import-error')));
     await tester.pageBack();
     await _idle(tester);
-    await events.deleteEvent(imported.id, 1);
+    final replacedEvent = await events.getEvent(imported.id, []);
+    expect(replacedEvent.revision, 2);
+    await events.deleteEvent(imported.id, replacedEvent.revision);
     await tester.pageBack();
     await _idle(tester);
     await _tap(tester, 'calendar-attach-self');

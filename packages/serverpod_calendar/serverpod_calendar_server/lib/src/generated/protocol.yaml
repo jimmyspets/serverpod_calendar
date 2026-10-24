@@ -29,6 +29,7 @@ calendar:
   - changeSubject:
   - delete:
 calendarEvent:
+  - replaceFromImport:
   - exportEvents:
   - importEvents:
   - create:

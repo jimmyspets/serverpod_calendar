@@ -161,6 +161,8 @@ Future<void> main(List<String> args) async {
         '--driver=test_driver/integration_test.dart',
         args.contains('--task-replacement')
             ? '--target=integration_test/task_replace_smoke_test.dart'
+            : args.contains('--event-replacement')
+            ? '--target=integration_test/event_replace_smoke_test.dart'
             : '--target=integration_test/connected_smoke_test.dart',
         '--driver-port=18444',
         '--web-port=18380',
