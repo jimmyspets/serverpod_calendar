@@ -12,6 +12,15 @@ final class IcalendarEventSeries {
     this.timedSeries,
   ) : overrides = List.unmodifiable(overrides);
 
+  /// Effective unarmed source definitions, retaining raw omission on components.
+  List<IcalendarDisplayAlarm> alarmsFor(IcalendarEvent component) {
+    if (identical(component, master)) return master.alarms;
+    if (!overrides.contains(component)) {
+      throw ArgumentError('Foreign component');
+    }
+    return component.alarms.isEmpty ? master.alarms : component.alarms;
+  }
+
   /// Resolve source-list omissions without inserting source properties.
   IcalendarEventReferences referencesFor(IcalendarEvent component) {
     if (identical(component, master)) return master.references;
@@ -63,6 +72,8 @@ IcalendarEventSeries _eventSeries(
     _matchingEventMetadata(master.metadata, o.metadata);
     _matchingEventParticipants(master.participants, o.participants);
     _matchingEventReferences(master.references, o.references);
+    _matchingDisplayAlarms(master.alarms, o.alarms);
+    _eventAlarmAnchors(o, o.alarms.isEmpty ? master.alarms : o.alarms);
     if ((o.transparency != null && o.isTransparent != master.isTransparent) ||
         (o.status != null &&
             o.status != master.status &&

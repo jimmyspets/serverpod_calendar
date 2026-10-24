@@ -27,6 +27,20 @@ COMMENT;LANGUAGE=en:Read-only source metadata
 CONTACT;ALTREP="cid:event-desk@example.invalid":Synthetic event desk
 RRULE:FREQ=DAILY;COUNT=3
 RDATE;VALUE=PERIOD:20261030T090000Z/PT2H
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Unarmed source reminder
+TRIGGER:-PT5M
+UID:source-alarm
+ACKNOWLEDGED:20261023T100000Z
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Unarmed source snooze
+TRIGGER;VALUE=DATE-TIME:20261026T080000Z
+UID:source-snooze
+RELATED-TO;RELTYPE=SNOOZE:source-alarm
+END:VALARM
 END:VEVENT
 END:VCALENDAR
 ''';
@@ -121,7 +135,7 @@ class _EventImportScreenState extends State<EventImportScreen> {
       padding: const EdgeInsets.all(16),
       children: [
         const Text(
-          'Paste a supported standalone event calendar. This creates new series; an existing UID rejects the whole import. Text line endings are converted to CRLF before sending. Imported text/link metadata and organizer/attendee claims stay read-only in native event editors and requires separate source-read permission for export. Source participants map to no host users and send no invitations. Source relationships stay unresolved and attachment URIs are never opened or fetched. CLASS does not grant access; links and contact references are never fetched. No invitations, feeds or reminders are started.',
+          'Paste a supported standalone event calendar. This creates new series; an existing UID rejects the whole import. Text line endings are converted to CRLF before sending. Imported text/link metadata and organizer/attendee claims stay read-only in native event editors and requires separate source-read permission for export. Source participants map to no host users and send no invitations. Source relationships stay unresolved and attachment URIs are never opened or fetched. CLASS does not grant access; links and contact references are never fetched. Imported DISPLAY alarm and snooze definitions stay unarmed. No invitations, feeds or reminders are started.',
         ),
         if (_busy) const LinearProgressIndicator(),
         if (_error != null) Text(_error!, key: const Key('event-import-error')),

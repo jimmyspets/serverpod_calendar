@@ -11,3 +11,4 @@ fields:
   attendees: List<CalendarEventSourceParticipant>?
   relationships: List<CalendarEventSourceRelationship>?
   attachments: List<CalendarEventSourceAttachment>?
+  alarms: List<CalendarEventSourceAlarm>?
