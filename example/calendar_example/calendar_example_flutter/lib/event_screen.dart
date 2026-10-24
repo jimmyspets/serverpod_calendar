@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'event_occurrence_screen.dart';
 import 'event_import_screen.dart';
 import 'event_export_screen.dart';
+import 'event_replace_screen.dart';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
@@ -757,6 +758,24 @@ class _EventEditorState extends State<EventEditor> {
                         ),
                       ),
                 child: const Text('Export event series'),
+              ),
+            if (_view != null)
+              TextButton(
+                key: const Key('event-replace'),
+                onPressed: locked || _dirty
+                    ? null
+                    : () async {
+                        await Navigator.of(context).push<void>(
+                          MaterialPageRoute(
+                            builder: (_) => EventReplaceScreen(
+                              client: widget.client,
+                              event: _view!,
+                            ),
+                          ),
+                        );
+                        if (mounted) await _run(_reload);
+                      },
+                child: const Text('Replace event source'),
               ),
             if (_view?.status != null) ...[
               Text(

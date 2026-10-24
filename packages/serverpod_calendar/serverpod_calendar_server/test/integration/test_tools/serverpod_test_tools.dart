@@ -67,6 +67,10 @@ import 'package:serverpod_calendar_server/src/generated/calendar_event_page.dart
     as _i092pg3q;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_receipt.dart'
     as _irjxy316;
+import 'package:serverpod_calendar_server/src/generated/calendar_event_replace_request.dart'
+    as _i6eqxu43;
+import 'package:serverpod_calendar_server/src/generated/calendar_event_replace_result.dart'
+    as _ihod1iqv;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_status_request.dart'
     as _ib916yyf;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_update_request.dart'
@@ -1202,6 +1206,37 @@ class _CalendarEventEndpoint {
   final _is.EndpointDispatch _endpointDispatch;
 
   final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_ihod1iqv.CalendarEventReplaceResult> replaceFromImport(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i6eqxu43.CalendarEventReplaceRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarEvent',
+            method: 'replaceFromImport',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarEvent',
+          methodName: 'replaceFromImport',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ihod1iqv.CalendarEventReplaceResult>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 
   _ida.Future<_idt.ByteData> exportEvents(
     _ist.TestSessionBuilder sessionBuilder,

@@ -116,3 +116,5 @@ Authenticated [task export](docs/task-export.md) now complements create-only tas
 [Selected task occurrence content](docs/task-occurrence-content.md) adds independent summary/description/location/priority overrides with explicit clear or series inheritance and protected preview groups. Source v3 requires explicit recreation/reimport of older imported tasks; development data is not reset. Future content propagation and runtime services remain separate.
 
 [Explicit task source replacement](docs/task-source-replacement.md) now follows create-only import and export: replace selected imported series with baseline/local-conflict protection, preserved assignments and true no-op retries. Adoption/overwrite and broader synchronization remain separate.
+
+[Explicit event source replacement](docs/event-source-replacement.md) now applies the same recorded-baseline/local-conflict and true no-op policy to selected imported event series, with independent lifecycle checks for status and cancellation changes. This is ordinary import replacement; scheduling reconciliation and adoption remain separate.

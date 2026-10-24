@@ -381,6 +381,7 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
       bob.close();
     }
     await eventImportSmoke(clients);
+    await eventReplacementSmoke(clients);
     await taskSmoke(clients);
     final ea = clients.first.modules.serverpod_calendar.calendarEvent;
     final eb = clients.last.modules.serverpod_calendar.calendarEvent;
@@ -1626,6 +1627,114 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
       final v = await b.getCalendar(id, groups);
       await b.delete(id, v.revision);
     }
+  }
+}
+
+Future<void> eventReplacementSmoke(List<Client> clients) async {
+  final calendars = clients.first.modules.serverpod_calendar.calendar;
+  final a = clients.first.modules.serverpod_calendar.calendarEvent;
+  final b = clients.last.modules.serverpod_calendar.calendarEvent;
+  final parent = (await calendars.create(
+    cal.CalendarCreateRequest(
+      displayName: 'Event replacement smoke',
+      availabilityZoneId: 'UTC',
+      noRuleFallback: cal.CalendarNoRuleFallback.free,
+    ),
+  ))!.calendarId;
+  UuidValue? id;
+  ByteData source(String summary) => ByteData.sublistView(
+    Uint8List.fromList(
+      utf8.encode(
+        [
+          'BEGIN:VCALENDAR',
+          'VERSION:2.0',
+          'PRODID:Synthetic',
+          'BEGIN:VEVENT',
+          'UID:event-replacement@example.invalid',
+          'DTSTAMP:20261023T120000Z',
+          'DTSTART:20261026T090000Z',
+          'SUMMARY:$summary',
+          'END:VEVENT',
+          'END:VCALENDAR',
+          '',
+        ].join('\r\n'),
+      ),
+    ),
+  );
+  try {
+    id = (await a.importEvents(
+      cal.CalendarEventImportRequest(
+        calendarId: parent,
+        expectedRevision: 1,
+        bytes: source('Before'),
+      ),
+    )).receipts.single.eventId;
+    cal.CalendarEventReplaceRequest replace(int revision, String summary) =>
+        cal.CalendarEventReplaceRequest(
+          calendarId: parent,
+          expectedRevision: 1,
+          selection: [
+            cal.CalendarEventExportSelection(
+              eventId: id!,
+              expectedRevision: revision,
+            ),
+          ],
+          bytes: source(summary),
+        );
+    final results = await Future.wait([
+      a
+          .replaceFromImport(replace(1, 'Source A'))
+          .then<Object>((v) => v)
+          .catchError((Object e) => e),
+      b
+          .replaceFromImport(replace(1, 'Source B'))
+          .then<Object>((v) => v)
+          .catchError((Object e) => e),
+    ]);
+    check(
+      results.whereType<cal.CalendarException>().length == 1 &&
+          results.whereType<cal.CalendarException>().single.code ==
+              cal.CalendarFailureCode.staleRevision,
+      'Cross-host event replacement race admits one writer',
+    );
+    await b.replaceFromImport(replace(2, 'Reviewed retry'));
+    final noOp = await a.replaceFromImport(replace(3, 'Reviewed retry'));
+    check(
+      !noOp.receipts.single.changed &&
+          noOp.receipts.single.receipt.revision == 3,
+      'Cross-host source retry baseline supports identical no-op',
+    );
+    final current = await a.getEvent(id, cal.CalendarEventFieldGroup.values);
+    await b.update(
+      cal.CalendarEventUpdateRequest(
+        eventId: id,
+        expectedRevision: 3,
+        content: cal.CalendarEventContent(
+          summary: 'Local edit',
+          timing: current.timing!,
+          status: current.status!,
+          transparency: current.transparency!,
+        ),
+      ),
+    );
+    await rejects(
+      () => a.replaceFromImport(replace(4, 'Source after local edit')),
+      cal.CalendarFailureCode.dependencyConflict,
+    );
+    check(
+      (await a.getEvent(id, cal.CalendarEventFieldGroup.values)).summary ==
+          'Local edit',
+      'Remote native edit prevents source overwrite',
+    );
+    print(
+      'PASS: event replacement cross-host stale race, explicit retry, true no-op and local-edit protection.',
+    );
+  } finally {
+    if (id != null) {
+      final current = await a.getEvent(id, []);
+      await a.deleteEvent(id, current.revision);
+    }
+    await calendars.delete(parent, 1);
   }
 }
 
