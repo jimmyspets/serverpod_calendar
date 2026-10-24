@@ -4628,6 +4628,8 @@ void main() {
       bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
     );
     const richEventMetadata = [
+      'RELATED-TO:SOURCE-RELATED',
+      'ATTACH;VALUE=URI;FMTTYPE=application/pdf:urn:source:file',
       'ORGANIZER;CN=Inert source:mailto:source-organizer@example.invalid',
       'ATTENDEE;PARTSTAT=DECLINED;RSVP=TRUE:mailto:source-attendee@example.invalid',
       'URL:https://example.invalid/event',
@@ -4637,31 +4639,38 @@ void main() {
       'COMMENT;LANGUAGE=sv:Source note',
       'CONTACT;ALTREP="cid:desk@example.invalid":SOURCE-DESK',
     ];
-    List<String> richEvent({String contact = 'SOURCE-DESK', bool own = true}) =>
-        [
-          eventSource(
-            'rich',
-            extra: [
-              'RRULE:FREQ=DAILY;COUNT=3',
-              ...richEventMetadata.map(
-                (v) => v.replaceFirst('SOURCE-DESK', contact),
-              ),
-            ],
+    List<String> richEvent({
+      String contact = 'SOURCE-DESK',
+      String target = 'SOURCE-RELATED',
+      bool own = true,
+    }) => [
+      eventSource(
+        'rich',
+        extra: [
+          'RRULE:FREQ=DAILY;COUNT=3',
+          ...richEventMetadata.map(
+            (v) => v
+                .replaceFirst('SOURCE-DESK', contact)
+                .replaceFirst('SOURCE-RELATED', target),
           ),
-          if (own)
-            eventSource(
-              'rich',
-              timing: 'DTSTART:20260330T110000Z',
-              extra: [
-                'RECURRENCE-ID:20260330T090000Z',
-                'SEQUENCE:3',
-                'CREATED:20260320T000000Z',
-                ...richEventMetadata.map(
-                  (v) => v.replaceFirst('SOURCE-DESK', contact),
-                ),
-              ],
+        ],
+      ),
+      if (own)
+        eventSource(
+          'rich',
+          timing: 'DTSTART:20260330T110000Z',
+          extra: [
+            'RECURRENCE-ID:20260330T090000Z',
+            'SEQUENCE:3',
+            'CREATED:20260320T000000Z',
+            ...richEventMetadata.map(
+              (v) => v
+                  .replaceFirst('SOURCE-DESK', contact)
+                  .replaceFirst('SOURCE-RELATED', target),
             ),
-        ];
+          ],
+        ),
+    ];
     CalendarEventTiming richOriginal() => CalendarEventTiming(
       kind: CalendarEventTimeKind.utc,
       start: CalendarEventCivil(year: 2026, month: 3, day: 30, hour: 9),
@@ -4732,6 +4741,29 @@ void main() {
         isNot(contains('source-attendee@example.invalid')),
       );
       expect(text, contains('CLASS:PRIVATE'));
+      expect(
+        row.protocolState!.sourceMetadata!.relationships!.single.targetUid,
+        'SOURCE-RELATED',
+      );
+      expect(
+        row
+            .timingOverrides!
+            .singles
+            .single
+            .sourceMetadata!
+            .attachments!
+            .single
+            .explicitUri,
+        isTrue,
+      );
+      expect(
+        jsonEncode(view.toJsonForProtocol()),
+        isNot(contains('urn:source:file')),
+      );
+      expect(
+        text,
+        contains('ATTACH;VALUE=URI;FMTTYPE=application/pdf:urn:source:file'),
+      );
       final round = eventStorageProposal(
         parseIcalendarEventCalendar(utf8.encode(text)).series.single,
       );
@@ -4914,6 +4946,94 @@ void main() {
         failure(CalendarFailureCode.accessDenied),
       );
     });
+    test('event source references preserve parameter-free participant baselines through replacements', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      List<String> input(String target) => [
+        eventSource(
+          'bare',
+          extra: [
+            'ORGANIZER:mailto:o@example.invalid',
+            'ATTENDEE:mailto:a@example.invalid',
+            'RELATED-TO:$target',
+          ],
+        ),
+      ];
+      final id = (await service.importEvents(
+        eventImport(parent, input('missing')),
+      )).receipts.single.eventId;
+      expect(
+        (await service.replaceEventsFromImport(
+          eventReplacement(parent, id, input('missing')),
+        )).receipts.single.changed,
+        isFalse,
+      );
+      expect(
+        (await service.replaceEventsFromImport(
+          eventReplacement(parent, id, input('other-missing')),
+        )).receipts.single.changed,
+        isTrue,
+      );
+      expect(
+        (await service.replaceEventsFromImport(
+          eventReplacement(parent, id, input('other-missing'), revision: 2),
+        )).receipts.single.changed,
+        isFalse,
+      );
+    });
+    test('event source references replace without resolution and identical source retries are no-ops', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final id = (await service.importEvents(eventImport(parent, richEvent())))
+          .receipts
+          .single
+          .eventId;
+      final result = await service.replaceEventsFromImport(
+        eventReplacement(parent, id, richEvent(target: 'different-unresolved')),
+      );
+      expect(result.receipts.single.changed, isTrue);
+      final before = await eventData(id), gen = await generation();
+      expect(
+        before.protocolState!.sourceMetadata!.relationships!.single.targetUid,
+        'different-unresolved',
+      );
+      expect(
+        (await service.replaceEventsFromImport(
+          eventReplacement(
+            parent,
+            id,
+            richEvent(target: 'different-unresolved'),
+            revision: 2,
+          ),
+        )).receipts.single.changed,
+        isFalse,
+      );
+      expect((await eventData(id)).toJson(), before.toJson());
+      expect(await generation(), gen);
+    });
+    test(
+      'event source references reject a late inline attachment atomically',
+      () async {
+        final parent = (await service.create(createInput()))!.calendarId,
+            gen = await generation();
+        await expectLater(
+          service.importEvents(
+            eventImport(parent, [
+              eventSource('reference-good', extra: richEventMetadata),
+              eventSource('reference-bad', extra: ['ATTACH;VALUE=BINARY:AAAA']),
+            ]),
+          ),
+          failure(CalendarFailureCode.validation),
+        );
+        expect(
+          (await service.listEvents(
+            parent,
+            pageSize: 20,
+            fieldGroups: eventGroups,
+          )).events,
+          isEmpty,
+        );
+        expect(await generation(), gen);
+      },
+    );
     test('event source metadata export rechecks independent source authority after serialization', () async {
       final parent = (await service.create(createInput()))!.calendarId;
       final e = (await service.importEvents(eventImport(parent, richEvent())))

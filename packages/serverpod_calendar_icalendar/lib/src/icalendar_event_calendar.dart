@@ -13,6 +13,7 @@ import 'icalendar_event_recurrence.dart';
 part 'icalendar_event_series.dart';
 part 'icalendar_event_metadata.dart';
 part 'icalendar_event_participants.dart';
+part 'icalendar_event_references.dart';
 part 'icalendar_task_calendar.dart';
 part 'icalendar_task_series.dart';
 part 'icalendar_task_metadata.dart';
@@ -43,6 +44,7 @@ final class IcalendarEvent {
     required this.timedSpan,
     required this.metadata,
     required this.participants,
+    required this.references,
     this.created,
     this.lastModified,
     this.sequence,
@@ -58,6 +60,7 @@ final class IcalendarEvent {
   });
   final IcalendarEventMetadata metadata;
   final IcalendarEventParticipants participants;
+  final IcalendarEventReferences references;
   final IcalendarSyntaxComponent source;
   final String uid;
   final DateTime stamp;
@@ -259,8 +262,17 @@ IcalendarEvent _event(
       ..._eventMetadataProperties,
       'ORGANIZER',
       'ATTENDEE',
+      'RELATED-TO',
+      'ATTACH',
     },
-    repeated: {'RDATE', 'EXDATE', 'ATTENDEE', ..._eventRepeatedMetadata},
+    repeated: {
+      'RDATE',
+      'EXDATE',
+      'ATTENDEE',
+      'RELATED-TO',
+      'ATTACH',
+      ..._eventRepeatedMetadata,
+    },
   );
   final uid = componentText(requiredProperty(p, 'UID'));
   if (uid.isEmpty) componentFail(IcalendarComponentError.invalidValue);
@@ -377,6 +389,7 @@ IcalendarEvent _event(
         : componentUtc(p['LAST-MODIFIED']!.single),
     sequence: sequence,
     metadata: _eventMetadata(source, budget),
+    references: _eventReferences(source, budget),
     participants: _eventParticipants(
       source,
       budget,

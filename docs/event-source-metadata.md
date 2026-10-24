@@ -23,3 +23,5 @@ The synthetic example file includes these properties. Its import screen explains
 [RFC property scope](rfc/rfc-5545.md), [event export](event-export.md), [source replacement](event-source-replacement.md), [selected occurrence content](event-occurrence-content.md) and [host authorization](host-authorization.md) retain their other boundaries.
 
 [ADR 0108 participant preservation](event-source-participants.md) now adds nullable organizer/attendee claims within this same private source boundary and shared budget. It supersedes the participant-pending wording above only for the declared inert source profile.
+
+[ADR 0109 source references](event-source-references.md) now extend this private source boundary with unresolved basic relationships and inert URI attachments. This supersedes references-pending wording only for that bounded profile; native graph/file editors and RFC 9253 extensions remain separate.

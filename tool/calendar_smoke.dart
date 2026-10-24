@@ -1650,6 +1650,8 @@ Future<void> eventMetadataSmoke(List<Client> clients) async {
     'CATEGORIES;LANGUAGE=en:Work,Work',
     'COMMENT;LANGUAGE=sv:Source note',
     'CONTACT;ALTREP="cid:desk@example.invalid":Cross-host source desk',
+    'RELATED-TO:metadata@example.invalid',
+    'ATTACH;VALUE=URI;FMTTYPE=application/pdf:urn:source:file',
     'ORGANIZER;CN=Inert organizer:mailto:source-organizer@example.invalid',
     'ATTENDEE;PARTSTAT=DECLINED:mailto:source-attendee@example.invalid',
   ];
@@ -1704,7 +1706,8 @@ Future<void> eventMetadataSmoke(List<Client> clients) async {
     check(
       'Cross-host source desk'.allMatches(text).length == 2 &&
           text.contains('CATEGORIES;LANGUAGE=en:Work,Work') &&
-          'source-attendee@example.invalid'.allMatches(text).length == 2,
+          'source-attendee@example.invalid'.allMatches(text).length == 2 &&
+          'urn:source:file'.allMatches(text).length == 2,
       'Cross-host metadata export preserves grouped own and master source',
     );
     check(

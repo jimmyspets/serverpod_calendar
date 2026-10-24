@@ -122,6 +122,25 @@ CalendarEventSourceMetadata? _metadata(IcalendarEvent event) =>
     validateEventSourceMetadata(
       CalendarEventSourceMetadata(
         url: event.metadata.url,
+        relationships: event.references.relationships
+            .map(
+              (r) => CalendarEventSourceRelationship(
+                targetUid: r.targetUid,
+                relationType: r.relationType,
+              ),
+            )
+            .toList(),
+        attachments: event.references.attachments
+            .map(
+              (a) => CalendarEventSourceAttachment(
+                uri: a.uri,
+                mediaType: a.mediaType,
+                explicitUri: a.source.parameters.any(
+                  (p) => p.canonicalName == 'VALUE',
+                ),
+              ),
+            )
+            .toList(),
         organizer: event.participants.organizer == null
             ? null
             : _participant(event.participants.organizer!),
