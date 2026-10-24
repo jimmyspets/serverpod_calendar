@@ -301,6 +301,20 @@ IcalendarAvailabilityCalendar validateIcalendarAvailabilityCalendar(
       }
       for (final master in masters.values) {
         for (final override in changes[master.uid] ?? <IcalendarEvent>[]) {
+          bool sameText(
+            IcalendarEventText? own,
+            IcalendarEventText? inherited,
+          ) =>
+              own == null ||
+              (inherited != null &&
+                  own.value == inherited.value &&
+                  own.language == inherited.language &&
+                  own.alternativeUri == inherited.alternativeUri);
+          if (!sameText(override.summary, master.summary) ||
+              !sameText(override.description, master.description) ||
+              !sameText(override.location, master.location)) {
+            componentFail(IcalendarComponentError.unsupportedProperty);
+          }
           _matchingPublicationMetadata(
             parsedOpenings[master]!.metadata,
             parsedOpenings[override]!.metadata,

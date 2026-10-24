@@ -259,10 +259,11 @@ final class EventComponentWriter {
       CalendarEventTiming? replacement,
       bool future,
       bool cancelled,
+      CalendarEventOccurrenceContent? own,
     ) {
       if (replacement == null) {
         throw ArgumentError(
-          'Cancellation restoration state is not wire representable',
+          'Occurrence timing inheritance is not wire representable',
         );
       }
       final checkpoint = state.overrides.singleWhere(
@@ -276,7 +277,12 @@ final class EventComponentWriter {
         time('RECURRENCE-ID', original, future: future),
         ...span(replacement),
         ...content(
-          v,
+          v.copyWith(
+            summary: own?.summary,
+            description: own?.description,
+            location: own?.location,
+            textParameters: own?.textParameters,
+          ),
           summary: checkpoint.summaryPresent,
           description: checkpoint.descriptionPresent,
           location: checkpoint.locationPresent,
@@ -300,9 +306,21 @@ final class EventComponentWriter {
         ),
       ]),
       for (final s in edits?.singles ?? <CalendarEventSingleOverride>[])
-        override(s.originalStart, s.replacement, false, s.cancelled),
+        override(
+          s.originalStart,
+          s.replacement,
+          false,
+          s.cancelled,
+          s.contentOverrides,
+        ),
       for (final s in edits?.future ?? <CalendarEventFutureOverride>[])
-        override(s.originalStart, s.replacement, true, false),
+        override(
+          s.originalStart,
+          s.replacement,
+          true,
+          false,
+          s.contentOverrides,
+        ),
     ];
   }
 }

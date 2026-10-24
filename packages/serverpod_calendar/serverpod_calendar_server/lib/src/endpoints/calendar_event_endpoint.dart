@@ -57,6 +57,10 @@ class CalendarEventEndpoint extends Endpoint {
     Session session,
     CalendarEventOccurrenceChange request,
   ) => CalendarModule.service(session).changeOccurrence(request);
+  Future<CalendarEventReceipt?> changeOccurrenceContent(
+    Session session,
+    CalendarEventOccurrenceContentRequest request,
+  ) => CalendarModule.service(session).changeOccurrenceContent(request);
   Future<CalendarEventReceipt?> deleteEvent(
     Session session,
     UuidValue eventId,

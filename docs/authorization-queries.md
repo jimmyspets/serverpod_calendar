@@ -97,3 +97,7 @@ The supported policy guarantee arrangements are selected under [ADR 0045](adr/00
 - [ ] Continue the same authorized query through two independent hosts; verify shared cursor/snapshot behavior and no process-local allow-cache dependence.
 
 No executable validation is claimed for these proposed services. Calendar domain authorization, policy result/query APIs, model schemas and cursor lifecycle remain unimplemented. See [requirements FR-04/FR-08 and NFR-01/NFR-09](requirements.md), [model proposals](models.md) and [multi-instance acceptance](adr/0018-automated-example-and-multiple-instances.md).
+
+## Selected event occurrence content
+
+[ADR 0106](adr/0106-single-event-content-overrides.md) adds `calendarEvent.changeOccurrenceContent` under `updateEvent`, independently of lifecycle permission. Immutable `eventOccurrenceContentChange` identifies the exact original; currentEvent carries actual parent/current content/overrides, and final `proposedTimingOverrides`/`proposedEventProtocolState` carry the validated result. Expected revisions, durable scope coordination and final declared-guarantee checks remain required. Previews optionally request summary/description/location in addition to timing and require both read and preview disclosure of every requested group. Detail/nested fields and component-version lists hide undisclosed content-only nodes. See [the content guide](event-occurrence-content.md).

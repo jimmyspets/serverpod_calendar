@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+import 'calendar_event_occurrence_content.dart' as _io4uvjqi;
 import 'calendar_event_timing.dart' as _ieswiaty;
 
 @_is.immutable
@@ -22,12 +23,14 @@ abstract class CalendarEventSingleOverride
     required this.originalStart,
     this.replacement,
     bool? cancelled,
+    this.contentOverrides,
   }) : cancelled = cancelled ?? false;
 
   const factory CalendarEventSingleOverride({
     required _ieswiaty.CalendarEventTiming originalStart,
     _ieswiaty.CalendarEventTiming? replacement,
     bool? cancelled,
+    _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides,
   }) = _CalendarEventSingleOverrideImpl;
 
   factory CalendarEventSingleOverride.fromJson(
@@ -46,6 +49,12 @@ abstract class CalendarEventSingleOverride
       cancelled: jsonSerialization['cancelled'] == null
           ? null
           : _is.BoolJsonExtension.fromJson(jsonSerialization['cancelled']),
+      contentOverrides: jsonSerialization['contentOverrides'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_io4uvjqi.CalendarEventOccurrenceContent>(
+                  jsonSerialization['contentOverrides'],
+                ),
     );
   }
 
@@ -55,6 +64,8 @@ abstract class CalendarEventSingleOverride
 
   final bool cancelled;
 
+  final _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides;
+
   /// Returns a shallow copy of this [CalendarEventSingleOverride]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -62,6 +73,7 @@ abstract class CalendarEventSingleOverride
     _ieswiaty.CalendarEventTiming? originalStart,
     _ieswiaty.CalendarEventTiming? replacement,
     bool? cancelled,
+    _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides,
   });
   @override
   bool operator ==(Object other) {
@@ -85,7 +97,12 @@ abstract class CalendarEventSingleOverride
                   other.cancelled,
                   cancelled,
                 ) ||
-                other.cancelled == cancelled);
+                other.cancelled == cancelled) &&
+            (identical(
+                  other.contentOverrides,
+                  contentOverrides,
+                ) ||
+                other.contentOverrides == contentOverrides);
   }
 
   @override
@@ -95,6 +112,7 @@ abstract class CalendarEventSingleOverride
       originalStart,
       replacement,
       cancelled,
+      contentOverrides,
     );
   }
 
@@ -105,6 +123,8 @@ abstract class CalendarEventSingleOverride
       'originalStart': originalStart.toJson(),
       if (replacement != null) 'replacement': replacement?.toJson(),
       'cancelled': cancelled,
+      if (contentOverrides != null)
+        'contentOverrides': contentOverrides?.toJson(),
     };
   }
 
@@ -115,6 +135,8 @@ abstract class CalendarEventSingleOverride
       'originalStart': originalStart.toJsonForProtocol(),
       if (replacement != null) 'replacement': replacement?.toJsonForProtocol(),
       'cancelled': cancelled,
+      if (contentOverrides != null)
+        'contentOverrides': contentOverrides?.toJsonForProtocol(),
     };
   }
 
@@ -131,10 +153,12 @@ class _CalendarEventSingleOverrideImpl extends CalendarEventSingleOverride {
     required _ieswiaty.CalendarEventTiming originalStart,
     _ieswiaty.CalendarEventTiming? replacement,
     bool? cancelled,
+    _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides,
   }) : super._(
          originalStart: originalStart,
          replacement: replacement,
          cancelled: cancelled,
+         contentOverrides: contentOverrides,
        );
 
   /// Returns a shallow copy of this [CalendarEventSingleOverride]
@@ -145,6 +169,7 @@ class _CalendarEventSingleOverrideImpl extends CalendarEventSingleOverride {
     _ieswiaty.CalendarEventTiming? originalStart,
     Object? replacement = _Undefined,
     bool? cancelled,
+    Object? contentOverrides = _Undefined,
   }) {
     return CalendarEventSingleOverride(
       originalStart: originalStart ?? this.originalStart.copyWith(),
@@ -152,6 +177,10 @@ class _CalendarEventSingleOverrideImpl extends CalendarEventSingleOverride {
           ? replacement
           : this.replacement?.copyWith(),
       cancelled: cancelled ?? this.cancelled,
+      contentOverrides:
+          contentOverrides is _io4uvjqi.CalendarEventOccurrenceContent?
+          ? contentOverrides
+          : this.contentOverrides?.copyWith(),
     );
   }
 }
