@@ -129,6 +129,10 @@ import 'package:serverpod_calendar_server/src/generated/calendar_task_progress_r
     as _ilb9fjz5;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_receipt.dart'
     as _ix5y5076;
+import 'package:serverpod_calendar_server/src/generated/calendar_task_replace_request.dart'
+    as _ibprdq7s;
+import 'package:serverpod_calendar_server/src/generated/calendar_task_replace_result.dart'
+    as _igldhn4m;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_update_request.dart'
     as _ifljty0a;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_view.dart'
@@ -1535,6 +1539,37 @@ class _CalendarTaskEndpoint {
   final _is.EndpointDispatch _endpointDispatch;
 
   final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_igldhn4m.CalendarTaskReplaceResult> replaceFromImport(
+    _ist.TestSessionBuilder sessionBuilder,
+    _ibprdq7s.CalendarTaskReplaceRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarTask',
+            method: 'replaceFromImport',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarTask',
+          methodName: 'replaceFromImport',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_igldhn4m.CalendarTaskReplaceResult>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 
   _ida.Future<_idt.ByteData> exportTasks(
     _ist.TestSessionBuilder sessionBuilder,

@@ -85,6 +85,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_task_occurrence
     as _i4pulpcp;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_progress_request.dart'
     as _ilb9fjz5;
+import 'package:serverpod_calendar_server/src/generated/calendar_task_replace_request.dart'
+    as _ibprdq7s;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_update_request.dart'
     as _ifljty0a;
 import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
@@ -970,6 +972,26 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'calendarTask',
       endpoint: endpoints['calendarTask']!,
       methodConnectors: {
+        'replaceFromImport': _is.MethodConnector(
+          name: 'replaceFromImport',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_ibprdq7s.CalendarTaskReplaceRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarTask'] as _i4tukef9.CalendarTaskEndpoint)
+                      .replaceFromImport(
+                        session,
+                        params['request'],
+                      ),
+        ),
         'exportTasks': _is.MethodConnector(
           name: 'exportTasks',
           params: {

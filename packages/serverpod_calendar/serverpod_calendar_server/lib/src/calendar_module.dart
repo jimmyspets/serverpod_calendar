@@ -32,6 +32,7 @@ part 'calendar_task_occurrence_content.dart';
 part 'calendar_event_import.dart';
 part 'calendar_task_import.dart';
 part 'calendar_task_export.dart';
+part 'calendar_task_replace.dart';
 part 'calendar_event_export.dart';
 part 'calendar_free_busy.dart';
 part 'calendar_availability_search.dart';
