@@ -1,6 +1,6 @@
 # Calendar example host and Flutter Web app
 
-This is the automated integration/example host for the root workspace. It uses official Serverpod authentication with synthetic seeded accounts and the built-in JWT token manager and refresh endpoint. It exposes diagnostic/identity endpoints and the first native calendar CRUD/association module with a Flutter screen and replaceable private-user demo policy. Remaining domain and notification delivery features remain planned.
+This is the automated integration/example host for the root workspace. It uses official Serverpod authentication with synthetic seeded accounts and the built-in JWT token manager and refresh endpoint. It exposes diagnostic/identity endpoints and the first native calendar CRUD/association module with a Flutter screen and replaceable private-user demo policy. The ADR 0114 increment also wires generic delivery to calendar source checks and authenticated Redis/Flutter streaming. Remaining domain/release requirements stay planned; use the current roadmap and validation record.
 
 The maintainer authorized the repeatable local CLI workflow in ../../docs/development.md. Use the root setup/generation/check/start scripts. They start and stop owned test hosts, use isolated Docker test storage and exercise real generated clients and Flutter Web. Verify Serverpod MCP availability in the current tool session rather than assuming configuration implies access. Never expose seeding/reset as production endpoints, send real auth email, or commit local secrets.
 
@@ -24,3 +24,8 @@ After approved table-source changes, create migrations with the pinned CLI or co
 6. Keep every production-only provider credential and platform push implementation outside this example scaffold.
 
 Flutter launches from calendar_example_flutter/lib/main.dart. Browser automation uses integration_test/connected_smoke_test.dart and test_driver/integration_test.dart through the root harness. No legacy driver.dart is used.
+
+
+## Reusable live notification increment, 2026-10-25
+
+[ADR 0114](../../docs/adr/0114-reusable-notification-delivery.md) approves the generic three-table storage/defaults and live-reminder profile. The [delivery guide](../../docs/reusable-notification-delivery.md) describes durable idempotent acceptance, fenced retry/publication, fresh authorized source projection and the example Redis/Flutter streaming path. This supersedes earlier unconnected-delivery/scaffold-only wording for this scoped increment; the full local batch checks passed, with actual evidence recorded in the validation guide. Imported alarms remain unarmed; provider delivery, adoption and the remaining first-release requirements stay separate.

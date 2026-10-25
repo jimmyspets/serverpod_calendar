@@ -1,0 +1,10 @@
+class: NotificationView
+immutable: true
+fields:
+  id: UuidValue
+  title: String
+  body: String?
+  sourceNamespace: String
+  actionReference: String?
+  dueAt: DateTime
+  expiresAt: DateTime

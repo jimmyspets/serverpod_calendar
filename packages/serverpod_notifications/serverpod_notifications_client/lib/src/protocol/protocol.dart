@@ -12,6 +12,18 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import 'notification_delivery_state.dart' as _is3a40pv;
+import 'notification_exception.dart' as _i299pw2t;
+import 'notification_failure_code.dart' as _i909e29g;
+import 'notification_hint.dart' as _i6bnr478;
+import 'notification_page.dart' as _iw4dnqzf;
+import 'notification_view.dart' as _i86vfscw;
+export 'notification_delivery_state.dart';
+export 'notification_exception.dart';
+export 'notification_failure_code.dart';
+export 'notification_hint.dart';
+export 'notification_page.dart';
+export 'notification_view.dart';
 export 'client.dart';
 
 class Protocol extends _isc.SerializationManager {
@@ -59,11 +71,71 @@ class Protocol extends _isc.SerializationManager {
       }
     }
 
+    if (t == _is3a40pv.NotificationDeliveryState) {
+      return _is3a40pv.NotificationDeliveryState.fromJson(data) as T;
+    }
+    if (t == _i299pw2t.NotificationException) {
+      return _i299pw2t.NotificationException.fromJson(data) as T;
+    }
+    if (t == _i909e29g.NotificationFailureCode) {
+      return _i909e29g.NotificationFailureCode.fromJson(data) as T;
+    }
+    if (t == _i6bnr478.NotificationHint) {
+      return _i6bnr478.NotificationHint.fromJson(data) as T;
+    }
+    if (t == _iw4dnqzf.NotificationPage) {
+      return _iw4dnqzf.NotificationPage.fromJson(data) as T;
+    }
+    if (t == _i86vfscw.NotificationView) {
+      return _i86vfscw.NotificationView.fromJson(data) as T;
+    }
+    if (t == _isc.getType<_is3a40pv.NotificationDeliveryState?>()) {
+      return (data != null
+              ? _is3a40pv.NotificationDeliveryState.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_i299pw2t.NotificationException?>()) {
+      return (data != null
+              ? _i299pw2t.NotificationException.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_i909e29g.NotificationFailureCode?>()) {
+      return (data != null
+              ? _i909e29g.NotificationFailureCode.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_i6bnr478.NotificationHint?>()) {
+      return (data != null ? _i6bnr478.NotificationHint.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iw4dnqzf.NotificationPage?>()) {
+      return (data != null ? _iw4dnqzf.NotificationPage.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i86vfscw.NotificationView?>()) {
+      return (data != null ? _i86vfscw.NotificationView.fromJson(data) : null)
+          as T;
+    }
+    if (t == List<_i86vfscw.NotificationView>) {
+      return (data as List)
+              .map((e) => deserialize<_i86vfscw.NotificationView>(e))
+              .toList()
+          as T;
+    }
     return super.deserialize<T>(data, t);
   }
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
+      _is3a40pv.NotificationDeliveryState => 'NotificationDeliveryState',
+      _i299pw2t.NotificationException => 'NotificationException',
+      _i909e29g.NotificationFailureCode => 'NotificationFailureCode',
+      _i6bnr478.NotificationHint => 'NotificationHint',
+      _iw4dnqzf.NotificationPage => 'NotificationPage',
+      _i86vfscw.NotificationView => 'NotificationView',
       _ => null,
     };
   }
@@ -80,6 +152,20 @@ class Protocol extends _isc.SerializationManager {
       );
     }
 
+    switch (data) {
+      case _is3a40pv.NotificationDeliveryState():
+        return 'NotificationDeliveryState';
+      case _i299pw2t.NotificationException():
+        return 'NotificationException';
+      case _i909e29g.NotificationFailureCode():
+        return 'NotificationFailureCode';
+      case _i6bnr478.NotificationHint():
+        return 'NotificationHint';
+      case _iw4dnqzf.NotificationPage():
+        return 'NotificationPage';
+      case _i86vfscw.NotificationView():
+        return 'NotificationView';
+    }
     return null;
   }
 
@@ -88,6 +174,24 @@ class Protocol extends _isc.SerializationManager {
     var dataClassName = data['className'];
     if (dataClassName is! String) {
       return super.deserializeByClassName(data);
+    }
+    if (dataClassName == 'NotificationDeliveryState') {
+      return deserialize<_is3a40pv.NotificationDeliveryState>(data['data']);
+    }
+    if (dataClassName == 'NotificationException') {
+      return deserialize<_i299pw2t.NotificationException>(data['data']);
+    }
+    if (dataClassName == 'NotificationFailureCode') {
+      return deserialize<_i909e29g.NotificationFailureCode>(data['data']);
+    }
+    if (dataClassName == 'NotificationHint') {
+      return deserialize<_i6bnr478.NotificationHint>(data['data']);
+    }
+    if (dataClassName == 'NotificationPage') {
+      return deserialize<_iw4dnqzf.NotificationPage>(data['data']);
+    }
+    if (dataClassName == 'NotificationView') {
+      return deserialize<_i86vfscw.NotificationView>(data['data']);
     }
     return super.deserializeByClassName(data);
   }

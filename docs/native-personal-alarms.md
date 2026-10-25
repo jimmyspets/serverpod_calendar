@@ -61,3 +61,8 @@ The pure `AlarmPlan.complete` primitive validates a caller-supplied complete can
 ## Native action extension
 
 [ADR 0113](adr/0113-native-alarm-actions.md) now adds [private activity pages and acknowledgement/dismiss/reset/snooze](native-alarm-actions.md). Snooze responds to a due/accepted automatic origin; reset cancels the selection and restores future automatic eligibility only. Action writes retain definition/public/protocol revisions and scrub private continuations on alarm/parent deletion. Notification delivery remains unconnected.
+
+
+## Connected live delivery extension
+
+[ADR 0114](adr/0114-reusable-notification-delivery.md) now connects the example delivery port through the [generic live notification module](reusable-notification-delivery.md). This supersedes earlier unconnected-delivery wording for that scoped path. Recovery uses fresh source/recipient authorization and current text, without copied content; the example declares fresh-check consistency. Imported adoption, advanced actions, providers and the remaining release gates stay separate. See [the actual local validation](scaffold-validation.md).

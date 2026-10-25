@@ -18,6 +18,8 @@ import 'package:calendar_example_server/src/generated/future_calls.dart'
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _iacs;
+import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
+    as _ik9lwgjh;
 import 'package:serverpod_test/serverpod_test.dart' as _ist;
 import 'package:calendar_example_server/src/generated/protocol.dart';
 import 'package:calendar_example_server/src/generated/endpoints.dart';
@@ -158,6 +160,8 @@ class TestEndpoints {
 
   late final _RefreshJwtTokensEndpoint refreshJwtTokens;
 
+  late final _NotificationStreamEndpoint notificationStream;
+
   late final _SmokeEndpoint smoke;
 }
 
@@ -173,6 +177,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     refreshJwtTokens = _RefreshJwtTokensEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    notificationStream = _NotificationStreamEndpoint(
       endpoints,
       serializationManager,
     );
@@ -502,6 +510,49 @@ class _RefreshJwtTokensEndpoint {
         await _localUniqueSession.close();
       }
     });
+  }
+}
+
+class _NotificationStreamEndpoint {
+  _NotificationStreamEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Stream<_ik9lwgjh.NotificationHint> watch(
+    _ist.TestSessionBuilder sessionBuilder,
+  ) {
+    var _localTestStreamManager =
+        _ist.TestStreamManager<_ik9lwgjh.NotificationHint>();
+    _ist.callStreamFunctionAndHandleExceptions(
+      () async {
+        var _localUniqueSession =
+            (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+              endpoint: 'notificationStream',
+              method: 'watch',
+            );
+        var _localCallContext = await _endpointDispatch
+            .getMethodStreamCallContext(
+              createSessionCallback: (_) => _localUniqueSession,
+              endpointPath: 'notificationStream',
+              methodName: 'watch',
+              arguments: {},
+              requestedInputStreams: [],
+              serializationManager: _serializationManager,
+            );
+        await _localTestStreamManager.callStreamMethod(
+          _localCallContext,
+          _localUniqueSession,
+          {},
+        );
+      },
+      _localTestStreamManager.outputStreamController,
+    );
+    return _localTestStreamManager.outputStreamController.stream;
   }
 }
 

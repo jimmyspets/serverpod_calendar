@@ -47,3 +47,8 @@ Downstream queues must call `CalendarModule.validateAlarmDelivery` before every 
 Pages use live UUID keyset order, not chronological order or a frozen snapshot. Concurrent inserts/pruning may change later pages; refresh starts a new traversal. Firing views disclose only private firing state and the current action for that original, without automatic parent text, leases, recipient references or baselines. Persistent action pages remain available after terminal-history pruning.
 
 The example provides firing/action tabs, continuation controls, acknowledgement/dismissal, UTC snooze editing and reset. Stale or denied writes show an error and require refreshed state. Reset is reachable through persistent actions even when the corresponding firing is gone. The example still declares delivery unconnected; reusable notifications and connected Flutter streaming remain required separate work. Source alarm adoption, private alarm export and mobile provider implementations are outside this increment.
+
+
+## Connected live delivery extension
+
+[ADR 0114](adr/0114-reusable-notification-delivery.md) now connects the example delivery port through the [generic live notification module](reusable-notification-delivery.md). This supersedes earlier unconnected-delivery wording for that scoped path. Recovery uses fresh source/recipient authorization and current text, without copied content; the example declares fresh-check consistency. Imported adoption, advanced actions, providers and the remaining release gates stay separate. See [the actual local validation](scaffold-validation.md).
