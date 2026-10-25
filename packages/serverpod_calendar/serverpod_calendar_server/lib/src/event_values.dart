@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:serverpod_calendar_core/serverpod_calendar_core.dart';
 import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 
 import 'generated/protocol.dart';
 
 part 'event_override_values.dart';
+part 'event_alarm_candidates.dart';
 part 'event_occurrence_content_values.dart';
 part 'event_source_metadata_values.dart';
 part 'event_source_alarm_values.dart';

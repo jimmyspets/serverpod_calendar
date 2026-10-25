@@ -1,0 +1,18 @@
+class: CalendarAlarmActionRecord
+serverOnly: true
+table: serverpod_calendar_alarm_action
+fields:
+  id: UuidValue?, defaultPersist=random
+  alarmId: UuidValue, relation(parent=serverpod_calendar_alarm)
+  originalKey: String
+  revision: int
+  acknowledgedAt: DateTime?
+  dismissedAt: DateTime?
+  pendingSnoozeAt: DateTime?
+  snoozeRevision: int, default=0
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  calendar_alarm_action_identity_unique:
+    fields: alarmId, originalKey
+    unique: true

@@ -11,52 +11,39 @@ CalendarDuration alarmDuration(CalendarAlarmDuration value) => CalendarDuration(
   seconds: value.seconds,
 );
 
-CalendarAlarmDefinition validateAlarmDefinition(CalendarAlarmDefinition value) {
+AlarmTiming alarmTiming(CalendarAlarmDefinition value) {
   final relative = value.relativeDuration;
+  final interval = value.repeatInterval == null
+      ? null
+      : alarmDuration(value.repeatInterval!);
   if ((relative == null) == (value.absoluteUtc == null)) {
     throw ArgumentError('Exactly one alarm trigger is required');
   }
   if (relative == null) {
-    TimedValue.utc(value.absoluteUtc!);
     if (value.anchor != null || value.dateZoneId != null) {
       throw ArgumentError('Absolute trigger has no relative anchor or zone');
     }
-  } else {
-    _boundedAlarmDuration(relative);
-    if (value.anchor == null) throw ArgumentError('Relative anchor required');
-    final zone = value.dateZoneId;
-    if (zone != null &&
-        (zone.length > 255 || !NamedZoneResolver().zoneIds.contains(zone))) {
-      throw ArgumentError('Exact named zone required');
-    }
+    return AlarmTiming.absolute(
+      utc: value.absoluteUtc!,
+      repeat: value.repeat,
+      repeatInterval: interval,
+    );
   }
-  if ((value.repeat == null) != (value.repeatInterval == null)) {
-    throw ArgumentError('Repeat count and interval must be paired');
-  }
-  if (value.repeat != null) {
-    RangeError.checkValueInInterval(value.repeat!, 0, 100, 'repeat');
-    final d = alarmDuration(value.repeatInterval!);
-    if (d.sign < 0 || d.isZero) {
-      throw ArgumentError('Positive repeat interval required');
-    }
-    _boundedAlarmDuration(value.repeatInterval!, multiplier: value.repeat!);
-  }
-  return value;
+  if (value.anchor == null) throw ArgumentError('Relative anchor required');
+  return AlarmTiming.relative(
+    offset: alarmDuration(relative),
+    anchor: value.anchor == CalendarAlarmAnchor.start
+        ? AlarmAnchor.start
+        : AlarmAnchor.end,
+    dateZoneId: value.dateZoneId,
+    repeat: value.repeat,
+    repeatInterval: interval,
+  );
 }
 
-void _boundedAlarmDuration(CalendarAlarmDuration value, {int multiplier = 1}) {
-  alarmDuration(value);
-  // Check the weighted aggregate exactly before any narrowing or multiplication.
-  final seconds =
-      BigInt.from(value.weeks) * BigInt.from(604800) +
-      BigInt.from(value.days) * BigInt.from(86400) +
-      BigInt.from(value.hours) * BigInt.from(3600) +
-      BigInt.from(value.minutes) * BigInt.from(60) +
-      BigInt.from(value.seconds);
-  final bound = BigInt.from(366 * 86400);
-  if (seconds > bound || seconds * BigInt.from(multiplier) > bound) {
-    throw ArgumentError('Alarm duration exceeds supported bound');
-  }
+CalendarAlarmDefinition validateAlarmDefinition(CalendarAlarmDefinition value) {
+  alarmTiming(value);
+  return value;
 }
 
 /// Compatibility of the current master anchor, not readiness for delivery.
@@ -88,4 +75,42 @@ bool alarmTaskAnchorCompatible(
   return definition.anchor == CalendarAlarmAnchor.start
       ? timing.start != null
       : timing.due != null || timing.duration != null;
+}
+
+/// Conservative inverse trigger bounds. Unit/day arithmetic may change offsets;
+/// two days cover the difference between supported offsets smaller than a day.
+UtcWindow alarmAnchorWindow(
+  AlarmTiming timing,
+  UtcWindow target, {
+  Duration endLookback = Duration.zero,
+}) {
+  int seconds(CalendarDuration? d) => d == null
+      ? 0
+      : d.sign *
+            (d.weeks * 604800 +
+                d.days * 86400 +
+                d.hours * 3600 +
+                d.minutes * 60 +
+                d.seconds);
+  final offset = seconds(timing.offset);
+  final repeats = seconds(timing.repeatInterval) * (timing.repeat ?? 0);
+  final calendarUnits = [
+    timing.offset,
+    timing.repeatInterval,
+  ].any((d) => d != null && (d.weeks != 0 || d.days != 0));
+  final padding = calendarUnits
+      ? const Duration(days: 2)
+      : const Duration(seconds: 1);
+  var from = target.start
+      .subtract(Duration(seconds: offset + repeats))
+      .subtract(padding)
+      .subtract(endLookback);
+  var until = target.end.subtract(Duration(seconds: offset)).add(padding);
+  final first = DateTime.utc(1970), last = DateTime.utc(2100);
+  if (from.isBefore(first)) from = first;
+  if (until.isAfter(last)) until = last;
+  if (!from.isBefore(until)) {
+    throw ArgumentError('Alarm anchors outside supported profile');
+  }
+  return UtcWindow(start: from, end: until);
 }

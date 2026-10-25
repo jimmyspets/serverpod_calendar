@@ -68,6 +68,7 @@ try {
   try { Invoke-Checked dart @('test', 'test/integration/calendar_test.dart') }
   finally { Pop-Location }
   Invoke-Checked python @('tool/metadata_upgrade_smoke.py')
+  Invoke-Checked dart @('run', 'tool/alarm_work_smoke.dart')
   & "$PSScriptRoot/build-host.ps1"
   $smokeArgs = @('run', 'tool/host_smoke.dart')
   if (-not $SkipBrowser) { $smokeArgs += '--flutter' }

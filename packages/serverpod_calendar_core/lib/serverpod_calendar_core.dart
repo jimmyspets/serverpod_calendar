@@ -34,3 +34,6 @@ export 'src/free_busy.dart';
 
 export 'src/availability_rules.dart';
 export 'src/availability_search.dart';
+
+export 'src/alarm_timing.dart';
+export 'src/alarm_plan.dart';

@@ -1,0 +1,7 @@
+enum: CalendarAlarmFiringState
+serialized: byName
+values:
+  - pending
+  - suppressed
+  - expired
+  - accepted

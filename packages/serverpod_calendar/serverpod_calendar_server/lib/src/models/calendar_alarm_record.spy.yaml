@@ -10,6 +10,8 @@ fields:
   recipientNamespace: String
   recipientKey: String
   revision: int
+  armed: bool, default=false
+  generation: int, default=1
   definition: CalendarAlarmDefinition
   createdAt: DateTime
   updatedAt: DateTime

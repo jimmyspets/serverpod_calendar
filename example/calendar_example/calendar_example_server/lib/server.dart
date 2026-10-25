@@ -8,6 +8,7 @@ import 'package:serverpod_auth_idp_server/providers/email.dart';
 import 'src/generated/serverpod.dart';
 import 'src/local_demo.dart';
 import 'src/calendar_policy.dart';
+import 'src/alarm_runtime.dart';
 
 Future<void> run(List<String> args) async {
   final pod = Serverpod(args);
@@ -48,6 +49,10 @@ Future<void> run(List<String> args) async {
   CalendarModule.install(
     pod,
     policy: DemoCalendarPolicy(),
+    alarms: CalendarAlarmRuntime(
+      policy: DemoAlarmBackgroundPolicy(),
+      delivery: UnconnectedAlarmDeliveryPort(),
+    ),
     availabilityExtensions: [
       CalendarAvailabilityExtensionRegistration(
         name: 'X-CALENDAR-EXAMPLE-LABEL',
@@ -63,6 +68,15 @@ Future<void> run(List<String> args) async {
     ),
   );
   await pod.start();
+  // A distinct durable wake-up per host; cancellation never interrupts in-flight
+  // module work. Duplicate executions remain guarded by module database fences.
+  final alarmWakeId = 'calendar-alarm-maintenance:${pod.serverId}';
+  await pod.futureCalls.cancel(alarmWakeId);
+  await pod.futureCalls
+      .callRecurring(identifier: alarmWakeId)
+      .every(const Duration(seconds: 15))
+      .calendarAlarmMaintenance
+      .sweep();
   if (Platform.environment['CALENDAR_EXAMPLE_SEED_DEMO'] == 'true') {
     await seedDemoAccounts(pod);
   }

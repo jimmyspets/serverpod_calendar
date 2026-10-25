@@ -1,0 +1,5 @@
+enum: CalendarAlarmFiringKind
+serialized: byName
+values:
+  - automatic
+  - snooze

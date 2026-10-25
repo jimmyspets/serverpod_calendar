@@ -2,6 +2,7 @@ calendarAlarm:
   - list:
   - create:
   - update:
+  - setArmed:
   - delete:
 calendarAvailability:
   - replaceFromImport:
