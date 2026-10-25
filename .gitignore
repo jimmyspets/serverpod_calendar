@@ -46,3 +46,7 @@ Thumbs.db
 **/.serverpod/
 **/sp_*.db*
 **/web/app/
+
+# Python test-helper bytecode
+__pycache__/
+*.py[cod]
