@@ -223,6 +223,45 @@ class Endpoints extends _is.EndpointDispatch {
                         params['request'],
                       ),
         ),
+        'setArmed': _is.MethodConnector(
+          name: 'setArmed',
+          params: {
+            'parent': _is.ParameterDescription(
+              name: 'parent',
+              type: _is.getType<_i3f0y8iu.CalendarAlarmParent>(),
+              nullable: false,
+            ),
+            'alarmId': _is.ParameterDescription(
+              name: 'alarmId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'expectedRevision': _is.ParameterDescription(
+              name: 'expectedRevision',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'armed': _is.ParameterDescription(
+              name: 'armed',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAlarm']
+                          as _ifkkyj2z.CalendarAlarmEndpoint)
+                      .setArmed(
+                        session,
+                        params['parent'],
+                        params['alarmId'],
+                        params['expectedRevision'],
+                        params['armed'],
+                      ),
+        ),
         'delete': _is.MethodConnector(
           name: 'delete',
           params: {

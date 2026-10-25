@@ -358,3 +358,18 @@ The next confirmed direction is host-resolved personal recipients without client
 - [ ] Implement bounded occurrence planning, arming, expiry/missed behavior, private actions, durable intent/delivery and the reusable notification/connected streaming example. Definitions are unarmed; this does not complete the alarm runtime milestone.
 
 This supersedes the preceding native-definition-pending wording only for the confirmed definition/editor increment. Current-master anchor compatibility does not establish per-occurrence firing readiness. Detailed worker/notification policy and failure-recovery evidence remain open.
+
+
+## Confirmed alarm execution contract
+
+[ADR 0112](adr/0112-bounded-durable-alarm-planning.md) records separate arm/disarm authority, complete 30-day coverage within the default 1,000-firing budget, configurable late grace, source lifecycle suppression and latest-eligible recovery. The three worker tables and separate 30-day terminal/action retention boundary were approved on 2026-10-25. Persistent acknowledgement and seven-day replacement snooze policies are confirmed, while their native command APIs remain a later increment. The scoped implementation and remaining gates follow below.
+
+## Durable native planner batch, 2026-10-25
+
+- [x] Pure UTC/DATE/zoned trigger calculations and complete candidate-plan validation.
+- [x] Approved worker tables, additive migrations, explicit arming/private planning status and transactional invalidation/cleanup under [ADR 0112](adr/0112-bounded-durable-alarm-planning.md).
+- [x] Complete rolling window, expiry/coalescing, guarded stable-ID handoff, separate terminal/action retention and example maintenance wake-ups; see [the bounded contract](durable-alarm-planning.md).
+- [x] Finish batch validation, including independent-process recovery, full check phases and generated-client/Flutter journeys; see [actual outcomes and corrected/resumed runs](scaffold-validation.md).
+- [ ] Add native acknowledgement/dismiss/reset/snooze APIs, the reusable notification delivery module and connected Flutter streaming. Adoption/private export, richer actions and provider integrations remain separate.
+
+This implements the scoped native planner, not the entire alarm runtime milestone or first release. Delivery remains explicitly unconnected in the current example.

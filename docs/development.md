@@ -154,3 +154,8 @@ After an interrupted browser journey, run `./tool/reset-test.ps1` before rerunni
 `dart run tool/host_smoke.dart --flutter --event-content` runs the existing two-host/generated-client checks followed by the focused event occurrence-content editor journey. The full `--flutter` target retains the complete journey, including selected content and timing edits. Tests use the supported simulated keyboard for dialog/source text and scroll lazy preview rows explicitly; this is not physical keyboard or clipboard compatibility evidence.
 
 The full Flutter journey has a six-minute outer process guard, including compilation and shutdown; focused targets retain four minutes. Individual widget/action waits remain bounded. The larger full guard follows a run that reported passing tests/application completion but exceeded the previous four-minute shutdown deadline.
+
+
+## Alarm worker process check
+
+`dart run tool/alarm_work_smoke.dart` starts two real isolated Serverpod test hosts on ports 18380–18382 and 18480–18482. Each verifies `calendar_example_test` before applying generated migrations. The harness creates only synthetic namespaced rows, races committed leases, kills the winning owned process, waits for its short test lease, and verifies takeover/stale fencing before cleanup. Test-control files/logs stay under ignored `.local/`; file communication is only harness control, never work ownership. Root `tool/check.ps1` runs this once per broad batch after database checks. Keep these ports free and do not run competing local check harnesses against the same synthetic database.

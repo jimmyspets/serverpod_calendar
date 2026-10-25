@@ -401,3 +401,158 @@ CalendarTaskOccurrence taskTimingAt(
     progress: progress,
   );
 }
+
+/// Internal complete task projection; completion signals do not change source.
+Iterable<AlarmFiringCandidate> taskAlarmCandidates(
+  CalendarTaskContent content,
+  List<CalendarTaskOccurrence> records,
+  AlarmTiming alarm,
+  UtcWindow anchorWindow,
+) sync* {
+  if (alarm.absoluteUtc != null) {
+    final values = alarm.resolveUndatedTask();
+    for (var i = 0; i < values.length; i++) {
+      yield AlarmFiringCandidate(
+        originalKey: 'item',
+        repeatOrdinal: i,
+        dueAt: values[i],
+      );
+    }
+    return;
+  }
+  if (content.recurrence == null) {
+    final values = content.timing.kind == CalendarTaskTimeKind.date
+        ? alarm.resolveDateTask(_taskDateTiming(content.timing))
+        : content.timing.kind == CalendarTaskTimeKind.undated
+        ? alarm.resolveUndatedTask()
+        : alarm.resolveTimedTask(_taskTimedTiming(content.timing));
+    for (var i = 0; i < values.length; i++) {
+      yield AlarmFiringCandidate(
+        originalKey: 'item',
+        repeatOrdinal: i,
+        dueAt: values[i],
+      );
+    }
+    return;
+  }
+  final singles = {
+    for (final r in records)
+      if (r.replacementTiming != null) r.originalStart: r.replacementTiming!,
+  };
+  final future = {
+    for (final r in records)
+      if (r.futureTiming != null) r.originalStart: r.futureTiming!,
+  };
+  if (content.timing.kind == CalendarTaskTimeKind.date) {
+    CalendarDate date(DateTime v) =>
+        CalendarDate(year: v.year, month: v.month, day: v.day);
+    final first = DateTime.utc(1970), last = DateTime.utc(2099, 12, 31);
+    final lower = anchorWindow.start.subtract(const Duration(days: 2));
+    final upper = anchorWindow.end.add(const Duration(days: 2));
+    for (final occurrence in _taskDateTiming(content.timing).expandStarts(
+      _dates(content),
+      replacements: {
+        for (final e in singles.entries)
+          _date(e.key.start): _taskDateTiming(e.value),
+      },
+      futureChanges: {
+        for (final e in future.entries)
+          _date(e.key.start): _taskDateTiming(e.value),
+      },
+      from: date(lower.isBefore(first) ? first : lower),
+      through: date(upper.isAfter(last) ? last : upper),
+      maxCandidateDays: eventMaxCandidateWork,
+      maxRuleOccurrences: eventMaxRuleOccurrences,
+      maxResults: eventMaxRuleOccurrences,
+    )) {
+      final original = taskAnchor(content.timing)
+          .copyWith(start: eventDate(occurrence.originalStart));
+      final key = taskOriginalKey(original);
+      // Still enumerate/calculates suppressed originals; caller counts them before suppression.
+      final values = alarm.resolveDateTask(occurrence.timing);
+      for (var i = 0; i < values.length; i++) {
+        yield AlarmFiringCandidate(
+          originalKey: key,
+          repeatOrdinal: i,
+          dueAt: values[i],
+        );
+      }
+    }
+  } else {
+    final master = _taskTimedTiming(content.timing);
+    final timedSingles = {
+      for (final e in singles.entries) _timed(e.key): _taskTimedTiming(e.value),
+    };
+    final timedFuture = {
+      for (final e in future.entries) _timed(e.key): _taskTimedTiming(e.value),
+    };
+    final changes = timedFuture.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+    for (final occurrence in master.expandStarts(
+      _times(content),
+      replacements: timedSingles,
+      futureChanges: timedFuture,
+      window: anchorWindow,
+      maxCandidateWork: eventMaxCandidateWork,
+      maxRuleOccurrences: eventMaxRuleOccurrences,
+      maxResults: eventMaxRuleOccurrences,
+    )) {
+      final original = taskAnchor(content.timing)
+          .copyWith(start: eventCivil(occurrence.originalStart.civil));
+      var template = master;
+      for (final change in changes) {
+        if (change.key.compareTo(occurrence.originalStart) > 0) break;
+        template = change.value;
+      }
+      template = timedSingles[occurrence.originalStart] ?? template;
+      final values =
+          template.start == occurrence.timing.start &&
+              template.effectiveDue == occurrence.timing.dueInstant
+          ? alarm.resolveTimedTask(template)
+          : alarm.resolveTimedProjection(
+              start: occurrence.timing.start,
+              end: occurrence.timing.dueInstant,
+            );
+      for (var i = 0; i < values.length; i++) {
+        yield AlarmFiringCandidate(
+          originalKey: taskOriginalKey(original),
+          repeatOrdinal: i,
+          dueAt: values[i],
+        );
+      }
+    }
+  }
+}
+
+/// Max actual template milestone separation plus offset-change padding.
+Duration taskAlarmEndLookback(
+  CalendarTaskContent content,
+  List<CalendarTaskOccurrence> records,
+) {
+  var result = Duration.zero;
+  for (final t in [
+    content.timing,
+    for (final r in records) ...[
+      if (r.replacementTiming != null) r.replacementTiming!,
+      if (r.futureTiming != null) r.futureTiming!,
+    ],
+  ]) {
+    if (t.start == null) continue;
+    Duration length;
+    if (t.kind == CalendarTaskTimeKind.date) {
+      final timing = _taskDateTiming(t);
+      length = Duration(
+        days: timing.effectiveDue == null
+            ? 0
+            : timing.start!.daysUntil(timing.effectiveDue!),
+      );
+    } else {
+      final timing = _taskTimedTiming(t);
+      length =
+          timing.effectiveDue?.difference(timing.start!.instant) ??
+          Duration.zero;
+    }
+    if (length > result) result = length;
+  }
+  return result + const Duration(days: 2);
+}

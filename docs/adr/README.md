@@ -126,6 +126,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0110](0110-unarmed-event-source-alarms.md) | Unarmed event source DISPLAY alarms | Confirmed task-style DISPLAY/source state and bounded sibling snoozes; mechanics under draft review |
 | [0111](0111-native-personal-alarm-definitions.md) | Native personal alarm definitions | Confirmed private recipient, DATE zone, lifecycle and bounded table choices; mechanics under draft review |
+| [0112](0112-bounded-durable-alarm-planning.md) | Bounded durable alarm planning and handoff | Execution policies, storage boundaries and retention confirmed; scoped planner/handoff implementation under review |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
