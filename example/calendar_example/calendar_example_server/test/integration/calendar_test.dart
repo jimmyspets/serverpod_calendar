@@ -553,6 +553,651 @@ void main() {
       ))!;
     }
 
+    CalendarAlarmActionRequest actionInput(
+      CalendarAlarmView a,
+      CalendarAlarmFiringRecord f,
+      CalendarAlarmActionKind kind, {
+      int revision = 0,
+      DateTime? snooze,
+    }) => CalendarAlarmActionRequest(
+      parent: a.parent,
+      alarmId: a.id,
+      expectedAlarmRevision: a.revision,
+      expectedActionRevision: revision,
+      kind: kind,
+      firingId: f.id,
+      snoozeAt: snooze,
+    );
+    Future<CalendarAlarmFiringRecord> acceptedFiring(
+      CalendarAlarmView a,
+    ) async => (await CalendarAlarmFiringRecord.db.findFirstRow(
+      session,
+      where: (t) =>
+          t.alarmId.equals(a.id) &
+          t.state.equals(CalendarAlarmFiringState.accepted),
+    ))!;
+
+    test('alarm actions acknowledge, dismiss and reset preserve private revisions and pruning cutoff', () async {
+      installAlarmRuntime();
+      final a = await armedDueAlarm();
+      final publicGeneration = await generation();
+      await CalendarModule.runAlarmMaintenance(session);
+      final f = await acceptedFiring(a);
+      final ack = (await service.actOnPersonalAlarm(
+        actionInput(a, f, CalendarAlarmActionKind.acknowledge),
+      ))!;
+      expect(ack.acknowledgedAt, isNotNull);
+      expect(
+        await CalendarModule.validateAlarmDelivery(
+          session,
+          alarmDelivery.accepted.values.single,
+        ),
+        isFalse,
+      );
+      final dismissed = (await service.actOnPersonalAlarm(
+        actionInput(
+          a,
+          f,
+          CalendarAlarmActionKind.dismiss,
+          revision: ack.revision,
+        ),
+      ))!;
+      expect(dismissed.dismissedAt, isNotNull);
+      await CalendarAlarmFiringRecord.db.deleteWhere(
+        session,
+        where: (t) => t.alarmId.equals(a.id),
+      );
+      final reset = (await service.actOnPersonalAlarm(
+        CalendarAlarmActionRequest(
+          parent: a.parent,
+          alarmId: a.id,
+          expectedAlarmRevision: a.revision,
+          expectedActionRevision: dismissed.revision,
+          kind: CalendarAlarmActionKind.reset,
+          actionId: ack.id,
+        ),
+      ))!;
+      expect(reset.resetAt, isNotNull);
+      expect(reset.acknowledgedAt, isNull);
+      expect(reset.dismissedAt, isNull);
+      await CalendarModule.runAlarmMaintenance(session);
+      expect(alarmDelivery.calls, 1);
+      expect(
+        (await service.listPersonalAlarms(a.parent)).single.revision,
+        a.revision,
+      );
+      expect(await generation(), publicGeneration);
+      final page = await service.personalAlarmActivity(
+        a.parent,
+        a.id,
+        CalendarAlarmActivityKind.actions,
+        10,
+        null,
+      );
+      expect(page.actions.single.id, ack.id);
+      expect(page.firings, isEmpty);
+    });
+
+    test('alarm actions stale, final denied, hidden and recipient checks are atomic', () async {
+      installAlarmRuntime();
+      final a = await armedDueAlarm();
+      await CalendarModule.runAlarmMaintenance(session);
+      final f = await acceptedFiring(a);
+      final input = actionInput(a, f, CalendarAlarmActionKind.acknowledge);
+      policy.denied.add(CalendarPermission.acknowledgePersonalAlarm);
+      await expectLater(
+        service.actOnPersonalAlarm(input),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denied.clear();
+      policy.denyFinal = true;
+      await expectLater(
+        service.actOnPersonalAlarm(input),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denyFinal = false;
+      policy.alarmRecipientOverride = (phase) => CalendarAlarmRecipient(
+        'demo',
+        phase == CalendarAuthorizationPhase.finalWrite ? 'changed' : 'alice',
+      );
+      await expectLater(
+        service.actOnPersonalAlarm(input),
+        failure(CalendarFailureCode.unavailable),
+      );
+      policy.alarmRecipientOverride = null;
+      expect(await CalendarAlarmActionRecord.db.count(session), 0);
+      policy.hideAlarmReceipt = true;
+      expect(await service.actOnPersonalAlarm(input), isNull);
+      policy.hideAlarmReceipt = false;
+      await expectLater(
+        service.actOnPersonalAlarm(input),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      policy.alarmRecipientOverride = (_) =>
+          const CalendarAlarmRecipient('demo', 'bob');
+      await expectLater(
+        service.actOnPersonalAlarm(input),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+
+    test('alarm actions snooze replaces pending work and reset cancels it without chains', () async {
+      installAlarmRuntime();
+      final a = await armedDueAlarm();
+      await CalendarModule.runAlarmMaintenance(session);
+      final f = await acceptedFiring(a);
+      final due = (await alarmNow()).add(const Duration(minutes: 10));
+      final first = (await service.actOnPersonalAlarm(
+        actionInput(a, f, CalendarAlarmActionKind.snooze, snooze: due),
+      ))!;
+      await CalendarModule.runAlarmMaintenance(session);
+      final sf = (await CalendarAlarmFiringRecord.db.findFirstRow(
+        session,
+        where: (t) => t.kind.equals(CalendarAlarmFiringKind.snooze),
+      ))!;
+      expect(sf.dueAt, due);
+      expect(sf.state, CalendarAlarmFiringState.pending);
+      await expectLater(
+        service.actOnPersonalAlarm(
+          actionInput(
+            a,
+            sf,
+            CalendarAlarmActionKind.snooze,
+            revision: first.revision,
+            snooze: due.add(const Duration(minutes: 1)),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      final next = (await service.actOnPersonalAlarm(
+        actionInput(
+          a,
+          f,
+          CalendarAlarmActionKind.snooze,
+          revision: first.revision,
+          snooze: due.add(const Duration(minutes: 2)),
+        ),
+      ))!;
+      await CalendarModule.runAlarmMaintenance(session);
+      final pending = await CalendarAlarmFiringRecord.db.find(
+        session,
+        where: (t) =>
+            t.kind.equals(CalendarAlarmFiringKind.snooze) &
+            t.state.equals(CalendarAlarmFiringState.pending),
+      );
+      expect(pending.single.dueAt, next.pendingSnoozeAt);
+      await service.actOnPersonalAlarm(
+        CalendarAlarmActionRequest(
+          parent: a.parent,
+          alarmId: a.id,
+          expectedAlarmRevision: a.revision,
+          expectedActionRevision: next.revision,
+          kind: CalendarAlarmActionKind.reset,
+          actionId: next.id,
+        ),
+      );
+      await CalendarModule.runAlarmMaintenance(session);
+      expect(
+        await CalendarAlarmFiringRecord.db.count(
+          session,
+          where: (t) =>
+              t.kind.equals(CalendarAlarmFiringKind.snooze) &
+              t.state.equals(CalendarAlarmFiringState.pending),
+        ),
+        0,
+      );
+      expect(alarmDelivery.calls, 1);
+    });
+
+    test('alarm actions reject fractional, past, beyond seven-day and exhausted budget snooze atomically', () async {
+      installAlarmRuntime(cap: 1);
+      final a = await armedDueAlarm();
+      await CalendarModule.runAlarmMaintenance(session);
+      final f = await acceptedFiring(a);
+      final now = await alarmNow();
+      for (final due in [
+        now,
+        now.add(const Duration(days: 7, seconds: 2)),
+        now.add(const Duration(minutes: 1, microseconds: 1)),
+      ]) {
+        await expectLater(
+          service.actOnPersonalAlarm(
+            actionInput(a, f, CalendarAlarmActionKind.snooze, snooze: due),
+          ),
+          failure(CalendarFailureCode.validation),
+        );
+      }
+      await expectLater(
+        service.actOnPersonalAlarm(
+          actionInput(
+            a,
+            f,
+            CalendarAlarmActionKind.snooze,
+            snooze: now.add(const Duration(minutes: 1)),
+          ),
+        ),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      expect(await CalendarAlarmActionRecord.db.count(session), 0);
+      expect(
+        (await CalendarAlarmPlanRecord.db.findFirstRow(session))!.dirty,
+        isFalse,
+      );
+    });
+
+    test('alarm actions history cursors bind kind, alarm, principal and policy and preserve independent read gates', () async {
+      installAlarmRuntime();
+      final a = await armedDueAlarm(repeats: true);
+      await CalendarModule.runAlarmMaintenance(session);
+      final first = await service.personalAlarmActivity(
+        a.parent,
+        a.id,
+        CalendarAlarmActivityKind.firings,
+        1,
+        null,
+      );
+      expect(first.firings, hasLength(1));
+      expect(first.nextCursor, isNotNull);
+      await expectLater(
+        service.personalAlarmActivity(
+          a.parent,
+          a.id,
+          CalendarAlarmActivityKind.actions,
+          1,
+          first.nextCursor,
+        ),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+      final next = await service.personalAlarmActivity(
+        a.parent,
+        a.id,
+        CalendarAlarmActivityKind.firings,
+        1,
+        first.nextCursor,
+      );
+      expect(next.firings.single.id, isNot(first.firings.single.id));
+      policy.denied.add(CalendarPermission.readPersonalAlarmActivity);
+      await expectLater(
+        service.personalAlarmActivity(
+          a.parent,
+          a.id,
+          CalendarAlarmActivityKind.firings,
+          1,
+          first.nextCursor,
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denied.clear();
+      final saved = (await CalendarCursorRecord.db.findFirstRow(
+        session,
+        where: (t) => t.token.equals(first.nextCursor!),
+      ))!;
+      saved.principalId = 'bob';
+      await CalendarCursorRecord.db.updateRow(session, saved);
+      await expectLater(
+        service.personalAlarmActivity(
+          a.parent,
+          a.id,
+          CalendarAlarmActivityKind.firings,
+          1,
+          first.nextCursor,
+        ),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+    });
+
+    test('alarm actions due unaccepted snooze can be rescheduled through its automatic origin', () async {
+      installAlarmRuntime();
+      alarmDelivery.decline = true;
+      final a = await armedDueAlarm();
+      await CalendarModule.runAlarmMaintenance(session);
+      final f = (await CalendarAlarmFiringRecord.db.findFirstRow(session))!;
+      expect(f.state, CalendarAlarmFiringState.pending);
+      final due = (await alarmNow()).add(const Duration(minutes: 5));
+      final first = (await service.actOnPersonalAlarm(
+        actionInput(a, f, CalendarAlarmActionKind.snooze, snooze: due),
+      ))!;
+      await CalendarModule.runAlarmMaintenance(session);
+      final second = (await service.actOnPersonalAlarm(
+        actionInput(
+          a,
+          f,
+          CalendarAlarmActionKind.snooze,
+          revision: first.revision,
+          snooze: due.add(const Duration(minutes: 1)),
+        ),
+      ))!;
+      expect(second.pendingSnoozeAt, due.add(const Duration(minutes: 1)));
+    });
+
+    test('alarm actions reset allows future repeats but never replays an accepted firing after generation changes', () async {
+      installAlarmRuntime();
+      final a = await armedDueAlarm();
+      await CalendarModule.runAlarmMaintenance(session);
+      final f = await acceptedFiring(a);
+      final ack = (await service.actOnPersonalAlarm(
+        actionInput(a, f, CalendarAlarmActionKind.acknowledge),
+      ))!;
+      final reset = (await service.actOnPersonalAlarm(
+        CalendarAlarmActionRequest(
+          parent: a.parent,
+          alarmId: a.id,
+          expectedAlarmRevision: a.revision,
+          expectedActionRevision: ack.revision,
+          kind: CalendarAlarmActionKind.reset,
+          actionId: ack.id,
+        ),
+      ))!;
+      await service.updatePersonalAlarm(
+        CalendarAlarmUpdateRequest(
+          parent: a.parent,
+          alarmId: a.id,
+          expectedRevision: a.revision,
+          definition: CalendarAlarmDefinition(
+            absoluteUtc: f.dueAt,
+            repeat: 1,
+            repeatInterval: CalendarAlarmDuration(hours: 1),
+          ),
+        ),
+      );
+      await CalendarModule.runAlarmMaintenance(session);
+      expect(alarmDelivery.calls, 1);
+      final future = await CalendarAlarmFiringRecord.db.find(
+        session,
+        where: (t) => t.state.equals(CalendarAlarmFiringState.pending),
+      );
+      expect(future.single.dueAt.isAfter(reset.resetAt!), isTrue);
+    });
+
+    test('alarm actions activity cursor cannot cross into calendar event task or history lists', () async {
+      installAlarmRuntime();
+      final a = await armedDueAlarm(repeats: true);
+      await CalendarModule.runAlarmMaintenance(session);
+      final page = await service.personalAlarmActivity(
+        a.parent,
+        a.id,
+        CalendarAlarmActivityKind.firings,
+        1,
+        null,
+      );
+      final record = (await CalendarAlarmRecord.db.findById(session, a.id))!;
+      await expectLater(
+        service.list(pageSize: 1, fieldGroups: [], cursor: page.nextCursor),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+      await expectLater(
+        service.listEvents(
+          record.calendarId,
+          pageSize: 1,
+          fieldGroups: [],
+          cursor: page.nextCursor,
+        ),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+      await expectLater(
+        service.listTasks(
+          record.calendarId,
+          pageSize: 1,
+          fieldGroups: [],
+          cursor: page.nextCursor,
+        ),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+    });
+
+    test('alarm actions final host context includes actual parent firing and proposed action', () async {
+      installAlarmRuntime();
+      final a = await armedDueAlarm();
+      await CalendarModule.runAlarmMaintenance(session);
+      final f = await acceptedFiring(a);
+      await service.actOnPersonalAlarm(
+        actionInput(a, f, CalendarAlarmActionKind.acknowledge),
+      );
+      final request = policy.lastAlarmAction!;
+      expect(request.eventId, a.parent.id);
+      expect(request.currentEvent, isNotNull);
+      expect(request.currentAlarmFiring!.id, f.id);
+      expect(request.alarmRecipient!.key, 'alice');
+      expect(request.currentAlarmAction, isNull);
+      expect(request.proposedAlarmAction!.acknowledgedAt, isNotNull);
+      expect(request.alarmActionKind, CalendarAlarmActionKind.acknowledge);
+    });
+
+    test(
+      'alarm actions time validation repeats after a slow final policy check',
+      () async {
+        installAlarmRuntime();
+        final a = await armedDueAlarm();
+        await CalendarModule.runAlarmMaintenance(session);
+        final f = await acceptedFiring(a);
+        policy.alarmActionFinalDelay = const Duration(seconds: 2);
+        await expectLater(
+          service.actOnPersonalAlarm(
+            actionInput(
+              a,
+              f,
+              CalendarAlarmActionKind.snooze,
+              snooze: (await alarmNow()).add(const Duration(seconds: 2)),
+            ),
+          ),
+          failure(CalendarFailureCode.validation),
+        );
+        expect(await CalendarAlarmActionRecord.db.count(session), 0);
+      },
+    );
+
+    test('alarm actions snooze rejects future expired and stale generation references', () async {
+      installAlarmRuntime();
+      final a = await armedDueAlarm();
+      await CalendarModule.runAlarmMaintenance(session);
+      final f = await acceptedFiring(a);
+      final now = await alarmNow();
+      final original = f.copyWith();
+      f.state = CalendarAlarmFiringState.pending;
+      f.dueAt = now.add(const Duration(minutes: 1));
+      await CalendarAlarmFiringRecord.db.updateRow(session, f);
+      await expectLater(
+        service.actOnPersonalAlarm(
+          actionInput(
+            a,
+            f,
+            CalendarAlarmActionKind.snooze,
+            snooze: now.add(const Duration(minutes: 5)),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      f.dueAt = now.subtract(const Duration(minutes: 20));
+      f.expiresAt = now;
+      await CalendarAlarmFiringRecord.db.updateRow(session, f);
+      await expectLater(
+        service.actOnPersonalAlarm(
+          actionInput(
+            a,
+            f,
+            CalendarAlarmActionKind.snooze,
+            snooze: now.add(const Duration(minutes: 5)),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      original.generation++;
+      await CalendarAlarmFiringRecord.db.updateRow(session, original);
+      await expectLater(
+        service.actOnPersonalAlarm(
+          actionInput(
+            a,
+            original,
+            CalendarAlarmActionKind.snooze,
+            snooze: now.add(const Duration(minutes: 5)),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      expect(await CalendarAlarmActionRecord.db.count(session), 0);
+    });
+
+    test('alarm actions accepted expired history still establishes snooze while active', () async {
+      installAlarmRuntime();
+      final a = await armedDueAlarm();
+      await CalendarModule.runAlarmMaintenance(session);
+      final f = await acceptedFiring(a);
+      f.expiresAt = (await alarmNow()).subtract(const Duration(seconds: 1));
+      await CalendarAlarmFiringRecord.db.updateRow(session, f);
+      final result = await service.actOnPersonalAlarm(
+        actionInput(
+          a,
+          f,
+          CalendarAlarmActionKind.snooze,
+          snooze: (await alarmNow()).add(const Duration(days: 7)),
+        ),
+      );
+      expect(result!.pendingSnoozeAt, isNotNull);
+    });
+
+    test('alarm actions action counter exhaustion and parent spoofing fail without mutation', () async {
+      installAlarmRuntime();
+      final a = await armedDueAlarm();
+      await CalendarModule.runAlarmMaintenance(session);
+      final f = await acceptedFiring(a);
+      final action = (await service.actOnPersonalAlarm(
+        actionInput(a, f, CalendarAlarmActionKind.acknowledge),
+      ))!;
+      final row = (await CalendarAlarmActionRecord.db.findById(
+        session,
+        action.id,
+      ))!;
+      row.revision = 9007199254740991;
+      await CalendarAlarmActionRecord.db.updateRow(session, row);
+      policy.denied.add(CalendarPermission.dismissPersonalAlarm);
+      await expectLater(
+        service.actOnPersonalAlarm(
+          actionInput(
+            a,
+            f,
+            CalendarAlarmActionKind.dismiss,
+            revision: row.revision,
+          ),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denied.clear();
+      await expectLater(
+        service.actOnPersonalAlarm(
+          actionInput(
+            a,
+            f,
+            CalendarAlarmActionKind.dismiss,
+            revision: row.revision,
+          ),
+        ),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      final other = await workAlarm();
+      await expectLater(
+        service.actOnPersonalAlarm(
+          CalendarAlarmActionRequest(
+            parent: eventAlarmParent(other.parentId),
+            alarmId: a.id,
+            expectedAlarmRevision: a.revision,
+            expectedActionRevision: row.revision,
+            kind: CalendarAlarmActionKind.reset,
+            actionId: row.id,
+          ),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(
+        (await CalendarAlarmActionRecord.db.findById(
+          session,
+          row.id!,
+        ))!.dismissedAt,
+        isNull,
+      );
+      row.revision = 1;
+      row.snoozeRevision = 9007199254740991;
+      await CalendarAlarmActionRecord.db.updateRow(session, row);
+      final reset = await service.actOnPersonalAlarm(
+        CalendarAlarmActionRequest(
+          parent: a.parent,
+          alarmId: a.id,
+          expectedAlarmRevision: a.revision,
+          expectedActionRevision: 1,
+          kind: CalendarAlarmActionKind.reset,
+          actionId: row.id,
+        ),
+      );
+      expect(reset!.resetAt, isNotNull);
+    });
+
+    test('alarm actions snooze uses raw database time rather than a future audit timestamp', () async {
+      installAlarmRuntime();
+      final a = await armedDueAlarm();
+      await CalendarModule.runAlarmMaintenance(session);
+      final f = await acceptedFiring(a);
+      final ack = (await service.actOnPersonalAlarm(
+        actionInput(a, f, CalendarAlarmActionKind.acknowledge),
+      ))!;
+      await CalendarModule.runAlarmMaintenance(session);
+      final row = (await CalendarAlarmActionRecord.db.findById(
+        session,
+        ack.id,
+      ))!;
+      final now = await alarmNow();
+      row.updatedAt = now.add(const Duration(days: 1));
+      await CalendarAlarmActionRecord.db.updateRow(session, row);
+      await expectLater(
+        service.actOnPersonalAlarm(
+          actionInput(
+            a,
+            f,
+            CalendarAlarmActionKind.snooze,
+            revision: ack.revision,
+            snooze: now.add(const Duration(days: 7, hours: 1)),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      expect(
+        (await CalendarAlarmActionRecord.db.findById(
+          session,
+          row.id!,
+        ))!.pendingSnoozeAt,
+        isNull,
+      );
+    });
+
+    test(
+      'alarm actions alarm and parent deletion scrub private continuation rows',
+      () async {
+        installAlarmRuntime();
+        for (final deleteParent in [false, true]) {
+          final a = await armedDueAlarm(repeats: true);
+          await CalendarModule.runAlarmMaintenance(session);
+          final page = await service.personalAlarmActivity(
+            a.parent,
+            a.id,
+            CalendarAlarmActivityKind.firings,
+            1,
+            null,
+          );
+          expect(page.nextCursor, isNotNull);
+          if (deleteParent) {
+            await service.deleteEvent(a.parent.id, 1);
+          } else {
+            await service.deletePersonalAlarm(a.parent, a.id, a.revision);
+          }
+          expect(
+            await CalendarCursorRecord.db.count(
+              session,
+              where: (t) => t.alarmActivityId.equals(a.id),
+            ),
+            0,
+          );
+        }
+      },
+    );
+
     test('alarm planner explicit arming requires configured runtime and separate authority', () async {
       final row = await workAlarm();
       expect(row.armed, isFalse);
@@ -13487,6 +14132,8 @@ final class TestPolicy implements CalendarHostPolicy {
   alarmRecipientOverride;
 
   Duration organizerDelay = Duration.zero;
+  Duration alarmActionFinalDelay = Duration.zero;
+  CalendarAuthorizationRequest? lastAlarmAction;
   bool hideAlarmReceipt = false;
   bool denyOrganizer = false, denyFinalOrganizer = false;
   bool organizerUnavailable = false;
@@ -13685,6 +14332,12 @@ final class TestPolicy implements CalendarHostPolicy {
     CalendarAuthorizationPhase phase,
   ) async {
     for (final request in requests) {
+      if (request.alarmActionKind != null) {
+        lastAlarmAction = request;
+        if (phase == CalendarAuthorizationPhase.finalWrite) {
+          await Future<void>.delayed(alarmActionFinalDelay);
+        }
+      }
       if (request.eventReplacement != null ||
           request.operation == CalendarPermission.replaceEventsFromImport) {
         onEventReplacement?.call(request);
@@ -13893,12 +14546,14 @@ final class TestAlarmDeliveryPort implements CalendarAlarmDeliveryPort {
   final accepted = <UuidValue, CalendarAlarmDeliveryIntent>{};
   int calls = 0;
   bool throwAfterAcceptance = false;
+  bool decline = false;
   @override
   Future<bool> accept(
     Session session,
     CalendarAlarmDeliveryIntent intent,
   ) async {
     calls++;
+    if (decline) return false;
     final alreadyAccepted = accepted.containsKey(intent.firingId);
     accepted.putIfAbsent(intent.firingId, () => intent);
     if (throwAfterAcceptance && !alreadyAccepted) {

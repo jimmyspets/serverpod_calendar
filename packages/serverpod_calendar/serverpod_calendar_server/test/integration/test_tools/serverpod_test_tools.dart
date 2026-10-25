@@ -15,6 +15,14 @@ import 'dart:async' as _ida;
 import 'dart:io' as _idi;
 import 'dart:typed_data' as _idt;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_calendar_server/src/generated/calendar_alarm_action_request.dart'
+    as _i4jzmye1;
+import 'package:serverpod_calendar_server/src/generated/calendar_alarm_action_view.dart'
+    as _i1d2lmbf;
+import 'package:serverpod_calendar_server/src/generated/calendar_alarm_activity_kind.dart'
+    as _iry1yxo8;
+import 'package:serverpod_calendar_server/src/generated/calendar_alarm_activity_page.dart'
+    as _iufzu7ub;
 import 'package:serverpod_calendar_server/src/generated/calendar_alarm_create_request.dart'
     as _i8n3ncsd;
 import 'package:serverpod_calendar_server/src/generated/calendar_alarm_parent.dart'
@@ -512,6 +520,78 @@ class _CalendarAlarmEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i1d2lmbf.CalendarAlarmActionView?> act(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i4jzmye1.CalendarAlarmActionRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarAlarm',
+            method: 'act',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarAlarm',
+          methodName: 'act',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i1d2lmbf.CalendarAlarmActionView?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_iufzu7ub.CalendarAlarmActivityPage> activity(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i3f0y8iu.CalendarAlarmParent parent,
+    _is.UuidValue alarmId,
+    _iry1yxo8.CalendarAlarmActivityKind kind,
+    int pageSize,
+    String? cursor,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarAlarm',
+            method: 'activity',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarAlarm',
+          methodName: 'activity',
+          parameters: _ist.testObjectToJson({
+            'parent': parent,
+            'alarmId': alarmId,
+            'kind': kind,
+            'pageSize': pageSize,
+            'cursor': cursor,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iufzu7ub.CalendarAlarmActivityPage>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

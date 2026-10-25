@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:calendar_example_flutter/personal_alarm_screen.dart';
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:calendar_example_flutter/main.dart';
 import 'package:flutter/material.dart';
@@ -1287,6 +1290,12 @@ Future<void> _waitFor(WidgetTester tester, Finder finder) async {
   for (var i = 0; i < 120; i++) {
     await tester.pump(const Duration(milliseconds: 100));
     if (finder.evaluate().isNotEmpty) return;
+    final activityErrors = find.byKey(const Key('alarm-activity-error'));
+    if (activityErrors.evaluate().isNotEmpty) {
+      fail(
+        'Unexpected alarm action error: ${tester.widget<Text>(activityErrors).data}',
+      );
+    }
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 100)),
     );
@@ -1410,6 +1419,103 @@ Future<void> _personalAlarmJourney(
   await _tap(tester, 'alarm-delete-${alarm.id}');
   await _waitFor(tester, find.text('No personal alarm definitions.'));
   expect(await api.list(parent), isEmpty);
+  if (parent.kind == cal.CalendarAlarmParentKind.event) {
+    // The surrounding journey deliberately left its event cancelled. Use an
+    // independent active fixture; native snooze must reject cancelled parents.
+    final events = client.modules.serverpod_calendar.calendarEvent;
+    final original = await events.getEvent(
+      parent.id,
+      cal.CalendarEventFieldGroup.values,
+    );
+    final source = (await events.create(
+      cal.CalendarEventCreateRequest(
+        calendarId: original.calendarId,
+        content: cal.CalendarEventContent(
+          summary: 'Active personal action fixture',
+          timing: cal.CalendarEventTiming(
+            kind: cal.CalendarEventTimeKind.utc,
+            start: cal.CalendarEventCivil(year: 2026, month: 10, day: 25),
+          ),
+        ),
+      ),
+    ))!;
+    final actionParent = cal.CalendarAlarmParent(
+      kind: cal.CalendarAlarmParentKind.event,
+      id: source.eventId,
+    );
+    unawaited(
+      Navigator.of(tester.element(find.byType(PersonalAlarmScreen))).push<void>(
+        MaterialPageRoute(
+          builder: (_) => PersonalAlarmScreen(
+            client: client,
+            parent: actionParent,
+            initialZone: 'Etc/UTC',
+          ),
+        ),
+      ),
+    );
+    await _waitFor(tester, find.text('No personal alarm definitions.'));
+    final due = DateTime.fromMillisecondsSinceEpoch(
+      (DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000 - 60) * 1000,
+      isUtc: true,
+    );
+    final actionAlarm = (await api.create(
+      cal.CalendarAlarmCreateRequest(
+        parent: actionParent,
+        definition: cal.CalendarAlarmDefinition(absoluteUtc: due),
+      ),
+    ))!;
+    await api.setArmed(
+      actionParent,
+      actionAlarm.id,
+      actionAlarm.revision,
+      true,
+    );
+    final deadline = DateTime.now().add(const Duration(seconds: 45));
+    while (DateTime.now().isBefore(deadline)) {
+      final activity = await api.activity(
+        actionParent,
+        actionAlarm.id,
+        cal.CalendarAlarmActivityKind.firings,
+        20,
+        null,
+      );
+      if (activity.firings.isNotEmpty) break;
+      await tester.pump(const Duration(milliseconds: 250));
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+    }
+    await _tap(tester, 'alarms-refresh');
+    await _waitFor(tester, find.byTooltip('Personal alarm activity'));
+    await tester.tap(find.byTooltip('Personal alarm activity'));
+    await _waitFor(tester, find.text('Snooze'));
+    await tester.tap(find.text('Snooze'));
+    await _waitFor(tester, find.byKey(const Key('alarm-snooze-utc')));
+    await _tap(tester, 'alarm-snooze-confirm');
+    await _waitFor(tester, find.textContaining('Action revision 1'));
+    await tester.tap(find.text('Acknowledge'));
+    await _waitFor(tester, find.textContaining('Action revision 2'));
+    await tester.tap(find.text('Dismiss'));
+    await _waitFor(tester, find.textContaining('Action revision 3'));
+    await tester.tap(find.text('Persistent actions'));
+    await _waitFor(tester, find.text('Reset'));
+    await tester.tap(find.text('Reset'));
+    await _waitFor(tester, find.textContaining('Reset cutoff: 20'));
+    final actions = await api.activity(
+      actionParent,
+      actionAlarm.id,
+      cal.CalendarAlarmActivityKind.actions,
+      20,
+      null,
+    );
+    expect(actions.actions.single.resetAt, isNotNull);
+    expect(actions.actions.single.pendingSnoozeAt, isNull);
+    await tester.pageBack();
+    await _idle(tester);
+    await api.delete(actionParent, actionAlarm.id, 2);
+    await tester.pageBack();
+    await _idle(tester);
+    await events.deleteEvent(source.eventId, 1);
+  }
   await tester.pageBack();
   await _idle(tester);
 }

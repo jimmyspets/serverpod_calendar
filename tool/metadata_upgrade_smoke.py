@@ -546,6 +546,27 @@ END;
 $verify_work$;
 DROP TABLE alarm_work_upgrade_guard;
 """)
+        sql(database, """
+INSERT INTO serverpod_calendar_alarm_action
+(id, "alarmId", "originalKey", revision, "acknowledgedAt", "snoozeRevision", "createdAt", "updatedAt")
+SELECT '33333333-3333-4333-8333-333333333333', id, 'item', 3, '2026-10-25 08:00:00', 2,
+ '2026-10-25 07:00:00', '2026-10-25 08:00:00' FROM serverpod_calendar_alarm LIMIT 1;
+CREATE TABLE action_upgrade_guard AS SELECT to_jsonb(a) AS content FROM serverpod_calendar_alarm_action a;
+""")
+        sql(database, (SERVER / "migrations/20261025083029145-alarm-actions/migration.sql").read_text(encoding="utf-8"))
+        sql(database, """
+DO $verify_actions$
+BEGIN
+ IF EXISTS (SELECT 1 FROM serverpod_calendar_alarm_action WHERE "resetAt" IS NOT NULL)
+ OR EXISTS (SELECT 1 FROM serverpod_calendar_cursor WHERE "alarmActivityId" IS NOT NULL OR "alarmActivityKind" IS NOT NULL)
+ THEN RAISE EXCEPTION 'Action migration invented reset or cursor context'; END IF;
+ IF (SELECT jsonb_agg(content ORDER BY content::text) FROM action_upgrade_guard) IS DISTINCT FROM
+ (SELECT jsonb_agg(to_jsonb(a)-'resetAt' ORDER BY (to_jsonb(a)-'resetAt')::text) FROM serverpod_calendar_alarm_action a)
+ THEN RAISE EXCEPTION 'Action migration changed retained private state'; END IF;
+END;
+$verify_actions$;
+DROP TABLE action_upgrade_guard;
+""")
         print("PASS: populated schema upgrades preserve prior rows, add unarmed generation defaults and create no alarm work or actions.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

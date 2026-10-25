@@ -621,3 +621,7 @@ The maintainer approved the [ADR 0112](adr/0112-bounded-durable-alarm-planning.m
 ## Durable alarm planning increment, 2026-10-25
 
 [ADR 0112](adr/0112-bounded-durable-alarm-planning.md) now adds [explicit arming, complete rolling plans and guarded durable handoff](durable-alarm-planning.md), with separate background policy, database leases/fences, source/lifecycle checks, stable retry IDs and terminal-history pruning that preserves action state. This supersedes earlier unarmed-only/planner-pending wording for native definitions only. Imported alarms remain unarmed. Native action APIs, reusable notification delivery and connected streaming remain separate requirements; the example delivery port explicitly remains unconnected. First-release alarm requirements are not complete.
+
+## Approved native alarm-action additions, 2026-10-25
+
+[ADR 0113](adr/0113-native-alarm-actions.md) proposes nullable action `resetAt` and nullable cursor alarm/list-kind discriminators on existing server-only tables. The maintainer approved these additive fields on 2026-10-25, alongside due/accepted-firing snooze eligibility and future-only reset without overdue replay. Generated module/example migrations add nullable fields without inventing reset or cursor state. No new table or provider data is introduced. Scoped commands and private activity pages are now implemented; broad batch evidence remains in the validation guide. See [the action contract](native-alarm-actions.md).

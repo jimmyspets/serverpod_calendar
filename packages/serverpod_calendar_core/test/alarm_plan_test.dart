@@ -31,6 +31,33 @@ AlarmPlan plan(
 );
 
 void main() {
+  test('reset cutoff suppresses due work before coalescing and retains future repeats', () {
+    final result = AlarmPlan.complete(
+      window: UtcWindow(start: at(0), end: at(59)),
+      now: at(30),
+      candidates: [
+        candidate(21, key: 'other'),
+        candidate(25),
+        candidate(40, ordinal: 1),
+      ],
+      resetCutoffs: {'original': at(25).add(const Duration(microseconds: 1))},
+    );
+    expect(result.firings.map((f) => f.disposition), [
+      AlarmFiringDisposition.pending,
+      AlarmFiringDisposition.suppressed,
+      AlarmFiringDisposition.pending,
+    ]);
+    expect(
+      () => AlarmPlan.complete(
+        window: UtcWindow(start: at(0), end: at(59)),
+        now: at(30),
+        candidates: [],
+        resetCutoffs: {'original': DateTime(2026)},
+      ),
+      throwsArgumentError,
+    );
+  });
+
   test('recovery keeps latest eligible; earlier eligible and expired remain distinct', () {
     final result = plan([
       candidate(10, ordinal: 0),

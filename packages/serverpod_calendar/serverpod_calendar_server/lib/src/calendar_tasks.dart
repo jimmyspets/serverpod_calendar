@@ -589,6 +589,8 @@ extension CalendarTaskOperations on CalendarService {
           transaction: tx,
         );
         if (saved == null ||
+            saved.alarmActivityId != null ||
+            saved.alarmActivityKind != null ||
             saved.taskHistoryTaskId != null ||
             saved.taskHistoryOriginalKey != null ||
             saved.taskHistoryAfterRevision != null ||

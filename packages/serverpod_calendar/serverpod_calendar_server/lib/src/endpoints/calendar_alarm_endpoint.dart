@@ -35,4 +35,18 @@ class CalendarAlarmEndpoint extends Endpoint {
   ) =>
       CalendarModule.service(session)
           .deletePersonalAlarm(parent, alarmId, expectedRevision);
+  Future<CalendarAlarmActionView?> act(
+    Session session,
+    CalendarAlarmActionRequest request,
+  ) => CalendarModule.service(session).actOnPersonalAlarm(request);
+  Future<CalendarAlarmActivityPage> activity(
+    Session session,
+    CalendarAlarmParent parent,
+    UuidValue alarmId,
+    CalendarAlarmActivityKind kind,
+    int pageSize,
+    String? cursor,
+  ) =>
+      CalendarModule.service(session)
+          .personalAlarmActivity(parent, alarmId, kind, pageSize, cursor);
 }

@@ -69,6 +69,7 @@ final class AlarmPlan {
     int maxScannedCandidates = 100000,
     Set<String> suppressedOriginals = const {},
     bool lifecycleSuppressed = false,
+    Map<String, DateTime> resetCutoffs = const {},
   }) {
     TimedValue.utc(window.start);
     TimedValue.utcEnd(window.end);
@@ -85,6 +86,19 @@ final class AlarmPlan {
     RangeError.checkValueInInterval(maxFirings, 1, 10000);
     RangeError.checkValueInInterval(maxScannedCandidates, 1, 1000000);
     final actions = Set<String>.unmodifiable(suppressedOriginals);
+    final cutoffs = Map<String, DateTime>.unmodifiable(resetCutoffs);
+    for (final cutoff in cutoffs.values) {
+      if (!cutoff.isUtc ||
+          cutoff.isBefore(DateTime.utc(1970)) ||
+          !cutoff.isBefore(DateTime.utc(2100))) {
+        throw ArgumentError(
+          'Reset cutoff requires a supported UTC database instant',
+        );
+      }
+    }
+    bool resetSuppressed(AlarmFiringCandidate c) =>
+        cutoffs[c.originalKey] != null &&
+        !c.dueAt.isAfter(cutoffs[c.originalKey]!);
     final values = <AlarmFiringCandidate>[];
     final identities = <(String, int)>{};
     var scanned = 0;
@@ -116,6 +130,7 @@ final class AlarmPlan {
     for (final value in values) {
       if (!lifecycleSuppressed &&
           !actions.contains(value.originalKey) &&
+          !resetSuppressed(value) &&
           !value.dueAt.isAfter(now) &&
           expiry(value).isAfter(now)) {
         latest = value;
@@ -132,6 +147,7 @@ final class AlarmPlan {
                 ? AlarmFiringDisposition.expired
                 : lifecycleSuppressed ||
                       actions.contains(value.originalKey) ||
+                      resetSuppressed(value) ||
                       (!value.dueAt.isAfter(now) && !identical(value, latest))
                 ? AlarmFiringDisposition.suppressed
                 : AlarmFiringDisposition.pending,

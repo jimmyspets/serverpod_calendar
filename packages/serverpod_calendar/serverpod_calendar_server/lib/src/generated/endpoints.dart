@@ -11,6 +11,10 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_calendar_server/src/generated/calendar_alarm_action_request.dart'
+    as _i4jzmye1;
+import 'package:serverpod_calendar_server/src/generated/calendar_alarm_activity_kind.dart'
+    as _iry1yxo8;
 import 'package:serverpod_calendar_server/src/generated/calendar_alarm_create_request.dart'
     as _i8n3ncsd;
 import 'package:serverpod_calendar_server/src/generated/calendar_alarm_parent.dart'
@@ -293,6 +297,72 @@ class Endpoints extends _is.EndpointDispatch {
                         params['parent'],
                         params['alarmId'],
                         params['expectedRevision'],
+                      ),
+        ),
+        'act': _is.MethodConnector(
+          name: 'act',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i4jzmye1.CalendarAlarmActionRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAlarm']
+                          as _ifkkyj2z.CalendarAlarmEndpoint)
+                      .act(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'activity': _is.MethodConnector(
+          name: 'activity',
+          params: {
+            'parent': _is.ParameterDescription(
+              name: 'parent',
+              type: _is.getType<_i3f0y8iu.CalendarAlarmParent>(),
+              nullable: false,
+            ),
+            'alarmId': _is.ParameterDescription(
+              name: 'alarmId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'kind': _is.ParameterDescription(
+              name: 'kind',
+              type: _is.getType<_iry1yxo8.CalendarAlarmActivityKind>(),
+              nullable: false,
+            ),
+            'pageSize': _is.ParameterDescription(
+              name: 'pageSize',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'cursor': _is.ParameterDescription(
+              name: 'cursor',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAlarm']
+                          as _ifkkyj2z.CalendarAlarmEndpoint)
+                      .activity(
+                        session,
+                        params['parent'],
+                        params['alarmId'],
+                        params['kind'],
+                        params['pageSize'],
+                        params['cursor'],
                       ),
         ),
       },
