@@ -11,6 +11,8 @@ dependencies:
   serverpod_auth_idp_server: 4.0.4
   serverpod_calendar_server:
     path: ../../../packages/serverpod_calendar/serverpod_calendar_server
+  serverpod_calendar_feed_server:
+    path: ../../../packages/serverpod_calendar_feed/serverpod_calendar_feed_server
   serverpod_notifications_server:
     path: ../../../packages/serverpod_notifications/serverpod_notifications_server
 dev_dependencies:

@@ -29,6 +29,7 @@ import 'availability_wire_storage.dart';
 import 'availability_wire_output.dart';
 import 'availability_import_baseline.dart';
 
+part 'calendar_publication.dart';
 part 'calendar_alarms.dart';
 part 'calendar_alarm_adoption.dart';
 part 'calendar_alarm_actions.dart';
@@ -54,11 +55,22 @@ part 'calendar_availability_replace.dart';
 /// Configuration is per Serverpod instance, never an allow-decision cache.
 abstract final class CalendarModule {
   static final _installed = Expando<_Runtime>();
+  static CalendarAuthorizationGuarantee? publicationGuarantee(
+    Serverpod pod,
+    CalendarDependencyProvider dependency,
+  ) {
+    final runtime = _installed[pod];
+    return runtime != null && runtime.dependencies.contains(dependency)
+        ? runtime.publicationPolicy?.guarantee
+        : null;
+  }
+
   static void install(
     Serverpod pod, {
     required CalendarHostPolicy policy,
     required CalendarModuleOptions options,
     CalendarAlarmRuntime? alarms,
+    CalendarPublicationPolicy? publicationPolicy,
     List<CalendarDependencyProvider> dependencies = const [],
     List<CalendarAvailabilityExtensionRegistration> availabilityExtensions =
         const [],
@@ -94,6 +106,15 @@ abstract final class CalendarModule {
         'Alarm policy cannot supply required coordinated guarantee',
       );
     }
+    if (publicationPolicy != null &&
+        options.requiredWriteGuarantee ==
+            CalendarAuthorizationGuarantee.coordinated &&
+        publicationPolicy.guarantee !=
+            CalendarAuthorizationGuarantee.coordinated) {
+      throw ArgumentError(
+        'Publication policy cannot supply required guarantee',
+      );
+    }
     final registry = <String, CalendarAvailabilityExtensionRegistration>{};
     if (availabilityExtensions.length > 32) {
       throw ArgumentError('Too many extension registrations');
@@ -112,6 +133,7 @@ abstract final class CalendarModule {
       List.unmodifiable(dependencies),
       Map.unmodifiable(registry),
       alarms,
+      publicationPolicy,
     );
   }
 
@@ -162,6 +184,37 @@ abstract final class CalendarModule {
         .projectNotification(intent);
   }
 
+  /// Trusted optional-module port. This is never an RPC endpoint.
+  /// Every selected source is authorized by the installed publication policy.
+  static Future<T> publicationTransaction<T>(
+    Session session,
+    String scopeKey,
+    Future<T> Function(CalendarPublicationTransaction) action,
+  ) async {
+    final runtime = _installed[session.serverpod];
+    if (runtime?.publicationPolicy == null) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
+    final service = CalendarService._(session, runtime!);
+    service._opaque(scopeKey);
+    return service._scopeTransaction(scopeKey, (tx, _) async {
+      final publication = CalendarPublicationTransaction._(
+        service,
+        scopeKey,
+        tx,
+      );
+      try {
+        final result = await action(publication);
+        for (final check in publication._checks) {
+          await publication._authorize(check, finalCheck: true);
+        }
+        return result;
+      } finally {
+        publication._open = false;
+      }
+    });
+  }
+
   static CalendarService service(Session session) {
     final runtime = _installed[session.serverpod];
     if (runtime == null || session.authenticated == null) {
@@ -194,10 +247,12 @@ final class _Runtime {
     this.dependencies,
     this.availabilityExtensions,
     this.alarms,
+    this.publicationPolicy,
   );
   final Map<String, CalendarAvailabilityExtensionRegistration>
   availabilityExtensions;
   final CalendarAlarmRuntime? alarms;
+  final CalendarPublicationPolicy? publicationPolicy;
   final CalendarHostPolicy policy;
   final CalendarModuleOptions options;
   final List<CalendarDependencyProvider> dependencies;
@@ -310,17 +365,21 @@ final class CalendarService {
   Future<T> _transaction<T>(
     CalendarHostContext c,
     Future<T> Function(Transaction, CalendarScopeRecord) action,
+  ) => _scopeTransaction(c.scopeKey, action);
+  Future<T> _scopeTransaction<T>(
+    String scopeKey,
+    Future<T> Function(Transaction, CalendarScopeRecord) action,
   ) => _session.db.transaction((tx) async {
     await CalendarScopeRecord.db.insert(
       _session,
-      [CalendarScopeRecord(scopeKey: c.scopeKey, revision: 1)],
+      [CalendarScopeRecord(scopeKey: scopeKey, revision: 1)],
       transaction: tx,
       ignoreConflicts: true,
       noReturn: true,
     );
     final scope = await CalendarScopeRecord.db.findFirstRow(
       _session,
-      where: (t) => t.scopeKey.equals(c.scopeKey),
+      where: (t) => t.scopeKey.equals(scopeKey),
       transaction: tx,
       lockMode: LockMode.forUpdate,
     );
@@ -338,9 +397,27 @@ final class CalendarService {
     return previous != null && now.isBefore(previous) ? previous.toUtc() : now;
   }
 
-  Future<void> _bump(CalendarScopeRecord scope, Transaction tx) async {
+  Future<void> _bump(
+    CalendarScopeRecord scope,
+    Transaction tx, {
+    UuidValue? publishedEventCalendar,
+  }) async {
     if (scope.revision >= _maxRevision) {
       throw _failure(CalendarFailureCode.limitExceeded);
+    }
+    if (publishedEventCalendar != null) {
+      for (final observer
+          in _runtime.dependencies
+              .whereType<CalendarPublicationChangeObserver>()) {
+        await _bounded(
+          () => observer.eventsChanged(
+            _session,
+            scope.scopeKey,
+            publishedEventCalendar,
+            tx,
+          ),
+        );
+      }
     }
     // A shared write records durable wake-up/invalidation in this transaction.
     // Private definitions never block it through recipient policy or list caps.
@@ -355,8 +432,8 @@ final class CalendarService {
     await CalendarScopeRecord.db.updateRow(_session, scope, transaction: tx);
   }
 
-  Future<CalendarIdentityRecord> _identity(
-    CalendarHostContext c,
+  Future<CalendarIdentityRecord> _identityInScope(
+    String scopeKey,
     UuidValue id,
     Transaction tx,
   ) async {
@@ -364,7 +441,7 @@ final class CalendarService {
       _session,
       where: (t) =>
           t.id.equals(id) &
-          t.scopeKey.equals(c.scopeKey) &
+          t.scopeKey.equals(scopeKey) &
           t.deletedAt.equals(null),
       transaction: tx,
       lockMode: LockMode.forUpdate,
@@ -377,8 +454,13 @@ final class CalendarService {
     CalendarHostContext c,
     UuidValue id,
     Transaction tx,
+  ) => _activeInScope(c.scopeKey, id, tx);
+  Future<_Active> _activeInScope(
+    String scopeKey,
+    UuidValue id,
+    Transaction tx,
   ) async {
-    final identity = await _identity(c, id, tx);
+    final identity = await _identityInScope(scopeKey, id, tx);
     final data = await CalendarDataRecord.db.findFirstRow(
       _session,
       where: (t) => t.calendarId.equals(id),

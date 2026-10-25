@@ -4,6 +4,7 @@ import 'dart:io';
 import 'calendar_smoke.dart';
 import 'notification_smoke.dart';
 import 'alarm_adoption_smoke.dart';
+import 'feed_smoke.dart';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart';
@@ -55,6 +56,7 @@ Future<void> main(List<String> args) async {
           first.modules.serverpod_notifications.notificationDiagnostics.check(),
       () =>
           first.modules.serverpod_notifications.notification.recover(10, null),
+      () => first.modules.serverpod_calendar_feed.calendarFeed.list(),
     ]) {
       rejected = false;
       try {
@@ -95,10 +97,30 @@ Future<void> main(List<String> args) async {
         auth.refreshToken == null) {
       throw StateError('Expected JWT access and refresh credentials.');
     }
-    await calendarSmoke(clients, values['demoBobPassword'] as String);
-    if (clients.length > 1) {
-      await alarmAdoptionSmoke(clients);
-      await notificationSmoke(clients);
+    Future<void> runFeeds() => feedSmoke(
+      clients,
+      setPublisherBlocked: mode != 'test'
+          ? null
+          : (blocked) async {
+              final result = await Process.run('python', [
+                'tool/notification_access_probe.py',
+                '${auth.authUserId}',
+                blocked ? 'block' : 'unblock',
+              ]);
+              if (result.exitCode != 0) {
+                throw StateError('Synthetic publisher fixture failed');
+              }
+            },
+    );
+    if (args.contains('--feeds')) {
+      await runFeeds();
+    } else {
+      await calendarSmoke(clients, values['demoBobPassword'] as String);
+      if (clients.length > 1) {
+        await alarmAdoptionSmoke(clients);
+        await runFeeds();
+        await notificationSmoke(clients);
+      }
     }
     final verifier = clients.length > 1 ? clients.last : first;
     // Exercise real refresh/rotation on another host before revoking the pair.

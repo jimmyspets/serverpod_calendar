@@ -1,0 +1,4 @@
+exception: CalendarFeedException
+fields:
+  code: CalendarFeedFailureCode
+  message: String

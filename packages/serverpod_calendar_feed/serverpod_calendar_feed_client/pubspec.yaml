@@ -1,0 +1,13 @@
+name: serverpod_calendar_feed_client
+description: Generated management client for optional calendar subscriptions.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: '>=3.13.5 <3.14.0'
+
+dependencies:
+  serverpod_client: 4.0.4
+  serverpod_calendar_client:
+    path: ../../serverpod_calendar/serverpod_calendar_client

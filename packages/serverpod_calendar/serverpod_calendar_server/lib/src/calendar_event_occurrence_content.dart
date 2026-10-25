@@ -61,6 +61,9 @@ extension CalendarEventOccurrenceContentOperations on CalendarService {
         CalendarAuthorizationPhase.preliminaryWrite,
       );
       final decisions = await _final(c, [request(proposed, state)], tx);
+      final publicationChanged =
+          jsonEncode(e.data.protocolState!.toJson()) !=
+          jsonEncode(state.toJson());
       e.data.protocolState = state;
       e.data.timingOverrides = proposed;
       e.data.updatedAt = now;
@@ -75,7 +78,13 @@ extension CalendarEventOccurrenceContentOperations on CalendarService {
         e.identity,
         transaction: tx,
       );
-      await _bump(scope, tx);
+      await _bump(
+        scope,
+        tx,
+        publishedEventCalendar: publicationChanged
+            ? e.identity.calendarId
+            : null,
+      );
       return _eventReceipt(e, decisions.values);
     });
   }

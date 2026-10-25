@@ -18,6 +18,8 @@ import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _iaic;
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as _imrxcdin;
+import 'package:serverpod_calendar_feed_client/serverpod_calendar_feed_client.dart'
+    as _ithfap9s;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_notifications_client/serverpod_notifications_client.dart'
     as _i9wvmat7;
@@ -286,6 +288,7 @@ class Modules {
   Modules(Client client) {
     serverpod_auth_idp = _iaic.Caller(client);
     serverpod_calendar = _imrxcdin.Caller(client);
+    serverpod_calendar_feed = _ithfap9s.Caller(client);
     serverpod_notifications = _i9wvmat7.Caller(client);
     serverpod_auth_core = _iacc.Caller(client);
   }
@@ -293,6 +296,8 @@ class Modules {
   late final _iaic.Caller serverpod_auth_idp;
 
   late final _imrxcdin.Caller serverpod_calendar;
+
+  late final _ithfap9s.Caller serverpod_calendar_feed;
 
   late final _i9wvmat7.Caller serverpod_notifications;
 
@@ -355,6 +360,7 @@ class Client extends _isc.ServerpodClientShared {
   Map<String, _isc.ModuleEndpointCaller> get moduleLookup => {
     'serverpod_auth_idp': modules.serverpod_auth_idp,
     'serverpod_calendar': modules.serverpod_calendar,
+    'serverpod_calendar_feed': modules.serverpod_calendar_feed,
     'serverpod_notifications': modules.serverpod_notifications,
     'serverpod_auth_core': modules.serverpod_auth_core,
   };

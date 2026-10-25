@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'calendar_screen.dart';
 import 'live_notifications.dart';
+import 'feed_screen.dart';
 
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:serverpod_flutter/serverpod_flutter.dart';
@@ -187,6 +188,17 @@ class _ConnectionScreenState extends State<_ConnectionScreen> {
                             ),
                           ),
                     child: const Text('My calendars'),
+                  ),
+                  FilledButton(
+                    key: const Key('open-feeds'),
+                    onPressed: _busy
+                        ? null
+                        : () => Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (_) => FeedScreen(client: widget.client),
+                            ),
+                          ),
+                    child: const Text('Subscription feeds'),
                   ),
                   FilledButton(
                     key: const Key('check'),

@@ -3,6 +3,7 @@ Assert-Toolchain
 foreach ($relative in @(
   'packages/serverpod_notifications/serverpod_notifications_server',
   'packages/serverpod_calendar/serverpod_calendar_server',
+  'packages/serverpod_calendar_feed/serverpod_calendar_feed_server',
   'example/calendar_example/calendar_example_server'
 )) {
   Push-Location (Join-Path $WorkspaceRoot $relative)
