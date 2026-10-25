@@ -19,6 +19,7 @@ abstract class CalendarAlarmActionRecord
     required this.alarmId,
     required this.originalKey,
     required this.revision,
+    this.resetAt,
     this.acknowledgedAt,
     this.dismissedAt,
     this.pendingSnoozeAt,
@@ -32,6 +33,7 @@ abstract class CalendarAlarmActionRecord
     required _is.UuidValue alarmId,
     required String originalKey,
     required int revision,
+    DateTime? resetAt,
     DateTime? acknowledgedAt,
     DateTime? dismissedAt,
     DateTime? pendingSnoozeAt,
@@ -52,6 +54,9 @@ abstract class CalendarAlarmActionRecord
       ),
       originalKey: jsonSerialization['originalKey'] as String,
       revision: jsonSerialization['revision'] as int,
+      resetAt: jsonSerialization['resetAt'] == null
+          ? null
+          : _is.DateTimeJsonExtension.fromJson(jsonSerialization['resetAt']),
       acknowledgedAt: jsonSerialization['acknowledgedAt'] == null
           ? null
           : _is.DateTimeJsonExtension.fromJson(
@@ -90,6 +95,8 @@ abstract class CalendarAlarmActionRecord
 
   int revision;
 
+  DateTime? resetAt;
+
   DateTime? acknowledgedAt;
 
   DateTime? dismissedAt;
@@ -113,6 +120,7 @@ abstract class CalendarAlarmActionRecord
     _is.UuidValue? alarmId,
     String? originalKey,
     int? revision,
+    DateTime? resetAt,
     DateTime? acknowledgedAt,
     DateTime? dismissedAt,
     DateTime? pendingSnoozeAt,
@@ -128,6 +136,7 @@ abstract class CalendarAlarmActionRecord
       'alarmId': alarmId.toJson(),
       'originalKey': originalKey,
       'revision': revision,
+      if (resetAt != null) 'resetAt': resetAt?.toJson(),
       if (acknowledgedAt != null) 'acknowledgedAt': acknowledgedAt?.toJson(),
       if (dismissedAt != null) 'dismissedAt': dismissedAt?.toJson(),
       if (pendingSnoozeAt != null) 'pendingSnoozeAt': pendingSnoozeAt?.toJson(),
@@ -178,6 +187,7 @@ class _CalendarAlarmActionRecordImpl extends CalendarAlarmActionRecord {
     required _is.UuidValue alarmId,
     required String originalKey,
     required int revision,
+    DateTime? resetAt,
     DateTime? acknowledgedAt,
     DateTime? dismissedAt,
     DateTime? pendingSnoozeAt,
@@ -189,6 +199,7 @@ class _CalendarAlarmActionRecordImpl extends CalendarAlarmActionRecord {
          alarmId: alarmId,
          originalKey: originalKey,
          revision: revision,
+         resetAt: resetAt,
          acknowledgedAt: acknowledgedAt,
          dismissedAt: dismissedAt,
          pendingSnoozeAt: pendingSnoozeAt,
@@ -206,6 +217,7 @@ class _CalendarAlarmActionRecordImpl extends CalendarAlarmActionRecord {
     _is.UuidValue? alarmId,
     String? originalKey,
     int? revision,
+    Object? resetAt = _Undefined,
     Object? acknowledgedAt = _Undefined,
     Object? dismissedAt = _Undefined,
     Object? pendingSnoozeAt = _Undefined,
@@ -218,6 +230,7 @@ class _CalendarAlarmActionRecordImpl extends CalendarAlarmActionRecord {
       alarmId: alarmId ?? this.alarmId,
       originalKey: originalKey ?? this.originalKey,
       revision: revision ?? this.revision,
+      resetAt: resetAt is DateTime? ? resetAt : this.resetAt,
       acknowledgedAt: acknowledgedAt is DateTime?
           ? acknowledgedAt
           : this.acknowledgedAt,
@@ -251,6 +264,12 @@ class CalendarAlarmActionRecordUpdateTable
     table.revision,
     value,
   );
+
+  _is.ColumnValue<DateTime, DateTime> resetAt(DateTime? value) =>
+      _is.ColumnValue(
+        table.resetAt,
+        value,
+      );
 
   _is.ColumnValue<DateTime, DateTime> acknowledgedAt(DateTime? value) =>
       _is.ColumnValue(
@@ -304,6 +323,10 @@ class CalendarAlarmActionRecordTable extends _is.Table<_is.UuidValue?> {
       'revision',
       this,
     );
+    resetAt = _is.ColumnDateTime(
+      'resetAt',
+      this,
+    );
     acknowledgedAt = _is.ColumnDateTime(
       'acknowledgedAt',
       this,
@@ -339,6 +362,8 @@ class CalendarAlarmActionRecordTable extends _is.Table<_is.UuidValue?> {
 
   late final _is.ColumnInt revision;
 
+  late final _is.ColumnDateTime resetAt;
+
   late final _is.ColumnDateTime acknowledgedAt;
 
   late final _is.ColumnDateTime dismissedAt;
@@ -357,6 +382,7 @@ class CalendarAlarmActionRecordTable extends _is.Table<_is.UuidValue?> {
     alarmId,
     originalKey,
     revision,
+    resetAt,
     acknowledgedAt,
     dismissedAt,
     pendingSnoozeAt,

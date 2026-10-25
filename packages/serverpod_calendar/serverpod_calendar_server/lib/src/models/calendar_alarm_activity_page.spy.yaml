@@ -1,0 +1,6 @@
+class: CalendarAlarmActivityPage
+immutable: true
+fields:
+  firings: List<CalendarAlarmFiringView>
+  actions: List<CalendarAlarmActionView>
+  nextCursor: String?

@@ -370,6 +370,16 @@ This supersedes the preceding native-definition-pending wording only for the con
 - [x] Approved worker tables, additive migrations, explicit arming/private planning status and transactional invalidation/cleanup under [ADR 0112](adr/0112-bounded-durable-alarm-planning.md).
 - [x] Complete rolling window, expiry/coalescing, guarded stable-ID handoff, separate terminal/action retention and example maintenance wake-ups; see [the bounded contract](durable-alarm-planning.md).
 - [x] Finish batch validation, including independent-process recovery, full check phases and generated-client/Flutter journeys; see [actual outcomes and corrected/resumed runs](scaffold-validation.md).
-- [ ] Add native acknowledgement/dismiss/reset/snooze APIs, the reusable notification delivery module and connected Flutter streaming. Adoption/private export, richer actions and provider integrations remain separate.
+- [x] Add native acknowledgement/dismiss/reset/snooze and private activity under ADR 0113.
+- [ ] Add the reusable notification delivery module and connected Flutter streaming. Adoption/private export, richer actions and provider integrations remain separate.
 
 This implements the scoped native planner, not the entire alarm runtime milestone or first release. Delivery remains explicitly unconnected in the current example.
+
+## Native alarm-action contract, 2026-10-25
+
+- [x] Confirm snooze requires a due/accepted firing; reset restores future eligibility only and cancels pending snooze.
+- [x] Review the concrete additive action/cursor model proposal in [ADR 0113](adr/0113-native-alarm-actions.md).
+- [x] Implement private acknowledgement/dismiss/reset/snooze APIs, activity pagination and example controls after model approval.
+- [x] Complete broader batch validation; publish the native action batch as a draft for review.
+
+The action APIs now have scoped implementation and focused validation. Notification delivery/streaming and other first-release requirements remain open.

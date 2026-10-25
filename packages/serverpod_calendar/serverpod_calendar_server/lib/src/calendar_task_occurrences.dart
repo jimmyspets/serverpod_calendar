@@ -618,6 +618,8 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
           transaction: tx,
         );
         if (saved == null ||
+            saved.alarmActivityId != null ||
+            saved.alarmActivityKind != null ||
             saved.taskHistoryTaskId != query.taskId ||
             saved.taskHistoryOriginalKey != key ||
             saved.taskHistoryAfterRevision == null ||

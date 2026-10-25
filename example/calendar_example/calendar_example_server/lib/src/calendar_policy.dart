@@ -21,7 +21,7 @@ final class DemoCalendarPolicy implements CalendarHostPolicy {
     return CalendarHostContext(
       principalId: principal,
       scopeKey: 'demo:user:$principal',
-      policyRevision: 'private-scope-v12',
+      policyRevision: 'private-scope-v13',
     );
   }
 

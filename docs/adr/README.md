@@ -128,6 +128,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0111](0111-native-personal-alarm-definitions.md) | Native personal alarm definitions | Confirmed private recipient, DATE zone, lifecycle and bounded table choices; mechanics under draft review |
 | [0112](0112-bounded-durable-alarm-planning.md) | Bounded durable alarm planning and handoff | Execution policies, storage boundaries and retention confirmed; scoped planner/handoff implementation under review |
 
+| [0113](0113-native-alarm-actions.md) | Native personal alarm actions | Due/accepted snooze, future-only reset and additive storage approved; scoped action/activity implementation under review |
+
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
 Use the next consecutive number for a new ADR covering a material decision. Include context, proposal/decision, alternatives, consequences, and acceptance conditions. Preserve committed/accepted decision history; supersede accepted decisions with a linked ADR. Superseded uncommitted drafts may be removed under the maintainer-authorized cleanup. Mark an ADR accepted only after explicit maintainer agreement recorded in the PR or issue.

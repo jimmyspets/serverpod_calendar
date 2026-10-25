@@ -30,6 +30,7 @@ import 'availability_wire_output.dart';
 import 'availability_import_baseline.dart';
 
 part 'calendar_alarms.dart';
+part 'calendar_alarm_actions.dart';
 part 'calendar_alarm_worker.dart';
 part 'calendar_events.dart';
 part 'calendar_event_occurrence_content.dart';
@@ -957,6 +958,8 @@ final class CalendarService {
           transaction: tx,
         );
         if (saved == null ||
+            saved.alarmActivityId != null ||
+            saved.alarmActivityKind != null ||
             saved.taskHistoryTaskId != null ||
             saved.taskHistoryOriginalKey != null ||
             saved.taskHistoryAfterRevision != null ||

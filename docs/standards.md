@@ -99,3 +99,7 @@ The maintainer selected the timing/composition-first slice and positive opening 
 ## Durable alarm planning increment, 2026-10-25
 
 [ADR 0112](adr/0112-bounded-durable-alarm-planning.md) now adds [explicit arming, complete rolling plans and guarded durable handoff](durable-alarm-planning.md), with separate background policy, database leases/fences, source/lifecycle checks, stable retry IDs and terminal-history pruning that preserves action state. This supersedes earlier unarmed-only/planner-pending wording for native definitions only. Imported alarms remain unarmed. Native action APIs, reusable notification delivery and connected streaming remain separate requirements; the example delivery port explicitly remains unconnected. First-release alarm requirements are not complete.
+
+## Native alarm actions remain separate from interchange
+
+[ADR 0113](adr/0113-native-alarm-actions.md) adds scoped private acknowledgement/dismiss/reset/snooze commands and activity pages. These commands neither interpret imported ACKNOWLEDGED/SNOOZE as trusted user actions nor publish private state into source exports. Source RFC 9074 preservation, native actions, generic notification delivery and actual client display remain distinct validation boundaries. See [the native contract](native-alarm-actions.md).
