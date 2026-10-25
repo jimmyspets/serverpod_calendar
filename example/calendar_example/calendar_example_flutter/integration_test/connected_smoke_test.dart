@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:calendar_example_flutter/personal_alarm_screen.dart';
 import 'package:calendar_example_client/calendar_example_client.dart';
@@ -1280,6 +1282,7 @@ void main() {
     expect(find.text(renamedLabel), findsNothing);
     await tester.pageBack();
     await _idle(tester);
+    await _alarmAdoptionJourney(tester, client);
     await _liveReminderJourney(tester, client);
     await tester.tap(find.byKey(const Key('sign-out')));
     await _waitFor(tester, find.byKey(const Key('sign-in')));
@@ -1583,6 +1586,97 @@ Future<void> _liveReminderJourney(WidgetTester tester, Client client) async {
     expect(find.byKey(const Key('notifications-error')), findsNothing);
   } finally {
     await api.calendarEvent.deleteEvent(event.eventId, event.revision);
+    await api.calendar.delete(calendar.calendarId, calendar.revision);
+  }
+}
+
+Future<void> _alarmAdoptionJourney(WidgetTester tester, Client client) async {
+  final api = client.modules.serverpod_calendar;
+  final calendar = (await api.calendar.create(
+    cal.CalendarCreateRequest(
+      displayName: 'Synthetic Flutter source adoption',
+      availabilityZoneId: 'Europe/Stockholm',
+      noRuleFallback: cal.CalendarNoRuleFallback.free,
+    ),
+  ))!;
+  final source = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:Synthetic',
+    'BEGIN:VTODO',
+    'UID:adoption-task@example.invalid',
+    'DTSTAMP:20260301T000000Z',
+    'DTSTART;VALUE=DATE:20260329',
+    'SUMMARY:Current task text',
+    'BEGIN:VALARM',
+    'ACTION:DISPLAY',
+    'DESCRIPTION:Never copy this source text',
+    'TRIGGER:-PT5M',
+    'UID:untrusted-task-alarm',
+    'ACKNOWLEDGED:20260301T000000Z',
+    'END:VALARM',
+    'END:VTODO',
+    'END:VCALENDAR',
+    '',
+  ].join('\r\n');
+  final task = (await api.calendarTask.importTasks(
+    cal.CalendarTaskImportRequest(
+      calendarId: calendar.calendarId,
+      expectedRevision: 1,
+      bytes: ByteData.sublistView(Uint8List.fromList(utf8.encode(source))),
+    ),
+  )).receipts.single;
+  final parent = cal.CalendarAlarmParent(
+    kind: cal.CalendarAlarmParentKind.task,
+    id: task.taskId,
+  );
+  try {
+    unawaited(
+      Navigator.of(tester.element(find.byKey(const Key('live-notifications'))))
+          .push<void>(
+            MaterialPageRoute(
+              builder: (_) => PersonalAlarmScreen(
+                client: client,
+                parent: parent,
+                initialZone: 'Europe/Stockholm',
+              ),
+            ),
+          ),
+    );
+    await _waitFor(tester, find.text('No personal alarm definitions.'));
+    await _tap(tester, 'alarm-source-review');
+    await _waitFor(tester, find.byKey(const Key('alarm-source-adopt-0')));
+    expect(find.text('Never copy this source text'), findsNothing);
+    await _tap(tester, 'alarm-source-adopt-0');
+    await _waitFor(
+      tester,
+      find.text('Unarmed: current master anchor available'),
+    );
+    final copied = (await api.calendarAlarm.list(parent)).single;
+    expect(copied.armed, isFalse);
+    expect(copied.definition.dateZoneId, 'Europe/Stockholm');
+    expect(copied.definition.relativeDuration!.minutes, 5);
+    expect(
+      (await api.calendarAlarm.activity(
+        parent,
+        copied.id,
+        cal.CalendarAlarmActivityKind.actions,
+        10,
+        null,
+      )).actions,
+      isEmpty,
+    );
+    expect(
+      (await api.calendarTask.getTask(
+        task.taskId,
+        cal.CalendarTaskFieldGroup.values,
+      )).revision,
+      task.revision,
+    );
+    await tester.pageBack();
+    await _idle(tester);
+  } finally {
+    await api.calendarTask.deleteTask(task.taskId, task.revision);
     await api.calendar.delete(calendar.calendarId, calendar.revision);
   }
 }

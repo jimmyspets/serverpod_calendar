@@ -116,6 +116,7 @@ extension CalendarAlarmOperations on CalendarService {
     proposedAction,
     CalendarAlarmActionKind? actionKind,
     CalendarAlarmActivityKind? activityKind,
+    int? sourceIndex,
   }) => CalendarAuthorizationRequest(
     key:
         '${operation.name}:${alarmId ?? parent.event?.identity.id ?? parent.task!.identity.id}',
@@ -136,6 +137,7 @@ extension CalendarAlarmOperations on CalendarService {
     proposedAlarmAction: proposedAction,
     alarmActionKind: actionKind,
     alarmActivityKind: activityKind,
+    alarmSourceIndex: sourceIndex,
   );
 
   Future<List<CalendarAlarmRecord>> _privateAlarms(
@@ -236,57 +238,83 @@ extension CalendarAlarmOperations on CalendarService {
         tx,
         CalendarAuthorizationPhase.preliminaryWrite,
       );
-      final id = const Uuid().v4obj();
-      final requests = [
-        _alarmRequest(
-          parent,
-          CalendarPermission.createPersonalAlarm,
-          recipient,
-          alarmId: id,
-          proposed: definition,
-        ),
-      ];
-      await _decide(
+      return _createPrivateAlarm(
         c,
-        requests,
-        tx,
-        CalendarAuthorizationPhase.preliminaryWrite,
-      );
-      if (!parent.compatible(definition)) {
-        throw _failure(CalendarFailureCode.validation);
-      }
-      if ((await _privateAlarms(c, input.parent, recipient, tx)).length >= 16) {
-        throw _failure(CalendarFailureCode.limitExceeded);
-      }
-      await _verifyAlarmRecipient(
-        c,
+        input.parent,
+        parent,
         recipient,
+        definition,
         tx,
-        CalendarAuthorizationPhase.finalWrite,
       );
-      final decisions = await _final(c, requests, tx);
-      final now = await _revisionTime(tx);
-      final row = await CalendarAlarmRecord.db.insertRow(
-        _session,
-        CalendarAlarmRecord(
-          id: id,
-          scopeKey: c.scopeKey,
-          calendarId: parent.parent.identity.id!,
-          parentKind: input.parent.kind,
-          parentId: input.parent.id,
-          recipientNamespace: recipient.namespace,
-          recipientKey: recipient.key,
-          revision: 1,
-          definition: definition,
-          createdAt: now,
-          updatedAt: now,
-        ),
-        transaction: tx,
-      );
-      return decisions.values.every((d) => d.discloseMutationReceipt)
-          ? _alarmView(row, parent)
-          : null;
     });
+  }
+
+  Future<CalendarAlarmView?> _createPrivateAlarm(
+    CalendarHostContext c,
+    CalendarAlarmParent inputParent,
+    _AlarmParent parent,
+    CalendarAlarmRecipient recipient,
+    CalendarAlarmDefinition definition,
+    Transaction tx, {
+    List<CalendarAuthorizationRequest> additionalRequests = const [],
+  }) async {
+    final id = const Uuid().v4obj();
+    final requests = [
+      ...additionalRequests,
+      _alarmRequest(
+        parent,
+        CalendarPermission.createPersonalAlarm,
+        recipient,
+        alarmId: id,
+        proposed: definition,
+      ),
+    ];
+    await _decide(
+      c,
+      requests,
+      tx,
+      CalendarAuthorizationPhase.preliminaryWrite,
+    );
+    if (!parent.compatible(definition)) {
+      throw _failure(CalendarFailureCode.validation);
+    }
+    if ((await _privateAlarms(c, inputParent, recipient, tx)).length >= 16) {
+      throw _failure(CalendarFailureCode.limitExceeded);
+    }
+    await _verifyAlarmRecipient(
+      c,
+      recipient,
+      tx,
+      CalendarAuthorizationPhase.finalWrite,
+    );
+    final decisions = await _final(c, requests, tx);
+    await _verifyAlarmRecipient(
+      c,
+      recipient,
+      tx,
+      CalendarAuthorizationPhase.finalWrite,
+    );
+    final now = await _revisionTime(tx);
+    final row = await CalendarAlarmRecord.db.insertRow(
+      _session,
+      CalendarAlarmRecord(
+        id: id,
+        scopeKey: c.scopeKey,
+        calendarId: parent.parent.identity.id!,
+        parentKind: inputParent.kind,
+        parentId: inputParent.id,
+        recipientNamespace: recipient.namespace,
+        recipientKey: recipient.key,
+        revision: 1,
+        definition: definition,
+        createdAt: now,
+        updatedAt: now,
+      ),
+      transaction: tx,
+    );
+    return decisions.values.every((d) => d.discloseMutationReceipt)
+        ? _alarmView(row, parent)
+        : null;
   }
 
   Future<CalendarAlarmView?> updatePersonalAlarm(

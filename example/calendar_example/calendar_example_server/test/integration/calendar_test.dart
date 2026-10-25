@@ -6798,6 +6798,225 @@ void main() {
         expect(await generation(), gen);
       },
     );
+    Future<CalendarAlarmParent> adoptionEvent() async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      final event = (await service.importEvents(
+        eventImport(calendar, richEvent()),
+      )).receipts.single;
+      return eventAlarmParent(event.eventId);
+    }
+
+    test(
+      'alarm adoption copies master timing only into independent unarmed rows',
+      () async {
+        final parent = await adoptionEvent();
+        final before = jsonEncode((await eventData(parent.id)).toJson());
+        final gen = await generation();
+        policy.eventGrants = {};
+        final review = await service.personalAlarmSourceTimings(parent, null);
+        expect(review.definitions, hasLength(2));
+        expect(
+          jsonEncode(review.toJsonForProtocol()),
+          isNot(contains('SOURCE-ALARM-DESCRIPTION')),
+        );
+        final first = (await service.adoptPersonalAlarm(
+          parent,
+          review.parentRevision,
+          0,
+          null,
+        ))!;
+        final second = (await service.adoptPersonalAlarm(
+          parent,
+          review.parentRevision,
+          1,
+          null,
+        ))!;
+        expect(first.definition.relativeDuration!.sign, -1);
+        expect(first.definition.relativeDuration!.minutes, 5);
+        expect(second.definition.absoluteUtc, DateTime.utc(2026, 3, 29, 8));
+        expect(first.armed, isFalse);
+        expect(second.armed, isFalse);
+        expect(first.id, isNot(second.id));
+        expect(await CalendarAlarmPlanRecord.db.count(session), 0);
+        expect(await CalendarAlarmFiringRecord.db.count(session), 0);
+        expect(await CalendarAlarmActionRecord.db.count(session), 0);
+        expect(jsonEncode((await eventData(parent.id)).toJson()), before);
+        expect(await generation(), gen);
+        expect(policy.lastAlarmAdoption!.alarmSourceIndex, 1);
+        expect(policy.lastAlarmAdoption!.currentEvent!.eventId, parent.id);
+        expect(policy.lastAlarmAdoption!.proposedAlarmArmed, isFalse);
+      },
+    );
+    for (final permission in [
+      CalendarPermission.readEventSource,
+      CalendarPermission.adoptPersonalAlarm,
+      CalendarPermission.createPersonalAlarm,
+    ]) {
+      test(
+        'alarm adoption requires independent $permission authority',
+        () async {
+          final parent = await adoptionEvent();
+          policy.denied.add(permission);
+          await expectLater(
+            service.adoptPersonalAlarm(parent, 1, 0, null),
+            failure(CalendarFailureCode.accessDenied),
+          );
+          expect(await CalendarAlarmRecord.db.count(session), 0);
+          if (permission == CalendarPermission.readEventSource) {
+            await expectLater(
+              service.adoptPersonalAlarm(parent, -9, -9, null),
+              failure(CalendarFailureCode.accessDenied),
+            );
+            await expectLater(
+              service.personalAlarmSourceTimings(parent, null),
+              failure(CalendarFailureCode.accessDenied),
+            );
+          }
+        },
+      );
+    }
+    test('alarm adoption rejects stale source revision invalid index and final denial atomically', () async {
+      final parent = await adoptionEvent();
+      await expectLater(
+        service.adoptPersonalAlarm(parent, 2, 0, null),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      for (final index in [-1, 2]) {
+        await expectLater(
+          service.adoptPersonalAlarm(parent, 1, index, null),
+          failure(CalendarFailureCode.validation),
+        );
+      }
+      policy.denyFinal = true;
+      await expectLater(
+        service.adoptPersonalAlarm(parent, 1, 0, null),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(await CalendarAlarmRecord.db.count(session), 0);
+    });
+    test('alarm adoption final recipient changes cannot create a copy for the earlier recipient', () async {
+      final parent = await adoptionEvent();
+      var changed = false;
+      policy.onFinal = () => changed = true;
+      policy.alarmRecipientOverride = (_) =>
+          CalendarAlarmRecipient('demo', changed ? 'bob' : 'alice');
+      await expectLater(
+        service.adoptPersonalAlarm(parent, 1, 0, null),
+        failure(CalendarFailureCode.unavailable),
+      );
+      expect(await CalendarAlarmRecord.db.count(session), 0);
+    });
+    test('alarm adoption task DATE timing requires explicit zone and retains source state', () async {
+      final task = await storedSourceTask(alarm: true);
+      final parent = CalendarAlarmParent(
+        kind: CalendarAlarmParentKind.task,
+        id: task.taskId,
+      );
+      final before = jsonEncode(
+        (await CalendarTaskDataRecord.db.findFirstRow(session))!.toJson(),
+      );
+      await expectLater(
+        service.adoptPersonalAlarm(parent, 1, 0, null),
+        failure(CalendarFailureCode.validation),
+      );
+      await expectLater(
+        service.adoptPersonalAlarm(parent, 1, 0, 'europe/stockholm'),
+        failure(CalendarFailureCode.validation),
+      );
+      final adopted = (await service.adoptPersonalAlarm(
+        parent,
+        1,
+        0,
+        'Europe/Stockholm',
+      ))!;
+      expect(adopted.definition.dateZoneId, 'Europe/Stockholm');
+      expect(adopted.armed, isFalse);
+      expect(
+        jsonEncode(
+          (await CalendarTaskDataRecord.db.findFirstRow(session))!.toJson(),
+        ),
+        before,
+      );
+      policy.denied.add(CalendarPermission.readTaskSource);
+      await expectLater(
+        service.personalAlarmSourceTimings(parent, null),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+    test('alarm adoption preserves hidden receipts and the existing per-recipient cap', () async {
+      final parent = await adoptionEvent();
+      policy.hideAlarmReceipt = true;
+      expect(await service.adoptPersonalAlarm(parent, 1, 0, null), isNull);
+      for (var i = 1; i < 16; i++) {
+        await service.adoptPersonalAlarm(parent, 1, 0, null);
+      }
+      await expectLater(
+        service.adoptPersonalAlarm(parent, 1, 0, null),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      expect((await service.listPersonalAlarms(parent)), hasLength(16));
+      policy.scopeOverride = 'foreign';
+      await expectLater(
+        service.adoptPersonalAlarm(parent, 1, 0, null),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+
+    test(
+      'alarm adoption preserves END calendar units and paired repeat units',
+      () async {
+        final calendar = (await service.create(createInput()))!.calendarId;
+        final event = (await service.importEvents(
+          eventImport(calendar, [
+            eventSource(
+              'unit-alarm',
+              timing: 'DTSTART:20260329T090000Z\r\nDTEND:20260329T100000Z',
+              extra: [
+                'BEGIN:VALARM',
+                'ACTION:DISPLAY',
+                'DESCRIPTION:Source only',
+                'TRIGGER;RELATED=END:-P1D',
+                'REPEAT:2',
+                'DURATION:PT1H',
+                'END:VALARM',
+              ],
+            ),
+          ]),
+        )).receipts.single;
+        final adopted = (await service.adoptPersonalAlarm(
+          eventAlarmParent(event.eventId),
+          1,
+          0,
+          null,
+        ))!;
+        expect(adopted.definition.anchor, CalendarAlarmAnchor.end);
+        expect(adopted.definition.relativeDuration!.sign, -1);
+        expect(adopted.definition.relativeDuration!.days, 1);
+        expect(adopted.definition.relativeDuration!.hours, 0);
+        expect(adopted.definition.repeat, 2);
+        expect(adopted.definition.repeatInterval!.hours, 1);
+      },
+    );
+
+    test('alarm adoption keeps copies private for recipients sharing the same host scope', () async {
+      policy.scopeOverride = 'shared-source-adoption';
+      final parent = await adoptionEvent();
+      final alice = (await service.adoptPersonalAlarm(parent, 1, 0, null))!;
+      final bobSession = builder
+          .copyWith(
+            authentication: AuthenticationOverride.authenticationInfo(
+              'bob',
+              {},
+            ),
+          )
+          .build();
+      final bobService = CalendarModule.service(bobSession);
+      final bob = (await bobService.adoptPersonalAlarm(parent, 1, 0, null))!;
+      expect(bob.id, isNot(alice.id));
+      expect((await service.listPersonalAlarms(parent)).single.id, alice.id);
+      expect((await bobService.listPersonalAlarms(parent)).single.id, bob.id);
+    });
+
     test('event source alarms persist privately and source replacements remain unarmed no-ops on retry', () async {
       final parent = (await service.create(createInput()))!.calendarId;
       final receipt = (await service.importEvents(
@@ -14213,6 +14432,7 @@ final class TestPolicy implements CalendarHostPolicy {
   Duration alarmActionFinalDelay = Duration.zero;
   CalendarAuthorizationRequest? lastAlarmAction;
   bool hideAlarmReceipt = false;
+  CalendarAuthorizationRequest? lastAlarmAdoption;
   bool denyOrganizer = false, denyFinalOrganizer = false;
   bool organizerUnavailable = false;
   CalendarAuthorizationRequest? organizerRequest;
@@ -14410,6 +14630,9 @@ final class TestPolicy implements CalendarHostPolicy {
     CalendarAuthorizationPhase phase,
   ) async {
     for (final request in requests) {
+      if (request.operation == CalendarPermission.adoptPersonalAlarm) {
+        lastAlarmAdoption = request;
+      }
       if (request.alarmActionKind != null) {
         lastAlarmAction = request;
         if (phase == CalendarAuthorizationPhase.finalWrite) {

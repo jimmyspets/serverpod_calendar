@@ -63,3 +63,8 @@ Calendar acknowledgement/dismissal/snooze use the existing separately authorized
 Focused tests cover generic non-calendar acceptance, conflicts/capacity, source/host denial, unavailable pages, current text, cursor bindings, retries, expiry, pruning and fences. Calendar regressions exercise independent projection authority and dirty-plan/withdrawal distinctions. The process probe uses two independent Serverpod processes, competing acceptance/leases, actual owner termination, takeover and stale-owner rejection. The real host harness and Flutter journey separately exercise generated clients, Redis hints, reconnect/current text and native actions; consult the validation record for outcomes actually completed.
 
 HTTP feeds, iTIP/iMIP, imported-alarm adoption, advanced actions, provider integrations and CI release evidence remain separate requirements. This scoped implementation does not complete the first-release roadmap.
+
+
+## Timing-only source alarm adoption, 2026-10-25
+
+[ADR 0115](adr/0115-timing-only-source-alarm-adoption.md) implements [explicit master-timing copying](imported-alarm-adoption.md) into new unarmed personal definitions, using current authorized item text. It reuses existing storage without a migration and enforces source-read/adopt/create rights, actual parent revisions and trusted recipients. This supersedes earlier adoption-pending wording only for this bounded flow. Source text/UID/acknowledgement/snooze state stays inert; broader profiles, private exports and release gates remain separate. Full local batch validation passed; see the validation record for exact evidence.
