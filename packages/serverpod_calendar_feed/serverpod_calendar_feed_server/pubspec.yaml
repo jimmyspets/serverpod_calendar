@@ -1,0 +1,23 @@
+name: serverpod_calendar_feed_server
+description: Optional authorized iCalendar event subscriptions for Serverpod.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: '>=3.13.5 <3.14.0'
+
+dependencies:
+  serverpod: 4.0.4
+  crypto: 3.0.7
+  serverpod_calendar_server:
+    path: ../../serverpod_calendar/serverpod_calendar_server
+  serverpod_calendar_core:
+    path: ../../serverpod_calendar_core
+  serverpod_calendar_icalendar:
+    path: ../../serverpod_calendar_icalendar
+
+dev_dependencies:
+  lints: 6.1.0
+  serverpod_test: 4.0.4
+  test: ^1.25.5

@@ -1,0 +1,13 @@
+class: CalendarFeedSelectionRecord
+serverOnly: true
+table: serverpod_calendar_feed_selection
+fields:
+  id: UuidValue?, defaultPersist=random
+  feedId: UuidValue, relation(parent=serverpod_calendar_feed_identity)
+  calendarId: UuidValue
+indexes:
+  calendar_feed_selection_unique:
+    fields: feedId, calendarId
+    unique: true
+  calendar_feed_selection_calendar_idx:
+    fields: calendarId

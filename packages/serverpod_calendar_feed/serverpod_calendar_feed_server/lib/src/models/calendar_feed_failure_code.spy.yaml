@@ -1,0 +1,8 @@
+enum: CalendarFeedFailureCode
+serialized: byName
+values:
+  - validation
+  - accessDenied
+  - staleRevision
+  - unavailable
+  - limitExceeded

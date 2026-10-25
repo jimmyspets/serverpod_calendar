@@ -1,0 +1,5 @@
+type: module
+nickname: serverpod_calendar_feed
+
+client_package_path: ../serverpod_calendar_feed_client
+server_test_tools_path: test/integration/test_tools

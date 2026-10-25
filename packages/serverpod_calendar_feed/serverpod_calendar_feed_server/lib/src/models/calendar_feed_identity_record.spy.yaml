@@ -1,0 +1,11 @@
+class: CalendarFeedIdentityRecord
+serverOnly: true
+table: serverpod_calendar_feed_identity
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  revision: int
+  deletedAt: DateTime?
+indexes:
+  calendar_feed_identity_scope_idx:
+    fields: scopeKey, id

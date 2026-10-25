@@ -302,7 +302,9 @@ extension CalendarEventReplacementOperations on CalendarService {
           );
         }
       }
-      if (changed.any((v) => v)) await _bump(scope, tx);
+      if (changed.any((v) => v)) {
+        await _bump(scope, tx, publishedEventCalendar: input.calendarId);
+      }
       return CalendarEventReplaceResult(receipts: List.unmodifiable(receipts));
     });
   }
