@@ -1,0 +1,5 @@
+class: CalendarAlarmSourceTimings
+immutable: true
+fields:
+  parentRevision: int
+  definitions: List<CalendarAlarmDefinition>

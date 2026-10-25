@@ -24,6 +24,8 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_create_req
     as _i5ky5yg6;
 import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_parent.dart'
     as _ihgvrd5l;
+import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_source_timings.dart'
+    as _ify5cri5;
 import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_update_request.dart'
     as _iqdswnia;
 import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_view.dart'
@@ -181,6 +183,34 @@ class EndpointCalendarAlarm extends _isc.EndpointRef {
     'serverpod_calendar.calendarAlarm',
     'create',
     {'request': request},
+  );
+
+  _ida.Future<_ify5cri5.CalendarAlarmSourceTimings> sourceTimings(
+    _ihgvrd5l.CalendarAlarmParent parent,
+    String? dateZoneId,
+  ) => caller.callServerEndpoint<_ify5cri5.CalendarAlarmSourceTimings>(
+    'serverpod_calendar.calendarAlarm',
+    'sourceTimings',
+    {
+      'parent': parent,
+      'dateZoneId': dateZoneId,
+    },
+  );
+
+  _ida.Future<_i39h9w7l.CalendarAlarmView?> adopt(
+    _ihgvrd5l.CalendarAlarmParent parent,
+    int expectedParentRevision,
+    int sourceIndex,
+    String? dateZoneId,
+  ) => caller.callServerEndpoint<_i39h9w7l.CalendarAlarmView?>(
+    'serverpod_calendar.calendarAlarm',
+    'adopt',
+    {
+      'parent': parent,
+      'expectedParentRevision': expectedParentRevision,
+      'sourceIndex': sourceIndex,
+      'dateZoneId': dateZoneId,
+    },
   );
 
   _ida.Future<_i39h9w7l.CalendarAlarmView?> update(

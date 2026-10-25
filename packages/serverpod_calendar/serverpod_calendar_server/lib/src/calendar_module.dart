@@ -30,6 +30,7 @@ import 'availability_wire_output.dart';
 import 'availability_import_baseline.dart';
 
 part 'calendar_alarms.dart';
+part 'calendar_alarm_adoption.dart';
 part 'calendar_alarm_actions.dart';
 part 'calendar_alarm_worker.dart';
 part 'calendar_events.dart';

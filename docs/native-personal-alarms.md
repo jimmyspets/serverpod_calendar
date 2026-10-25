@@ -66,3 +66,8 @@ The pure `AlarmPlan.complete` primitive validates a caller-supplied complete can
 ## Connected live delivery extension
 
 [ADR 0114](adr/0114-reusable-notification-delivery.md) now connects the example delivery port through the [generic live notification module](reusable-notification-delivery.md). This supersedes earlier unconnected-delivery wording for that scoped path. Recovery uses fresh source/recipient authorization and current text, without copied content; the example declares fresh-check consistency. Imported adoption, advanced actions, providers and the remaining release gates stay separate. See [the actual local validation](scaffold-validation.md).
+
+
+## Timing-only source alarm adoption, 2026-10-25
+
+[ADR 0115](adr/0115-timing-only-source-alarm-adoption.md) implements [explicit master-timing copying](imported-alarm-adoption.md) into new unarmed personal definitions, using current authorized item text. It reuses existing storage without a migration and enforces source-read/adopt/create rights, actual parent revisions and trusted recipients. This supersedes earlier adoption-pending wording only for this bounded flow. Source text/UID/acknowledgement/snooze state stays inert; broader profiles, private exports and release gates remain separate. Full local batch validation passed; see the validation record for exact evidence.

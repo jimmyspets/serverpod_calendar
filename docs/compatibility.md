@@ -366,3 +366,8 @@ Authenticated [task import](task-import.md#implemented-create-only-operation) no
 ## Connected live reminder profile, 2026-10-25
 
 [ADR 0114](adr/0114-reusable-notification-delivery.md) and [the delivery guide](reusable-notification-delivery.md) add the scoped generic durable delivery and example Redis/Flutter path. Hints carry no copied text; recovery requires current source/recipient authority. This supersedes prior unconnected-delivery wording only for this increment. Imported alarms remain unarmed; no mobile push or Apple/Google/Outlook display compatibility is claimed. Batch results remain in [the validation record](scaffold-validation.md).
+
+
+## Timing-only source alarm adoption, 2026-10-25
+
+[ADR 0115](adr/0115-timing-only-source-alarm-adoption.md) implements [explicit master-timing copying](imported-alarm-adoption.md) into new unarmed personal definitions, using current authorized item text. It reuses existing storage without a migration and enforces source-read/adopt/create rights, actual parent revisions and trusted recipients. This supersedes earlier adoption-pending wording only for this bounded flow. Source text/UID/acknowledgement/snooze state stays inert; broader profiles, private exports and release gates remain separate. Full local batch validation passed; see the validation record for exact evidence.

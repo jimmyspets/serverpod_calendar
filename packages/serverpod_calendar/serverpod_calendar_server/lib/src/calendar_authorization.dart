@@ -18,6 +18,7 @@ enum CalendarPermission {
   armPersonalAlarm,
   readPersonalAlarms,
   createPersonalAlarm,
+  adoptPersonalAlarm,
   updatePersonalAlarm,
   deletePersonalAlarm,
   replaceEventsFromImport,
@@ -179,6 +180,7 @@ final class CalendarAuthorizationRequest {
     this.proposedAlarmAction,
     this.alarmActionKind,
     this.alarmActivityKind,
+    this.alarmSourceIndex,
     this.current,
     this.proposed,
     this.calendarId,
@@ -246,6 +248,9 @@ final class CalendarAuthorizationRequest {
   final CalendarAlarmActionView? currentAlarmAction, proposedAlarmAction;
   final CalendarAlarmActionKind? alarmActionKind;
   final CalendarAlarmActivityKind? alarmActivityKind;
+
+  /// Validated master-source index for explicit timing adoption, never identity.
+  final int? alarmSourceIndex;
   final UuidValue? eventId;
   final UuidValue? taskId;
   final CalendarTaskPolicySnapshot? currentTask;
