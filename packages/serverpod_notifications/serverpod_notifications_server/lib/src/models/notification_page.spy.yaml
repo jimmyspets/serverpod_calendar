@@ -1,0 +1,5 @@
+class: NotificationPage
+immutable: true
+fields:
+  notifications: List<NotificationView>
+  nextCursor: String?

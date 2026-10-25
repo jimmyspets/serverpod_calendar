@@ -59,3 +59,8 @@ The Flutter example has explicit arm/disarm and private planning status. Its del
 ## Next native action contract
 
 The maintainer confirmed snooze must respond to a due or accepted firing, and reset must cancel pending snooze and restore only future firing eligibility without overdue replay. [ADR 0113](adr/0113-native-alarm-actions.md) proposes the explicit replay cutoff, independent permissions, private activity pages and concurrency rules needed to implement these policies. Its additive model changes were approved on 2026-10-25; [the action guide](native-alarm-actions.md) records the scoped command/activity implementation and remaining delivery boundary.
+
+
+## Connected live delivery extension
+
+[ADR 0114](adr/0114-reusable-notification-delivery.md) now connects the example delivery port through the [generic live notification module](reusable-notification-delivery.md). This supersedes earlier unconnected-delivery wording for that scoped path. Recovery uses fresh source/recipient authorization and current text, without copied content; the example declares fresh-check consistency. Imported adoption, advanced actions, providers and the remaining release gates stay separate. See [the actual local validation](scaffold-validation.md).

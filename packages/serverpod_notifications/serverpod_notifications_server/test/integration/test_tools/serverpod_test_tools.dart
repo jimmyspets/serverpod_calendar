@@ -14,6 +14,8 @@
 import 'dart:async' as _ida;
 import 'dart:io' as _idi;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_notifications_server/src/generated/notification_page.dart'
+    as _ii9qae7d;
 import 'package:serverpod_test/serverpod_test.dart' as _ist;
 import 'package:serverpod_notifications_server/src/generated/protocol.dart';
 import 'package:serverpod_notifications_server/src/generated/endpoints.dart';
@@ -148,6 +150,8 @@ void withServerpod(
 }
 
 class TestEndpoints {
+  late final _NotificationEndpoint notification;
+
   late final _NotificationDiagnosticsEndpoint notificationDiagnostics;
 }
 
@@ -158,10 +162,60 @@ class _InternalTestEndpoints extends TestEndpoints
     _is.SerializationManager serializationManager,
     _is.EndpointDispatch endpoints,
   ) {
+    notification = _NotificationEndpoint(
+      endpoints,
+      serializationManager,
+    );
     notificationDiagnostics = _NotificationDiagnosticsEndpoint(
       endpoints,
       serializationManager,
     );
+  }
+}
+
+class _NotificationEndpoint {
+  _NotificationEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_ii9qae7d.NotificationPage> recover(
+    _ist.TestSessionBuilder sessionBuilder,
+    int pageSize,
+    String? cursor,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'notification',
+            method: 'recover',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'notification',
+          methodName: 'recover',
+          parameters: _ist.testObjectToJson({
+            'pageSize': pageSize,
+            'cursor': cursor,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ii9qae7d.NotificationPage>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
   }
 }
 

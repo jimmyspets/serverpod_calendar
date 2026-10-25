@@ -1280,9 +1280,11 @@ void main() {
     expect(find.text(renamedLabel), findsNothing);
     await tester.pageBack();
     await _idle(tester);
+    await _liveReminderJourney(tester, client);
     await tester.tap(find.byKey(const Key('sign-out')));
     await _waitFor(tester, find.byKey(const Key('sign-in')));
     expect(find.byKey(const Key('result')), findsNothing);
+    expect(find.byKey(const Key('live-notifications')), findsNothing);
   });
 }
 
@@ -1518,4 +1520,69 @@ Future<void> _personalAlarmJourney(
   }
   await tester.pageBack();
   await _idle(tester);
+}
+
+Future<void> _liveReminderJourney(WidgetTester tester, Client client) async {
+  final api = client.modules.serverpod_calendar;
+  final calendar = (await api.calendar.create(
+    cal.CalendarCreateRequest(
+      displayName: 'Synthetic Flutter live notification',
+      availabilityZoneId: 'Etc/UTC',
+      noRuleFallback: cal.CalendarNoRuleFallback.free,
+    ),
+  ))!;
+  final event = (await api.calendarEvent.create(
+    cal.CalendarEventCreateRequest(
+      calendarId: calendar.calendarId,
+      content: cal.CalendarEventContent(
+        summary: 'Synthetic connected reminder',
+        timing: cal.CalendarEventTiming(
+          kind: cal.CalendarEventTimeKind.utc,
+          start: cal.CalendarEventCivil(year: 2026, month: 10, day: 25),
+        ),
+      ),
+    ),
+  ))!;
+  try {
+    final parent = cal.CalendarAlarmParent(
+      kind: cal.CalendarAlarmParentKind.event,
+      id: event.eventId,
+    );
+    final due = DateTime.fromMillisecondsSinceEpoch(
+      (DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000 - 30) * 1000,
+      isUtc: true,
+    );
+    final alarm = (await api.calendarAlarm.create(
+      cal.CalendarAlarmCreateRequest(
+        parent: parent,
+        definition: cal.CalendarAlarmDefinition(absoluteUtc: due),
+      ),
+    ))!;
+    await api.calendarAlarm.setArmed(parent, alarm.id, alarm.revision, true);
+    final deadline = DateTime.now().add(const Duration(seconds: 50));
+    while (DateTime.now().isBefore(deadline) &&
+        find.text('Synthetic connected reminder').evaluate().isEmpty) {
+      await tester.pump(const Duration(milliseconds: 250));
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 250)),
+      );
+    }
+    expect(find.text('Synthetic connected reminder'), findsOneWidget);
+    expect(find.byKey(const Key('notifications-error')), findsNothing);
+    await _tap(tester, 'notifications-toggle');
+    expect(find.text('Synthetic connected reminder'), findsNothing);
+    await _tap(tester, 'notifications-toggle');
+    await _waitFor(tester, find.text('Synthetic connected reminder'));
+    final page = await client.modules.serverpod_notifications.notification
+        .recover(100, null);
+    final item = page.notifications.singleWhere(
+      (v) => v.title == 'Synthetic connected reminder',
+    );
+    await _tap(tester, 'notification-ack-${item.id}');
+    expect(find.text('Synthetic connected reminder'), findsNothing);
+    expect(find.byKey(const Key('notifications-error')), findsNothing);
+  } finally {
+    await api.calendarEvent.deleteEvent(event.eventId, event.revision);
+    await api.calendar.delete(calendar.calendarId, calendar.revision);
+  }
 }

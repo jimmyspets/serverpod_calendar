@@ -625,3 +625,7 @@ The maintainer approved the [ADR 0112](adr/0112-bounded-durable-alarm-planning.m
 ## Approved native alarm-action additions, 2026-10-25
 
 [ADR 0113](adr/0113-native-alarm-actions.md) proposes nullable action `resetAt` and nullable cursor alarm/list-kind discriminators on existing server-only tables. The maintainer approved these additive fields on 2026-10-25, alongside due/accepted-firing snooze eligibility and future-only reset without overdue replay. Generated module/example migrations add nullable fields without inventing reset or cursor state. No new table or provider data is introduced. Scoped commands and private activity pages are now implemented; broad batch evidence remains in the validation guide. See [the action contract](native-alarm-actions.md).
+
+## Approved reusable notification storage, 2026-10-25
+
+[ADR 0114](adr/0114-reusable-notification-delivery.md) proposes separate generic scope-lock, delivery/retry and cursor tables. The recommended live profile retains bounded source references and idempotency/lifecycle state, projecting current authorized text instead of storing a content inbox. The live profile was confirmed on 2026-10-25; the maintainer also approved all three physical models and defaults. Table sources, generated module/example migrations and the scoped delivery/recovery implementation now follow that approval, with batch evidence recorded separately. Calendar owns alarm timing/actions; the example owns the connected stream adapter.

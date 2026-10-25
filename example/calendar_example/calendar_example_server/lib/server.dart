@@ -1,5 +1,10 @@
 import 'dart:io';
 
+import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
+    as notify;
+
+import 'src/notification_runtime.dart';
+
 import 'package:serverpod_calendar_server/serverpod_calendar_server.dart';
 
 import 'package:serverpod_auth_idp_server/core.dart';
@@ -46,12 +51,18 @@ Future<void> run(List<String> args) async {
       ),
     ],
   );
+  notify.NotificationModule.install(
+    pod,
+    policy: DemoNotificationPolicy(),
+    sources: [CalendarNotificationSource()],
+    publication: DemoNotificationPublication(),
+  );
   CalendarModule.install(
     pod,
     policy: DemoCalendarPolicy(),
     alarms: CalendarAlarmRuntime(
       policy: DemoAlarmBackgroundPolicy(),
-      delivery: UnconnectedAlarmDeliveryPort(),
+      delivery: CalendarNotificationDelivery(),
     ),
     availabilityExtensions: [
       CalendarAvailabilityExtensionRegistration(

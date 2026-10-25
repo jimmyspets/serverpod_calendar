@@ -361,3 +361,8 @@ Authenticated [task import](task-import.md#implemented-create-only-operation) no
 ## Scoped native personal actions, 2026-10-25
 
 [ADR 0113](adr/0113-native-alarm-actions.md) now adds [private native acknowledgement/dismiss/reset/snooze and activity pages](native-alarm-actions.md). Additive action cutoff/cursor fields were explicitly approved. Snooze requires a due/accepted automatic origin and active current original; future-only reset cancels the selection and prevents overdue replay across replanning/pruning. Independent permissions, actual object/recipient context, revisions and final database-time checks protect commands. This supersedes earlier native-action-pending wording only for this scoped increment. Imported alarm state remains inert; reusable notification delivery/streaming, adoption and external-client evidence remain separate requirements.
+
+
+## Connected live reminder profile, 2026-10-25
+
+[ADR 0114](adr/0114-reusable-notification-delivery.md) and [the delivery guide](reusable-notification-delivery.md) add the scoped generic durable delivery and example Redis/Flutter path. Hints carry no copied text; recovery requires current source/recipient authority. This supersedes prior unconnected-delivery wording only for this increment. Imported alarms remain unarmed; no mobile push or Apple/Google/Outlook display compatibility is claimed. Batch results remain in [the validation record](scaffold-validation.md).

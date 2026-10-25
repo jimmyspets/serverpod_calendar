@@ -1,0 +1,4 @@
+class: NotificationHint
+immutable: true
+fields:
+  notificationId: UuidValue?

@@ -142,3 +142,8 @@ Read-only [event source metadata](docs/event-source-metadata.md) is implemented 
 [ADR 0112](docs/adr/0112-bounded-durable-alarm-planning.md) now adds [explicit arming, complete rolling plans and guarded durable handoff](docs/durable-alarm-planning.md), with separate background policy, database leases/fences, source/lifecycle checks, stable retry IDs and terminal-history pruning that preserves action state. This supersedes earlier unarmed-only/planner-pending wording for native definitions only. Imported alarms remain unarmed. Native action APIs, reusable notification delivery and connected streaming remain separate requirements; the example delivery port explicitly remains unconnected. First-release alarm requirements are not complete.
 
 Native [personal alarm actions and private activity pages](docs/native-alarm-actions.md) now extend the planner with acknowledgement/dismissal, bounded replacement snooze and future-only reset. Notification delivery and connected streaming remain separate required work.
+
+
+## Reusable live notification increment, 2026-10-25
+
+[ADR 0114](docs/adr/0114-reusable-notification-delivery.md) approves the generic three-table storage/defaults and live-reminder profile. The [delivery guide](docs/reusable-notification-delivery.md) describes durable idempotent acceptance, fenced retry/publication, fresh authorized source projection and the example Redis/Flutter streaming path. This supersedes earlier unconnected-delivery/scaffold-only wording for this scoped increment; the full local batch checks passed, with actual evidence recorded in the validation guide. Imported alarms remain unarmed; provider delivery, adoption and the remaining first-release requirements stay separate.
