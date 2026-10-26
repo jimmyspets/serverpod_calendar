@@ -1,6 +1,6 @@
 # ADR 0117: First pure iTIP message profile
 
-Status: **Proposed; maintainer scope decision pending**. Date: 2026-10-25.
+Status: **Four-method, non-recurring pure-adapter batch approved by the maintainer on 2026-10-25; detailed profile mechanics under review**. Date: 2026-10-25.
 
 ## Context
 
@@ -8,7 +8,7 @@ The optional event feed has completed local batch validation under ADR 0116. Sch
 
 [RFC 5546](https://www.rfc-editor.org/rfc/rfc5546.html), sections 3.1 and 3.2, supplies component- and method-specific restrictions. Ordinary event validation cannot substitute for those restrictions. The first-release method inventory in [the RFC table](../rfc/rfc-5546.md) remains unchanged.
 
-## Proposed first batch
+## Confirmed first batch
 
 Implement a pure Dart adapter in the existing iCalendar package for **PUBLISH, REQUEST, REPLY and CANCEL**, initially with exactly one non-recurring VEVENT per VCALENDAR. This is an incremental application profile, not the full RFC or first-release scheduling capability. Other methods/components, recurrence properties, RECURRENCE-ID and RANGE reject explicitly in this first slice. Required later increments include recurring masters/instances, ADD, REFRESH, COUNTER, DECLINECOUNTER and the selected VFREEBUSY methods.
 
@@ -32,4 +32,4 @@ Implementing every method and recurrence form together gives a broader first inc
 
 Use method-specific positive/negative fixtures, required/forbidden property and cardinality checks, source-omission round trips, malformed/unsupported/mixed-component rejection, timezone/precision boundaries and input/output budget failures. Demonstrate unchanged ordinary event import/export and feed behavior through directly affected regressions. During development run focused VM tests; at batch completion run the full wire VM/Chrome suites and required repository checks. Record exact results without claiming reconciliation, mail, external-client or full first-release interoperability.
 
-Approval requested: the four-method, one non-recurring event, pure-adapter batch boundary. Detailed property mappings must be documented alongside implementation and reviewed against the cited method tables; this proposal does not silently approve unlisted scheduling extensions.
+The maintainer approved the four-method, one non-recurring event, pure-adapter batch boundary. [The implementation profile](../itip-message-profile.md) records the concrete property subset and explicit rejections, including unprofiled REQUEST-STATUS and delegated REPLY workflows. Those limits do not remove remaining first-release requirements. Detailed mechanics remain reviewable; selected broader batch checks passed, with commands and deferred release checks recorded in the validation guide.
