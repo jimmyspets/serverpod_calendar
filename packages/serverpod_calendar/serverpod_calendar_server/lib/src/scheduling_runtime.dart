@@ -1,4 +1,5 @@
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 
 import 'calendar_authorization.dart';
 
@@ -25,7 +26,9 @@ final class CalendarSchedulingPolicyContext {
     required this.calendar,
     required this.currentEvent,
     required this.proposedEvent,
-    required this.outgoingEvent,
+    required this.publicationEvent,
+    required this.outgoingMessage,
+    required this.payloadDigest,
     required this.authority,
     required this.intent,
     this.actor,
@@ -38,8 +41,15 @@ final class CalendarSchedulingPolicyContext {
   /// Actual current and final proposed native state, distinct from publication.
   final CalendarEventPolicySnapshot currentEvent, proposedEvent;
 
-  /// Exact component authorized for disclosure, including retained retry bytes.
-  final CalendarEventPolicySnapshot outgoingEvent;
+  /// Complete canonical checkpoint at publication time, distinct from live state.
+  final CalendarEventPolicySnapshot publicationEvent;
+
+  /// Exact complete immutable message authorized for disclosure. Both command
+  /// phases have built candidates; dispatch has the retained immutable message.
+  final IcalendarSchedulingMessage outgoingMessage;
+
+  /// SHA-256 of the exact UTF-8 bytes in intent.payload.
+  final String payloadDigest;
   final CalendarSchedulingAuthority authority;
   final CalendarSchedulingIntent intent;
   final CalendarSchedulingRoute? recipient;
@@ -60,7 +70,7 @@ abstract interface class CalendarSchedulingHost {
   /// Approve the exact payload and roster for every recipient. During background
   /// dispatch this also enforces current method-specific lifecycle/publication
   /// and full detail/source-disclosure rights.
-  Future<CalendarAuthorizationVerdict> authorize(
+  Future<CalendarAuthorizationVerdict> authorizeMessage(
     Session session,
     CalendarSchedulingPolicyContext context,
     Transaction transaction,
