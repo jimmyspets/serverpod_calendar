@@ -236,6 +236,8 @@ GET/HEAD use fixed ICS output and the selected [HTTP profile](adr/0016-subscript
 
 ## Scheduling and import/export models
 
+[ADR 0122](adr/0122-explicit-native-organizer-publication.md) proposes the first physical outbound-only slice: organizer binding, immutable publication, per-recipient delivery and attempt tables, plus a server-controlled native/imported/unknown event-origin field. These are not implemented or approved. Private latest-publication snapshots differ from live canonical data; retained historical bodies require explicit model review. The broader candidate catalog below still covers later inbound/participation/counter work and is not blanket schema approval.
+
 | Model | Candidate fields | Contract |
 | --- | --- | --- |
 | `SchedulingStateRecord` | `id`, optional `eventSeriesId`, scheduling UID, organizer identity/address, optional occurrence identity/range, accepted sequence/stamp, cancellation/terminal state | Server-only correlation/order history; retained after event removal as needed to prevent stale resurrection. VFREEBUSY exchanges need no event. |
