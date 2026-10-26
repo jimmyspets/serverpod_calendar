@@ -7,24 +7,6 @@ import 'package:test/test.dart';
 import 'support/icalendar_fixtures.dart' show explicitZone, fixedZone;
 import 'support/scheduling_fixtures.dart';
 
-String component(List<String> fields) =>
-    ['BEGIN:VEVENT', ...fields, 'END:VEVENT'].join('\r\n');
-String multiple(
-  String method,
-  List<List<String>> events, {
-  List<String> zones = const [],
-}) => message(
-  method,
-  events.first,
-  zones: zones,
-  components: events.skip(1).map(component).toList(),
-);
-List<String> instance(String method, String identity, {bool future = false}) =>
-    [
-      ...minimal(method),
-      'RECURRENCE-ID${future ? ';RANGE=THISANDFUTURE' : ''}:$identity',
-    ];
-
 void main() {
   test('iTIP observance exclusivity follows verified erratum without narrowing ordinary source', () {
     final fields = minimal('REQUEST')

@@ -33,8 +33,14 @@ List<String> minimal(String method) => [
   uid,
   stamp,
   organizer,
-  if (method == 'PUBLISH' || method == 'REQUEST') ...[start, 'SUMMARY:'],
-  if (method == 'REQUEST' || method == 'REPLY') attendee,
+  if (const {'PUBLISH', 'REQUEST', 'ADD', 'COUNTER'}.contains(method)) ...[
+    start,
+    'SUMMARY:',
+  ],
+  if (const {'REQUEST', 'REPLY', 'REFRESH', 'DECLINECOUNTER'}.contains(method))
+    attendee,
+  if (method == 'ADD') 'SEQUENCE:1',
+  if (method == 'DECLINECOUNTER') 'SEQUENCE:2',
   if (method == 'CANCEL') ...['SEQUENCE:2', 'STATUS:CANCELLED'],
 ];
 IcalendarSchedulingMessage load(
@@ -48,3 +54,21 @@ Matcher rejects([IcalendarComponentError? kind]) => throwsA(
     true,
   ),
 );
+
+String component(List<String> fields) =>
+    ['BEGIN:VEVENT', ...fields, 'END:VEVENT'].join('\r\n');
+String multiple(
+  String method,
+  List<List<String>> events, {
+  List<String> zones = const [],
+}) => message(
+  method,
+  events.first,
+  zones: zones,
+  components: events.skip(1).map(component).toList(),
+);
+List<String> instance(String method, String identity, {bool future = false}) =>
+    [
+      ...minimal(method),
+      'RECURRENCE-ID${future ? ';RANGE=THISANDFUTURE' : ''}:$identity',
+    ];
