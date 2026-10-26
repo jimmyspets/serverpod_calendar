@@ -214,3 +214,6 @@ See [standalone availability wire adaptation](icalendar-availability-adapter.md)
 
 
 The approved [native organizer cancellation increment](adr/0123-explicit-native-organizer-cancellation.md) now extends [the runtime guide](native-organizer-scheduling.md#explicit-cancellation-and-reopening) with explicit CANCEL/reopening, draft isolation and existing bounded delivery storage. See validation for actual test results; broader scheduling remains separate.
+
+
+Next scheduling review: [recurring organizer masters and whole-series cancellation](adr/0124-recurring-organizer-masters.md), a proposed extension of explicit publication using existing native patterns, source codecs and delivery storage. Occurrence-component publication would remain a separate required increment.

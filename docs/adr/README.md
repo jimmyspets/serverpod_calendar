@@ -140,6 +140,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0121](0121-pure-freebusy-scheduling-messages.md) | Pure free/busy scheduling | Selected PUBLISH/REQUEST/REPLY codecs; concrete mechanics under review; no availability authority or automatic response |
 | [0122](0122-explicit-native-organizer-publication.md) | Explicit native organizer publication | Accepted bounded native non-recurring REQUEST publication, four tables, origin, retention and worker defaults; scoped implementation, broader scheduling remains |
 | [0123](0123-explicit-native-organizer-cancellation.md) | Explicit native organizer cancellation | Accepted explicit whole-event CANCEL using the last published snapshot, preserved local drafts and existing bounded delivery storage; scoped implementation |
+| [0124](0124-recurring-organizer-masters.md) | Recurring organizer masters and whole-series cancellation | Proposed master-pattern REQUEST/CANCEL using existing storage, preserved native drafts/exceptions and a separate later occurrence-component profile; review pending |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
