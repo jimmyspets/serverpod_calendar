@@ -221,6 +221,22 @@ Future<Map<String, String>> _seed(Session s, String method) =>
       );
       final content = CalendarEventContent(
         summary: 'Synthetic worker publication',
+        recurrence: CalendarEventRecurrence(
+          rule: CalendarEventRule(
+            frequency: CalendarEventFrequency.daily,
+            count: 4,
+            byDay: [],
+            byMonthDay: [],
+            byYearDay: [],
+            byWeekNo: [],
+            byMonth: [],
+            byHour: [],
+            byMinute: [],
+            bySetPosition: [],
+          ),
+          inclusions: [],
+          exclusions: [],
+        ),
         status: method == 'CANCEL'
             ? CalendarEventStatus.cancelled
             : CalendarEventStatus.confirmed,

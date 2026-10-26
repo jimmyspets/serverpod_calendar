@@ -385,3 +385,6 @@ The approved [ADR 0122 implementation](native-organizer-scheduling.md) adds expl
 
 
 Accepted [ADR 0123](adr/0123-explicit-native-organizer-cancellation.md) extends the bounded native organizer runtime with explicit whole-event CANCEL and reopening through a newer REQUEST. Saved local draft fields remain intact and are absent from the cancellation bytes. This supersedes earlier cancellation-runtime-pending statements for non-recurring native bindings only. Inbound/recurring lifecycle, recipient changes, deletion, MIME and external scheduling-client evidence remain separate; synthetic acceptance is not email interoperability.
+
+
+Accepted [ADR 0124](adr/0124-recurring-organizer-masters.md) now adds recurring-master REQUEST/whole-series CANCEL over the existing RRULE/RDATE/EXDATE/PERIOD profile. Native pattern/text/timing drafts and single/future/content/cancellation exceptions remain preserved. A new REQUEST with stored occurrence components rejects explicitly; whole-series cancellation and authorized retained retries preserve those states. This supersedes recurring-master-runtime-pending wording only for this synthetic-transport increment. Occurrence/instance/range and inbound/email interoperability remain separate; local browser tests do not establish external scheduling-client behavior.

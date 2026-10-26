@@ -35,3 +35,6 @@ Under accepted ADR 0122, the example also installs the bounded non-recurring REQ
 
 
 Under accepted ADR 0123, the example also demonstrates explicit Cancel and notify and Reopen and notify. Cancellation sends the last published snapshot, preserves saved local fields and remains synthetic-only. Dedicated host context distinguishes final native state from outgoingEvent; authorize the exact method and disclosure. The public DTO changes add no database table/column. Deletion, recipient/recurrence changes, inbound reconciliation and real mail remain separate.
+
+
+Under accepted ADR 0124, the meeting screen can publish saved recurring-master patterns. It keeps fixed recipients and explicitly disables new REQUEST publication while native occurrence exceptions exist; those exceptions remain saved and whole-series cancellation preserves them. Worker probes and two-host/Flutter journeys now cover recurring REQUEST/CANCEL. Source data and delivery remain synthetic-only, with no new migration or provider setup.

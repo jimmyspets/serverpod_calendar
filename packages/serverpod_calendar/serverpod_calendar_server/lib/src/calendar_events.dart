@@ -492,9 +492,7 @@ extension CalendarEventOperations on CalendarService {
         CalendarAuthorizationPhase.preliminaryWrite,
       );
       _eventRevision(e, expected);
-      if (value.recurrence != null) {
-        await _rejectSchedulingBinding(e.identity.id!, tx);
-      }
+      await _requireSchedulingMode(e.identity.id!, value, tx);
       final overrides = _validatedOverrides(value, e.data.timingOverrides);
       final now = await _revisionTime(tx, previous: e.data.updatedAt);
       final state = _eventProtocolValue(

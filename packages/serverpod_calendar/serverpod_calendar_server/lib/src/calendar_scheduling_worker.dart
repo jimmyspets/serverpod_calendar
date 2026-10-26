@@ -128,13 +128,16 @@ final class _SchedulingWorker {
         e.data.origin != CalendarEventOrigin.native ||
         p.method == 'REQUEST' &&
             e.data.content.status == CalendarEventStatus.cancelled ||
-        e.data.content.recurrence != null ||
         e.data.protocolUid != p.protocolUid ||
         _schedulingDigest(p.payload) != p.payloadDigest) {
       throw _failure(CalendarFailureCode.accessDenied);
     }
     final published = _schedulingPublished(p);
-    if (published.eventId != e.identity.id ||
+    if (_schedulingRecurring(published.content) !=
+            _schedulingRecurring(e.data.content) ||
+        _schedulingOverrides(published.timingOverrides) ||
+        published.protocolState!.overrides.isNotEmpty ||
+        published.eventId != e.identity.id ||
         published.calendarId != e.identity.calendarId ||
         published.protocolUid != p.protocolUid ||
         published.protocolState?.version.sequence != p.sequence ||
@@ -156,6 +159,9 @@ final class _SchedulingWorker {
                 parsed.events.single.status !=
                     IcalendarEventStatus.cancelled) ||
         parsed.events.length != 1 ||
+        parsed.events.single.originalDate != null ||
+        parsed.events.single.originalTime != null ||
+        parsed.events.single.isThisAndFuture ||
         parsed.uid != p.protocolUid ||
         parsed.events.single.sequence != p.sequence ||
         parsed.events.single.participants.organizer?.address !=
