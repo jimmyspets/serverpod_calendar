@@ -1,6 +1,6 @@
 # ADR 0125: Scheduling-only occurrence field projection
 
-Status: **Proposed wire-projection decision; no occurrence-publication implementation or physical storage design is approved by this record.**
+Status: **Accepted field-projection decision, confirmed 2026-10-26; pure prerequisite implemented. Durable occurrence publication and physical storage design remain unapproved.**
 
 ## Context and source evidence
 
@@ -8,7 +8,7 @@ Accepted [ADR 0124](0124-recurring-organizer-masters.md) currently publishes onl
 
 A plain canonical-source serialization can omit inherited component fields. That creates a distinct scheduling projection question, independent of ordinary authenticated file export and native inheritance. Sending an empty SUMMARY when a native occurrence inherits a nonempty series title would misrepresent its current value.
 
-## Recommended decision for maintainer review
+## Accepted decision
 
 Permit an outgoing occurrence REQUEST projection to include explicit current inherited SUMMARY and host-approved organizer/attendee properties, without pinning or rewriting those properties in native storage. Copy actual values and legal annotations/parameters; preserve explicit own values and explicit empty text. Use empty SUMMARY only when the current effective value is empty, never the example's display placeholder. Resolve participants from trusted host authority and the approved fixed roster, not from arbitrary source claims.
 
@@ -22,7 +22,15 @@ Before implementing occurrence publication, specify per-instance version advance
 
 Instance cancellations need CANCEL semantics and reviewed transactional message coordination. Removing a previously published exception or changing its original membership also needs an explicit reset/reconciliation policy; silently omitting it is not an approved remote-state reset. A single/future pair sharing one original identity requires separate review before publication. These lifecycle, version, bundle/storage and retention mechanics remain unapproved. Complete occurrence/instance/range scheduling stays a first-release requirement.
 
+The next version-policy question is whether each outgoing occurrence advances independently when its effective published fields change, including inherited text, while unchanged occurrences retain their scheduling versions. This is a recommendation for review, not an accepted allocation/storage contract. It would keep native canonical versions separate from publication versions; complete identity, monotonicity, reset and snapshot mechanics still need an ADR before durable implementation.
+
 Continue current fixed organizer/recipients, independent publish/lifecycle/detail/source authority, bounded work/payloads, stable retry identity, fresh authorization and fencing. Whole-series cancellation remains governed by ADR 0124. No new endpoint, model, migration, delivery capability or real mail is introduced by this document.
+
+## Pure implementation boundary
+
+`projectIcalendarRequestFields` in the pure iCalendar package accepts one already validated standalone series and returns an independently validated REQUEST candidate. It copies missing required SUMMARY/ORGANIZER/ATTENDEE properties from the master, preserving legal parameters and explicit own values; a missing master SUMMARY produces empty text. It retains original component order, timing, recurrence identities and source versions, without allocating publication versions or modifying source objects. It rejects missing master participants, multiple series and data outside the current REQUEST profile, including cancellation and alarms. It never drops unsupported source data to manufacture a message.
+
+Input syntax, component counts and projected output are bounded. A byte/line lower bound is charged before copying inherited fields; complete output validation then charges actual syntax, metadata, zones and recurrence work. Participants in this pure result remain untrusted source claims. A future authorized service must supply the approved roster and authorize the complete output; this helper cannot establish native origin, address ownership, disclosure rights or freshness. Existing durable APIs remain master-only. See [validation](../scaffold-validation.md) for focused and batch evidence.
 
 ## Alternative and future acceptance
 

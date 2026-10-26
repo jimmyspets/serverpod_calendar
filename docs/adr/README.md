@@ -141,7 +141,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0122](0122-explicit-native-organizer-publication.md) | Explicit native organizer publication | Accepted bounded native non-recurring REQUEST publication, four tables, origin, retention and worker defaults; scoped implementation, broader scheduling remains |
 | [0123](0123-explicit-native-organizer-cancellation.md) | Explicit native organizer cancellation | Accepted explicit whole-event CANCEL using the last published snapshot, preserved local drafts and existing bounded delivery storage; scoped implementation |
 | [0124](0124-recurring-organizer-masters.md) | Recurring organizer masters and whole-series cancellation | Accepted master-pattern REQUEST/CANCEL using existing storage, preserved native drafts/exceptions and a separate later occurrence-component profile; scoped implementation |
-| [0125](0125-scheduling-occurrence-field-projection.md) | Scheduling-only occurrence field projection | Proposed explicit inherited required fields in outgoing occurrence REQUESTs while preserving native inheritance; version/reset/bundle/storage designs remain unapproved |
+| [0125](0125-scheduling-occurrence-field-projection.md) | Scheduling-only occurrence field projection | Accepted inherited-field mapping and scoped pure candidate helper; native inheritance preserved, durable version/reset/bundle/storage designs unapproved |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
