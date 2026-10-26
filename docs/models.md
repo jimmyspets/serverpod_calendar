@@ -2,6 +2,8 @@
 
 The [ADR 0117 message profile](itip-message-profile.md) adds immutable pure `IcalendarSchedulingMessage` values, not database tables or generated endpoint DTOs. Optional source timing/version fields remain distinct from durable scheduling state, which still requires its own reviewed storage contract.
 
+ADR 0118 adds immutable request-status, exact geographic-position and descriptive resource-group values within that pure message. They remain source metadata with no native identity, reservation, retry or authority mapping.
+
 [First native non-recurring event CRUD](native-single-events.md) now implements scoped event storage/commands/projections under [ADR 0053](adr/0053-first-native-single-events.md). Native recurrence, occurrence timing, free/busy and scoped working-hours composition are implemented in the increments linked below; wire/client interoperability remains pending.
 
 [Native protocol UID and modification time](calendar-protocol-identity.md) add read-only identity/time disclosure under [ADR 0052](adr/0052-calendar-protocol-identity-and-revision-time.md), without parsing/export or feed validators.
@@ -641,4 +643,4 @@ The maintainer approved the [ADR 0112](adr/0112-bounded-durable-alarm-planning.m
 
 ## Optional event-feed increment, 2026-10-25
 
-[ADR 0116](adr/0116-optional-event-subscription-contract.md) records the approved separate module, stable publication UIDs, exclusion of all alarms and four-table/default choices. The [feed guide](http-event-feeds.md) describes scoped management/publication/HTTP implementation and the required whole-host logging guard. This supersedes blanket feed-not-implemented wording only for that bounded profile. Native and authenticated source behavior remain independent; full batch validation is in progress and external subscription-client, scheduling and other release gates remain open.
+[ADR 0116](adr/0116-optional-event-subscription-contract.md) records the approved separate module, stable publication UIDs, exclusion of all alarms and four-table/default choices. The [feed guide](http-event-feeds.md) describes scoped management/publication/HTTP implementation and the required whole-host logging guard. This supersedes blanket feed-not-implemented wording only for that bounded profile. Native and authenticated source behavior remain independent; full local batch validation passed and external subscription-client, scheduling and other release gates remain open.
