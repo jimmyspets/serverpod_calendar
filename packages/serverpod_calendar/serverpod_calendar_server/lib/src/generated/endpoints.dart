@@ -71,6 +71,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_presentation_up
     as _i1sjay6c;
 import 'package:serverpod_calendar_server/src/generated/calendar_protocol_metadata_update_request.dart'
     as _i53ouodu;
+import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_cancel_request.dart'
+    as _ih6si8n9;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_save_request.dart'
     as _igziosqt;
 import 'package:serverpod_calendar_server/src/generated/calendar_settings_update_request.dart'
@@ -1039,6 +1041,27 @@ class Endpoints extends _is.EndpointDispatch {
                   (endpoints['calendarEvent']
                           as _ibwv0suj.CalendarEventEndpoint)
                       .saveAndNotify(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'cancelAndNotify': _is.MethodConnector(
+          name: 'cancelAndNotify',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_ih6si8n9.CalendarSchedulingCancelRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .cancelAndNotify(
                         session,
                         params['request'],
                       ),

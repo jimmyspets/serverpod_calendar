@@ -12,6 +12,10 @@ class CalendarEventEndpoint extends Endpoint {
     Session session,
     CalendarSchedulingSaveRequest request,
   ) => CalendarModule.service(session).saveAndNotify(request);
+  Future<CalendarSchedulingReceipt> cancelAndNotify(
+    Session session,
+    CalendarSchedulingCancelRequest request,
+  ) => CalendarModule.service(session).cancelAndNotify(request);
   Future<CalendarSchedulingView> schedulingStatus(
     Session session,
     UuidValue eventId,

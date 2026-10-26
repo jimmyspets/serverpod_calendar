@@ -139,6 +139,7 @@ import 'calendar_protocol_identity.dart' as _iyrimg3m;
 import 'calendar_protocol_metadata.dart' as _itchuj1l;
 import 'calendar_protocol_metadata_update_request.dart' as _iyawor89;
 import 'calendar_refresh_hint.dart' as _ifsfk5xq;
+import 'calendar_scheduling_cancel_request.dart' as _i4uu6f5m;
 import 'calendar_scheduling_delivery_state.dart' as _it5jr5tm;
 import 'calendar_scheduling_delivery_view.dart' as _i63ky642;
 import 'calendar_scheduling_receipt.dart' as _izftntkw;
@@ -303,6 +304,7 @@ export 'calendar_protocol_identity.dart';
 export 'calendar_protocol_metadata.dart';
 export 'calendar_protocol_metadata_update_request.dart';
 export 'calendar_refresh_hint.dart';
+export 'calendar_scheduling_cancel_request.dart';
 export 'calendar_scheduling_delivery_state.dart';
 export 'calendar_scheduling_delivery_view.dart';
 export 'calendar_scheduling_receipt.dart';
@@ -745,6 +747,9 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _ifsfk5xq.CalendarRefreshHint) {
       return _ifsfk5xq.CalendarRefreshHint.fromJson(data) as T;
+    }
+    if (t == _i4uu6f5m.CalendarSchedulingCancelRequest) {
+      return _i4uu6f5m.CalendarSchedulingCancelRequest.fromJson(data) as T;
     }
     if (t == _it5jr5tm.CalendarSchedulingDeliveryState) {
       return _it5jr5tm.CalendarSchedulingDeliveryState.fromJson(data) as T;
@@ -1560,6 +1565,12 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_ifsfk5xq.CalendarRefreshHint?>()) {
       return (data != null
               ? _ifsfk5xq.CalendarRefreshHint.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_i4uu6f5m.CalendarSchedulingCancelRequest?>()) {
+      return (data != null
+              ? _i4uu6f5m.CalendarSchedulingCancelRequest.fromJson(data)
               : null)
           as T;
     }
@@ -2512,6 +2523,8 @@ class Protocol extends _isc.SerializationManager {
       _iyawor89.CalendarProtocolMetadataUpdateRequest =>
         'CalendarProtocolMetadataUpdateRequest',
       _ifsfk5xq.CalendarRefreshHint => 'CalendarRefreshHint',
+      _i4uu6f5m.CalendarSchedulingCancelRequest =>
+        'CalendarSchedulingCancelRequest',
       _it5jr5tm.CalendarSchedulingDeliveryState =>
         'CalendarSchedulingDeliveryState',
       _i63ky642.CalendarSchedulingDeliveryView =>
@@ -2818,6 +2831,8 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarProtocolMetadataUpdateRequest';
       case _ifsfk5xq.CalendarRefreshHint():
         return 'CalendarRefreshHint';
+      case _i4uu6f5m.CalendarSchedulingCancelRequest():
+        return 'CalendarSchedulingCancelRequest';
       case _it5jr5tm.CalendarSchedulingDeliveryState():
         return 'CalendarSchedulingDeliveryState';
       case _i63ky642.CalendarSchedulingDeliveryView():
@@ -3326,6 +3341,11 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'CalendarRefreshHint') {
       return deserialize<_ifsfk5xq.CalendarRefreshHint>(data['data']);
+    }
+    if (dataClassName == 'CalendarSchedulingCancelRequest') {
+      return deserialize<_i4uu6f5m.CalendarSchedulingCancelRequest>(
+        data['data'],
+      );
     }
     if (dataClassName == 'CalendarSchedulingDeliveryState') {
       return deserialize<_it5jr5tm.CalendarSchedulingDeliveryState>(

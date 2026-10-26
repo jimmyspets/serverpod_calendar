@@ -25,6 +25,7 @@ final class CalendarSchedulingPolicyContext {
     required this.calendar,
     required this.currentEvent,
     required this.proposedEvent,
+    required this.outgoingEvent,
     required this.authority,
     required this.intent,
     this.actor,
@@ -33,7 +34,12 @@ final class CalendarSchedulingPolicyContext {
   final String scopeKey;
   final CalendarHostContext? actor;
   final CalendarPolicySnapshot calendar;
+
+  /// Actual current and final proposed native state, distinct from publication.
   final CalendarEventPolicySnapshot currentEvent, proposedEvent;
+
+  /// Exact component authorized for disclosure, including retained retry bytes.
+  final CalendarEventPolicySnapshot outgoingEvent;
   final CalendarSchedulingAuthority authority;
   final CalendarSchedulingIntent intent;
   final CalendarSchedulingRoute? recipient;
@@ -52,7 +58,8 @@ abstract interface class CalendarSchedulingHost {
   );
 
   /// Approve the exact payload and roster for every recipient. During background
-  /// dispatch this also enforces current edit/detail/source/publication rights.
+  /// dispatch this also enforces current method-specific lifecycle/publication
+  /// and full detail/source-disclosure rights.
   Future<CalendarAuthorizationVerdict> authorize(
     Session session,
     CalendarSchedulingPolicyContext context,

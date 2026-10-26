@@ -32,3 +32,6 @@ Flutter launches from calendar_example_flutter/lib/main.dart. Browser automation
 
 
 Under accepted ADR 0122, the example also installs the bounded non-recurring REQUEST organizer runtime and **Meeting invitations** editor. It derives organizer authority from the current demo user and approves synthetic `example.invalid` recipients only. Transport writes ignored fixtures and sends no real mail. Ordinary event edits do not send. Existing migrated events remain unknown-origin; never reset development storage or infer provenance to enable publication. See ../../docs/native-organizer-scheduling.md for the exact scope and future lifecycle restrictions.
+
+
+Under accepted ADR 0123, the example also demonstrates explicit Cancel and notify and Reopen and notify. Cancellation sends the last published snapshot, preserves saved local fields and remains synthetic-only. Dedicated host context distinguishes final native state from outgoingEvent; authorize the exact method and disclosure. The public DTO changes add no database table/column. Deletion, recipient/recurrence changes, inbound reconciliation and real mail remain separate.

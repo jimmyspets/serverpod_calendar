@@ -420,6 +420,6 @@ The action APIs now have scoped implementation and focused validation. Notificat
 The first [event-feed module](http-event-feeds.md) under ADR 0116 is implemented in scope and undergoing final batch validation. Focused VM/database/two-host/browser evidence does not close external client, production infrastructure, scheduling or the other remaining first-release gates.
 
 
-## Next organizer lifecycle proposal
+## Native organizer cancellation increment
 
-[ADR 0123](adr/0123-explicit-native-organizer-cancellation.md) proposes explicit non-recurring Cancel and notify using the last published snapshot, preserving unpublished local fields and reusing existing delivery storage. Review the cancellation/reopening semantics before implementation. It is unapproved and unimplemented; recurring scheduling, recipient changes, binding deletion and inbound reconciliation remain separate.
+The maintainer explicitly approved [ADR 0123](adr/0123-explicit-native-organizer-cancellation.md). [The implementation](native-organizer-scheduling.md#explicit-cancellation-and-reopening) adds non-recurring Cancel and notify using the last published snapshot, preserved local drafts, distinct native/outgoing authorization context and existing bounded delivery storage. Explicit reopening publishes a newer REQUEST; local reopen sends nothing. See validation for focused and broader evidence. Recurring scheduling, recipient changes, binding deletion, manual resend, inbound reconciliation and real mail remain separate.

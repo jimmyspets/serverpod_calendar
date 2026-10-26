@@ -110,6 +110,33 @@ Future<void> runSchedulingJourney(WidgetTester tester, Client client) async {
   expect(updated.publicationId, isNot(published.publicationId));
   expect(updated.eventRevision, 4);
   expect(updated.hasLocalChanges, false);
+  await api.calendarEvent.update(
+    cal.CalendarEventUpdateRequest(
+      eventId: event.id,
+      expectedRevision: 4,
+      content: content('Saved private draft before cancellation'),
+    ),
+  );
+  await _tap(tester, 'scheduling-reload');
+  await _tap(tester, 'scheduling-cancel');
+  expect(find.byKey(const Key('scheduling-error')), findsNothing);
+  final cancelled = await api.calendarEvent.schedulingStatus(event.id);
+  expect(cancelled.method, 'CANCEL');
+  expect(cancelled.eventRevision, 6);
+  expect(cancelled.hasLocalChanges, true);
+  final saved = await api.calendarEvent.getEvent(
+    event.id,
+    cal.CalendarEventFieldGroup.values,
+  );
+  expect(saved.summary, 'Saved private draft before cancellation');
+  expect(saved.status, cal.CalendarEventStatus.cancelled);
+  expect(find.text('Reopen and notify'), findsOneWidget);
+  await _tap(tester, 'scheduling-publish');
+  expect(find.byKey(const Key('scheduling-error')), findsNothing);
+  final reopened = await api.calendarEvent.schedulingStatus(event.id);
+  expect(reopened.method, 'REQUEST');
+  expect(reopened.eventRevision, 7);
+  expect(reopened.hasLocalChanges, false);
   await tester.pageBack();
   await tester.pumpAndSettle();
   // This profile deliberately has no binding deletion API. The root harness
