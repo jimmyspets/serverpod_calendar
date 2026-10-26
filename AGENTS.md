@@ -8,6 +8,8 @@ Under ADR 0119, the maintainer approved detached scheduling components without a
 
 ADR 0120 extends the pure adapter to ADD/REFRESH/COUNTER/DECLINECOUNTER with separate method cardinalities and payload rules. Source proposals, refreshes and result codes trigger no lookup, mutation, retry or automatic reply. COUNTER omission remains distinct from explicit SEQUENCE zero; later reconciliation must verify the actual prior version. Concrete mechanics remain draft review material.
 
+ADR 0121 adds a separate pure VFREEBUSY scheduling adapter. Source periods/groups, FBTYPE interpretation, windows and numeric results establish no authorized coverage or sender identity and cause no automatic query/reply. Preserve overlaps/order/end-duration forms and distinguish empty source data from the complete authorized snapshot service.
+
 ## Current state and sources
 
 This repository now contains an initial workspace/authentication scaffold; calendar domain features remain documentation-first. Read README.md, docs/discussion-migration.md, docs/requirements.md, and the relevant proposed ADRs before changes. The per-RFC tables in docs/rfc/ are the latest feature-scope source; explicit newer maintainer instructions take precedence. Reconcile older narrative text with the table statuses and notes without treating unapproved implementation detail as accepted. Architecture documents describe proposals, not implemented behavior. Do not invent earlier chat decisions or claim complete iCalendar, CalDAV, or client compatibility.
