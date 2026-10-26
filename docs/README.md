@@ -220,3 +220,5 @@ Accepted [recurring organizer masters and whole-series cancellation](adr/0124-re
 
 
 Accepted [scheduling-only field projection](adr/0125-scheduling-occurrence-field-projection.md) has a pure candidate helper that makes missing required inherited values explicit while retaining source state and native inheritance. Version/reset/bundle/storage mechanics remain separate and unapproved; durable occurrence publication remains unavailable.
+
+The maintainer selected [independent outgoing occurrence versions](adr/0126-independent-occurrence-publication-versions.md). ADR 0126 now proposes the concrete bounded REQUEST bundle, private checkpoint in existing storage, cancellation/reopening floors and complete-message host approval. Those mechanics need review before durable implementation; no new schema or runtime is added by this proposal.

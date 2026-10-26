@@ -404,3 +404,5 @@ Accepted [ADR 0124](adr/0124-recurring-organizer-masters.md) implements the next
 
 
 [ADR 0125](adr/0125-scheduling-occurrence-field-projection.md) confirms how future FR-20 occurrence REQUESTs carry required inherited fields without changing native inheritance. Its scoped pure helper produces validated, untrusted candidates with copied missing fields and unchanged versions; canonical authenticated export remains separate. Complete occurrence version/lifecycle/reset and transactional message/storage contracts remain required and unapproved. This prerequisite does not complete durable occurrence scheduling.
+
+[ADR 0126](adr/0126-independent-occurrence-publication-versions.md) records confirmed independent outgoing occurrence versions. Its proposed complete-message checkpoint and lifecycle guards refine the next FR-20 batch; they remain unapproved and unimplemented. Native versions stay separate; occurrence reset/CANCEL, inbound reconciliation and email remain required beyond this proposed REQUEST slice.
