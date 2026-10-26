@@ -50,6 +50,45 @@ CalendarEventPolicySnapshot snapshot(EventStorageProposal p) =>
       protocolState: p.protocolState,
     );
 void main() {
+  test('native PERIOD-only export keeps source meaning without changing wrapper or baseline state', () {
+    final now = DateTime.utc(2026, 10, 26);
+    final content = CalendarEventContent(
+      timing: CalendarEventTiming(
+        kind: CalendarEventTimeKind.utc,
+        start: CalendarEventCivil(year: 2026, month: 11, day: 2, hour: 9),
+        duration: CalendarEventDuration(hours: 1),
+      ),
+      periods: [
+        CalendarEventTiming(
+          kind: CalendarEventTimeKind.utc,
+          start: CalendarEventCivil(year: 2026, month: 11, day: 1, hour: 9),
+          duration: CalendarEventDuration(hours: 2),
+        ),
+      ],
+    );
+    final state = eventProtocolBaseline(content, null, now, now);
+    final source = CalendarEventPolicySnapshot(
+      UuidValue.fromString('11111111-1111-4111-8111-111111111111'),
+      UuidValue.fromString('22222222-2222-4222-8222-222222222222'),
+      1,
+      content,
+      'native-period-only@example.invalid',
+      now,
+      protocolState: state,
+    );
+    final beforeContent = jsonEncode(content.toJson()),
+        beforeState = jsonEncode(state.toJson());
+    final decoded = parseIcalendarEventCalendar(eventExportBytes([source]));
+    expect(decoded.events.single.recurrence!.timedSet!.periods.length, 1);
+    final publication = parseIcalendarEventCalendar(
+      eventPublicationBytes([source]),
+    );
+    expect(publication.events.single.recurrence!.timedSet!.periods.length, 1);
+    expect(content.recurrence, isNull);
+    expect(jsonEncode(content.toJson()), beforeContent);
+    expect(jsonEncode(state.toJson()), beforeState);
+  });
+
   test(
     'emits complete decoded source meaning and versions without old envelope',
     () {

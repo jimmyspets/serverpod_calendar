@@ -178,3 +178,6 @@ The example installs the optional [native organizer runtime](native-organizer-sc
 
 
 The accepted cancellation increment adds **Cancel and notify** for existing non-recurring organizer bindings. It cancels using the published snapshot and retains saved local fields. **Reopen and notify** explicitly publishes a newer REQUEST; ordinary local lifecycle edits still send nothing. The generated cancellation-request/status DTOs require `tool/generate.ps1` but add no table migration. The scheduling worker smoke now covers both REQUEST and CANCEL, including actual holder loss before and after synthetic acceptance. The full connected Flutter journey covers cancellation, draft retention and explicit reopening.
+
+
+The accepted recurring-master increment publishes saved RRULE/RDATE/EXDATE/PERIOD master patterns through the same meeting screen and generated APIs. Save recurring mode before the first publication; bound mode conversions remain blocked. Native occurrence edits stay available, but the meeting screen explains and disables a new REQUEST while saved exceptions exist. Whole-series Cancel and notify preserves them. The worker loss probes, generated-client races and connected Flutter journey now use recurring masters; the browser also checks the exception-publication limit. No new model generation or migration is required by this increment.

@@ -358,6 +358,613 @@ void main() {
       );
     }
 
+    CalendarEventRule masterRule({
+      int? count = 4,
+      CalendarEventFrequency frequency = CalendarEventFrequency.daily,
+      int weekStart = 1,
+      CalendarEventCivil? untilDate,
+      DateTime? untilUtc,
+      List<CalendarEventByDay>? byDay,
+    }) => CalendarEventRule(
+      frequency: frequency,
+      count: count,
+      untilDate: untilDate,
+      untilUtc: untilUtc,
+      weekStart: weekStart,
+      byDay: byDay ?? [],
+      byMonthDay: [],
+      byYearDay: [],
+      byWeekNo: [],
+      byMonth: [],
+      byHour: [],
+      byMinute: [],
+      bySetPosition: [],
+    );
+    CalendarEventTiming masterTiming({
+      CalendarEventTimeKind kind = CalendarEventTimeKind.date,
+      int day = 27,
+    }) => CalendarEventTiming(
+      kind: kind,
+      start: CalendarEventCivil(
+        year: 2026,
+        month: 3,
+        day: day,
+        hour: kind == CalendarEventTimeKind.date ? 0 : 9,
+      ),
+      duration: CalendarEventDuration(
+        days: kind == CalendarEventTimeKind.date ? 1 : 0,
+        hours: kind == CalendarEventTimeKind.date ? 0 : 1,
+      ),
+      zoneId: kind == CalendarEventTimeKind.zoned ? 'Europe/Stockholm' : null,
+    );
+    CalendarEventContent masterContent({
+      CalendarEventTimeKind kind = CalendarEventTimeKind.date,
+      int count = 4,
+      String summary = 'Published master',
+    }) => CalendarEventContent(
+      summary: summary,
+      timing: masterTiming(kind: kind),
+      recurrence: CalendarEventRecurrence(
+        rule: masterRule(count: count),
+        inclusions: [],
+        exclusions: [],
+      ),
+    );
+    Future<UuidValue> masterEvent(CalendarEventContent content) async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      return (await service.createEvent(
+        CalendarEventCreateRequest(calendarId: parent, content: content),
+      ))!.eventId;
+    }
+
+    CalendarSchedulingSaveRequest masterRequest(
+      UuidValue id,
+      CalendarEventContent content, {
+      int revision = 1,
+    }) => request(id, revision: revision).copyWith(content: content);
+    List<IcalendarSyntaxProperty> props(
+      IcalendarSchedulingEvent event,
+      String name,
+    ) => event.source.entries
+        .whereType<IcalendarSyntaxProperty>()
+        .where((p) => p.canonicalName == name)
+        .toList();
+    CalendarEventTiming originalDay(int day) => CalendarEventTiming(
+      kind: CalendarEventTimeKind.date,
+      start: CalendarEventCivil(year: 2026, month: 3, day: day),
+    );
+
+    for (final kind in [
+      CalendarEventTimeKind.date,
+      CalendarEventTimeKind.utc,
+      CalendarEventTimeKind.zoned,
+    ]) {
+      test(
+        'recurring ${kind.name} master keeps count dates DST and last-published cancellation pattern',
+        () async {
+          var content = masterContent(kind: kind);
+          content = content.copyWith(
+            recurrence: content.recurrence!.copyWith(
+              inclusions: [
+                originalDay(26).copyWith(
+                  kind: kind,
+                  start: masterTiming(kind: kind, day: 26).start,
+                  zoneId: content.timing.zoneId,
+                ),
+              ],
+              exclusions: [
+                originalDay(28).copyWith(
+                  kind: kind,
+                  start: masterTiming(kind: kind, day: 28).start,
+                  zoneId: content.timing.zoneId,
+                ),
+              ],
+            ),
+          );
+          final id = await masterEvent(content),
+              first = await service.saveAndNotify(masterRequest(id, content));
+          final published = await publication(first.publicationId);
+          final message = parseIcalendarSchedulingMessage(
+            utf8.encode(published.payload),
+          );
+          expect(message.events.length, 1);
+          expect(message.events.single.isOverride, false);
+          expect(
+            props(message.events.single, 'RRULE').single.value,
+            contains('COUNT=4'),
+          );
+          expect(
+            props(message.events.single, 'RDATE').single.value,
+            contains('20260326'),
+          );
+          expect(
+            props(message.events.single, 'EXDATE').single.value,
+            contains('20260328'),
+          );
+          if (kind == CalendarEventTimeKind.date) {
+            expect(message.events.single.recurrence!.dateSet, isNotNull);
+          } else {
+            expect(message.events.single.recurrence!.timedSet, isNotNull);
+            expect(
+              message.events.single.startTime!.zoneId,
+              content.timing.zoneId,
+            );
+          }
+          if (kind == CalendarEventTimeKind.zoned) {
+            final preview = await service.previewOccurrences(
+              CalendarEventOccurrenceQuery(
+                eventId: id,
+                expectedRevision: 2,
+                fromUtc: DateTime.utc(2026, 3, 25),
+                untilUtc: DateTime.utc(2026, 4, 1),
+                fieldGroups: [],
+              ),
+            );
+            expect(
+              preview.occurrences
+                  .firstWhere((v) => v.originalStart.day == 27)
+                  .startUtc!
+                  .hour,
+              8,
+            );
+            expect(
+              preview.occurrences
+                  .firstWhere((v) => v.originalStart.day == 29)
+                  .startUtc!
+                  .hour,
+              7,
+            );
+            expect(preview.occurrences.every((v) => v.start.hour == 9), true);
+          }
+          final draft = content.copyWith(
+            summary: 'Private pattern edit',
+            recurrence: content.recurrence!.copyWith(
+              rule: masterRule(count: 6),
+            ),
+          );
+          await service.updateEvent(
+            CalendarEventUpdateRequest(
+              eventId: id,
+              expectedRevision: 2,
+              content: draft,
+            ),
+          );
+          expect((await service.schedulingStatus(id)).hasLocalChanges, true);
+          final cancelled = await service.cancelAndNotify(
+            cancelRequest(id, revision: 3),
+          );
+          final outgoing = parseIcalendarSchedulingMessage(
+            utf8.encode((await publication(cancelled.publicationId)).payload),
+          );
+          expect(outgoing.method, IcalendarSchedulingMethod.cancel);
+          expect(
+            props(outgoing.events.single, 'RRULE').single.value,
+            contains('COUNT=4'),
+          );
+          expect(outgoing.events.single.summary!.value, 'Published master');
+          expect((await eventData(id)).content.recurrence!.rule!.count, 6);
+          expect((await eventData(id)).content.summary, 'Private pattern edit');
+          await CalendarModule.runSchedulingMaintenance(session);
+          expect(
+            transport.submissions.single.publicationId,
+            cancelled.publicationId,
+          );
+        },
+      );
+    }
+    for (final kind in [
+      CalendarEventTimeKind.utc,
+      CalendarEventTimeKind.zoned,
+    ]) {
+      test(
+        'recurring ${kind.name} PERIOD-only master preserves earlier duration additions',
+        () async {
+          final timing = masterTiming(kind: kind);
+          final content = CalendarEventContent(
+            summary: 'Period master',
+            timing: timing,
+            periods: [
+              masterTiming(
+                kind: kind,
+                day: 26,
+              ).copyWith(duration: CalendarEventDuration(hours: 2)),
+            ],
+          );
+          final id = await masterEvent(content);
+          final receipt = await service.saveAndNotify(
+            masterRequest(id, content),
+          );
+          final message = parseIcalendarSchedulingMessage(
+            utf8.encode((await publication(receipt.publicationId)).payload),
+          );
+          final rdate = props(message.events.single, 'RDATE').single;
+          expect(
+            rdate.parameters
+                .singleWhere((p) => p.canonicalName == 'VALUE')
+                .values,
+            ['PERIOD'],
+          );
+          expect(rdate.value, contains('20260326T090000'));
+          expect(rdate.value, endsWith('/PT2H'));
+          expect(props(message.events.single, 'RRULE'), isEmpty);
+          expect(message.events.single.recurrence!.timedSet, isNotNull);
+          await expectLater(
+            service.updateEvent(
+              CalendarEventUpdateRequest(
+                eventId: id,
+                expectedRevision: 2,
+                content: content.copyWith(periods: null),
+                replacePeriods: true,
+              ),
+            ),
+            failure(CalendarFailureCode.dependencyConflict),
+          );
+        },
+      );
+    }
+    for (final kind in [
+      CalendarEventTimeKind.date,
+      CalendarEventTimeKind.utc,
+    ]) {
+      test(
+        'recurring ${kind.name} UNTIL and Sunday WKST keep the existing rule profile',
+        () async {
+          final content = masterContent(kind: kind).copyWith(
+            recurrence: CalendarEventRecurrence(
+              rule: masterRule(
+                count: null,
+                frequency: CalendarEventFrequency.weekly,
+                weekStart: 7,
+                untilDate: kind == CalendarEventTimeKind.date
+                    ? CalendarEventCivil(year: 2026, month: 4, day: 5)
+                    : null,
+                untilUtc: kind == CalendarEventTimeKind.utc
+                    ? DateTime.utc(2026, 4, 5, 9)
+                    : null,
+                byDay: [CalendarEventByDay(weekday: 5)],
+              ),
+              inclusions: [],
+              exclusions: [],
+            ),
+          );
+          final id = await masterEvent(content),
+              receipt = await service.saveAndNotify(masterRequest(id, content));
+          final wire = parseIcalendarSchedulingMessage(
+            utf8.encode((await publication(receipt.publicationId)).payload),
+          );
+          final text = props(wire.events.single, 'RRULE').single.value;
+          expect(text, contains('WKST=SU'));
+          expect(
+            text,
+            contains(
+              kind == CalendarEventTimeKind.date
+                  ? 'UNTIL=20260405'
+                  : 'UNTIL=20260405T090000Z',
+            ),
+          );
+          expect(text, isNot(contains('COUNT=')));
+        },
+      );
+    }
+    test('bound masters accept local pattern edits and explicit publication reuses the newer saved version', () async {
+      final initial = masterContent(), id = await masterEvent(masterContent());
+      final firstCommand = masterRequest(id, initial),
+          first = await service.saveAndNotify(firstCommand);
+      final changed = masterContent(count: 6, summary: 'New master');
+      await service.updateEvent(
+        CalendarEventUpdateRequest(
+          eventId: id,
+          expectedRevision: 2,
+          content: changed,
+        ),
+      );
+      final before = (await eventData(id)).protocolState!.version;
+      final next = await service.saveAndNotify(
+        masterRequest(id, changed, revision: 3),
+      );
+      expect((await publication(next.publicationId)).sequence, before.sequence);
+      expect(
+        jsonEncode((await eventData(id)).protocolState!.version.toJson()),
+        jsonEncode(before.toJson()),
+      );
+      expect(
+        (await service.saveAndNotify(masterRequest(id, changed, revision: 4)))
+            .unchanged,
+        true,
+      );
+      expect(
+        (await service.saveAndNotify(firstCommand)).publicationId,
+        first.publicationId,
+      );
+      expect((await eventData(id)).content.recurrence!.rule!.count, 6);
+      expect((await publications()).length, 2);
+      await CalendarModule.runSchedulingMaintenance(session);
+      expect(transport.submissions.single.publicationId, next.publicationId);
+    });
+    test('mode changes reject through native and publication paths without removing patterns', () async {
+      final single = await event();
+      await service.saveAndNotify(request(single));
+      await expectLater(
+        service.updateEvent(
+          CalendarEventUpdateRequest(
+            eventId: single,
+            expectedRevision: 2,
+            content: masterContent(),
+          ),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      await expectLater(
+        service.saveAndNotify(
+          masterRequest(single, masterContent(), revision: 2),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      final content = masterContent(),
+          recurring = await masterEvent(masterContent());
+      await service.saveAndNotify(masterRequest(recurring, content));
+      await expectLater(
+        service.updateEvent(
+          CalendarEventUpdateRequest(
+            eventId: recurring,
+            expectedRevision: 2,
+            content: content.copyWith(recurrence: null),
+          ),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      await expectLater(
+        service.saveAndNotify(
+          masterRequest(
+            recurring,
+            content.copyWith(recurrence: null),
+            revision: 2,
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      expect((await eventData(recurring)).content.recurrence!.rule!.count, 4);
+    });
+    test('first recurring publication cannot silently convert an existing single event', () async {
+      final id = await event();
+      await expectLater(
+        service.saveAndNotify(masterRequest(id, masterContent())),
+        failure(CalendarFailureCode.validation),
+      );
+      expect(await CalendarSchedulingMeetingRecord.db.count(session), 0);
+      expect((await eventData(id)).content.recurrence, isNull);
+    });
+    test(
+      'stored occurrence state rejects first REQUEST without being cleared',
+      () async {
+        final content = masterContent(),
+            id = await masterEvent(masterContent());
+        await service.changeOccurrence(
+          CalendarEventOccurrenceChange(
+            eventId: id,
+            expectedRevision: 1,
+            originalStart: originalDay(28),
+            action: CalendarEventOccurrenceAction.cancelSingle,
+          ),
+        );
+        final before = jsonEncode((await eventData(id)).toJson());
+        await expectLater(
+          service.saveAndNotify(masterRequest(id, content, revision: 2)),
+          failure(CalendarFailureCode.validation),
+        );
+        expect(jsonEncode((await eventData(id)).toJson()), before);
+        expect((await publications()), isEmpty);
+        await service.changeOccurrence(
+          CalendarEventOccurrenceChange(
+            eventId: id,
+            expectedRevision: 2,
+            originalStart: originalDay(28),
+            action: CalendarEventOccurrenceAction.restoreSingle,
+          ),
+        );
+        await service.saveAndNotify(masterRequest(id, content, revision: 3));
+        expect((await publications()).length, 1);
+      },
+    );
+    test('whole-series cancellation preserves private single future content and protocol exception state', () async {
+      final content = masterContent(count: 6),
+          id = await masterEvent(masterContent(count: 6));
+      final command = masterRequest(id, content),
+          published = await service.saveAndNotify(command);
+      await service.changeOccurrence(
+        CalendarEventOccurrenceChange(
+          eventId: id,
+          expectedRevision: 2,
+          originalStart: originalDay(28),
+          action: CalendarEventOccurrenceAction.replaceSingleTiming,
+          replacement: originalDay(28)
+              .copyWith(duration: CalendarEventDuration(days: 2)),
+        ),
+      );
+      await service.changeOccurrence(
+        CalendarEventOccurrenceChange(
+          eventId: id,
+          expectedRevision: 3,
+          originalStart: originalDay(29),
+          action: CalendarEventOccurrenceAction.cancelSingle,
+        ),
+      );
+      await service.changeOccurrence(
+        CalendarEventOccurrenceChange(
+          eventId: id,
+          expectedRevision: 4,
+          originalStart: originalDay(30),
+          action: CalendarEventOccurrenceAction.replaceFutureTiming,
+          replacement: originalDay(31),
+        ),
+      );
+      await service.changeOccurrenceContent(
+        CalendarEventOccurrenceContentRequest(
+          eventId: id,
+          expectedRevision: 5,
+          originalStart: originalDay(28),
+          changes: [
+            CalendarEventOccurrenceContentChange(
+              field: CalendarEventContentField.summary,
+              action: CalendarEventContentAction.setValue,
+              text: 'Private exception',
+            ),
+          ],
+        ),
+      );
+      final before = await eventData(id),
+          jsonBefore = jsonEncode(before.toJson());
+      expect((await service.schedulingStatus(id)).hasLocalChanges, true);
+      await expectLater(
+        service.saveAndNotify(masterRequest(id, content, revision: 6)),
+        failure(CalendarFailureCode.validation),
+      );
+      expect(jsonEncode((await eventData(id)).toJson()), jsonBefore);
+      expect(
+        (await service.saveAndNotify(command)).publicationId,
+        published.publicationId,
+      );
+      final contexts = <CalendarSchedulingPolicyContext>[];
+      host.onCheck = contexts.add;
+      final cancelled = await service.cancelAndNotify(
+        cancelRequest(id, revision: 6),
+      );
+      expect(
+        jsonEncode(policy.lastEventRequest!.proposedTimingOverrides!.toJson()),
+        jsonEncode(before.timingOverrides!.toJson()),
+      );
+      final after = await eventData(id);
+      expect(
+        jsonEncode(after.timingOverrides!.toJson()),
+        jsonEncode(before.timingOverrides!.toJson()),
+      );
+      expect(
+        jsonEncode(
+          after.protocolState!.overrides.map((v) => v.toJson()).toList(),
+        ),
+        jsonEncode(
+          before.protocolState!.overrides.map((v) => v.toJson()).toList(),
+        ),
+      );
+      expect(
+        contexts.every(
+          (v) =>
+              jsonEncode(v.proposedEvent.timingOverrides!.toJson()) ==
+                  jsonEncode(before.timingOverrides!.toJson()) &&
+              v.outgoingEvent.timingOverrides == null &&
+              v.outgoingEvent.protocolState!.overrides.isEmpty,
+        ),
+        true,
+      );
+      final wire = parseIcalendarSchedulingMessage(
+        utf8.encode((await publication(cancelled.publicationId)).payload),
+      );
+      expect(wire.events.length, 1);
+      expect(wire.events.single.isOverride, false);
+      expect(wire.method, IcalendarSchedulingMethod.cancel);
+      expect(
+        (await publication(cancelled.publicationId)).payload,
+        isNot(contains('Private exception')),
+      );
+      expect(
+        (await service.cancelAndNotify(cancelRequest(id, revision: 7)))
+            .unchanged,
+        true,
+      );
+      await service.changeEventStatus(
+        CalendarEventStatusRequest(
+          eventId: id,
+          expectedRevision: 7,
+          status: CalendarEventStatus.confirmed,
+        ),
+      );
+      await expectLater(
+        service.saveAndNotify(masterRequest(id, content, revision: 8)),
+        failure(CalendarFailureCode.validation),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      expect(
+        transport.submissions.single.publicationId,
+        cancelled.publicationId,
+      );
+      expect((await eventData(id)).timingOverrides!.singles.length, 2);
+    });
+    test(
+      'bound pattern edits still reject orphaning native exceptions',
+      () async {
+        final content = masterContent(),
+            id = await masterEvent(masterContent());
+        await service.saveAndNotify(masterRequest(id, content));
+        await service.changeOccurrence(
+          CalendarEventOccurrenceChange(
+            eventId: id,
+            expectedRevision: 2,
+            originalStart: originalDay(28),
+            action: CalendarEventOccurrenceAction.cancelSingle,
+          ),
+        );
+        final before = jsonEncode((await eventData(id)).toJson());
+        await expectLater(
+          service.updateEvent(
+            CalendarEventUpdateRequest(
+              eventId: id,
+              expectedRevision: 3,
+              content: masterContent(count: 1),
+            ),
+          ),
+          failure(CalendarFailureCode.validation),
+        );
+        expect(jsonEncode((await eventData(id)).toJson()), before);
+      },
+    );
+    test('corrupt private checkpoints fail without exposing source text during native pattern edits', () async {
+      final content = masterContent(), id = await masterEvent(masterContent());
+      final receipt = await service.saveAndNotify(masterRequest(id, content));
+      final saved = await publication(receipt.publicationId);
+      saved.snapshot = '{malformed PrivateCheckpointText';
+      await CalendarSchedulingPublicationRecord.db.updateRow(session, saved);
+      try {
+        await service.updateEvent(
+          CalendarEventUpdateRequest(
+            eventId: id,
+            expectedRevision: 2,
+            content: masterContent(count: 6),
+          ),
+        );
+        fail('Corrupt checkpoint was accepted');
+      } on CalendarException catch (e) {
+        expect(e.code, CalendarFailureCode.unavailable);
+        expect(e.message, isNot(contains('PrivateCheckpointText')));
+      }
+      expect((await eventData(id)).content.recurrence!.rule!.count, 4);
+    });
+    test('recurring publication final denial and payload bounds roll back pattern changes', () async {
+      final content = masterContent(), id = await masterEvent(masterContent());
+      await service.saveAndNotify(masterRequest(id, content));
+      final before = jsonEncode((await eventData(id)).toJson());
+      host.denyFinal = true;
+      await expectLater(
+        service.saveAndNotify(
+          masterRequest(id, masterContent(count: 6), revision: 2),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      host.denyFinal = false;
+      install(options: CalendarSchedulingOptions(maxPayloadBytes: 1024));
+      await expectLater(
+        service.saveAndNotify(
+          masterRequest(
+            id,
+            masterContent(count: 6, summary: 'x' * 2000),
+            revision: 2,
+          ),
+        ),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      expect(jsonEncode((await eventData(id)).toJson()), before);
+      expect((await publications()).length, 1);
+    });
+
     for (final kind in [
       CalendarEventTimeKind.date,
       CalendarEventTimeKind.utc,

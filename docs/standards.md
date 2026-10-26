@@ -124,3 +124,6 @@ Under [ADR 0122](adr/0122-explicit-native-organizer-publication.md), the maintai
 
 
 Accepted [ADR 0123](adr/0123-explicit-native-organizer-cancellation.md) now adds scoped non-recurring whole-event CANCEL runtime and explicit REQUEST reopening, independent of ordinary local lifecycle edits. This supersedes cancellation-runtime-pending wording only for that profile. Cancellation uses the last published source snapshot and verified fixed recipients; drafts are not sent. It reuses the existing outbox with fresh method-specific authority and fenced retries. Full scheduling state reconciliation, recurring/instance behavior and RFC 6047 mail remain required.
+
+
+Accepted [ADR 0124](adr/0124-recurring-organizer-masters.md) extends native outgoing REQUEST and whole-series CANCEL to recurring masters without occurrence flattening or new temporal defaults. Native exception data remains canonical and private; its REQUEST component publication rejects until its separate profile. Existing ISO presentation, rule-specific WKST, whole-second dates/zones and bounded full-horizon validation remain unchanged. Complete occurrence/instance/range scheduling, reconciliation and RFC 6047 mail remain required.
