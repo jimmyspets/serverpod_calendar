@@ -1,6 +1,6 @@
 # Pure scheduling messages
 
-Status: scoped implementation under the maintainer-approved batch boundary in [ADR 0117](adr/0117-first-itip-message-profile.md); selected broader batch checks passed. This is a pure message adapter, with no scheduling reconciliation or email runtime.
+Status: scoped implementation under the maintainer-approved batch boundary in [ADR 0117](adr/0117-first-itip-message-profile.md), extended with selected payload properties under [ADR 0118](adr/0118-scheduling-status-and-payload-metadata.md). The first batch passed selected broader checks; the payload extension passed selected broader batch checks. This is a pure message adapter, with no scheduling reconciliation or email runtime.
 
 The iCalendar package exposes `parseIcalendarSchedulingMessage`, `validateIcalendarSchedulingMessage` and `serializeIcalendarSchedulingMessage`. They handle one non-recurring VEVENT inside one VCALENDAR, for PUBLISH, REQUEST, REPLY or CANCEL. The ordinary standalone event parser still rejects METHOD. Source import/export, event feed publication and scheduling are distinct interfaces.
 
@@ -27,7 +27,17 @@ The strict UTF-8/CRLF boundary, whole-second precision, [1970-01-01, 2100-01-01)
 
 In addition to the method fields, this increment supports optional DTEND/DURATION, DESCRIPTION, LOCATION, STATUS, TRANSP, CREATED and LAST-MODIFIED, plus the existing bounded event CLASS/URL, grouped CATEGORIES/COMMENT/CONTACT, ORGANIZER/ATTENDEE parameters, RELATED-TO and URI ATTACH codecs. Language/ALTREP annotations and source groups remain intact. Links and attachments remain inert; their presence causes no fetching or host association.
 
-Recurrence properties, RECURRENCE-ID/RANGE, multiple VEVENT components, VTODO/VFREEBUSY/other component families, all VALARM components and arbitrary extension properties/parameters reject. REQUEST-STATUS, GEO, PRIORITY and RESOURCES are not yet profiled here and also reject. Other selected methods remain first-release work rather than being treated as successful input. The one-attendee REPLY slice rejects PARTSTAT=DELEGATED: the RFC delegation workflow needs a separately validated multi-attendee profile. Ordinary source participant preservation is unchanged.
+Recurrence properties, RECURRENCE-ID/RANGE, multiple VEVENT components, VTODO/VFREEBUSY/other component families, all VALARM components and arbitrary extension properties/parameters reject. Other selected methods remain first-release work rather than being treated as successful input. The one-attendee REPLY slice rejects PARTSTAT=DELEGATED: the RFC delegation workflow needs a separately validated multi-attendee profile. Ordinary source participant preservation is unchanged.
+
+## Reply results and payload metadata
+
+ADR 0118 extends the first slice with REQUEST-STATUS in REPLY only, plus independently optional PRIORITY/GEO and grouped RESOURCES on all four methods. These source codecs do not widen ordinary event/task import or native storage.
+
+`requestStatuses` retains up to 32 reported results in source order. Each keeps its original numeric code spelling, immutable two/three integer levels, decoded description, optional extra data and LANGUAGE. Missing extra data differs from an explicitly empty third field. Escaped commas, semicolons, backslashes and text newlines remain text. Code spelling is capped at 32 characters, numeric levels at 2,147,483,647 and each decoded text component at 4,096 code points. Unknown numeric codes remain data; no success/retry decision or automatic response follows.
+
+`priority` preserves omission independently of a supplied 0–9 value. `geographicPosition` retains exact latitude/longitude decimal strings, each at most 64 characters, with exact latitude ±90 and longitude ±180 bounds. Convenience double getters are approximate; serialization preserves the source decimals without rounding. Geographic fractions are independent of the whole-second timing rule. No mapping/geocoding is started.
+
+`resources` keeps source groups and their LANGUAGE/ALTREP metadata, with at most 32 groups, 64 combined labels and 4,096 code points per label. Empty labels and internal spelling remain intact. Labels do not identify or reserve host resources; links remain inert. Repeated scheduling groups follow the method tables, without changing ordinary-component cardinality. Existing aggregate metadata/syntax budgets still apply, and unprofiled parameters reject.
 
 ORGANIZER, ATTENDEE, SENT-BY and delegation parameters are unverified claims. Their syntax is not proof of identity, membership, sender authority or recipient consent. This adapter does not choose a host scope, compare versions against storage, update events, reserve resources, send automatic replies, activate alarms or dispatch email. Feed publication UIDs never replace scheduling UIDs. Future authenticated reconciliation must supply current trusted authority and prior state before any mutation or outbound intent.
 
