@@ -46,37 +46,9 @@ String _schedulingProjection(
   state.transparencyPresent,
 ]);
 
-String _schedulingSnapshot(CalendarEventPolicySnapshot value) => jsonEncode({
-  'eventId': value.eventId.toString(),
-  'calendarId': value.calendarId.toString(),
-  'revision': value.revision,
-  'protocolUid': value.protocolUid,
-  'updatedAt': value.updatedAt.toIso8601String(),
-  'content': value.content.toJson(),
-  'state': value.protocolState!.toJson(),
-});
-
 CalendarEventPolicySnapshot _schedulingPublished(
   CalendarSchedulingPublicationRecord p,
-) {
-  try {
-    final v = jsonDecode(p.snapshot) as Map<String, dynamic>;
-    return CalendarEventPolicySnapshot(
-      UuidValue.fromString(v['eventId'] as String),
-      UuidValue.fromString(v['calendarId'] as String),
-      v['revision'] as int,
-      CalendarEventContent.fromJson(v['content'] as Map<String, dynamic>),
-      v['protocolUid'] as String,
-      DateTime.parse(v['updatedAt'] as String),
-      origin: CalendarEventOrigin.native,
-      protocolState: CalendarEventProtocolState.fromJson(
-        v['state'] as Map<String, dynamic>,
-      ),
-    );
-  } catch (_) {
-    throw _failure(CalendarFailureCode.unavailable);
-  }
-}
+) => _schedulingReadCheckpoint(p).outgoing;
 
 List<String> _schedulingAddresses(Iterable<String> input, int limit) {
   final values = input.toList();
@@ -132,9 +104,19 @@ String _schedulingPayload(
   int maxBytes, {
   String method = 'REQUEST',
 }) {
-  final source = parseIcalendarSyntax(eventExportBytes([value]))
-      .components
-      .single;
+  final bytes = eventExportBytes([value]);
+  if (method == 'REQUEST') {
+    return utf8.decode(
+      serializeIcalendarSchedulingMessage(
+        projectIcalendarRequestFields(
+          parseIcalendarEventCalendar(bytes),
+          syntaxLimits: IcalendarSyntaxLimits(maxBytes: maxBytes),
+        ),
+        syntaxLimits: IcalendarSyntaxLimits(maxBytes: maxBytes),
+      ),
+    );
+  }
+  final source = parseIcalendarSyntax(bytes).components.single;
   final document = IcalendarSyntaxDocument([
     IcalendarSyntaxComponent('VCALENDAR', [
       ...source.entries.whereType<IcalendarSyntaxProperty>(),
@@ -294,7 +276,7 @@ extension CalendarSchedulingOperations on CalendarService {
       throw _failure(CalendarFailureCode.unavailable);
     }
     final verdict = await _bounded(
-      () => _scheduling.host.authorize(_session, value, tx, phase),
+      () => _scheduling.host.authorizeMessage(_session, value, tx, phase),
     );
     if (verdict != CalendarAuthorizationVerdict.allow) {
       throw _failure(
@@ -368,6 +350,16 @@ extension CalendarSchedulingOperations on CalendarService {
         tx,
         CalendarAuthorizationPhase.preliminaryWrite,
       );
+      final previousCheckpoint = last == null
+          ? null
+          : _schedulingReadCheckpoint(last);
+      if (previousCheckpoint != null &&
+          (previousCheckpoint.canonical.eventId != e.identity.id ||
+              previousCheckpoint.canonical.calendarId !=
+                  e.identity.calendarId ||
+              previousCheckpoint.outgoing.protocolUid != e.data.protocolUid)) {
+        throw _failure(CalendarFailureCode.unavailable);
+      }
       if (cancellation && (meeting == null || last == null)) {
         throw _failure(CalendarFailureCode.validation);
       }
@@ -405,13 +397,8 @@ extension CalendarSchedulingOperations on CalendarService {
               retry.meetingId != meeting?.id)) {
         throw _failure(CalendarFailureCode.validation);
       }
-      if (!cancellation &&
-          retry == null &&
-          _schedulingOverrides(e.data.timingOverrides)) {
-        throw _failure(CalendarFailureCode.validation);
-      }
       if (last != null &&
-          _schedulingRecurring(_schedulingPublished(last).content) !=
+          _schedulingRecurring(previousCheckpoint!.outgoing.content) !=
               _schedulingRecurring(e.data.content)) {
         throw _failure(CalendarFailureCode.unavailable);
       }
@@ -430,9 +417,7 @@ extension CalendarSchedulingOperations on CalendarService {
               jsonEncode(last!.recipients) != jsonEncode(proposals))) {
         throw _failure(CalendarFailureCode.validation);
       }
-      final previousPublished = last == null
-          ? null
-          : _schedulingPublished(last);
+      final previousPublished = previousCheckpoint?.outgoing;
       final metadata = e.data.protocolState!.sourceMetadata;
       final source =
           (metadata ??
@@ -471,12 +456,40 @@ extension CalendarSchedulingOperations on CalendarService {
           last.method == method &&
           (cancellation
               ? e.data.content.status == CalendarEventStatus.cancelled
-              : last.projection == projection &&
+              : _schedulingCanonicalKey(previousCheckpoint!.canonical) ==
+                        _schedulingCanonicalKey(
+                          CalendarEventPolicySnapshot(
+                            e.identity.id!,
+                            e.identity.calendarId,
+                            e.identity.revision,
+                            content,
+                            e.data.protocolUid,
+                            e.data.updatedAt,
+                            protocolState: baseState,
+                            timingOverrides: e.data.timingOverrides,
+                          ),
+                        ) &&
                     _schedulingProjection(
                           e.data.content,
                           e.data.protocolState!,
                         ) ==
-                        projection);
+                        projection &&
+                    _schedulingValue(
+                      () => _schedulingWireUnchanged(
+                        CalendarEventPolicySnapshot(
+                          e.identity.id!,
+                          e.identity.calendarId,
+                          e.identity.revision,
+                          content,
+                          e.data.protocolUid,
+                          e.data.updatedAt,
+                          protocolState: baseState,
+                          timingOverrides: e.data.timingOverrides,
+                        ),
+                        previousCheckpoint,
+                        options.maxPayloadBytes,
+                      ),
+                    ));
       if (retry == null) _eventRevision(e, expectedRevision);
       // Queue eligibility/expiry use raw database time, independent of audit floors.
       final queuedAt = await _revisionTime(tx);
@@ -487,8 +500,28 @@ extension CalendarSchedulingOperations on CalendarService {
           _schedulingProjection(e.data.content, e.data.protocolState!) !=
           projection;
       final currentSequence = e.data.protocolState!.version.sequence ?? 0;
+      final currentNativeMaximum = e.data.protocolState!.overrides.fold(
+        currentSequence,
+        (int value, component) => max(value, component.version.sequence ?? 0),
+      );
+      final previousMaximum = previousCheckpoint == null
+          ? -1
+          : previousCheckpoint.ledger.fold(
+              last!.sequence,
+              (int a, v) => max(a, v.sequence),
+            );
+      final masterUnchanged =
+          !cancellation &&
+          last?.method == 'REQUEST' &&
+          _schedulingProjection(
+                previousPublished!.content,
+                previousPublished.protocolState!,
+              ) ==
+              projection;
       final nextSequence = cancellation
-          ? max(currentSequence, last!.sequence) + 1
+          ? max(currentNativeMaximum, previousMaximum) + 1
+          : masterUnchanged
+          ? last!.sequence
           : max(
               currentSequence + (componentChanged ? 1 : 0),
               (last?.sequence ?? -1) + 1,
@@ -509,6 +542,7 @@ extension CalendarSchedulingOperations on CalendarService {
       final state =
           retry != null ||
               unchanged ||
+              masterUnchanged ||
               !cancellation &&
                   !componentChanged &&
                   nextSequence == currentSequence
@@ -544,6 +578,7 @@ extension CalendarSchedulingOperations on CalendarService {
           ? _eventProtocolValue(
               () => validateEventProtocolState(
                 previousPublished!.protocolState!.copyWith(
+                  overrides: [],
                   statusPresent: true,
                   version: previousPublished.protocolState!.version.copyWith(
                     sequence: nextSequence,
@@ -553,6 +588,13 @@ extension CalendarSchedulingOperations on CalendarService {
                 ),
                 outgoingContent,
                 null,
+              ),
+            )
+          : masterUnchanged && receiptPublication == null
+          ? state.copyWith(
+              version: state.version.copyWith(
+                sequence: last!.sequence,
+                stamp: last.stamp,
               ),
             )
           : state;
@@ -565,11 +607,14 @@ extension CalendarSchedulingOperations on CalendarService {
               proposed.protocolUid,
               proposed.updatedAt,
               origin: proposed.origin,
-              protocolState: outgoingState,
+              timingOverrides: cancellation ? null : proposed.timingOverrides,
+              protocolState: cancellation
+                  ? outgoingState.copyWith(overrides: [])
+                  : outgoingState,
             )
           : _schedulingPublished(receiptPublication);
 
-      final String payload =
+      var payload =
           receiptPublication?.payload ??
           _schedulingValue<String>(
             () => _schedulingPayload(
@@ -578,6 +623,35 @@ extension CalendarSchedulingOperations on CalendarService {
               method: method,
             ),
           );
+      if (receiptPublication == null && !cancellation) {
+        payload = _schedulingValue(
+          () => _schedulingVersionedPayload(
+            payload,
+            previousCheckpoint,
+            now,
+            options.maxPayloadBytes,
+          ),
+        );
+      }
+      final outgoingMessage = _schedulingValue(
+        () => parseIcalendarSchedulingMessage(
+          utf8.encode(payload),
+          syntaxLimits: IcalendarSyntaxLimits(
+            maxBytes: options.maxPayloadBytes,
+          ),
+        ),
+      );
+      final components = _schedulingValue(
+        () => _schedulingComponents(outgoingMessage),
+      );
+      final ledger = cancellation ? previousCheckpoint!.ledger : components;
+      // Validate/bound private storage before policy callbacks or any write.
+      final checkpoint =
+          receiptPublication?.snapshot ??
+          _schedulingWriteCheckpoint(proposed, outgoing, ledger);
+      final bundleProjection =
+          receiptPublication?.projection ??
+          _schedulingBundleProjection(components);
       final intent = CalendarSchedulingIntent(
         method: method,
         organizerAddress: authority.organizerAddress,
@@ -600,7 +674,11 @@ extension CalendarSchedulingOperations on CalendarService {
         calendar: e.parent.snapshot,
         currentEvent: e.snapshot,
         proposedEvent: proposed,
-        outgoingEvent: outgoing,
+        publicationEvent: receiptPublication == null
+            ? proposed
+            : _schedulingReadCheckpoint(receiptPublication).canonical,
+        outgoingMessage: outgoingMessage,
+        payloadDigest: _schedulingDigest(payload),
         authority: authority,
         intent: intent,
       );
@@ -698,13 +776,14 @@ extension CalendarSchedulingOperations on CalendarService {
               generation: savedMeeting.generation + 1,
               method: method,
               protocolUid: e.data.protocolUid,
-              sequence: state.version.sequence!,
-              stamp: state.version.stamp,
-              snapshot: _schedulingSnapshot(outgoing),
-              projection: _schedulingProjection(
-                outgoing.content,
-                outgoing.protocolState!,
-              ),
+              sequence: outgoingMessage.events
+                  .singleWhere((e) => !e.isOverride)
+                  .sequence!,
+              stamp: outgoingMessage.events
+                  .singleWhere((e) => !e.isOverride)
+                  .stamp,
+              snapshot: checkpoint,
+              projection: bundleProjection,
               payload: payload,
               payloadDigest: _schedulingDigest(payload),
               recipients: proposals,
@@ -808,6 +887,13 @@ extension CalendarSchedulingOperations on CalendarService {
         throw _failure(CalendarFailureCode.unavailable);
       }
       await _verifyContext(c);
+      final checkpoint = p == null ? null : _schedulingReadCheckpoint(p);
+      if (checkpoint != null &&
+          (checkpoint.canonical.eventId != e.identity.id ||
+              checkpoint.canonical.calendarId != e.identity.calendarId ||
+              checkpoint.outgoing.protocolUid != e.data.protocolUid)) {
+        throw _failure(CalendarFailureCode.unavailable);
+      }
       return CalendarSchedulingView(
         eventId: eventId,
         eventRevision: e.identity.revision,
@@ -818,9 +904,12 @@ extension CalendarSchedulingOperations on CalendarService {
         method: p?.method,
         hasLocalChanges:
             p == null ||
-            _schedulingOverrides(e.data.timingOverrides) ||
-            p.projection !=
-                _schedulingProjection(e.data.content, e.data.protocolState!),
+            _schedulingCanonicalKey(
+                  p.method == 'CANCEL'
+                      ? checkpoint!.outgoing
+                      : checkpoint!.canonical,
+                ) !=
+                _schedulingCanonicalKey(e.snapshot),
         deliveries: [
           for (final d in deliveries)
             CalendarSchedulingDeliveryView(

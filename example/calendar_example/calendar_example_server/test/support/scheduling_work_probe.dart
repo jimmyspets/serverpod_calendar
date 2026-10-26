@@ -25,7 +25,7 @@ final class _Host implements CalendarSchedulingHost {
     Transaction t,
   ) => throw StateError('No user entry point in worker probe');
   @override
-  Future<CalendarAuthorizationVerdict> authorize(
+  Future<CalendarAuthorizationVerdict> authorizeMessage(
     Session s,
     CalendarSchedulingPolicyContext c,
     Transaction t,
@@ -247,7 +247,32 @@ Future<Map<String, String>> _seed(Session s, String method) =>
       );
       final uid = Uuid().v4obj().toString(),
           recipient = 'mailto:bob@example.invalid';
-      final state = eventProtocolBaseline(content, null, now, now).copyWith(
+      final edits = method == 'REQUEST'
+          ? CalendarEventTimingOverrides(
+              singles: [
+                CalendarEventSingleOverride(
+                  originalStart: content.timing.copyWith(
+                    start: CalendarEventCivil(
+                      year: 2026,
+                      month: 11,
+                      day: 3,
+                      hour: 9,
+                    ),
+                  ),
+                  replacement: content.timing.copyWith(
+                    start: CalendarEventCivil(
+                      year: 2026,
+                      month: 11,
+                      day: 3,
+                      hour: 10,
+                    ),
+                  ),
+                ),
+              ],
+              future: [],
+            )
+          : null;
+      final state = eventProtocolBaseline(content, edits, now, now).copyWith(
         sourceMetadata: CalendarEventSourceMetadata(
           categoryGroups: [],
           comments: [],
@@ -269,6 +294,7 @@ Future<Map<String, String>> _seed(Session s, String method) =>
         uid,
         now,
         origin: CalendarEventOrigin.native,
+        timingOverrides: edits,
         protocolState: state,
       );
       final source = parseIcalendarSyntax(eventExportBytes([snapshot]))
@@ -276,16 +302,65 @@ Future<Map<String, String>> _seed(Session s, String method) =>
           .single;
       final payload = utf8.decode(
         serializeIcalendarSchedulingMessage(
-          validateIcalendarSchedulingMessage(
-            IcalendarSyntaxDocument([
-              IcalendarSyntaxComponent('VCALENDAR', [
-                ...source.entries,
-                IcalendarSyntaxProperty('METHOD', method),
-              ]),
-            ]),
-          ),
+          method == 'REQUEST'
+              ? projectIcalendarRequestFields(
+                  parseIcalendarEventCalendar(eventExportBytes([snapshot])),
+                )
+              : validateIcalendarSchedulingMessage(
+                  IcalendarSyntaxDocument([
+                    IcalendarSyntaxComponent('VCALENDAR', [
+                      ...source.entries,
+                      IcalendarSyntaxProperty('METHOD', method),
+                    ]),
+                  ]),
+                ),
         ),
       );
+      final message = parseIcalendarSchedulingMessage(utf8.encode(payload));
+      final components = message.events.map((e) {
+        final rid = e.source.entries
+            .whereType<IcalendarSyntaxProperty>()
+            .where((p) => p.canonicalName == 'RECURRENCE-ID')
+            .firstOrNull;
+        return {
+          'key': rid == null
+              ? 'master'
+              : jsonEncode([
+                  rid.value,
+                  rid.parameters
+                      .where((p) => p.canonicalName != 'RANGE')
+                      .map((p) => [p.canonicalName, p.values])
+                      .toList(),
+                ]),
+          'future': e.isThisAndFuture,
+          'projection': utf8.decode(
+            serializeIcalendarSyntax(
+              IcalendarSyntaxDocument([
+                IcalendarSyntaxComponent(
+                  'VEVENT',
+                  e.source.entries.where(
+                    (p) =>
+                        p is! IcalendarSyntaxProperty ||
+                        !{'SEQUENCE', 'DTSTAMP'}.contains(p.canonicalName),
+                  ),
+                ),
+              ]),
+            ),
+          ),
+          'sequence': e.sequence ?? 0,
+          'stamp': e.stamp.toIso8601String(),
+        };
+      }).toList();
+      final checkpoint = {
+        'eventId': event.id.toString(),
+        'calendarId': calendar.id.toString(),
+        'revision': 2,
+        'protocolUid': uid,
+        'updatedAt': now.toIso8601String(),
+        'content': content.toJson(),
+        'state': state.toJson(),
+        'overrides': edits?.toJson(),
+      };
       await CalendarEventDataRecord.db.insertRow(
         s,
         CalendarEventDataRecord(
@@ -295,6 +370,7 @@ Future<Map<String, String>> _seed(Session s, String method) =>
           protocolUid: uid,
           uidDigest: eventUidDigest(uid),
           protocolState: state,
+          timingOverrides: edits,
           content: content,
           createdAt: now,
           updatedAt: now,
@@ -326,21 +402,30 @@ Future<Map<String, String>> _seed(Session s, String method) =>
           protocolUid: uid,
           sequence: state.version.sequence!,
           stamp: state.version.stamp,
-          snapshot: jsonEncode({
-            'eventId': event.id.toString(),
-            'calendarId': calendar.id.toString(),
-            'revision': 2,
-            'protocolUid': uid,
-            'updatedAt': now.toIso8601String(),
-            'content': content.toJson(),
-            'state': state.toJson(),
-          }),
-          projection: jsonEncode([
-            content.toJson(),
-            state.sourceMetadata!.toJson(),
-            state.statusPresent,
-            state.transparencyPresent,
-          ]),
+          snapshot: method == 'REQUEST'
+              ? jsonEncode({
+                  'version': 2,
+                  'canonical': checkpoint,
+                  'outgoing': checkpoint,
+                  'ledger': components,
+                })
+              : jsonEncode({
+                  'eventId': event.id.toString(),
+                  'calendarId': calendar.id.toString(),
+                  'revision': 2,
+                  'protocolUid': uid,
+                  'updatedAt': now.toIso8601String(),
+                  'content': content.toJson(),
+                  'state': state.toJson(),
+                }),
+          projection: method == 'REQUEST'
+              ? jsonEncode({'version': 2, 'components': components})
+              : jsonEncode([
+                  content.toJson(),
+                  state.sourceMetadata!.toJson(),
+                  state.statusPresent,
+                  state.transparencyPresent,
+                ]),
           payload: payload,
           payloadDigest: sha256.convert(utf8.encode(payload)).toString(),
           recipients: [recipient],
