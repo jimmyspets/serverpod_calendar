@@ -913,3 +913,16 @@ ADR 0120 adds ADD, REFRESH, COUNTER and DECLINECOUNTER to the source-only adapte
 The full unrelated database/upgrade/worker-loss/Flutter-journey/release-build phases were not repeated for this pure-library increment; preceding evidence remains separate. Full release checks remain required before ready status. Pure parsing establishes no sender authority, stored reconciliation or external-client/mail compatibility. No real mail was sent and development storage was retained.
 
 The owned interactive host and headless Flutter runner were restored without resetting development storage. Serverpod MCP logs/hot reload and Dart MCP Flutter connection/hot reload succeeded; no runtime errors were reported. Restore logs: `.local/itip-methods-development.log` and `.local/itip-methods-chrome.log`.
+
+## Pure VFREEBUSY scheduling batch, 2026-10-26
+
+ADR 0121 adds separate source-only PUBLISH/REQUEST/REPLY codecs. The [profile](itip-freebusy-profile.md) distinguishes grouped source claims from complete authorized availability and ordinary snapshot output. No tables, migrations, dependencies, generated clients or endpoints changed.
+
+- **75 focused VM cases** passed: method cardinalities/allowlists, grouped comma-separated periods, end/duration form, overlap/order/duplicates, omitted/unknown FBTYPE, independent publication identities, result claims, attendee parameter restrictions, whole-second UTC/horizon boundaries, shared budgets and unchanged adapter rejection. The first test load used an incorrect syntax-limit argument and was corrected; initial analysis then found five missing statement blocks, corrected before broader checks. Neither failed attempt is counted as a successful check.
+- `.local/itip-freebusy-batch-check.ps1` runs formatting/fatal-info workspace analysis, complete core/wire VM/Chrome suites, module unit suites, selected native free/busy database regressions and a rebuilt real two-host feed/JWT flow. Final outcomes are recorded below.
+
+The unrelated full database/upgrade/worker-loss/Flutter-journey/release-build phases were not repeated for this pure-library increment; preceding evidence remains separate. Full release checks remain required before ready status. No free/busy request was automatically answered, no source reply certified coverage, no real mail was sent and development storage was retained.
+
+The broader script exited **0**: formatting and fatal-info workspace analysis, **502 core VM + 502 Chrome**, **541 wire VM + 541 Chrome**, **207 calendar module VM + 17 Chrome**, **13 feed VM** and **16 selected free/busy database regressions** passed. The rebuilt real two-host feed/JWT flow passed conditional requests, publication/source separation, revocation/withdrawal, transport redaction and competing writes. Log: `.local/itip-freebusy-batch-check.log`.
+
+The owned interactive host and headless Flutter runner were restored with existing development storage. Serverpod MCP log inspection/hot reload and Dart MCP Flutter connection/hot reload succeeded; no runtime errors were found. Restore logs: `.local/itip-freebusy-development.log` and `.local/itip-freebusy-chrome.log`.
