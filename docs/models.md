@@ -2,6 +2,8 @@
 
 The [ADR 0117 message profile](itip-message-profile.md) adds immutable pure `IcalendarSchedulingMessage` values, not database tables or generated endpoint DTOs. Optional source timing/version fields remain distinct from durable scheduling state, which still requires its own reviewed storage contract.
 
+ADR 0119 separates the pure envelope from an explicit list of `IcalendarSchedulingEvent` components, preserving each component's optional timing/version and original/range identity. Detached source components grant no parent association, stored membership or authority. This unpublished pure API change requires no database migration or generated client changes.
+
 ADR 0118 adds immutable request-status, exact geographic-position and descriptive resource-group values within that pure message. They remain source metadata with no native identity, reservation, retry or authority mapping.
 
 [First native non-recurring event CRUD](native-single-events.md) now implements scoped event storage/commands/projections under [ADR 0053](adr/0053-first-native-single-events.md). Native recurrence, occurrence timing, free/busy and scoped working-hours composition are implemented in the increments linked below; wire/client interoperability remains pending.

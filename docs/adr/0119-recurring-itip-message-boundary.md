@@ -31,3 +31,7 @@ Alternative: initially require a matching master in every recurring scheduling m
 Test recurring DATE/UTC/named-zone masters and additions/exclusions, per-component versions/omissions, detached identities, missing/mismatched zone evidence, UID/cardinality/duplicate constraints, RANGE preservation, malformed input and shared work/output budgets. Test ordinary import and feed regressions separately. Parsing cannot establish replay ordering, stored membership, external sender trust or interoperability with scheduling clients. Durable reconciliation and its model/authority/retention review follow separately.
 
 The detached-component choice is confirmed for this next pure-message batch. Other profile mechanics remain draft review material and must be recorded with actual implementation evidence.
+
+## Scoped implementation
+
+The [message guide](../itip-message-profile.md) documents the implemented envelope/component split, recurrence profile, source-only original/range identities, one-UID/cardinality limits and explicit lack of stored-membership proof. The unpublished API now returns `message.events`; versions and optional fields belong to each `IcalendarSchedulingEvent`. Patterns require a start; overrides cannot also define recurrence patterns. Known incoming profiles are checked, but an original outside an incoming master's rule is not treated as proof of invalid stored membership. Focused tests passed; selected broader checks passed. No database or ordinary-import behavior is changed by this implementation.
