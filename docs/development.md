@@ -168,3 +168,10 @@ The full Flutter journey has a six-minute outer process guard, including compila
 ## Focused event-feed checks
 
 The optional feed pair and example integration are described in [the feed guide](http-event-feeds.md). After `./tool/build-host.ps1`, run `dart run tool/host_smoke.dart --feeds` for only the two-host feed/JWT flow, or add `--flutter` for its focused browser target. The full root check includes all feed tests and the full journey. Stop owned interactive runners before native bundle builds on Windows. Wrap the host entry point in the documented feed logging guard; the test transport-fault fixture is enabled only by the owned test harness.
+
+
+## Synthetic organizer publication
+
+The example installs the optional [native organizer runtime](native-organizer-scheduling.md). Create a new non-recurring event, open **Meeting invitations**, enter synthetic `mailto:...@example.invalid` recipients and use **Save and notify**. Ordinary saves remain local. Existing migrated events have unknown origin and cannot publish; create fresh synthetic events without resetting the development database. The example transport writes ignored `.local/scheduling-mail/` fixtures and sends no email.
+
+`tool/check.ps1` includes the scheduling database suite, populated-schema upgrade check, generated-client cross-host publication races, `tool/scheduling_work_smoke.dart` independent-worker/loss checks and the Flutter publication/local-dirty journey. The scheduling worker probe uses only isolated test storage and kills only its owned fixture processes. Trusted hosts schedule `CalendarModule.runSchedulingMaintenance(session)`; the example invokes it from recurring maintenance every 15 seconds. No client worker endpoint or process-local lock is required.

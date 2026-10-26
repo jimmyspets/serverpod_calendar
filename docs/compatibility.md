@@ -377,3 +377,8 @@ Authenticated [task import](task-import.md#implemented-create-only-operation) no
 [ADR 0116](adr/0116-optional-event-subscription-contract.md) records the approved separate module, stable publication UIDs, exclusion of all alarms and four-table/default choices. The [feed guide](http-event-feeds.md) describes scoped management/publication/HTTP implementation and the required whole-host logging guard. This supersedes blanket feed-not-implemented wording only for that bounded profile. Native and authenticated source behavior remain independent; full local batch validation passed and external subscription-client, scheduling and other release gates remain open.
 
 The [ADR 0121 pure VFREEBUSY scheduling reader](itip-freebusy-profile.md) preserves untrusted source groups/method claims independently of authenticated snapshot output. It adds no automatic response, complete-coverage guarantee, email transport or external-client compatibility evidence.
+
+
+## Bounded native organizer runtime
+
+The approved [ADR 0122 implementation](native-organizer-scheduling.md) adds explicit atomic Save and notify for non-recurring native DATE/UTC/named-zone events with fixed verified organizer/recipients. Generated clients, durable publication/retry storage, database fencing and a synthetic Flutter example are implemented. Ordinary edits stay local; imported/unknown origins cannot publish. Local validation covers only this declared slice. This supersedes blanket scheduling-runtime-pending wording for outbound REQUEST only; recurring runtime, cancellation/recipient changes, inbound reconciliation, RFC 6047 mail and external scheduling-client evidence remain required. Synthetic acceptance does not prove delivery, display or participant response.

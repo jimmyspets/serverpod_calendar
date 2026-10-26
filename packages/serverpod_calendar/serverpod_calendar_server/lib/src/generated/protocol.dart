@@ -114,6 +114,7 @@ import 'calendar_event_occurrence_content_request.dart' as _iaip8d0d;
 import 'calendar_event_occurrence_preview.dart' as _i1a4s0rt;
 import 'calendar_event_occurrence_protocol_version.dart' as _im5iu6ju;
 import 'calendar_event_occurrence_query.dart' as _ivs4ir3j;
+import 'calendar_event_origin.dart' as _ipbrznp8;
 import 'calendar_event_override_protocol_state.dart' as _iml0c566;
 import 'calendar_event_page.dart' as _iaayjmj1;
 import 'calendar_event_protocol_state.dart' as _i8iqsbco;
@@ -162,6 +163,15 @@ import 'calendar_protocol_identity.dart' as _iyrimg3m;
 import 'calendar_protocol_metadata.dart' as _itchuj1l;
 import 'calendar_protocol_metadata_update_request.dart' as _iyawor89;
 import 'calendar_refresh_hint.dart' as _ifsfk5xq;
+import 'calendar_scheduling_attempt_record.dart' as _i64utb1e;
+import 'calendar_scheduling_delivery_record.dart' as _iuidcanh;
+import 'calendar_scheduling_delivery_state.dart' as _it5jr5tm;
+import 'calendar_scheduling_delivery_view.dart' as _i63ky642;
+import 'calendar_scheduling_meeting_record.dart' as _ihlqfuoo;
+import 'calendar_scheduling_publication_record.dart' as _ivo2647b;
+import 'calendar_scheduling_receipt.dart' as _izftntkw;
+import 'calendar_scheduling_save_request.dart' as _icabxeyo;
+import 'calendar_scheduling_view.dart' as _is73suzs;
 import 'calendar_scope_record.dart' as _i9mvj7kq;
 import 'calendar_settings_update_request.dart' as _i66us6t1;
 import 'calendar_subject_action.dart' as _i41idnki;
@@ -312,6 +322,7 @@ export 'calendar_event_occurrence_content_request.dart';
 export 'calendar_event_occurrence_preview.dart';
 export 'calendar_event_occurrence_protocol_version.dart';
 export 'calendar_event_occurrence_query.dart';
+export 'calendar_event_origin.dart';
 export 'calendar_event_override_protocol_state.dart';
 export 'calendar_event_page.dart';
 export 'calendar_event_protocol_state.dart';
@@ -360,6 +371,15 @@ export 'calendar_protocol_identity.dart';
 export 'calendar_protocol_metadata.dart';
 export 'calendar_protocol_metadata_update_request.dart';
 export 'calendar_refresh_hint.dart';
+export 'calendar_scheduling_attempt_record.dart';
+export 'calendar_scheduling_delivery_record.dart';
+export 'calendar_scheduling_delivery_state.dart';
+export 'calendar_scheduling_delivery_view.dart';
+export 'calendar_scheduling_meeting_record.dart';
+export 'calendar_scheduling_publication_record.dart';
+export 'calendar_scheduling_receipt.dart';
+export 'calendar_scheduling_save_request.dart';
+export 'calendar_scheduling_view.dart';
 export 'calendar_scope_record.dart';
 export 'calendar_settings_update_request.dart';
 export 'calendar_subject_action.dart';
@@ -1618,6 +1638,13 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
+          name: 'origin',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:CalendarEventOrigin',
+          columnDefault: '\'unknown\'',
+        ),
+        _isp.ColumnDefinition(
           name: 'protocolUid',
           columnType: _isp.ColumnType.text,
           isNullable: false,
@@ -1757,6 +1784,612 @@ class Protocol extends _is.DatabaseSerializationManager {
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
               definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'serverpod_calendar_scheduling_attempt',
+      dartName: 'CalendarSchedulingAttemptRecord',
+      schema: 'public',
+      module: 'serverpod_calendar',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'deliveryId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'attemptNumber',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseToken',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseFence',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'startedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'finishedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'outcome',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'adapterReceipt',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'resultCode',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_scheduling_attempt_fk_0',
+          columns: ['deliveryId'],
+          referenceTable: 'serverpod_calendar_scheduling_delivery',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_scheduling_attempt_number_unique',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'deliveryId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'attemptNumber',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'serverpod_calendar_scheduling_delivery',
+      dartName: 'CalendarSchedulingDeliveryRecord',
+      schema: 'public',
+      module: 'serverpod_calendar',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'scopeKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'publicationId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'recipientAddress',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'routeRef',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'deliveryKey',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'state',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:CalendarSchedulingDeliveryState',
+          columnDefault: '\'pending\'',
+        ),
+        _isp.ColumnDefinition(
+          name: 'attemptCount',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'nextAttemptAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseOwner',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseToken',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseFence',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseUntil',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'terminalAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'resultCode',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_scheduling_delivery_fk_0',
+          columns: ['publicationId'],
+          referenceTable: 'serverpod_calendar_scheduling_publication',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_scheduling_delivery_recipient_unique',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'publicationId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'recipientAddress',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_scheduling_delivery_key_unique',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'deliveryKey',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_scheduling_delivery_due_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'state',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'nextAttemptAt',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'leaseUntil',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_scheduling_delivery_scope_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'scopeKey',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'terminalAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'serverpod_calendar_scheduling_meeting',
+      dartName: 'CalendarSchedulingMeetingRecord',
+      schema: 'public',
+      module: 'serverpod_calendar',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'scopeKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'calendarId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'eventId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'organizerAddress',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'authorityRef',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'revision',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'generation',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'latestPublicationId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_scheduling_meeting_fk_0',
+          columns: ['eventId'],
+          referenceTable: 'serverpod_calendar_event',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_scheduling_meeting_event_unique',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'eventId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_scheduling_meeting_scope_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'scopeKey',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'serverpod_calendar_scheduling_publication',
+      dartName: 'CalendarSchedulingPublicationRecord',
+      schema: 'public',
+      module: 'serverpod_calendar',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'scopeKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'meetingId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'generation',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'method',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'protocolUid',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'sequence',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'stamp',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'snapshot',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'projection',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'payload',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'payloadDigest',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'recipients',
+          columnType: _isp.ColumnType.json,
+          isNullable: false,
+          dartType: 'List<String>',
+        ),
+        _isp.ColumnDefinition(
+          name: 'commandId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'actorId',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'requestDigest',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'expectedRevision',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'eventRevision',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'expiresAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'completedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'outcome',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_scheduling_publication_fk_0',
+          columns: ['meetingId'],
+          referenceTable: 'serverpod_calendar_scheduling_meeting',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_scheduling_publication_generation_unique',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'meetingId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'generation',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_scheduling_publication_command_unique',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'scopeKey',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'commandId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_scheduling_publication_cleanup_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'completedAt',
             ),
           ],
           type: 'btree',
@@ -2614,6 +3247,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _ivs4ir3j.CalendarEventOccurrenceQuery) {
       return _ivs4ir3j.CalendarEventOccurrenceQuery.fromJson(data) as T;
     }
+    if (t == _ipbrznp8.CalendarEventOrigin) {
+      return _ipbrznp8.CalendarEventOrigin.fromJson(data) as T;
+    }
     if (t == _iml0c566.CalendarEventOverrideProtocolState) {
       return _iml0c566.CalendarEventOverrideProtocolState.fromJson(data) as T;
     }
@@ -2758,6 +3394,33 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _ifsfk5xq.CalendarRefreshHint) {
       return _ifsfk5xq.CalendarRefreshHint.fromJson(data) as T;
+    }
+    if (t == _i64utb1e.CalendarSchedulingAttemptRecord) {
+      return _i64utb1e.CalendarSchedulingAttemptRecord.fromJson(data) as T;
+    }
+    if (t == _iuidcanh.CalendarSchedulingDeliveryRecord) {
+      return _iuidcanh.CalendarSchedulingDeliveryRecord.fromJson(data) as T;
+    }
+    if (t == _it5jr5tm.CalendarSchedulingDeliveryState) {
+      return _it5jr5tm.CalendarSchedulingDeliveryState.fromJson(data) as T;
+    }
+    if (t == _i63ky642.CalendarSchedulingDeliveryView) {
+      return _i63ky642.CalendarSchedulingDeliveryView.fromJson(data) as T;
+    }
+    if (t == _ihlqfuoo.CalendarSchedulingMeetingRecord) {
+      return _ihlqfuoo.CalendarSchedulingMeetingRecord.fromJson(data) as T;
+    }
+    if (t == _ivo2647b.CalendarSchedulingPublicationRecord) {
+      return _ivo2647b.CalendarSchedulingPublicationRecord.fromJson(data) as T;
+    }
+    if (t == _izftntkw.CalendarSchedulingReceipt) {
+      return _izftntkw.CalendarSchedulingReceipt.fromJson(data) as T;
+    }
+    if (t == _icabxeyo.CalendarSchedulingSaveRequest) {
+      return _icabxeyo.CalendarSchedulingSaveRequest.fromJson(data) as T;
+    }
+    if (t == _is73suzs.CalendarSchedulingView) {
+      return _is73suzs.CalendarSchedulingView.fromJson(data) as T;
     }
     if (t == _i9mvj7kq.CalendarScopeRecord) {
       return _i9mvj7kq.CalendarScopeRecord.fromJson(data) as T;
@@ -3468,6 +4131,12 @@ class Protocol extends _is.DatabaseSerializationManager {
               : null)
           as T;
     }
+    if (t == _is.getType<_ipbrznp8.CalendarEventOrigin?>()) {
+      return (data != null
+              ? _ipbrznp8.CalendarEventOrigin.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _is.getType<_iml0c566.CalendarEventOverrideProtocolState?>()) {
       return (data != null
               ? _iml0c566.CalendarEventOverrideProtocolState.fromJson(data)
@@ -3738,6 +4407,60 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_ifsfk5xq.CalendarRefreshHint?>()) {
       return (data != null
               ? _ifsfk5xq.CalendarRefreshHint.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i64utb1e.CalendarSchedulingAttemptRecord?>()) {
+      return (data != null
+              ? _i64utb1e.CalendarSchedulingAttemptRecord.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iuidcanh.CalendarSchedulingDeliveryRecord?>()) {
+      return (data != null
+              ? _iuidcanh.CalendarSchedulingDeliveryRecord.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_it5jr5tm.CalendarSchedulingDeliveryState?>()) {
+      return (data != null
+              ? _it5jr5tm.CalendarSchedulingDeliveryState.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i63ky642.CalendarSchedulingDeliveryView?>()) {
+      return (data != null
+              ? _i63ky642.CalendarSchedulingDeliveryView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ihlqfuoo.CalendarSchedulingMeetingRecord?>()) {
+      return (data != null
+              ? _ihlqfuoo.CalendarSchedulingMeetingRecord.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ivo2647b.CalendarSchedulingPublicationRecord?>()) {
+      return (data != null
+              ? _ivo2647b.CalendarSchedulingPublicationRecord.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_izftntkw.CalendarSchedulingReceipt?>()) {
+      return (data != null
+              ? _izftntkw.CalendarSchedulingReceipt.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_icabxeyo.CalendarSchedulingSaveRequest?>()) {
+      return (data != null
+              ? _icabxeyo.CalendarSchedulingSaveRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_is73suzs.CalendarSchedulingView?>()) {
+      return (data != null
+              ? _is73suzs.CalendarSchedulingView.fromJson(data)
               : null)
           as T;
     }
@@ -4600,6 +5323,14 @@ class Protocol extends _is.DatabaseSerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_i63ky642.CalendarSchedulingDeliveryView>) {
+      return (data as List)
+              .map(
+                (e) => deserialize<_i63ky642.CalendarSchedulingDeliveryView>(e),
+              )
+              .toList()
+          as T;
+    }
     if (t == List<_icnza73c.CalendarCategory>) {
       return (data as List)
               .map((e) => deserialize<_icnza73c.CalendarCategory>(e))
@@ -4891,6 +5622,7 @@ class Protocol extends _is.DatabaseSerializationManager {
       _im5iu6ju.CalendarEventOccurrenceProtocolVersion =>
         'CalendarEventOccurrenceProtocolVersion',
       _ivs4ir3j.CalendarEventOccurrenceQuery => 'CalendarEventOccurrenceQuery',
+      _ipbrznp8.CalendarEventOrigin => 'CalendarEventOrigin',
       _iml0c566.CalendarEventOverrideProtocolState =>
         'CalendarEventOverrideProtocolState',
       _iaayjmj1.CalendarEventPage => 'CalendarEventPage',
@@ -4947,6 +5679,22 @@ class Protocol extends _is.DatabaseSerializationManager {
       _iyawor89.CalendarProtocolMetadataUpdateRequest =>
         'CalendarProtocolMetadataUpdateRequest',
       _ifsfk5xq.CalendarRefreshHint => 'CalendarRefreshHint',
+      _i64utb1e.CalendarSchedulingAttemptRecord =>
+        'CalendarSchedulingAttemptRecord',
+      _iuidcanh.CalendarSchedulingDeliveryRecord =>
+        'CalendarSchedulingDeliveryRecord',
+      _it5jr5tm.CalendarSchedulingDeliveryState =>
+        'CalendarSchedulingDeliveryState',
+      _i63ky642.CalendarSchedulingDeliveryView =>
+        'CalendarSchedulingDeliveryView',
+      _ihlqfuoo.CalendarSchedulingMeetingRecord =>
+        'CalendarSchedulingMeetingRecord',
+      _ivo2647b.CalendarSchedulingPublicationRecord =>
+        'CalendarSchedulingPublicationRecord',
+      _izftntkw.CalendarSchedulingReceipt => 'CalendarSchedulingReceipt',
+      _icabxeyo.CalendarSchedulingSaveRequest =>
+        'CalendarSchedulingSaveRequest',
+      _is73suzs.CalendarSchedulingView => 'CalendarSchedulingView',
       _i9mvj7kq.CalendarScopeRecord => 'CalendarScopeRecord',
       _i66us6t1.CalendarSettingsUpdateRequest =>
         'CalendarSettingsUpdateRequest',
@@ -5213,6 +5961,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarEventOccurrenceProtocolVersion';
       case _ivs4ir3j.CalendarEventOccurrenceQuery():
         return 'CalendarEventOccurrenceQuery';
+      case _ipbrznp8.CalendarEventOrigin():
+        return 'CalendarEventOrigin';
       case _iml0c566.CalendarEventOverrideProtocolState():
         return 'CalendarEventOverrideProtocolState';
       case _iaayjmj1.CalendarEventPage():
@@ -5309,6 +6059,24 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarProtocolMetadataUpdateRequest';
       case _ifsfk5xq.CalendarRefreshHint():
         return 'CalendarRefreshHint';
+      case _i64utb1e.CalendarSchedulingAttemptRecord():
+        return 'CalendarSchedulingAttemptRecord';
+      case _iuidcanh.CalendarSchedulingDeliveryRecord():
+        return 'CalendarSchedulingDeliveryRecord';
+      case _it5jr5tm.CalendarSchedulingDeliveryState():
+        return 'CalendarSchedulingDeliveryState';
+      case _i63ky642.CalendarSchedulingDeliveryView():
+        return 'CalendarSchedulingDeliveryView';
+      case _ihlqfuoo.CalendarSchedulingMeetingRecord():
+        return 'CalendarSchedulingMeetingRecord';
+      case _ivo2647b.CalendarSchedulingPublicationRecord():
+        return 'CalendarSchedulingPublicationRecord';
+      case _izftntkw.CalendarSchedulingReceipt():
+        return 'CalendarSchedulingReceipt';
+      case _icabxeyo.CalendarSchedulingSaveRequest():
+        return 'CalendarSchedulingSaveRequest';
+      case _is73suzs.CalendarSchedulingView():
+        return 'CalendarSchedulingView';
       case _i9mvj7kq.CalendarScopeRecord():
         return 'CalendarScopeRecord';
       case _i66us6t1.CalendarSettingsUpdateRequest():
@@ -5768,6 +6536,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (dataClassName == 'CalendarEventOccurrenceQuery') {
       return deserialize<_ivs4ir3j.CalendarEventOccurrenceQuery>(data['data']);
     }
+    if (dataClassName == 'CalendarEventOrigin') {
+      return deserialize<_ipbrznp8.CalendarEventOrigin>(data['data']);
+    }
     if (dataClassName == 'CalendarEventOverrideProtocolState') {
       return deserialize<_iml0c566.CalendarEventOverrideProtocolState>(
         data['data'],
@@ -5923,6 +6694,45 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'CalendarRefreshHint') {
       return deserialize<_ifsfk5xq.CalendarRefreshHint>(data['data']);
+    }
+    if (dataClassName == 'CalendarSchedulingAttemptRecord') {
+      return deserialize<_i64utb1e.CalendarSchedulingAttemptRecord>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarSchedulingDeliveryRecord') {
+      return deserialize<_iuidcanh.CalendarSchedulingDeliveryRecord>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarSchedulingDeliveryState') {
+      return deserialize<_it5jr5tm.CalendarSchedulingDeliveryState>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarSchedulingDeliveryView') {
+      return deserialize<_i63ky642.CalendarSchedulingDeliveryView>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarSchedulingMeetingRecord') {
+      return deserialize<_ihlqfuoo.CalendarSchedulingMeetingRecord>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarSchedulingPublicationRecord') {
+      return deserialize<_ivo2647b.CalendarSchedulingPublicationRecord>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarSchedulingReceipt') {
+      return deserialize<_izftntkw.CalendarSchedulingReceipt>(data['data']);
+    }
+    if (dataClassName == 'CalendarSchedulingSaveRequest') {
+      return deserialize<_icabxeyo.CalendarSchedulingSaveRequest>(data['data']);
+    }
+    if (dataClassName == 'CalendarSchedulingView') {
+      return deserialize<_is73suzs.CalendarSchedulingView>(data['data']);
     }
     if (dataClassName == 'CalendarScopeRecord') {
       return deserialize<_i9mvj7kq.CalendarScopeRecord>(data['data']);
@@ -6232,6 +7042,14 @@ class Protocol extends _is.DatabaseSerializationManager {
         return _ilvoe14z.CalendarEventRecord.t;
       case _ibccnfmr.CalendarIdentityRecord:
         return _ibccnfmr.CalendarIdentityRecord.t;
+      case _i64utb1e.CalendarSchedulingAttemptRecord:
+        return _i64utb1e.CalendarSchedulingAttemptRecord.t;
+      case _iuidcanh.CalendarSchedulingDeliveryRecord:
+        return _iuidcanh.CalendarSchedulingDeliveryRecord.t;
+      case _ihlqfuoo.CalendarSchedulingMeetingRecord:
+        return _ihlqfuoo.CalendarSchedulingMeetingRecord.t;
+      case _ivo2647b.CalendarSchedulingPublicationRecord:
+        return _ivo2647b.CalendarSchedulingPublicationRecord.t;
       case _i9mvj7kq.CalendarScopeRecord:
         return _i9mvj7kq.CalendarScopeRecord.t;
       case _i76vfrve.CalendarSubjectRecord:

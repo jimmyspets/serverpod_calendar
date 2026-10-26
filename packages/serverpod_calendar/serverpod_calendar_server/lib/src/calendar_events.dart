@@ -78,6 +78,7 @@ final class _Event {
     data.content,
     data.protocolUid.toString(),
     data.updatedAt,
+    origin: data.origin,
     timingOverrides: data.timingOverrides,
     protocolState: data.protocolState,
   );
@@ -344,6 +345,7 @@ extension CalendarEventOperations on CalendarService {
         CalendarEventDataRecord(
           eventId: identity.id!,
           calendarId: input.calendarId,
+          origin: CalendarEventOrigin.native,
           protocolUid: protocolUid,
           uidDigest: eventUidDigest(protocolUid),
           protocolState: state,
@@ -490,6 +492,9 @@ extension CalendarEventOperations on CalendarService {
         CalendarAuthorizationPhase.preliminaryWrite,
       );
       _eventRevision(e, expected);
+      if (value.recurrence != null) {
+        await _rejectSchedulingBinding(e.identity.id!, tx);
+      }
       final overrides = _validatedOverrides(value, e.data.timingOverrides);
       final now = await _revisionTime(tx, previous: e.data.updatedAt);
       final state = _eventProtocolValue(
@@ -644,6 +649,7 @@ extension CalendarEventOperations on CalendarService {
       );
       _eventRevision(e, expected);
       final decisions = await _final(c, requests, tx);
+      await _rejectSchedulingBinding(id, tx);
       await _deleteParentAlarms(
         c.scopeKey,
         CalendarAlarmParentKind.event,

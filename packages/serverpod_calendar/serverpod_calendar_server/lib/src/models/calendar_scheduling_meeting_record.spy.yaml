@@ -1,0 +1,21 @@
+class: CalendarSchedulingMeetingRecord
+serverOnly: true
+table: serverpod_calendar_scheduling_meeting
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  calendarId: UuidValue
+  eventId: UuidValue, relation(parent=serverpod_calendar_event)
+  organizerAddress: String
+  authorityRef: String
+  revision: int
+  generation: int
+  latestPublicationId: UuidValue?
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  calendar_scheduling_meeting_event_unique:
+    fields: eventId
+    unique: true
+  calendar_scheduling_meeting_scope_idx:
+    fields: scopeKey

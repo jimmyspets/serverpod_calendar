@@ -1,4 +1,5 @@
 import 'personal_alarm_screen.dart';
+import 'event_scheduling_screen.dart';
 
 import 'package:flutter/material.dart';
 
@@ -743,6 +744,27 @@ class _EventEditorState extends State<EventEditor> {
             ] else
               const Text(
                 'Some fields are withheld. Full editing is unavailable.',
+              ),
+            if (_view != null &&
+                _view!.disclosedGroups.toSet().containsAll(
+                  cal.CalendarEventFieldGroup.values,
+                ))
+              TextButton(
+                key: const Key('event-scheduling'),
+                onPressed: locked || _dirty
+                    ? null
+                    : () async {
+                        await Navigator.of(context).push<void>(
+                          MaterialPageRoute(
+                            builder: (_) => EventSchedulingScreen(
+                              client: widget.client,
+                              event: _view!,
+                            ),
+                          ),
+                        );
+                        if (mounted) await _run(_reload);
+                      },
+                child: const Text('Meeting invitations'),
               ),
             if (_view != null &&
                 _view!.disclosedGroups.contains(

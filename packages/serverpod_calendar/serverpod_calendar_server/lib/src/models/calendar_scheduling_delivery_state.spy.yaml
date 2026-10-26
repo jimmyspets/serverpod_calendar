@@ -1,0 +1,9 @@
+enum: CalendarSchedulingDeliveryState
+values:
+  - pending
+  - claimed
+  - accepted
+  - failed
+  - expired
+  - superseded
+  - blocked
