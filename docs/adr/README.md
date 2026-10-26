@@ -136,6 +136,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0117](0117-first-itip-message-profile.md) | First pure iTIP message profile | Four-method non-recurring pure boundary approved; scoped implementation passed selected broader checks; no storage, authority or mail implementation |
 | [0118](0118-scheduling-status-and-payload-metadata.md) | Scheduling result and payload metadata | Selected properties; concrete bounded pure codecs under review; no native storage or executable result handling |
 | [0119](0119-recurring-itip-message-boundary.md) | Recurring scheduling-message boundary | Detached components approved; scoped pure implementation passed selected broader checks; ordinary import unchanged |
+| [0120](0120-remaining-pure-event-scheduling-methods.md) | Remaining pure event methods | Selected ADD/REFRESH/COUNTER/DECLINECOUNTER codecs under review; no scheduling transitions or mail |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

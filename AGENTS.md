@@ -6,6 +6,8 @@ ADR 0118 extends only those pure messages with bounded REPLY request-status data
 
 Under ADR 0119, the maintainer approved detached scheduling components without a master in the same message. The pure envelope now owns an explicit component list; preserve independent source omissions/versions and original/range identities. Parsing proves no stored existence/membership or permission to apply edits. Known source-profile checks do not replace later trusted reconciliation. Ordinary authenticated file import still requires its matching master. Do not interpret source future cancellation as implemented native future-cancellation behavior.
 
+ADR 0120 extends the pure adapter to ADD/REFRESH/COUNTER/DECLINECOUNTER with separate method cardinalities and payload rules. Source proposals, refreshes and result codes trigger no lookup, mutation, retry or automatic reply. COUNTER omission remains distinct from explicit SEQUENCE zero; later reconciliation must verify the actual prior version. Concrete mechanics remain draft review material.
+
 ## Current state and sources
 
 This repository now contains an initial workspace/authentication scaffold; calendar domain features remain documentation-first. Read README.md, docs/discussion-migration.md, docs/requirements.md, and the relevant proposed ADRs before changes. The per-RFC tables in docs/rfc/ are the latest feature-scope source; explicit newer maintainer instructions take precedence. Reconcile older narrative text with the table statuses and notes without treating unapproved implementation detail as accepted. Architecture documents describe proposals, not implemented behavior. Do not invent earlier chat decisions or claim complete iCalendar, CalDAV, or client compatibility.

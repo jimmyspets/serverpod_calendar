@@ -305,13 +305,7 @@ void main() {
     });
   }
   test('unsupported methods, mixed/multiple components and alarms reject', () {
-    for (final method in [
-      'ADD',
-      'REFRESH',
-      'COUNTER',
-      'DECLINECOUNTER',
-      'X-METHOD',
-    ]) {
+    for (final method in ['X-METHOD']) {
       expect(() => load(message(method, minimal('REQUEST'))), rejects());
     }
     for (final component in [

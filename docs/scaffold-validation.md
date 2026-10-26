@@ -901,3 +901,15 @@ The unrelated full database/upgrade/worker-loss/browser/release-build phases wer
 The final standards review added the scheduling-only observance restriction from verified RFC 5546 erratum 3932. Its regression proves ordinary RFC 5545 source still accepts a matching mixed RRULE/RDATE observance while iTIP rejects it. On the final source, complete wire VM and Chrome suites each passed **433 cases**, including **80 scheduling cases**, and fatal-info workspace analysis passed. Logs: `.local/itip-recurring-final-wire-vm.log`, `.local/itip-recurring-final-wire-chrome.log`, `.local/itip-recurring-final-analysis.log`. Unaffected completed core/module/database/feed phases above were not repeated for that isolated validation guard.
 
 The owned interactive host and headless Flutter runner were restored with existing development storage. Serverpod MCP logs/hot reload and Dart MCP Flutter connection/hot reload succeeded, with no runtime errors. Restore logs are `.local/itip-recurring-development.log` and `.local/itip-recurring-chrome.log`.
+
+## Remaining pure event methods, 2026-10-26
+
+ADR 0120 adds ADD, REFRESH, COUNTER and DECLINECOUNTER to the source-only adapter. No tables, migrations, dependencies, generated clients or endpoints changed. Method constraints, source omissions and inert proposal/result handling are documented in the [profile](itip-message-profile.md).
+
+- Focused scheduling tests passed **113 cases**: minimal/populated method messages, required/forbidden fields, attendee/component cardinality, absent/zero/positive SEQUENCE, detached identity, status/result combinations, immutable source round trips, work limits and ordinary-import rejection.
+- `.local/itip-methods-batch-check.ps1` completed all selected phases, recorded in `.local/itip-methods-batch-check.log`. Formatting and fatal-info workspace analysis passed, along with **502 core VM + 502 Chrome**, **466 wire VM + 466 Chrome**, **207 calendar module VM + 17 Chrome**, **13 feed VM** and **57 selected database import/export/replacement regressions**.
+- A rebuilt example passed the real two-host `dart run tool/host_smoke.dart --feeds` flow: source/publication separation, alarm exclusion, conditional responses, revocation/withdrawal, transport redaction and competing writes. JWT checks passed.
+
+The full unrelated database/upgrade/worker-loss/Flutter-journey/release-build phases were not repeated for this pure-library increment; preceding evidence remains separate. Full release checks remain required before ready status. Pure parsing establishes no sender authority, stored reconciliation or external-client/mail compatibility. No real mail was sent and development storage was retained.
+
+The owned interactive host and headless Flutter runner were restored without resetting development storage. Serverpod MCP logs/hot reload and Dart MCP Flutter connection/hot reload succeeded; no runtime errors were reported. Restore logs: `.local/itip-methods-development.log` and `.local/itip-methods-chrome.log`.
