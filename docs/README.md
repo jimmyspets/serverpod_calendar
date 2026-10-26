@@ -2,7 +2,7 @@
 
 The maintainer has specified first-release capabilities in [requirements](requirements.md). The workspace/authentication scaffold and scoped native calendar CRUD/metadata increments have local implementation evidence. Broader domain designs remain proposals; pure wire adapters are limited to the explicitly documented profile and no external-client compatibility is claimed.
 
-The [pure scheduling-message profile](itip-message-profile.md) documents the ADR 0117 initial adapter, ADR 0119 recurring/detached extension and ADR 0120 remaining event methods, independently of durable reconciliation and email. The separate [VFREEBUSY scheduling profile](itip-freebusy-profile.md) covers source periods and method constraints under ADR 0121.
+The [pure scheduling-message profile](itip-message-profile.md) documents the ADR 0117 initial adapter, ADR 0119 recurring/detached extension and ADR 0120 remaining event methods, independently of durable reconciliation and email. The separate [VFREEBUSY scheduling profile](itip-freebusy-profile.md) covers source periods and method constraints under ADR 0121. [ADR 0122](adr/0122-explicit-native-organizer-publication.md) records confirmed explicit publication/native-origin choices and the proposed organizer storage/workflow for review.
 
 | Document | Purpose |
 | --- | --- |
