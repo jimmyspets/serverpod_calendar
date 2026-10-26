@@ -110,6 +110,12 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_presentation_upd
     as _iju8myao;
 import 'package:serverpod_calendar_client/src/protocol/calendar_protocol_metadata_update_request.dart'
     as _i3063onq;
+import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_receipt.dart'
+    as _ip6y7si3;
+import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_save_request.dart'
+    as _ihl5k6te;
+import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_view.dart'
+    as _i6q8if2a;
 import 'package:serverpod_calendar_client/src/protocol/calendar_settings_update_request.dart'
     as _ixxutfio;
 import 'package:serverpod_calendar_client/src/protocol/calendar_subject_change_request.dart'
@@ -550,6 +556,22 @@ class EndpointCalendarEvent extends _isc.EndpointRef {
 
   @override
   String get name => 'serverpod_calendar.calendarEvent';
+
+  _ida.Future<_ip6y7si3.CalendarSchedulingReceipt> saveAndNotify(
+    _ihl5k6te.CalendarSchedulingSaveRequest request,
+  ) => caller.callServerEndpoint<_ip6y7si3.CalendarSchedulingReceipt>(
+    'serverpod_calendar.calendarEvent',
+    'saveAndNotify',
+    {'request': request},
+  );
+
+  _ida.Future<_i6q8if2a.CalendarSchedulingView> schedulingStatus(
+    _isc.UuidValue eventId,
+  ) => caller.callServerEndpoint<_i6q8if2a.CalendarSchedulingView>(
+    'serverpod_calendar.calendarEvent',
+    'schedulingStatus',
+    {'eventId': eventId},
+  );
 
   _ida.Future<_ijp3g32l.CalendarEventReplaceResult> replaceFromImport(
     _imamfnav.CalendarEventReplaceRequest request,

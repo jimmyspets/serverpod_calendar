@@ -1,0 +1,55 @@
+# Explicit native organizer scheduling
+
+Status: scoped implementation of the maintainer-approved [ADR 0122](adr/0122-explicit-native-organizer-publication.md) batch; focused and broader phased local validation passed (see the evidence below). This is outbound REQUEST publication through a transport-independent port and a synthetic example adapter. It does not implement inbound reconciliation, cancellation messages, recurring scheduling or RFC 6047 mail.
+
+## Publishing and local edits
+
+Create an ordinary native event first. The generated `calendarEvent.saveAndNotify` API accepts its UUID and expected revision, final event content, recipient calendar-address proposals and a UUID command key. It saves the validated event and all recipient intents in one transaction, or saves nothing. Ordinary event edits never queue invitations. The host supplies the verified organizer and approved routes; no client-supplied organizer identity or system flag is accepted.
+
+The first workflow supports non-recurring DATE, UTC and named-zone native events with a fixed organizer and 1–64 fixed recipients. Every subsequent publication is a complete REQUEST snapshot for that same set. Imported and unknown-origin events require a future explicit adoption flow. Changing recipients/organizer, recurring publication, cancellations, replies, delegation and other methods reject in this increment and remain first-release work. No invitation grants access, assigns a task or reserves a resource.
+
+The canonical event retains the approved organizer/attendee metadata; ordinary source-read permissions protect it. The event's protocol UID is stable and separate from feed publication identity and transport IDs. Native omitted/empty summaries produce an empty scheduling SUMMARY, never the example's “Untitled event” display label. Existing text LANGUAGE/ALTREP annotations survive ordinary text changes. Rich data unsupported by the scheduling profile rejects before committing; it is not silently dropped.
+
+Actual component changes advance the native component version. Publishing an already-saved local edit reuses its existing newer component version when it is ahead of the last publication. A changed outgoing publication must always have a greater SEQUENCE than the previous publication; overflow rejects atomically. Database-clock component times are whole-second and nondecreasing. Retries never change payload, source identity, SEQUENCE or DTSTAMP.
+
+An exact retained command retry rechecks current authorization and returns its recorded receipt. A conflicting reuse of the command key rejects. Identical normalized current and last-published content is a true no-op with no revision, protocol, scope-generation or intent changes. A new publication advances the API revision even when the component was already saved locally, so stale commands cannot queue another publication. Command receipts have bounded retention; after cleanup, stale expected revisions still reject, but indefinite command-key deduplication is not promised. Save and notify is not an implicit manual resend of a failed publication.
+
+## Host authorization and installation
+
+Install an optional `CalendarSchedulingRuntime` on `CalendarModule.install`. It contains a `CalendarSchedulingHost`, `CalendarSchedulingTransport` and bounded `CalendarSchedulingOptions`. A host can omit it while using ordinary calendar/import/export/feed APIs. Scheduling publication then fails unavailable; no permissive default sender or transport exists.
+
+The ordinary policy independently enforces `publishScheduling`, `updateEvent`, full event detail disclosure and `readEventSource`, plus lifecycle permission when applicable. `readScheduling` independently controls the bounded status response. Policies receive actual calendar/event state, validated final content/protocol state and an immutable `CalendarSchedulingIntent` containing the exact outgoing bytes, organizer, roster and publication generation. A command key or stored authority reference is never a grant.
+
+The dedicated host adapter resolves approved organizer/routes and explicitly authorizes disclosure of the exact payload and full attendee roster to every recipient. It checks again before commit. The transaction uses the existing scope lock and declared coordinated or external fresh-check guarantee; configuration and runtime checks reject a required-guarantee downgrade. A fresh external check still has an after-check revocation race. Hosts claiming coordination must implement real commit/revocation coordination through the provided transaction, not just return an enum.
+
+Background work receives `CalendarSchedulingPolicyContext` with no fabricated login. The host must freshly enforce current sender, route, publication and full detail/source-disclosure authority for the exact queued snapshot, not just check that an event exists. Route references cannot silently redirect to another calendar address. Declared guarantees and the external after-check race apply here too. No network submission occurs under the scope lock.
+
+The reusable module exposes `CalendarModule.runSchedulingMaintenance(session)` as a trusted server entry point. Schedule bounded wake-ups on each host or run dedicated workers. The example's recurring maintenance call runs it every 15 seconds alongside existing maintenance. Correctness uses shared database leases, transaction locks and fencing, not process-local locks, caches, sticky routing or one designated host.
+
+## Durable records and limits
+
+Four server-only tables separate organizer binding, immutable publication, recipient delivery and delivery attempts. The publication stores a normalized snapshot and immutable ICS bytes; each recipient has a stable delivery key, route, lease/fence, attempts and outcome. Attempts distinguish acceptance, failure, uncertainty and work never submitted. Source bodies and routing/authority references are absent from ordinary responses, exports, feeds and diagnostics. The generated `schedulingStatus` API exposes origin, latest-publication identity/time, local-change indication and at most 64 authorized recipient outcomes, without raw bytes, routes or totals.
+
+New native creates record `native` origin; create-only import records `imported`; generated migrations mark existing rows `unknown`. A null import baseline or UUID-shaped source UID proves no origin. Development storage is not automatically reset. Existing events with unknown origin can still use their ordinary APIs but cannot enter this initial organizer workflow.
+
+Defaults are 512 KiB ICS, 64 recipients, 16 nonterminal and 256 retained publications per meeting, 10,000 nonterminal recipient deliveries per scope, 100 maintenance candidates, eight attempts, a 120-second lease, a 30-second transport timeout, exponential retry from 30 seconds capped at one hour, seven-day expiry and 30-day terminal-history retention. Options enforce finite bounds; recipient and payload ceilings cannot exceed this profile. Capacity checks are transactional and fail the whole publication, without eviction or partial recipient sets.
+
+Cleanup removes superseded completed publications, recipient rows, attempts and receipts after retention. The latest published snapshot remains while its binding is active to compare against local edits and preserve exact retry meaning. It may retain an old title/body removed by a later local edit; it remains private. Cleanup excludes active checkpoints before limiting candidate work, so old active checkpoints cannot starve eligible cleanup.
+
+An organizer binding blocks event deletion, recurrence conversion and source replacement/adoption in this first increment. There is no binding deletion/restore API yet. Local native cancellation sends no CANCEL and suppresses queued REQUEST delivery. The later explicit cancellation/deletion workflow must notify previously invited recipients and specify minimal correlation retention and content scrubbing before it can replace these restrictions.
+
+## Submission and example behavior
+
+Every dispatch/retry checks parent state, current publication generation, recipient authority, route binding, immutable payload validity and expiry. Newer publications supersede older work not yet submitted. Authority denial blocks delivery; unavailable checks remain retryable until expiry and send nothing. Completion uses only the current lease/fence. A dead holder's unfinished attempt becomes uncertain when another worker takes over.
+
+`CalendarSchedulingTransport.submit` receives the stable delivery key, immutable payload and approved source/recipient routing. Its result distinguishes accepted, transient failure, permanent failure and uncertain. Adapter exceptions/timeouts are uncertain; arbitrary exception text is not stored. Receipts must be bounded opaque text. Acceptance is not receipt, display, attendee response or resource acceptance. An already submitted message cannot be recalled after a generation/authority change. Crash after external acceptance but before commit may cause duplicate delivery; the host should support idempotency using the stable key, but exactly-once transport is not promised.
+
+The example approves only synthetic `example.invalid` addresses and derives a synthetic organizer from the active demo identity. Its transport records fixtures under ignored `.local/scheduling-mail/` and sends no email. No SMTP/MIME provider, credential, device token, FCM/APNs or real recipient is added. Production hosts replace the policy and transport; RFC 6047 MIME and trusted inbound mail remain separate reviewed work.
+
+The Flutter event editor opens **Meeting invitations** for saved full-detail events. That screen edits text, proposes initial recipients, explicitly saves and queues publication, shows whether current saved content differs from the publication, and lists delivery outcomes. Timing follows the saved event; ordinary timing edits stay local until publication. An uncertain response retains the exact command for retry. Reload explicitly discards unsaved text and refreshes authoritative state. Cancellation/recipient changes are clearly outside this first screen.
+
+## Evidence and remaining work
+
+Focused database tests cover authorization, atomicity, native/imported/unknown origin, DATE/UTC/zones, source annotations, command/revision behavior, private snapshots, supersession, expiry, recovery and retention. Separate processes exercise competing workers and actual holder loss before/after synthetic acceptance. Generated-client and Flutter journeys extend the root checks. Actual counts, failures/corrections and broad-run results are recorded in [validation](scaffold-validation.md); tests do not establish external mail/client interoperability or full scheduling conformance.
+
+Recurring/native lifecycle profiles, participant changes, inbound ledger/order/reconciliation, replies/delegation/counters, VFREEBUSY runtime, explicit adoption/resend/cancellation cleanup, maintained MIME transport and external-client/release evidence remain required separately. All selected methods remain in the [RFC inventory](rfc/rfc-5546.md).

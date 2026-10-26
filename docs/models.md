@@ -236,7 +236,7 @@ GET/HEAD use fixed ICS output and the selected [HTTP profile](adr/0016-subscript
 
 ## Scheduling and import/export models
 
-[ADR 0122](adr/0122-explicit-native-organizer-publication.md) proposes the first physical outbound-only slice: organizer binding, immutable publication, per-recipient delivery and attempt tables, plus a server-controlled native/imported/unknown event-origin field. These are not implemented or approved. Private latest-publication snapshots differ from live canonical data; retained historical bodies require explicit model review. The broader candidate catalog below still covers later inbound/participation/counter work and is not blanket schema approval.
+[ADR 0122](adr/0122-explicit-native-organizer-publication.md) explicitly approves the first physical outbound-only slice: organizer binding, immutable publication, per-recipient delivery and attempt tables, plus a server-controlled native/imported/unknown event-origin field. These now have generated model sources and migrations; see [scoped implementation](native-organizer-scheduling.md). Private latest-publication snapshots differ from live canonical data; their approved retention keeps the latest checkpoint while its binding is active and prunes superseded terminal history after a configurable 30-day default. The broader candidate catalog below still covers later inbound/participation/counter work and is not blanket schema approval.
 
 | Model | Candidate fields | Contract |
 | --- | --- | --- |

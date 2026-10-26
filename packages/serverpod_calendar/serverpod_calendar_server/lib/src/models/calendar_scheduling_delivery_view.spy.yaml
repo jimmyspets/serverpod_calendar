@@ -1,0 +1,7 @@
+class: CalendarSchedulingDeliveryView
+immutable: true
+fields:
+  recipientAddress: String
+  state: CalendarSchedulingDeliveryState
+  attemptCount: int
+  resultCode: String?

@@ -138,7 +138,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0119](0119-recurring-itip-message-boundary.md) | Recurring scheduling-message boundary | Detached components approved; scoped pure implementation passed selected broader checks; ordinary import unchanged |
 | [0120](0120-remaining-pure-event-scheduling-methods.md) | Remaining pure event methods | Selected ADD/REFRESH/COUNTER/DECLINECOUNTER codecs under review; no scheduling transitions or mail |
 | [0121](0121-pure-freebusy-scheduling-messages.md) | Pure free/busy scheduling | Selected PUBLISH/REQUEST/REPLY codecs; concrete mechanics under review; no availability authority or automatic response |
-| [0122](0122-explicit-native-organizer-publication.md) | Explicit native organizer publication | Confirmed explicit Save and notify and native-created meetings first; proposed first scope, four tables, origin, retention and worker mechanics await review |
+| [0122](0122-explicit-native-organizer-publication.md) | Explicit native organizer publication | Accepted bounded native non-recurring REQUEST publication, four tables, origin, retention and worker defaults; scoped implementation, broader scheduling remains |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

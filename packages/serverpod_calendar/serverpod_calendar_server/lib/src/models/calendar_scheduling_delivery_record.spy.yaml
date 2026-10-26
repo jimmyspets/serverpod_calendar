@@ -1,0 +1,30 @@
+class: CalendarSchedulingDeliveryRecord
+serverOnly: true
+table: serverpod_calendar_scheduling_delivery
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  publicationId: UuidValue, relation(parent=serverpod_calendar_scheduling_publication)
+  recipientAddress: String
+  routeRef: String
+  deliveryKey: UuidValue, default=random
+  state: CalendarSchedulingDeliveryState, default=pending
+  attemptCount: int, default=0
+  nextAttemptAt: DateTime
+  leaseOwner: UuidValue?
+  leaseToken: UuidValue?
+  leaseFence: int, default=0
+  leaseUntil: DateTime?
+  terminalAt: DateTime?
+  resultCode: String?
+indexes:
+  calendar_scheduling_delivery_recipient_unique:
+    fields: publicationId, recipientAddress
+    unique: true
+  calendar_scheduling_delivery_key_unique:
+    fields: deliveryKey
+    unique: true
+  calendar_scheduling_delivery_due_idx:
+    fields: state, nextAttemptAt, leaseUntil
+  calendar_scheduling_delivery_scope_idx:
+    fields: scopeKey, terminalAt

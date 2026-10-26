@@ -9,6 +9,7 @@ import 'package:serverpod_calendar_feed_server/serverpod_calendar_feed_server.da
 class CalendarAlarmMaintenanceFutureCall extends FutureCall {
   Future<void> sweep(Session session) async {
     await CalendarModule.runAlarmMaintenance(session);
+    await CalendarModule.runSchedulingMaintenance(session);
     await notify.NotificationModule.runMaintenance(session);
     await feed.CalendarFeedModule.runMaintenance(session);
   }

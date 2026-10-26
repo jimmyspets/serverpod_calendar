@@ -102,6 +102,7 @@ import 'calendar_event_occurrence_content_request.dart' as _iaip8d0d;
 import 'calendar_event_occurrence_preview.dart' as _i1a4s0rt;
 import 'calendar_event_occurrence_protocol_version.dart' as _im5iu6ju;
 import 'calendar_event_occurrence_query.dart' as _ivs4ir3j;
+import 'calendar_event_origin.dart' as _ipbrznp8;
 import 'calendar_event_page.dart' as _iaayjmj1;
 import 'calendar_event_protocol_version.dart' as _iblfo3t0;
 import 'calendar_event_receipt.dart' as _i500bvo7;
@@ -138,6 +139,11 @@ import 'calendar_protocol_identity.dart' as _iyrimg3m;
 import 'calendar_protocol_metadata.dart' as _itchuj1l;
 import 'calendar_protocol_metadata_update_request.dart' as _iyawor89;
 import 'calendar_refresh_hint.dart' as _ifsfk5xq;
+import 'calendar_scheduling_delivery_state.dart' as _it5jr5tm;
+import 'calendar_scheduling_delivery_view.dart' as _i63ky642;
+import 'calendar_scheduling_receipt.dart' as _izftntkw;
+import 'calendar_scheduling_save_request.dart' as _icabxeyo;
+import 'calendar_scheduling_view.dart' as _is73suzs;
 import 'calendar_settings_update_request.dart' as _i66us6t1;
 import 'calendar_subject_action.dart' as _i41idnki;
 import 'calendar_subject_availability.dart' as _imo3vsmf;
@@ -260,6 +266,7 @@ export 'calendar_event_occurrence_content_request.dart';
 export 'calendar_event_occurrence_preview.dart';
 export 'calendar_event_occurrence_protocol_version.dart';
 export 'calendar_event_occurrence_query.dart';
+export 'calendar_event_origin.dart';
 export 'calendar_event_page.dart';
 export 'calendar_event_protocol_version.dart';
 export 'calendar_event_receipt.dart';
@@ -296,6 +303,11 @@ export 'calendar_protocol_identity.dart';
 export 'calendar_protocol_metadata.dart';
 export 'calendar_protocol_metadata_update_request.dart';
 export 'calendar_refresh_hint.dart';
+export 'calendar_scheduling_delivery_state.dart';
+export 'calendar_scheduling_delivery_view.dart';
+export 'calendar_scheduling_receipt.dart';
+export 'calendar_scheduling_save_request.dart';
+export 'calendar_scheduling_view.dart';
 export 'calendar_settings_update_request.dart';
 export 'calendar_subject_action.dart';
 export 'calendar_subject_availability.dart';
@@ -622,6 +634,9 @@ class Protocol extends _isc.SerializationManager {
     if (t == _ivs4ir3j.CalendarEventOccurrenceQuery) {
       return _ivs4ir3j.CalendarEventOccurrenceQuery.fromJson(data) as T;
     }
+    if (t == _ipbrznp8.CalendarEventOrigin) {
+      return _ipbrznp8.CalendarEventOrigin.fromJson(data) as T;
+    }
     if (t == _iaayjmj1.CalendarEventPage) {
       return _iaayjmj1.CalendarEventPage.fromJson(data) as T;
     }
@@ -730,6 +745,21 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _ifsfk5xq.CalendarRefreshHint) {
       return _ifsfk5xq.CalendarRefreshHint.fromJson(data) as T;
+    }
+    if (t == _it5jr5tm.CalendarSchedulingDeliveryState) {
+      return _it5jr5tm.CalendarSchedulingDeliveryState.fromJson(data) as T;
+    }
+    if (t == _i63ky642.CalendarSchedulingDeliveryView) {
+      return _i63ky642.CalendarSchedulingDeliveryView.fromJson(data) as T;
+    }
+    if (t == _izftntkw.CalendarSchedulingReceipt) {
+      return _izftntkw.CalendarSchedulingReceipt.fromJson(data) as T;
+    }
+    if (t == _icabxeyo.CalendarSchedulingSaveRequest) {
+      return _icabxeyo.CalendarSchedulingSaveRequest.fromJson(data) as T;
+    }
+    if (t == _is73suzs.CalendarSchedulingView) {
+      return _is73suzs.CalendarSchedulingView.fromJson(data) as T;
     }
     if (t == _i66us6t1.CalendarSettingsUpdateRequest) {
       return _i66us6t1.CalendarSettingsUpdateRequest.fromJson(data) as T;
@@ -1326,6 +1356,12 @@ class Protocol extends _isc.SerializationManager {
               : null)
           as T;
     }
+    if (t == _isc.getType<_ipbrznp8.CalendarEventOrigin?>()) {
+      return (data != null
+              ? _ipbrznp8.CalendarEventOrigin.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _isc.getType<_iaayjmj1.CalendarEventPage?>()) {
       return (data != null ? _iaayjmj1.CalendarEventPage.fromJson(data) : null)
           as T;
@@ -1524,6 +1560,36 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_ifsfk5xq.CalendarRefreshHint?>()) {
       return (data != null
               ? _ifsfk5xq.CalendarRefreshHint.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_it5jr5tm.CalendarSchedulingDeliveryState?>()) {
+      return (data != null
+              ? _it5jr5tm.CalendarSchedulingDeliveryState.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_i63ky642.CalendarSchedulingDeliveryView?>()) {
+      return (data != null
+              ? _i63ky642.CalendarSchedulingDeliveryView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_izftntkw.CalendarSchedulingReceipt?>()) {
+      return (data != null
+              ? _izftntkw.CalendarSchedulingReceipt.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_icabxeyo.CalendarSchedulingSaveRequest?>()) {
+      return (data != null
+              ? _icabxeyo.CalendarSchedulingSaveRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_is73suzs.CalendarSchedulingView?>()) {
+      return (data != null
+              ? _is73suzs.CalendarSchedulingView.fromJson(data)
               : null)
           as T;
     }
@@ -2152,6 +2218,14 @@ class Protocol extends _isc.SerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_i63ky642.CalendarSchedulingDeliveryView>) {
+      return (data as List)
+              .map(
+                (e) => deserialize<_i63ky642.CalendarSchedulingDeliveryView>(e),
+              )
+              .toList()
+          as T;
+    }
     if (t == List<_icnza73c.CalendarCategory>) {
       return (data as List)
               .map((e) => deserialize<_icnza73c.CalendarCategory>(e))
@@ -2398,6 +2472,7 @@ class Protocol extends _isc.SerializationManager {
       _im5iu6ju.CalendarEventOccurrenceProtocolVersion =>
         'CalendarEventOccurrenceProtocolVersion',
       _ivs4ir3j.CalendarEventOccurrenceQuery => 'CalendarEventOccurrenceQuery',
+      _ipbrznp8.CalendarEventOrigin => 'CalendarEventOrigin',
       _iaayjmj1.CalendarEventPage => 'CalendarEventPage',
       _iblfo3t0.CalendarEventProtocolVersion => 'CalendarEventProtocolVersion',
       _i500bvo7.CalendarEventReceipt => 'CalendarEventReceipt',
@@ -2437,6 +2512,14 @@ class Protocol extends _isc.SerializationManager {
       _iyawor89.CalendarProtocolMetadataUpdateRequest =>
         'CalendarProtocolMetadataUpdateRequest',
       _ifsfk5xq.CalendarRefreshHint => 'CalendarRefreshHint',
+      _it5jr5tm.CalendarSchedulingDeliveryState =>
+        'CalendarSchedulingDeliveryState',
+      _i63ky642.CalendarSchedulingDeliveryView =>
+        'CalendarSchedulingDeliveryView',
+      _izftntkw.CalendarSchedulingReceipt => 'CalendarSchedulingReceipt',
+      _icabxeyo.CalendarSchedulingSaveRequest =>
+        'CalendarSchedulingSaveRequest',
+      _is73suzs.CalendarSchedulingView => 'CalendarSchedulingView',
       _i66us6t1.CalendarSettingsUpdateRequest =>
         'CalendarSettingsUpdateRequest',
       _i41idnki.CalendarSubjectAction => 'CalendarSubjectAction',
@@ -2661,6 +2744,8 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarEventOccurrenceProtocolVersion';
       case _ivs4ir3j.CalendarEventOccurrenceQuery():
         return 'CalendarEventOccurrenceQuery';
+      case _ipbrznp8.CalendarEventOrigin():
+        return 'CalendarEventOrigin';
       case _iaayjmj1.CalendarEventPage():
         return 'CalendarEventPage';
       case _iblfo3t0.CalendarEventProtocolVersion():
@@ -2733,6 +2818,16 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarProtocolMetadataUpdateRequest';
       case _ifsfk5xq.CalendarRefreshHint():
         return 'CalendarRefreshHint';
+      case _it5jr5tm.CalendarSchedulingDeliveryState():
+        return 'CalendarSchedulingDeliveryState';
+      case _i63ky642.CalendarSchedulingDeliveryView():
+        return 'CalendarSchedulingDeliveryView';
+      case _izftntkw.CalendarSchedulingReceipt():
+        return 'CalendarSchedulingReceipt';
+      case _icabxeyo.CalendarSchedulingSaveRequest():
+        return 'CalendarSchedulingSaveRequest';
+      case _is73suzs.CalendarSchedulingView():
+        return 'CalendarSchedulingView';
       case _i66us6t1.CalendarSettingsUpdateRequest():
         return 'CalendarSettingsUpdateRequest';
       case _i41idnki.CalendarSubjectAction():
@@ -3117,6 +3212,9 @@ class Protocol extends _isc.SerializationManager {
     if (dataClassName == 'CalendarEventOccurrenceQuery') {
       return deserialize<_ivs4ir3j.CalendarEventOccurrenceQuery>(data['data']);
     }
+    if (dataClassName == 'CalendarEventOrigin') {
+      return deserialize<_ipbrznp8.CalendarEventOrigin>(data['data']);
+    }
     if (dataClassName == 'CalendarEventPage') {
       return deserialize<_iaayjmj1.CalendarEventPage>(data['data']);
     }
@@ -3228,6 +3326,25 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'CalendarRefreshHint') {
       return deserialize<_ifsfk5xq.CalendarRefreshHint>(data['data']);
+    }
+    if (dataClassName == 'CalendarSchedulingDeliveryState') {
+      return deserialize<_it5jr5tm.CalendarSchedulingDeliveryState>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarSchedulingDeliveryView') {
+      return deserialize<_i63ky642.CalendarSchedulingDeliveryView>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarSchedulingReceipt') {
+      return deserialize<_izftntkw.CalendarSchedulingReceipt>(data['data']);
+    }
+    if (dataClassName == 'CalendarSchedulingSaveRequest') {
+      return deserialize<_icabxeyo.CalendarSchedulingSaveRequest>(data['data']);
+    }
+    if (dataClassName == 'CalendarSchedulingView') {
+      return deserialize<_is73suzs.CalendarSchedulingView>(data['data']);
     }
     if (dataClassName == 'CalendarSettingsUpdateRequest') {
       return deserialize<_i66us6t1.CalendarSettingsUpdateRequest>(data['data']);

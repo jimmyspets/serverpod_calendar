@@ -10,7 +10,7 @@ ADR 0120 extends the pure adapter to ADD/REFRESH/COUNTER/DECLINECOUNTER with sep
 
 ADR 0121 adds a separate pure VFREEBUSY scheduling adapter. Source periods/groups, FBTYPE interpretation, windows and numeric results establish no authorized coverage or sender identity and cause no automatic query/reply. Preserve overlaps/order/end-duration forms and distinguish empty source data from the complete authorized snapshot service.
 
-The maintainer confirmed explicit atomic Save and notify and native-created organizer meetings first under ADR 0122. Ordinary edits send nothing; imported meetings need later adoption. The proposed first REQUEST scope, four tables, origin enum, snapshot retention and worker defaults remain unapproved; do not add model sources or infer native provenance from a null baseline.
+The maintainer confirmed explicit atomic Save and notify and native-created organizer meetings first under ADR 0122. Ordinary edits send nothing; imported meetings need later adoption. The maintainer explicitly approved the first bounded REQUEST scope, four tables, origin enum, snapshot retention and worker defaults. See docs/native-organizer-scheduling.md for the scoped implementation. Do not infer native provenance from a null baseline; broader lifecycle, inbound reconciliation and real mail remain separate required work.
 
 ## Current state and sources
 

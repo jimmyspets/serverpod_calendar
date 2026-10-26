@@ -628,7 +628,24 @@ END;
 $verify_feed$;
 DROP TABLE feed_upgrade_guard;
 """)
-        print("PASS: populated schema upgrades preserve prior rows, create no alarm work/actions and add four empty feed tables.")
+        sql(database, "CREATE TABLE scheduling_upgrade_guard AS SELECT id, to_jsonb(t) AS payload FROM serverpod_calendar_event_data t;")
+        sql(database, (SERVER / "migrations/20261026092959392/migration.sql").read_text(encoding="utf-8"))
+        sql(database, """
+DO $verify_scheduling$
+BEGIN
+ IF EXISTS (SELECT 1 FROM scheduling_upgrade_guard g LEFT JOIN serverpod_calendar_event_data e USING(id)
+   WHERE e.id IS NULL OR to_jsonb(e)-'origin' IS DISTINCT FROM g.payload OR e.origin <> 'unknown')
+ THEN RAISE EXCEPTION 'Scheduling migration changed event data or invented provenance'; END IF;
+ IF (SELECT count(*) FROM serverpod_calendar_scheduling_meeting) <> 0
+ OR (SELECT count(*) FROM serverpod_calendar_scheduling_publication) <> 0
+ OR (SELECT count(*) FROM serverpod_calendar_scheduling_delivery) <> 0
+ OR (SELECT count(*) FROM serverpod_calendar_scheduling_attempt) <> 0
+ THEN RAISE EXCEPTION 'Scheduling migration invented organizer or outbound state'; END IF;
+END;
+$verify_scheduling$;
+DROP TABLE scheduling_upgrade_guard;
+""")
+        print("PASS: populated schema upgrades preserve prior rows, create no alarm work/actions and add empty feed/scheduling tables with unknown legacy event provenance.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")
 

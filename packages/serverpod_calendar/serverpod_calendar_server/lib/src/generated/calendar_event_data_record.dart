@@ -15,6 +15,7 @@ import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'calendar_event_content.dart' as _id4cvk34;
 import 'calendar_event_import_baseline.dart' as _iblybidp;
+import 'calendar_event_origin.dart' as _ipbrznp8;
 import 'calendar_event_protocol_state.dart' as _i8iqsbco;
 import 'calendar_event_timing_overrides.dart' as _ijijze99;
 
@@ -24,6 +25,7 @@ abstract class CalendarEventDataRecord
     this.id,
     required this.eventId,
     required this.calendarId,
+    _ipbrznp8.CalendarEventOrigin? origin,
     required this.protocolUid,
     required this.uidDigest,
     this.protocolState,
@@ -32,12 +34,13 @@ abstract class CalendarEventDataRecord
     required this.content,
     required this.createdAt,
     required this.updatedAt,
-  });
+  }) : origin = origin ?? _ipbrznp8.CalendarEventOrigin.unknown;
 
   factory CalendarEventDataRecord({
     int? id,
     required _is.UuidValue eventId,
     required _is.UuidValue calendarId,
+    _ipbrznp8.CalendarEventOrigin? origin,
     required String protocolUid,
     required String uidDigest,
     _i8iqsbco.CalendarEventProtocolState? protocolState,
@@ -59,6 +62,11 @@ abstract class CalendarEventDataRecord
       calendarId: _is.UuidValueJsonExtension.fromJson(
         jsonSerialization['calendarId'],
       ),
+      origin: jsonSerialization['origin'] == null
+          ? null
+          : _ipbrznp8.CalendarEventOrigin.fromJson(
+              (jsonSerialization['origin'] as String),
+            ),
       protocolUid: jsonSerialization['protocolUid'] as String,
       uidDigest: jsonSerialization['uidDigest'] as String,
       protocolState: jsonSerialization['protocolState'] == null
@@ -102,6 +110,8 @@ abstract class CalendarEventDataRecord
 
   _is.UuidValue calendarId;
 
+  _ipbrznp8.CalendarEventOrigin origin;
+
   String protocolUid;
 
   String uidDigest;
@@ -128,6 +138,7 @@ abstract class CalendarEventDataRecord
     int? id,
     _is.UuidValue? eventId,
     _is.UuidValue? calendarId,
+    _ipbrznp8.CalendarEventOrigin? origin,
     String? protocolUid,
     String? uidDigest,
     _i8iqsbco.CalendarEventProtocolState? protocolState,
@@ -144,6 +155,7 @@ abstract class CalendarEventDataRecord
       if (id != null) 'id': id,
       'eventId': eventId.toJson(),
       'calendarId': calendarId.toJson(),
+      'origin': origin.toJson(),
       'protocolUid': protocolUid,
       'uidDigest': uidDigest,
       if (protocolState != null) 'protocolState': protocolState?.toJson(),
@@ -195,6 +207,7 @@ class _CalendarEventDataRecordImpl extends CalendarEventDataRecord {
     int? id,
     required _is.UuidValue eventId,
     required _is.UuidValue calendarId,
+    _ipbrznp8.CalendarEventOrigin? origin,
     required String protocolUid,
     required String uidDigest,
     _i8iqsbco.CalendarEventProtocolState? protocolState,
@@ -207,6 +220,7 @@ class _CalendarEventDataRecordImpl extends CalendarEventDataRecord {
          id: id,
          eventId: eventId,
          calendarId: calendarId,
+         origin: origin,
          protocolUid: protocolUid,
          uidDigest: uidDigest,
          protocolState: protocolState,
@@ -225,6 +239,7 @@ class _CalendarEventDataRecordImpl extends CalendarEventDataRecord {
     Object? id = _Undefined,
     _is.UuidValue? eventId,
     _is.UuidValue? calendarId,
+    _ipbrznp8.CalendarEventOrigin? origin,
     String? protocolUid,
     String? uidDigest,
     Object? protocolState = _Undefined,
@@ -238,6 +253,7 @@ class _CalendarEventDataRecordImpl extends CalendarEventDataRecord {
       id: id is int? ? id : this.id,
       eventId: eventId ?? this.eventId,
       calendarId: calendarId ?? this.calendarId,
+      origin: origin ?? this.origin,
       protocolUid: protocolUid ?? this.protocolUid,
       uidDigest: uidDigest ?? this.uidDigest,
       protocolState: protocolState is _i8iqsbco.CalendarEventProtocolState?
@@ -271,6 +287,12 @@ class CalendarEventDataRecordUpdateTable
     _is.UuidValue value,
   ) => _is.ColumnValue(
     table.calendarId,
+    value,
+  );
+
+  _is.ColumnValue<_ipbrznp8.CalendarEventOrigin, _ipbrznp8.CalendarEventOrigin>
+  origin(_ipbrznp8.CalendarEventOrigin value) => _is.ColumnValue(
+    table.origin,
     value,
   );
 
@@ -347,6 +369,12 @@ class CalendarEventDataRecordTable extends _is.Table<int?> {
       'calendarId',
       this,
     );
+    origin = _is.ColumnEnum(
+      'origin',
+      this,
+      _is.EnumSerialization.byName,
+      hasDefault: true,
+    );
     protocolUid = _is.ColumnString(
       'protocolUid',
       this,
@@ -390,6 +418,8 @@ class CalendarEventDataRecordTable extends _is.Table<int?> {
 
   late final _is.ColumnUuid calendarId;
 
+  late final _is.ColumnEnum<_ipbrznp8.CalendarEventOrigin> origin;
+
   late final _is.ColumnString protocolUid;
 
   late final _is.ColumnString uidDigest;
@@ -414,6 +444,7 @@ class CalendarEventDataRecordTable extends _is.Table<int?> {
     id,
     eventId,
     calendarId,
+    origin,
     protocolUid,
     uidDigest,
     protocolState,

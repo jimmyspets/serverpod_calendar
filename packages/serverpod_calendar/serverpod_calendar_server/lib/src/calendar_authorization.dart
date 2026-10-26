@@ -10,6 +10,8 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  publishScheduling,
+  readScheduling,
   readPersonalAlarmActivity,
   acknowledgePersonalAlarm,
   dismissPersonalAlarm,
@@ -203,6 +205,7 @@ final class CalendarAuthorizationRequest {
     this.currentTaskOccurrence,
     this.proposedTaskOccurrence,
     Iterable<CalendarTaskOccurrence> recordedTaskOccurrences = const [],
+    this.scheduling,
     this.currentEvent,
     this.proposedEvent,
     this.proposedEventProtocolState,
@@ -269,6 +272,7 @@ final class CalendarAuthorizationRequest {
   final CalendarTaskOccurrence? currentTaskOccurrence, proposedTaskOccurrence;
   final List<CalendarTaskOccurrence> recordedTaskOccurrences;
   final Set<CalendarTaskFieldGroup> taskGroups;
+  final CalendarSchedulingIntent? scheduling;
   final CalendarEventPolicySnapshot? currentEvent;
   final CalendarEventContent? proposedEvent;
   final CalendarEventProtocolState? proposedEventProtocolState;
@@ -636,11 +640,13 @@ final class CalendarEventPolicySnapshot {
     this.content,
     this.protocolUid,
     this.updatedAt, {
+    this.origin = CalendarEventOrigin.unknown,
     this.timingOverrides,
     this.protocolState,
   });
   final CalendarEventTimingOverrides? timingOverrides;
   final CalendarEventProtocolState? protocolState;
+  final CalendarEventOrigin origin;
   final UuidValue eventId, calendarId;
   final int revision;
   final CalendarEventContent content;
@@ -730,4 +736,20 @@ final class CalendarTaskPolicySnapshot {
   final String protocolUid;
   final CalendarTaskProtocolVersion protocolVersion;
   final DateTime updatedAt;
+}
+
+/// Exact outgoing snapshot and recipients, never an authorization grant.
+final class CalendarSchedulingIntent {
+  CalendarSchedulingIntent({
+    required this.organizerAddress,
+    required Iterable<String> recipients,
+    required this.payload,
+    this.publicationId,
+    required this.generation,
+  }) : recipients = List.unmodifiable(recipients);
+  final String method = 'REQUEST';
+  final String organizerAddress, payload;
+  final List<String> recipients;
+  final UuidValue? publicationId;
+  final int generation;
 }
