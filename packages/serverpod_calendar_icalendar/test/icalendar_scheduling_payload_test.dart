@@ -16,7 +16,8 @@ void main() {
         'REQUEST-STATUS:5.42.9;Uninterpreted future code',
         'REQUEST-STATUS:2.0;',
       ]);
-      final value = load(source), statuses = value.requestStatuses;
+      final value = load(source),
+          statuses = value.events.single.requestStatuses;
       expect(statuses, hasLength(4));
       expect(statuses.first.code, '02.008.000');
       expect(statuses.first.levels, [2, 8, 0]);
@@ -84,7 +85,7 @@ void main() {
         'REQUEST-STATUS:2147483647.2147483647.2147483647;Max',
       ]),
     );
-    expect(largest.requestStatuses.single.levels, [
+    expect(largest.events.single.requestStatuses.single.levels, [
       2147483647,
       2147483647,
       2147483647,
@@ -113,7 +114,7 @@ void main() {
           ...minimal('REPLY'),
           ...List.filled(32, 'REQUEST-STATUS:2.0;Success'),
         ]),
-      ).requestStatuses,
+      ).events.single.requestStatuses,
       hasLength(32),
     );
     expect(
@@ -131,10 +132,10 @@ void main() {
       '$method retains optional priority, exact GEO and descriptive resource groups',
       () {
         final absent = load(message(method, minimal(method)));
-        expect(absent.priority, isNull);
-        expect(absent.geographicPosition, isNull);
-        expect(absent.resources, isEmpty);
-        expect(absent.requestStatuses, isEmpty);
+        expect(absent.events.single.priority, isNull);
+        expect(absent.events.single.geographicPosition, isNull);
+        expect(absent.events.single.resources, isEmpty);
+        expect(absent.events.single.requestStatuses, isEmpty);
         final source = message(method, [
           ...minimal(method),
           'PRIORITY:+0009',
@@ -143,29 +144,36 @@ void main() {
           'RESOURCES;LANGUAGE=sv:Sal,Projektor',
           'RESOURCES:',
         ]);
-        final value = load(source), position = value.geographicPosition!;
-        expect(value.priority, 9);
+        final value = load(source),
+            position = value.events.single.geographicPosition!;
+        expect(value.events.single.priority, 9);
         expect(position.latitudeText, '+37.386013000000000001');
         expect(position.longitudeText, '-122.082932');
         expect(position.latitude, closeTo(37.386013, 0.0000001));
         expect(position.longitude, closeTo(-122.082932, 0.0000001));
-        expect(value.resources, hasLength(3));
-        expect(value.resources.first.values, ['Room, west', 'Projector']);
+        expect(value.events.single.resources, hasLength(3));
+        expect(value.events.single.resources.first.values, [
+          'Room, west',
+          'Projector',
+        ]);
         expect(
-          value.resources.first.alternativeUri,
+          value.events.single.resources.first.alternativeUri,
           'https://example.invalid/resources',
         );
-        expect(value.resources[1].language, 'sv');
-        expect(value.resources.last.values, ['']);
+        expect(value.events.single.resources[1].language, 'sv');
+        expect(value.events.single.resources.last.values, ['']);
         expect(
           utf8
               .decode(serializeIcalendarSchedulingMessage(value))
               .replaceAll('\r\n ', ''),
           source,
         );
-        expect(() => value.resources.clear(), throwsUnsupportedError);
         expect(
-          () => value.resources.first.values.clear(),
+          () => value.events.single.resources.clear(),
+          throwsUnsupportedError,
+        );
+        expect(
+          () => value.events.single.resources.first.values.clear(),
           throwsUnsupportedError,
         );
       },
@@ -180,6 +188,8 @@ void main() {
     ]) {
       expect(
         load(message('REQUEST', [...minimal('REQUEST'), 'GEO:$raw']))
+            .events
+            .single
             .geographicPosition,
         isNotNull,
       );
@@ -218,6 +228,8 @@ void main() {
       for (var n = 0; n <= 9; n++) {
         expect(
           load(message('REQUEST', [...minimal('REQUEST'), 'PRIORITY:$n']))
+              .events
+              .single
               .priority,
           n,
         );
@@ -239,7 +251,7 @@ void main() {
           ...minimal('REQUEST'),
           ...List.filled(32, 'RESOURCES:Room'),
         ]),
-      ).resources,
+      ).events.single.resources,
       hasLength(32),
     );
     expect(
@@ -257,7 +269,7 @@ void main() {
           ...minimal('REQUEST'),
           'RESOURCES:${List.filled(64, 'Room').join(',')}',
         ]),
-      ).resources.single.values,
+      ).events.single.resources.single.values,
       hasLength(64),
     );
     expect(

@@ -2,7 +2,7 @@
 
 The maintainer has specified first-release capabilities in [requirements](requirements.md). The workspace/authentication scaffold and scoped native calendar CRUD/metadata increments have local implementation evidence. Broader domain designs remain proposals; pure wire adapters are limited to the explicitly documented profile and no external-client compatibility is claimed.
 
-The [pure scheduling-message profile](itip-message-profile.md) documents the ADR 0117 four-method, non-recurring adapter, independently of durable reconciliation and email.
+The [pure scheduling-message profile](itip-message-profile.md) documents the ADR 0117 four-method adapter and ADR 0119 recurring/detached extension, independently of durable reconciliation and email.
 
 | Document | Purpose |
 | --- | --- |

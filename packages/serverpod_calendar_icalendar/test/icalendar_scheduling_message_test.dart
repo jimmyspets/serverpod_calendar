@@ -52,19 +52,22 @@ void main() {
       final value = load(source);
       expect(value.method.name, method.toLowerCase());
       expect(value.uid, 'synthetic-scheduling@example.invalid');
-      expect(value.sequence, method == 'CANCEL' ? 2 : null);
+      expect(value.events.single.sequence, method == 'CANCEL' ? 2 : null);
       expect(
-        value.status,
+        value.events.single.status,
         method == 'CANCEL' ? IcalendarEventStatus.cancelled : null,
       );
-      expect(value.transparency, isNull);
+      expect(value.events.single.transparency, isNull);
       expect(
-        value.summary?.value,
+        value.events.single.summary?.value,
         method == 'PUBLISH' || method == 'REQUEST' ? '' : null,
       );
-      expect(value.startTime == null, method == 'REPLY' || method == 'CANCEL');
-      expect(value.created, isNull);
-      expect(value.lastModified, isNull);
+      expect(
+        value.events.single.startTime == null,
+        method == 'REPLY' || method == 'CANCEL',
+      );
+      expect(value.events.single.created, isNull);
+      expect(value.events.single.lastModified, isNull);
       expect(
         utf8
             .decode(serializeIcalendarSchedulingMessage(value))
@@ -72,7 +75,7 @@ void main() {
         source,
       );
       expect(
-        () => value.participants.attendees.clear(),
+        () => value.events.single.participants.attendees.clear(),
         throwsUnsupportedError,
       );
       expect(() => value.timeZones.clear(), throwsUnsupportedError);
@@ -128,7 +131,7 @@ void main() {
             'CONTACT:One',
             'CONTACT:Two',
           ]),
-        ).metadata.contacts,
+        ).events.single.metadata.contacts,
         hasLength(2),
       );
       expect(
@@ -165,6 +168,8 @@ void main() {
       );
       expect(
         load(message('PUBLISH', [...minimal('PUBLISH'), 'STATUS:CANCELLED']))
+            .events
+            .single
             .status,
         IcalendarEventStatus.cancelled,
       );
@@ -176,9 +181,9 @@ void main() {
       attendee,
     ];
     final value = load(message('CANCEL', fields));
-    expect(value.status, isNull);
+    expect(value.events.single.status, isNull);
     expect(
-      value.participants.attendees.single.address,
+      value.events.single.participants.attendees.single.address,
       'mailto:guest@example.invalid',
     );
     expect(
@@ -193,9 +198,12 @@ void main() {
       final value = load(
         message('REPLY', [...minimal('REPLY'), 'DTEND:20261022T130000Z']),
       );
-      expect(value.startTime, isNull);
-      expect(value.timedSpan, isNull);
-      expect(value.endTime!.instant, DateTime.utc(2026, 10, 22, 13));
+      expect(value.events.single.startTime, isNull);
+      expect(value.events.single.timedSpan, isNull);
+      expect(
+        value.events.single.endTime!.instant,
+        DateTime.utc(2026, 10, 22, 13),
+      );
     },
   );
   test('DATE/UTC/named-zone start spans preserve end and duration forms', () {
@@ -208,12 +216,15 @@ void main() {
           ..add('DURATION:P2D'),
       ),
     );
-    expect(date.dateSpan!.dayCount, 2);
-    expect(date.duration!.days, 2);
+    expect(date.events.single.dateSpan!.dayCount, 2);
+    expect(date.events.single.duration!.days, 2);
     final timed = load(
       message('REQUEST', [...minimal('REQUEST'), 'DTEND:20261022T130000Z']),
     );
-    expect(timed.timedSpan!.end!.instant, DateTime.utc(2026, 10, 22, 13));
+    expect(
+      timed.events.single.timedSpan!.end!.instant,
+      DateTime.utc(2026, 10, 22, 13),
+    );
     final zoned = load(
       message(
         'REQUEST',
@@ -228,12 +239,17 @@ void main() {
         zones: [explicitZone('America/New_York')],
       ),
     );
-    expect(zoned.startTime!.instant, DateTime.utc(2026, 11, 1, 5, 30));
+    expect(
+      zoned.events.single.startTime!.instant,
+      DateTime.utc(2026, 11, 1, 5, 30),
+    );
     expect(
       load(utf8.decode(serializeIcalendarSchedulingMessage(zoned)))
+          .events
+          .single
           .startTime!
           .instant,
-      zoned.startTime!.instant,
+      zoned.events.single.startTime!.instant,
     );
   });
   test('partial optional text, annotations, source claims and inert references survive', () {
@@ -256,20 +272,23 @@ void main() {
       'LAST-MODIFIED:20261022T090000Z',
     ];
     final source = message('REPLY', fields), value = load(source);
-    expect(value.summary!.value, '');
-    expect(value.summary!.language, 'sv');
-    expect(value.summary!.alternativeUri, 'https://example.invalid/text');
-    expect(value.description, isNull);
+    expect(value.events.single.summary!.value, '');
+    expect(value.events.single.summary!.language, 'sv');
     expect(
-      value.participants.organizer!.sentBy,
+      value.events.single.summary!.alternativeUri,
+      'https://example.invalid/text',
+    );
+    expect(value.events.single.description, isNull);
+    expect(
+      value.events.single.participants.organizer!.sentBy,
       'mailto:delegate@example.invalid',
     );
-    expect(value.metadata.comments, hasLength(2));
+    expect(value.events.single.metadata.comments, hasLength(2));
     expect(
-      value.references.attachments.single.uri,
+      value.events.single.references.attachments.single.uri,
       'https://example.invalid/file',
     );
-    expect(value.sequence, 0);
+    expect(value.events.single.sequence, 0);
     expect(
       utf8
           .decode(serializeIcalendarSchedulingMessage(value))
@@ -277,13 +296,7 @@ void main() {
       source,
     );
   });
-  for (final property in [
-    'RRULE:FREQ=DAILY',
-    'RDATE:20261023T120000Z',
-    'EXDATE:20261023T120000Z',
-    'RECURRENCE-ID:20261022T120000Z',
-    'X-PRIVATE:value',
-  ]) {
+  for (final property in ['X-PRIVATE:value']) {
     test('unprofiled $property rejects rather than disappearing', () {
       expect(
         () => load(message('REPLY', [...minimal('REPLY'), property])),
@@ -443,7 +456,7 @@ void main() {
           ..add('DTEND:21000101T000000Z'),
       ),
     );
-    expect(value.endTime!.instant, DateTime.utc(2100));
+    expect(value.events.single.endTime!.instant, DateTime.utc(2100));
     expect(
       () => parseIcalendarSchedulingMessage(
         utf8.encode(message('REQUEST', minimal('REQUEST'))),
