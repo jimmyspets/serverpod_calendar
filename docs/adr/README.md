@@ -143,6 +143,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0124](0124-recurring-organizer-masters.md) | Recurring organizer masters and whole-series cancellation | Accepted master-pattern REQUEST/CANCEL using existing storage, preserved native drafts/exceptions and a separate later occurrence-component profile; scoped implementation |
 | [0125](0125-scheduling-occurrence-field-projection.md) | Scheduling-only occurrence field projection | Accepted inherited-field mapping and scoped pure candidate helper; native inheritance preserved, durable version/reset/bundle/storage designs unapproved |
 | [0126](0126-independent-occurrence-publication-versions.md) | Independent occurrence publication versions and bounded REQUEST bundles | Accepted complete REQUEST bundles, independent outgoing versions, bounded private checkpoints, lifecycle guards and full-message host approval; scoped implementation |
+| [0127](0127-retained-occurrence-reset-projections.md) | Retained original identities for occurrence resets | Retain identity/re-project current values confirmed; v3 checkpoints, bounded slots and concrete reset profile proposed, unimplemented |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
