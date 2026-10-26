@@ -395,3 +395,6 @@ The maintainer selected the timing/composition-first slice and positive opening 
 ## Optional event-feed increment, 2026-10-25
 
 [ADR 0116](adr/0116-optional-event-subscription-contract.md) records the approved separate module, stable publication UIDs, exclusion of all alarms and four-table/default choices. The [feed guide](http-event-feeds.md) describes scoped management/publication/HTTP implementation and the required whole-host logging guard. This supersedes blanket feed-not-implemented wording only for that bounded profile. Native and authenticated source behavior remain independent; full local batch validation passed and external subscription-client, scheduling and other release gates remain open.
+
+
+[ADR 0123](adr/0123-explicit-native-organizer-cancellation.md) proposes the next scoped FR-20 lifecycle batch: explicit whole-event cancellation for existing non-recurring native organizer meetings, retaining local draft fields and reusing the approved outbox boundaries. Cancellation/reopening policy is pending review; this proposal adds no runtime evidence or email authorization.
