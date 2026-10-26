@@ -113,6 +113,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_presentation_up
     as _i1sjay6c;
 import 'package:serverpod_calendar_server/src/generated/calendar_protocol_metadata_update_request.dart'
     as _i53ouodu;
+import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_cancel_request.dart'
+    as _ih6si8n9;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_receipt.dart'
     as _igqgquq7;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_save_request.dart'
@@ -1580,6 +1582,37 @@ class _CalendarEventEndpoint {
           createSessionCallback: (_) => _localUniqueSession,
           endpointPath: 'calendarEvent',
           methodName: 'saveAndNotify',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_igqgquq7.CalendarSchedulingReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_igqgquq7.CalendarSchedulingReceipt> cancelAndNotify(
+    _ist.TestSessionBuilder sessionBuilder,
+    _ih6si8n9.CalendarSchedulingCancelRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarEvent',
+            method: 'cancelAndNotify',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarEvent',
+          methodName: 'cancelAndNotify',
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );

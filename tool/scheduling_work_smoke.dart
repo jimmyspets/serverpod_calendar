@@ -70,49 +70,71 @@ Future<void> main() async {
   try {
     var a = await start('a', 18580);
     final b = await start('b', 18680);
-    final first =
-        (await a.command({'command': 'seed'})) as Map<String, dynamic>;
-    fixtures.add(first);
-    await Future.wait([
-      a.command({'command': 'work'}),
-      b.command({'command': 'work'}),
-    ]);
-    final raced = (await b.command({
-      'command': 'inspect',
-      ...first,
-    })) as Map<String, dynamic>;
-    if (raced['state'] != 'accepted' ||
-        (raced['attempts'] as List).length != 1) {
-      throw StateError('Competing workers duplicated a live claim');
-    }
-    for (final pause in ['before', 'after']) {
-      final fixture =
-          (await b.command({'command': 'seed'})) as Map<String, dynamic>;
-      fixtures.add(fixture);
-      a.submitted = Completer<void>();
-      final lost = a
-          .command({'command': 'work', 'pause': pause})
-          .then<void>((_) {}, onError: (Object _, StackTrace _) {});
-      await a.submitted!.future.timeout(const Duration(seconds: 30));
-      await a.stop();
-      await lost;
-      await Future<void>.delayed(const Duration(seconds: 7));
-      await b.command({'command': 'work'});
-      final recovered = (await b.command({
-        'command': 'inspect',
-        ...fixture,
+    for (final method in ['REQUEST', 'CANCEL']) {
+      final first = (await a.command({
+        'command': 'seed',
+        'method': method,
       })) as Map<String, dynamic>;
-      if (recovered['state'] != 'accepted' ||
-          jsonEncode(recovered['attempts']) !=
-              jsonEncode(['uncertain', 'accepted'])) {
-        throw StateError(
-          'Actual holder loss did not recover with retained uncertain attempt',
-        );
+      fixtures.add(first);
+      await Future.wait([
+        a.command({'command': 'work'}),
+        b.command({'command': 'work'}),
+      ]);
+      final raced = (await b.command({
+        'command': 'inspect',
+        ...first,
+      })) as Map<String, dynamic>;
+      if (raced['state'] != 'accepted' ||
+          (raced['attempts'] as List).length != 1) {
+        throw StateError('Competing workers duplicated a live claim');
       }
-      if (pause == 'before') a = await start('a-recovered', 18580);
+      for (final pause in ['before', 'after']) {
+        final fixture = (await b.command({
+          'command': 'seed',
+          'method': method,
+        })) as Map<String, dynamic>;
+        fixtures.add(fixture);
+        a.submitted = Completer<void>();
+        final lost = a
+            .command({'command': 'work', 'pause': pause})
+            .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+        await a.submitted!.future.timeout(const Duration(seconds: 30));
+        await a.stop();
+        await lost;
+        await Future<void>.delayed(const Duration(seconds: 7));
+        await b.command({'command': 'work'});
+        final recovered = (await b.command({
+          'command': 'inspect',
+          ...fixture,
+        })) as Map<String, dynamic>;
+        if (recovered['state'] != 'accepted' ||
+            jsonEncode(recovered['attempts']) !=
+                jsonEncode(['uncertain', 'accepted'])) {
+          throw StateError(
+            'Actual holder loss did not recover with retained uncertain attempt',
+          );
+        }
+        final accepted = await File(
+          '$root/.local/scheduling-worker-acceptance.jsonl',
+        ).readAsLines();
+        final recorded = accepted
+            .map((line) => jsonDecode(line) as Map<String, dynamic>)
+            .where((v) => v['publication'] == fixture['publicationId'])
+            .toList();
+        if (recorded.length != (pause == 'after' ? 2 : 1) ||
+            recorded.any((v) => v['key'] != recovered['key']) ||
+            recorded.map((v) => v['digest']).toSet().length != 1) {
+          throw StateError(
+            'Recovered $method submissions changed identity or bytes',
+          );
+        }
+        if (pause == 'before' || method == 'REQUEST') {
+          a = await start('a-recovered-$method-$pause', 18580);
+        }
+      }
     }
     stdout.writeln(
-      'PASS: two independent scheduling workers, competing claims, actual loss before/after synthetic acceptance and fenced stable-key recovery.',
+      'PASS: REQUEST and CANCEL on two independent scheduling workers, competing claims, actual loss before/after synthetic acceptance and fenced stable-key recovery.',
     );
   } finally {
     final live = probes.where((p) => !p.stopped).toList();

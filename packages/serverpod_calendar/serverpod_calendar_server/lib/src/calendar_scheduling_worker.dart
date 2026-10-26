@@ -121,12 +121,13 @@ final class _SchedulingWorker {
     final e = await s._eventInScope(meeting.scopeKey, meeting.eventId, tx);
     if (d.scopeKey != meeting.scopeKey ||
         p.scopeKey != meeting.scopeKey ||
-        p.method != 'REQUEST' ||
+        !{'REQUEST', 'CANCEL'}.contains(p.method) ||
         meeting.calendarId != e.identity.calendarId ||
         meeting.latestPublicationId != p.id ||
         meeting.generation != p.generation ||
         e.data.origin != CalendarEventOrigin.native ||
-        e.data.content.status == CalendarEventStatus.cancelled ||
+        p.method == 'REQUEST' &&
+            e.data.content.status == CalendarEventStatus.cancelled ||
         e.data.content.recurrence != null ||
         e.data.protocolUid != p.protocolUid ||
         _schedulingDigest(p.payload) != p.payloadDigest) {
@@ -146,7 +147,14 @@ final class _SchedulingWorker {
       utf8.encode(p.payload),
       syntaxLimits: IcalendarSyntaxLimits(maxBytes: options.maxPayloadBytes),
     );
-    if (parsed.method != IcalendarSchedulingMethod.request ||
+    if (parsed.method !=
+            (p.method == 'CANCEL'
+                ? IcalendarSchedulingMethod.cancel
+                : IcalendarSchedulingMethod.request) ||
+        p.method == 'CANCEL' &&
+            (published.content.status != CalendarEventStatus.cancelled ||
+                parsed.events.single.status !=
+                    IcalendarEventStatus.cancelled) ||
         parsed.events.length != 1 ||
         parsed.uid != p.protocolUid ||
         parsed.events.single.sequence != p.sequence ||
@@ -186,9 +194,11 @@ final class _SchedulingWorker {
       scopeKey: meeting.scopeKey,
       calendar: e.parent.snapshot,
       currentEvent: e.snapshot,
-      proposedEvent: published,
+      proposedEvent: e.snapshot,
+      outgoingEvent: published,
       authority: authority,
       intent: CalendarSchedulingIntent(
+        method: p.method,
         organizerAddress: meeting.organizerAddress,
         recipients: p.recipients,
         payload: p.payload,
