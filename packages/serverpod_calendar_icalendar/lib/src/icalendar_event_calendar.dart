@@ -22,6 +22,7 @@ part 'icalendar_task_references.dart';
 part 'icalendar_display_alarm.dart';
 part 'icalendar_availability_calendar.dart';
 part 'icalendar_availability_metadata.dart';
+part 'icalendar_scheduling_message.dart';
 
 enum IcalendarEventStatus { tentative, confirmed, cancelled }
 
