@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:serverpod_calendar_core/serverpod_calendar_core.dart';
@@ -23,6 +24,7 @@ part 'icalendar_display_alarm.dart';
 part 'icalendar_availability_calendar.dart';
 part 'icalendar_availability_metadata.dart';
 part 'icalendar_scheduling_message.dart';
+part 'icalendar_scheduling_projection.dart';
 part 'icalendar_scheduling_payload.dart';
 part 'icalendar_free_busy_message.dart';
 
