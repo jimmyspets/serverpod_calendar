@@ -2,6 +2,130 @@ part of 'calendar_module.dart';
 
 const _schedulingCheckpointBytes = 524288;
 
+String _schedulingOriginalKey(EventSchedulingOriginal value) =>
+    eventComponentKey(value.originalStart, value.isThisAndFuture);
+
+List<EventSchedulingOriginal> _schedulingMessageOriginals(
+  IcalendarSchedulingMessage value,
+) => List.unmodifiable(
+  value.events
+      .where((e) => e.isOverride)
+      .map(
+        (e) => EventSchedulingOriginal(
+          CalendarEventTiming(
+            kind: e.originalDate != null
+                ? CalendarEventTimeKind.date
+                : e.originalTime!.zoneId == null
+                ? CalendarEventTimeKind.utc
+                : CalendarEventTimeKind.zoned,
+            start: e.originalDate != null
+                ? eventDate(e.originalDate!)
+                : eventCivil(e.originalTime!.civil),
+            zoneId: e.originalTime?.zoneId,
+          ),
+          e.isThisAndFuture,
+        ),
+      ),
+);
+
+List<EventSchedulingOriginal> _schedulingResetOriginals(
+  CalendarEventPolicySnapshot value,
+  _SchedulingCheckpoint? previous,
+) {
+  if (previous == null) return const [];
+  final retained = {
+    for (final o in previous.projectionOriginals) _schedulingOriginalKey(o): o,
+  };
+  final actual = {
+    for (final s
+        in value.timingOverrides?.singles ?? <CalendarEventSingleOverride>[])
+      eventComponentKey(s.originalStart, false): s.replacement,
+    for (final s
+        in value.timingOverrides?.future ?? <CalendarEventFutureOverride>[])
+      eventComponentKey(s.originalStart, true): s.replacement,
+  };
+  for (final original in previous.originals) {
+    final key = _schedulingOriginalKey(original);
+    final before = eventOriginalContent(
+      previous.canonical.timingOverrides,
+      original.originalStart,
+    );
+    final after = eventOriginalContent(
+      value.timingOverrides,
+      original.originalStart,
+    );
+    if (previous.message.method == IcalendarSchedulingMethod.cancel ||
+        actual[key] == null ||
+        before?.summary != null && after?.summary == null ||
+        before?.description != null && after?.description == null ||
+        before?.location != null && after?.location == null) {
+      retained[key] = original;
+    }
+  }
+  final sorted = retained.values.toList()
+    ..sort(
+      (a, b) => _schedulingOriginalKey(a).compareTo(_schedulingOriginalKey(b)),
+    );
+  return List.unmodifiable(sorted);
+}
+
+CalendarEventPolicySnapshot _schedulingProjectionSource(
+  CalendarEventPolicySnapshot value,
+  List<EventSchedulingOriginal> originals,
+) {
+  if (originals.isEmpty) return value;
+  final edits = eventSchedulingProjection(
+    value.content,
+    value.timingOverrides,
+    originals,
+  ).$1;
+  final slots = originals.map(_schedulingOriginalKey).toSet();
+  final current = {
+    for (final v in value.protocolState!.overrides)
+      eventComponentKey(v.originalStart, v.isThisAndFuture): v,
+  };
+  final state = value.protocolState!.copyWith(
+    overrides: [
+      for (final pair in [
+        for (final row in edits?.singles ?? <CalendarEventSingleOverride>[])
+          (row.originalStart, false),
+        for (final row in edits?.future ?? <CalendarEventFutureOverride>[])
+          (row.originalStart, true),
+      ])
+        if (!slots.contains(eventComponentKey(pair.$1, pair.$2)))
+          current[eventComponentKey(pair.$1, pair.$2)]!
+        else
+          CalendarEventOverrideProtocolState(
+            originalStart: pair.$1,
+            isThisAndFuture: pair.$2,
+            version:
+                current[eventComponentKey(pair.$1, pair.$2)]?.version ??
+                CalendarEventProtocolVersion(
+                  sequence: 0,
+                  stamp: value.protocolState!.version.stamp,
+                ),
+            summaryPresent: true,
+            descriptionPresent: true,
+            locationPresent: true,
+            statusPresent: true,
+            transparencyPresent: true,
+          ),
+    ],
+  );
+  final checked = validateEventProtocolState(state, value.content, edits);
+  return CalendarEventPolicySnapshot(
+    value.eventId,
+    value.calendarId,
+    value.revision,
+    value.content,
+    value.protocolUid,
+    value.updatedAt,
+    origin: value.origin,
+    timingOverrides: edits,
+    protocolState: checked,
+  );
+}
+
 String _schedulingBound(String value) {
   if (value.length > _schedulingCheckpointBytes ||
       utf8.encode(value).length > _schedulingCheckpointBytes) {
@@ -152,13 +276,15 @@ List<_SchedulingComponentVersion> _schedulingComponents(
   return result;
 }
 
-String _schedulingBundleProjection(List<_SchedulingComponentVersion> values) =>
-    _schedulingBound(
-      jsonEncode({
-        'version': 2,
-        'components': values.map((v) => v.toJson()).toList(),
-      }),
-    );
+String _schedulingBundleProjection(
+  List<_SchedulingComponentVersion> values, {
+  int version = 3,
+}) => _schedulingBound(
+  jsonEncode({
+    'version': version,
+    'components': values.map((v) => v.toJson()).toList(),
+  }),
+);
 
 bool _schedulingWireUnchanged(
   CalendarEventPolicySnapshot proposed,
@@ -166,7 +292,13 @@ bool _schedulingWireUnchanged(
   int maxBytes,
 ) {
   final candidate = parseIcalendarSchedulingMessage(
-    utf8.encode(_schedulingPayload(proposed, maxBytes)),
+    utf8.encode(
+      _schedulingPayload(
+        proposed,
+        maxBytes,
+        projectionOriginals: _schedulingResetOriginals(proposed, previous),
+      ),
+    ),
     syntaxLimits: IcalendarSyntaxLimits(maxBytes: maxBytes),
   );
   String projection(List<_SchedulingComponentVersion> values) =>
@@ -181,10 +313,13 @@ final class _SchedulingCheckpoint {
     this.outgoing,
     this.message,
     this.ledger,
+    this.projectionOriginals,
+    this.originals,
   );
   final CalendarEventPolicySnapshot canonical, outgoing;
   final IcalendarSchedulingMessage message;
   final List<_SchedulingComponentVersion> ledger;
+  final List<EventSchedulingOriginal> projectionOriginals, originals;
 }
 
 _SchedulingCheckpoint _schedulingReadCheckpoint(
@@ -207,7 +342,17 @@ _SchedulingCheckpoint _schedulingReadCheckpoint(
     final master = components.singleWhere((v) => v.key == 'master');
     final value = jsonDecode(p.snapshot) as Map<String, dynamic>;
     final legacy = !value.containsKey('version');
-    if (!legacy && value['version'] != 2) throw const FormatException();
+    final version = legacy ? 1 : value['version'] as int;
+    if (!legacy && !{2, 3}.contains(version)) throw const FormatException();
+    final projectionOriginals = version < 3
+        ? <EventSchedulingOriginal>[]
+        : (value['projectionOriginals'] as List)
+              .map(
+                (v) =>
+                    EventSchedulingOriginal.fromJson(v as Map<String, dynamic>),
+              )
+              .toList();
+    if (projectionOriginals.length > 64) throw const FormatException();
     final canonical = _schedulingReadSnapshot(
       legacy ? value : value['canonical'],
     );
@@ -244,7 +389,8 @@ _SchedulingCheckpoint _schedulingReadCheckpoint(
                     outgoing.protocolState!,
                   ) !=
                   p.projection
-            : _schedulingBundleProjection(components) != p.projection) ||
+            : _schedulingBundleProjection(components, version: version) !=
+                  p.projection) ||
         p.method == 'REQUEST' &&
             _schedulingBundleProjection(ledger) !=
                 _schedulingBundleProjection(components)) {
@@ -257,6 +403,7 @@ _SchedulingCheckpoint _schedulingReadCheckpoint(
           outgoing,
           _schedulingCheckpointBytes,
           method: p.method,
+          projectionOriginals: projectionOriginals,
         ),
       ),
     );
@@ -311,6 +458,7 @@ _SchedulingCheckpoint _schedulingReadCheckpoint(
     ]);
     // Legacy CANCELs predate a retained REQUEST ledger and contain only their
     // cancellation master. Never invent a prior active component for them.
+    final List<EventSchedulingOriginal> originals;
     {
       final validatedLedger = validateIcalendarSchedulingMessage(ledgerSource);
       if (validatedLedger.uid != p.protocolUid ||
@@ -329,6 +477,26 @@ _SchedulingCheckpoint _schedulingReadCheckpoint(
           )) {
         throw const FormatException();
       }
+      originals = _schedulingMessageOriginals(validatedLedger);
+      final keys = {
+        for (final original in originals)
+          _schedulingOriginalKey(original): original,
+      };
+      if (projectionOriginals.map(_schedulingOriginalKey).toSet().length !=
+              projectionOriginals.length ||
+          projectionOriginals.any(
+            (v) => !keys.containsKey(_schedulingOriginalKey(v)),
+          )) {
+        throw const FormatException();
+      }
+      if (version == 3 && p.method == 'CANCEL') {
+        eventSchedulingProjection(
+          outgoing.content,
+          null,
+          projectionOriginals,
+          membershipOnly: true,
+        );
+      }
     }
     // Ledger projections are separately bounded syntax, not arbitrary opaque keys.
     for (final v in ledger) {
@@ -343,6 +511,8 @@ _SchedulingCheckpoint _schedulingReadCheckpoint(
       outgoing,
       message,
       List.unmodifiable(ledger),
+      List.unmodifiable(projectionOriginals),
+      List.unmodifiable(originals),
     );
   } catch (_) {
     throw _failure(CalendarFailureCode.unavailable);
@@ -353,12 +523,14 @@ String _schedulingWriteCheckpoint(
   CalendarEventPolicySnapshot canonical,
   CalendarEventPolicySnapshot outgoing,
   List<_SchedulingComponentVersion> ledger,
+  List<EventSchedulingOriginal> projectionOriginals,
 ) => _schedulingBound(
   jsonEncode({
-    'version': 2,
+    'version': 3,
     'canonical': _schedulingSnapshotMap(canonical),
     'outgoing': _schedulingSnapshotMap(outgoing),
     'ledger': ledger.map((v) => v.toJson()).toList(),
+    'projectionOriginals': projectionOriginals.map((v) => v.toJson()).toList(),
   }),
 );
 

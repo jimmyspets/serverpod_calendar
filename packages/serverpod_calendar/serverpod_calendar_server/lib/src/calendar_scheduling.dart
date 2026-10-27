@@ -103,8 +103,13 @@ String _schedulingPayload(
   CalendarEventPolicySnapshot value,
   int maxBytes, {
   String method = 'REQUEST',
+  List<EventSchedulingOriginal> projectionOriginals = const [],
 }) {
-  final bytes = eventExportBytes([value]);
+  final bytes = eventExportBytes([
+    method == 'REQUEST'
+        ? _schedulingProjectionSource(value, projectionOriginals)
+        : value,
+  ]);
   if (method == 'REQUEST') {
     return utf8.decode(
       serializeIcalendarSchedulingMessage(
@@ -614,6 +619,12 @@ extension CalendarSchedulingOperations on CalendarService {
             )
           : _schedulingPublished(receiptPublication);
 
+      final projectionOriginals = cancellation
+          ? previousCheckpoint!.projectionOriginals
+          : receiptPublication != null
+          ? _schedulingReadCheckpoint(receiptPublication).projectionOriginals
+          : _schedulingResetOriginals(outgoing, previousCheckpoint);
+
       var payload =
           receiptPublication?.payload ??
           _schedulingValue<String>(
@@ -621,6 +632,7 @@ extension CalendarSchedulingOperations on CalendarService {
               outgoing,
               options.maxPayloadBytes,
               method: method,
+              projectionOriginals: projectionOriginals,
             ),
           );
       if (receiptPublication == null && !cancellation) {
@@ -648,7 +660,12 @@ extension CalendarSchedulingOperations on CalendarService {
       // Validate/bound private storage before policy callbacks or any write.
       final checkpoint =
           receiptPublication?.snapshot ??
-          _schedulingWriteCheckpoint(proposed, outgoing, ledger);
+          _schedulingWriteCheckpoint(
+            proposed,
+            outgoing,
+            ledger,
+            projectionOriginals,
+          );
       final bundleProjection =
           receiptPublication?.projection ??
           _schedulingBundleProjection(components);
