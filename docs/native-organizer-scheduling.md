@@ -177,6 +177,6 @@ V6 uses existing columns and limits: a non-recursive v4/v5 individual-state proo
 
 The example distinguishes reopening published values from Save and notify and keeps uncertain commands for exact retry. Canonical import/export, HTTP feeds and native inheritance retain their independent behavior. Synthetic module/worker/browser checks are not external scheduling-client or real-mail evidence.
 
-## Proposed authenticated attendee replies
+## Authenticated attendee replies
 
-The next proposal is separate organizer-side REPLY processing under ADR 0131. Current native drafts and outbound generations/leases stay untouched; a response to an older published version is retained for review without automatic application. Trusted ingress/storage/authority mechanics are not yet approved or implemented. See [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
+Accepted ADR 0131 adds separate non-recurring organizer-side REPLY processing. Trusted host ingress verifies the actual binding/roster/origin; private source, ingress receipt and attendee response persist atomically. Older-version replies remain stale for review, current ordering uses SEQUENCE/DTSTAMP, and newer native drafts and outbound generations/leases remain untouched. Recurring replies, other methods and mail follow separately. See [the reply guide](authenticated-attendee-replies.md) and [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).

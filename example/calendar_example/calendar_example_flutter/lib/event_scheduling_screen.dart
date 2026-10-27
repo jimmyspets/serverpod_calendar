@@ -1,5 +1,8 @@
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:flutter/material.dart';
+
+import 'attendee_replies_screen.dart';
+
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
 
@@ -336,6 +339,11 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
   @override
   Widget build(BuildContext context) {
     final eligible = _status?.origin == cal.CalendarEventOrigin.native;
+    final recurring =
+        _event.recurrence?.rule != null ||
+        (_event.recurrence?.inclusions.isNotEmpty ?? false) ||
+        (_event.recurrence?.exclusions.isNotEmpty ?? false) ||
+        (_event.periods?.isNotEmpty ?? false);
     final hasExceptions =
         (_event.timingOverrides?.singles.isNotEmpty ?? false) ||
         (_event.timingOverrides?.future.isNotEmpty ?? false);
@@ -351,6 +359,21 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
       appBar: AppBar(
         title: const Text('Meeting invitations'),
         actions: [
+          if (_status?.publicationId != null && !recurring)
+            TextButton(
+              key: const Key('scheduling-replies'),
+              onPressed: _busy
+                  ? null
+                  : () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => AttendeeRepliesScreen(
+                          client: widget.client,
+                          eventId: _event.id,
+                        ),
+                      ),
+                    ),
+              child: const Text('Attendee replies'),
+            ),
           TextButton(
             key: const Key('scheduling-reload'),
             onPressed: _busy ? null : _reload,

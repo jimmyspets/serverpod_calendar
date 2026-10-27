@@ -6,6 +6,7 @@ import 'notification_smoke.dart';
 import 'alarm_adoption_smoke.dart';
 import 'feed_smoke.dart';
 import 'scheduling_smoke.dart';
+import 'scheduling_reply_smoke.dart';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart';
@@ -114,6 +115,7 @@ Future<void> main(List<String> args) async {
             },
     );
     if (mode == 'test') await schedulingSmoke(clients);
+    if (mode == 'test') await schedulingReplySmoke(clients);
     if (args.contains('--feeds')) {
       await runFeeds();
     } else {

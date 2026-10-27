@@ -14510,6 +14510,7 @@ final class TestPolicy implements CalendarHostPolicy {
   )?
   onImportBatch;
   final denied = <CalendarPermission>{};
+  final deniedReplySources = <UuidValue>{};
   final hidden = <UuidValue>{};
   Set<CalendarFieldGroup> grants = groups.toSet();
   Set<CalendarEventFieldGroup> eventGrants = eventGroups.toSet();
@@ -14759,6 +14760,8 @@ final class TestPolicy implements CalendarHostPolicy {
                   r.availabilityId != null &&
                   r.availabilityId == denyReplacementId) ||
               denied.contains(r.operation) ||
+              (r.operation == CalendarPermission.readSchedulingReplySource &&
+                  deniedReplySources.contains(r.schedulingReplySource?.id)) ||
               (r.operation == CalendarPermission.readSubjectAvailability &&
                   deniedSubjects.contains(r.availabilityTarget?.externalId)) ||
               (r.operation == CalendarPermission.projectEventBusy &&

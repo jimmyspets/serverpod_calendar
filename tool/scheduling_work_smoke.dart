@@ -70,6 +70,58 @@ Future<void> main(List<String> args) async {
   try {
     var a = await start('a', 18580);
     final b = await start('b', 18680);
+    if (args.contains('--replies')) {
+      final fixture = (await b.command({
+        'command': 'seed',
+        'method': 'REPLY',
+      })) as Map<String, dynamic>;
+      fixtures.add(fixture);
+      final raced = await Future.wait([
+        for (final probe in [a, b])
+          probe.command({'command': 'reply', ...fixture, 'key': 'raced'}),
+      ]);
+      final r0 = raced.first as Map, r1 = raced.last as Map;
+      if (r0['receiptId'] != r1['receiptId'] ||
+          [r0, r1].where((r) => r['unchanged'] == false).length != 1) {
+        throw StateError('Independent-host reply deduplication failed');
+      }
+      for (final pause in ['before', 'after']) {
+        final fixture = (await b.command({
+          'command': 'seed',
+          'method': 'REPLY',
+        })) as Map<String, dynamic>;
+        fixtures.add(fixture);
+        a.submitted = Completer<void>();
+        final lost = a
+            .command({
+              'command': 'reply',
+              ...fixture,
+              'key': 'recover-$pause',
+              'pause': pause,
+            })
+            .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+        await a.submitted!.future.timeout(const Duration(seconds: 30));
+        await a.stop();
+        await lost;
+        final recovered = (await b.command({
+          'command': 'reply',
+          ...fixture,
+          'key': 'recover-$pause',
+        })) as Map;
+        if (recovered['unchanged'] != (pause == 'after') ||
+            recovered['sources'] != 1 ||
+            recovered['receipts'] != 1 ||
+            recovered['responses'] != 1 ||
+            recovered['outcome'] != 'applied') {
+          throw StateError('Reply process-loss recovery violated atomicity');
+        }
+        if (pause == 'before') a = await start('reply-recovered', 18580);
+      }
+      stdout.writeln(
+        'PASS: independent reply hosts, raced stable keys, actual loss before commit and after commit, atomic three-table recovery.',
+      );
+      return;
+    }
     final methods = args.contains('--projected-only')
         ? ['REOPEN', 'MASKRESTORE']
         : args.contains('--restore-only')

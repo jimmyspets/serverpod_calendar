@@ -4,7 +4,7 @@ Status: **scoped native calendar/event/availability implementation plus pure iCa
 
 ## Pinned tools and packages
 
-Use Flutter **3.47.7 stable**, bundled Dart **3.13.5**, and Serverpod CLI/runtime/auth/client/test packages **4.0.4**. Pins are recorded in `toolchain.json`, `.flutter-version`, SDK constraints and package manifests; `pubspec.lock` locks the workspace resolution. Docker/Compose are required; the initial local checks used Docker **29.8.2** and Compose **v5.6.0**. Compose images are pinned by digest in the Compose file and toolchain.json. Chrome, a matching ChromeDriver and PowerShell 7 are used by the local scripts. The browser setup helper downloads a matching official Windows ChromeDriver into ignored .local/webdriver when absent; CHROMEDRIVER can point to an existing driver. Transitive dependencies can include prerelease dependencies selected by the stable Serverpod release; the lockfile records actual resolution.
+Use Flutter **3.47.7 stable**, bundled Dart **3.13.5**, and Serverpod CLI/runtime/auth/client/test packages **4.0.4**. Pins are recorded in `toolchain.json`, `.flutter-version`, SDK constraints and package manifests; `pubspec.lock` locks the workspace resolution. Docker/Compose are required; the initial local checks used Docker **29.8.2** and Compose **v5.6.0**. Compose images are pinned by digest in the Compose file and toolchain.json. Chrome, a matching ChromeDriver and PowerShell 7 are used by the local scripts. The browser setup helper downloads a matching official Windows ChromeDriver into ignored .local/webdriver when absent or when its build no longer matches installed Chrome; CHROMEDRIVER can point to an existing driver. Transitive dependencies can include prerelease dependencies selected by the stable Serverpod release; the lockfile records actual resolution.
 
 The core pins `timezone` 0.11.2 with generated IANA 2026e data; toolchain.json records source/artifact checksums and the profile. Ordinary calendar dates are [1970-01-01, 2100-01-01), with whole seconds, explicit exclusive endpoints and UTC calculation padding. Unknown offsets still reject; future projections assume pinned rules remain unchanged. See [ADR 0041](adr/0041-whole-second-1970-2100-profile.md) and the [timezone generation/update procedure](timezone-data.md).
 
@@ -124,6 +124,8 @@ The root batch check also runs the dedicated `serverpod_calendar_icalendar` synt
 
 
 ## Pre-beta database compatibility
+
+For attendee replies under accepted ADR 0131, run `dart test test/integration/scheduling_replies_test.dart` from the example server against test storage. Actual competing-process and before/after-commit loss checks use `dart run tool/scheduling_work_smoke.dart --replies` from the root. After building the current host bundle, `dart run tool/host_smoke.dart --flutter --replies --browser-only` runs only the focused reply review journey; it explicitly skips the generated-client/worker prerequisites. The full root check retains all suites and the complete browser journey.
 
 Breaking APIs/schema and fresh-database requirements are authorized before beta. A feature may document a reset instead of preserving unpublished compatibility. Use only the identified local development or isolated synthetic test database, and record which reset is required. Existing historical upgrade checks remain evidence of their own batches. ADR 0073 import uses the existing schema and requires no reset.
 

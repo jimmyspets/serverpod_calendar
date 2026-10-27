@@ -1,0 +1,8 @@
+enum: CalendarSchedulingReplyOutcome
+values:
+  - applied
+  - stale
+  - unmatched
+  - conflict
+  - unappliedResult
+  - duplicate

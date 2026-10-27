@@ -26,6 +26,7 @@ import 'package:serverpod_notifications_server/serverpod_notifications_server.da
 import '../auth/email_idp_endpoint.dart' as _iuc1hd5t;
 import '../auth/refresh_jwt_tokens_endpoint.dart' as _ih79u0oj;
 import '../endpoints/notification_stream_endpoint.dart' as _ixiz6tz4;
+import '../endpoints/scheduling_demo_endpoint.dart' as _ik68ors2;
 import '../endpoints/smoke_endpoint.dart' as _ivabzmjp;
 export 'future_calls.dart' show ServerpodFutureCallsGetter;
 
@@ -49,6 +50,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'notificationStream',
+          null,
+        ),
+      'schedulingDemo': _ik68ors2.SchedulingDemoEndpoint()
+        ..initialize(
+          server,
+          'schedulingDemo',
           null,
         ),
       'smoke': _ivabzmjp.SmokeEndpoint()
@@ -283,6 +290,69 @@ class Endpoints extends _is.EndpointDispatch {
                   (endpoints['notificationStream']
                           as _ixiz6tz4.NotificationStreamEndpoint)
                       .watch(session),
+        ),
+      },
+    );
+    connectors['schedulingDemo'] = _is.EndpointConnector(
+      name: 'schedulingDemo',
+      endpoint: endpoints['schedulingDemo']!,
+      methodConnectors: {
+        'simulateReply': _is.MethodConnector(
+          name: 'simulateReply',
+          params: {
+            'eventId': _is.ParameterDescription(
+              name: 'eventId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'commandId': _is.ParameterDescription(
+              name: 'commandId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'attendeeAddress': _is.ParameterDescription(
+              name: 'attendeeAddress',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'participation': _is.ParameterDescription(
+              name: 'participation',
+              type: _is.getType<_ipn35bcd.CalendarSchedulingParticipation>(),
+              nullable: false,
+            ),
+            'sequence': _is.ParameterDescription(
+              name: 'sequence',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+            'sourceStamp': _is.ParameterDescription(
+              name: 'sourceStamp',
+              type: _is.getType<DateTime>(),
+              nullable: false,
+            ),
+            'comment': _is.ParameterDescription(
+              name: 'comment',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['schedulingDemo']
+                          as _ik68ors2.SchedulingDemoEndpoint)
+                      .simulateReply(
+                        session,
+                        params['eventId'],
+                        params['commandId'],
+                        params['attendeeAddress'],
+                        params['participation'],
+                        params['sequence'],
+                        params['sourceStamp'],
+                        params['comment'],
+                      ),
         ),
       },
     );

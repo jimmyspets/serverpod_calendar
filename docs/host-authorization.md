@@ -236,6 +236,6 @@ Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) independently e
 
 Accepted ADR 0130 requires independent reopenScheduling plus scheduling-read, full event/source and lifecycle authority. Both command phases and dispatch expose immutable publicationExclusions, the unprojected publishedRequest, exact message and native snapshots. Masked restoration authorizes a complete REQUEST; source exclusions never grant authority. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).
 
-## Proposed authenticated attendee replies
+## Authenticated attendee replies
 
-ADR 0131 proposes server-only trusted ingress with actual local binding/parent and explicit origin authority for the exact fixed-roster address. Neither payload UID/ATTENDEE, SMTP headers nor a client flag proves identity. Preliminary/final checks and independent protected response/source reads remain proposed. See [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
+Accepted ADR 0131 requires a server-only trusted host adapter to verify the actual origin for an exact fixed-roster address and local binding/parent. Preliminary approval precedes private reply lookup; final approval inside the scope transaction can roll back every proposed write. Independent readSchedulingResponses/readSchedulingReplySource gates protect summary/review and raw source, alongside existing full event/scheduling/source authority. Payload identities, SMTP headers and client flags never prove origin. See [the reply guide](authenticated-attendee-replies.md) and [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).

@@ -3,6 +3,7 @@ import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 
 import 'calendar_authorization.dart';
 import 'generated/calendar_event_timing.dart';
+import 'inbound_reply_runtime.dart';
 
 /// Trusted routing result. Neither the stored reference nor address grants access.
 final class CalendarSchedulingRoute {
@@ -181,9 +182,11 @@ final class CalendarSchedulingRuntime {
   CalendarSchedulingRuntime({
     required this.host,
     required this.transport,
+    this.replies,
     CalendarSchedulingOptions? options,
   }) : options = options ?? CalendarSchedulingOptions();
   final CalendarSchedulingHost host;
   final CalendarSchedulingTransport transport;
   final CalendarSchedulingOptions options;
+  final CalendarSchedulingReplyRuntime? replies;
 }

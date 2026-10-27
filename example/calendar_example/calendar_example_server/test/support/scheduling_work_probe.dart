@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:serverpod/serverpod.dart';
@@ -65,6 +66,29 @@ final class _Transport implements CalendarSchedulingTransport {
   }
 }
 
+final class _ReplyHost implements CalendarSchedulingReplyHost {
+  String pause = '';
+  @override
+  CalendarAuthorizationGuarantee get guarantee =>
+      CalendarAuthorizationGuarantee.freshCheck;
+  @override
+  Future<CalendarAuthorizationVerdict> authorizeReply(
+    Session s,
+    CalendarSchedulingReplyPolicyContext c,
+    Transaction tx,
+    CalendarAuthorizationPhase phase,
+  ) async {
+    if (pause == 'before' && phase == CalendarAuthorizationPhase.finalWrite) {
+      stdout.writeln('SCHEDULING_SUBMITTED');
+      await Completer<void>().future;
+    }
+    return c.delivery.scopeKey.startsWith('scheduling-work-probe:') &&
+            c.delivery.originReference == 'synthetic-verified-bob'
+        ? CalendarAuthorizationVerdict.allow
+        : CalendarAuthorizationVerdict.deny;
+  }
+}
+
 /// Internal isolated-storage process fixture. No endpoint or real mail transport.
 Future<void> main(List<String> args) async {
   final pod = generated.Serverpod([
@@ -78,6 +102,7 @@ Future<void> main(List<String> args) async {
     throw StateError('Synthetic test storage required');
   }
   final transport = _Transport();
+  final replies = _ReplyHost();
   CalendarModule.install(
     pod,
     policy: DemoCalendarPolicy(),
@@ -87,6 +112,7 @@ Future<void> main(List<String> args) async {
     scheduling: CalendarSchedulingRuntime(
       host: _Host(),
       transport: transport,
+      replies: CalendarSchedulingReplyRuntime(host: replies),
       options: CalendarSchedulingOptions(
         lease: const Duration(seconds: 6),
         transportTimeout: const Duration(seconds: 5),
@@ -102,6 +128,62 @@ Future<void> main(List<String> args) async {
       final input = jsonDecode(line) as Map<String, dynamic>;
       Object? result;
       switch (input['command']) {
+        case 'reply':
+          replies.pause = input['pause'] as String? ?? '';
+          final eventId = UuidValue.fromString(input['eventId'] as String);
+          final meeting = (await CalendarSchedulingMeetingRecord.db
+              .findFirstRow(s, where: (t) => t.eventId.equals(eventId)))!;
+          if (!meeting.scopeKey.startsWith('scheduling-work-probe:')) {
+            throw StateError('Foreign reply fixture');
+          }
+          final publication = (await CalendarSchedulingPublicationRecord.db
+              .findById(s, meeting.latestPublicationId!))!;
+          final body = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//Synthetic reply//EN',
+            'METHOD:REPLY',
+            'BEGIN:VEVENT',
+            'UID:${publication.protocolUid}',
+            'DTSTAMP:20261027T120000Z',
+            'SEQUENCE:${publication.sequence}',
+            'ORGANIZER:${meeting.organizerAddress}',
+            'ATTENDEE;PARTSTAT=ACCEPTED:mailto:bob@example.invalid',
+            'END:VEVENT',
+            'END:VCALENDAR',
+            '',
+          ].join('\r\n');
+          final receipt = await CalendarModule.receiveSchedulingReply(
+            s,
+            CalendarSchedulingReplyDelivery(
+              scopeKey: meeting.scopeKey,
+              eventId: eventId,
+              namespace: 'process-loss-fixture',
+              deliveryKey: input['key'] as String,
+              originReference: 'synthetic-verified-bob',
+              bytes: Uint8List.fromList(utf8.encode(body)),
+            ),
+          );
+          if (replies.pause == 'after') {
+            stdout.writeln('SCHEDULING_SUBMITTED');
+            await Completer<void>().future;
+          }
+          result = {
+            'receiptId': receipt.receiptId.toString(),
+            'sourceId': receipt.sourceId.toString(),
+            'unchanged': receipt.unchanged,
+            'outcome': receipt.outcome.name,
+            'sources': await CalendarSchedulingReplySourceRecord.db.count(
+              s,
+              where: (t) => t.meetingId.equals(meeting.id!),
+            ),
+            'receipts': await CalendarSchedulingReplyReceiptRecord.db.count(
+              s,
+              where: (t) => t.meetingId.equals(meeting.id!),
+            ),
+            'responses': await CalendarSchedulingAttendeeResponseRecord.db
+                .count(s, where: (t) => t.meetingId.equals(meeting.id!)),
+          };
         case 'seed':
           result = await _seed(s, input['method'] as String? ?? 'REQUEST');
         case 'work':
@@ -136,6 +218,18 @@ Future<void> main(List<String> args) async {
               !meeting.scopeKey.startsWith('scheduling-work-probe:')) {
             throw StateError('Foreign fixture');
           }
+          await CalendarSchedulingAttendeeResponseRecord.db.deleteWhere(
+            s,
+            where: (t) => t.meetingId.equals(meeting.id!),
+          );
+          await CalendarSchedulingReplyReceiptRecord.db.deleteWhere(
+            s,
+            where: (t) => t.meetingId.equals(meeting.id!),
+          );
+          await CalendarSchedulingReplySourceRecord.db.deleteWhere(
+            s,
+            where: (t) => t.meetingId.equals(meeting.id!),
+          );
           for (final p in await CalendarSchedulingPublicationRecord.db.find(
             s,
             where: (t) => t.meetingId.equals(meeting.id!),
@@ -189,6 +283,8 @@ Future<Map<String, String>> _seed(
   Session s,
   String method,
 ) => s.db.transaction((tx) async {
+  final replyMode = method == 'REPLY';
+  if (replyMode) method = 'REQUEST';
   final maskedRestore = method == 'MASKRESTORE';
   final reopening = method == 'REOPEN';
   final projectedMode = reopening || maskedRestore;
@@ -230,22 +326,24 @@ Future<Map<String, String>> _seed(
   );
   final content = CalendarEventContent(
     summary: 'Synthetic worker publication',
-    recurrence: CalendarEventRecurrence(
-      rule: CalendarEventRule(
-        frequency: CalendarEventFrequency.daily,
-        count: 4,
-        byDay: [],
-        byMonthDay: [],
-        byYearDay: [],
-        byWeekNo: [],
-        byMonth: [],
-        byHour: [],
-        byMinute: [],
-        bySetPosition: [],
-      ),
-      inclusions: [],
-      exclusions: [],
-    ),
+    recurrence: replyMode
+        ? null
+        : CalendarEventRecurrence(
+            rule: CalendarEventRule(
+              frequency: CalendarEventFrequency.daily,
+              count: 4,
+              byDay: [],
+              byMonthDay: [],
+              byYearDay: [],
+              byWeekNo: [],
+              byMonth: [],
+              byHour: [],
+              byMinute: [],
+              bySetPosition: [],
+            ),
+            inclusions: [],
+            exclusions: [],
+          ),
     status: method == 'CANCEL'
         ? CalendarEventStatus.cancelled
         : CalendarEventStatus.confirmed,
@@ -256,7 +354,7 @@ Future<Map<String, String>> _seed(
   );
   final uid = Uuid().v4obj().toString(),
       recipient = 'mailto:bob@example.invalid';
-  final originals = method == 'REQUEST'
+  final originals = method == 'REQUEST' && !replyMode
       ? [
           EventSchedulingOriginal(
             content.timing.copyWith(
