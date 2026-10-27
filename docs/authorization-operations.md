@@ -198,3 +198,8 @@ Accepted [ADR 0128](adr/0128-explicit-single-occurrence-cancellation.md) adds `c
 
 
 Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) adds independent `restoreOccurrenceScheduling`, scheduling read, full event/source and lifecycle gates, including historical originals without a native mutation. Ordinary publish/edit/cancel permissions do not substitute. Trusted context carries exact historical basis/target, current native membership and final state plus immutable outgoing REQUEST/digest. Current sender/routes/parent/origin/generation/expiry and the configured guarantee apply to commands and workers. Native and published cancelled masters are not implicitly reopened.
+
+
+## Proposed retained-cancellation reopening
+
+Proposed only: ADR 0130 adds independent reopenScheduling plus scheduling-read, complete event/source and lifecycle checks. It also makes restoration of a module-masked original approve a complete outgoing REQUEST. These are not implemented permissions or substitutes for current publication/restore authority. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).

@@ -146,6 +146,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0127](0127-retained-occurrence-reset-projections.md) | Retained original identities for occurrence resets | Accepted v3 checkpoints, bounded retained slots and current single/future reset projections preserving native inheritance; scoped implementation |
 | [0128](0128-explicit-single-occurrence-cancellation.md) | Explicit single-occurrence cancellation with preserved drafts | Accepted 2026-10-27; scoped historical single-CANCEL runtime, delivery gate and v4/DTO/host changes; restoration remains separate |
 | [0129](0129-explicit-occurrence-restoration.md) | Explicit restoration of published occurrence values | Accepted 2026-10-27; scoped published-value restoration, v5 active/history ledger and guarded complete REQUEST; broader reopening remains separate |
+| [0130](0130-preserved-cancellations-reopening.md) | Reopening published series with retained individual cancellations | Policy confirmed; published-value API, exclusion projection and v6 mechanics proposed, not implemented |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

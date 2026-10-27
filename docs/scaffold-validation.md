@@ -1089,3 +1089,11 @@ The final clean `dart analyze --fatal-infos`, host rebuild and `dart run tool/ho
 Interactive Serverpod and Chrome runners were restored without a development reset. Serverpod MCP hot reload completed; the actual Chrome VM connected and hot reload succeeded, runtime-error inspection returned none, and recent alarm maintenance succeeded. Final static review passed 2,695 relative links, consecutive ADRs 0001-0129, 47 candidate-file/credential checks, unchanged Apache 2.0 LICENSE and whitespace checks. No generated files or migration metadata were edited by hand.
 
 No development reset, new dependency/schema, real mail, remote exception deletion, full iTIP conformance or external-client compatibility is claimed. The maintainer separately selected preserving individual cancellations when reopening the whole series; its next concrete projection/coordination design remains outside this batch.
+
+
+## Retained-cancellation reopening proposal, 2026-10-27
+
+ADR 0130 records the confirmed preserve-cancellations policy separately from its proposed API, publication-only exclusion/restoration, authority and v6 mechanics. Primary RFC 5546 REQUEST and RFC 5545 EXDATE references were checked on 2026-10-27. This documentation batch changes no runtime/model/generated source, schema or migration. The current implementation guards remain. Relative links, consecutive ADR numbering, changed-file/credential/LICENSE and whitespace checks run before staging; runtime suites are not repeated for the proposal.
+
+
+Documentation checks passed 2,707 relative links, consecutive ADRs 0001-0130, 14 candidate files, local credential scanning, unchanged Apache 2.0 LICENSE and whitespace. No runtime tests were repeated for this separate documentation proposal.

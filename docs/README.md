@@ -228,3 +228,7 @@ Accepted [ADR 0127](adr/0127-retained-occurrence-reset-projections.md) implement
 Accepted [ADR 0128](adr/0128-explicit-single-occurrence-cancellation.md) adds scoped historical single-occurrence cancellation with preserved drafts, exact native matching, terminal-prior-delivery gating and self-contained v4 cancellation state. The generated request/status and host context are implemented; no table/migration is added. Individual restoration, range cancellation, concurrent partial coordination and real mail remain separate. See runtime and validation for the checked scope.
 
 Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) adds published-value individual restoration, exact native flag removal, separate authority, serialized delivery and v5 active/restored version history in existing storage. Complete REQUEST publication can resume only after no individual cancellations remain and all retained originals validate against the proposed native series. No table/migration, timing pinning, real mail or external-client claim is added; see runtime and validation for checked scope.
+
+## Proposed retained-cancellation reopening
+
+The next concrete lifecycle proposal is ADR 0130: reopening published values while retaining individual cancellations. It separates the confirmed policy from the proposed API, publication-only masks, full-message restoration and v6 mechanics. The implemented ADR 0129 restoration boundary remains unchanged. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).
