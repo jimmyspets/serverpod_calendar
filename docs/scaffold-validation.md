@@ -1117,3 +1117,10 @@ Owned interactive Serverpod/Chrome runners were restored without resetting devel
 
 
 Final static validation passed 2,712 relative links, consecutive ADRs 0001-0130, 50 candidate-file/credential checks, unchanged Apache 2.0 LICENSE and whitespace. Changed source formatting was checked before the single implementation commit.
+
+## Authenticated attendee-reply proposal, 2026-10-27
+
+ADR 0131 records confirmed stale retention separately from proposed non-recurring ingress, independent response state, three tables and authority/version/retention/example mechanics. RFC 5546 sequencing/REPLY, RFC 5545 participation defaults and current Serverpod 4 model documentation were checked against primary text on 2026-10-27. No source/model/generated/migration/runtime change is added by this separate documentation batch. Links, consecutive ADRs, changed-file/credential/LICENSE and whitespace checks run before staging; runtime suites are not repeated for the proposal.
+
+
+Documentation validation passed 2,725 relative links, consecutive ADRs 0001-0131, 14 changed/candidate files, local credential scanning, unchanged Apache 2.0 LICENSE and whitespace checks. Runtime suites were not repeated for this proposal.

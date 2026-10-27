@@ -447,3 +447,7 @@ Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) now implements 
 ## Retained-cancellation reopening
 
 Accepted ADR 0130 adds the separate published-value reopening action, publication-only exclusion masks and complete master-updating restoration. Newer native drafts remain local; ordinary complete publication stays guarded while cancellations remain. Next are broader lifecycle/participant coordination, inbound reconciliation, RFC 6047 transport and release evidence. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).
+
+## Proposed authenticated attendee replies
+
+Next review organizer-side non-recurring attendee REPLY. The maintainer selected retaining stale older-version replies without automatic application. Three-table trusted ingress and response/review mechanics remain proposed; recurrence, other methods and mail follow separately. See [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
