@@ -119,13 +119,36 @@ Future<void> runSchedulingJourney(WidgetTester tester, Client client) async {
   await _tap(tester, 'scheduling-publish');
   expect(find.byKey(const Key('scheduling-error')), findsNothing);
   expect(find.text('Current saved content is published'), findsOneWidget);
-  final published = await api.calendarEvent.schedulingStatus(event.id);
+  var published = await api.calendarEvent.schedulingStatus(event.id);
   expect(published.eventRevision, 3);
+  expect(published.hasLocalChanges, false);
+  await api.calendarEvent.changeOccurrence(
+    cal.CalendarEventOccurrenceChange(
+      eventId: event.id,
+      expectedRevision: published.eventRevision,
+      originalStart: cal.CalendarEventTiming(
+        kind: cal.CalendarEventTimeKind.date,
+        start: cal.CalendarEventCivil(year: 2026, month: 11, day: 4),
+      ),
+      action: cal.CalendarEventOccurrenceAction.clearSingleTiming,
+    ),
+  );
+  await _tap(tester, 'scheduling-reload');
+  expect(find.text('Local changes have not been published'), findsOneWidget);
+  await _tap(tester, 'scheduling-publish');
+  expect(find.byKey(const Key('scheduling-error')), findsNothing);
+  final resetView = await api.calendarEvent.getEvent(
+    event.id,
+    cal.CalendarEventFieldGroup.values,
+  );
+  expect(resetView.timingOverrides, isNull);
+  published = await api.calendarEvent.schedulingStatus(event.id);
+  expect(published.eventRevision, 5);
   expect(published.hasLocalChanges, false);
   await api.calendarEvent.update(
     cal.CalendarEventUpdateRequest(
       eventId: event.id,
-      expectedRevision: 3,
+      expectedRevision: 5,
       content: content('Local Flutter edit'),
     ),
   );
@@ -139,12 +162,12 @@ Future<void> runSchedulingJourney(WidgetTester tester, Client client) async {
   expect(find.byKey(const Key('scheduling-error')), findsNothing);
   final updated = await api.calendarEvent.schedulingStatus(event.id);
   expect(updated.publicationId, isNot(published.publicationId));
-  expect(updated.eventRevision, 5);
+  expect(updated.eventRevision, 7);
   expect(updated.hasLocalChanges, false);
   await api.calendarEvent.update(
     cal.CalendarEventUpdateRequest(
       eventId: event.id,
-      expectedRevision: 5,
+      expectedRevision: 7,
       content: content('Saved private draft before cancellation'),
     ),
   );
@@ -153,7 +176,7 @@ Future<void> runSchedulingJourney(WidgetTester tester, Client client) async {
   expect(find.byKey(const Key('scheduling-error')), findsNothing);
   final cancelled = await api.calendarEvent.schedulingStatus(event.id);
   expect(cancelled.method, 'CANCEL');
-  expect(cancelled.eventRevision, 7);
+  expect(cancelled.eventRevision, 9);
   expect(cancelled.hasLocalChanges, true);
   final saved = await api.calendarEvent.getEvent(
     event.id,
@@ -166,12 +189,12 @@ Future<void> runSchedulingJourney(WidgetTester tester, Client client) async {
   expect(find.byKey(const Key('scheduling-error')), findsNothing);
   final reopened = await api.calendarEvent.schedulingStatus(event.id);
   expect(reopened.method, 'REQUEST');
-  expect(reopened.eventRevision, 8);
+  expect(reopened.eventRevision, 10);
   expect(reopened.hasLocalChanges, false);
   await api.calendarEvent.changeOccurrence(
     cal.CalendarEventOccurrenceChange(
       eventId: event.id,
-      expectedRevision: 8,
+      expectedRevision: 10,
       originalStart: cal.CalendarEventTiming(
         kind: cal.CalendarEventTimeKind.date,
         start: cal.CalendarEventCivil(year: 2026, month: 11, day: 3),
@@ -206,7 +229,7 @@ Future<void> runSchedulingJourney(WidgetTester tester, Client client) async {
     event.id,
     cal.CalendarEventFieldGroup.values,
   );
-  expect(withException.revision, 10);
+  expect(withException.revision, 12);
   expect(withException.status, cal.CalendarEventStatus.cancelled);
   expect(withException.timingOverrides!.singles.any((v) => v.cancelled), true);
   expect(

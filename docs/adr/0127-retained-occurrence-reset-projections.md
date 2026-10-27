@@ -1,12 +1,12 @@
 # ADR 0127: Retained original identities for occurrence resets
 
-Status: **Retain identity and re-project current values confirmed by the maintainer on 2026-10-26. The concrete checkpoint/profile mechanics below are proposed for review; no reset runtime is implemented by this record.**
+Status: **Accepted by explicit maintainer approval on 2026-10-26, including the v3 checkpoint/profile mechanics. Scoped implementation and actual validation are documented in [the organizer guide](../native-organizer-scheduling.md) and [validation record](../scaffold-validation.md).**
 
 ## Confirmed policy
 
 After an occurrence is returned to following the series, preserve native inheritance and retain its original identity in the private publication ledger. Each later explicit Save and notify projects its then-current effective values. This restores remote published values without claiming to delete a recipient's exception record. Ordinary native edits still send nothing. The maintainer selected this policy after approving the independent-version bundle under [ADR 0126](0126-independent-occurrence-publication-versions.md).
 
-## Proposed reset batch
+## Accepted reset batch
 
 Extend existing Save and notify; add no endpoint, table, column or generated client model. Combine current native exception identities with retained published identities and emit at most 64 occurrence components plus the master. A retained original must remain a valid, nonexcluded current series member in the exact DATE/UTC/named-zone profile. Removing membership, changing original identity, unsupported cancellation, single/future collisions or unrepresentable data still rejects atomically. Never silently drop a retained identity or flatten the recurrence pattern.
 
@@ -14,7 +14,7 @@ For a retained original whose explicit native fields were cleared, calculate eff
 
 Outgoing reset components explicitly state current effective SUMMARY, DESCRIPTION, LOCATION, STATUS and TRANSP, plus the fixed host-approved organizer/attendee roster. When optional native text has no effective value, emit empty TEXT to replace previously published own text. This is an explicit scheduling presentation rule, not normalization of canonical absent versus empty source values. Retain applicable current text parameters; do not retain annotations from cleared own values. Preserve the effective DATE/UTC/zone, default/end/duration meaning and nominal units. Reject source data that cannot be represented within this profile rather than dropping it. Rich source metadata continues under existing supported/matching rules; this batch adds no native metadata editor or blanket extension support.
 
-## Proposed checkpoint and version mechanics
+## Accepted checkpoint and version mechanics
 
 Write a version-3 checkpoint and version-3 comparison value in the existing private string columns. Retain complete canonical and outgoing source snapshots and the independent outgoing component ledger. Add `projectionOriginals`, a bounded list of entries containing `originalStart` (a typed point-only CalendarEventTiming, without end/duration) and `isThisAndFuture`. This distinguishes genuine canonical overrides from scheduling-only reset projections; derive comparison keys from typed values, never trust a separately supplied opaque key. Validate duplicate/profile/membership/source/body correspondence, bounds and exact UID/parent containment before use. Keep snapshot and projection caps at 512 KiB each and the existing payload, recipient, work and retention limits. Unknown/corrupt versions fail unavailable without echoing content.
 
@@ -29,3 +29,9 @@ Retained projection slots count toward the same 64-component limit even after th
 Continue complete `authorizeMessage` disclosure for every recipient, with distinct native current/final state, canonical checkpoint and exact outgoing typed message/bytes/digest. Policy sees scheduling-only reset projections without being told they are native own values. Ordinary preliminary access checks precede detailed projection; final and worker checks retain current origin/parent/authority/route/generation/expiry guarantees and the documented external-check race. Never infer authority from source participants.
 
 The example exposes existing clear/follow-series actions and explicit Save and notify, explains that retained originals continue to be projected, and preserves stale or rejected local drafts. Transport stays synthetic. Test single/future resets, inherited/own/empty text and annotations, repeated master/range edits, exact original/profile/DST/end/duration semantics, ordinary export separation, independent versions/no-ops/overflow, legacy/v2/v3 checkpoint reads, bounded retained-slot growth and missing-member/cancellation rejection. Verify full policy context/rollback, ledger survival through cancellation/cleanup/reopening, independent host races/process loss, generated-client and Flutter reset journeys. Run focused development tests followed by the full agreed batch. No development database reset or new migration is expected.
+
+## Implementation boundary
+
+The private ledger retains all emitted originals. `projectionOriginals` records the subset requiring full current-value materialization for that publication: cleared timing, a cleared own text field, previously active reset mode, or explicit reopening after whole-series cancellation. This avoids turning an unchanged first publication into a new message merely because its ordinary native overrides entered the ledger. A v3 reader reconstructs the exact projection from the immutable outgoing canonical snapshot and those typed markers; legacy/v2 readers infer no reset markers. It validates marker identity/kind/profile/membership and body correspondence before use. Marker retention and ledger retention are distinct; both stay bounded and self-contained through cancellation.
+
+Membership is proved in bounded set scans before per-slot arithmetic; the implementation never performs an unbounded recurrence expansion for each original. Nominal duration/default/explicit-end form is retained. An elapsed explicit end whose later-fold instant cannot be faithfully encoded with the selected RFC wall fields rejects publication. No native source fields are pinned or protocol versions manufactured in active storage. See validation for actual commands and results.
