@@ -11,6 +11,9 @@ import 'notification_smoke.dart';
 /// Compose test services must already be healthy. All child processes are owned
 /// by this harness and are stopped in finally, including on test failure.
 Future<void> main(List<String> args) async {
+  if (args.contains('--browser-only') && !args.contains('--flutter')) {
+    throw ArgumentError('--browser-only requires --flutter');
+  }
   final root = Directory.current.absolute.path;
   final server = '$root/example/calendar_example/calendar_example_server';
   final hosts = <Process>[];
@@ -81,73 +84,79 @@ Future<void> main(List<String> args) async {
   try {
     await start('smoke-a', 18180);
     await start('smoke-b', 18280);
-    final client = await Process.start(Platform.resolvedExecutable, [
-      'run',
-      'tool/client_smoke.dart',
-      if (args.contains('--feeds')) '--feeds',
-      'http://localhost:18180/',
-      'http://localhost:18280/',
-    ], workingDirectory: root);
-    final out = client.stdout.transform(utf8.decoder).listen(stdout.write);
-    final err = client.stderr.transform(utf8.decoder).listen(stderr.write);
-    final code = await client.exitCode.timeout(
-      const Duration(seconds: 180),
-      onTimeout: () {
-        unawaited(stop(client));
-        throw TimeoutException('Generated-client smoke timed out.');
-      },
-    );
-    await out.cancel();
-    await err.cancel();
-    if (code != 0) throw StateError('Real-client smoke failed ($code).');
     final settings =
         (jsonDecode(await File('.local/credentials.json').readAsString())
                 as Map)['test']
             as Map;
-    if (args.contains('--feeds') && !args.contains('--flutter')) return;
-    if (!args.contains('--feeds')) {
-      final recoveryClients = [
-        for (final port in [18180, 18280])
-          Client('http://localhost:$port/')
-            ..authSessionManager = ClientAuthSessionManager(
-              storage: _RecoveryStorage(),
-            ),
-      ];
-      try {
-        final auth = await recoveryClients.first.emailIdp.login(
-          email: 'alice@example.invalid',
-          password: settings['demoAlicePassword'] as String,
-        );
-        for (final c in recoveryClients) {
-          await c.auth.updateSignedInUser(auth);
+    if (!args.contains('--browser-only')) {
+      final client = await Process.start(Platform.resolvedExecutable, [
+        'run',
+        'tool/client_smoke.dart',
+        if (args.contains('--feeds')) '--feeds',
+        'http://localhost:18180/',
+        'http://localhost:18280/',
+      ], workingDirectory: root);
+      final out = client.stdout.transform(utf8.decoder).listen(stdout.write);
+      final err = client.stderr.transform(utf8.decoder).listen(stderr.write);
+      final code = await client.exitCode.timeout(
+        const Duration(seconds: 180),
+        onTimeout: () {
+          unawaited(stop(client));
+          throw TimeoutException('Generated-client smoke timed out.');
+        },
+      );
+      await out.cancel();
+      await err.cancel();
+      if (code != 0) throw StateError('Real-client smoke failed ($code).');
+      if (args.contains('--feeds') && !args.contains('--flutter')) return;
+      if (!args.contains('--feeds')) {
+        final recoveryClients = [
+          for (final port in [18180, 18280])
+            Client('http://localhost:$port/')
+              ..authSessionManager = ClientAuthSessionManager(
+                storage: _RecoveryStorage(),
+              ),
+        ];
+        try {
+          final auth = await recoveryClients.first.emailIdp.login(
+            email: 'alice@example.invalid',
+            password: settings['demoAlicePassword'] as String,
+          );
+          for (final c in recoveryClients) {
+            await c.auth.updateSignedInUser(auth);
+          }
+          await notificationSmoke(
+            recoveryClients,
+            setRecipientBlocked: (blocked) async {
+              final result = await Process.run('python', [
+                'tool/notification_access_probe.py',
+                '${auth.authUserId}',
+                blocked ? 'block' : 'unblock',
+              ], workingDirectory: root);
+              if (result.exitCode != 0) {
+                throw StateError('Synthetic access fixture failed');
+              }
+            },
+            loseProducer: () async {
+              await stop(hosts.first);
+              await hosts.first.exitCode;
+            },
+          );
+          stdout.writeln(
+            'PASS: producer host actually terminated; survivor reauthorized and recovered the same live notification.',
+          );
+        } finally {
+          for (final c in recoveryClients) {
+            c.close();
+          }
         }
-        await notificationSmoke(
-          recoveryClients,
-          setRecipientBlocked: (blocked) async {
-            final result = await Process.run('python', [
-              'tool/notification_access_probe.py',
-              '${auth.authUserId}',
-              blocked ? 'block' : 'unblock',
-            ], workingDirectory: root);
-            if (result.exitCode != 0) {
-              throw StateError('Synthetic access fixture failed');
-            }
-          },
-          loseProducer: () async {
-            await stop(hosts.first);
-            await hosts.first.exitCode;
-          },
-        );
-        stdout.writeln(
-          'PASS: producer host actually terminated; survivor reauthorized and recovered the same live notification.',
-        );
-      } finally {
-        for (final c in recoveryClients) {
-          c.close();
-        }
+        // Restore the owned host so the complete Flutter journey still uses A/B.
+        await start('smoke-a-recovered', 18180);
       }
-      // Restore the owned host so the complete Flutter journey still uses A/B.
-      await start('smoke-a-recovered', 18180);
+    } else {
+      stdout.writeln(
+        'Focused browser only: generated-client and worker-loss prerequisites skipped.',
+      );
     }
     if (args.contains('--flutter')) {
       final driverPath =
@@ -248,7 +257,7 @@ Future<void> main(List<String> args) async {
       // The full journey includes all delivered features and process shutdown.
       // Keep the focused feature targets short; per-action waits stay bounded.
       final browserCode = await result.exitCode.timeout(
-        Duration(minutes: focused ? 4 : 6),
+        Duration(minutes: focused ? 4 : 8),
         onTimeout: () {
           unawaited(stop(result));
           throw TimeoutException('Flutter browser smoke timed out.');

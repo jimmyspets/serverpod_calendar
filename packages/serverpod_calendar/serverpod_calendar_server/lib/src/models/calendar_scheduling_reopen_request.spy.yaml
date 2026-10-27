@@ -1,0 +1,6 @@
+class: CalendarSchedulingReopenRequest
+immutable: true
+fields:
+  eventId: UuidValue
+  expectedRevision: int
+  commandId: UuidValue

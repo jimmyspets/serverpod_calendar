@@ -232,6 +232,6 @@ Accepted [ADR 0128](adr/0128-explicit-single-occurrence-cancellation.md) enforce
 
 Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) independently enforces `restoreOccurrenceScheduling`, scheduling read, full event/source and lifecycle authority even without a native mutation. Preliminary access precedes historical decoding; final host phases and workers receive exact published basis/target, current native-match result, complete current/final native state and immutable outgoing restoration bytes/digest. Ordinary editing, REQUEST publication and whole/instance-cancellation permissions do not substitute. Current sender/routes/parent/origin/generation/expiry and declared consistency guarantees remain required; cancelled native/published masters are not silently reopened.
 
-## Proposed retained-cancellation reopening
+## Retained-cancellation reopening
 
-ADR 0130 proposes independent published-series reopening authority and immutable host context containing current/final native state, unprojected published basis, mask identities and exact complete outgoing bytes. Restoration of a masked original would require full-message approval. These mechanics are unapproved; existing guards and canonical authority boundaries remain. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).
+Accepted ADR 0130 requires independent reopenScheduling plus scheduling-read, full event/source and lifecycle authority. Both command phases and dispatch expose immutable publicationExclusions, the unprojected publishedRequest, exact message and native snapshots. Masked restoration authorizes a complete REQUEST; source exclusions never grant authority. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).

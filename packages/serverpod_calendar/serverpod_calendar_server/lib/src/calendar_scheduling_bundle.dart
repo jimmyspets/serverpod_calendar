@@ -325,6 +325,10 @@ final class _SchedulingCheckpoint {
     this.basisRecord,
     this.cancelled = const [],
     this.restored = const [],
+    this.publicationExclusions,
+    this.privateStateRecord,
+    this.fullRequestPayload,
+    this.reopenFloor,
   });
   final CalendarEventPolicySnapshot canonical, outgoing;
   final IcalendarSchedulingMessage message;
@@ -335,6 +339,10 @@ final class _SchedulingCheckpoint {
   final bool? nativeMatch;
   final CalendarSchedulingPublicationRecord? basisRecord;
   final List<_SchedulingCancellation> cancelled, restored;
+  final List<CalendarEventTiming>? publicationExclusions;
+  final CalendarSchedulingPublicationRecord? privateStateRecord;
+  final String? fullRequestPayload;
+  final (int, DateTime)? reopenFloor;
   List<_SchedulingCancellation> get individuals => [...cancelled, ...restored];
 }
 
@@ -347,6 +355,7 @@ _SchedulingCheckpoint _schedulingReadCheckpoint(
     final header = jsonDecode(p.snapshot) as Map<String, dynamic>;
     if (header['version'] == 4) return _schedulingReadV4(p, header);
     if (header['version'] == 5) return _schedulingReadV5(p, header);
+    if (header['version'] == 6) return _schedulingReadV6(p, header);
     if (p.payload.length > _schedulingCheckpointBytes ||
         _schedulingDigest(p.payload) != p.payloadDigest) {
       throw const FormatException();

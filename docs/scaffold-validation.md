@@ -1097,3 +1097,23 @@ ADR 0130 records the confirmed preserve-cancellations policy separately from its
 
 
 Documentation checks passed 2,707 relative links, consecutive ADRs 0001-0130, 14 candidate files, local credential scanning, unchanged Apache 2.0 LICENSE and whitespace. No runtime tests were repeated for this separate documentation proposal.
+
+
+## Approved retained-cancellation reopening batch, 2026-10-27
+
+The maintainer explicitly approved the complete ADR 0130 API/projection/v6/authority batch before implementation. The source adds generated reopening/status kinds, independent authority, publication-only masks, complete master-restoration, self-contained v6 state and explicit example controls without new tables/migrations. Native drafts/flags and ordinary source exclusions stay separate. Current/proposed native version floors, exact retries/no-ops, global cancellation and guarded normal publication are covered.
+
+Focused development checks passed the initial three cases, an expanded 13-case set and three additional corruption/retention/global-floor/overflow cases. The actual two-process `dart run tool/scheduling_work_smoke.dart --projected-only` probe passed REOPEN and MASKRESTORE, including competing committed claims, process loss before/after acceptance, uncertainty and stable ID/byte fencing. Workspace fatal-info analysis passed after example/journey changes. The complete directly affected scheduling file and final batch results follow below. An initial conversion test expected rejection at reopening, but the existing native edit gate correctly rejected earlier; the fixture was corrected without relaxing runtime validation.
+
+The final root run passed stable generation, formatting/fatal-info analysis, core 502 VM/502 Chrome, iCalendar 552 VM/552 Chrome, module 221 VM/17 Chrome, feed 13, Flutter widgets 3 and all 579 database cases (138 scheduling cases including 18 new). Populated upgrades, independent alarm/notification workers and all six scheduling modes (REQUEST, CANCEL, INSTANCE, RESTORE, REOPEN, MASKRESTORE) passed competing claims, actual process loss, uncertainty and stable-key/byte fencing. The rebuilt two-host generated-client/JWT/feed/notification/domain journeys passed the new reopening/restoration races and preserved-draft assertions.
+
+The complete browser phase reached the former six-minute total harness budget without an assertion failure. The affected scheduling browser target then passed alone via `dart run tool/host_smoke.dart --flutter --scheduling --browser-only`. The explicit browser-only mode reports skipped already-passed server prerequisites; the default batch path retains them. The full browser budget was raised to eight minutes while focused targets retain four minutes and bounded per-action waits. Final workspace analysis passed after that test-harness change. This is phased completion of the check commands, not a claim that the initial root invocation finished uninterrupted.
+
+The complete `dart run tool/host_smoke.dart --flutter --browser-only` journey passed with the eight-minute budget, including the new published-value reopening/master-restoration controls and the remaining notification/sign-out steps. Already-passed server prerequisites were not needlessly repeated; no assertion or runtime behavior was weakened.
+
+`flutter build web --no-pub` passed after the complete browser journey, including the default Wasm compilation dry run. Wasm runtime and external scheduling-client/mail interoperability were not tested. No runtime code changed after the broad server sweep; only the explicit focused-browser switch and expanded complete-journey budget changed in the harness.
+
+Owned interactive Serverpod/Chrome runners were restored without resetting development data. Serverpod MCP hot reload completed; the actual Chrome VM connected and hot reload succeeded, runtime-error inspection returned none, and recent alarm maintenance operations succeeded. Final relative-link/consecutive-ADR/changed-file/credential/LICENSE and whitespace checks run before staging. No generated or migration metadata was edited by hand.
+
+
+Final static validation passed 2,712 relative links, consecutive ADRs 0001-0130, 50 candidate-file/credential checks, unchanged Apache 2.0 LICENSE and whitespace. Changed source formatting was checked before the single implementation commit.

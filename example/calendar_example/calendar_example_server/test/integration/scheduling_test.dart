@@ -508,6 +508,679 @@ void main() {
       originalStart: point,
     );
 
+    Future<CalendarSchedulingReopenRequest> reopenCommand(UuidValue id) async =>
+        CalendarSchedulingReopenRequest(
+          eventId: id,
+          expectedRevision: (await service.getEvent(
+            id,
+            CalendarEventFieldGroup.values,
+          )).revision,
+          commandId: Uuid().v4obj(),
+        );
+
+    Future<UuidValue> cancelledPublishedSeries() async {
+      final content = masterContent();
+      final id = await masterEvent(content);
+      await notifyCurrent(id, content);
+      await CalendarModule.runSchedulingMaintenance(session);
+      await service.cancelOccurrenceAndNotify(
+        await instanceCommand(id, originalDay(28)),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      final view = await service.getEvent(id, CalendarEventFieldGroup.values);
+      await service.cancelAndNotify(cancelRequest(id, revision: view.revision));
+      await CalendarModule.runSchedulingMaintenance(session);
+      return id;
+    }
+
+    for (final permission in [
+      CalendarPermission.reopenScheduling,
+      CalendarPermission.readScheduling,
+      CalendarPermission.readEvent,
+      CalendarPermission.readEventSource,
+      CalendarPermission.changeEventStatus,
+    ]) {
+      test(
+        'projected REOPEN independently requires ${permission.name}',
+        () async {
+          final id = await cancelledPublishedSeries();
+          final command = await reopenCommand(id);
+          final before = (await publications()).length;
+          policy.denied.add(permission);
+          await expectLater(
+            service.reopenPublishedAndNotify(command),
+            failure(CalendarFailureCode.accessDenied),
+          );
+          expect(
+            (await eventData(id)).content.status,
+            CalendarEventStatus.cancelled,
+          );
+          expect((await publications()).length, before);
+        },
+      );
+    }
+    test('projected REOPEN final denial stale revisions pending restoration and retry isolation', () async {
+      final id = await cancelledPublishedSeries();
+      final command = await reopenCommand(id);
+      host.denyFinal = true;
+      await expectLater(
+        service.reopenPublishedAndNotify(command),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(
+        (await eventData(id)).content.status,
+        CalendarEventStatus.cancelled,
+      );
+      host.denyFinal = false;
+      await expectLater(
+        service.reopenPublishedAndNotify(command.copyWith(expectedRevision: 1)),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      final reopened = await service.reopenPublishedAndNotify(command);
+      await expectLater(
+        service.restoreOccurrenceAndNotify(
+          await restoreCommand(id, originalDay(28)),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      await expectLater(
+        service.restoreOccurrenceAndNotify(
+          (await restoreCommand(
+            id,
+            originalDay(28),
+          )).copyWith(commandId: command.commandId),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      final current = await service.getEvent(
+        id,
+        CalendarEventFieldGroup.values,
+      );
+      await service.changeEventStatus(
+        CalendarEventStatusRequest(
+          eventId: id,
+          expectedRevision: current.revision,
+          status: CalendarEventStatus.cancelled,
+        ),
+      );
+      expect(
+        (await service.reopenPublishedAndNotify(command)).publicationId,
+        reopened.publicationId,
+      );
+      expect(
+        (await eventData(id)).content.status,
+        CalendarEventStatus.cancelled,
+      );
+      await expectLater(
+        service.reopenPublishedAndNotify(await reopenCommand(id)),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+    });
+    for (final kind in [
+      CalendarEventTimeKind.utc,
+      CalendarEventTimeKind.zoned,
+    ]) {
+      test(
+        'projected REOPEN ${kind.name} preserves exact profile and nominal span',
+        () async {
+          final content = masterContent(kind: kind).copyWith(
+            status: CalendarEventStatus.tentative,
+            timing: masterTiming(kind: kind)
+                .copyWith(duration: CalendarEventDuration(days: 1)),
+          );
+          final id = await masterEvent(content);
+          await notifyCurrent(id, content);
+          await CalendarModule.runSchedulingMaintenance(session);
+          final point = CalendarEventTiming(
+            kind: kind,
+            start: masterTiming(kind: kind, day: 28).start,
+            zoneId: content.timing.zoneId,
+          );
+          await service.cancelOccurrenceAndNotify(
+            await instanceCommand(id, point),
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          final current = await service.getEvent(
+            id,
+            CalendarEventFieldGroup.values,
+          );
+          await service.cancelAndNotify(
+            cancelRequest(id, revision: current.revision),
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          final reopened = await service.reopenPublishedAndNotify(
+            await reopenCommand(id),
+          );
+          final master = (await messageFor(reopened)).events
+              .singleWhere((e) => !e.isOverride);
+          final exclusion = props(master, 'EXDATE').single;
+          expect(
+            exclusion.value,
+            kind == CalendarEventTimeKind.utc
+                ? '20260328T090000Z'
+                : '20260328T090000',
+          );
+          if (kind == CalendarEventTimeKind.zoned) {
+            expect(exclusion.parameters.single.values, ['Europe/Stockholm']);
+          }
+          expect(
+            (await service.getEvent(id, CalendarEventFieldGroup.values)).status,
+            CalendarEventStatus.tentative,
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          final restored = await service.restoreOccurrenceAndNotify(
+            await restoreCommand(id, point),
+          );
+          final occurrence = (await messageFor(restored)).events
+              .singleWhere((e) => e.isOverride);
+          expect(occurrence.duration!.days, 1);
+          expect(occurrence.status, IcalendarEventStatus.tentative);
+          expect(occurrence.originalTime!.zoneId, content.timing.zoneId);
+        },
+      );
+    }
+    test('projected REOPEN historical changed-profile draft remains private and orphan guard survives', () async {
+      final id = await cancelledPublishedSeries();
+      var current = await service.getEvent(id, CalendarEventFieldGroup.values);
+      await service.changeOccurrence(
+        CalendarEventOccurrenceChange(
+          eventId: id,
+          expectedRevision: current.revision,
+          originalStart: originalDay(28),
+          action: CalendarEventOccurrenceAction.restoreSingle,
+        ),
+      );
+      current = await service.getEvent(id, CalendarEventFieldGroup.values);
+      await service.updateEvent(
+        CalendarEventUpdateRequest(
+          eventId: id,
+          expectedRevision: current.revision,
+          content: masterContent(
+            kind: CalendarEventTimeKind.utc,
+            summary: 'Private UTC draft',
+          ).copyWith(status: CalendarEventStatus.cancelled),
+        ),
+      );
+      await service.reopenPublishedAndNotify(await reopenCommand(id));
+      current = await service.getEvent(id, CalendarEventFieldGroup.values);
+      expect(current.timing!.kind, CalendarEventTimeKind.utc);
+      expect(current.summary, 'Private UTC draft');
+      await CalendarModule.runSchedulingMaintenance(session);
+      final restored = await service.restoreOccurrenceAndNotify(
+        await restoreCommand(id, originalDay(28)),
+      );
+      expect(
+        (await messageFor(restored)).events
+            .singleWhere((e) => e.isOverride)
+            .startDate!
+            .day,
+        28,
+      );
+      expect(
+        (await service.getEvent(
+          id,
+          CalendarEventFieldGroup.values,
+        )).timingOverrides,
+        isNull,
+      );
+      await expectLater(
+        notifyCurrent(id, masterContent(kind: CalendarEventTimeKind.utc)),
+        failure(CalendarFailureCode.validation),
+      );
+    });
+    test('projected REOPEN ordinary source exclusion and DTSTART cancellation remain distinct', () async {
+      final content = masterContent().copyWith(
+        recurrence: masterContent().recurrence!.copyWith(
+          exclusions: [originalDay(30)],
+        ),
+      );
+      final id = await masterEvent(content);
+      await notifyCurrent(id, content);
+      await CalendarModule.runSchedulingMaintenance(session);
+      await service.cancelOccurrenceAndNotify(
+        await instanceCommand(id, originalDay(27)),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      final current = await service.getEvent(
+        id,
+        CalendarEventFieldGroup.values,
+      );
+      await service.cancelAndNotify(
+        cancelRequest(id, revision: current.revision),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      final reopened = await service.reopenPublishedAndNotify(
+        await reopenCommand(id),
+      );
+      final master = (await messageFor(reopened)).events
+          .singleWhere((e) => !e.isOverride);
+      expect(props(master, 'EXDATE').map((p) => p.value).toSet(), {
+        '20260330',
+        '20260327',
+      });
+      expect(props(master, 'DTSTART').single.value, '20260327');
+      await CalendarModule.runSchedulingMaintenance(session);
+      final restored = await service.restoreOccurrenceAndNotify(
+        await restoreCommand(id, originalDay(27)),
+      );
+      expect(
+        props(
+          (await messageFor(restored)).events.singleWhere((e) => !e.isOverride),
+          'EXDATE',
+        ).single.value,
+        '20260330',
+      );
+      expect(
+        (await service.getEvent(
+          id,
+          CalendarEventFieldGroup.values,
+        )).recurrence!.exclusions.single.start.day,
+        30,
+      );
+    });
+    test('projected REOPEN corrupt provenance and pruned restoration no-op fail safely', () async {
+      install(
+        options: CalendarSchedulingOptions(
+          retention: const Duration(seconds: 1),
+        ),
+      );
+      final id = await cancelledPublishedSeries();
+      final reopened = await service.reopenPublishedAndNotify(
+        await reopenCommand(id),
+      );
+      final row = await publication(reopened.publicationId);
+      final snapshot = row.snapshot;
+      for (final field in [
+        'state',
+        'ledger',
+        'masks',
+        'floor',
+        'fullPayload',
+      ]) {
+        final changed = jsonDecode(snapshot) as Map<String, dynamic>;
+        changed[field] = null;
+        row.snapshot = jsonEncode(changed);
+        await CalendarSchedulingPublicationRecord.db.updateRow(session, row);
+        await expectLater(
+          service.schedulingStatus(id),
+          failure(CalendarFailureCode.unavailable),
+        );
+      }
+      final nested = jsonDecode(snapshot) as Map<String, dynamic>;
+      (nested['state'] as Map)['snapshot'] = snapshot;
+      row.snapshot = jsonEncode(nested);
+      await CalendarSchedulingPublicationRecord.db.updateRow(session, row);
+      await expectLater(
+        service.schedulingStatus(id),
+        failure(CalendarFailureCode.unavailable),
+      );
+      row.snapshot = snapshot;
+      await CalendarSchedulingPublicationRecord.db.updateRow(session, row);
+      await CalendarModule.runSchedulingMaintenance(session);
+      await service.restoreOccurrenceAndNotify(
+        await restoreCommand(id, originalDay(28)),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      await service.cancelOccurrenceAndNotify(
+        await instanceCommand(id, originalDay(29)),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      await service.restoreOccurrenceAndNotify(
+        await restoreCommand(id, originalDay(29)),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      await session.db.unsafeExecute(
+        "UPDATE serverpod_calendar_scheduling_publication SET \"completedAt\"=clock_timestamp()-interval '2 seconds' WHERE \"completedAt\" IS NOT NULL",
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      expect((await publications()).length, 1);
+      host.onCheck = (context) {
+        expect(context.intent.publicationId, isNull);
+        expect(context.publicationExclusions, isEmpty);
+        expect(context.outgoingMessage.events.length, 3);
+      };
+      expect(
+        (await service.restoreOccurrenceAndNotify(
+          await restoreCommand(id, originalDay(28)),
+        )).unchanged,
+        true,
+      );
+      host.onCheck = null;
+      final current = await service.getEvent(
+        id,
+        CalendarEventFieldGroup.values,
+      );
+      final cancelled = await service.cancelAndNotify(
+        cancelRequest(id, revision: current.revision),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      await notifyCurrent(id, masterContent());
+      expect(
+        (await service.schedulingStatus(id)).usesPublicationExclusions,
+        false,
+      );
+      expect(
+        (await publications()).any((p) => p.id == cancelled.publicationId),
+        true,
+      );
+    });
+    test('projected REOPEN repeated whole cancellation preserves masks and advances global floor', () async {
+      final id = await cancelledPublishedSeries();
+      final first = await service.reopenPublishedAndNotify(
+        await reopenCommand(id),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      final current = await service.getEvent(
+        id,
+        CalendarEventFieldGroup.values,
+      );
+      final cancelled = await service.cancelAndNotify(
+        cancelRequest(id, revision: current.revision),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      final again = await service.reopenPublishedAndNotify(
+        await reopenCommand(id),
+      );
+      final sequence = (await publication(again.publicationId)).sequence;
+      expect(
+        sequence,
+        greaterThan((await publication(first.publicationId)).sequence),
+      );
+      expect(
+        sequence,
+        greaterThan((await publication(cancelled.publicationId)).sequence),
+      );
+      expect(
+        props(
+          (await messageFor(again)).events.singleWhere((e) => !e.isOverride),
+          'EXDATE',
+        ).single.value,
+        '20260328',
+      );
+      expect(
+        (await service.getEvent(
+          id,
+          CalendarEventFieldGroup.values,
+        )).timingOverrides!.singles.single.cancelled,
+        true,
+      );
+    });
+    test('projected REOPEN restoration includes removed native component overflow floor', () async {
+      final id = await cancelledPublishedSeries();
+      await service.reopenPublishedAndNotify(await reopenCommand(id));
+      await CalendarModule.runSchedulingMaintenance(session);
+      final data = await eventData(id);
+      data.protocolState = data.protocolState!.copyWith(
+        overrides: [
+          for (final o in data.protocolState!.overrides)
+            o.copyWith(version: o.version.copyWith(sequence: 2147483647)),
+        ],
+      );
+      await CalendarEventDataRecord.db.updateRow(session, data);
+      await expectLater(
+        service.restoreOccurrenceAndNotify(
+          await restoreCommand(id, originalDay(28)),
+        ),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      expect(
+        (await eventData(id)).timingOverrides!.singles.single.cancelled,
+        true,
+      );
+      expect((await publications()).length, 4);
+    });
+    test('projected REOPEN preserves PERIOD additions annotations and inherited range values', () async {
+      final period = masterTiming(
+        kind: CalendarEventTimeKind.utc,
+        day: 26,
+      ).copyWith(duration: CalendarEventDuration(hours: 2));
+      final content = masterContent(kind: CalendarEventTimeKind.utc).copyWith(
+        periods: [period],
+        textParameters: CalendarEventTextParameters(
+          summary: CalendarTextParameters(
+            language: 'sv',
+            alternativeUri: 'https://example.invalid/title',
+          ),
+        ),
+      );
+      final id = await masterEvent(content);
+      await moveOccurrence(id, CalendarEventTimeKind.utc, 28, future: true);
+      await notifyCurrent(id, content);
+      await CalendarModule.runSchedulingMaintenance(session);
+      final point = period.copyWith(duration: null);
+      await service.cancelOccurrenceAndNotify(await instanceCommand(id, point));
+      await CalendarModule.runSchedulingMaintenance(session);
+      var current = await service.getEvent(id, CalendarEventFieldGroup.values);
+      await service.cancelAndNotify(
+        cancelRequest(id, revision: current.revision),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      final reopened = await service.reopenPublishedAndNotify(
+        await reopenCommand(id),
+      );
+      final master = (await messageFor(reopened)).events
+          .singleWhere((e) => !e.isOverride);
+      expect(props(master, 'RDATE').single.value, '20260326T090000Z/PT2H');
+      expect(
+        props(
+          master,
+          'SUMMARY',
+        ).single.parameters.any((p) => p.canonicalName == 'LANGUAGE'),
+        true,
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      final restored = await service.restoreOccurrenceAndNotify(
+        await restoreCommand(id, point),
+      );
+      final wire = await messageFor(restored);
+      final own = wire.events.singleWhere(
+        (e) => e.isOverride && !e.isThisAndFuture,
+      );
+      expect(own.startTime!.civil.date.day, 26);
+      expect(own.duration!.hours, 2);
+      expect(
+        props(own, 'SUMMARY').single.parameters
+            .singleWhere((p) => p.canonicalName == 'ALTREP')
+            .values,
+        ['https://example.invalid/title'],
+      );
+      expect(
+        wire.events
+            .singleWhere((e) => e.isThisAndFuture)
+            .startTime!
+            .civil
+            .date
+            .day,
+        29,
+      );
+      current = await service.getEvent(id, CalendarEventFieldGroup.values);
+      expect(
+        current.timingOverrides!.future.single.originalStart.start.day,
+        28,
+      );
+    });
+    test(
+      'projected REOPEN rejects bound recurring-to-single draft conversion',
+      () async {
+        final id = await cancelledPublishedSeries();
+        var current = await service.getEvent(
+          id,
+          CalendarEventFieldGroup.values,
+        );
+        await service.changeOccurrence(
+          CalendarEventOccurrenceChange(
+            eventId: id,
+            expectedRevision: current.revision,
+            originalStart: originalDay(28),
+            action: CalendarEventOccurrenceAction.restoreSingle,
+          ),
+        );
+        current = await service.getEvent(id, CalendarEventFieldGroup.values);
+        await expectLater(
+          service.updateEvent(
+            CalendarEventUpdateRequest(
+              eventId: id,
+              expectedRevision: current.revision,
+              content: masterContent().copyWith(
+                recurrence: null,
+                status: CalendarEventStatus.cancelled,
+              ),
+            ),
+          ),
+          failure(CalendarFailureCode.dependencyConflict),
+        );
+        await service.reopenPublishedAndNotify(await reopenCommand(id));
+        expect(
+          (await eventData(id)).content.status,
+          CalendarEventStatus.confirmed,
+        );
+        expect((await eventData(id)).content.recurrence!.rule, isNotNull);
+        expect((await eventData(id)).timingOverrides, isNull);
+        expect(
+          (await service.schedulingStatus(id)).hasOccurrenceCancellations,
+          true,
+        );
+      },
+    );
+    test(
+      'projected REOPEN preserves private fields and individual cancellation',
+      () async {
+        final id = await cancelledPublishedSeries();
+        var current = await service.getEvent(
+          id,
+          CalendarEventFieldGroup.values,
+        );
+        await service.updateEvent(
+          CalendarEventUpdateRequest(
+            eventId: id,
+            expectedRevision: current.revision,
+            content: masterContent(summary: 'Private reopening draft')
+                .copyWith(status: CalendarEventStatus.cancelled),
+          ),
+        );
+        final contexts = <CalendarSchedulingPolicyContext>[];
+        host.onCheck = contexts.add;
+        final command = await reopenCommand(id);
+        final result = await service.reopenPublishedAndNotify(command);
+        final wire = await messageFor(result);
+        final master = wire.events.singleWhere((e) => !e.isOverride);
+        expect(master.summary!.value, 'Published master');
+        expect(props(master, 'EXDATE').single.value, '20260328');
+        expect(wire.events.where((e) => e.isOverride), isEmpty);
+        current = await service.getEvent(id, CalendarEventFieldGroup.values);
+        expect(current.summary, 'Private reopening draft');
+        expect(current.status, CalendarEventStatus.confirmed);
+        expect(current.recurrence!.exclusions, isEmpty);
+        expect(current.timingOverrides!.singles.single.cancelled, true);
+        final status = await service.schedulingStatus(id);
+        expect(status.usesPublicationExclusions, true);
+        expect(status.hasOccurrenceCancellations, true);
+        expect(status.hasLocalChanges, true);
+        expect(
+          contexts.every((c) => c.publicationExclusions.single.start.day == 28),
+          true,
+        );
+        expect(
+          () => contexts.first.publicationExclusions.clear(),
+          throwsUnsupportedError,
+        );
+        expect(
+          (await service.reopenPublishedAndNotify(command)).unchanged,
+          true,
+        );
+        expect(
+          (await service.reopenPublishedAndNotify(await reopenCommand(id)))
+              .unchanged,
+          true,
+        );
+      },
+    );
+
+    test('projected REOPEN restore updates master and returns to complete publication', () async {
+      final id = await cancelledPublishedSeries();
+      await service.reopenPublishedAndNotify(await reopenCommand(id));
+      await CalendarModule.runSchedulingMaintenance(session);
+      final restored = await service.restoreOccurrenceAndNotify(
+        await restoreCommand(id, originalDay(28)),
+      );
+      final wire = await messageFor(restored);
+      expect(wire.events.length, 2);
+      expect(
+        props(wire.events.singleWhere((e) => !e.isOverride), 'EXDATE'),
+        isEmpty,
+      );
+      expect(
+        wire.events.singleWhere((e) => e.isOverride).originalDate!.day,
+        28,
+      );
+      expect(
+        (await service.schedulingStatus(id)).publicationKind,
+        CalendarSchedulingPublicationKind.occurrenceRestoreWithMaster,
+      );
+      expect(
+        (await service.getEvent(
+          id,
+          CalendarEventFieldGroup.values,
+        )).timingOverrides,
+        isNull,
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      await notifyCurrent(id, masterContent());
+      final status = await service.schedulingStatus(id);
+      expect(status.usesPublicationExclusions, false);
+      expect(status.hasOccurrenceCancellations, false);
+      expect(status.hasLocalChanges, false);
+    });
+
+    test('projected REOPEN later cancellation and restores preserve every remaining mask', () async {
+      final id = await cancelledPublishedSeries();
+      await service.reopenPublishedAndNotify(await reopenCommand(id));
+      await CalendarModule.runSchedulingMaintenance(session);
+      final cancelled = await service.cancelOccurrenceAndNotify(
+        await instanceCommand(id, originalDay(29)),
+      );
+      expect(
+        (await messageFor(cancelled)).method,
+        IcalendarSchedulingMethod.cancel,
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      final first = await service.restoreOccurrenceAndNotify(
+        await restoreCommand(id, originalDay(28)),
+      );
+      expect(
+        props(
+          (await messageFor(first)).events.singleWhere((e) => !e.isOverride),
+          'EXDATE',
+        ).single.value,
+        '20260329',
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      final second = await service.restoreOccurrenceAndNotify(
+        await restoreCommand(id, originalDay(29)),
+      );
+      expect(
+        props(
+          (await messageFor(second)).events.singleWhere((e) => !e.isOverride),
+          'EXDATE',
+        ),
+        isEmpty,
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      final current = await service.getEvent(
+        id,
+        CalendarEventFieldGroup.values,
+      );
+      await service.cancelAndNotify(
+        cancelRequest(id, revision: current.revision),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      await notifyCurrent(id, masterContent());
+      expect(
+        (await service.schedulingStatus(id)).hasOccurrenceCancellations,
+        false,
+      );
+    });
+
     test('instance RESTORE zoned nominal day across DST retains published text annotations', () async {
       final content = masterContent(kind: CalendarEventTimeKind.zoned).copyWith(
         timing: masterTiming(kind: CalendarEventTimeKind.zoned)

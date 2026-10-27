@@ -40,3 +40,6 @@ Accepted ADR 0128 implements explicit historical single-occurrence Cancel and no
 
 
 Accepted ADR 0129 implements published-value individual restoration with preserved drafts. Keep latest cancelled/restored versions separate from last active REQUEST components in bounded v5 private envelopes; full REQUEST refreshes a non-recursive legacy/v3 basis while retaining restored identities. Clear only an exact current native single flag; never pin timing or erase private ranges/content. Dedicated restore/lifecycle/full-source/read and complete-message host checks plus terminal-prior-delivery gating remain required. Master version floors come from the master ledger, not a partial row. Complete publication requires zero remaining individual cancellations and valid retained native membership/profile. Cancelled masters, range/parallel-partial coordination and real mail remain separate; no new table/migration or development reset.
+
+
+Accepted [ADR 0130](../../docs/adr/0130-preserved-cancellations-reopening.md) adds published-value reopening and full-message restoration with publication-only exclusion state. Preserve native drafts/flags, separate authority and exact retry commands. No new tables or real mail; canonical import/export/feeds remain independent. Use focused tests during development, then the complete agreed batch checks.

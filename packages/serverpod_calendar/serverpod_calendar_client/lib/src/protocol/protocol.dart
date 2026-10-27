@@ -146,6 +146,7 @@ import 'calendar_scheduling_occurrence_cancel_request.dart' as _ia8x0otq;
 import 'calendar_scheduling_occurrence_restore_request.dart' as _io2t7cny;
 import 'calendar_scheduling_publication_kind.dart' as _il38fbb4;
 import 'calendar_scheduling_receipt.dart' as _izftntkw;
+import 'calendar_scheduling_reopen_request.dart' as _iv2f51nm;
 import 'calendar_scheduling_save_request.dart' as _icabxeyo;
 import 'calendar_scheduling_view.dart' as _is73suzs;
 import 'calendar_settings_update_request.dart' as _i66us6t1;
@@ -314,6 +315,7 @@ export 'calendar_scheduling_occurrence_cancel_request.dart';
 export 'calendar_scheduling_occurrence_restore_request.dart';
 export 'calendar_scheduling_publication_kind.dart';
 export 'calendar_scheduling_receipt.dart';
+export 'calendar_scheduling_reopen_request.dart';
 export 'calendar_scheduling_save_request.dart';
 export 'calendar_scheduling_view.dart';
 export 'calendar_settings_update_request.dart';
@@ -776,6 +778,9 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _izftntkw.CalendarSchedulingReceipt) {
       return _izftntkw.CalendarSchedulingReceipt.fromJson(data) as T;
+    }
+    if (t == _iv2f51nm.CalendarSchedulingReopenRequest) {
+      return _iv2f51nm.CalendarSchedulingReopenRequest.fromJson(data) as T;
     }
     if (t == _icabxeyo.CalendarSchedulingSaveRequest) {
       return _icabxeyo.CalendarSchedulingSaveRequest.fromJson(data) as T;
@@ -1630,6 +1635,12 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_izftntkw.CalendarSchedulingReceipt?>()) {
       return (data != null
               ? _izftntkw.CalendarSchedulingReceipt.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_iv2f51nm.CalendarSchedulingReopenRequest?>()) {
+      return (data != null
+              ? _iv2f51nm.CalendarSchedulingReopenRequest.fromJson(data)
               : null)
           as T;
     }
@@ -2577,6 +2588,8 @@ class Protocol extends _isc.SerializationManager {
       _il38fbb4.CalendarSchedulingPublicationKind =>
         'CalendarSchedulingPublicationKind',
       _izftntkw.CalendarSchedulingReceipt => 'CalendarSchedulingReceipt',
+      _iv2f51nm.CalendarSchedulingReopenRequest =>
+        'CalendarSchedulingReopenRequest',
       _icabxeyo.CalendarSchedulingSaveRequest =>
         'CalendarSchedulingSaveRequest',
       _is73suzs.CalendarSchedulingView => 'CalendarSchedulingView',
@@ -2892,6 +2905,8 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarSchedulingPublicationKind';
       case _izftntkw.CalendarSchedulingReceipt():
         return 'CalendarSchedulingReceipt';
+      case _iv2f51nm.CalendarSchedulingReopenRequest():
+        return 'CalendarSchedulingReopenRequest';
       case _icabxeyo.CalendarSchedulingSaveRequest():
         return 'CalendarSchedulingSaveRequest';
       case _is73suzs.CalendarSchedulingView():
@@ -3427,6 +3442,11 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'CalendarSchedulingReceipt') {
       return deserialize<_izftntkw.CalendarSchedulingReceipt>(data['data']);
+    }
+    if (dataClassName == 'CalendarSchedulingReopenRequest') {
+      return deserialize<_iv2f51nm.CalendarSchedulingReopenRequest>(
+        data['data'],
+      );
     }
     if (dataClassName == 'CalendarSchedulingSaveRequest') {
       return deserialize<_icabxeyo.CalendarSchedulingSaveRequest>(data['data']);

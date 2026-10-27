@@ -30,6 +30,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
   cal.CalendarSchedulingCancelRequest? _pendingCancel;
   cal.CalendarSchedulingOccurrenceCancelRequest? _pendingOccurrenceCancel;
   cal.CalendarSchedulingOccurrenceRestoreRequest? _pendingOccurrenceRestore;
+  cal.CalendarSchedulingReopenRequest? _pendingReopen;
   bool _busy = true;
   String? _error, _message;
   @override
@@ -89,6 +90,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
         _pendingCancel = null;
         _pendingOccurrenceCancel = null;
         _pendingOccurrenceRestore = null;
+        _pendingReopen = null;
         _summary.text = event.summary ?? '';
         _description.text = event.description ?? '';
         _location.text = event.location ?? '';
@@ -215,6 +217,37 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
     }
   }
 
+  Future<void> _reopenPublished() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+      _message = null;
+    });
+    try {
+      final input = _pendingReopen ??= cal.CalendarSchedulingReopenRequest(
+        eventId: _event.id,
+        expectedRevision: _event.revision,
+        commandId: cal.Uuid().v4obj(),
+      );
+      final receipt = await widget
+          .client
+          .modules
+          .serverpod_calendar
+          .calendarEvent
+          .reopenPublishedAndNotify(input);
+      if (!mounted) return;
+      setState(() {
+        _pendingReopen = null;
+        _message = receipt.unchanged ? 'Published series already reopened.' : 'Reopened published values; individual cancellations and newer saved drafts were preserved.';
+      });
+      await _reload();
+    } catch (e) {
+      if (mounted) setState(() => _error = _safe(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _publish() async {
     setState(() {
       _busy = true;
@@ -308,6 +341,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
         (_event.timingOverrides?.future.isNotEmpty ?? false);
     final locked =
         _busy ||
+        _pendingReopen != null ||
         _pending != null ||
         _pendingCancel != null ||
         _pendingOccurrenceCancel != null ||
@@ -403,6 +437,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
             onPressed:
                 _busy ||
                     !eligible ||
+                    _pendingReopen != null ||
                     _pendingCancel != null ||
                     _pendingOccurrenceCancel != null ||
                     _pendingOccurrenceRestore != null ||
@@ -417,12 +452,41 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
                   : 'Save and notify',
             ),
           ),
+          if (_status?.hasOccurrenceCancellations ?? false) ...[
+            const Text(
+              'Reopen the last published series while keeping individual cancellations. Newer saved drafts are not published by this action.',
+            ),
+            FilledButton(
+              key: const Key('scheduling-reopen-published'),
+              onPressed:
+                  _busy ||
+                      !eligible ||
+                      _pending != null ||
+                      _pendingCancel != null ||
+                      _pendingOccurrenceCancel != null ||
+                      _pendingOccurrenceRestore != null ||
+                      _status?.publicationKind !=
+                          cal.CalendarSchedulingPublicationKind.seriesCancel
+                  ? null
+                  : _reopenPublished,
+              child: Text(
+                _pendingReopen == null
+                    ? 'Reopen published series and notify'
+                    : 'Retry reopening published series',
+              ),
+            ),
+          ],
+          if (_status?.usesPublicationExclusions ?? false)
+            const Text(
+              'Individual cancellations are preserved in scheduling publications. Restoring one sends a complete published-series update; newer saved drafts stay local.',
+            ),
           if (_status?.publicationId != null)
             OutlinedButton(
               key: const Key('scheduling-cancel'),
               onPressed:
                   _busy ||
                       !eligible ||
+                      _pendingReopen != null ||
                       _pending != null ||
                       _pendingOccurrenceCancel != null ||
                       _pendingOccurrenceRestore != null
@@ -491,6 +555,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
               onPressed:
                   _busy ||
                       !eligible ||
+                      _pendingReopen != null ||
                       _pending != null ||
                       _pendingCancel != null ||
                       _pendingOccurrenceRestore != null ||
@@ -509,6 +574,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
               onPressed:
                   _busy ||
                       !eligible ||
+                      _pendingReopen != null ||
                       _pending != null ||
                       _pendingCancel != null ||
                       _pendingOccurrenceCancel != null ||

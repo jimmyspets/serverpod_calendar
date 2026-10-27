@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 
 import 'calendar_authorization.dart';
+import 'generated/calendar_event_timing.dart';
 
 /// Trusted routing result. Neither the stored reference nor address grants access.
 final class CalendarSchedulingRoute {
@@ -21,7 +22,7 @@ final class CalendarSchedulingAuthority {
 
 /// Dedicated execution context; background work never fabricates a login.
 final class CalendarSchedulingPolicyContext {
-  const CalendarSchedulingPolicyContext({
+  CalendarSchedulingPolicyContext({
     required this.scopeKey,
     required this.calendar,
     required this.currentEvent,
@@ -35,7 +36,8 @@ final class CalendarSchedulingPolicyContext {
     this.recipient,
     this.publishedRequest,
     this.exactNativeMatch,
-  });
+    Iterable<CalendarEventTiming> publicationExclusions = const [],
+  }) : publicationExclusions = List.unmodifiable(publicationExclusions);
   final String scopeKey;
   final CalendarHostContext? actor;
   final CalendarPolicySnapshot calendar;
@@ -61,6 +63,10 @@ final class CalendarSchedulingPolicyContext {
 
   /// Exact current profile/membership result for an instance cancellation.
   final bool? exactNativeMatch;
+
+  /// Module-created exclusions in the last complete published REQUEST. These
+  /// are publication state, never canonical recurrence exclusions or authority.
+  final List<CalendarEventTiming> publicationExclusions;
 }
 
 abstract interface class CalendarSchedulingHost {

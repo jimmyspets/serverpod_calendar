@@ -713,7 +713,20 @@ extension CalendarSchedulingOperations on CalendarService {
         final v5 =
             !cancellation ||
             previousCheckpoint!.individuals.any((s) => s.active != null);
-        if (v5) {
+        final v6 =
+            cancellation && previousCheckpoint!.publicationExclusions != null;
+        if (v6) {
+          checkpoint = _schedulingWriteV6(
+            canonical: proposed,
+            kind: publicationKind,
+            state: previousCheckpoint.privateStateRecord!,
+            ledger: previousCheckpoint.ledger,
+            masks: previousCheckpoint.publicationExclusions!,
+            fullPayload: previousCheckpoint.fullRequestPayload!,
+            floor: previousCheckpoint.reopenFloor!,
+            masterMessage: masterRecord,
+          );
+        } else if (v5) {
           final states = cancellation
               ? previousCheckpoint!.individuals
               : [
@@ -751,7 +764,11 @@ extension CalendarSchedulingOperations on CalendarService {
           publicationKind,
           null,
           components,
-          version: v5 ? 5 : 4,
+          version: v6
+              ? 6
+              : v5
+              ? 5
+              : 4,
         );
       }
       final intent = CalendarSchedulingIntent(
@@ -782,6 +799,8 @@ extension CalendarSchedulingOperations on CalendarService {
         publicationEvent: receiptPublication == null
             ? proposed
             : _schedulingReadCheckpoint(receiptPublication).canonical,
+        publicationExclusions:
+            previousCheckpoint?.publicationExclusions ?? const [],
         outgoingMessage: outgoingMessage,
         payloadDigest: _schedulingDigest(payload),
         authority: authority,
@@ -1038,6 +1057,7 @@ extension CalendarSchedulingOperations on CalendarService {
         publicationKind: checkpoint?.kind,
         originalStart: checkpoint?.target,
         hasOccurrenceCancellations: checkpoint?.cancelled.isNotEmpty ?? false,
+        usesPublicationExclusions: checkpoint?.publicationExclusions != null,
         hasLocalChanges:
             p == null ||
             _schedulingCanonicalKey(
