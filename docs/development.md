@@ -181,3 +181,8 @@ The accepted cancellation increment adds **Cancel and notify** for existing non-
 
 
 The accepted recurring-master increment publishes saved RRULE/RDATE/EXDATE/PERIOD master patterns through the same meeting screen and generated APIs. Save recurring mode before the first publication; bound mode conversions remain blocked. Native occurrence edits stay available, but the meeting screen explains and disables a new REQUEST while saved exceptions exist. Whole-series Cancel and notify preserves them. The worker loss probes, generated-client races and connected Flutter journey now use recurring masters; the browser also checks the exception-publication limit. No new model generation or migration is required by this increment.
+
+
+### Focused scheduling browser journey
+
+With the isolated test services running and the example host bundle rebuilt, run `dart run tool/host_smoke.dart --flutter --scheduling` for the organizer scheduling screen alone. The harness still exercises its shared two-host generated-client prerequisites; only the Flutter target is narrowed. The normal `--flutter` invocation retains the complete connected journey. Use focused database cases during edits and the broader root checks at the batch boundary.
