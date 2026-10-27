@@ -5,13 +5,65 @@ import 'dart:convert';
 
 import 'package:test/test.dart';
 import 'package:serverpod_calendar_core/serverpod_calendar_core.dart'
-    show RecurrenceLimitException;
+    show RecurrenceLimitException, RecurrenceWorkBudget;
 import 'package:serverpod_calendar_server/serverpod_calendar_server.dart';
 import 'package:serverpod_calendar_server/src/event_values.dart';
 
 import 'event_overrides_test.dart' as f;
 
 void main() {
+  test('exact membership distinguishes excluded, out-of-rule and mixed-profile originals', () {
+    final point = f.timing(29);
+    final content = f.content().copyWith(
+      recurrence: f.content().recurrence!.copyWith(exclusions: [point]),
+    );
+    expect(eventSchedulingMember(content, point), false);
+    expect(eventSchedulingMember(content, f.timing(30)), true);
+    expect(eventSchedulingMember(content, f.timing(27)), false);
+    expect(
+      eventSchedulingMember(
+        content,
+        f.timing(29, kind: CalendarEventTimeKind.utc),
+      ),
+      false,
+    );
+    expect(
+      () => eventSchedulingMember(content, f.timing(30, days: 1)),
+      throwsArgumentError,
+    );
+  });
+  test('membership honors PERIOD starts and exact named-zone identity', () {
+    final content = f
+        .content(kind: CalendarEventTimeKind.zoned)
+        .copyWith(
+          periods: [
+            CalendarEventTiming(
+              kind: CalendarEventTimeKind.zoned,
+              zoneId: 'Europe/Stockholm',
+              start: CalendarEventCivil(year: 2026, month: 4, day: 15),
+              duration: CalendarEventDuration(hours: 1),
+            ),
+          ],
+        );
+    final point = content.periods!.single.copyWith(duration: null);
+    expect(eventSchedulingMember(content, point), true);
+    expect(
+      eventSchedulingMember(content, point.copyWith(zoneId: 'Europe/Paris')),
+      false,
+    );
+  });
+  test('membership budget exhaustion throws instead of reporting absence', () {
+    final work = RecurrenceWorkBudget(maxWork: 1);
+    expect(
+      () => eventSchedulingMember(
+        f.content(),
+        f.timing(31),
+        sharedWorkBudget: work,
+      ),
+      throwsA(isA<RecurrenceLimitException>()),
+    );
+    expect(work.remaining, 0);
+  });
   test('retained-slot union cannot evict an old original at capacity', () {
     final content = f.content().copyWith(
       recurrence: f.content().recurrence!.copyWith(

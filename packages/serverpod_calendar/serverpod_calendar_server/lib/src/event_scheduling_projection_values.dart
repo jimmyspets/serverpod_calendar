@@ -1,5 +1,47 @@
 part of 'event_values.dart';
 
+/// Exact original membership. An exhausted scan throws; it never means absent.
+bool eventSchedulingMember(
+  CalendarEventContent content,
+  CalendarEventTiming point, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
+  if (point.end != null || point.duration != null) {
+    throw ArgumentError('Original must be a point');
+  }
+  validateEventTiming(point);
+  if (content.timing.kind != point.kind ||
+      content.timing.zoneId != point.zoneId) {
+    return false;
+  }
+  if (point.kind == CalendarEventTimeKind.date) {
+    final date = _date(point.start);
+    return _dateMaster(content).recurrence
+        .expand(
+          from: date,
+          through: date,
+          maxCandidateDays: eventMaxCandidateWork,
+          maxRuleOccurrences: eventMaxRuleOccurrences,
+          maxResults: eventMaxRuleOccurrences,
+          sharedWorkBudget: sharedWorkBudget,
+        )
+        .contains(date);
+  }
+  final value = validateEventTiming(point).$2!.start;
+  return _timedOverrides(content, null).recurrence
+      .expand(
+        window: UtcWindow(
+          start: value.instant,
+          end: value.instant.add(const Duration(seconds: 1)),
+        ),
+        maxCandidateWork: eventMaxCandidateWork,
+        maxRuleOccurrences: eventMaxRuleOccurrences,
+        maxResults: eventMaxRuleOccurrences,
+        sharedWorkBudget: sharedWorkBudget,
+      )
+      .contains(value);
+}
+
 /// A private publication identity, never an extra canonical occurrence edit.
 final class EventSchedulingOriginal {
   const EventSchedulingOriginal(this.originalStart, this.isThisAndFuture);

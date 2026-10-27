@@ -210,7 +210,8 @@ final class _SchedulingComponentVersion {
     final v = input as Map<String, dynamic>;
     final sequence = v['sequence'] as int,
         stamp = DateTime.parse(v['stamp'] as String);
-    if (sequence < 0 ||
+    if (!stamp.isUtc ||
+        sequence < 0 ||
         sequence > eventMaxSequence ||
         eventProtocolInstant(stamp) != stamp) {
       throw _failure(CalendarFailureCode.unavailable);
@@ -314,12 +315,22 @@ final class _SchedulingCheckpoint {
     this.message,
     this.ledger,
     this.projectionOriginals,
-    this.originals,
-  );
+    this.originals, {
+    this.kind = CalendarSchedulingPublicationKind.request,
+    this.target,
+    this.nativeMatch,
+    this.basisRecord,
+    this.cancelled = const [],
+  });
   final CalendarEventPolicySnapshot canonical, outgoing;
   final IcalendarSchedulingMessage message;
   final List<_SchedulingComponentVersion> ledger;
   final List<EventSchedulingOriginal> projectionOriginals, originals;
+  final CalendarSchedulingPublicationKind kind;
+  final CalendarEventTiming? target;
+  final bool? nativeMatch;
+  final CalendarSchedulingPublicationRecord? basisRecord;
+  final List<_SchedulingCancellation> cancelled;
 }
 
 _SchedulingCheckpoint _schedulingReadCheckpoint(
@@ -328,6 +339,8 @@ _SchedulingCheckpoint _schedulingReadCheckpoint(
   try {
     _schedulingBound(p.snapshot);
     _schedulingBound(p.projection);
+    final header = jsonDecode(p.snapshot) as Map<String, dynamic>;
+    if (header['version'] == 4) return _schedulingReadV4(p, header);
     if (p.payload.length > _schedulingCheckpointBytes ||
         _schedulingDigest(p.payload) != p.payloadDigest) {
       throw const FormatException();
@@ -513,6 +526,10 @@ _SchedulingCheckpoint _schedulingReadCheckpoint(
       List.unmodifiable(ledger),
       List.unmodifiable(projectionOriginals),
       List.unmodifiable(originals),
+      kind: p.method == 'CANCEL'
+          ? CalendarSchedulingPublicationKind.seriesCancel
+          : CalendarSchedulingPublicationKind.request,
+      basisRecord: p.method == 'REQUEST' ? p : null,
     );
   } catch (_) {
     throw _failure(CalendarFailureCode.unavailable);
