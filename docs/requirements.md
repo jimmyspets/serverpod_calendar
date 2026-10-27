@@ -413,6 +413,6 @@ Accepted [ADR 0128](adr/0128-explicit-single-occurrence-cancellation.md) impleme
 
 Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) implements the next bounded FR-20 restoration slice: last published occurrence values, preserved private drafts, native single-flag removal only, separate authority, terminal-prior-delivery gating and self-contained v5 latest/active versions. Complete REQUEST can follow only after all individual cancellations are restored and retained native memberships/profiles validate. Cancelled-master reopening, range cancellation, concurrent partial coordination, inbound/mail and release evidence remain separate. No new table/migration or development reset.
 
-## Proposed retained-cancellation reopening
+## Retained-cancellation reopening
 
-Whole-series reopening must preserve individually cancelled originals. The confirmed policy does not yet lift the implementation guard: the explicit published-value API, publication-only masks and restoration/version mechanics in ADR 0130 remain proposed. This is a lifecycle prerequisite, not complete scheduling conformance. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).
+Accepted ADR 0130 implements the selected preserve-cancellations reopening policy through an explicit published-value action and separate master-updating restoration. Current native drafts and source exclusions stay independent of publication masks. This scoped lifecycle increment does not complete scheduling reconciliation, mail or external-client release requirements. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).

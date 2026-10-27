@@ -14,6 +14,7 @@ enum CalendarPermission {
   cancelScheduling,
   cancelOccurrenceScheduling,
   restoreOccurrenceScheduling,
+  reopenScheduling,
   readScheduling,
   readPersonalAlarmActivity,
   acknowledgePersonalAlarm,

@@ -196,6 +196,7 @@ final class _SchedulingWorker {
       currentEvent: e.snapshot,
       proposedEvent: e.snapshot,
       publicationEvent: checkpoint.canonical,
+      publicationExclusions: checkpoint.publicationExclusions ?? const [],
       publishedRequest: checkpoint.basisRecord == null
           ? null
           : _schedulingReadCheckpoint(checkpoint.basisRecord!).outgoing,

@@ -77,6 +77,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_occu
     as _ihunri6y;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_occurrence_restore_request.dart'
     as _ij9idrbi;
+import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_reopen_request.dart'
+    as _idfk8xbx;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_save_request.dart'
     as _igziosqt;
 import 'package:serverpod_calendar_server/src/generated/calendar_settings_update_request.dart'
@@ -1028,6 +1030,27 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'calendarEvent',
       endpoint: endpoints['calendarEvent']!,
       methodConnectors: {
+        'reopenPublishedAndNotify': _is.MethodConnector(
+          name: 'reopenPublishedAndNotify',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_idfk8xbx.CalendarSchedulingReopenRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .reopenPublishedAndNotify(
+                        session,
+                        params['request'],
+                      ),
+        ),
         'restoreOccurrenceAndNotify': _is.MethodConnector(
           name: 'restoreOccurrenceAndNotify',
           params: {

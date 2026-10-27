@@ -39,6 +39,7 @@ calendar:
   - changeSubject:
   - delete:
 calendarEvent:
+  - reopenPublishedAndNotify:
   - restoreOccurrenceAndNotify:
   - cancelOccurrenceAndNotify:
   - saveAndNotify:

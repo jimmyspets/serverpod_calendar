@@ -667,6 +667,6 @@ Accepted [ADR 0128](adr/0128-explicit-single-occurrence-cancellation.md) adds im
 
 Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) adds immutable `CalendarSchedulingOccurrenceRestoreRequest`, the `occurrenceRestore` kind and a generated restore endpoint/client. Existing private strings carry bounded v5 `individuals`: typed original, latest state/version and optional last-active REQUEST component. A restore sets latest and active versions together; later cancellation keeps its independent last-active component. Full REQUESTs refresh a non-recursive v3 basis while retaining restored identities and their latest versions. No new table/column/migration, retention change or dependency; legacy/v2/v3/v4 reads remain supported.
 
-## Proposed retained-cancellation reopening
+## Retained-cancellation reopening
 
-ADR 0130 proposes bounded v6 checkpoint data in existing scheduling columns: unprojected active basis, last complete message masks/versions and independent cancelled/restored history. No table, column, migration or reset is proposed. The confirmed preservation policy does not approve this physical/API design. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).
+Accepted ADR 0130 uses bounded v6 JSON in existing scheduling columns: one non-recursive v4/v5 individual-state proof with its ordinary active REQUEST basis, current active versions, publication masks, last complete REQUEST and reopening floors. No table, column, migration or reset is added. Canonical/current snapshots remain distinct from published source values. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).

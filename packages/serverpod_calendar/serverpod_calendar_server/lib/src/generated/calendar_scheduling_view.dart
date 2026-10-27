@@ -33,9 +33,11 @@ abstract class CalendarSchedulingView
     this.publicationKind,
     this.originalStart,
     bool? hasOccurrenceCancellations,
+    bool? usesPublicationExclusions,
     required this.hasLocalChanges,
     required this.deliveries,
-  }) : hasOccurrenceCancellations = hasOccurrenceCancellations ?? false;
+  }) : hasOccurrenceCancellations = hasOccurrenceCancellations ?? false,
+       usesPublicationExclusions = usesPublicationExclusions ?? false;
 
   const factory CalendarSchedulingView({
     required _is.UuidValue eventId,
@@ -48,6 +50,7 @@ abstract class CalendarSchedulingView
     _il38fbb4.CalendarSchedulingPublicationKind? publicationKind,
     _ieswiaty.CalendarEventTiming? originalStart,
     bool? hasOccurrenceCancellations,
+    bool? usesPublicationExclusions,
     required bool hasLocalChanges,
     required List<_i63ky642.CalendarSchedulingDeliveryView> deliveries,
   }) = _CalendarSchedulingViewImpl;
@@ -91,6 +94,12 @@ abstract class CalendarSchedulingView
           : _is.BoolJsonExtension.fromJson(
               jsonSerialization['hasOccurrenceCancellations'],
             ),
+      usesPublicationExclusions:
+          jsonSerialization['usesPublicationExclusions'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(
+              jsonSerialization['usesPublicationExclusions'],
+            ),
       hasLocalChanges: _is.BoolJsonExtension.fromJson(
         jsonSerialization['hasLocalChanges'],
       ),
@@ -121,6 +130,8 @@ abstract class CalendarSchedulingView
 
   final bool hasOccurrenceCancellations;
 
+  final bool usesPublicationExclusions;
+
   final bool hasLocalChanges;
 
   final List<_i63ky642.CalendarSchedulingDeliveryView> deliveries;
@@ -139,6 +150,7 @@ abstract class CalendarSchedulingView
     _il38fbb4.CalendarSchedulingPublicationKind? publicationKind,
     _ieswiaty.CalendarEventTiming? originalStart,
     bool? hasOccurrenceCancellations,
+    bool? usesPublicationExclusions,
     bool? hasLocalChanges,
     List<_i63ky642.CalendarSchedulingDeliveryView>? deliveries,
   });
@@ -202,6 +214,11 @@ abstract class CalendarSchedulingView
                 other.hasOccurrenceCancellations ==
                     hasOccurrenceCancellations) &&
             (identical(
+                  other.usesPublicationExclusions,
+                  usesPublicationExclusions,
+                ) ||
+                other.usesPublicationExclusions == usesPublicationExclusions) &&
+            (identical(
                   other.hasLocalChanges,
                   hasLocalChanges,
                 ) ||
@@ -226,6 +243,7 @@ abstract class CalendarSchedulingView
       publicationKind,
       originalStart,
       hasOccurrenceCancellations,
+      usesPublicationExclusions,
       hasLocalChanges,
       const _iss.DeepCollectionEquality().hash(deliveries),
     );
@@ -245,6 +263,7 @@ abstract class CalendarSchedulingView
       if (publicationKind != null) 'publicationKind': publicationKind?.toJson(),
       if (originalStart != null) 'originalStart': originalStart?.toJson(),
       'hasOccurrenceCancellations': hasOccurrenceCancellations,
+      'usesPublicationExclusions': usesPublicationExclusions,
       'hasLocalChanges': hasLocalChanges,
       'deliveries': deliveries.toJson(valueToJson: (v) => v.toJson()),
     };
@@ -265,6 +284,7 @@ abstract class CalendarSchedulingView
       if (originalStart != null)
         'originalStart': originalStart?.toJsonForProtocol(),
       'hasOccurrenceCancellations': hasOccurrenceCancellations,
+      'usesPublicationExclusions': usesPublicationExclusions,
       'hasLocalChanges': hasLocalChanges,
       'deliveries': deliveries.toJson(
         valueToJson: (v) => v.toJsonForProtocol(),
@@ -292,6 +312,7 @@ class _CalendarSchedulingViewImpl extends CalendarSchedulingView {
     _il38fbb4.CalendarSchedulingPublicationKind? publicationKind,
     _ieswiaty.CalendarEventTiming? originalStart,
     bool? hasOccurrenceCancellations,
+    bool? usesPublicationExclusions,
     required bool hasLocalChanges,
     required List<_i63ky642.CalendarSchedulingDeliveryView> deliveries,
   }) : super._(
@@ -305,6 +326,7 @@ class _CalendarSchedulingViewImpl extends CalendarSchedulingView {
          publicationKind: publicationKind,
          originalStart: originalStart,
          hasOccurrenceCancellations: hasOccurrenceCancellations,
+         usesPublicationExclusions: usesPublicationExclusions,
          hasLocalChanges: hasLocalChanges,
          deliveries: deliveries,
        );
@@ -324,6 +346,7 @@ class _CalendarSchedulingViewImpl extends CalendarSchedulingView {
     Object? publicationKind = _Undefined,
     Object? originalStart = _Undefined,
     bool? hasOccurrenceCancellations,
+    bool? usesPublicationExclusions,
     bool? hasLocalChanges,
     List<_i63ky642.CalendarSchedulingDeliveryView>? deliveries,
   }) {
@@ -348,6 +371,8 @@ class _CalendarSchedulingViewImpl extends CalendarSchedulingView {
           : this.originalStart?.copyWith(),
       hasOccurrenceCancellations:
           hasOccurrenceCancellations ?? this.hasOccurrenceCancellations,
+      usesPublicationExclusions:
+          usesPublicationExclusions ?? this.usesPublicationExclusions,
       hasLocalChanges: hasLocalChanges ?? this.hasLocalChanges,
       deliveries:
           deliveries ?? this.deliveries.map((e0) => e0.copyWith()).toList(),
