@@ -60,8 +60,10 @@ final class DemoSchedulingHost implements CalendarSchedulingHost {
     Transaction transaction,
     CalendarAuthorizationPhase phase,
   ) async {
-    if (context.intent.publicationKind ==
-            CalendarSchedulingPublicationKind.occurrenceCancel &&
+    if ({
+          CalendarSchedulingPublicationKind.occurrenceCancel,
+          CalendarSchedulingPublicationKind.occurrenceRestore,
+        }.contains(context.intent.publicationKind) &&
         (context.publishedRequest == null ||
             context.exactNativeMatch == null ||
             context.intent.originalStart == null ||
