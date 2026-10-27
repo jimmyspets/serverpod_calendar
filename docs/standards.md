@@ -145,3 +145,7 @@ Accepted ADR 0130 uses permitted REQUEST/EXDATE syntax as an explicit scheduling
 ## Authenticated attendee replies
 
 Accepted ADR 0131 applies RFC 5546 SEQUENCE/DTSTAMP ordering with independently optional source values and stale retention. Reply state is separate from event status and participant authority. Source comments/results initiate no mail or retries; RFC 6047 transport and recurring reconciliation remain separate. See [the reply guide](authenticated-attendee-replies.md) and [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
+
+## Proposed recurring master replies
+
+The next RFC 5546 proposal distinguishes the master version from independently versioned occurrence publications. It proposes bounded whole-series REPLY without RECURRENCE-ID/RANGE, preserving source omissions and explicit master response labels. Instance reconciliation, other methods and RFC 6047 transport remain separate and no new standards support is implemented by this document. See [ADR 0132](adr/0132-recurring-master-attendee-replies.md).

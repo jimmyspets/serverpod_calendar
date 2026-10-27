@@ -1146,3 +1146,9 @@ The full browser run passed while cached ChromeDriver 155 reported an installed 
 The owned development server and Chrome runners were restored without resetting development storage. Serverpod MCP hot reload completed, the actual Chrome VM connected through Dart MCP and hot reload succeeded, runtime-error inspection found none, and recent alarm-maintenance operations succeeded. Final static/staged checks and the single feature-batch commit follow; no generated protocol/client/test tool or migration metadata was edited by hand.
 
 Final static validation passed 2,740 relative links, consecutive ADRs 0001–0131, 97 candidate files, scanning against 17 local credential values, unchanged Apache 2.0 LICENSE and whitespace checks. All approved feature-batch validation completed in the documented phases; external scheduling-client/mail evidence and the remaining roadmap are separate.
+
+## Proposed recurring master replies
+
+This separate documentation proposal follows completed ADR 0131 validation and draft PR #92. Primary RFC 5546 sequencing and REPLY sections were reviewed on 2026-10-27. No Dart/model/generated/migration/runtime changes are included and no runtime suite is repeated for the proposal; relative links, consecutive ADRs, changed-file/credential/LICENSE and whitespace checks run before its documentation commit. See [ADR 0132](adr/0132-recurring-master-attendee-replies.md).
+
+Documentation validation passed 2,754 relative links, consecutive ADRs 0001–0132, 14 Markdown-only candidate files, scanning against 17 local credential values, unchanged Apache 2.0 LICENSE and whitespace checks. The proposal remains unapproved and does not extend runtime support.
