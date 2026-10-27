@@ -670,3 +670,7 @@ Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) adds immutable 
 ## Retained-cancellation reopening
 
 Accepted ADR 0130 uses bounded v6 JSON in existing scheduling columns: one non-recursive v4/v5 individual-state proof with its ordinary active REQUEST basis, current active versions, publication masks, last complete REQUEST and reopening floors. No table, column, migration or reset is added. Canonical/current snapshots remain distinct from published source values. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).
+
+## Proposed authenticated attendee replies
+
+ADR 0131 proposes server-only normalized reply-source, host-ingress-receipt and attendee-response tables, bounded retained idempotency and protected stale review. Current source remains while referenced; other source/receipts default to 30 days. No table sources/migration are added before model/ADR approval. See [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).

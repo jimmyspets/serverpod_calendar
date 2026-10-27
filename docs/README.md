@@ -232,3 +232,7 @@ Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) adds published-
 ## Retained-cancellation reopening
 
 Accepted ADR 0130 implements published-series reopening with retained individual cancellations. Its explicit API, publication-only masks, full-message restoration and bounded v6 state extend ADR 0129 without changing canonical import/export/feeds or adding tables. See runtime and validation for the implemented scope. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).
+
+## Proposed authenticated attendee replies
+
+ADR 0131 proposes authenticated non-recurring attendee replies after the completed organizer publication lifecycle. The confirmed retain-stale/no-auto-apply policy is distinct from the unapproved ingress, three-table storage, authority/retention and example mechanics. See [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
