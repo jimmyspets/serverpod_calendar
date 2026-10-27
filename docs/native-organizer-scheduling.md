@@ -180,3 +180,7 @@ The example distinguishes reopening published values from Save and notify and ke
 ## Authenticated attendee replies
 
 Accepted ADR 0131 adds separate non-recurring organizer-side REPLY processing. Trusted host ingress verifies the actual binding/roster/origin; private source, ingress receipt and attendee response persist atomically. Older-version replies remain stale for review, current ordering uses SEQUENCE/DTSTAMP, and newer native drafts and outbound generations/leases remain untouched. Recurring replies, other methods and mail follow separately. See [the reply guide](authenticated-attendee-replies.md) and [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
+
+## Proposed recurring master replies
+
+The next proposal admits whole-series recurring-master responses using a validated complete-master resolver over existing self-contained checkpoints. Partial occurrence messages must not supply a false master SEQUENCE or cancelled state. Every actual master-changing publication path would update source inactivity in the same scope transaction. No runtime change is included or approved yet. See [ADR 0132](adr/0132-recurring-master-attendee-replies.md).

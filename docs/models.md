@@ -674,3 +674,7 @@ Accepted ADR 0130 uses bounded v6 JSON in existing scheduling columns: one non-r
 ## Authenticated attendee replies
 
 Accepted ADR 0131 adds server-only CalendarSchedulingReplySourceRecord, CalendarSchedulingReplyReceiptRecord and CalendarSchedulingAttendeeResponseRecord with generated additive module/example migrations. Exact source identity and ingress-key idempotency are distinct; current ordering and unexpired references retain source, with configurable 30-day inactive/receipt retention and bounded cleanup. Generated review DTOs contain no transport key; the source document has its own authority gate. Existing data is preserved without a development reset. See [the reply guide](authenticated-attendee-replies.md) and [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
+
+## Proposed recurring master replies
+
+The next proposal reuses ADR 0131 tables/columns and caps. It adds a read-only recurring indicator and trusted complete-master context, without a table or migration. Stored source admission versions would qualify the actual master rather than a partial carrier row. These DTO/SPI/version/retention mechanics remain unapproved; no generated model changes are included. See [ADR 0132](adr/0132-recurring-master-attendee-replies.md).
