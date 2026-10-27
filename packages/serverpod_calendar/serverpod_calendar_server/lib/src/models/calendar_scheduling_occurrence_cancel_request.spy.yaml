@@ -1,0 +1,7 @@
+class: CalendarSchedulingOccurrenceCancelRequest
+immutable: true
+fields:
+  eventId: UuidValue
+  expectedRevision: int
+  commandId: UuidValue
+  originalStart: CalendarEventTiming

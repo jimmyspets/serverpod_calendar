@@ -8,5 +8,8 @@ fields:
   publicationId: UuidValue?
   publishedAt: DateTime?
   method: String?
+  publicationKind: CalendarSchedulingPublicationKind?
+  originalStart: CalendarEventTiming?
+  hasOccurrenceCancellations: bool, default=false
   hasLocalChanges: bool
   deliveries: List<CalendarSchedulingDeliveryView>

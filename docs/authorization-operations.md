@@ -192,3 +192,6 @@ Accepted [ADR 0123](adr/0123-explicit-native-organizer-cancellation.md) adds `ca
 
 
 Accepted [ADR 0124](adr/0124-recurring-organizer-masters.md) retains all existing scheduling rights for recurring masters. Ordinary and dedicated policy context now includes complete proposed native timing/content/cancellation overrides even when the outgoing master omits them. A new REQUEST rejects stored occurrence components; whole-series CANCEL and retained exact retries preserve those states. Bound mode conversions fail after ordinary authorization/revision checks, while supported local pattern edits retain native orphan checks. Private checkpoint decoding fails unavailable with non-echo diagnostics.
+
+
+Accepted [ADR 0128](adr/0128-explicit-single-occurrence-cancellation.md) adds `cancelOccurrenceScheduling`, plus independent `readScheduling`, full event/source read and `changeEventStatus`. Neither `updateEvent` nor whole-series `cancelScheduling` substitutes. Preliminary access precedes historical membership checks; final context contains actual native state, historical REQUEST basis, typed target/current exact-match result and immutable outgoing message/digest. Retained retries and no-ops reauthorize. Current dispatch checks remain necessary even for a historical original absent from the native draft.

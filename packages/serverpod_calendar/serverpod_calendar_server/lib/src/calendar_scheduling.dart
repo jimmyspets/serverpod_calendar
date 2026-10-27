@@ -402,6 +402,11 @@ extension CalendarSchedulingOperations on CalendarService {
               retry.meetingId != meeting?.id)) {
         throw _failure(CalendarFailureCode.validation);
       }
+      if (!cancellation &&
+          retry == null &&
+          (previousCheckpoint?.cancelled.isNotEmpty ?? false)) {
+        throw _failure(CalendarFailureCode.dependencyConflict);
+      }
       if (last != null &&
           _schedulingRecurring(previousCheckpoint!.outgoing.content) !=
               _schedulingRecurring(e.data.content)) {
@@ -460,7 +465,9 @@ extension CalendarSchedulingOperations on CalendarService {
           last != null &&
           last.method == method &&
           (cancellation
-              ? e.data.content.status == CalendarEventStatus.cancelled
+              ? previousCheckpoint!.kind ==
+                        CalendarSchedulingPublicationKind.seriesCancel &&
+                    e.data.content.status == CalendarEventStatus.cancelled
               : _schedulingCanonicalKey(previousCheckpoint!.canonical) ==
                         _schedulingCanonicalKey(
                           CalendarEventPolicySnapshot(
@@ -512,7 +519,10 @@ extension CalendarSchedulingOperations on CalendarService {
       final previousMaximum = previousCheckpoint == null
           ? -1
           : previousCheckpoint.ledger.fold(
-              last!.sequence,
+              previousCheckpoint.cancelled.fold(
+                last!.sequence,
+                (int a, r) => max(a, r.version.sequence),
+              ),
               (int a, v) => max(a, v.sequence),
             );
       final masterUnchanged =
@@ -536,10 +546,14 @@ extension CalendarSchedulingOperations on CalendarService {
       }
       DateTime latest(DateTime a, DateTime? b) =>
           b != null && b.isAfter(a) ? b : a;
-      final versionTime = latest(
+      var versionTime = latest(
         latest(now, baseState.version.stamp),
         previousPublished?.protocolState?.version.stamp,
       );
+      for (final row
+          in previousCheckpoint?.cancelled ?? <_SchedulingCancellation>[]) {
+        versionTime = latest(versionTime, row.version.stamp);
+      }
       final modifiedTime = latest(
         latest(versionTime, baseState.version.lastModified),
         previousPublished?.protocolState?.version.lastModified,
@@ -658,7 +672,7 @@ extension CalendarSchedulingOperations on CalendarService {
       );
       final ledger = cancellation ? previousCheckpoint!.ledger : components;
       // Validate/bound private storage before policy callbacks or any write.
-      final checkpoint =
+      var checkpoint =
           receiptPublication?.snapshot ??
           _schedulingWriteCheckpoint(
             proposed,
@@ -666,11 +680,39 @@ extension CalendarSchedulingOperations on CalendarService {
             ledger,
             projectionOriginals,
           );
-      final bundleProjection =
+      var bundleProjection =
           receiptPublication?.projection ??
           _schedulingBundleProjection(components);
+      if (receiptPublication == null &&
+          cancellation &&
+          previousCheckpoint!.cancelled.isNotEmpty) {
+        final masterRecord = last!.copyWith(
+          snapshot: checkpoint,
+          projection: bundleProjection,
+          payload: payload,
+          payloadDigest: _schedulingDigest(payload),
+          method: 'CANCEL',
+          sequence: components.single.sequence,
+          stamp: components.single.stamp,
+        );
+        checkpoint = _schedulingWriteV4(
+          canonical: proposed,
+          kind: CalendarSchedulingPublicationKind.seriesCancel,
+          basis: previousCheckpoint.basisRecord!,
+          cancelled: previousCheckpoint.cancelled,
+          masterMessage: masterRecord,
+        );
+        bundleProjection = _schedulingV4Projection(
+          CalendarSchedulingPublicationKind.seriesCancel,
+          null,
+          components,
+        );
+      }
       final intent = CalendarSchedulingIntent(
         method: method,
+        publicationKind: cancellation
+            ? CalendarSchedulingPublicationKind.seriesCancel
+            : CalendarSchedulingPublicationKind.request,
         organizerAddress: authority.organizerAddress,
         recipients: proposals,
         payload: payload,
@@ -698,6 +740,10 @@ extension CalendarSchedulingOperations on CalendarService {
         payloadDigest: _schedulingDigest(payload),
         authority: authority,
         intent: intent,
+        publishedRequest: previousCheckpoint?.basisRecord == null
+            ? null
+            : _schedulingReadCheckpoint(previousCheckpoint!.basisRecord!)
+                  .outgoing,
       );
       await _schedulingAuthorize(
         c,
@@ -905,6 +951,28 @@ extension CalendarSchedulingOperations on CalendarService {
       }
       await _verifyContext(c);
       final checkpoint = p == null ? null : _schedulingReadCheckpoint(p);
+      if (checkpoint?.kind ==
+          CalendarSchedulingPublicationKind.occurrenceCancel) {
+        await _schedulingAuthorize(
+          c,
+          _schedulingRequests(
+            e,
+            CalendarSchedulingIntent(
+              method: p!.method,
+              publicationKind: checkpoint!.kind,
+              originalStart: checkpoint.target,
+              organizerAddress: binding!.organizerAddress,
+              recipients: p.recipients,
+              payload: p.payload,
+              publicationId: p.id,
+              generation: p.generation,
+            ),
+            write: false,
+          ),
+          tx,
+          CalendarAuthorizationPhase.read,
+        );
+      }
       if (checkpoint != null &&
           (checkpoint.canonical.eventId != e.identity.id ||
               checkpoint.canonical.calendarId != e.identity.calendarId ||
@@ -919,12 +987,13 @@ extension CalendarSchedulingOperations on CalendarService {
         publicationId: p?.id,
         publishedAt: p?.createdAt,
         method: p?.method,
+        publicationKind: checkpoint?.kind,
+        originalStart: checkpoint?.target,
+        hasOccurrenceCancellations: checkpoint?.cancelled.isNotEmpty ?? false,
         hasLocalChanges:
             p == null ||
             _schedulingCanonicalKey(
-                  p.method == 'CANCEL'
-                      ? checkpoint!.outgoing
-                      : checkpoint!.canonical,
+                  _schedulingValue(() => _schedulingExpectedState(checkpoint!)),
                 ) !=
                 _schedulingCanonicalKey(e.snapshot),
         deliveries: [

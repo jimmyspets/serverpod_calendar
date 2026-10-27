@@ -12,6 +12,7 @@ enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 enum CalendarPermission {
   publishScheduling,
   cancelScheduling,
+  cancelOccurrenceScheduling,
   readScheduling,
   readPersonalAlarmActivity,
   acknowledgePersonalAlarm,
@@ -748,7 +749,16 @@ final class CalendarSchedulingIntent {
     this.publicationId,
     required this.generation,
     this.method = 'REQUEST',
-  }) : recipients = List.unmodifiable(recipients);
+    CalendarSchedulingPublicationKind? publicationKind,
+    this.originalStart,
+  }) : recipients = List.unmodifiable(recipients),
+       publicationKind =
+           publicationKind ??
+           (method == 'CANCEL'
+               ? CalendarSchedulingPublicationKind.seriesCancel
+               : CalendarSchedulingPublicationKind.request);
+  final CalendarSchedulingPublicationKind publicationKind;
+  final CalendarEventTiming? originalStart;
   final String method;
   final String organizerAddress, payload;
   final List<String> recipients;

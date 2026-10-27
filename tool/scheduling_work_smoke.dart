@@ -70,7 +70,7 @@ Future<void> main() async {
   try {
     var a = await start('a', 18580);
     final b = await start('b', 18680);
-    for (final method in ['REQUEST', 'CANCEL']) {
+    for (final method in ['REQUEST', 'CANCEL', 'INSTANCE']) {
       final first = (await a.command({
         'command': 'seed',
         'method': method,
@@ -128,13 +128,13 @@ Future<void> main() async {
             'Recovered $method submissions changed identity or bytes',
           );
         }
-        if (pause == 'before' || method == 'REQUEST') {
+        if (pause == 'before' || method != 'INSTANCE') {
           a = await start('a-recovered-$method-$pause', 18580);
         }
       }
     }
     stdout.writeln(
-      'PASS: REQUEST and CANCEL on two independent scheduling workers, competing claims, actual loss before/after synthetic acceptance and fenced stable-key recovery.',
+      'PASS: v3 REQUEST, legacy series CANCEL and v4 instance CANCEL on two independent scheduling workers, competing claims, actual loss before/after synthetic acceptance and fenced stable-key recovery.',
     );
   } finally {
     final live = probes.where((p) => !p.stopped).toList();
