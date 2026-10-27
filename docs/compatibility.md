@@ -398,3 +398,7 @@ Accepted [ADR 0127](adr/0127-retained-occurrence-reset-projections.md) adds scop
 Accepted [ADR 0128](adr/0128-explicit-single-occurrence-cancellation.md) adds scoped durable historical instance CANCEL with minimal detached data, fixed recipients, independent versions and preserved unpublished drafts. Native mutation requires exact current membership/profile; prior nonterminal delivery blocks new partial commands. Restoration, range cancellation, concurrent partial coordination and external-client/mail evidence remain separate; new REQUEST/reopen is blocked while individual cancellations remain.
 
 Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) adds bounded durable individual restoration through detached REQUEST, preserving published source meaning and private native drafts. V5 state retains independent active/cancelled/restored versions; complete publication is permitted only after the remaining-cancellation and native-membership guards pass. This does not establish remote exception deletion, cancelled-master reopening, parallel partial coordination or external-client/mail compatibility.
+
+## Proposed retained-cancellation reopening
+
+No reopened-series cancellation-preservation interoperability is claimed. ADR 0130 proposes one complete REQUEST with separately tracked publication-only EXDATE masks and master-updating restoration; the policy is confirmed but mechanics are unapproved/unimplemented. Ordinary import/export/feed compatibility is unchanged. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).

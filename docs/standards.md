@@ -137,3 +137,7 @@ Accepted [ADR 0127](adr/0127-retained-occurrence-reset-projections.md) implement
 Accepted [ADR 0128](adr/0128-explicit-single-occurrence-cancellation.md) implements minimal detached instance CANCEL with original UID/RECURRENCE-ID, independent version, organizer/fixed attendees and STATUS:CANCELLED, omitting timing/text/alarms. Historical membership, serialized-delivery gating, preserved drafts and v4 storage are application policies. This scoped synthetic runtime does not establish restoration, concurrent partial coordination, real mail or external-client interoperability.
 
 Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) implements the bounded published-value individual-restoration profile with detached REQUEST and independent target versions. Native private timing/text remains unchanged except an exact current cancellation flag; no authority is inferred from source fields. Serialized delivery, v5 history and complete-publication guards are application choices, not blanket iTIP/iMIP or client interoperability claims.
+
+## Proposed retained-cancellation reopening
+
+RFC 5546 REQUEST permits EXDATE and active status; RFC 5545 exclusions apply to original recurrence identities. ADR 0130 proposes using that syntax as an explicit publication projection while retaining private cancellation provenance. This application mapping is not a new RFC rule, canonical import capability or verified client behavior. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).
