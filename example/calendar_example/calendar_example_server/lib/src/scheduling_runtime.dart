@@ -112,6 +112,40 @@ final class DemoSchedulingHost implements CalendarSchedulingHost {
   }
 }
 
+/// A development simulation, never proof of ownership of an external mailbox.
+final class DemoSchedulingReplyHost implements CalendarSchedulingReplyHost {
+  @override
+  CalendarAuthorizationGuarantee get guarantee =>
+      CalendarAuthorizationGuarantee.freshCheck;
+  @override
+  Future<CalendarAuthorizationVerdict> authorizeReply(
+    Session session,
+    CalendarSchedulingReplyPolicyContext context,
+    Transaction transaction,
+    CalendarAuthorizationPhase phase,
+  ) async {
+    final id = session.authenticated?.userIdentifier;
+    final scope = 'demo:user:$id';
+    final attendee =
+        context.message.events.single.participants.attendees.single.address;
+    return {'development', 'test'}.contains(session.serverpod.runMode) &&
+            id != null &&
+            context.delivery.namespace == 'demo-synthetic-reply' &&
+            context.delivery.scopeKey == scope &&
+            context.delivery.originReference == 'demo-owner:$id' &&
+            DemoSchedulingHost()._synthetic(attendee) &&
+            context.currentEvent.eventId == context.publishedEvent.eventId &&
+            await DemoSchedulingHost()._active(
+              session,
+              scope,
+              scope,
+              transaction,
+            )
+        ? CalendarAuthorizationVerdict.allow
+        : CalendarAuthorizationVerdict.deny;
+  }
+}
+
 /// Recording only: no SMTP/MIME/mobile provider and no body in application logs.
 final class DemoSchedulingTransport implements CalendarSchedulingTransport {
   @override

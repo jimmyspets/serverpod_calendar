@@ -233,6 +233,6 @@ Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) adds published-
 
 Accepted ADR 0130 implements published-series reopening with retained individual cancellations. Its explicit API, publication-only masks, full-message restoration and bounded v6 state extend ADR 0129 without changing canonical import/export/feeds or adding tables. See runtime and validation for the implemented scope. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).
 
-## Proposed authenticated attendee replies
+## Authenticated attendee replies
 
-ADR 0131 proposes authenticated non-recurring attendee replies after the completed organizer publication lifecycle. The confirmed retain-stale/no-auto-apply policy is distinct from the unapproved ingress, three-table storage, authority/retention and example mechanics. See [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
+Accepted ADR 0131 adds trusted non-recurring attendee REPLY ingress, separate response/source authority, three private tables, bounded retention and a synthetic example. Current/prior/unknown responses remain distinct and stale replies never apply automatically. Recurrence, other inbound methods, MIME and real-client evidence remain separate. See [the reply guide](authenticated-attendee-replies.md) and [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).

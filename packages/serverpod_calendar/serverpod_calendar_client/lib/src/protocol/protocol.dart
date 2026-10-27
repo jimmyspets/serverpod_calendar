@@ -19,6 +19,8 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_event_field_grou
     as _icxx5h8a;
 import 'package:serverpod_calendar_client/src/protocol/calendar_field_group.dart'
     as _ioi1smgh;
+import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_reply_source_view.dart'
+    as _ibmpwk5c;
 import 'package:serverpod_calendar_client/src/protocol/calendar_subject_view.dart'
     as _iad1u4rm;
 import 'package:serverpod_calendar_client/src/protocol/calendar_task_field_group.dart'
@@ -139,14 +141,21 @@ import 'calendar_protocol_identity.dart' as _iyrimg3m;
 import 'calendar_protocol_metadata.dart' as _itchuj1l;
 import 'calendar_protocol_metadata_update_request.dart' as _iyawor89;
 import 'calendar_refresh_hint.dart' as _ifsfk5xq;
+import 'calendar_scheduling_attendee_response_view.dart' as _itopoldj;
 import 'calendar_scheduling_cancel_request.dart' as _i4uu6f5m;
 import 'calendar_scheduling_delivery_state.dart' as _it5jr5tm;
 import 'calendar_scheduling_delivery_view.dart' as _i63ky642;
 import 'calendar_scheduling_occurrence_cancel_request.dart' as _ia8x0otq;
 import 'calendar_scheduling_occurrence_restore_request.dart' as _io2t7cny;
+import 'calendar_scheduling_participation.dart' as _iot0xi24;
 import 'calendar_scheduling_publication_kind.dart' as _il38fbb4;
 import 'calendar_scheduling_receipt.dart' as _izftntkw;
 import 'calendar_scheduling_reopen_request.dart' as _iv2f51nm;
+import 'calendar_scheduling_reply_document.dart' as _iqen8jmy;
+import 'calendar_scheduling_reply_outcome.dart' as _ikqvfn4d;
+import 'calendar_scheduling_reply_receipt.dart' as _iwdevo6h;
+import 'calendar_scheduling_reply_source_view.dart' as _i2peuvqu;
+import 'calendar_scheduling_responses_view.dart' as _ixbxcx0r;
 import 'calendar_scheduling_save_request.dart' as _icabxeyo;
 import 'calendar_scheduling_view.dart' as _is73suzs;
 import 'calendar_settings_update_request.dart' as _i66us6t1;
@@ -308,14 +317,21 @@ export 'calendar_protocol_identity.dart';
 export 'calendar_protocol_metadata.dart';
 export 'calendar_protocol_metadata_update_request.dart';
 export 'calendar_refresh_hint.dart';
+export 'calendar_scheduling_attendee_response_view.dart';
 export 'calendar_scheduling_cancel_request.dart';
 export 'calendar_scheduling_delivery_state.dart';
 export 'calendar_scheduling_delivery_view.dart';
 export 'calendar_scheduling_occurrence_cancel_request.dart';
 export 'calendar_scheduling_occurrence_restore_request.dart';
+export 'calendar_scheduling_participation.dart';
 export 'calendar_scheduling_publication_kind.dart';
 export 'calendar_scheduling_receipt.dart';
 export 'calendar_scheduling_reopen_request.dart';
+export 'calendar_scheduling_reply_document.dart';
+export 'calendar_scheduling_reply_outcome.dart';
+export 'calendar_scheduling_reply_receipt.dart';
+export 'calendar_scheduling_reply_source_view.dart';
+export 'calendar_scheduling_responses_view.dart';
 export 'calendar_scheduling_save_request.dart';
 export 'calendar_scheduling_view.dart';
 export 'calendar_settings_update_request.dart';
@@ -756,6 +772,10 @@ class Protocol extends _isc.SerializationManager {
     if (t == _ifsfk5xq.CalendarRefreshHint) {
       return _ifsfk5xq.CalendarRefreshHint.fromJson(data) as T;
     }
+    if (t == _itopoldj.CalendarSchedulingAttendeeResponseView) {
+      return _itopoldj.CalendarSchedulingAttendeeResponseView.fromJson(data)
+          as T;
+    }
     if (t == _i4uu6f5m.CalendarSchedulingCancelRequest) {
       return _i4uu6f5m.CalendarSchedulingCancelRequest.fromJson(data) as T;
     }
@@ -773,6 +793,9 @@ class Protocol extends _isc.SerializationManager {
       return _io2t7cny.CalendarSchedulingOccurrenceRestoreRequest.fromJson(data)
           as T;
     }
+    if (t == _iot0xi24.CalendarSchedulingParticipation) {
+      return _iot0xi24.CalendarSchedulingParticipation.fromJson(data) as T;
+    }
     if (t == _il38fbb4.CalendarSchedulingPublicationKind) {
       return _il38fbb4.CalendarSchedulingPublicationKind.fromJson(data) as T;
     }
@@ -781,6 +804,21 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _iv2f51nm.CalendarSchedulingReopenRequest) {
       return _iv2f51nm.CalendarSchedulingReopenRequest.fromJson(data) as T;
+    }
+    if (t == _iqen8jmy.CalendarSchedulingReplyDocument) {
+      return _iqen8jmy.CalendarSchedulingReplyDocument.fromJson(data) as T;
+    }
+    if (t == _ikqvfn4d.CalendarSchedulingReplyOutcome) {
+      return _ikqvfn4d.CalendarSchedulingReplyOutcome.fromJson(data) as T;
+    }
+    if (t == _iwdevo6h.CalendarSchedulingReplyReceipt) {
+      return _iwdevo6h.CalendarSchedulingReplyReceipt.fromJson(data) as T;
+    }
+    if (t == _i2peuvqu.CalendarSchedulingReplySourceView) {
+      return _i2peuvqu.CalendarSchedulingReplySourceView.fromJson(data) as T;
+    }
+    if (t == _ixbxcx0r.CalendarSchedulingResponsesView) {
+      return _ixbxcx0r.CalendarSchedulingResponsesView.fromJson(data) as T;
     }
     if (t == _icabxeyo.CalendarSchedulingSaveRequest) {
       return _icabxeyo.CalendarSchedulingSaveRequest.fromJson(data) as T;
@@ -1590,6 +1628,13 @@ class Protocol extends _isc.SerializationManager {
               : null)
           as T;
     }
+    if (t ==
+        _isc.getType<_itopoldj.CalendarSchedulingAttendeeResponseView?>()) {
+      return (data != null
+              ? _itopoldj.CalendarSchedulingAttendeeResponseView.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _isc.getType<_i4uu6f5m.CalendarSchedulingCancelRequest?>()) {
       return (data != null
               ? _i4uu6f5m.CalendarSchedulingCancelRequest.fromJson(data)
@@ -1626,6 +1671,12 @@ class Protocol extends _isc.SerializationManager {
               : null)
           as T;
     }
+    if (t == _isc.getType<_iot0xi24.CalendarSchedulingParticipation?>()) {
+      return (data != null
+              ? _iot0xi24.CalendarSchedulingParticipation.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _isc.getType<_il38fbb4.CalendarSchedulingPublicationKind?>()) {
       return (data != null
               ? _il38fbb4.CalendarSchedulingPublicationKind.fromJson(data)
@@ -1641,6 +1692,36 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_iv2f51nm.CalendarSchedulingReopenRequest?>()) {
       return (data != null
               ? _iv2f51nm.CalendarSchedulingReopenRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_iqen8jmy.CalendarSchedulingReplyDocument?>()) {
+      return (data != null
+              ? _iqen8jmy.CalendarSchedulingReplyDocument.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ikqvfn4d.CalendarSchedulingReplyOutcome?>()) {
+      return (data != null
+              ? _ikqvfn4d.CalendarSchedulingReplyOutcome.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_iwdevo6h.CalendarSchedulingReplyReceipt?>()) {
+      return (data != null
+              ? _iwdevo6h.CalendarSchedulingReplyReceipt.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_i2peuvqu.CalendarSchedulingReplySourceView?>()) {
+      return (data != null
+              ? _i2peuvqu.CalendarSchedulingReplySourceView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ixbxcx0r.CalendarSchedulingResponsesView?>()) {
+      return (data != null
+              ? _ixbxcx0r.CalendarSchedulingResponsesView.fromJson(data)
               : null)
           as T;
     }
@@ -2281,6 +2362,17 @@ class Protocol extends _isc.SerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_itopoldj.CalendarSchedulingAttendeeResponseView>) {
+      return (data as List)
+              .map(
+                (e) =>
+                    deserialize<
+                      _itopoldj.CalendarSchedulingAttendeeResponseView
+                    >(e),
+              )
+              .toList()
+          as T;
+    }
     if (t == List<_i63ky642.CalendarSchedulingDeliveryView>) {
       return (data as List)
               .map(
@@ -2405,6 +2497,15 @@ class Protocol extends _isc.SerializationManager {
     if (t == List<_iad1u4rm.CalendarSubjectView>) {
       return (data as List)
               .map((e) => deserialize<_iad1u4rm.CalendarSubjectView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ibmpwk5c.CalendarSchedulingReplySourceView>) {
+      return (data as List)
+              .map(
+                (e) =>
+                    deserialize<_ibmpwk5c.CalendarSchedulingReplySourceView>(e),
+              )
               .toList()
           as T;
     }
@@ -2575,6 +2676,8 @@ class Protocol extends _isc.SerializationManager {
       _iyawor89.CalendarProtocolMetadataUpdateRequest =>
         'CalendarProtocolMetadataUpdateRequest',
       _ifsfk5xq.CalendarRefreshHint => 'CalendarRefreshHint',
+      _itopoldj.CalendarSchedulingAttendeeResponseView =>
+        'CalendarSchedulingAttendeeResponseView',
       _i4uu6f5m.CalendarSchedulingCancelRequest =>
         'CalendarSchedulingCancelRequest',
       _it5jr5tm.CalendarSchedulingDeliveryState =>
@@ -2585,11 +2688,23 @@ class Protocol extends _isc.SerializationManager {
         'CalendarSchedulingOccurrenceCancelRequest',
       _io2t7cny.CalendarSchedulingOccurrenceRestoreRequest =>
         'CalendarSchedulingOccurrenceRestoreRequest',
+      _iot0xi24.CalendarSchedulingParticipation =>
+        'CalendarSchedulingParticipation',
       _il38fbb4.CalendarSchedulingPublicationKind =>
         'CalendarSchedulingPublicationKind',
       _izftntkw.CalendarSchedulingReceipt => 'CalendarSchedulingReceipt',
       _iv2f51nm.CalendarSchedulingReopenRequest =>
         'CalendarSchedulingReopenRequest',
+      _iqen8jmy.CalendarSchedulingReplyDocument =>
+        'CalendarSchedulingReplyDocument',
+      _ikqvfn4d.CalendarSchedulingReplyOutcome =>
+        'CalendarSchedulingReplyOutcome',
+      _iwdevo6h.CalendarSchedulingReplyReceipt =>
+        'CalendarSchedulingReplyReceipt',
+      _i2peuvqu.CalendarSchedulingReplySourceView =>
+        'CalendarSchedulingReplySourceView',
+      _ixbxcx0r.CalendarSchedulingResponsesView =>
+        'CalendarSchedulingResponsesView',
       _icabxeyo.CalendarSchedulingSaveRequest =>
         'CalendarSchedulingSaveRequest',
       _is73suzs.CalendarSchedulingView => 'CalendarSchedulingView',
@@ -2891,6 +3006,8 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarProtocolMetadataUpdateRequest';
       case _ifsfk5xq.CalendarRefreshHint():
         return 'CalendarRefreshHint';
+      case _itopoldj.CalendarSchedulingAttendeeResponseView():
+        return 'CalendarSchedulingAttendeeResponseView';
       case _i4uu6f5m.CalendarSchedulingCancelRequest():
         return 'CalendarSchedulingCancelRequest';
       case _it5jr5tm.CalendarSchedulingDeliveryState():
@@ -2901,12 +3018,24 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarSchedulingOccurrenceCancelRequest';
       case _io2t7cny.CalendarSchedulingOccurrenceRestoreRequest():
         return 'CalendarSchedulingOccurrenceRestoreRequest';
+      case _iot0xi24.CalendarSchedulingParticipation():
+        return 'CalendarSchedulingParticipation';
       case _il38fbb4.CalendarSchedulingPublicationKind():
         return 'CalendarSchedulingPublicationKind';
       case _izftntkw.CalendarSchedulingReceipt():
         return 'CalendarSchedulingReceipt';
       case _iv2f51nm.CalendarSchedulingReopenRequest():
         return 'CalendarSchedulingReopenRequest';
+      case _iqen8jmy.CalendarSchedulingReplyDocument():
+        return 'CalendarSchedulingReplyDocument';
+      case _ikqvfn4d.CalendarSchedulingReplyOutcome():
+        return 'CalendarSchedulingReplyOutcome';
+      case _iwdevo6h.CalendarSchedulingReplyReceipt():
+        return 'CalendarSchedulingReplyReceipt';
+      case _i2peuvqu.CalendarSchedulingReplySourceView():
+        return 'CalendarSchedulingReplySourceView';
+      case _ixbxcx0r.CalendarSchedulingResponsesView():
+        return 'CalendarSchedulingResponsesView';
       case _icabxeyo.CalendarSchedulingSaveRequest():
         return 'CalendarSchedulingSaveRequest';
       case _is73suzs.CalendarSchedulingView():
@@ -3410,6 +3539,11 @@ class Protocol extends _isc.SerializationManager {
     if (dataClassName == 'CalendarRefreshHint') {
       return deserialize<_ifsfk5xq.CalendarRefreshHint>(data['data']);
     }
+    if (dataClassName == 'CalendarSchedulingAttendeeResponseView') {
+      return deserialize<_itopoldj.CalendarSchedulingAttendeeResponseView>(
+        data['data'],
+      );
+    }
     if (dataClassName == 'CalendarSchedulingCancelRequest') {
       return deserialize<_i4uu6f5m.CalendarSchedulingCancelRequest>(
         data['data'],
@@ -3435,6 +3569,11 @@ class Protocol extends _isc.SerializationManager {
         data['data'],
       );
     }
+    if (dataClassName == 'CalendarSchedulingParticipation') {
+      return deserialize<_iot0xi24.CalendarSchedulingParticipation>(
+        data['data'],
+      );
+    }
     if (dataClassName == 'CalendarSchedulingPublicationKind') {
       return deserialize<_il38fbb4.CalendarSchedulingPublicationKind>(
         data['data'],
@@ -3445,6 +3584,31 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'CalendarSchedulingReopenRequest') {
       return deserialize<_iv2f51nm.CalendarSchedulingReopenRequest>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarSchedulingReplyDocument') {
+      return deserialize<_iqen8jmy.CalendarSchedulingReplyDocument>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarSchedulingReplyOutcome') {
+      return deserialize<_ikqvfn4d.CalendarSchedulingReplyOutcome>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarSchedulingReplyReceipt') {
+      return deserialize<_iwdevo6h.CalendarSchedulingReplyReceipt>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarSchedulingReplySourceView') {
+      return deserialize<_i2peuvqu.CalendarSchedulingReplySourceView>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarSchedulingResponsesView') {
+      return deserialize<_ixbxcx0r.CalendarSchedulingResponsesView>(
         data['data'],
       );
     }

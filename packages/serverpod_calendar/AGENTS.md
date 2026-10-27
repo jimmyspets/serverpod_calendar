@@ -43,3 +43,5 @@ Accepted ADR 0129 implements published-value individual restoration with preserv
 
 
 Accepted [ADR 0130](../../docs/adr/0130-preserved-cancellations-reopening.md) adds published-value reopening and full-message restoration with publication-only exclusion state. Preserve native drafts/flags, separate authority and exact retry commands. No new tables or real mail; canonical import/export/feeds remain independent. Use focused tests during development, then the complete agreed batch checks.
+
+Accepted ADR 0131 adds trusted server-only non-recurring REPLY intake and three private tables. Generated clients may query independently authorized summaries/source review, but cannot submit verified sender evidence. Recheck exact actual binding/roster/origin, preserve source omissions and SEQUENCE/DTSTAMP ordering, and commit source/receipt/response atomically under the shared scope lock. Replies never edit native/outbound state. Active ordering and unexpired receipt references survive bounded cleanup; stale/future/conflict data stays unapplied. The complete approved mechanics are in ../../docs/authenticated-attendee-replies.md; recurring replies and mail remain separate.

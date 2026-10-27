@@ -16,6 +16,8 @@ enum CalendarPermission {
   restoreOccurrenceScheduling,
   reopenScheduling,
   readScheduling,
+  readSchedulingResponses,
+  readSchedulingReplySource,
   readPersonalAlarmActivity,
   acknowledgePersonalAlarm,
   dismissPersonalAlarm,
@@ -210,6 +212,8 @@ final class CalendarAuthorizationRequest {
     this.proposedTaskOccurrence,
     Iterable<CalendarTaskOccurrence> recordedTaskOccurrences = const [],
     this.scheduling,
+    this.schedulingReplySource,
+    this.schedulingReplyDocument,
     this.currentEvent,
     this.proposedEvent,
     this.proposedEventProtocolState,
@@ -277,6 +281,8 @@ final class CalendarAuthorizationRequest {
   final List<CalendarTaskOccurrence> recordedTaskOccurrences;
   final Set<CalendarTaskFieldGroup> taskGroups;
   final CalendarSchedulingIntent? scheduling;
+  final CalendarSchedulingReplySourceView? schedulingReplySource;
+  final String? schedulingReplyDocument;
   final CalendarEventPolicySnapshot? currentEvent;
   final CalendarEventContent? proposedEvent;
   final CalendarEventProtocolState? proposedEventProtocolState;

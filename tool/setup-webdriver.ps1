@@ -4,7 +4,6 @@ if ($env:CHROMEDRIVER) {
   if (-not (Test-Path -LiteralPath $env:CHROMEDRIVER)) { throw 'CHROMEDRIVER does not point to a file.' }
   return
 }
-if (Test-Path -LiteralPath $driver) { return }
 if (-not ($IsWindows -or $env:OS -eq 'Windows_NT')) {
   throw 'Install a matching ChromeDriver and set CHROMEDRIVER on this platform.'
 }
@@ -17,6 +16,12 @@ $chrome = $chromeCandidates | Where-Object { Test-Path -LiteralPath $_ } | Selec
 if (-not $chrome) { throw 'Chrome was not found; set CHROMEDRIVER for your installation.' }
 $version = (Get-Item -LiteralPath $chrome).VersionInfo.ProductVersion
 $buildPrefix = ($version.Split('.')[0..2] -join '.') + '.'
+if (Test-Path -LiteralPath $driver) {
+  $cachedVersion = & $driver --version
+  if ($LASTEXITCODE -eq 0 -and $cachedVersion -match '^ChromeDriver (\d+\.\d+\.\d+\.\d+)' -and
+      $Matches[1].StartsWith($buildPrefix)) { return }
+  Write-Host "Refreshing cached ChromeDriver for installed Chrome $version."
+}
 $metadata = Invoke-RestMethod 'https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json'
 $release = $metadata.versions | Where-Object version -EQ $version
 if (-not $release) { $release = $metadata.versions | Where-Object { $_.version.StartsWith($buildPrefix) } | Select-Object -Last 1 }

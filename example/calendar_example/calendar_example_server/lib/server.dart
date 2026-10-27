@@ -72,6 +72,7 @@ Future<void> run(List<String> args) async {
     scheduling: CalendarSchedulingRuntime(
       host: DemoSchedulingHost(),
       transport: DemoSchedulingTransport(),
+      replies: CalendarSchedulingReplyRuntime(host: DemoSchedulingReplyHost()),
     ),
     alarms: CalendarAlarmRuntime(
       policy: DemoAlarmBackgroundPolicy(),

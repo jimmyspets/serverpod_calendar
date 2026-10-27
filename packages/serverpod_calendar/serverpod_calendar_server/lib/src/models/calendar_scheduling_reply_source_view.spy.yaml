@@ -1,0 +1,14 @@
+class: CalendarSchedulingReplySourceView
+immutable: true
+fields:
+  id: UuidValue
+  attendeeAddress: String
+  sourceSequence: int?
+  stamp: DateTime
+  sourceParticipation: CalendarSchedulingParticipation?
+  effectiveParticipation: CalendarSchedulingParticipation
+  outcome: CalendarSchedulingReplyOutcome
+  publishedSequence: int
+  publishedCancelled: bool
+  receivedAt: DateTime
+  isCurrent: bool

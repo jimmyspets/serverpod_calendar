@@ -11,5 +11,7 @@ refreshJwtTokens:
   - refreshAccessToken:
 notificationStream:
   - watch:
+schedulingDemo:
+  - simulateReply:
 smoke:
   - whoAmI:

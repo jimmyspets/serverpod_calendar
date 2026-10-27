@@ -1,0 +1,5 @@
+class: CalendarSchedulingReplyDocument
+immutable: true
+fields:
+  metadata: CalendarSchedulingReplySourceView
+  normalizedSource: String

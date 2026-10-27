@@ -1,0 +1,23 @@
+class: CalendarSchedulingAttendeeResponseRecord
+serverOnly: true
+table: serverpod_calendar_scheduling_attendee_response
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  meetingId: UuidValue, relation(parent=serverpod_calendar_scheduling_meeting)
+  attendeeAddress: String
+  revision: int
+  sourceId: UuidValue, relation(parent=serverpod_calendar_scheduling_reply_source)
+  sequence: int
+  stamp: DateTime
+  sourceParticipation: CalendarSchedulingParticipation?
+  effectiveParticipation: CalendarSchedulingParticipation
+  receivedAt: DateTime
+indexes:
+  calendar_attendee_response_address_unique:
+    fields: meetingId, attendeeAddress
+    unique: true
+  calendar_attendee_response_source_idx:
+    fields: sourceId
+  calendar_attendee_response_scope_idx:
+    fields: scopeKey

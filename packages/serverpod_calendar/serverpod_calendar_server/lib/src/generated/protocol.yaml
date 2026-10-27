@@ -39,6 +39,9 @@ calendar:
   - changeSubject:
   - delete:
 calendarEvent:
+  - schedulingResponses:
+  - schedulingReplySources:
+  - schedulingReplySource:
   - reopenPublishedAndNotify:
   - restoreOccurrenceAndNotify:
   - cancelOccurrenceAndNotify:

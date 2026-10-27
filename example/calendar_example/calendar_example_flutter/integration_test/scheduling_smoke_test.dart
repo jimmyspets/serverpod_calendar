@@ -6,6 +6,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import 'scheduling_journey.dart';
+import 'attendee_reply_journey.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -41,5 +42,6 @@ void main() {
     tester.testTextInput.register();
     addTearDown(tester.testTextInput.unregister);
     await runSchedulingJourney(tester, client);
+    await runAttendeeReplyJourney(tester, client);
   });
 }

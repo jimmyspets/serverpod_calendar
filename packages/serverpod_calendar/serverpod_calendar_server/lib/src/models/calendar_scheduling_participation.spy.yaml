@@ -1,0 +1,6 @@
+enum: CalendarSchedulingParticipation
+values:
+  - needsAction
+  - accepted
+  - declined
+  - tentative

@@ -204,6 +204,6 @@ Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) adds independen
 
 Implemented under accepted ADR 0130: reopenScheduling is independent of ordinary editing and publication. Reopening also requires scheduling-read, all event detail groups, source-read and lifecycle access. restoreOccurrenceScheduling remains required for masked restoration; the host approves its entire outgoing REQUEST. Existing fresh/coordinated guarantees and final rechecks apply. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).
 
-## Proposed authenticated attendee replies
+## Authenticated attendee replies
 
-Proposed under ADR 0131: separate response-read and reply-source-read gates plus existing complete scheduling/event/source authority; generated clients cannot ingest verified-origin claims. Existing native lifecycle/publication rights are not attendee identity or consent. See [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
+Accepted ADR 0131 adds separate `readSchedulingResponses` and `readSchedulingReplySource` gates plus existing complete scheduling/event/source authority. Source requests carry actual parent/event/source UUID, metadata and normalized body; a bounded list fails completely when any source is withheld. Generated clients cannot ingest verified-origin claims. Trusted server ingress independently verifies the exact attendee origin through preliminary and final host checks; native lifecycle/publication rights are not attendee identity or consent. See [the reply guide](authenticated-attendee-replies.md).

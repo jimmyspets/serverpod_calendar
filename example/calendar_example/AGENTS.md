@@ -51,3 +51,5 @@ Accepted ADR 0129 implements published-value individual restoration with preserv
 
 
 Accepted [ADR 0130](../../docs/adr/0130-preserved-cancellations-reopening.md) adds published-value reopening and full-message restoration with publication-only exclusion state. Preserve native drafts/flags, separate authority and exact retry commands. No new tables or real mail; canonical import/export/feeds remain independent. Use focused tests during development, then the complete agreed batch checks.
+
+Accepted ADR 0131 adds the protected attendee response/source review screen and development/test-only synthetic reply simulator. The actual authenticated private demo owner and fixed example.invalid roster are verified server-side; this establishes no real mailbox identity. The reusable module has no ingestion endpoint accepting sender proof. Keep body-defining values stable on uncertain retries, display current/prior/unknown separately, and show raw source only through its independent gate as inert text. Never apply stale records automatically or send mail. See ../../docs/authenticated-attendee-replies.md.

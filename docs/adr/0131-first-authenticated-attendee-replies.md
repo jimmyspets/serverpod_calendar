@@ -1,6 +1,6 @@
 # ADR 0131: First authenticated attendee replies
 
-Status: **The maintainer confirmed on 2026-10-27 that older-version replies are retained as stale for review and never automatically applied. The concrete first REPLY scope, trusted ingress, three tables, authority, version/retention and example mechanics below are proposed, not approved or implemented.**
+Status: **Accepted by explicit maintainer approval on 2026-10-27, including the complete non-recurring REPLY batch and three-table storage/authority/version/retention/example mechanics. The scoped implementation passed local batch checks in phases; this does not establish external client/mail interoperability.**
 
 ## Context and confirmed policy
 
@@ -10,7 +10,7 @@ The maintainer selected retaining a supported, verified reply to an older publis
 
 [RFC 5546 sequencing](https://www.rfc-editor.org/rfc/rfc5546.html#section-2.1.5) identifies the invitation revision in REPLY SEQUENCE and uses DTSTAMP to order responses to that revision. [The REPLY method](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.3) distinguishes attendee response data from changes that require COUNTER. The RFC allows an organizer to decide whether to accept an older response; this initial application policy never does so automatically. These primary references were checked on 2026-10-27. The [restricted mail/trust boundary](0015-restricted-imip-profile.md) remains separate; pure parser success or SMTP headers establish no authority.
 
-## Proposed trusted ingress and source profile
+## Approved trusted ingress and source profile
 
 Expose server-only receipt processing through a replaceable trusted host adapter, not a generated endpoint accepting a client-supplied verified-sender flag. The host selects the actual local event/binding in one trusted scope and supplies a namespaced opaque delivery key plus origin evidence. The module loads the actual parent and requires the source UID/ORGANIZER and replying ATTENDEE to match that binding's published identities and fixed roster. Never route by an untrusted body UID alone, guess address aliases/case, create an attendee, or infer trust from From, feed credentials, DNS, participant parameters or a session's display address. The host must explicitly verify that this origin may act for the exact stored attendee address.
 
@@ -20,7 +20,7 @@ The only applied value is the replying attendee's own participation state. Prese
 
 Malformed/over-budget input, an unknown/foreign UID, unknown attendee, unsupported method/profile or unverified origin is rejected without domain mutation or automatic response. The host owns any raw-mail archive/quarantine outside the module. Only bounded supported source associated with a verified actual binding is admitted to these private tables; no arbitrary foreign payload archive is introduced.
 
-## Proposed version and atomicity rules
+## Approved version and atomicity rules
 
 Compare against the last committed published REQUEST, not a newer unpublished native revision or the success of a provider delivery. Replies need not prove provider acceptance and never mark an outbound attempt accepted. A cancelled published meeting accepts no current participation update. Retain lower versions as stale, higher unmatched versions as reviewable unmatched source, and supported replies while cancelled as unapplied source. Never reopen a meeting or apply these records later automatically.
 
@@ -32,7 +32,7 @@ Use the existing durable scope transaction/lock and database uniqueness across h
 
 Response processing changes neither native event API/protocol revisions/content/baselines nor availability, feed validators, scope publication generation or outbound meeting generation/leases. It must not fence unrelated queued deliveries. No native participant address/role or organizer ownership changes.
 
-## Proposed three-table model
+## Approved three-table model
 
 All tables are server-only with server UUIDs and actual scope/binding references, using reviewed [Serverpod model sources](https://docs.serverpod.dev/concepts/data-and-the-database/models) and pinned 4.x generation/migrations only after approval:
 
@@ -42,9 +42,9 @@ All tables are server-only with server UUIDs and actual scope/binding references
 
 The last applied source remains while it matches the active published invitation version so ordering survives cleanup. Other stale/conflict/unmatched/superseded sources and terminal receipts default to host-configurable 30-day retention. An unapplied source starts retention at database receipt time; a formerly current source becomes eligible only after the module observes its published version becoming inactive, with a recorded database-time retention boundary. An obsolete response checkpoint may be removed with its expired source, since published-version comparison still rejects old replies. Unexpired transport receipts also retain their referenced source; cross-key duplicates can therefore extend source retention through their latest receipt expiry. Bounds still apply and cleanup removes expired receipt references before eligible obsolete sources/checkpoints. Pruning cannot remove an active-version source, weaken ordering or reapply an old reply. Retained duplicate guarantees are bounded by retention; do not promise permanent transport-key deduplication. Existing binding/parent deletion guards remain; eventual cleanup must scrub these private rows atomically and is not an implicit new deletion API.
 
-Proposed configurable defaults: 512 KiB normalized source; 256 retained sources and 1,024 receipts per binding, 4,096 sources and 8,192 receipts per scope; the existing fixed roster remains at most 64. Reject capacity exhaustion atomically with a bounded result; never evict still-retained/current source to accept more data. Whole bounded metadata lists contain no raw source, totals or hidden foreign membership; explicit authorized source lookup returns at most one bounded message. No new cursor table or unbounded history query.
+Approved configurable defaults: 512 KiB normalized source; 256 retained sources and 1,024 receipts per binding, 4,096 sources and 8,192 receipts per scope; the existing fixed roster remains at most 64. Reject capacity exhaustion atomically with a bounded result; never evict still-retained/current source to accept more data. Whole bounded metadata lists contain no raw source, totals or hidden foreign membership; explicit authorized source lookup returns at most one bounded message. No new cursor table or unbounded history query.
 
-## Proposed authorization, example and review
+## Approved authorization, example and review
 
 Add separate response-read and reply-source-read operations alongside existing scheduling/full event/source access for this first complete-disclosure profile. Actual parent/object context remains mandatory. The public generated API can list the bounded current/prior response summaries and retained review descriptors and read an explicitly selected source only with its independent gate. It cannot accept sender proof or ingest arbitrary replies. Current response summaries expose no raw comments/body. Retained source-review descriptors require both response-read and source-read; the first bounded list is all-or-nothing if any admitted source is withheld. Transport receipts remain server-only. Restrict stale/conflict source and comments to the source-read operation; ordinary event views/exports/feeds expose none of these rows.
 
@@ -52,17 +52,26 @@ The example uses deterministic synthetic trusted ingress and a clearly labelled 
 
 ```mermaid
 flowchart TD
-  A[Trusted host selects actual binding and origin evidence] --> B[Bounded pure REPLY and module identity checks]
-  B --> C[Host preliminary and final authority with exact source]
-  C --> D[Scope transaction classifies version and duplicate state]
-  D --> E[Atomic private source receipt and response checkpoint]
-  E --> F[Authorized current or stale review projection]
+  A[Trusted host selects actual binding and origin evidence] --> B[Bounded pure REPLY profile]
+  B --> C[Scope transaction validates actual parent publication UID and roster]
+  C --> D[Preliminary host origin approval]
+  D --> E[Load current response and classify source or retry]
+  E --> F[Approve complete new proposal and write provisional state]
+  E --> R[Retained receipt retry without writes]
+  F --> G[Final host approval before commit]
+  R --> G
+  G --> H[Atomic commit]
+  H --> I[Independently authorized response or source review]
 ```
 
-## Alternatives and proposed acceptance
+## Alternatives and acceptance
 
-A two-table design could copy a whole source into every transport receipt. The proposed three tables keep delivery-key idempotency separate from source identity and avoid copying large bodies for duplicates, at the cost of extra relationships and migration surface; that physical choice requires review.
+A two-table design could copy a whole source into every transport receipt. The approved three tables keep delivery-key idempotency separate from source identity and avoid copying large bodies for duplicates, at the cost of extra relationships and migration surface; that physical choice is included in the explicit maintainer approval.
 
 Discarding stale source contradicts the selected review policy. Applying the latest-arriving reply ignores protocol ordering. Updating event participants or sending automatic updates would conflate response data with independently authorized native publication. Routing by UID/sender text without a trusted actual binding risks cross-calendar copies and impersonation. Broader MIME/recurrence/delegation/adoption/manual conflict resolution stays separate.
 
 Test verified versus spoofed/unknown origin, actual scope/parent/UID/roster, cancelled/pending publication and native-draft isolation, omitted zero SEQUENCE, lower/equal/higher versions, source-stamp ordering/ties and result data. Cover exact/cross-key duplicates, conflicting key reuse, atomic final denial, capacity/overflow, private raw-read gates, retained/pruned ordering and ordinary export/feed invisibility. Run two actual hosts racing publication/receipt and duplicate/conflicting replies, plus process-loss transaction/retry recovery and Flutter review journeys with synthetic ingress. Verify fresh/upgraded storage using the pinned generator, focused feature tests and complete batch checks. Do not claim mail or external-client interoperability from this increment.
+
+## Implementation record
+
+The approved runtime is described in [the attendee reply guide](../authenticated-attendee-replies.md). Source table models and module/example migrations were generated with the pinned CLI; Serverpod MCP applied the development migration and a read-only catalog probe verified all three tables. No development reset or hand-edited generated metadata was used. Focused database and actual independent-process loss checks passed; completed phased batch validation is recorded in [the validation guide](../scaffold-validation.md). This supersedes proposal-only language for this bounded increment.
