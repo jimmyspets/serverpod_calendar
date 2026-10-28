@@ -163,3 +163,7 @@ Accepted ADR 0134 adds the scoped native/ordinary VEVENT descriptive-field incre
 Accepted ADR 0135 adds selected-field native event/task URL, classification, category and comment editors with independent disclosure, retained source groups/baselines and effective outgoing versions. CONTACT remains import-only; category search remains separate. See [the implementation guide](native-item-text-metadata.md) and scoped validation evidence.
 
 Accepted ADR 0136 implements exact native event/task master-category filtering with independent disclosure and cursor binding. This application query does not extend RFC wire grammar, schedule meetings, query busy time or establish external-client rendering/search compatibility. See [the bounded query profile](item-category-search.md).
+
+## Incoming organizer REQUEST review proposal
+
+The confirmed review-first policy keeps receipt separate from calendar adoption and participation. [ADR 0137](adr/0137-trusted-invitation-intake-and-review.md) proposes bounded trusted non-recurring intake with source ordering, duplicate receipts and private review. It adds no implemented method/MIME conformance today; recurrence, calendar reconciliation, responses and RFC 6047 mail remain separate required work.
