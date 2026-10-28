@@ -1,3 +1,4 @@
+import 'item_category_filter.dart';
 import 'item_text_metadata_editor.dart';
 import 'event_descriptive_editor.dart';
 import 'personal_alarm_screen.dart';
@@ -31,6 +32,7 @@ class EventScreen extends StatefulWidget {
 class _EventScreenState extends State<EventScreen> {
   final _events = <cal.CalendarEventView>[];
   String? _cursor, _error;
+  cal.CalendarCategoryFilter? _filter;
   bool _busy = true;
   @override
   void initState() {
@@ -50,6 +52,7 @@ class _EventScreenState extends State<EventScreen> {
             pageSize: 25,
             fieldGroups: cal.CalendarEventFieldGroup.values,
             cursor: more ? _cursor : null,
+            categoryFilter: _filter,
           );
       if (mounted) {
         setState(() {
@@ -119,6 +122,18 @@ class _EventScreenState extends State<EventScreen> {
       children: [
         const Text(
           'Event series and single events. This detail list does not establish free time.',
+        ),
+        ItemCategoryFilter(
+          prefix: 'event',
+          busy: _busy,
+          onApply: (filter) {
+            setState(() {
+              _filter = filter;
+              _cursor = null;
+              _events.clear();
+            });
+            _load();
+          },
         ),
         if (_busy) const LinearProgressIndicator(),
         if (_error != null) Text(_error!, key: const Key('event-error')),

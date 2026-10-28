@@ -99,6 +99,7 @@ extension CalendarEventOperations on CalendarService {
     CalendarEventContent? proposed,
     CalendarEventProtocolState? proposedState,
     CalendarItemTextMetadataPatch? textMetadataPatch,
+    CalendarCategoryQuery? categoryFilter,
     CalendarEventOccurrenceQuery? query,
     CalendarFreeBusyQuery? freeBusy,
     CalendarAvailabilitySearchQuery? search,
@@ -117,6 +118,7 @@ extension CalendarEventOperations on CalendarService {
     proposedEvent: proposed,
     proposedEventProtocolState: proposedState,
     itemTextMetadataPatch: textMetadataPatch,
+    categoryFilter: categoryFilter,
     occurrenceQuery: query,
     freeBusyQuery: freeBusy,
     availabilitySearchQuery: search,
@@ -857,8 +859,23 @@ extension CalendarEventOperations on CalendarService {
     required int pageSize,
     required List<CalendarEventFieldGroup> fieldGroups,
     String? cursor,
+    CalendarCategoryFilter? categoryFilter,
   }) async {
     final groups = _egroups(fieldGroups);
+    final filter = _itemCategoryFilter(categoryFilter);
+    final queryFilter = filter == null
+        ? null
+        : CalendarCategoryQuery(filter.value, filter.language);
+    final savedFilter = filter == null
+        ? null
+        : CalendarCategoryFilter(
+            value: filter.value,
+            language: filter.language,
+          );
+    final evaluationGroups = Set<CalendarEventFieldGroup>.unmodifiable({
+      ...groups,
+      if (filter != null) CalendarEventFieldGroup.categories,
+    });
     if (pageSize < 1 || pageSize > _options.maxPageSize) {
       throw _failure(CalendarFailureCode.validation);
     }
@@ -869,7 +886,14 @@ extension CalendarEventOperations on CalendarService {
       final parent = await _active(c, calendarId, tx);
       await _decide(
         c,
-        [_er(parent, CalendarPermission.listEvents, groups: groups)],
+        [
+          _er(
+            parent,
+            CalendarPermission.listEvents,
+            groups: evaluationGroups,
+            categoryFilter: queryFilter,
+          ),
+        ],
         tx,
         CalendarAuthorizationPhase.read,
       );
@@ -878,7 +902,8 @@ extension CalendarEventOperations on CalendarService {
           _session,
           c,
           parent.snapshot,
-          groups,
+          evaluationGroups,
+          categoryFilter: queryFilter,
         ),
       );
       if ((plan.eventIds?.length ?? 0) > _options.maxScannedEvents) {
@@ -908,6 +933,7 @@ extension CalendarEventOperations on CalendarService {
             saved.policyRevision != c.policyRevision ||
             saved.dataRevision != scope.revision ||
             saved.pageSize != pageSize ||
+            !_sameCategoryFilter(saved.categoryFilter, filter) ||
             !saved.expiresAt.isAfter(DateTime.now().toUtc()) ||
             saved.eventFieldGroups == null ||
             saved.eventFieldGroups!.length != canonical.length ||
@@ -950,7 +976,8 @@ extension CalendarEventOperations on CalendarService {
                 parent,
                 CalendarPermission.readEvent,
                 event: e,
-                groups: groups,
+                groups: evaluationGroups,
+                categoryFilter: queryFilter,
               ),
           ];
           final decisions = await _decide(
@@ -963,7 +990,17 @@ extension CalendarEventOperations on CalendarService {
           for (final e in active) {
             final key = '${CalendarPermission.readEvent.name}:${e.identity.id}';
             final decision = decisions[key]!;
-            if (decision.verdict == CalendarAuthorizationVerdict.allow) {
+            if (decision.verdict == CalendarAuthorizationVerdict.allow &&
+                (filter == null ||
+                    (decision.eventDisclosedGroups.contains(
+                          CalendarEventFieldGroup.categories,
+                        ) &&
+                        _itemCategoryMatches(
+                          eventTextMetadata(
+                            e.data.protocolState!.sourceMetadata,
+                          ).categoryGroups!,
+                          filter,
+                        )))) {
               visible.add(_eventView(e, groups, decision));
             }
             if (visible.length > pageSize) break;
@@ -1015,6 +1052,7 @@ extension CalendarEventOperations on CalendarService {
             fieldGroups: [],
             eventCalendarId: calendarId,
             eventFieldGroups: canonical,
+            categoryFilter: savedFilter,
             expiresAt: DateTime.now().toUtc().add(_options.cursorLifetime),
           ),
           transaction: tx,

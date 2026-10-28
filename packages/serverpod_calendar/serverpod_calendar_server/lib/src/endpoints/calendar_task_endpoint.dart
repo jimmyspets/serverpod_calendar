@@ -40,11 +40,13 @@ class CalendarTaskEndpoint extends Endpoint {
     required int pageSize,
     required List<CalendarTaskFieldGroup> fieldGroups,
     String? cursor,
+    CalendarCategoryFilter? categoryFilter,
   }) => CalendarModule.service(session).listTasks(
     calendarId,
     pageSize: pageSize,
     fieldGroups: fieldGroups,
     cursor: cursor,
+    categoryFilter: categoryFilter,
   );
   Future<CalendarTaskReceipt?> update(
     Session session,

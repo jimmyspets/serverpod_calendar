@@ -1,3 +1,4 @@
+import 'item_category_filter.dart';
 import 'item_text_metadata_editor.dart';
 import 'personal_alarm_screen.dart';
 
@@ -38,6 +39,7 @@ String taskError(Object e) => e is cal.CalendarException
 class _TaskScreenState extends State<TaskScreen> {
   final _tasks = <cal.CalendarTaskView>[];
   String? _cursor, _error;
+  cal.CalendarCategoryFilter? _filter;
   bool _busy = true;
   @override
   void initState() {
@@ -57,6 +59,7 @@ class _TaskScreenState extends State<TaskScreen> {
             pageSize: 25,
             fieldGroups: cal.CalendarTaskFieldGroup.values,
             cursor: more ? _cursor : null,
+            categoryFilter: _filter,
           );
       if (mounted) {
         setState(() {
@@ -127,6 +130,18 @@ class _TaskScreenState extends State<TaskScreen> {
       children: [
         const Text(
           'Task dates and assignments do not reserve calendar time. Imported source participants and alarms remain inert.',
+        ),
+        ItemCategoryFilter(
+          prefix: 'task',
+          busy: _busy,
+          onApply: (filter) {
+            setState(() {
+              _filter = filter;
+              _cursor = null;
+              _tasks.clear();
+            });
+            _load();
+          },
         ),
         if (_busy) const LinearProgressIndicator(),
         if (_error != null) Text(_error!, key: const Key('task-error')),

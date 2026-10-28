@@ -736,6 +736,7 @@ class EndpointCalendarEvent extends _isc.EndpointRef {
     required int pageSize,
     required List<_icxx5h8a.CalendarEventFieldGroup> fieldGroups,
     String? cursor,
+    _in004d9w.CalendarCategoryFilter? categoryFilter,
   }) => caller.callServerEndpoint<_i8kstbs4.CalendarEventPage>(
     'serverpod_calendar.calendarEvent',
     'list',
@@ -744,6 +745,7 @@ class EndpointCalendarEvent extends _isc.EndpointRef {
       'pageSize': pageSize,
       'fieldGroups': fieldGroups,
       'cursor': cursor,
+      'categoryFilter': categoryFilter,
     },
   );
 
@@ -864,6 +866,7 @@ class EndpointCalendarTask extends _isc.EndpointRef {
     required int pageSize,
     required List<_i6s1er1y.CalendarTaskFieldGroup> fieldGroups,
     String? cursor,
+    _in004d9w.CalendarCategoryFilter? categoryFilter,
   }) => caller.callServerEndpoint<_il0k8fyg.CalendarTaskPage>(
     'serverpod_calendar.calendarTask',
     'list',
@@ -872,6 +875,7 @@ class EndpointCalendarTask extends _isc.EndpointRef {
       'pageSize': pageSize,
       'fieldGroups': fieldGroups,
       'cursor': cursor,
+      'categoryFilter': categoryFilter,
     },
   );
 
