@@ -1240,3 +1240,9 @@ The complete root `./tool/check.ps1` run ended with **All requested local checks
 After the final URI refinement, `dart test --concurrency=1 test/integration/item_text_metadata_test.dart --reporter expanded` passed all **9** affected database cases, including invalid ALTREP rejection with unchanged event/task state. The earlier broad counts precede that added case and the separate 3 wire VM/Chrome and 6 patch-unit review cases. Cumulative authored formatting and `dart analyze --fatal-infos` passed. Owned development runners were restored without resetting development storage; the existing latest migration was already applied. Actual Serverpod MCP hot reload and Flutter MCP hot reload succeeded, and runtime-error inspection found none.
 
 Final static checks passed **2,809 relative links**, consecutive ADRs 0001–0135, **89 candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. The approved feature batch is complete before its single implementation commit; category search and remaining roadmap/release work remain separate.
+
+## Item category search proposal — 2026-10-28
+
+Documentation-only ADR 0136 follows completed ADR 0135 and draft implementation PR #100. Existing calendar-level exact matching, query adapter interfaces and cursor JSON were inspected; proposed item integration is not runtime support. Open issues/PRs were checked for overlap (older calendar-level metadata PR #5 remains separate). No application/generated/schema change or runtime test repetition is included. Relative links, consecutive ADRs, changed files, credentials, LICENSE and whitespace are checked before the documentation commit.
+
+Documentation validation passed **2,816 relative links**, consecutive ADRs 0001–0136, **9 Markdown-only candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. Runtime suites were not repeated for this proposal.

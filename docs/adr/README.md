@@ -153,6 +153,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0134](0134-native-event-descriptive-fields.md) | Native event descriptive fields and interchange | Accepted 2026-10-28; native descriptive metadata/editor/disclosure, faithful wire/source storage and effective outgoing versions |
 | [0135](0135-native-item-text-metadata-editors.md) | Native event and task text/link metadata editors | Accepted 2026-10-28, including the native task metadata-only refinement; selected-field editing/disclosure and source/version preservation |
 
+| [0136](0136-authorized-item-category-search.md) | Authorized event and task category search | Proposed query/disclosure/cursor/API mechanics; exact category matching already selected |
+
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
 Use the next consecutive number for a new ADR covering a material decision. Include context, proposal/decision, alternatives, consequences, and acceptance conditions. Preserve committed/accepted decision history; supersede accepted decisions with a linked ADR. Superseded uncommitted drafts may be removed under the maintainer-authorized cleanup. Mark an ADR accepted only after explicit maintainer agreement recorded in the PR or issue.
