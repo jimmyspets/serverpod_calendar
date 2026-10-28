@@ -405,8 +405,8 @@ Accepted ADR 0130 adds scoped module behavior for reopening with publication-onl
 
 ## Authenticated attendee replies
 
-Accepted ADR 0131 adds bounded authenticated non-recurring organizer-side REPLY intake and synthetic generated-client/Flutter review. Exact source identity/version validation and host approval do not establish real mailbox or client interoperability. Recurring replies, MIME and external-client evidence remain pending. See [the reply guide](authenticated-attendee-replies.md) and [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
+Accepted ADR 0131 adds bounded authenticated non-recurring organizer-side REPLY intake and synthetic generated-client/Flutter review. Exact source identity/version validation and host approval do not establish real mailbox or client interoperability. Recurring masters now follow under ADR 0132. Instance/range replies, MIME and external-client evidence remain pending. See [the reply guide](authenticated-attendee-replies.md) and [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
 
-## Proposed recurring master replies
+## Recurring master replies
 
-Recurring master REPLY is proposed next, with no RECURRENCE-ID/RANGE and no inferred per-occurrence acceptance. This document adds no parser/runtime/client or mail compatibility evidence. The implemented authenticated runtime remains ADR 0131 non-recurring only. See [ADR 0132](adr/0132-recurring-master-attendee-replies.md).
+Accepted [ADR 0132](adr/0132-recurring-master-attendee-replies.md) extends trusted organizer-side REPLY to recurring masters. The runtime resolves the actual master from validated self-contained publication evidence, including partial messages and v6 exclusion masks; it preserves private native drafts, complete host context and source distinctions. Responses describe the whole series, never inferred instance acceptance. Master-changing commits update source inactivity atomically; unchanged master versions retain ordering across occurrence publications. Existing tables/caps are reused with no migration. Generated views add `recurring`; trusted adapters receive the complete published message, selected master and carrier kind. Validation evidence is recorded separately. Instance/range replies, other inbound methods and mail remain required separate work.
