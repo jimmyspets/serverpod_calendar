@@ -196,9 +196,16 @@ CalendarEventProtocolState advanceEventProtocol(
   CalendarEventTimingOverrides? beforeEdits,
   CalendarEventContent after,
   CalendarEventTimingOverrides? afterEdits,
-  DateTime now,
-) {
-  final masterChanged = _json(before.toJson()) != _json(after.toJson());
+  DateTime now, {
+  bool replaceSourceMetadata = false,
+  CalendarEventSourceMetadata? sourceMetadata,
+}) {
+  final nextMetadata = replaceSourceMetadata
+      ? validateEventSourceMetadata(sourceMetadata)
+      : current.sourceMetadata;
+  final masterChanged =
+      _json(before.toJson()) != _json(after.toJson()) ||
+      _json(current.sourceMetadata?.toJson()) != _json(nextMetadata?.toJson());
   final oldComponents = _components(beforeEdits),
       components = _components(afterEdits);
   final states = <CalendarEventOverrideProtocolState>[];
@@ -261,6 +268,7 @@ CalendarEventProtocolState advanceEventProtocol(
   }
   return validateEventProtocolState(
     current.copyWith(
+      sourceMetadata: nextMetadata,
       version: masterChanged ? _advance(current.version, now) : current.version,
       statusPresent: current.statusPresent || before.status != after.status,
       transparencyPresent:

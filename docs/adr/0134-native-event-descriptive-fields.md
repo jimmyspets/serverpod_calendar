@@ -1,6 +1,6 @@
 # ADR 0134: Native event descriptive fields and interchange
 
-Status: **Proposed. The maintainer confirmed exact bounded decimal strings for coordinates. The native model/API/disclosure and wire/version mechanics below require explicit agreement before implementation.**
+Status: **Accepted by explicit maintainer approval on 2026-10-28, including the native model/API/disclosure and wire/version mechanics. Scoped implementation and local batch validation are complete; final interactive/static verification is recorded separately.**
 
 ## Context and confirmed direction
 
@@ -8,7 +8,7 @@ The RFC feature tables select editable event coordinates, priority and descripti
 
 Primary sources checked 2026-10-28: [RFC 5545 GEO](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.1.6), [PRIORITY](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.1.9), [RESOURCES](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.1.10), [verified erratum 2677](https://www.rfc-editor.org/errata/eid2677), and RFC 5546 method tables. The erratum removes the erroneous single-RESOURCES restriction, matching the repeated component grammar. Reuse the bounded source codec rather than flattening groups or inheriting that obsolete restriction.
 
-## Proposed native representation and storage
+## Approved native representation and storage
 
 Add optional priority, geographicPosition and resourceGroups to the existing immutable CalendarEventSourceMetadata, which is already stored in event protocol/source JSON and supported occurrence source metadata. Add client-visible immutable geographic-position and resource-text-group DTOs plus an explicit descriptive-field request/view shape. Do not duplicate values into CalendarEventContent or infer them from location text. All other source participants, relationships, attachments, alarms and metadata remain preserved; this editor cannot mutate them.
 
@@ -20,7 +20,7 @@ Resource groups preserve ordered decoded labels, duplicates/empty labels, option
 
 The nested JSON additions require no new table/column/index or migration. Generate models/clients normally and verify SQL schema stability. Legacy missing fields remain absent; do not invent defaults, history or import baselines. Preserve active-data deletion/scrubbing and baseline conflict rules.
 
-## Proposed API, permissions and example
+## Approved API, permissions and example
 
 Add an explicit revision-checked updateEventDescriptiveMetadata operation replacing only these three fields. It uses independent updateEventDescriptiveMetadata authority with actual parent/event/current/final validated protocol state; hosts may map it to ordinary edit rules. Existing native event content edits retain these fields automatically. Lifecycle/association permissions remain separate. Actual changes advance existing event protocol/API versions and publication generations under their normal rules; normalized no-ops keep protocol values stable.
 
@@ -28,7 +28,7 @@ Expose coordinates within the existing location disclosure group. Add separate p
 
 The example edits master metadata only, with exact coordinate text, optional priority and resource groups/annotations. No per-occurrence descriptive editor is included. Retained explicit matching source metadata must remain compatible: native edits that would make preserved component metadata violate the supported profile reject atomically instead of clearing or rewriting it. Broader per-occurrence differences/clear/inherit editors follow separately.
 
-## Proposed wire, scheduling and feed behavior
+## Approved wire, scheduling and feed behavior
 
 Extend the ordinary pure VEVENT master profile with optional singular GEO/PRIORITY and repeated grouped RESOURCES, preserving source omissions, decimal spelling and resource annotations. Unknown parameters still reject. For this first occurrence profile, omitted values inherit and explicit values must match the master under the bounded existing metadata policy; per-occurrence differences reject rather than flatten. Preserve supplied component properties/presence in storage and round trips.
 
@@ -42,4 +42,4 @@ The optional feed's declared native-field projection may include the new propert
 
 Binary doubles can change accepted source values/spelling; the confirmed strings avoid that loss. Flattened resource text discards source grouping and language/alternative representations. Requiring raw source-read permission for every native coordinate view would prevent useful independent location disclosure, while unrestricted source metadata writes could mutate participants/alarms. The explicit subset editor and disclosure groups keep those boundaries visible.
 
-Review the concrete nested models, operation/read groups, strict occurrence compatibility and effective scheduling-version comparisons before implementation. Test exact numeric boundaries on VM/Chrome, groups/annotations/cardinality/errata, omissions and zero, authenticated native/import/export/replacement round trips, stale revisions/rollback/disclosure, source preservation/deletion/baselines, outgoing inheritance/version/current-reply behavior, feed ETags/withdrawal, two-host races and the Flutter editor. Run focused tests during development and full batch checks before one code commit. No real email, maps, geocoding, resource reservation or blanket client conformance is authorized.
+The maintainer explicitly approved the concrete nested models, operation/read groups, strict occurrence compatibility and effective scheduling-version comparisons before implementation. See [the implementation guide](../native-event-descriptive-fields.md). Test exact numeric boundaries on VM/Chrome, groups/annotations/cardinality/errata, omissions and zero, authenticated native/import/export/replacement round trips, stale revisions/rollback/disclosure, source preservation/deletion/baselines, outgoing inheritance/version/current-reply behavior, feed ETags/withdrawal, two-host races and the Flutter editor. Run focused tests during development and full batch checks before one code commit. No real email, maps, geocoding, resource reservation or blanket client conformance is authorized.

@@ -1,0 +1,5 @@
+class: CalendarEventGeographicPosition
+immutable: true
+fields:
+  latitudeText: String
+  longitudeText: String

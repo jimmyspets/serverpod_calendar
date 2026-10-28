@@ -1,0 +1,6 @@
+class: CalendarEventDescriptiveRequest
+immutable: true
+fields:
+  eventId: UuidValue
+  expectedRevision: int
+  metadata: CalendarEventDescriptiveMetadata

@@ -20,3 +20,6 @@ fields:
   transparencyPresent: bool?
   protocolVersion: CalendarEventProtocolVersion?
   occurrenceProtocolVersions: List<CalendarEventOccurrenceProtocolVersion>?
+  priority: int?
+  geographicPosition: CalendarEventGeographicPosition?
+  resourceGroups: List<CalendarEventResourceGroup>?

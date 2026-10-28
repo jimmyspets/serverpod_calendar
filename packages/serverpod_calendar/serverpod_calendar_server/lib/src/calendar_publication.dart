@@ -16,6 +16,12 @@ final class CalendarPublicationRequest {
   }) : sources = List.unmodifiable(sources);
   final String scopeKey, authorityReference;
   final bool selecting;
+
+  /// Every event field in the complete feed projection must be publishable.
+  /// This includes location/GEO, priority and descriptive resources; approval
+  /// is independent of whether an authenticated detail query would expose them.
+  Set<CalendarEventFieldGroup> get requiredEventGroups =>
+      Set.unmodifiable(CalendarEventFieldGroup.values);
   final List<CalendarPublicationSource> sources;
 }
 

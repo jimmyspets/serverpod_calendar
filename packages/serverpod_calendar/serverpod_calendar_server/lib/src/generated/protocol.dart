@@ -98,12 +98,15 @@ import 'calendar_event_content_action.dart' as _ing6pwn6;
 import 'calendar_event_content_field.dart' as _ipyf9yt3;
 import 'calendar_event_create_request.dart' as _i0orp171;
 import 'calendar_event_data_record.dart' as _i23wc83s;
+import 'calendar_event_descriptive_metadata.dart' as _i0bvx67a;
+import 'calendar_event_descriptive_request.dart' as _ibq0xtgn;
 import 'calendar_event_duration.dart' as _idn2i48l;
 import 'calendar_event_export_request.dart' as _ifgpnp3a;
 import 'calendar_event_export_selection.dart' as _ijug927r;
 import 'calendar_event_field_group.dart' as _iftiwkuj;
 import 'calendar_event_frequency.dart' as _i2q54gr5;
 import 'calendar_event_future_override.dart' as _imbjv41e;
+import 'calendar_event_geographic_position.dart' as _iloy79hd;
 import 'calendar_event_import_baseline.dart' as _iblybidp;
 import 'calendar_event_import_request.dart' as _ixo47kyf;
 import 'calendar_event_import_result.dart' as _iduchdjm;
@@ -127,6 +130,7 @@ import 'calendar_event_recurrence.dart' as _iqxs44bf;
 import 'calendar_event_replace_receipt.dart' as _ii1x02jx;
 import 'calendar_event_replace_request.dart' as _ikx66n5r;
 import 'calendar_event_replace_result.dart' as _ipzyec4h;
+import 'calendar_event_resource_group.dart' as _iiajf89w;
 import 'calendar_event_rule.dart' as _iovyzq1q;
 import 'calendar_event_single_override.dart' as _iq1kxi25;
 import 'calendar_event_source_alarm.dart' as _i4dai4jt;
@@ -322,12 +326,15 @@ export 'calendar_event_content_action.dart';
 export 'calendar_event_content_field.dart';
 export 'calendar_event_create_request.dart';
 export 'calendar_event_data_record.dart';
+export 'calendar_event_descriptive_metadata.dart';
+export 'calendar_event_descriptive_request.dart';
 export 'calendar_event_duration.dart';
 export 'calendar_event_export_request.dart';
 export 'calendar_event_export_selection.dart';
 export 'calendar_event_field_group.dart';
 export 'calendar_event_frequency.dart';
 export 'calendar_event_future_override.dart';
+export 'calendar_event_geographic_position.dart';
 export 'calendar_event_import_baseline.dart';
 export 'calendar_event_import_request.dart';
 export 'calendar_event_import_result.dart';
@@ -351,6 +358,7 @@ export 'calendar_event_recurrence.dart';
 export 'calendar_event_replace_receipt.dart';
 export 'calendar_event_replace_request.dart';
 export 'calendar_event_replace_result.dart';
+export 'calendar_event_resource_group.dart';
 export 'calendar_event_rule.dart';
 export 'calendar_event_single_override.dart';
 export 'calendar_event_source_alarm.dart';
@@ -3680,6 +3688,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _i23wc83s.CalendarEventDataRecord) {
       return _i23wc83s.CalendarEventDataRecord.fromJson(data) as T;
     }
+    if (t == _i0bvx67a.CalendarEventDescriptiveMetadata) {
+      return _i0bvx67a.CalendarEventDescriptiveMetadata.fromJson(data) as T;
+    }
+    if (t == _ibq0xtgn.CalendarEventDescriptiveRequest) {
+      return _ibq0xtgn.CalendarEventDescriptiveRequest.fromJson(data) as T;
+    }
     if (t == _idn2i48l.CalendarEventDuration) {
       return _idn2i48l.CalendarEventDuration.fromJson(data) as T;
     }
@@ -3697,6 +3711,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _imbjv41e.CalendarEventFutureOverride) {
       return _imbjv41e.CalendarEventFutureOverride.fromJson(data) as T;
+    }
+    if (t == _iloy79hd.CalendarEventGeographicPosition) {
+      return _iloy79hd.CalendarEventGeographicPosition.fromJson(data) as T;
     }
     if (t == _iblybidp.CalendarEventImportBaseline) {
       return _iblybidp.CalendarEventImportBaseline.fromJson(data) as T;
@@ -3768,6 +3785,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _ipzyec4h.CalendarEventReplaceResult) {
       return _ipzyec4h.CalendarEventReplaceResult.fromJson(data) as T;
+    }
+    if (t == _iiajf89w.CalendarEventResourceGroup) {
+      return _iiajf89w.CalendarEventResourceGroup.fromJson(data) as T;
     }
     if (t == _iovyzq1q.CalendarEventRule) {
       return _iovyzq1q.CalendarEventRule.fromJson(data) as T;
@@ -4565,6 +4585,18 @@ class Protocol extends _is.DatabaseSerializationManager {
               : null)
           as T;
     }
+    if (t == _is.getType<_i0bvx67a.CalendarEventDescriptiveMetadata?>()) {
+      return (data != null
+              ? _i0bvx67a.CalendarEventDescriptiveMetadata.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ibq0xtgn.CalendarEventDescriptiveRequest?>()) {
+      return (data != null
+              ? _ibq0xtgn.CalendarEventDescriptiveRequest.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _is.getType<_idn2i48l.CalendarEventDuration?>()) {
       return (data != null
               ? _idn2i48l.CalendarEventDuration.fromJson(data)
@@ -4598,6 +4630,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_imbjv41e.CalendarEventFutureOverride?>()) {
       return (data != null
               ? _imbjv41e.CalendarEventFutureOverride.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iloy79hd.CalendarEventGeographicPosition?>()) {
+      return (data != null
+              ? _iloy79hd.CalendarEventGeographicPosition.fromJson(data)
               : null)
           as T;
     }
@@ -4734,6 +4772,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_ipzyec4h.CalendarEventReplaceResult?>()) {
       return (data != null
               ? _ipzyec4h.CalendarEventReplaceResult.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iiajf89w.CalendarEventResourceGroup?>()) {
+      return (data != null
+              ? _iiajf89w.CalendarEventResourceGroup.fromJson(data)
               : null)
           as T;
     }
@@ -5754,6 +5798,12 @@ class Protocol extends _is.DatabaseSerializationManager {
               : null)
           as T;
     }
+    if (t == List<_iiajf89w.CalendarEventResourceGroup>) {
+      return (data as List)
+              .map((e) => deserialize<_iiajf89w.CalendarEventResourceGroup>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_ijug927r.CalendarEventExportSelection>) {
       return (data as List)
               .map(
@@ -5901,6 +5951,17 @@ class Protocol extends _is.DatabaseSerializationManager {
               ? (data as List)
                     .map(
                       (e) => deserialize<_i4dai4jt.CalendarEventSourceAlarm>(e),
+                    )
+                    .toList()
+              : null)
+          as T;
+    }
+    if (t == _is.getType<List<_iiajf89w.CalendarEventResourceGroup>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map(
+                      (e) =>
+                          deserialize<_iiajf89w.CalendarEventResourceGroup>(e),
                     )
                     .toList()
               : null)
@@ -6265,12 +6326,18 @@ class Protocol extends _is.DatabaseSerializationManager {
       _ipyf9yt3.CalendarEventContentField => 'CalendarEventContentField',
       _i0orp171.CalendarEventCreateRequest => 'CalendarEventCreateRequest',
       _i23wc83s.CalendarEventDataRecord => 'CalendarEventDataRecord',
+      _i0bvx67a.CalendarEventDescriptiveMetadata =>
+        'CalendarEventDescriptiveMetadata',
+      _ibq0xtgn.CalendarEventDescriptiveRequest =>
+        'CalendarEventDescriptiveRequest',
       _idn2i48l.CalendarEventDuration => 'CalendarEventDuration',
       _ifgpnp3a.CalendarEventExportRequest => 'CalendarEventExportRequest',
       _ijug927r.CalendarEventExportSelection => 'CalendarEventExportSelection',
       _iftiwkuj.CalendarEventFieldGroup => 'CalendarEventFieldGroup',
       _i2q54gr5.CalendarEventFrequency => 'CalendarEventFrequency',
       _imbjv41e.CalendarEventFutureOverride => 'CalendarEventFutureOverride',
+      _iloy79hd.CalendarEventGeographicPosition =>
+        'CalendarEventGeographicPosition',
       _iblybidp.CalendarEventImportBaseline => 'CalendarEventImportBaseline',
       _ixo47kyf.CalendarEventImportRequest => 'CalendarEventImportRequest',
       _iduchdjm.CalendarEventImportResult => 'CalendarEventImportResult',
@@ -6302,6 +6369,7 @@ class Protocol extends _is.DatabaseSerializationManager {
       _ii1x02jx.CalendarEventReplaceReceipt => 'CalendarEventReplaceReceipt',
       _ikx66n5r.CalendarEventReplaceRequest => 'CalendarEventReplaceRequest',
       _ipzyec4h.CalendarEventReplaceResult => 'CalendarEventReplaceResult',
+      _iiajf89w.CalendarEventResourceGroup => 'CalendarEventResourceGroup',
       _iovyzq1q.CalendarEventRule => 'CalendarEventRule',
       _iq1kxi25.CalendarEventSingleOverride => 'CalendarEventSingleOverride',
       _i4dai4jt.CalendarEventSourceAlarm => 'CalendarEventSourceAlarm',
@@ -6625,6 +6693,10 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarEventCreateRequest';
       case _i23wc83s.CalendarEventDataRecord():
         return 'CalendarEventDataRecord';
+      case _i0bvx67a.CalendarEventDescriptiveMetadata():
+        return 'CalendarEventDescriptiveMetadata';
+      case _ibq0xtgn.CalendarEventDescriptiveRequest():
+        return 'CalendarEventDescriptiveRequest';
       case _idn2i48l.CalendarEventDuration():
         return 'CalendarEventDuration';
       case _ifgpnp3a.CalendarEventExportRequest():
@@ -6637,6 +6709,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarEventFrequency';
       case _imbjv41e.CalendarEventFutureOverride():
         return 'CalendarEventFutureOverride';
+      case _iloy79hd.CalendarEventGeographicPosition():
+        return 'CalendarEventGeographicPosition';
       case _iblybidp.CalendarEventImportBaseline():
         return 'CalendarEventImportBaseline';
       case _ixo47kyf.CalendarEventImportRequest():
@@ -6683,6 +6757,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarEventReplaceRequest';
       case _ipzyec4h.CalendarEventReplaceResult():
         return 'CalendarEventReplaceResult';
+      case _iiajf89w.CalendarEventResourceGroup():
+        return 'CalendarEventResourceGroup';
       case _iovyzq1q.CalendarEventRule():
         return 'CalendarEventRule';
       case _iq1kxi25.CalendarEventSingleOverride():
@@ -7204,6 +7280,16 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (dataClassName == 'CalendarEventDataRecord') {
       return deserialize<_i23wc83s.CalendarEventDataRecord>(data['data']);
     }
+    if (dataClassName == 'CalendarEventDescriptiveMetadata') {
+      return deserialize<_i0bvx67a.CalendarEventDescriptiveMetadata>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarEventDescriptiveRequest') {
+      return deserialize<_ibq0xtgn.CalendarEventDescriptiveRequest>(
+        data['data'],
+      );
+    }
     if (dataClassName == 'CalendarEventDuration') {
       return deserialize<_idn2i48l.CalendarEventDuration>(data['data']);
     }
@@ -7221,6 +7307,11 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'CalendarEventFutureOverride') {
       return deserialize<_imbjv41e.CalendarEventFutureOverride>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventGeographicPosition') {
+      return deserialize<_iloy79hd.CalendarEventGeographicPosition>(
+        data['data'],
+      );
     }
     if (dataClassName == 'CalendarEventImportBaseline') {
       return deserialize<_iblybidp.CalendarEventImportBaseline>(data['data']);
@@ -7302,6 +7393,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'CalendarEventReplaceResult') {
       return deserialize<_ipzyec4h.CalendarEventReplaceResult>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventResourceGroup') {
+      return deserialize<_iiajf89w.CalendarEventResourceGroup>(data['data']);
     }
     if (dataClassName == 'CalendarEventRule') {
       return deserialize<_iovyzq1q.CalendarEventRule>(data['data']);
