@@ -24,6 +24,7 @@ abstract class CalendarSchedulingResponsesView
     required this.publicationId,
     required this.publishedSequence,
     required this.publishedCancelled,
+    required this.recurring,
     required this.responses,
   });
 
@@ -32,6 +33,7 @@ abstract class CalendarSchedulingResponsesView
     required _isc.UuidValue publicationId,
     required int publishedSequence,
     required bool publishedCancelled,
+    required bool recurring,
     required List<_itopoldj.CalendarSchedulingAttendeeResponseView> responses,
   }) = _CalendarSchedulingResponsesViewImpl;
 
@@ -49,6 +51,9 @@ abstract class CalendarSchedulingResponsesView
       publishedCancelled: _isc.BoolJsonExtension.fromJson(
         jsonSerialization['publishedCancelled'],
       ),
+      recurring: _isc.BoolJsonExtension.fromJson(
+        jsonSerialization['recurring'],
+      ),
       responses: _ie4a1wrz.Protocol()
           .deserialize<List<_itopoldj.CalendarSchedulingAttendeeResponseView>>(
             jsonSerialization['responses'],
@@ -64,6 +69,8 @@ abstract class CalendarSchedulingResponsesView
 
   final bool publishedCancelled;
 
+  final bool recurring;
+
   final List<_itopoldj.CalendarSchedulingAttendeeResponseView> responses;
 
   /// Returns a shallow copy of this [CalendarSchedulingResponsesView]
@@ -74,6 +81,7 @@ abstract class CalendarSchedulingResponsesView
     _isc.UuidValue? publicationId,
     int? publishedSequence,
     bool? publishedCancelled,
+    bool? recurring,
     List<_itopoldj.CalendarSchedulingAttendeeResponseView>? responses,
   });
   @override
@@ -104,6 +112,11 @@ abstract class CalendarSchedulingResponsesView
                   publishedCancelled,
                 ) ||
                 other.publishedCancelled == publishedCancelled) &&
+            (identical(
+                  other.recurring,
+                  recurring,
+                ) ||
+                other.recurring == recurring) &&
             const _iss.DeepCollectionEquality().equals(
               other.responses,
               responses,
@@ -118,6 +131,7 @@ abstract class CalendarSchedulingResponsesView
       publicationId,
       publishedSequence,
       publishedCancelled,
+      recurring,
       const _iss.DeepCollectionEquality().hash(responses),
     );
   }
@@ -130,6 +144,7 @@ abstract class CalendarSchedulingResponsesView
       'publicationId': publicationId.toJson(),
       'publishedSequence': publishedSequence,
       'publishedCancelled': publishedCancelled,
+      'recurring': recurring,
       'responses': responses.toJson(valueToJson: (v) => v.toJson()),
     };
   }
@@ -142,6 +157,7 @@ abstract class CalendarSchedulingResponsesView
       'publicationId': publicationId.toJson(),
       'publishedSequence': publishedSequence,
       'publishedCancelled': publishedCancelled,
+      'recurring': recurring,
       'responses': responses.toJson(valueToJson: (v) => v.toJsonForProtocol()),
     };
   }
@@ -159,12 +175,14 @@ class _CalendarSchedulingResponsesViewImpl
     required _isc.UuidValue publicationId,
     required int publishedSequence,
     required bool publishedCancelled,
+    required bool recurring,
     required List<_itopoldj.CalendarSchedulingAttendeeResponseView> responses,
   }) : super._(
          eventId: eventId,
          publicationId: publicationId,
          publishedSequence: publishedSequence,
          publishedCancelled: publishedCancelled,
+         recurring: recurring,
          responses: responses,
        );
 
@@ -177,6 +195,7 @@ class _CalendarSchedulingResponsesViewImpl
     _isc.UuidValue? publicationId,
     int? publishedSequence,
     bool? publishedCancelled,
+    bool? recurring,
     List<_itopoldj.CalendarSchedulingAttendeeResponseView>? responses,
   }) {
     return CalendarSchedulingResponsesView(
@@ -184,6 +203,7 @@ class _CalendarSchedulingResponsesViewImpl
       publicationId: publicationId ?? this.publicationId,
       publishedSequence: publishedSequence ?? this.publishedSequence,
       publishedCancelled: publishedCancelled ?? this.publishedCancelled,
+      recurring: recurring ?? this.recurring,
       responses:
           responses ?? this.responses.map((e0) => e0.copyWith()).toList(),
     );

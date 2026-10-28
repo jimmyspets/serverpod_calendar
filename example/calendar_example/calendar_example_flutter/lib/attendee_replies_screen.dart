@@ -215,12 +215,16 @@ class _AttendeeRepliesScreenState extends State<AttendeeRepliesScreen> {
       padding: const EdgeInsets.all(24),
       children: [
         const Text(
-          'Non-recurring invitation responses. Prior and stale replies never apply automatically.',
+          'Master invitation responses. Prior and stale replies never apply automatically.',
         ),
         if (_busy) const LinearProgressIndicator(),
         if (_error != null) Text(_error!, key: const Key('replies-error')),
         if (_message != null) Text(_message!, key: const Key('replies-result')),
         if (_responses != null) ...[
+          if (_responses!.recurring)
+            const Text(
+              'Whole-series master response; instance replies are not supported.',
+            ),
           Text(
             'Published sequence ${_responses!.publishedSequence}'
             '${_responses!.publishedCancelled ? ' (cancelled)' : ''}',
