@@ -122,6 +122,22 @@ CalendarEventSourceMetadata? _metadata(IcalendarEvent event) =>
     validateEventSourceMetadata(
       CalendarEventSourceMetadata(
         url: event.metadata.url,
+        priority: event.metadata.priority,
+        geographicPosition: event.metadata.geographicPosition == null
+            ? null
+            : CalendarEventGeographicPosition(
+                latitudeText: event.metadata.geographicPosition!.latitudeText,
+                longitudeText: event.metadata.geographicPosition!.longitudeText,
+              ),
+        resourceGroups: event.metadata.resources
+            .map(
+              (g) => CalendarEventResourceGroup(
+                values: List.unmodifiable(g.values),
+                language: g.language,
+                alternativeUri: g.alternativeUri,
+              ),
+            )
+            .toList(),
         alarms: event.alarms.map(eventSourceAlarm).toList(),
         relationships: event.references.relationships
             .map(

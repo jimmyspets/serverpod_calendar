@@ -12,3 +12,6 @@ fields:
   relationships: List<CalendarEventSourceRelationship>?
   attachments: List<CalendarEventSourceAttachment>?
   alarms: List<CalendarEventSourceAlarm>?
+  priority: int?
+  geographicPosition: CalendarEventGeographicPosition?
+  resourceGroups: List<CalendarEventResourceGroup>?

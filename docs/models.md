@@ -683,6 +683,6 @@ Accepted [ADR 0132](adr/0132-recurring-master-attendee-replies.md) extends trust
 
 Accepted [ADR 0133](adr/0133-single-instance-attendee-replies.md) adds scoped trusted single-instance replies to any validated published original, with effective single/range/master versions and separate target response state. Existing reply tables gain source targetKey/originalStart/targetBasisKey and response targetKey, with a meeting/attendee/target uniqueness index. Legacy rows default to master; an explicit newer Save and notify upgrades legacy publication version profiles. New outgoing components cannot reuse earlier effective versions, range applicability changes advance affected versions, and native inheritance/source versions stay separate. Host contexts identify the exact original, selected component and effective occurrence; no source identity grants authority. Instance queries and private source review remain independently authorized. RANGE replies, broader inbound methods and mail remain separate. Validation evidence is recorded separately.
 
-## Proposed event descriptive models
+## Event descriptive fields
 
-[ADR 0134](adr/0134-native-event-descriptive-fields.md) proposes optional priority, exact geographic-position and grouped-resource DTOs within existing event source/protocol JSON, plus a bounded subset request/view. No table, column or index change is expected. Generate clients and verify schema stability only after concrete review; absent legacy fields remain absent.
+Accepted ADR 0134 adds immutable geographic-position/resource-group/subset request DTOs and optional nested event source metadata. Views expose independently disclosed values; SQL layout is unchanged. See [the model/API guide](native-event-descriptive-fields.md).

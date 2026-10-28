@@ -1,3 +1,5 @@
+import 'event_descriptive_journey.dart';
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -1290,6 +1292,7 @@ void main() {
     await runFeedJourney(tester, client);
     await runSchedulingJourney(tester, client);
     await runAttendeeReplyJourney(tester, client);
+    await runEventDescriptiveJourney(tester, client);
     await _liveReminderJourney(tester, client);
     await tester.tap(find.byKey(const Key('sign-out')));
     await _waitFor(tester, find.byKey(const Key('sign-in')));

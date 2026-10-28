@@ -642,6 +642,31 @@ String _schedulingVersionedPayload(
   final applicabilityChanged =
       previous != null &&
       applicability(old['master']!) != applicability(current['master']!);
+  String effectiveDescriptive(
+    _SchedulingComponentVersion master,
+    _SchedulingComponentVersion component,
+  ) {
+    List<IcalendarSyntaxProperty> properties(_SchedulingComponentVersion v) =>
+        parseIcalendarSyntax(utf8.encode(v.projection))
+            .components
+            .single
+            .entries
+            .whereType<IcalendarSyntaxProperty>()
+            .toList();
+    final own = properties(component), inherited = properties(master);
+    return utf8.decode(
+      serializeIcalendarSyntax(
+        IcalendarSyntaxDocument([
+          IcalendarSyntaxComponent('VEVENT', [
+            for (final name in ['GEO', 'PRIORITY', 'RESOURCES'])
+              ...(own.any((p) => p.canonicalName == name) ? own : inherited)
+                  .where((p) => p.canonicalName == name),
+          ]),
+        ]),
+      ),
+    );
+  }
+
   final versions = <String, _SchedulingComponentVersion>{};
   for (final value in values) {
     if (value.key == 'master') {
@@ -653,7 +678,9 @@ String _schedulingVersionedPayload(
         prior.projection == value.projection &&
         reopenFloor == null &&
         !upgrading &&
-        !(value.future && applicabilityChanged)) {
+        !(value.future && applicabilityChanged) &&
+        effectiveDescriptive(old['master']!, prior) ==
+            effectiveDescriptive(current['master']!, value)) {
       versions[value.key] = prior;
     } else {
       final sequence = max(

@@ -1,0 +1,6 @@
+class: CalendarEventResourceGroup
+immutable: true
+fields:
+  values: List<String>
+  language: String?
+  alternativeUri: String?

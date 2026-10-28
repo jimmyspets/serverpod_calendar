@@ -39,6 +39,7 @@ calendar:
   - changeSubject:
   - delete:
 calendarEvent:
+  - updateDescriptiveMetadata:
   - schedulingInstanceResponses:
   - schedulingResponses:
   - schedulingReplySources:

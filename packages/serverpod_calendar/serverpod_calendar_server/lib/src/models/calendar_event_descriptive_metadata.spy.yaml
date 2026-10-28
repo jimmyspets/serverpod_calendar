@@ -1,0 +1,6 @@
+class: CalendarEventDescriptiveMetadata
+immutable: true
+fields:
+  priority: int?
+  geographicPosition: CalendarEventGeographicPosition?
+  resourceGroups: List<CalendarEventResourceGroup>

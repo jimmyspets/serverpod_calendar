@@ -14,9 +14,11 @@ import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'calendar_event_field_group.dart' as _iftiwkuj;
+import 'calendar_event_geographic_position.dart' as _iloy79hd;
 import 'calendar_event_occurrence_protocol_version.dart' as _im5iu6ju;
 import 'calendar_event_protocol_version.dart' as _iblfo3t0;
 import 'calendar_event_recurrence.dart' as _iqxs44bf;
+import 'calendar_event_resource_group.dart' as _iiajf89w;
 import 'calendar_event_status.dart' as _ivzxk9bc;
 import 'calendar_event_text_parameters.dart' as _isfojy12;
 import 'calendar_event_timing.dart' as _ieswiaty;
@@ -46,6 +48,9 @@ abstract class CalendarEventView
     this.transparencyPresent,
     this.protocolVersion,
     this.occurrenceProtocolVersions,
+    this.priority,
+    this.geographicPosition,
+    this.resourceGroups,
   });
 
   factory CalendarEventView({
@@ -70,6 +75,9 @@ abstract class CalendarEventView
     _iblfo3t0.CalendarEventProtocolVersion? protocolVersion,
     List<_im5iu6ju.CalendarEventOccurrenceProtocolVersion>?
     occurrenceProtocolVersions,
+    int? priority,
+    _iloy79hd.CalendarEventGeographicPosition? geographicPosition,
+    List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups,
   }) = _CalendarEventViewImpl;
 
   factory CalendarEventView.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -150,6 +158,19 @@ abstract class CalendarEventView
           : _ie4a1wrz.Protocol().deserialize<
               List<_im5iu6ju.CalendarEventOccurrenceProtocolVersion>
             >(jsonSerialization['occurrenceProtocolVersions']),
+      priority: jsonSerialization['priority'] as int?,
+      geographicPosition: jsonSerialization['geographicPosition'] == null
+          ? null
+          : _ie4a1wrz.Protocol()
+                .deserialize<_iloy79hd.CalendarEventGeographicPosition>(
+                  jsonSerialization['geographicPosition'],
+                ),
+      resourceGroups: jsonSerialization['resourceGroups'] == null
+          ? null
+          : _ie4a1wrz.Protocol()
+                .deserialize<List<_iiajf89w.CalendarEventResourceGroup>>(
+                  jsonSerialization['resourceGroups'],
+                ),
     );
   }
 
@@ -194,6 +215,12 @@ abstract class CalendarEventView
   List<_im5iu6ju.CalendarEventOccurrenceProtocolVersion>?
   occurrenceProtocolVersions;
 
+  int? priority;
+
+  _iloy79hd.CalendarEventGeographicPosition? geographicPosition;
+
+  List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups;
+
   /// Returns a shallow copy of this [CalendarEventView]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -219,6 +246,9 @@ abstract class CalendarEventView
     _iblfo3t0.CalendarEventProtocolVersion? protocolVersion,
     List<_im5iu6ju.CalendarEventOccurrenceProtocolVersion>?
     occurrenceProtocolVersions,
+    int? priority,
+    _iloy79hd.CalendarEventGeographicPosition? geographicPosition,
+    List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -247,6 +277,13 @@ abstract class CalendarEventView
       if (protocolVersion != null) 'protocolVersion': protocolVersion?.toJson(),
       if (occurrenceProtocolVersions != null)
         'occurrenceProtocolVersions': occurrenceProtocolVersions?.toJson(
+          valueToJson: (v) => v.toJson(),
+        ),
+      if (priority != null) 'priority': priority,
+      if (geographicPosition != null)
+        'geographicPosition': geographicPosition?.toJson(),
+      if (resourceGroups != null)
+        'resourceGroups': resourceGroups?.toJson(
           valueToJson: (v) => v.toJson(),
         ),
     };
@@ -284,6 +321,13 @@ abstract class CalendarEventView
         'occurrenceProtocolVersions': occurrenceProtocolVersions?.toJson(
           valueToJson: (v) => v.toJsonForProtocol(),
         ),
+      if (priority != null) 'priority': priority,
+      if (geographicPosition != null)
+        'geographicPosition': geographicPosition?.toJsonForProtocol(),
+      if (resourceGroups != null)
+        'resourceGroups': resourceGroups?.toJson(
+          valueToJson: (v) => v.toJsonForProtocol(),
+        ),
     };
   }
 
@@ -318,6 +362,9 @@ class _CalendarEventViewImpl extends CalendarEventView {
     _iblfo3t0.CalendarEventProtocolVersion? protocolVersion,
     List<_im5iu6ju.CalendarEventOccurrenceProtocolVersion>?
     occurrenceProtocolVersions,
+    int? priority,
+    _iloy79hd.CalendarEventGeographicPosition? geographicPosition,
+    List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups,
   }) : super._(
          id: id,
          calendarId: calendarId,
@@ -339,6 +386,9 @@ class _CalendarEventViewImpl extends CalendarEventView {
          transparencyPresent: transparencyPresent,
          protocolVersion: protocolVersion,
          occurrenceProtocolVersions: occurrenceProtocolVersions,
+         priority: priority,
+         geographicPosition: geographicPosition,
+         resourceGroups: resourceGroups,
        );
 
   /// Returns a shallow copy of this [CalendarEventView]
@@ -366,6 +416,9 @@ class _CalendarEventViewImpl extends CalendarEventView {
     Object? transparencyPresent = _Undefined,
     Object? protocolVersion = _Undefined,
     Object? occurrenceProtocolVersions = _Undefined,
+    Object? priority = _Undefined,
+    Object? geographicPosition = _Undefined,
+    Object? resourceGroups = _Undefined,
   }) {
     return CalendarEventView(
       id: id ?? this.id,
@@ -417,6 +470,15 @@ class _CalendarEventViewImpl extends CalendarEventView {
           : this.occurrenceProtocolVersions
                 ?.map((e0) => e0.copyWith())
                 .toList(),
+      priority: priority is int? ? priority : this.priority,
+      geographicPosition:
+          geographicPosition is _iloy79hd.CalendarEventGeographicPosition?
+          ? geographicPosition
+          : this.geographicPosition?.copyWith(),
+      resourceGroups:
+          resourceGroups is List<_iiajf89w.CalendarEventResourceGroup>?
+          ? resourceGroups
+          : this.resourceGroups?.map((e0) => e0.copyWith()).toList(),
     );
   }
 }

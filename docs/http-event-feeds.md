@@ -62,3 +62,7 @@ The example's transport fault route is registered only in test mode with explici
 ## Validation
 
 Use `dart run tool/host_smoke.dart --feeds` for focused two-host HTTP/management checks, or add `--flutter` for the focused browser journey after building the host and configuring WebDriver. The full root check also exercises the feed flow. Focused tests cover publication identity/alarm separation, conditional grammar, logging, management authorization, rollback, scope/revision/cap/dependency boundaries and retention. Current exact results and deferred gates belong in [the validation record](scaffold-validation.md); full local batch validation passed. Live mobile push, iTIP/iMIP and external subscription-client UI behavior are separate requirements.
+
+## Event descriptive fields
+
+Accepted [ADR 0134](adr/0134-native-event-descriptive-fields.md) adds the [bounded priority/GEO/RESOURCES projection](native-event-descriptive-fields.md). Continuing complete publication authority must include location, priority and resources; `CalendarPublicationRequest.requiredEventGroups` makes that set explicit to host policy. Exact coordinate spelling and resource groups/annotations remain deterministic. Actual metadata edits change bytes/ETags; normalized no-ops keep protocol/feed generation stable. Revocation is still checked before 200/304, and labels create no bookings. Alarms stay excluded.

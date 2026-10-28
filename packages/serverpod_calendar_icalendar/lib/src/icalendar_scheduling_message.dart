@@ -525,6 +525,7 @@ IcalendarSchedulingEvent _schedulingEvent(
     return value;
   }
 
+  final metadata = _eventMetadata(event, budget);
   return IcalendarSchedulingEvent._(
     source: event,
     recurrence: recurrence,
@@ -534,15 +535,15 @@ IcalendarSchedulingEvent _schedulingEvent(
     uid: uid,
     stamp: stamp,
     participants: participants,
-    metadata: _eventMetadata(event, budget),
+    metadata: metadata,
     references: _eventReferences(event, budget),
     requestStatuses: _schedulingRequestStatuses(
       p['REQUEST-STATUS'] ?? [],
       budget,
     ),
-    resources: _schedulingResources(p['RESOURCES'] ?? [], budget),
-    priority: _componentInteger(p['PRIORITY']?.single, maximum: 9),
-    geographicPosition: _schedulingGeographicPosition(p['GEO']?.single, budget),
+    resources: metadata.resources,
+    priority: metadata.priority,
+    geographicPosition: metadata.geographicPosition,
     sequence: sequence,
     created: p['CREATED'] == null ? null : componentUtc(p['CREATED']!.single),
     lastModified: p['LAST-MODIFIED'] == null

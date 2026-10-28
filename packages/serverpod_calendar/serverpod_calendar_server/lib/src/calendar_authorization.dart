@@ -68,6 +68,7 @@ enum CalendarPermission {
   readEvent,
   createEvent,
   updateEvent,
+  updateEventDescriptiveMetadata,
   changeEventStatus,
   deleteEvent,
   list,
