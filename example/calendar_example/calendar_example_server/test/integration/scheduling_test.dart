@@ -2424,6 +2424,86 @@ void main() {
       );
     });
 
+    test('item text metadata changes advance inherited scheduling versions and preserve native component state', () async {
+      final content = masterContent(kind: CalendarEventTimeKind.utc),
+          id = await masterEvent(
+            masterContent(kind: CalendarEventTimeKind.utc),
+          );
+      await moveOccurrence(id, CalendarEventTimeKind.utc, 28);
+      await moveOccurrence(id, CalendarEventTimeKind.utc, 29, future: true);
+      var last = await messageFor(await notifyCurrent(id, content));
+      final native = (await eventData(id)).protocolState!.overrides;
+      final patches = [
+        CalendarItemTextMetadataPatch(
+          selectedFields: [CalendarItemTextMetadataField.url],
+          url: 'https://example.invalid/event',
+        ),
+        CalendarItemTextMetadataPatch(
+          selectedFields: [CalendarItemTextMetadataField.classification],
+          classification: 'PRIVATE',
+        ),
+        CalendarItemTextMetadataPatch(
+          selectedFields: [CalendarItemTextMetadataField.categories],
+          categoryGroups: [
+            CalendarItemCategoryGroup(values: ['Å', 'Å'], language: 'sv'),
+          ],
+        ),
+        CalendarItemTextMetadataPatch(
+          selectedFields: [CalendarItemTextMetadataField.comments],
+          comments: [
+            CalendarItemComment(
+              value: 'Note\nLine',
+              parameters: CalendarTextParameters(
+                language: 'en',
+                alternativeUri: 'cid:note@example.invalid',
+              ),
+            ),
+          ],
+        ),
+      ];
+      for (final patch in patches) {
+        final revision = (await service.getEvent(
+          id,
+          CalendarEventFieldGroup.values,
+        )).revision;
+        await service.updateEventTextMetadata(
+          CalendarEventTextMetadataRequest(
+            eventId: id,
+            expectedRevision: revision,
+            patch: patch,
+          ),
+        );
+        final next = await messageFor(await notifyCurrent(id, content));
+        for (var i = 1; i < next.events.length; i++) {
+          expect(
+            next.events[i].sequence,
+            greaterThan(last.events[i].sequence!),
+          );
+        }
+        expect(
+          (await eventData(id)).protocolState!.overrides
+              .map((v) => v.version.toJson())
+              .toList(),
+          native.map((v) => v.version.toJson()).toList(),
+        );
+        expect((await notifyCurrent(id, content)).unchanged, isTrue);
+        last = next;
+      }
+      for (final group in [
+        CalendarEventFieldGroup.url,
+        CalendarEventFieldGroup.classification,
+        CalendarEventFieldGroup.categories,
+        CalendarEventFieldGroup.comments,
+      ]) {
+        policy.eventGrants = CalendarEventFieldGroup.values.toSet()
+          ..remove(group);
+        await expectLater(
+          notifyCurrent(id, content),
+          failure(CalendarFailureCode.accessDenied),
+        );
+      }
+    });
+
     test('own occurrence summary retains its version across unrelated inherited summary changes', () async {
       final content = masterContent(), id = await masterEvent(masterContent());
       await moveOccurrence(id, CalendarEventTimeKind.date, 28);

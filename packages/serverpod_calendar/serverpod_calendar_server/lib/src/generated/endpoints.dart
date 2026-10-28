@@ -61,6 +61,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_event_replace_r
     as _i6eqxu43;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_status_request.dart'
     as _ib916yyf;
+import 'package:serverpod_calendar_server/src/generated/calendar_event_text_metadata_request.dart'
+    as _iowqejyn;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_timing.dart'
     as _i3rsvgvx;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_update_request.dart'
@@ -115,6 +117,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_task_progress_r
     as _ilb9fjz5;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_replace_request.dart'
     as _ibprdq7s;
+import 'package:serverpod_calendar_server/src/generated/calendar_task_text_metadata_request.dart'
+    as _i2kaqe7j;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_update_request.dart'
     as _ifljty0a;
 import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
@@ -1034,6 +1038,27 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'calendarEvent',
       endpoint: endpoints['calendarEvent']!,
       methodConnectors: {
+        'updateTextMetadata': _is.MethodConnector(
+          name: 'updateTextMetadata',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_iowqejyn.CalendarEventTextMetadataRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .updateTextMetadata(
+                        session,
+                        params['request'],
+                      ),
+        ),
         'updateDescriptiveMetadata': _is.MethodConnector(
           name: 'updateDescriptiveMetadata',
           params: {
@@ -1572,6 +1597,26 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'calendarTask',
       endpoint: endpoints['calendarTask']!,
       methodConnectors: {
+        'updateTextMetadata': _is.MethodConnector(
+          name: 'updateTextMetadata',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i2kaqe7j.CalendarTaskTextMetadataRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarTask'] as _i4tukef9.CalendarTaskEndpoint)
+                      .updateTextMetadata(
+                        session,
+                        params['request'],
+                      ),
+        ),
         'replaceFromImport': _is.MethodConnector(
           name: 'replaceFromImport',
           params: {

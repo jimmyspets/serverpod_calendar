@@ -39,6 +39,7 @@ calendar:
   - changeSubject:
   - delete:
 calendarEvent:
+  - updateTextMetadata:
   - updateDescriptiveMetadata:
   - schedulingInstanceResponses:
   - schedulingResponses:
@@ -63,6 +64,7 @@ calendarEvent:
   - changeOccurrenceContent:
   - deleteEvent:
 calendarTask:
+  - updateTextMetadata:
   - replaceFromImport:
   - exportTasks:
   - importTasks:

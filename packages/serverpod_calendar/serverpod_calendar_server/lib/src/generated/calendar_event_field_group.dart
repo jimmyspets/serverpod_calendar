@@ -20,7 +20,11 @@ enum CalendarEventFieldGroup implements _is.SerializableModel {
   state,
   protocolIdentity,
   priority,
-  resources;
+  resources,
+  url,
+  classification,
+  categories,
+  comments;
 
   static CalendarEventFieldGroup fromJson(String name) {
     switch (name) {
@@ -40,6 +44,14 @@ enum CalendarEventFieldGroup implements _is.SerializableModel {
         return CalendarEventFieldGroup.priority;
       case 'resources':
         return CalendarEventFieldGroup.resources;
+      case 'url':
+        return CalendarEventFieldGroup.url;
+      case 'classification':
+        return CalendarEventFieldGroup.classification;
+      case 'categories':
+        return CalendarEventFieldGroup.categories;
+      case 'comments':
+        return CalendarEventFieldGroup.comments;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "CalendarEventFieldGroup"',

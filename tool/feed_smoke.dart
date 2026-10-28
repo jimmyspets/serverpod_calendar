@@ -317,7 +317,7 @@ Future<void> feedSmoke(
       ),
     );
     events[0] = events[0].copyWith(revision: 3);
-    final changed = await _fetch(
+    var changed = await _fetch(
       otherUrl.replace(port: 18282),
       headers: {'If-None-Match': get.etag!},
     );
@@ -327,6 +327,62 @@ Future<void> feedSmoke(
           utf8.decode(changed.bytes).contains('STATUS:CANCELLED'),
       'Cross-host event change retained stale publication',
     );
+    final textPatch = cal.CalendarItemTextMetadataPatch(
+      selectedFields: cal.CalendarItemTextMetadataField.values,
+      url: 'https://example.invalid/info',
+      classification: 'PRIVATE',
+      categoryGroups: [
+        cal.CalendarItemCategoryGroup(values: ['Å 🧰', 'Å 🧰'], language: 'sv'),
+      ],
+      comments: [
+        cal.CalendarItemComment(
+          value: 'First\nSecond',
+          parameters: cal.CalendarTextParameters(
+            language: 'en',
+            alternativeUri: 'cid:note@example.invalid',
+          ),
+        ),
+      ],
+    );
+    final textRace = await Future.wait([
+      for (final api in [a, b])
+        () async {
+          try {
+            await api.calendarEvent.updateTextMetadata(
+              cal.CalendarEventTextMetadataRequest(
+                eventId: events.last.eventId,
+                expectedRevision: 1,
+                patch: textPatch,
+              ),
+            );
+            return true;
+          } on cal.CalendarException catch (e) {
+            if (e.code != cal.CalendarFailureCode.staleRevision) rethrow;
+            return false;
+          }
+        }(),
+    ]);
+    _require(
+      textRace.where((v) => v).length == 1,
+      'Text metadata writes did not fence one stale revision',
+    );
+    events[events.length - 1] = events.last.copyWith(revision: 2);
+    final textChanged = await _fetch(
+      otherUrl,
+      headers: {'If-None-Match': changed.etag!},
+    );
+    final textMetadata = utf8.decode(textChanged.bytes);
+    _require(
+      textChanged.code == 200 &&
+          textChanged.etag != changed.etag &&
+          textMetadata.contains('CATEGORIES;LANGUAGE=sv:Å 🧰,Å 🧰') &&
+          textMetadata.contains('URL:https://example.invalid/info') &&
+          textMetadata.contains(
+            'COMMENT;LANGUAGE=en;ALTREP="cid:note@example.invalid":First\\nSecond',
+          ),
+      'Exact text metadata or cross-host feed ETag failed',
+    );
+    changed = textChanged;
     final canonical = await a.calendarEvent.exportEvents(
       cal.CalendarEventExportRequest(
         calendarId: calendars.last.calendarId,
@@ -334,7 +390,7 @@ Future<void> feedSmoke(
         selection: [
           cal.CalendarEventExportSelection(
             eventId: events.last.eventId,
-            expectedRevision: 1,
+            expectedRevision: events.last.revision,
           ),
         ],
       ),

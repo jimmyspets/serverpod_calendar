@@ -93,6 +93,7 @@ extension CalendarTaskOperations on CalendarService {
     CalendarTaskProtocolVersion? version,
     CalendarTaskProtocolVersion? occurrenceVersion,
     CalendarTaskSourceState? sourceState,
+    CalendarItemTextMetadataPatch? textMetadataPatch,
     CalendarTaskProgressRequest? change,
     CalendarTaskOccurrenceQuery? occurrenceQuery,
     CalendarTaskOccurrenceProgressRequest? occurrenceChange,
@@ -116,6 +117,7 @@ extension CalendarTaskOperations on CalendarService {
     proposedTaskVersion: version,
     proposedTaskOccurrenceVersion: occurrenceVersion,
     proposedTaskSourceState: sourceState,
+    itemTextMetadataPatch: textMetadataPatch,
     taskProgressChange: change,
     taskOccurrenceQuery: occurrenceQuery,
     taskOccurrenceProgressChange: occurrenceChange,
@@ -187,11 +189,20 @@ extension CalendarTaskOperations on CalendarService {
       ..sort((a, b) => a.index.compareTo(b.index));
     bool has(CalendarTaskFieldGroup group) => groups.contains(group);
     final d = task.data, c = d.content;
+    final metadata = taskTextMetadata(d.sourceState?.master.metadata);
     return CalendarTaskView(
       id: task.identity.id!,
       calendarId: task.identity.calendarId,
       revision: task.identity.revision,
       disclosedGroups: groups,
+      url: has(CalendarTaskFieldGroup.url) ? metadata.url : null,
+      classification: has(CalendarTaskFieldGroup.classification)
+          ? metadata.classification
+          : null,
+      categoryGroups: has(CalendarTaskFieldGroup.categories)
+          ? metadata.categoryGroups
+          : null,
+      comments: has(CalendarTaskFieldGroup.comments) ? metadata.comments : null,
       summary: has(CalendarTaskFieldGroup.summary) ? c.summary : null,
       description: has(CalendarTaskFieldGroup.description)
           ? c.description
@@ -460,7 +471,7 @@ extension CalendarTaskOperations on CalendarService {
       task.data.assignees = nextAssignees;
       task.data.protocolVersion = version;
       task.data.sourceState = sourceState;
-      if (sourceState != null) {
+      if (sourceState != null && sourceState.nativeMetadataOnly != true) {
         final byKey = {
           for (final o in sourceState.occurrences)
             taskOriginalKey(o.originalStart!): o,

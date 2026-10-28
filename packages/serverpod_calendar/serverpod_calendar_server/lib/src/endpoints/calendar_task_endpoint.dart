@@ -6,6 +6,11 @@ import '../calendar_module.dart';
 import '../generated/protocol.dart';
 
 class CalendarTaskEndpoint extends Endpoint {
+  Future<CalendarTaskReceipt?> updateTextMetadata(
+    Session session,
+    CalendarTaskTextMetadataRequest request,
+  ) => CalendarModule.service(session).updateTaskTextMetadata(request);
+
   @override
   bool get requireLogin => true;
   Future<CalendarTaskReplaceResult> replaceFromImport(

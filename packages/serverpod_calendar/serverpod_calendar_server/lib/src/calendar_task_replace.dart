@@ -75,6 +75,15 @@ extension CalendarTaskReplacementOperations on CalendarService {
           proposedTaskAssignees: task?.data.assignees,
           proposedTaskVersion: proposed?.state.master.version,
           proposedTaskSourceState: proposed?.state,
+          itemTextMetadataPatch:
+              op == CalendarPermission.updateTaskTextMetadata &&
+                  task != null &&
+                  proposed != null
+              ? itemTextChanges(
+                  taskTextState(task.data.sourceState!),
+                  taskTextState(proposed.state),
+                )
+              : null,
           taskReplacement: batch,
           taskGroups: CalendarTaskFieldGroup.values,
         );
@@ -209,6 +218,12 @@ extension CalendarTaskReplacementOperations on CalendarService {
         for (var i = 0; i < tasks.length; i++)
           if (changed[i]) ...[
             request(CalendarPermission.updateTask, tasks[i]),
+            if (itemTextChanges(
+                  taskTextState(tasks[i].data.sourceState!),
+                  taskTextState(proposals[tasks[i].data.protocolUid]!.state),
+                ) !=
+                null)
+              request(CalendarPermission.updateTaskTextMetadata, tasks[i]),
             if (members[i].requiresProgress ||
                 CalendarTaskImportMember(
                   taskId: tasks[i].identity.id!,

@@ -1,0 +1,6 @@
+class: CalendarTaskTextMetadataRequest
+immutable: true
+fields:
+  taskId: UuidValue
+  expectedRevision: int
+  patch: CalendarItemTextMetadataPatch

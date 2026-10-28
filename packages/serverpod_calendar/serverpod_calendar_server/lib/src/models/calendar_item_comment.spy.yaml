@@ -1,0 +1,5 @@
+class: CalendarItemComment
+immutable: true
+fields:
+  value: String
+  parameters: CalendarTextParameters?

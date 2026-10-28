@@ -1,6 +1,6 @@
 # ADR 0135: Native event and task text/link metadata editors
 
-Status: **Proposed. Editable categories, event/task comments, URL and host-controlled classification are already selected requirements. The concrete subset models, permissions, lifecycle and projection mechanics below require explicit agreement.**
+Status: **Accepted by explicit maintainer approval on 2026-10-28 for the proposed editor/patch/disclosure/version batch. The native-task storage refinement below was separately approved on the same date. The scoped implementation and feature-batch validation are complete; see docs/native-item-text-metadata.md and docs/scaffold-validation.md.**
 
 ## Context
 
@@ -10,7 +10,7 @@ Reuse the existing bounded property profiles and source evidence in ADRs 0091/01
 
 Primary sources checked 2026-10-28: [RFC 5545 descriptive properties](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.1.2), [URL](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.4.6), and [current Serverpod 4 model guidance](https://docs.serverpod.dev/concepts/data-and-the-database/models), against the pinned 4.0.4 workflow. Limits and the patch/authority design below are application-profile choices, not new RFC requirements.
 
-## Proposed models and storage
+## Approved models and storage
 
 Add shared immutable client-visible CalendarItemCategoryGroup (values and optional LANGUAGE), CalendarItemComment (value and optional CalendarTextParameters), CalendarItemTextMetadataField (url/classification/categories/comments), CalendarItemTextMetadataPatch and separate event/task revision-checked request models. Keep existing private event/task source containers, source participants, contacts, references, attachments and alarms separate. Expose only this explicit subset through ordinary event/task views and the new editor.
 
@@ -18,7 +18,7 @@ Use existing source/protocol JSON, without new SQL tables/columns/indexes or mig
 
 Preserve class absence versus explicit PUBLIC, PRIVATE or CONFIDENTIAL. Keep the existing HTTP/HTTPS absolute URL profile without embedded credentials and no fetching. Groups preserve order, duplicate labels and language spelling. Reuse the category profile: at most 64 combined nonblank single-line values of 256 code points, at least one value per group, up to 64 groups and optional validated LANGUAGE. Category spelling/internal spacing remain exact. Each comment is independent plain multiline TEXT up to 4,096 code points, with optional legal LANGUAGE/ALTREP; at most 32 comments and existing aggregate budgets. Empty comment text remains present; empty group/comment lists clear those properties. No translation, URI rendering or source CONTACT editor follows.
 
-## Proposed operations and disclosure
+## Approved operations and disclosure
 
 Add updateEventTextMetadata and updateTaskTextMetadata, each taking actual item UUID, expected API revision and a selected-field patch. selectedFields contains one to four unique field names. Selected URL/classification with a null value explicitly clears it; selected category/comment fields require a list, with an empty list clearing it. Unselected payload fields must be absent/null and remain unchanged. Reject duplicate fields, empty selection and conflicting payload shapes. Ordinary content/progress/assignment/timing operations retain the metadata. Neither editor can mutate contacts, source participants, attachments, relationships, alarms, private baselines or protocol versions directly.
 
@@ -26,7 +26,7 @@ Use separate write operations; hosts may map them to ordinary edit rules. Resolv
 
 Add independently grantable url, classification, categories and comments groups to event/task views. Reuse read/list decisions and opaque cursor group binding; no totals or new category filters. Full export/replacement and event scheduling require complete applicable native disclosure plus existing source rights. CONTACT and unrelated rich source data remain behind raw source-read authority and never appear in this subset. Busy responses include none of these fields.
 
-## Proposed lifecycle and supported occurrence behavior
+## Approved lifecycle and supported occurrence behavior
 
 Keep the existing ordinary wire profiles: occurrence omission inherits while explicit metadata must match the master, including grouped spelling/annotations (CLASS PUBLIC may match an omitted master default). Master edits that would conflict with retained explicit occurrence metadata reject atomically without rewriting or dropping it. This first editor is master-only; no new per-occurrence metadata, future content or source adoption policy is introduced.
 
@@ -42,4 +42,16 @@ Add master editors to event/task example screens with separate fields per commen
 
 Flattening groups or hiding annotations would lose supported data; exposing an entire source-container editor would allow unintended participant/alarm mutations. The selected-field subset avoids requiring unrelated hidden fields merely to edit one granted group. Search remains an explicit next query batch rather than claiming that editable labels are searchable.
 
-Review models, write operations/read groups and effective outgoing comparisons before implementation. Test VM/Chrome text/group limits, Unicode/empty/omission handling, native/import/export/replacement round trips, immutable selected-field host context, independent disclosure and final rollback, compatibility/local-conflict preservation, task progress/assignment/history separation, deletion scrubbing, outgoing versions, feed ETags/withdrawal, real two-host races and the connected Flutter editors. Use focused tests during development and broader checks before one feature-batch commit. No maps, directory creation, reservation, source CONTACT authoring, incoming reconciliation or real mail is included.
+The maintainer approved these models, write operations/read groups and effective outgoing comparisons before implementation. Test VM/Chrome text/group limits, Unicode/empty/omission handling, native/import/export/replacement round trips, immutable selected-field host context, independent disclosure and final rollback, compatibility/local-conflict preservation, task progress/assignment/history separation, deletion scrubbing, outgoing versions, feed ETags/withdrawal, real two-host races and the connected Flutter editors. Use focused tests during development and broader checks before one feature-batch commit. No maps, directory creation, reservation, source CONTACT authoring, incoming reconciliation or real mail is included.
+
+## Approved implementation refinement: native task metadata without wire limits
+
+Inspection found that native task occurrence/progress records are independently row-backed (up to 1,000), while existing imported sourceState stores a complete bounded wire component set. Metadata editing must not convert native history into that narrower set, invent source history, or impose interchange limits on ordinary native tasks.
+
+Propose one nullable server-only nativeMetadataOnly boolean in CalendarTaskSourceState, using existing JSON and no SQL table/column/index. Only true or absent is valid. True is constructed only by the trusted native metadata service; pure imports never set it and it grants no identity/provenance/permission. It contains the known current native master content/progress/version and the approved text/link metadata, with no source occurrence components. Native occurrence data/history stays in its existing rows; no occurrence versions/CREATED values or import baseline are invented.
+
+Validation of this marked state uses the existing native master and bounded metadata rules, without serializing all native rows through wire validation. Its unrelated source participants/contacts/attachments/relationships/alarms remain empty. Unmarked imported source state keeps complete strict wire validation and exact row/component consistency. Native master edits synchronize the marked master; native occurrence commands retain row-backed behavior rather than adding synthetic source components. Source replacements still require a recorded imported baseline and never adopt this state implicitly.
+
+Export explicitly combines the marked master metadata with actual native rows into a temporary ordinary source projection, clearing the internal marker. Existing wire limits/unrepresentable-history rejections remain export-only; they do not limit metadata editing or fabricate missing historical versions. Views expose only granted metadata groups. Task content/progress/assignments/history, no-op/version rules and deletion scrubbing remain as approved.
+
+The maintainer explicitly approved the concrete extra field and these read/update/validation/export boundaries before the sourceState model change. Test native tasks beyond wire component limits, unchanged row/history/progress checkpoints, ordinary edits and exports, and unchanged imported-state consistency. This refinement changes storage representation only; no SQL migration or broader task wire profile is proposed.
