@@ -157,3 +157,7 @@ Accepted [ADR 0133](adr/0133-single-instance-attendee-replies.md) adds scoped tr
 ## Event descriptive fields
 
 Accepted ADR 0134 adds the scoped native/ordinary VEVENT descriptive-field increment: exact decimal coordinates, optional priority and preserved resource groups, with separate editing/disclosure and effective scheduling versions. See [the implementation guide](native-event-descriptive-fields.md) and validation evidence. Resource labels grant no booking or authority; external rendering/mail evidence remains separate.
+
+## Proposed native item text/link editors
+
+[ADR 0135](adr/0135-native-item-text-metadata-editors.md) proposes native editing of the existing bounded RFC 5545 URL/CLASS/CATEGORIES/COMMENT profile. Application limits, selected-field operations and disclosure remain review material; source preservation does not imply authority or external-client rendering.

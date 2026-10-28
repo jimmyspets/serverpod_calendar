@@ -466,3 +466,7 @@ Accepted [ADR 0133](adr/0133-single-instance-attendee-replies.md) adds scoped tr
 
 - [x] Implement accepted ADR 0134 native event priority, exact coordinates and grouped resource labels across metadata editing/disclosure, ordinary VEVENT interchange, source replacements, outgoing versions, feeds and the Flutter example. Batch validation is recorded separately.
 - [ ] Continue remaining native/source property profiles and authenticated invitation reconciliation; RANGE replies, mail and release/interoperability work remain required.
+
+## Proposed native item text/link editors
+
+- [ ] Review [ADR 0135](adr/0135-native-item-text-metadata-editors.md), then implement native event/task URL, classification, category and comment patches, independent disclosure, source-preserving versions/feed projection and Flutter editors. Category search, participant/file workflows and inbound reconciliation remain separate requirements; CONTACT remains import-only.
