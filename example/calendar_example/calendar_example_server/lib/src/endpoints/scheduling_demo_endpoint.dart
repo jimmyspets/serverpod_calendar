@@ -16,6 +16,7 @@ class SchedulingDemoEndpoint extends Endpoint {
     int? sequence,
     DateTime sourceStamp,
     String? comment,
+    CalendarEventTiming? originalStart,
   ) async {
     if (!{'development', 'test'}.contains(session.serverpod.runMode) ||
         !RegExp(r'^mailto:[A-Za-z0-9._+\-]+@example\.invalid$')
@@ -33,7 +34,11 @@ class SchedulingDemoEndpoint extends Endpoint {
     }
     final service = CalendarModule.service(session);
     // Actual object/parent rights checked before constructing trusted test evidence.
-    await service.schedulingResponses(eventId);
+    if (originalStart == null) {
+      await service.schedulingResponses(eventId);
+    } else {
+      await service.schedulingInstanceResponses(eventId, originalStart);
+    }
     final event = await service.getEvent(
       eventId,
       CalendarEventFieldGroup.values,
@@ -49,6 +54,23 @@ class SchedulingDemoEndpoint extends Endpoint {
       CalendarSchedulingParticipation.declined => 'DECLINED',
       CalendarSchedulingParticipation.tentative => 'TENTATIVE',
     };
+    final c = originalStart?.start;
+    final date = c == null ? null : '${c.year}${two(c.month)}${two(c.day)}';
+    final original = c == null
+        ? null
+        : IcalendarSyntaxProperty(
+            'RECURRENCE-ID',
+            originalStart!.kind == CalendarEventTimeKind.date
+                ? date!
+                : '$date'
+                      'T${two(c.hour)}${two(c.minute)}${two(c.second)}${originalStart.kind == CalendarEventTimeKind.utc ? 'Z' : ''}',
+            parameters: [
+              if (originalStart.kind == CalendarEventTimeKind.date)
+                IcalendarSyntaxParameter('VALUE', ['DATE']),
+              if (originalStart.zoneId != null)
+                IcalendarSyntaxParameter('TZID', [originalStart.zoneId!]),
+            ],
+          );
     final bytes = serializeIcalendarSyntax(
       IcalendarSyntaxDocument([
         IcalendarSyntaxComponent('VCALENDAR', [
@@ -58,12 +80,15 @@ class SchedulingDemoEndpoint extends Endpoint {
             '-//Synthetic reply simulation//EN',
           ),
           IcalendarSyntaxProperty('METHOD', 'REPLY'),
+          if (originalStart?.zoneId != null)
+            createIcalendarTimeZone(originalStart!.zoneId!),
           IcalendarSyntaxComponent('VEVENT', [
             IcalendarSyntaxProperty(
               'UID',
               encodeIcalendarText(event.protocolUid!),
             ),
             IcalendarSyntaxProperty('DTSTAMP', stamp),
+            ?original,
             if (sequence != null)
               IcalendarSyntaxProperty('SEQUENCE', '$sequence'),
             IcalendarSyntaxProperty('ORGANIZER', status.organizerAddress!),

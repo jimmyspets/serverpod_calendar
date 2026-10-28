@@ -76,6 +76,7 @@ Future<void> _replySmoke(List<Client> clients, bool recurring) async {
     sequence ?? published.publishedSequence,
     time ?? stamp,
     'Synthetic private reply',
+    null,
   );
   final receipts = await Future.wait([
     for (final client in [a, b]) submit(client, command),
@@ -139,5 +140,124 @@ Future<void> _replySmoke(List<Client> clients, bool recurring) async {
   );
   if (saved.revision != 3 || saved.summary != 'New invitation') {
     throw StateError('Reply changed native event state');
+  }
+  if (recurring) {
+    final point = cal.CalendarEventTiming(
+      kind: cal.CalendarEventTimeKind.utc,
+      start: cal.CalendarEventCivil(year: 2026, month: 11, day: 3, hour: 9),
+    );
+    final target = await api.calendarEvent.schedulingInstanceResponses(
+      event.eventId,
+      point,
+    );
+    Future<cal.CalendarSchedulingReplyReceipt> instanceReply(
+      Client client,
+      UuidValue key,
+      int sequence,
+      int second,
+    ) => client.schedulingDemo.simulateReply(
+      event.eventId,
+      key,
+      'mailto:bob@example.invalid',
+      cal.CalendarSchedulingParticipation.accepted,
+      sequence,
+      stamp.add(Duration(seconds: second)),
+      'Synthetic instance reply',
+      point,
+    );
+    final key = const Uuid().v4obj();
+    final instances = await Future.wait([
+      for (final client in [a, b])
+        instanceReply(client, key, target.publishedSequence!, 3),
+    ]);
+    if (instances.first.receiptId != instances.last.receiptId ||
+        instances.where((r) => !r.unchanged).length != 1) {
+      throw StateError('Instance reply race lost stable identity');
+    }
+    final masterSource = (await api.calendarEvent.schedulingResponses(
+      event.eventId,
+    )).responses.single.sourceId;
+    if ((await b.modules.serverpod_calendar.calendarEvent
+                    .schedulingInstanceResponses(event.eventId, point))
+                .responses
+                .single
+                .sourceId !=
+            instances.first.sourceId ||
+        (await api.calendarEvent.schedulingResponses(event.eventId))
+                .responses
+                .single
+                .sourceId !=
+            masterSource) {
+      throw StateError('Instance response changed the master checkpoint');
+    }
+    await Future.wait<Object>([
+      api.calendarEvent.saveAndNotify(
+        cal.CalendarSchedulingSaveRequest(
+          eventId: event.eventId,
+          expectedRevision: 3,
+          content: content('Instance invitation'),
+          recipients: ['mailto:bob@example.invalid'],
+          commandId: const Uuid().v4obj(),
+        ),
+      ),
+      instanceReply(b, const Uuid().v4obj(), target.publishedSequence!, 4),
+    ]);
+    if ((await api.calendarEvent.schedulingInstanceResponses(
+      event.eventId,
+      point,
+    )).responses.single.isCurrent) {
+      throw StateError('Instance acceptance crossed a new master invitation');
+    }
+    final nextMaster = await api.calendarEvent.schedulingResponses(
+      event.eventId,
+    );
+    await submit(
+      b,
+      const Uuid().v4obj(),
+      sequence: nextMaster.publishedSequence,
+      time: stamp.add(const Duration(seconds: 5)),
+    );
+    final retainedMaster = (await api.calendarEvent.schedulingResponses(
+      event.eventId,
+    )).responses.single.sourceId;
+    await api.calendarEvent.changeOccurrence(
+      cal.CalendarEventOccurrenceChange(
+        eventId: event.eventId,
+        expectedRevision: 4,
+        originalStart: point,
+        action: cal.CalendarEventOccurrenceAction.replaceSingleTiming,
+        replacement: point.copyWith(start: point.start.copyWith(day: 8)),
+      ),
+    );
+    await api.calendarEvent.saveAndNotify(
+      cal.CalendarSchedulingSaveRequest(
+        eventId: event.eventId,
+        expectedRevision: 5,
+        content: content('Instance invitation'),
+        recipients: ['mailto:bob@example.invalid'],
+        commandId: const Uuid().v4obj(),
+      ),
+    );
+    final own = await b.modules.serverpod_calendar.calendarEvent
+        .schedulingInstanceResponses(event.eventId, point);
+    final master = await b.modules.serverpod_calendar.calendarEvent
+        .schedulingResponses(event.eventId);
+    if (own.publishedSequence! <= master.publishedSequence ||
+        own.responses.single.isCurrent ||
+        !master.responses.single.isCurrent ||
+        master.responses.single.sourceId != retainedMaster) {
+      throw StateError(
+        'Independent exception version changed unrelated master participation',
+      );
+    }
+    await instanceReply(b, const Uuid().v4obj(), own.publishedSequence!, 6);
+    if (!(await api.calendarEvent.schedulingInstanceResponses(
+      event.eventId,
+      point,
+    )).responses.single.isCurrent) {
+      throw StateError(
+        'New exception response was not visible on the other host',
+      );
+    }
   }
 }

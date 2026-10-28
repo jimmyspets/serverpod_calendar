@@ -249,3 +249,59 @@ CivilDateTime _eventSchedulingCivilFields(DateTime v, {bool end = false}) =>
       minute: v.minute,
       second: v.second,
     );
+
+/// Projects one original from already validated publication content/overrides.
+/// Membership consumes the caller's aggregate budget; this allocates no edit.
+CalendarEventContent? eventSchedulingOccurrence(
+  CalendarEventContent content,
+  CalendarEventTimingOverrides? overrides,
+  CalendarEventTiming point, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
+  _profile(content.timing, point, anchor: true);
+  if (!eventSchedulingMember(
+    content,
+    point,
+    sharedWorkBudget: sharedWorkBudget,
+  )) {
+    return null;
+  }
+  final key = _anchorKey(point);
+  final single = overrides?.singles
+      .where((s) => _anchorKey(s.originalStart) == key)
+      .firstOrNull;
+  final ownRange = overrides?.future
+      .where((s) => _anchorKey(s.originalStart) == key)
+      .firstOrNull;
+  if (single?.cancelled ?? false) throw ArgumentError('Cancelled original');
+  final ranges = [...?overrides?.future]
+    ..sort(
+      (a, b) =>
+          _anchorKey(a.originalStart).compareTo(_anchorKey(b.originalStart)),
+    );
+  CalendarEventFutureOverride? active;
+  for (final change in ranges) {
+    if (_anchorKey(change.originalStart).compareTo(key) > 0) break;
+    active = change;
+  }
+  var template = content.timing;
+  for (final period in content.periods ?? <CalendarEventTiming>[]) {
+    if (_anchorKey(period) == key) template = period;
+  }
+  template = active?.replacement ?? template;
+  final timing =
+      single?.replacement ?? _eventSchedulingTiming(point, template, active);
+  final own = eventEffectiveOccurrenceContent(
+    content,
+    single?.contentOverrides ?? ownRange?.contentOverrides,
+  );
+  return content.copyWith(
+    timing: timing,
+    recurrence: null,
+    periods: null,
+    summary: own.summary,
+    description: own.description,
+    location: own.location,
+    textParameters: own.textParameters,
+  );
+}

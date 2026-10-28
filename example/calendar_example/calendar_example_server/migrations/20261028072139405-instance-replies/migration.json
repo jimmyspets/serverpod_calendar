@@ -1,0 +1,131 @@
+{
+  "__className__": "serverpod.DatabaseMigration",
+  "actions": [
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "serverpod_calendar_scheduling_attendee_response",
+        "schema": "public",
+        "addColumns": [
+          {
+            "__className__": "serverpod.ColumnDefinition",
+            "name": "targetKey",
+            "fieldName": "targetKey",
+            "columnType": 0,
+            "isNullable": false,
+            "columnDefault": "'master'",
+            "dartType": "String"
+          }
+        ],
+        "deleteColumns": [],
+        "modifyColumns": [],
+        "addIndexes": [
+          {
+            "__className__": "serverpod.IndexDefinition",
+            "indexName": "calendar_attendee_response_address_unique",
+            "elements": [
+              {
+                "__className__": "serverpod.IndexElementDefinition",
+                "type": 0,
+                "definition": "meetingId"
+              },
+              {
+                "__className__": "serverpod.IndexElementDefinition",
+                "type": 0,
+                "definition": "attendeeAddress"
+              },
+              {
+                "__className__": "serverpod.IndexElementDefinition",
+                "type": 0,
+                "definition": "targetKey"
+              }
+            ],
+            "type": "btree",
+            "isUnique": true,
+            "isPrimary": false
+          }
+        ],
+        "deleteIndexes": [
+          "calendar_attendee_response_address_unique"
+        ],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": [
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "uniqueIndexCreated",
+            "message": "Unique index \"calendar_attendee_response_address_unique\" is added to table \"serverpod_calendar_scheduling_attendee_response\". If there are existing rows with duplicate values, this migration will fail.",
+            "table": "serverpod_calendar_scheduling_attendee_response",
+            "columns": [
+              "meetingId",
+              "attendeeAddress",
+              "targetKey"
+            ],
+            "destrucive": false
+          }
+        ]
+      }
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "serverpod_calendar_scheduling_reply_source",
+        "schema": "public",
+        "addColumns": [
+          {
+            "__className__": "serverpod.ColumnDefinition",
+            "name": "targetKey",
+            "fieldName": "targetKey",
+            "columnType": 0,
+            "isNullable": false,
+            "columnDefault": "'master'",
+            "dartType": "String"
+          },
+          {
+            "__className__": "serverpod.ColumnDefinition",
+            "name": "originalStart",
+            "fieldName": "originalStart",
+            "columnType": 8,
+            "isNullable": true,
+            "dartType": "protocol:CalendarEventTiming?"
+          },
+          {
+            "__className__": "serverpod.ColumnDefinition",
+            "name": "targetBasisKey",
+            "fieldName": "targetBasisKey",
+            "columnType": 0,
+            "isNullable": false,
+            "columnDefault": "'master'",
+            "dartType": "String"
+          }
+        ],
+        "deleteColumns": [],
+        "modifyColumns": [],
+        "addIndexes": [],
+        "deleteIndexes": [],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": []
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "uniqueIndexCreated",
+      "message": "Unique index \"calendar_attendee_response_address_unique\" is added to table \"serverpod_calendar_scheduling_attendee_response\". If there are existing rows with duplicate values, this migration will fail.",
+      "table": "serverpod_calendar_scheduling_attendee_response",
+      "columns": [
+        "meetingId",
+        "attendeeAddress",
+        "targetKey"
+      ],
+      "destrucive": false
+    }
+  ],
+  "migrationApiVersion": 1
+}

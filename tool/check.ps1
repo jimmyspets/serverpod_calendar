@@ -79,6 +79,7 @@ try {
   Invoke-Checked dart @('run', 'tool/scheduling_work_smoke.dart')
   Invoke-Checked dart @('run', 'tool/scheduling_work_smoke.dart', '--replies')
   Invoke-Checked dart @('run', 'tool/scheduling_work_smoke.dart', '--replies', '--recurring')
+  Invoke-Checked dart @('run', 'tool/scheduling_work_smoke.dart', '--replies', '--instances')
   & "$PSScriptRoot/build-host.ps1"
   $smokeArgs = @('run', 'tool/host_smoke.dart')
   if (-not $SkipBrowser) { $smokeArgs += '--flutter' }

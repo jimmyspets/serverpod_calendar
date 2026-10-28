@@ -165,7 +165,14 @@ CalendarEventSourceMetadata? _metadata(IcalendarEvent event) =>
       ),
     );
 
-EventStorageProposal eventStorageProposal(IcalendarEventSeries source) {
+typedef EventWireProjection = ({
+  CalendarEventContent content,
+  CalendarEventTimingOverrides? edits,
+  CalendarEventProtocolState protocolState,
+});
+
+/// Validated semantic projection, without allocating an import-history snapshot.
+EventWireProjection eventWireProjection(IcalendarEventSeries source) {
   final m = source.master;
   CalendarEventOccurrenceContent? own(IcalendarEvent value) =>
       validateEventOccurrenceContent(
@@ -249,11 +256,21 @@ EventStorageProposal eventStorageProposal(IcalendarEventSeries source) {
     content,
     edits,
   );
+  return (content: content, edits: edits, protocolState: state);
+}
+
+EventStorageProposal eventStorageProposal(IcalendarEventSeries source) {
+  final value = eventWireProjection(source);
   return EventStorageProposal._(
-    m.uid,
-    content,
-    edits,
-    state,
-    eventImportBaseline(m.uid, content, edits, state),
+    source.master.uid,
+    value.content,
+    value.edits,
+    value.protocolState,
+    eventImportBaseline(
+      source.master.uid,
+      value.content,
+      value.edits,
+      value.protocolState,
+    ),
   );
 }

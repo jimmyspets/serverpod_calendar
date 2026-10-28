@@ -45,6 +45,9 @@ final class CalendarSchedulingReplyPolicyContext {
     required this.message,
     required this.normalizedSource,
     required this.sourceDigest,
+    this.originalStart,
+    this.publishedTarget,
+    this.effectiveOccurrence,
     this.currentResponse,
     this.proposedOutcome,
     this.sourceId,
@@ -54,11 +57,14 @@ final class CalendarSchedulingReplyPolicyContext {
   final CalendarSchedulingReplyDelivery delivery;
   final CalendarPolicySnapshot calendar;
   final CalendarEventPolicySnapshot currentEvent, publishedEvent;
-  final int publishedSequence;
-  final bool publishedCancelled;
+  final int? publishedSequence;
+  final bool? publishedCancelled;
   final IcalendarSchedulingMessage publishedMessage;
   final IcalendarSchedulingEvent publishedMaster;
   final CalendarSchedulingPublicationKind latestPublicationKind;
+  final CalendarEventTiming? originalStart;
+  final IcalendarSchedulingEvent? publishedTarget;
+  final CalendarEventContent? effectiveOccurrence;
   final IcalendarSchedulingMessage message;
   final String normalizedSource, sourceDigest;
 

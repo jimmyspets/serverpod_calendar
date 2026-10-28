@@ -285,6 +285,7 @@ class EndpointSchedulingDemo extends _isc.EndpointRef {
     int? sequence,
     DateTime sourceStamp,
     String? comment,
+    _imrxcdin.CalendarEventTiming? originalStart,
   ) => caller.callServerEndpoint<_imrxcdin.CalendarSchedulingReplyReceipt>(
     'schedulingDemo',
     'simulateReply',
@@ -296,6 +297,7 @@ class EndpointSchedulingDemo extends _isc.EndpointRef {
       'sequence': sequence,
       'sourceStamp': sourceStamp,
       'comment': comment,
+      'originalStart': originalStart,
     },
   );
 }

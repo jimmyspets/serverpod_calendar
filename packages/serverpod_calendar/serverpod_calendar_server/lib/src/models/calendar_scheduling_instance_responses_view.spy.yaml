@@ -1,0 +1,9 @@
+class: CalendarSchedulingInstanceResponsesView
+immutable: true
+fields:
+  eventId: UuidValue
+  publicationId: UuidValue
+  originalStart: CalendarEventTiming
+  publishedSequence: int?
+  publishedCancelled: bool?
+  responses: List<CalendarSchedulingAttendeeResponseView>

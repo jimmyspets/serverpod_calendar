@@ -1,6 +1,6 @@
 # ADR 0133: Single-instance attendee replies
 
-Status: **Proposed. The maintainer confirmed accepting any validated published original and using the effective single/range/master component version. The storage, publication-version upgrade and concrete mechanics below require explicit review before implementation.**
+Status: **Accepted by explicit maintainer approval on 2026-10-28, including target storage/index changes and collision-safe outgoing/legacy-upgrade mechanics. Scoped implementation and phased local validation are complete; RANGE replies and mail remain separate.**
 
 ## Confirmed direction and source evidence
 
