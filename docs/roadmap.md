@@ -480,3 +480,12 @@ Accepted [ADR 0133](adr/0133-single-instance-attendee-replies.md) adds scoped tr
 - [x] Complete feature-batch privacy/budget/cursor, real two-host/Flutter and broader checks in documented phases before one code commit.
 
 The bounded query implementation is now present; validation is recorded separately. Remaining participant/relationship/file/inbound/mail and release gates retain their existing scope.
+
+## Incoming invitation review
+
+- [x] Confirm review before adding a new authenticated non-recurring invitation; receipt alone books nothing and sends no reply.
+- [ ] Review [ADR 0137](adr/0137-trusted-invitation-intake-and-review.md): trusted intake, private summary/source review, dismissal, three tables, ordering/idempotency and bounded retention.
+- [ ] After approval, implement that scoped batch and synthetic-only example with focused tests, fresh/upgrade, two-host/process-loss and broad batch checks.
+- [ ] Implement separately reviewed calendar adoption, existing-meeting updates, participation responses, recurrence/CANCEL correlation and remaining mail/release requirements.
+
+The proposed review queue is calendar scheduling state, separate from the reusable notification module; it does not add a persistent notification inbox. No source/schema/runtime change is included in this proposal.
