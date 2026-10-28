@@ -22,11 +22,13 @@ abstract class CalendarTaskSourceState
   const CalendarTaskSourceState._({
     required this.master,
     required this.occurrences,
+    this.nativeMetadataOnly,
   });
 
   const factory CalendarTaskSourceState({
     required _ivqadd6c.CalendarTaskSourceComponent master,
     required List<_ivqadd6c.CalendarTaskSourceComponent> occurrences,
+    bool? nativeMetadataOnly,
   }) = _CalendarTaskSourceStateImpl;
 
   factory CalendarTaskSourceState.fromJson(
@@ -41,6 +43,11 @@ abstract class CalendarTaskSourceState
           .deserialize<List<_ivqadd6c.CalendarTaskSourceComponent>>(
             jsonSerialization['occurrences'],
           ),
+      nativeMetadataOnly: jsonSerialization['nativeMetadataOnly'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(
+              jsonSerialization['nativeMetadataOnly'],
+            ),
     );
   }
 
@@ -48,12 +55,15 @@ abstract class CalendarTaskSourceState
 
   final List<_ivqadd6c.CalendarTaskSourceComponent> occurrences;
 
+  final bool? nativeMetadataOnly;
+
   /// Returns a shallow copy of this [CalendarTaskSourceState]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
   CalendarTaskSourceState copyWith({
     _ivqadd6c.CalendarTaskSourceComponent? master,
     List<_ivqadd6c.CalendarTaskSourceComponent>? occurrences,
+    bool? nativeMetadataOnly,
   });
   @override
   bool operator ==(Object other) {
@@ -71,7 +81,12 @@ abstract class CalendarTaskSourceState
             const _iss.DeepCollectionEquality().equals(
               other.occurrences,
               occurrences,
-            );
+            ) &&
+            (identical(
+                  other.nativeMetadataOnly,
+                  nativeMetadataOnly,
+                ) ||
+                other.nativeMetadataOnly == nativeMetadataOnly);
   }
 
   @override
@@ -80,6 +95,7 @@ abstract class CalendarTaskSourceState
       runtimeType,
       master,
       const _iss.DeepCollectionEquality().hash(occurrences),
+      nativeMetadataOnly,
     );
   }
 
@@ -89,6 +105,7 @@ abstract class CalendarTaskSourceState
       '__className__': 'serverpod_calendar.CalendarTaskSourceState',
       'master': master.toJson(),
       'occurrences': occurrences.toJson(valueToJson: (v) => v.toJson()),
+      if (nativeMetadataOnly != null) 'nativeMetadataOnly': nativeMetadataOnly,
     };
   }
 
@@ -103,13 +120,17 @@ abstract class CalendarTaskSourceState
   }
 }
 
+class _Undefined {}
+
 class _CalendarTaskSourceStateImpl extends CalendarTaskSourceState {
   const _CalendarTaskSourceStateImpl({
     required _ivqadd6c.CalendarTaskSourceComponent master,
     required List<_ivqadd6c.CalendarTaskSourceComponent> occurrences,
+    bool? nativeMetadataOnly,
   }) : super._(
          master: master,
          occurrences: occurrences,
+         nativeMetadataOnly: nativeMetadataOnly,
        );
 
   /// Returns a shallow copy of this [CalendarTaskSourceState]
@@ -119,11 +140,15 @@ class _CalendarTaskSourceStateImpl extends CalendarTaskSourceState {
   CalendarTaskSourceState copyWith({
     _ivqadd6c.CalendarTaskSourceComponent? master,
     List<_ivqadd6c.CalendarTaskSourceComponent>? occurrences,
+    Object? nativeMetadataOnly = _Undefined,
   }) {
     return CalendarTaskSourceState(
       master: master ?? this.master.copyWith(),
       occurrences:
           occurrences ?? this.occurrences.map((e0) => e0.copyWith()).toList(),
+      nativeMetadataOnly: nativeMetadataOnly is bool?
+          ? nativeMetadataOnly
+          : this.nativeMetadataOnly,
     );
   }
 }

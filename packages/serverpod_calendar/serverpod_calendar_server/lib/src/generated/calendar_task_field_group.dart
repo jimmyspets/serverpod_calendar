@@ -20,7 +20,11 @@ enum CalendarTaskFieldGroup implements _is.SerializableModel {
   priority,
   progress,
   assignments,
-  protocolIdentity;
+  protocolIdentity,
+  url,
+  classification,
+  categories,
+  comments;
 
   static CalendarTaskFieldGroup fromJson(String name) {
     switch (name) {
@@ -40,6 +44,14 @@ enum CalendarTaskFieldGroup implements _is.SerializableModel {
         return CalendarTaskFieldGroup.assignments;
       case 'protocolIdentity':
         return CalendarTaskFieldGroup.protocolIdentity;
+      case 'url':
+        return CalendarTaskFieldGroup.url;
+      case 'classification':
+        return CalendarTaskFieldGroup.classification;
+      case 'categories':
+        return CalendarTaskFieldGroup.categories;
+      case 'comments':
+        return CalendarTaskFieldGroup.comments;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "CalendarTaskFieldGroup"',

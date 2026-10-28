@@ -225,7 +225,9 @@ Future<void> main(List<String> args) async {
         '-d',
         'web-server',
         '--driver=test_driver/integration_test.dart',
-        args.contains('--descriptive')
+        args.contains('--text-metadata')
+            ? '--target=integration_test/item_text_metadata_smoke_test.dart'
+            : args.contains('--descriptive')
             ? '--target=integration_test/event_descriptive_smoke_test.dart'
             : args.contains('--replies')
             ? '--target=integration_test/attendee_replies_smoke_test.dart'
@@ -254,6 +256,7 @@ Future<void> main(List<String> args) async {
       final output = result.stdout.transform(utf8.decoder).listen(stdout.write);
       final error = result.stderr.transform(utf8.decoder).listen(stderr.write);
       final focused =
+          args.contains('--text-metadata') ||
           args.contains('--descriptive') ||
           args.contains('--replies') ||
           args.contains('--scheduling') ||

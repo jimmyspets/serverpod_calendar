@@ -15,3 +15,7 @@ fields:
   protocolUid: String?
   protocolVersion: CalendarTaskProtocolVersion?
   recurrence: CalendarEventRecurrence?
+  url: String?
+  classification: String?
+  categoryGroups: List<CalendarItemCategoryGroup>?
+  comments: List<CalendarItemComment>?

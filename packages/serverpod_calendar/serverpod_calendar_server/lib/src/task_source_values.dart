@@ -8,6 +8,7 @@ import 'event_protocol_values.dart';
 import 'event_wire_output.dart';
 import 'generated/protocol.dart';
 import 'task_values.dart';
+import 'item_text_metadata_values.dart';
 import 'task_content_values.dart';
 import 'task_recurrence_values.dart';
 
@@ -316,6 +317,26 @@ CalendarTaskSourceState validateTaskSourceState(
   CalendarTaskSourceState value,
 ) {
   validateEventUid(uid);
+  if (value.nativeMetadataOnly != null) {
+    if (value.nativeMetadataOnly != true ||
+        value.occurrences.isNotEmpty ||
+        value.master.originalStart != null ||
+        value.master.thisAndFuture != null ||
+        (value.master.textParameters != null &&
+            value.master.textParameters != CalendarEventTextParameters())) {
+      throw ArgumentError('Invalid native metadata-only task state');
+    }
+    return value.copyWith(
+      master: value.master.copyWith(
+        content: validateTaskContent(value.master.content),
+        progress: validateTaskProgress(value.master.progress),
+        version: validateTaskVersion(value.master.version),
+        textParameters: CalendarEventTextParameters(),
+        metadata: validateNativeTaskTextMetadata(value.master.metadata),
+      ),
+      occurrences: const [],
+    );
+  }
   // Bound serialized input before zone generation or recurrence validation.
   taskImportBaseline(uid, value);
   final writer = _TaskWriter();
@@ -533,6 +554,7 @@ CalendarTaskSourceState changeTaskSourceOccurrence(
   CalendarTaskProgress progress,
   CalendarTaskProtocolVersion version,
 ) {
+  if (before.nativeMetadataOnly == true) return before;
   final key = taskOriginalKey(original);
   var found = false;
   final components = [
@@ -615,6 +637,7 @@ CalendarTaskSourceState changeTaskSourceTiming(
   CalendarTaskProtocolVersion version, {
   bool thisAndFuture = false,
 }) {
+  if (before.nativeMetadataOnly == true) return before;
   final key = taskOriginalKey(original);
   final existing = before.occurrences
       .where((o) => taskOriginalKey(o.originalStart!) == key)
@@ -672,6 +695,7 @@ CalendarTaskSourceState changeTaskSourceContent(
   CalendarTaskProgress progress,
   CalendarTaskProtocolVersion version,
 ) {
+  if (before.nativeMetadataOnly == true) return before;
   final key = taskOriginalKey(original);
   final existing = before.occurrences
       .where((o) => taskOriginalKey(o.originalStart!) == key)

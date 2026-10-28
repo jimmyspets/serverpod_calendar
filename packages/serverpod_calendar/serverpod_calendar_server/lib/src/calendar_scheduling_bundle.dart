@@ -658,7 +658,16 @@ String _schedulingVersionedPayload(
       serializeIcalendarSyntax(
         IcalendarSyntaxDocument([
           IcalendarSyntaxComponent('VEVENT', [
-            for (final name in ['GEO', 'PRIORITY', 'RESOURCES'])
+            for (final name in [
+              'GEO',
+              'PRIORITY',
+              'RESOURCES',
+              'URL',
+              'CLASS',
+              'CATEGORIES',
+              'COMMENT',
+              'CONTACT',
+            ])
               ...(own.any((p) => p.canonicalName == name) ? own : inherited)
                   .where((p) => p.canonicalName == name),
           ]),

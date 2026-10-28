@@ -687,6 +687,6 @@ Accepted [ADR 0133](adr/0133-single-instance-attendee-replies.md) adds scoped tr
 
 Accepted ADR 0134 adds immutable geographic-position/resource-group/subset request DTOs and optional nested event source metadata. Views expose independently disclosed values; SQL layout is unchanged. See [the model/API guide](native-event-descriptive-fields.md).
 
-## Proposed native item text/link editors
+## Native item text/link metadata
 
-[ADR 0135](adr/0135-native-item-text-metadata-editors.md) proposes shared public category/comment DTOs, a bounded selected-field patch enum/model and separate revision-checked event/task requests. Existing private source containers and JSON storage stay separate; no SQL table/column/index change is expected. Verify generation/schema stability after approval.
+Accepted ADR 0135 adds shared immutable category/comment/field/patch DTOs, separate revision-checked event/task requests, read-group/view fields and private nullable nativeMetadataOnly on task sourceState. No SQL changes were detected. The flag keeps native rows independent from wire limits and never invents provenance, baselines or history. See [the model and API guide](native-item-text-metadata.md).

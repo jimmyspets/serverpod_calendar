@@ -23,3 +23,7 @@ fields:
   priority: int?
   geographicPosition: CalendarEventGeographicPosition?
   resourceGroups: List<CalendarEventResourceGroup>?
+  url: String?
+  classification: String?
+  categoryGroups: List<CalendarItemCategoryGroup>?
+  comments: List<CalendarItemComment>?

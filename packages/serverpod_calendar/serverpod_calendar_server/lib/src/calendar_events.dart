@@ -98,6 +98,7 @@ extension CalendarEventOperations on CalendarService {
     _Event? event,
     CalendarEventContent? proposed,
     CalendarEventProtocolState? proposedState,
+    CalendarItemTextMetadataPatch? textMetadataPatch,
     CalendarEventOccurrenceQuery? query,
     CalendarFreeBusyQuery? freeBusy,
     CalendarAvailabilitySearchQuery? search,
@@ -115,6 +116,7 @@ extension CalendarEventOperations on CalendarService {
     currentEvent: event?.snapshot,
     proposedEvent: proposed,
     proposedEventProtocolState: proposedState,
+    itemTextMetadataPatch: textMetadataPatch,
     occurrenceQuery: query,
     freeBusyQuery: freeBusy,
     availabilitySearchQuery: search,
@@ -195,6 +197,7 @@ extension CalendarEventOperations on CalendarService {
           ..sort((a, b) => a.index.compareTo(b.index));
     bool has(CalendarEventFieldGroup g) => groups.contains(g);
     final v = e.data.content;
+    final metadata = eventTextMetadata(e.data.protocolState!.sourceMetadata);
     final filteredOverrides = eventDisclosedOverrides(
       e.data.timingOverrides,
       groups.toSet(),
@@ -221,6 +224,16 @@ extension CalendarEventOperations on CalendarService {
           : null,
       resourceGroups: has(CalendarEventFieldGroup.resources)
           ? e.data.protocolState!.sourceMetadata?.resourceGroups ?? []
+          : null,
+      url: has(CalendarEventFieldGroup.url) ? metadata.url : null,
+      classification: has(CalendarEventFieldGroup.classification)
+          ? metadata.classification
+          : null,
+      categoryGroups: has(CalendarEventFieldGroup.categories)
+          ? metadata.categoryGroups
+          : null,
+      comments: has(CalendarEventFieldGroup.comments)
+          ? metadata.comments
           : null,
       summary: has(CalendarEventFieldGroup.summary) ? v.summary : null,
       description: has(CalendarEventFieldGroup.description)

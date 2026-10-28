@@ -1,3 +1,4 @@
+import 'item_text_metadata_editor.dart';
 import 'personal_alarm_screen.dart';
 
 import 'package:flutter/material.dart';
@@ -734,6 +735,26 @@ class _TaskEditorState extends State<TaskEditor> {
             if (_dirty)
               const Text(
                 'Save or reload content before changing progress, assignments or deleting.',
+              ),
+            if (_view != null)
+              TextButton(
+                key: const Key('task-text-metadata'),
+                onPressed: _locked || _dirty
+                    ? null
+                    : () async {
+                        await Navigator.of(context).push<void>(
+                          MaterialPageRoute(
+                            builder: (_) => ItemTextMetadataEditor(
+                              client: widget.client,
+                              task: _view!,
+                            ),
+                          ),
+                        );
+                        if (mounted) {
+                          await _run(_reload);
+                        }
+                      },
+                child: const Text('Text, labels and links'),
               ),
             if (_view != null)
               TextButton(

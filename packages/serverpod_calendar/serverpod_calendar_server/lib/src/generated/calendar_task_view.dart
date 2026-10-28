@@ -15,6 +15,8 @@ import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
 import 'calendar_event_recurrence.dart' as _iqxs44bf;
+import 'calendar_item_category_group.dart' as _i3iolgr8;
+import 'calendar_item_comment.dart' as _itx19m90;
 import 'calendar_task_assignee.dart' as _ih5e3u6u;
 import 'calendar_task_field_group.dart' as _isemqyyv;
 import 'calendar_task_progress.dart' as _ikcsq95s;
@@ -39,6 +41,10 @@ abstract class CalendarTaskView
     this.protocolUid,
     this.protocolVersion,
     this.recurrence,
+    this.url,
+    this.classification,
+    this.categoryGroups,
+    this.comments,
   });
 
   const factory CalendarTaskView({
@@ -56,6 +62,10 @@ abstract class CalendarTaskView
     String? protocolUid,
     _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion,
     _iqxs44bf.CalendarEventRecurrence? recurrence,
+    String? url,
+    String? classification,
+    List<_i3iolgr8.CalendarItemCategoryGroup>? categoryGroups,
+    List<_itx19m90.CalendarItemComment>? comments,
   }) = _CalendarTaskViewImpl;
 
   factory CalendarTaskView.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -101,6 +111,20 @@ abstract class CalendarTaskView
           : _ix00hwbf.Protocol().deserialize<_iqxs44bf.CalendarEventRecurrence>(
               jsonSerialization['recurrence'],
             ),
+      url: jsonSerialization['url'] as String?,
+      classification: jsonSerialization['classification'] as String?,
+      categoryGroups: jsonSerialization['categoryGroups'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<List<_i3iolgr8.CalendarItemCategoryGroup>>(
+                  jsonSerialization['categoryGroups'],
+                ),
+      comments: jsonSerialization['comments'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<List<_itx19m90.CalendarItemComment>>(
+                  jsonSerialization['comments'],
+                ),
     );
   }
 
@@ -132,6 +156,14 @@ abstract class CalendarTaskView
 
   final _iqxs44bf.CalendarEventRecurrence? recurrence;
 
+  final String? url;
+
+  final String? classification;
+
+  final List<_i3iolgr8.CalendarItemCategoryGroup>? categoryGroups;
+
+  final List<_itx19m90.CalendarItemComment>? comments;
+
   /// Returns a shallow copy of this [CalendarTaskView]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -150,6 +182,10 @@ abstract class CalendarTaskView
     String? protocolUid,
     _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion,
     _iqxs44bf.CalendarEventRecurrence? recurrence,
+    String? url,
+    String? classification,
+    List<_i3iolgr8.CalendarItemCategoryGroup>? categoryGroups,
+    List<_itx19m90.CalendarItemComment>? comments,
   });
   @override
   bool operator ==(Object other) {
@@ -226,7 +262,25 @@ abstract class CalendarTaskView
                   other.recurrence,
                   recurrence,
                 ) ||
-                other.recurrence == recurrence);
+                other.recurrence == recurrence) &&
+            (identical(
+                  other.url,
+                  url,
+                ) ||
+                other.url == url) &&
+            (identical(
+                  other.classification,
+                  classification,
+                ) ||
+                other.classification == classification) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.categoryGroups,
+              categoryGroups,
+            ) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.comments,
+              comments,
+            );
   }
 
   @override
@@ -247,6 +301,10 @@ abstract class CalendarTaskView
       protocolUid,
       protocolVersion,
       recurrence,
+      url,
+      classification,
+      const _iss.DeepCollectionEquality().hash(categoryGroups),
+      const _iss.DeepCollectionEquality().hash(comments),
     );
   }
 
@@ -269,6 +327,14 @@ abstract class CalendarTaskView
       if (protocolUid != null) 'protocolUid': protocolUid,
       if (protocolVersion != null) 'protocolVersion': protocolVersion?.toJson(),
       if (recurrence != null) 'recurrence': recurrence?.toJson(),
+      if (url != null) 'url': url,
+      if (classification != null) 'classification': classification,
+      if (categoryGroups != null)
+        'categoryGroups': categoryGroups?.toJson(
+          valueToJson: (v) => v.toJson(),
+        ),
+      if (comments != null)
+        'comments': comments?.toJson(valueToJson: (v) => v.toJson()),
     };
   }
 
@@ -294,6 +360,14 @@ abstract class CalendarTaskView
       if (protocolVersion != null)
         'protocolVersion': protocolVersion?.toJsonForProtocol(),
       if (recurrence != null) 'recurrence': recurrence?.toJsonForProtocol(),
+      if (url != null) 'url': url,
+      if (classification != null) 'classification': classification,
+      if (categoryGroups != null)
+        'categoryGroups': categoryGroups?.toJson(
+          valueToJson: (v) => v.toJsonForProtocol(),
+        ),
+      if (comments != null)
+        'comments': comments?.toJson(valueToJson: (v) => v.toJsonForProtocol()),
     };
   }
 
@@ -321,6 +395,10 @@ class _CalendarTaskViewImpl extends CalendarTaskView {
     String? protocolUid,
     _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion,
     _iqxs44bf.CalendarEventRecurrence? recurrence,
+    String? url,
+    String? classification,
+    List<_i3iolgr8.CalendarItemCategoryGroup>? categoryGroups,
+    List<_itx19m90.CalendarItemComment>? comments,
   }) : super._(
          id: id,
          calendarId: calendarId,
@@ -336,6 +414,10 @@ class _CalendarTaskViewImpl extends CalendarTaskView {
          protocolUid: protocolUid,
          protocolVersion: protocolVersion,
          recurrence: recurrence,
+         url: url,
+         classification: classification,
+         categoryGroups: categoryGroups,
+         comments: comments,
        );
 
   /// Returns a shallow copy of this [CalendarTaskView]
@@ -357,6 +439,10 @@ class _CalendarTaskViewImpl extends CalendarTaskView {
     Object? protocolUid = _Undefined,
     Object? protocolVersion = _Undefined,
     Object? recurrence = _Undefined,
+    Object? url = _Undefined,
+    Object? classification = _Undefined,
+    Object? categoryGroups = _Undefined,
+    Object? comments = _Undefined,
   }) {
     return CalendarTaskView(
       id: id ?? this.id,
@@ -384,6 +470,17 @@ class _CalendarTaskViewImpl extends CalendarTaskView {
       recurrence: recurrence is _iqxs44bf.CalendarEventRecurrence?
           ? recurrence
           : this.recurrence?.copyWith(),
+      url: url is String? ? url : this.url,
+      classification: classification is String?
+          ? classification
+          : this.classification,
+      categoryGroups:
+          categoryGroups is List<_i3iolgr8.CalendarItemCategoryGroup>?
+          ? categoryGroups
+          : this.categoryGroups?.map((e0) => e0.copyWith()).toList(),
+      comments: comments is List<_itx19m90.CalendarItemComment>?
+          ? comments
+          : this.comments?.map((e0) => e0.copyWith()).toList(),
     );
   }
 }
