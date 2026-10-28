@@ -1180,3 +1180,9 @@ The resumed broad phases passed the full populated upgrade sequence, independent
 Serverpod MCP applied the generated development migrations without resetting development storage and successfully hot reloaded the restored owned interactive host. Flutter MCP reload/runtime inspection and final static checks are recorded below before the single feature-batch commit.
 
 Actual Dart MCP connected through DTD to the restored Chrome VM, successfully hot reloaded it, and found no runtime errors. Serverpod MCP logs showed successful maintenance operations. Final static validation passed **2,772 relative links**, consecutive ADRs 0001–0133, **74 candidate files**, scanning against 17 local credential values, unchanged Apache 2.0 LICENSE and whitespace checks. No real email or external client conformance is claimed.
+
+## Native event descriptive-field proposal — 2026-10-28
+
+The separate documentation proposal follows completed ADR 0133 implementation and draft PR #96. The maintainer confirmed exact bounded decimal coordinate strings. Primary RFC 5545 GEO/PRIORITY/RESOURCES and verified erratum 2677 were checked; repeated resource groups are legal. ADR 0134 proposes the concrete nested models, subset operation/disclosure, occurrence compatibility, wire/storage/feed and effective scheduling-version mechanics. These await approval. No source/model/generated/migration change or runtime test is included; the prior batch evidence remains separate. Relative-link, consecutive-ADR, changed-file/credential/LICENSE and whitespace checks run before the documentation commit.
+
+Documentation checks passed **2,783 relative links**, consecutive ADRs 0001–0134, **14 Markdown-only candidate files**, scanning against 17 local credential values, unchanged Apache 2.0 LICENSE and whitespace checks. Runtime suites were not repeated for this proposal.
