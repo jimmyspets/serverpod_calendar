@@ -332,6 +332,7 @@ _SchedulingCheckpoint _schedulingReadV6(
     state.projectionOriginals,
     state.originals,
     kind: kind,
+    instanceVersionProfile: state.instanceVersionProfile,
     target: target,
     nativeMatch: nativeMatch,
     basisRecord: state.basisRecord,

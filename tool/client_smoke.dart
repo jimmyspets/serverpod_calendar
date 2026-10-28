@@ -114,9 +114,15 @@ Future<void> main(List<String> args) async {
               }
             },
     );
-    if (mode == 'test') await schedulingSmoke(clients);
+    if (mode == 'test' && !args.contains('--replies-only')) {
+      await schedulingSmoke(clients);
+    }
     if (mode == 'test') await schedulingReplySmoke(clients);
-    if (args.contains('--feeds')) {
+    if (args.contains('--replies-only')) {
+      stdout.writeln(
+        'PASS: focused reply clients; unrelated domain/feed/notification journeys skipped.',
+      );
+    } else if (args.contains('--feeds')) {
       await runFeeds();
     } else {
       await calendarSmoke(clients, values['demoBobPassword'] as String);

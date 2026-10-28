@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:flutter/material.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
@@ -8,15 +10,27 @@ class AttendeeRepliesScreen extends StatefulWidget {
     super.key,
     required this.client,
     required this.eventId,
+    this.originalStart,
   });
   final Client client;
   final UuidValue eventId;
+  final cal.CalendarEventTiming? originalStart;
   @override
   State<AttendeeRepliesScreen> createState() => _AttendeeRepliesScreenState();
 }
 
 class _AttendeeRepliesScreenState extends State<AttendeeRepliesScreen> {
   cal.CalendarSchedulingResponsesView? _responses;
+  cal.CalendarSchedulingInstanceResponsesView? _instance;
+  List<cal.CalendarSchedulingAttendeeResponseView> get _rows =>
+      _instance?.responses ?? _responses?.responses ?? [];
+  int? get _publishedSequence =>
+      _instance?.publishedSequence ?? _responses?.publishedSequence;
+  bool? get _cancelled =>
+      _instance?.publishedCancelled ?? _responses?.publishedCancelled;
+  final _originalText = TextEditingController(),
+      _originalZone = TextEditingController();
+  cal.CalendarEventTimeKind _originalKind = cal.CalendarEventTimeKind.date;
   List<cal.CalendarSchedulingReplySourceView>? _sources;
   String? _error, _source, _message;
   bool _busy = false;
@@ -45,6 +59,8 @@ class _AttendeeRepliesScreenState extends State<AttendeeRepliesScreen> {
   void dispose() {
     _sequence.dispose();
     _comment.dispose();
+    _originalText.dispose();
+    _originalZone.dispose();
     super.dispose();
   }
 
@@ -54,24 +70,42 @@ class _AttendeeRepliesScreenState extends State<AttendeeRepliesScreen> {
       _error = null;
       _source = null;
       _responses = null;
+      _instance = null;
       _sources = null;
     });
     try {
       final api = widget.client.modules.serverpod_calendar.calendarEvent;
-      final responses = await api.schedulingResponses(widget.eventId);
+      final responses = widget.originalStart == null
+          ? await api.schedulingResponses(widget.eventId)
+          : null;
+      final instance = widget.originalStart == null
+          ? null
+          : await api.schedulingInstanceResponses(
+              widget.eventId,
+              widget.originalStart!,
+            );
       // Source access is independently protected. A denied source list must not
       // erase an already authorized response summary.
       if (!mounted) return;
       setState(() {
         _responses = responses;
+        _instance = instance;
         _sources = null;
-        _attendee ??= responses.responses.firstOrNull?.attendeeAddress;
-        if (_pending == null) _sequence.text = '${responses.publishedSequence}';
+        _attendee ??= _rows.firstOrNull?.attendeeAddress;
+        if (_pending == null) {
+          _sequence.text = _publishedSequence?.toString() ?? '';
+        }
       });
       final sources = await api.schedulingReplySources(widget.eventId);
       if (mounted) {
         setState(() {
-          _sources = sources;
+          _sources = sources
+              .where(
+                (source) =>
+                    jsonEncode(source.originalStart?.toJson()) ==
+                    jsonEncode(widget.originalStart?.toJson()),
+              )
+              .toList();
         });
       }
     } on cal.CalendarException catch (error) {
@@ -131,6 +165,7 @@ class _AttendeeRepliesScreenState extends State<AttendeeRepliesScreen> {
         input.$4,
         input.$5,
         input.$6,
+        widget.originalStart,
       );
       _pending = null;
       if (!mounted) return;
@@ -199,6 +234,43 @@ class _AttendeeRepliesScreenState extends State<AttendeeRepliesScreen> {
     }
   }
 
+  Future<void> _openInstance() async {
+    try {
+      final match = RegExp(
+        r'^([0-9]{4})-([0-9]{2})-([0-9]{2})(?:T([0-9]{2}):([0-9]{2}):([0-9]{2}))?$',
+      ).firstMatch(_originalText.text);
+      if (match == null) throw const FormatException();
+      int part(int n) => int.parse(match[n] ?? '0');
+      final point = cal.CalendarEventTiming(
+        kind: _originalKind,
+        zoneId: _originalKind == cal.CalendarEventTimeKind.zoned
+            ? _originalZone.text
+            : null,
+        start: cal.CalendarEventCivil(
+          year: part(1),
+          month: part(2),
+          day: part(3),
+          hour: part(4),
+          minute: part(5),
+          second: part(6),
+        ),
+      );
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => AttendeeRepliesScreen(
+            client: widget.client,
+            eventId: widget.eventId,
+            originalStart: point,
+          ),
+        ),
+      );
+    } on FormatException {
+      setState(() {
+        _error = 'Enter the original as YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
@@ -214,22 +286,26 @@ class _AttendeeRepliesScreenState extends State<AttendeeRepliesScreen> {
     body: ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        const Text(
-          'Master invitation responses. Prior and stale replies never apply automatically.',
+        Text(
+          widget.originalStart == null
+              ? 'Master invitation responses. Prior and stale replies never apply automatically.'
+              : 'Single-occurrence response; other occurrences and the whole series stay independent.',
         ),
+        if (widget.originalStart != null)
+          Text('Original: ${_originalLabel(widget.originalStart!)}'),
         if (_busy) const LinearProgressIndicator(),
         if (_error != null) Text(_error!, key: const Key('replies-error')),
         if (_message != null) Text(_message!, key: const Key('replies-result')),
-        if (_responses != null) ...[
-          if (_responses!.recurring)
+        if (_responses != null || _instance != null) ...[
+          if (_responses?.recurring ?? false)
             const Text(
-              'Whole-series master response; instance replies are not supported.',
+              'Whole-series master response; single-occurrence responses are separate.',
             ),
           Text(
-            'Published sequence ${_responses!.publishedSequence}'
-            '${_responses!.publishedCancelled ? ' (cancelled)' : ''}',
+            'Published sequence ${_publishedSequence?.toString() ?? 'no current target'}'
+            '${_cancelled == true ? ' (cancelled)' : ''}',
           ),
-          for (final response in _responses!.responses)
+          for (final response in _rows)
             ListTile(
               title: Text(response.attendeeAddress),
               subtitle: Text(
@@ -247,7 +323,7 @@ class _AttendeeRepliesScreenState extends State<AttendeeRepliesScreen> {
             key: const Key('reply-attendee'),
             initialValue: _attendee,
             items: [
-              for (final r in _responses!.responses)
+              for (final r in _rows)
                 DropdownMenuItem(
                   value: r.attendeeAddress,
                   child: Text(r.attendeeAddress),
@@ -293,10 +369,61 @@ class _AttendeeRepliesScreenState extends State<AttendeeRepliesScreen> {
           ),
           FilledButton(
             key: const Key('reply-simulate'),
-            onPressed: _busy || _attendee == null ? null : _simulate,
+            onPressed:
+                _busy ||
+                    _attendee == null ||
+                    (_publishedSequence == null && _pending == null)
+                ? null
+                : _simulate,
             child: Text(
               _pending == null ? 'Simulate reply' : 'Retry same reply',
             ),
+          ),
+        ],
+        if (widget.originalStart == null &&
+            (_responses?.recurring ?? false)) ...[
+          const Divider(),
+          const Text(
+            'Review one original from the published invitation, not its moved start. Choose its exact DATE/UTC/named-zone profile. Older invitations need a new Save and notify before instance replies.',
+          ),
+          DropdownButtonFormField<cal.CalendarEventTimeKind>(
+            key: const Key('reply-original-kind'),
+            initialValue: _originalKind,
+            items: [
+              for (final kind in [
+                cal.CalendarEventTimeKind.date,
+                cal.CalendarEventTimeKind.utc,
+                cal.CalendarEventTimeKind.zoned,
+              ])
+                DropdownMenuItem(value: kind, child: Text(kind.name)),
+            ],
+            onChanged: _busy || _pending != null
+                ? null
+                : (kind) => setState(() {
+                    _originalKind = kind!;
+                  }),
+          ),
+          TextField(
+            key: const Key('reply-original'),
+            controller: _originalText,
+            enabled: !_busy && _pending == null,
+            decoration: const InputDecoration(
+              labelText: 'Original YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS',
+            ),
+          ),
+          if (_originalKind == cal.CalendarEventTimeKind.zoned)
+            TextField(
+              key: const Key('reply-original-zone'),
+              controller: _originalZone,
+              enabled: !_busy && _pending == null,
+              decoration: const InputDecoration(
+                labelText: 'Exact published IANA zone',
+              ),
+            ),
+          FilledButton(
+            key: const Key('reply-open-instance'),
+            onPressed: _busy || _pending != null ? null : _openInstance,
+            child: const Text('Review single occurrence'),
           ),
         ],
         const Divider(),
@@ -319,4 +446,14 @@ class _AttendeeRepliesScreenState extends State<AttendeeRepliesScreen> {
       ],
     ),
   );
+}
+
+String _originalLabel(cal.CalendarEventTiming point) {
+  final c = point.start;
+  String two(int n) => n.toString().padLeft(2, '0');
+  final date = '${c.year}-${two(c.month)}-${two(c.day)}';
+  return point.kind == cal.CalendarEventTimeKind.date
+      ? date
+      : '$date'
+            'T${two(c.hour)}:${two(c.minute)}:${two(c.second)} ${point.zoneId ?? 'UTC'}';
 }

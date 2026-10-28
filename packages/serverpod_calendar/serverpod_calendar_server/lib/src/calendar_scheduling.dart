@@ -464,6 +464,7 @@ extension CalendarSchedulingOperations on CalendarService {
       final unchanged =
           last != null &&
           last.method == method &&
+          (cancellation || previousCheckpoint!.instanceVersionProfile) &&
           (cancellation ||
               previousCheckpoint!.kind ==
                   CalendarSchedulingPublicationKind.request) &&
@@ -605,7 +606,26 @@ extension CalendarSchedulingOperations on CalendarService {
         protocolState: state,
       );
       final receiptPublication = retry ?? (unchanged ? last : null);
-      final outgoingState = cancellation && receiptPublication == null
+      final upgrading =
+          !cancellation &&
+          previousCheckpoint != null &&
+          !previousCheckpoint.instanceVersionProfile;
+      final publicationSequence = upgrading
+          ? max(nextSequence, previousMaximum + 1)
+          : nextSequence;
+      if (retry == null &&
+          !unchanged &&
+          publicationSequence > eventMaxSequence) {
+        throw _failure(CalendarFailureCode.limitExceeded);
+      }
+      final outgoingState = upgrading && receiptPublication == null
+          ? state.copyWith(
+              version: state.version.copyWith(
+                sequence: publicationSequence,
+                stamp: eventProtocolInstant(versionTime),
+              ),
+            )
+          : cancellation && receiptPublication == null
           ? _eventProtocolValue(
               () => validateEventProtocolState(
                 previousPublished!.protocolState!.copyWith(
@@ -691,6 +711,9 @@ extension CalendarSchedulingOperations on CalendarService {
             outgoing,
             ledger,
             projectionOriginals,
+            instanceVersionProfile:
+                !cancellation ||
+                (previousCheckpoint?.instanceVersionProfile ?? false),
           );
       var bundleProjection =
           receiptPublication?.projection ??

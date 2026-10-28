@@ -23,12 +23,82 @@ def sql(database, statement):
         raise RuntimeError(result.stderr)
 
 
+def verify_instance_reply_upgrade(database):
+    # Only synthetic rows in this process-owned upgrade database.
+    sql(database, """
+INSERT INTO serverpod_calendar_identity (id,"scopeKey",revision)
+VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','instance-upgrade-test',1);
+INSERT INTO serverpod_calendar_event (id,"calendarId",revision)
+VALUES ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',3);
+INSERT INTO serverpod_calendar_scheduling_meeting
+(id,"scopeKey","calendarId","eventId","organizerAddress","authorityRef",revision,generation,"createdAt","updatedAt")
+VALUES ('cccccccc-cccc-4ccc-8ccc-cccccccccccc','instance-upgrade-test',
+'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+'mailto:organizer@example.invalid','synthetic-upgrade',1,0,'2026-10-28','2026-10-28');
+INSERT INTO serverpod_calendar_scheduling_reply_source
+(id,"scopeKey","meetingId","attendeeAddress",digest,"normalizedSource",sequence,stamp,
+"sourceParticipation","effectiveParticipation",outcome,"publishedSequence","publishedCancelled","receivedAt")
+VALUES ('dddddddd-dddd-4ddd-8ddd-dddddddddddd','instance-upgrade-test',
+'cccccccc-cccc-4ccc-8ccc-cccccccccccc','mailto:bob@example.invalid',repeat('a',64),
+'Synthetic preserved legacy source',0,'2026-10-28','accepted','accepted','applied',0,false,'2026-10-28');
+INSERT INTO serverpod_calendar_scheduling_reply_receipt
+(id,"scopeKey","meetingId","sourceId","ingressDigest",outcome,"receivedAt")
+VALUES ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee','instance-upgrade-test',
+'cccccccc-cccc-4ccc-8ccc-cccccccccccc','dddddddd-dddd-4ddd-8ddd-dddddddddddd',repeat('b',64),'applied','2026-10-28');
+INSERT INTO serverpod_calendar_scheduling_attendee_response
+(id,"scopeKey","meetingId","attendeeAddress",revision,"sourceId",sequence,stamp,
+"sourceParticipation","effectiveParticipation","receivedAt")
+VALUES ('ffffffff-ffff-4fff-8fff-ffffffffffff','instance-upgrade-test',
+'cccccccc-cccc-4ccc-8ccc-cccccccccccc','mailto:bob@example.invalid',4,
+'dddddddd-dddd-4ddd-8ddd-dddddddddddd',0,'2026-10-28','accepted','accepted','2026-10-28');
+CREATE TABLE instance_source_guard AS SELECT id,to_jsonb(t) AS payload FROM serverpod_calendar_scheduling_reply_source t;
+CREATE TABLE instance_response_guard AS SELECT id,to_jsonb(t) AS payload FROM serverpod_calendar_scheduling_attendee_response t;
+CREATE TABLE instance_receipt_guard AS SELECT id,to_jsonb(t) AS payload FROM serverpod_calendar_scheduling_reply_receipt t;
+""")
+    sql(database, (SERVER / "migrations/20261028072139405-instance-replies/migration.sql").read_text(encoding="utf-8"))
+    sql(database, """
+DO $verify_instance_replies$
+BEGIN
+ IF EXISTS (SELECT 1 FROM instance_source_guard g LEFT JOIN serverpod_calendar_scheduling_reply_source s USING(id)
+  WHERE s.id IS NULL OR to_jsonb(s)-'targetKey'-'originalStart'-'targetBasisKey' IS DISTINCT FROM g.payload
+  OR s."targetKey" <> 'master' OR s."targetBasisKey" <> 'master' OR s."originalStart" IS NOT NULL)
+ THEN RAISE EXCEPTION 'Instance upgrade changed source/history identity'; END IF;
+ IF EXISTS (SELECT 1 FROM instance_response_guard g LEFT JOIN serverpod_calendar_scheduling_attendee_response r USING(id)
+  WHERE r.id IS NULL OR to_jsonb(r)-'targetKey' IS DISTINCT FROM g.payload OR r."targetKey" <> 'master')
+ THEN RAISE EXCEPTION 'Instance upgrade changed response/history identity'; END IF;
+ IF EXISTS (SELECT 1 FROM instance_receipt_guard g LEFT JOIN serverpod_calendar_scheduling_reply_receipt r USING(id)
+  WHERE r.id IS NULL OR to_jsonb(r) IS DISTINCT FROM g.payload)
+ THEN RAISE EXCEPTION 'Instance upgrade changed stable receipt'; END IF;
+ IF (SELECT indexdef FROM pg_indexes WHERE indexname='calendar_attendee_response_address_unique')
+  NOT LIKE '%("meetingId", "attendeeAddress", "targetKey")%'
+ THEN RAISE EXCEPTION 'Instance target uniqueness index missing'; END IF;
+ BEGIN
+  INSERT INTO serverpod_calendar_scheduling_attendee_response
+  ("scopeKey","meetingId","attendeeAddress",revision,"sourceId",sequence,stamp,"effectiveParticipation","receivedAt")
+  VALUES ('instance-upgrade-test','cccccccc-cccc-4ccc-8ccc-cccccccccccc','mailto:bob@example.invalid',1,
+  'dddddddd-dddd-4ddd-8ddd-dddddddddddd',0,'2026-10-28','accepted','2026-10-28');
+  RAISE EXCEPTION 'Upgrade lost master-response uniqueness';
+ EXCEPTION WHEN unique_violation THEN NULL;
+ END;
+END;
+$verify_instance_replies$;
+DROP TABLE instance_source_guard;
+DROP TABLE instance_response_guard;
+DROP TABLE instance_receipt_guard;
+""")
+
+
 def main():
     # Drop only a database this process successfully creates on the test service.
     database = f"calendar_metadata_upgrade_{os.getpid()}"
     assert re.fullmatch(r"calendar_metadata_upgrade_[0-9]+", database)
     sql("postgres", f"CREATE DATABASE {database};")
     try:
+        if "--instance-replies-only" in __import__("sys").argv:
+            sql(database, (SERVER / "migrations/20261027194429192-attendee-replies/definition.sql").read_text(encoding="utf-8"))
+            verify_instance_reply_upgrade(database)
+            print("PASS: populated master reply source/response/receipt rows preserved, master defaults and target uniqueness verified.")
+            return
         sql(database, (SERVER / "migrations/20261020142844886-calendar-crud/definition.sql").read_text(encoding="utf-8"))
         sql(database, """
 INSERT INTO serverpod_calendar_identity (id, "scopeKey", revision)
@@ -661,7 +731,8 @@ END;
 $verify_replies$;
 DROP TABLE reply_upgrade_guard;
 """)
-        print("PASS: populated schema upgrades preserve prior rows, create no alarm work/actions and add empty feed/scheduling/reply tables with unknown legacy event provenance.")
+        verify_instance_reply_upgrade(database)
+        print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated master replies/receipts through the instance-target upgrade.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")
 

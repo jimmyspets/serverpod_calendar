@@ -10,7 +10,10 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
+    as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_scheduling_participation.dart' as _iot0xi24;
 import 'calendar_scheduling_reply_outcome.dart' as _ikqvfn4d;
 
@@ -20,6 +23,7 @@ abstract class CalendarSchedulingReplySourceView
   const CalendarSchedulingReplySourceView._({
     required this.id,
     required this.attendeeAddress,
+    this.originalStart,
     this.sourceSequence,
     required this.stamp,
     this.sourceParticipation,
@@ -34,6 +38,7 @@ abstract class CalendarSchedulingReplySourceView
   const factory CalendarSchedulingReplySourceView({
     required _isc.UuidValue id,
     required String attendeeAddress,
+    _ieswiaty.CalendarEventTiming? originalStart,
     int? sourceSequence,
     required DateTime stamp,
     _iot0xi24.CalendarSchedulingParticipation? sourceParticipation,
@@ -51,6 +56,11 @@ abstract class CalendarSchedulingReplySourceView
     return CalendarSchedulingReplySourceView(
       id: _isc.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
       attendeeAddress: jsonSerialization['attendeeAddress'] as String,
+      originalStart: jsonSerialization['originalStart'] == null
+          ? null
+          : _ie4a1wrz.Protocol().deserialize<_ieswiaty.CalendarEventTiming>(
+              jsonSerialization['originalStart'],
+            ),
       sourceSequence: jsonSerialization['sourceSequence'] as int?,
       stamp: _isc.DateTimeJsonExtension.fromJson(jsonSerialization['stamp']),
       sourceParticipation: jsonSerialization['sourceParticipation'] == null
@@ -82,6 +92,8 @@ abstract class CalendarSchedulingReplySourceView
 
   final String attendeeAddress;
 
+  final _ieswiaty.CalendarEventTiming? originalStart;
+
   final int? sourceSequence;
 
   final DateTime stamp;
@@ -106,6 +118,7 @@ abstract class CalendarSchedulingReplySourceView
   CalendarSchedulingReplySourceView copyWith({
     _isc.UuidValue? id,
     String? attendeeAddress,
+    _ieswiaty.CalendarEventTiming? originalStart,
     int? sourceSequence,
     DateTime? stamp,
     _iot0xi24.CalendarSchedulingParticipation? sourceParticipation,
@@ -134,6 +147,11 @@ abstract class CalendarSchedulingReplySourceView
                   attendeeAddress,
                 ) ||
                 other.attendeeAddress == attendeeAddress) &&
+            (identical(
+                  other.originalStart,
+                  originalStart,
+                ) ||
+                other.originalStart == originalStart) &&
             (identical(
                   other.sourceSequence,
                   sourceSequence,
@@ -187,6 +205,7 @@ abstract class CalendarSchedulingReplySourceView
       runtimeType,
       id,
       attendeeAddress,
+      originalStart,
       sourceSequence,
       stamp,
       sourceParticipation,
@@ -205,6 +224,7 @@ abstract class CalendarSchedulingReplySourceView
       '__className__': 'serverpod_calendar.CalendarSchedulingReplySourceView',
       'id': id.toJson(),
       'attendeeAddress': attendeeAddress,
+      if (originalStart != null) 'originalStart': originalStart?.toJson(),
       if (sourceSequence != null) 'sourceSequence': sourceSequence,
       'stamp': stamp.toJson(),
       if (sourceParticipation != null)
@@ -224,6 +244,8 @@ abstract class CalendarSchedulingReplySourceView
       '__className__': 'serverpod_calendar.CalendarSchedulingReplySourceView',
       'id': id.toJson(),
       'attendeeAddress': attendeeAddress,
+      if (originalStart != null)
+        'originalStart': originalStart?.toJsonForProtocol(),
       if (sourceSequence != null) 'sourceSequence': sourceSequence,
       'stamp': stamp.toJson(),
       if (sourceParticipation != null)
@@ -250,6 +272,7 @@ class _CalendarSchedulingReplySourceViewImpl
   const _CalendarSchedulingReplySourceViewImpl({
     required _isc.UuidValue id,
     required String attendeeAddress,
+    _ieswiaty.CalendarEventTiming? originalStart,
     int? sourceSequence,
     required DateTime stamp,
     _iot0xi24.CalendarSchedulingParticipation? sourceParticipation,
@@ -262,6 +285,7 @@ class _CalendarSchedulingReplySourceViewImpl
   }) : super._(
          id: id,
          attendeeAddress: attendeeAddress,
+         originalStart: originalStart,
          sourceSequence: sourceSequence,
          stamp: stamp,
          sourceParticipation: sourceParticipation,
@@ -280,6 +304,7 @@ class _CalendarSchedulingReplySourceViewImpl
   CalendarSchedulingReplySourceView copyWith({
     _isc.UuidValue? id,
     String? attendeeAddress,
+    Object? originalStart = _Undefined,
     Object? sourceSequence = _Undefined,
     DateTime? stamp,
     Object? sourceParticipation = _Undefined,
@@ -293,6 +318,9 @@ class _CalendarSchedulingReplySourceViewImpl
     return CalendarSchedulingReplySourceView(
       id: id ?? this.id,
       attendeeAddress: attendeeAddress ?? this.attendeeAddress,
+      originalStart: originalStart is _ieswiaty.CalendarEventTiming?
+          ? originalStart
+          : this.originalStart?.copyWith(),
       sourceSequence: sourceSequence is int?
           ? sourceSequence
           : this.sourceSequence,

@@ -50,6 +50,21 @@ final class _ReplyMaster {
   String get protocolUid => carrier.protocolUid;
   List<String> get recipients => carrier.recipients;
   bool get recurring => _schedulingRecurring(published.content);
+  final work = RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
+  final targets = <String, _ReplyTarget>{};
+  late final EventWireProjection wire = (() {
+    final root = message.source.components.single;
+    final document = IcalendarSyntaxDocument([
+      IcalendarSyntaxComponent(
+        root.name,
+        root.entries.where(
+          (e) => e is! IcalendarSyntaxProperty || e.canonicalName != 'METHOD',
+        ),
+      ),
+    ]);
+    final calendar = validateIcalendarEventCalendar(document);
+    return eventWireProjection(calendar.series.single);
+  })();
 }
 
 CalendarSchedulingParticipation? _replyParticipation(String? value) =>
@@ -76,8 +91,11 @@ IcalendarSchedulingMessage _replyMessage(List<int> bytes, int maxBytes) =>
         throw _failure(CalendarFailureCode.validation);
       }
       final event = message.events.single;
-      if (event.isOverride ||
-          event.isThisAndFuture ||
+      if (event.isThisAndFuture ||
+          event.isOverride &&
+              event.source.entries.whereType<IcalendarSyntaxProperty>().any(
+                (p) => {'RRULE', 'RDATE', 'EXDATE'}.contains(p.canonicalName),
+              ) ||
           event.participants.attendees.length != 1 ||
           event.participants.organizer == null) {
         throw _failure(CalendarFailureCode.validation);
@@ -144,6 +162,7 @@ bool _replyMatchesPublication(
     'ATTENDEE',
     'COMMENT',
     'REQUEST-STATUS',
+    'RECURRENCE-ID',
   };
   Object key(IcalendarSyntaxProperty p) {
     final parameters = [...p.parameters]
@@ -202,20 +221,28 @@ extension CalendarSchedulingReplies on CalendarService {
     final sources = await CalendarSchedulingReplySourceRecord.db.find(
       _session,
       where: (t) => t.meetingId.equals(meeting.id!) & t.inactiveAt.equals(null),
-      limit: 65,
+      limit: 257,
       transaction: tx,
     );
-    if (sources.length > 64) {
+    if (sources.length > 256) {
       throw _failure(CalendarFailureCode.unavailable);
     }
     if (sources.isEmpty) return;
     final target = _ReplyMaster(publication);
     for (final source in sources) {
+      _validateReplySource(source, meeting, target);
       if (source.scopeKey != meeting.scopeKey) {
         throw _failure(CalendarFailureCode.unavailable);
       }
-      if (target.method == 'REQUEST' &&
-          (source.sequence ?? 0) == target.sequence) {
+      final selected = _schedulingValue(
+        () => _replyTarget(target, source.originalStart, allowMissing: true),
+      );
+      if (source.targetKey != selected.key) {
+        throw _failure(CalendarFailureCode.unavailable);
+      }
+      if (selected.cancelled == false &&
+          source.targetBasisKey == selected.basisKey &&
+          (source.sequence ?? 0) == selected.sequence) {
         continue;
       }
       source.inactiveAt = now.isBefore(source.receivedAt)
@@ -297,9 +324,14 @@ extension CalendarSchedulingReplies on CalendarService {
               where: (t) => t.sourceId.equals(source.id!),
               transaction: tx,
             );
-        if (response != null &&
-            publication.method == 'REQUEST' &&
-            response.sequence == publication.sequence) {
+        final target = _schedulingValue(
+          () => _replyTarget(
+            publication,
+            source.originalStart,
+            allowMissing: true,
+          ),
+        );
+        if (target.current(response, source)) {
           return;
         }
         final references = await CalendarSchedulingReplyReceiptRecord.db.find(
@@ -348,7 +380,7 @@ extension CalendarSchedulingReplies on CalendarService {
     try {
       final decoded = _replyMessage(
         utf8.encode(source.normalizedSource),
-        _replies.options.maxSourceBytes,
+        _runtime.scheduling?.replies?.options.maxSourceBytes ?? 524288,
       );
       final event = decoded.events.single;
       final attendee = event.participants.attendees.single;
@@ -356,6 +388,11 @@ extension CalendarSchedulingReplies on CalendarService {
       if (source.id == null ||
           source.scopeKey != meeting.scopeKey ||
           source.meetingId != meeting.id ||
+          source.targetKey != _replyTargetKey(source.originalStart) ||
+          !_replySamePoint(source.originalStart, _replyOriginal(event)) ||
+          source.originalStart == null && source.targetBasisKey != 'master' ||
+          source.targetBasisKey != 'master' &&
+              !RegExp(r'^[0-9a-f]{64}$').hasMatch(source.targetBasisKey) ||
           event.uid != publication.protocolUid ||
           event.participants.organizer!.address != meeting.organizerAddress ||
           attendee.address != source.attendeeAddress ||
@@ -385,6 +422,7 @@ extension CalendarSchedulingReplies on CalendarService {
     if (response != null &&
         (response.scopeKey != source.scopeKey ||
             response.meetingId != source.meetingId ||
+            response.targetKey != source.targetKey ||
             response.attendeeAddress != source.attendeeAddress ||
             response.revision < 1 ||
             response.sourceId == source.id &&
@@ -401,6 +439,7 @@ extension CalendarSchedulingReplies on CalendarService {
     return CalendarSchedulingReplySourceView(
       id: source.id!,
       attendeeAddress: source.attendeeAddress,
+      originalStart: source.originalStart,
       sourceSequence: source.sequence,
       stamp: source.stamp,
       sourceParticipation: source.sourceParticipation,
@@ -411,8 +450,13 @@ extension CalendarSchedulingReplies on CalendarService {
       receivedAt: source.receivedAt,
       isCurrent:
           response?.sourceId == source.id &&
-          publication.method == 'REQUEST' &&
-          response?.sequence == publication.sequence,
+          _schedulingValue(
+            () => _replyTarget(
+              publication,
+              source.originalStart,
+              allowMissing: true,
+            ),
+          ).current(response, source),
     );
   }
 
@@ -425,7 +469,17 @@ extension CalendarSchedulingReplies on CalendarService {
     CalendarSchedulingReplySourceRecord? source,
     bool sourceAccess = false,
     CalendarSchedulingAttendeeResponseRecord? response,
+    _ReplyTarget? target,
   }) async {
+    final selected =
+        target ??
+        _schedulingValue<_ReplyTarget>(
+          () => _replyTarget(
+            publication,
+            source?.originalStart,
+            allowMissing: true,
+          ),
+        );
     final intent = CalendarSchedulingIntent(
       method: publication.carrier.method,
       publicationKind: publication.checkpoint.kind,
@@ -458,6 +512,9 @@ extension CalendarSchedulingReplies on CalendarService {
             schedulingReplyDocument: source?.normalizedSource,
             replyPublishedMessage: publication.message,
             replyPublishedMaster: publication.master,
+            replyOriginalStart: selected.originalStart,
+            replyPublishedTarget: selected.basis,
+            replyEffectiveOccurrence: selected.effective,
           ),
       ],
       tx,
@@ -474,8 +531,9 @@ extension CalendarSchedulingReplies on CalendarService {
       _ReplyMaster,
       Transaction,
     )
-    action,
-  ) async {
+    action, {
+    CalendarEventTiming? originalStart,
+  }) async {
     final actor = await _context();
     return _transaction(actor, (tx, _) async {
       final event = await _event(actor, eventId, tx);
@@ -495,7 +553,16 @@ extension CalendarSchedulingReplies on CalendarService {
           published.protocolUid != event.data.protocolUid) {
         throw _failure(CalendarFailureCode.unavailable);
       }
-      await _replyReadAccess(actor, event, meeting, publication, tx);
+      await _replyReadAccess(
+        actor,
+        event,
+        meeting,
+        publication,
+        tx,
+        target: _schedulingValue(
+          () => _replyTarget(publication, originalStart, allowMissing: true),
+        ),
+      );
       final value = await action(actor, event, meeting, publication, tx);
       await _verifyContext(actor);
       return value;
@@ -507,7 +574,8 @@ extension CalendarSchedulingReplies on CalendarService {
   ) => _replyRead(eventId, (actor, event, meeting, publication, tx) async {
     final rows = await CalendarSchedulingAttendeeResponseRecord.db.find(
       _session,
-      where: (t) => t.meetingId.equals(meeting.id!),
+      where: (t) =>
+          t.meetingId.equals(meeting.id!) & t.targetKey.equals('master'),
       limit: 65,
       transaction: tx,
     );
@@ -533,6 +601,8 @@ extension CalendarSchedulingReplies on CalendarService {
       if (response != null) {
         if (source == null ||
             response.scopeKey != actor.scopeKey ||
+            response.targetKey != 'master' ||
+            source.targetKey != 'master' ||
             response.sequence != (source.sequence ?? 0) ||
             response.stamp != source.stamp ||
             response.revision < 1 ||
@@ -556,6 +626,75 @@ extension CalendarSchedulingReplies on CalendarService {
       responses: views,
     );
   });
+
+  Future<CalendarSchedulingInstanceResponsesView> schedulingInstanceResponses(
+    UuidValue eventId,
+    CalendarEventTiming originalStart,
+  ) => _replyRead(eventId, (actor, event, meeting, publication, tx) async {
+    final target = _schedulingValue(
+      () => _replyTarget(publication, originalStart, allowMissing: true),
+    );
+    final rows = await CalendarSchedulingAttendeeResponseRecord.db.find(
+      _session,
+      where: (t) =>
+          t.meetingId.equals(meeting.id!) & t.targetKey.equals(target.key),
+      limit: 65,
+      transaction: tx,
+    );
+    if (rows.length > 64 ||
+        rows.any((r) => !publication.recipients.contains(r.attendeeAddress))) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
+    final views = <CalendarSchedulingAttendeeResponseView>[];
+    for (final address in publication.recipients) {
+      final matches = rows.where((r) => r.attendeeAddress == address).toList();
+      if (matches.length > 1) throw _failure(CalendarFailureCode.unavailable);
+      final response = matches.firstOrNull;
+      final source = response == null
+          ? null
+          : await CalendarSchedulingReplySourceRecord.db.findById(
+              _session,
+              response.sourceId,
+              transaction: tx,
+            );
+      if (response != null) {
+        if (source == null ||
+            response.scopeKey != actor.scopeKey ||
+            response.targetKey != target.key ||
+            source.targetKey != target.key ||
+            !_replySamePoint(source.originalStart, originalStart) ||
+            source.outcome != CalendarSchedulingReplyOutcome.applied) {
+          throw _failure(CalendarFailureCode.unavailable);
+        }
+        _validateReplySource(source, meeting, publication);
+        _replySourceView(source, response, publication);
+      }
+      views.add(
+        _replyResponseView(
+          address,
+          response,
+          source,
+          publication,
+        ).copyWith(isCurrent: target.current(response, source)),
+      );
+    }
+    await _replyReadAccess(
+      actor,
+      event,
+      meeting,
+      publication,
+      tx,
+      target: target,
+    );
+    return CalendarSchedulingInstanceResponsesView(
+      eventId: eventId,
+      publicationId: publication.id!,
+      originalStart: originalStart,
+      publishedSequence: target.sequence,
+      publishedCancelled: target.cancelled,
+      responses: views,
+    );
+  }, originalStart: originalStart);
 
   Future<List<CalendarSchedulingReplySourceView>> schedulingReplySources(
     UuidValue eventId,
@@ -586,7 +725,8 @@ extension CalendarSchedulingReplies on CalendarService {
             _session,
             where: (t) =>
                 t.meetingId.equals(meeting.id!) &
-                t.attendeeAddress.equals(source.attendeeAddress),
+                t.attendeeAddress.equals(source.attendeeAddress) &
+                t.targetKey.equals(source.targetKey),
             transaction: tx,
           );
       await _replyReadAccess(
@@ -632,7 +772,8 @@ extension CalendarSchedulingReplies on CalendarService {
           _session,
           where: (t) =>
               t.meetingId.equals(meeting.id!) &
-              t.attendeeAddress.equals(source.attendeeAddress),
+              t.attendeeAddress.equals(source.attendeeAddress) &
+              t.targetKey.equals(source.targetKey),
           transaction: tx,
         );
     await _replyReadAccess(
@@ -688,10 +829,10 @@ extension CalendarSchedulingReplies on CalendarService {
     sourceParticipation: response?.sourceParticipation,
     effectiveParticipation: response?.effectiveParticipation,
     receivedAt: response?.receivedAt,
-    isCurrent:
-        response != null &&
-        publication.method == 'REQUEST' &&
-        response.sequence == publication.sequence,
+    isCurrent: _schedulingValue(
+      () =>
+          _replyTarget(publication, source?.originalStart, allowMissing: true),
+    ).current(response, source),
   );
 
   Future<CalendarSchedulingReplyReceipt> _receiveReply(
@@ -749,6 +890,13 @@ extension CalendarSchedulingReplies on CalendarService {
           !publication.recipients.contains(attendee.address)) {
         throw _failure(CalendarFailureCode.validation);
       }
+      final target = _schedulingValue(
+        () => _replyTarget(
+          publication,
+          _replyOriginal(incoming),
+          allowMissing: true,
+        ),
+      );
       CalendarSchedulingReplyPolicyContext context({
         CalendarSchedulingAttendeeResponseView? response,
         CalendarSchedulingReplyOutcome? outcome,
@@ -760,8 +908,11 @@ extension CalendarSchedulingReplies on CalendarService {
         calendar: event.parent.snapshot,
         currentEvent: event.snapshot,
         publishedEvent: published,
-        publishedSequence: publication.sequence,
-        publishedCancelled: publication.method == 'CANCEL',
+        publishedSequence: target.sequence,
+        publishedCancelled: target.cancelled,
+        originalStart: target.originalStart,
+        publishedTarget: target.basis,
+        effectiveOccurrence: target.effective,
         publishedMessage: publication.message,
         publishedMaster: publication.master,
         latestPublicationKind: publication.checkpoint.kind,
@@ -785,7 +936,8 @@ extension CalendarSchedulingReplies on CalendarService {
             _session,
             where: (t) =>
                 t.meetingId.equals(meeting.id!) &
-                t.attendeeAddress.equals(attendee.address),
+                t.attendeeAddress.equals(attendee.address) &
+                t.targetKey.equals(target.key),
             transaction: tx,
           );
       final previousSource = response == null
@@ -800,7 +952,13 @@ extension CalendarSchedulingReplies on CalendarService {
               response.scopeKey != delivery.scopeKey ||
               previousSource.scopeKey != delivery.scopeKey ||
               previousSource.meetingId != meeting.id ||
-              previousSource.attendeeAddress != attendee.address)) {
+              previousSource.attendeeAddress != attendee.address ||
+              previousSource.targetKey != target.key ||
+              response.targetKey != target.key ||
+              !_replySamePoint(
+                previousSource.originalStart,
+                target.originalStart,
+              ))) {
         throw _failure(CalendarFailureCode.unavailable);
       }
       if (response != null) {
@@ -879,6 +1037,9 @@ extension CalendarSchedulingReplies on CalendarService {
         );
         return result(receipt, source, true);
       }
+      if (target.sequence == null || target.cancelled == null) {
+        throw _failure(CalendarFailureCode.validation);
+      }
       final existing = await CalendarSchedulingReplySourceRecord.db
           .findFirstRow(
             _session,
@@ -900,16 +1061,16 @@ extension CalendarSchedulingReplies on CalendarService {
       var outcome = CalendarSchedulingReplyOutcome.applied;
       if (existing != null) {
         outcome = CalendarSchedulingReplyOutcome.duplicate;
-      } else if (sequence < publication.sequence) {
+      } else if (sequence < target.sequence!) {
         outcome = CalendarSchedulingReplyOutcome.stale;
-      } else if (sequence > publication.sequence) {
+      } else if (sequence > target.sequence!) {
         outcome = CalendarSchedulingReplyOutcome.unmatched;
-      } else if (publication.method == 'CANCEL' ||
+      } else if (target.cancelled! ||
           incoming.requestStatuses.any((s) => s.levels.first != 2)) {
         outcome = CalendarSchedulingReplyOutcome.unappliedResult;
       } else {
         if (!_schedulingValue(
-          () => _replyMatchesPublication(incoming, publication.master),
+          () => _replyMatchesPublication(incoming, target.matching!),
         )) {
           outcome = CalendarSchedulingReplyOutcome.conflict;
         } else if (current.isCurrent &&
@@ -957,6 +1118,9 @@ extension CalendarSchedulingReplies on CalendarService {
             scopeKey: delivery.scopeKey,
             meetingId: meeting.id!,
             attendeeAddress: attendee.address,
+            targetKey: target.key,
+            originalStart: target.originalStart,
+            targetBasisKey: target.basisKey!,
             digest: digest,
             normalizedSource: normalized,
             sequence: incoming.sequence,
@@ -964,8 +1128,8 @@ extension CalendarSchedulingReplies on CalendarService {
             sourceParticipation: participation,
             effectiveParticipation: effective,
             outcome: outcome,
-            publishedSequence: publication.sequence,
-            publishedCancelled: publication.method == 'CANCEL',
+            publishedSequence: target.sequence!,
+            publishedCancelled: target.cancelled!,
             receivedAt: now,
             inactiveAt: outcome == CalendarSchedulingReplyOutcome.applied
                 ? null
@@ -1017,6 +1181,7 @@ extension CalendarSchedulingReplies on CalendarService {
           scopeKey: delivery.scopeKey,
           meetingId: meeting.id!,
           attendeeAddress: attendee.address,
+          targetKey: target.key,
           revision: (response?.revision ?? 0) + 1,
           sourceId: source.id!,
           sequence: sequence,

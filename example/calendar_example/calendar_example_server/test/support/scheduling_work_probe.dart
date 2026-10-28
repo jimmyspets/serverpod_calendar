@@ -147,6 +147,7 @@ Future<void> main(List<String> args) async {
             'UID:${publication.protocolUid}',
             'DTSTAMP:20261027T120000Z',
             'SEQUENCE:${publication.sequence}',
+            if (input['instance'] == true) 'RECURRENCE-ID:20261103T090000Z',
             'ORGANIZER:${meeting.organizerAddress}',
             'ATTENDEE;PARTSTAT=ACCEPTED:mailto:bob@example.invalid',
             'END:VEVENT',
@@ -173,6 +174,12 @@ Future<void> main(List<String> args) async {
             'sourceId': receipt.sourceId.toString(),
             'unchanged': receipt.unchanged,
             'outcome': receipt.outcome.name,
+            'instance':
+                (await CalendarSchedulingReplySourceRecord.db.findById(
+                  s,
+                  receipt.sourceId,
+                ))!.originalStart !=
+                null,
             'sources': await CalendarSchedulingReplySourceRecord.db.count(
               s,
               where: (t) => t.meetingId.equals(meeting.id!),
@@ -283,7 +290,8 @@ Future<Map<String, String>> _seed(
   Session s,
   String method,
 ) => s.db.transaction((tx) async {
-  final recurringReply = method == 'RECURRING_REPLY';
+  final instanceReply = method == 'INSTANCE_REPLY';
+  final recurringReply = method == 'RECURRING_REPLY' || instanceReply;
   final replyMode = method == 'REPLY' || recurringReply;
   if (replyMode) method = 'REQUEST';
   final maskedRestore = method == 'MASKRESTORE';
@@ -519,6 +527,7 @@ Future<Map<String, String>> _seed(
       snapshot: method == 'REQUEST'
           ? jsonEncode({
               'version': 3,
+              if (instanceReply) 'instanceVersionProfile': 1,
               'canonical': checkpoint,
               'outgoing': checkpoint,
               'ledger': components,

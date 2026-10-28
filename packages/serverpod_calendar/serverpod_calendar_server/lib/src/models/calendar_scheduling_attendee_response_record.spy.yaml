@@ -6,6 +6,7 @@ fields:
   scopeKey: String
   meetingId: UuidValue, relation(parent=serverpod_calendar_scheduling_meeting)
   attendeeAddress: String
+  targetKey: String, default='master'
   revision: int
   sourceId: UuidValue, relation(parent=serverpod_calendar_scheduling_reply_source)
   sequence: int
@@ -15,7 +16,7 @@ fields:
   receivedAt: DateTime
 indexes:
   calendar_attendee_response_address_unique:
-    fields: meetingId, attendeeAddress
+    fields: meetingId, attendeeAddress, targetKey
     unique: true
   calendar_attendee_response_source_idx:
     fields: sourceId

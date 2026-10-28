@@ -335,6 +335,11 @@ class Endpoints extends _is.EndpointDispatch {
               type: _is.getType<String?>(),
               nullable: true,
             ),
+            'originalStart': _is.ParameterDescription(
+              name: 'originalStart',
+              type: _is.getType<_ipn35bcd.CalendarEventTiming?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -352,6 +357,7 @@ class Endpoints extends _is.EndpointDispatch {
                         params['sequence'],
                         params['sourceStamp'],
                         params['comment'],
+                        params['originalStart'],
                       ),
         ),
       },

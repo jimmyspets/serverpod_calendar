@@ -2654,6 +2654,8 @@ void main() {
           row = await publication(first.publicationId);
       final decoded = jsonDecode(row.snapshot)..['version'] = 2;
       decoded.remove('projectionOriginals');
+      // Historical v2 predates the instance-version safety profile.
+      decoded.remove('instanceVersionProfile');
       row.snapshot = jsonEncode(decoded);
       final projection = jsonDecode(row.projection)..['version'] = 2;
       row.projection = jsonEncode(projection);
