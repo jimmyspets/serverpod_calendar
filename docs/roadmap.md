@@ -471,3 +471,10 @@ Accepted [ADR 0133](adr/0133-single-instance-attendee-replies.md) adds scoped tr
 
 - [x] Implement accepted ADR 0135 selected-field event/task text/link metadata editing, independent disclosure, source/version preservation, event feed integration and Flutter editors, including the approved row-backed native task-state refinement. Validation is recorded separately.
 - [ ] Implement privacy-safe category search and remaining participant/file/relationship/inbound profiles; CONTACT remains import-only.
+
+## Proposed event/task category search
+
+- [ ] Review [ADR 0136](adr/0136-authorized-item-category-search.md): exact master categories, categories disclosure, immutable query context and criteria-bound cursor reuse.
+- [ ] After approval, implement event/task lists and Flutter Apply/Clear, test privacy/budgets/cursor binding and real cross-host continuation/update races, then run broader batch checks before one code commit.
+
+No source/schema/search implementation is included in this proposal. Remaining participant/relationship/file/inbound/mail and release gates retain their existing scope.

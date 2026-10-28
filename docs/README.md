@@ -252,3 +252,7 @@ Accepted ADR 0134 adds the scoped native/ordinary VEVENT descriptive-field incre
 ## Native item text/link metadata
 
 Accepted ADR 0135 adds selected-field native event/task URL, classification, category and comment editors with independent disclosure, retained source groups/baselines and effective outgoing versions. CONTACT remains import-only; category search remains separate. See [the implementation guide](native-item-text-metadata.md) and scoped validation evidence.
+
+## Event/task category search proposal
+
+[ADR 0136](adr/0136-authorized-item-category-search.md) proposes exact per-calendar master-category filtering with independent disclosure and opaque criteria-bound continuation. Search remains unimplemented pending explicit contract review; the completed ADR 0135 editors remain separate.
