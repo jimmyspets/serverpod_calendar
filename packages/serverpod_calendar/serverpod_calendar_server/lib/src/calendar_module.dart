@@ -1392,3 +1392,25 @@ CalendarSupplementalMetadata _supplementalModel(
           seconds: v.refreshHint!.duration.seconds,
         ),
 );
+
+IcalendarCategory? _itemCategoryFilter(CalendarCategoryFilter? input) {
+  try {
+    return input == null
+        ? null
+        : IcalendarCategory(input.value, language: input.language);
+  } on ArgumentError {
+    throw _failure(CalendarFailureCode.validation);
+  }
+}
+
+bool _itemCategoryMatches(
+  List<CalendarItemCategoryGroup> groups,
+  IcalendarCategory filter,
+) => groups.any(
+  (g) => g.values.any(
+    (value) =>
+        value == filter.value &&
+        (filter.language == null ||
+            g.language?.toLowerCase() == filter.language!.toLowerCase()),
+  ),
+);

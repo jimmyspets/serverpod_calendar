@@ -262,3 +262,5 @@ Accepted ADR 0134 adds optional event priority, exact bounded coordinate strings
 ## Native item text/link metadata
 
 Accepted ADR 0135, including the separately approved nativeMetadataOnly flag, adds selected-field event/task text/link editing in existing JSON without SQL changes. Preserve hidden/unselected values, immutable host patch context, component-presence gates, imported strict consistency and native row-backed progress/history. The private flag grants no provenance/authority; exports compose an unmarked temporary wire projection. CONTACT stays import-only, and search/mail remain separate. See [the guide](docs/native-item-text-metadata.md).
+
+Accepted ADR 0136 adds [exact event/task master-category search](docs/item-category-search.md). Require ordinary read and category disclosure before matching; preserve response groups and immutable query context. Bind criteria to existing opaque cursor storage, charge all raw candidates, and fail unavailable/budget checks explicitly. Labels and empty detail results establish no authority or availability. No SQL change is expected; generated clients and host query adapters must upgrade together.

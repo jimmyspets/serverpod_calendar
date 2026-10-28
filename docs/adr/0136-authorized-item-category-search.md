@@ -1,6 +1,6 @@
 # ADR 0136: Authorized event and task category search
 
-Status: **Proposed. Searchable free-form event/task categories and exact text matching are already selected. The concrete query/disclosure/cursor/API mechanics below require explicit agreement.**
+Status: **Accepted by explicit maintainer approval on 2026-10-28 for the complete proposed category-search batch. Scoped implementation and phased feature-batch validation are complete; see docs/item-category-search.md and docs/scaffold-validation.md.**
 
 ## Context
 

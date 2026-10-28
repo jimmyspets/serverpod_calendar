@@ -573,15 +573,17 @@ abstract interface class CalendarHostPolicy {
     Session session,
     CalendarHostContext context,
     CalendarPolicySnapshot calendar,
-    Set<CalendarTaskFieldGroup> requestedGroups,
-  );
+    Set<CalendarTaskFieldGroup> requestedGroups, {
+    CalendarCategoryQuery? categoryFilter,
+  });
 
   Future<CalendarEventCandidatePlan> planEventQuery(
     Session session,
     CalendarHostContext context,
     CalendarPolicySnapshot calendar,
-    Set<CalendarEventFieldGroup> requestedGroups,
-  );
+    Set<CalendarEventFieldGroup> requestedGroups, {
+    CalendarCategoryQuery? categoryFilter,
+  });
 
   /// Authoritative complete contributor set within the trusted scope. Never a
   /// detail-filtered candidate plan. Unresolved/external coverage is incomplete.

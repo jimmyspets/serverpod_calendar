@@ -92,11 +92,13 @@ class CalendarEventEndpoint extends Endpoint {
     required int pageSize,
     required List<CalendarEventFieldGroup> fieldGroups,
     String? cursor,
+    CalendarCategoryFilter? categoryFilter,
   }) => CalendarModule.service(session).listEvents(
     calendarId,
     pageSize: pageSize,
     fieldGroups: fieldGroups,
     cursor: cursor,
+    categoryFilter: categoryFilter,
   );
   Future<CalendarEventOccurrencePreview> preview(
     Session session,
