@@ -198,19 +198,66 @@ DROP TABLE adoption_upgrade_guard;
 """)
 
 
+def verify_invitation_application_upgrade(database):
+    sql(database, """
+CREATE TABLE application_guard AS SELECT id,to_jsonb(t) payload FROM serverpod_calendar_invitation_link t;
+""")
+    sql(database, (SERVER / "migrations/20261029151703500-invitation-applications/migration.sql").read_text(encoding="utf-8"))
+    sql(database, """
+DO $verify_applications$
+BEGIN
+ IF EXISTS (SELECT 1 FROM application_guard g LEFT JOIN serverpod_calendar_invitation_link l USING(id)
+   WHERE l.id IS NULL OR to_jsonb(l) IS DISTINCT FROM g.payload)
+ THEN RAISE EXCEPTION 'Application upgrade changed creation receipts'; END IF;
+ IF (SELECT count(*) FROM serverpod_calendar_invitation_application)<>0
+ THEN RAISE EXCEPTION 'Upgrade invented application history'; END IF;
+END;
+$verify_applications$;
+INSERT INTO serverpod_calendar_invitation_application
+(id,"scopeKey","recipientKey","linkId",revision,"invitationId","sourceId",digest,stamp,
+"baselineDigest","creationDigest","eventRevision","invitationRevision","appliedAt","requestDigest","resultId")
+VALUES ('66666666-6666-4666-8666-666666666666','instance-upgrade-test','recipient',
+'99999999-9999-4999-8999-999999999999',1,'88888888-8888-4888-8888-888888888888',
+'77777777-7777-4777-8777-777777777777',repeat('a',64),now(),repeat('b',64),repeat('c',64),2,2,now(),repeat('d',64),
+'55555555-5555-4555-8555-555555555555');
+DO $verify_application_constraints$
+BEGIN
+ IF (SELECT sequence FROM serverpod_calendar_invitation_application LIMIT 1) IS NOT NULL
+ THEN RAISE EXCEPTION 'Invented source sequence zero'; END IF;
+ BEGIN
+  INSERT INTO serverpod_calendar_invitation_application
+  SELECT '44444444-4444-4444-8444-444444444444',"scopeKey","recipientKey","linkId",revision,"invitationId","sourceId",digest,sequence,stamp,
+  "baselineDigest","creationDigest","eventRevision","invitationRevision","appliedAt","requestDigest","resultId"
+  FROM serverpod_calendar_invitation_application;
+  RAISE EXCEPTION 'Missing one-checkpoint-per-link uniqueness';
+ EXCEPTION WHEN unique_violation THEN NULL;
+ END;
+ IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='serverpod_calendar_invitation_application'::regclass
+   AND contype='f' AND confdeltype='a' AND convalidated)
+ THEN RAISE EXCEPTION 'Missing restrictive checkpoint identity reference'; END IF;
+END;
+$verify_application_constraints$;
+DROP TABLE application_guard;
+""")
+
+
 def main():
     # Drop only a database this process successfully creates on the test service.
     database = f"calendar_metadata_upgrade_{os.getpid()}"
     assert re.fullmatch(r"calendar_metadata_upgrade_[0-9]+", database)
     sql("postgres", f"CREATE DATABASE {database};")
     try:
-        if any(arg in __import__("sys").argv for arg in ["--instance-replies-only", "--invitations-only", "--adoption-only"]):
+        if any(arg in __import__("sys").argv for arg in ["--instance-replies-only", "--invitations-only", "--adoption-only", "--applications-only"]):
             sql(database, (SERVER / "migrations/20261027194429192-attendee-replies/definition.sql").read_text(encoding="utf-8"))
             verify_instance_reply_upgrade(database)
-            if any(arg in __import__("sys").argv for arg in ["--invitations-only", "--adoption-only"]):
+            if any(arg in __import__("sys").argv for arg in ["--invitations-only", "--adoption-only", "--applications-only"]):
                 verify_invitation_upgrade(database)
-                if "--adoption-only" in __import__("sys").argv:
+                if any(arg in __import__("sys").argv for arg in ["--adoption-only", "--applications-only"]):
                     verify_invitation_adoption_upgrade(database)
+                    if "--applications-only" in __import__("sys").argv:
+                        verify_invitation_application_upgrade(database)
+                        print("PASS: populated application upgrade preserves immutable links, invents no history and enforces one bounded checkpoint per link.")
+                        return
                     print("PASS: populated invitation adoption upgrade preserves prior rows, invents no links, retains historical references and enforces identity/uniqueness constraints.")
                     return
                 print("PASS: invitation upgrade preserves populated prior domain rows, creates no invitation state and enforces bounded digest correlation/delivery keys.")
@@ -852,6 +899,7 @@ DROP TABLE reply_upgrade_guard;
         verify_instance_reply_upgrade(database)
         verify_invitation_upgrade(database)
         verify_invitation_adoption_upgrade(database)
+        verify_invitation_application_upgrade(database)
         print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated master replies/receipts through the instance-target, invitation-review and stable-link adoption upgrades.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

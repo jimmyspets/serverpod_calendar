@@ -1,3 +1,4 @@
+import 'invitation_application_smoke.dart';
 import 'invitation_adoption_smoke.dart';
 
 import 'dart:io';
@@ -130,4 +131,5 @@ Future<void> invitationSmoke(List<Client> clients) async {
     }
   }
   await invitationAdoptionSmoke(clients);
+  await invitationApplicationSmoke(clients);
 }

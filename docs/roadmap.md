@@ -487,7 +487,8 @@ The bounded query implementation is now present; validation is recorded separate
 - [x] Review [ADR 0137](adr/0137-trusted-invitation-intake-and-review.md): trusted intake, private summary/source review, dismissal, three tables, ordering/idempotency and bounded retention.
 - [x] Implement the approved intake/private-review batch and synthetic-only example.
 - [x] Complete its focused/fresh-upgrade/two-host/process-loss/client/Flutter and broader batch checks before one code commit.
-- [ ] Complete the scoped adoption validation below, then separately reviewed existing-meeting updates, participation responses, recurrence/CANCEL correlation and remaining mail/release requirements.
+- [x] Complete the scoped adoption validation below; explicit existing-meeting updates follow under ADR 0139.
+- [ ] Complete separately reviewed participation responses, recurrence/CANCEL correlation and remaining mail/release requirements.
 
 The approved review queue is calendar scheduling state, separate from the reusable notification module; it does not add a persistent notification inbox. The scoped implementation now exists; validation is recorded separately.
 
@@ -505,7 +506,8 @@ Accepted [ADR 0138](adr/0138-explicit-single-event-invitation-adoption.md) imple
 ## Explicit linked invitation updates
 
 - [x] Confirm explicit Apply update and rejection of local content conflicts.
-- [ ] Review [ADR 0139](adr/0139-explicit-linked-invitation-updates.md): accepted-source checkpoint, atomic writes, authority, ordering and latest-result retry boundary.
-- [ ] Implement and validate the separately approved update batch before one code commit.
+- [x] Review [ADR 0139](adr/0139-explicit-linked-invitation-updates.md): accepted-source checkpoint, atomic writes, authority, ordering and latest-result retry boundary.
+- [x] Implement the approved checkpoint/API/Flutter update batch.
+- [x] Complete focused and broader validation before one implementation commit.
 
-The maintainer confirmed explicit Apply update with rejection of local content conflicts. [ADR 0139](adr/0139-explicit-linked-invitation-updates.md) proposes one current accepted-source checkpoint per stable link, atomic source replacement/review writes, independent authority and a latest-result retry contract. The original creation receipt remains immutable. Earlier update commands would become stale after a later different application; the checkpoint/API/retention mechanics await explicit review and are not implemented. Receiving a newer invitation still only reopens review; participation replies and reviewed overwrite/merge remain separate.
+Accepted [ADR 0139](adr/0139-explicit-linked-invitation-updates.md) implements explicit conflict-protected application of newer linked non-recurring REQUEST sources. One private checkpoint tracks current acceptance and the latest retry result, while the creation receipt stays unchanged. See [the scope, permissions and retry limits](linked-invitation-updates.md) and separate batch validation. Receipt remains review-only; local changes reject replacement and no participation reply is sent.

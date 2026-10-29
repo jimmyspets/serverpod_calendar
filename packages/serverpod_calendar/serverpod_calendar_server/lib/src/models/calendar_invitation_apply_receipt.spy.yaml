@@ -1,0 +1,13 @@
+class: CalendarInvitationApplyReceipt
+immutable: true
+fields:
+  id: UuidValue
+  linkId: UuidValue
+  invitationId: UuidValue
+  sourceId: UuidValue
+  calendarId: UuidValue
+  eventId: UuidValue
+  applicationRevision: int
+  eventRevision: int
+  invitationRevision: int
+  appliedAt: DateTime
