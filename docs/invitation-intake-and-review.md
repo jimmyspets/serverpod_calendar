@@ -39,3 +39,8 @@ Generated `calendarInvitation.list` returns the complete bounded pending queue w
 The example review screen renders inert text and source history, supports refresh/dismissal and preserves stale-write errors. Its preview shows source civil date/clock and explicit DATE/UTC/zone, identifies exclusive DATE ends and preserves duration units/omitted end form without device-zone conversion. Its simulator exists only in development/test, constructs synthetic organizer/recipient evidence from the actual signed-in demo identity and accepts no arbitrary bytes or claimed sender proof. Uncertain simulator retries retain command/body identity until success. No Add/accept/decline/mail action is provided by this increment. Production hosts replace the adapter and transport integration.
 
 Focused database, populated-upgrade, real two-process loss/race and connected client/Flutter evidence is recorded in [validation](scaffold-validation.md). Generated sources and migrations come from the pinned CLI; participating hosts/clients must upgrade together. This increment establishes no MIME, external calendar-client or complete iTIP conformance.
+
+
+## Next proposed batch
+
+The maintainer selected one linked event in one explicitly chosen calendar per recipient invitation, with stable retries. [ADR 0138](adr/0138-explicit-single-event-invitation-adoption.md) proposes the new binding model, atomic Add to calendar operation and independent authority/retention checks. It awaits explicit model review; this guide describes only implemented review/dismissal.

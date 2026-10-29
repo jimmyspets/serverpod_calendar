@@ -702,3 +702,8 @@ Accepted ADR 0136 implements scoped per-calendar event/task master-category filt
 [ADR 0137](adr/0137-trusted-invitation-intake-and-review.md) implements CalendarInvitationRecord, CalendarInvitationSourceRecord and CalendarInvitationReceiptRecord for recipient-scoped correlation/current state, normalized source and trusted delivery-key receipts. Digest indexes verify retained exact values and avoid indexing large raw source identifiers. The concrete schemas, bounds, APIs and retention were explicitly approved before source generation; the scoped migrations and upgrade checks are recorded in validation. No event/booking/participation link is proposed in this first batch.
 
 Accepted ADR 0137 implements bounded trusted non-recurring REQUEST intake and private review/dismissal, with separate source access, retained source ordering/receipts and three private tables. Receipt creates no calendar event, booking or reply. See [the implementation and limits](invitation-intake-and-review.md); calendar adoption, updates, recurrence/CANCEL and mail remain separate.
+
+
+## Proposed invitation calendar adoption
+
+The maintainer confirmed one linked event in one explicitly chosen calendar per recipient invitation, with stable retries. [ADR 0138](adr/0138-explicit-single-event-invitation-adoption.md) proposes the concrete explicit Add to calendar batch: one private immutable binding table, atomic event/link/review state, independent source/create/import/link authority and retained retry checks. These mechanics await model/ADR approval and are not implemented. It creates a local imported-origin copy without a participation reply or organizer authority; existing-meeting reconciliation remains separate.
