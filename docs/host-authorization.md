@@ -262,6 +262,8 @@ Accepted [ADR 0136](adr/0136-authorized-item-category-search.md) requires catego
 
 Accepted ADR 0136 implements scoped per-calendar event/task master-category filtering with authorized category disclosure, immutable host query context, criteria-bound opaque continuations and Flutter Apply/Clear. See [the matching/privacy/limit guide](item-category-search.md) and batch validation. This supersedes earlier search-pending statements only for this bounded profile; broader queries and external interoperability remain separate.
 
-## Proposed invitation review authorization
+## Invitation review authorization
 
-[ADR 0137](adr/0137-trusted-invitation-intake-and-review.md) proposes a trusted server-only ingress adapter resolving actual scope/recipient and verifying authority for the exact organizer/target address. Native review resolves the current recipient server-side, with independent receive/list/summary/source/dismiss gates and immutable preliminary/final context. Source claims and mail headers supply no authority. These concrete mechanics require approval; current reply ingress does not implement organizer REQUEST intake.
+[ADR 0137](adr/0137-trusted-invitation-intake-and-review.md) implements a trusted server-only ingress adapter resolving actual scope/recipient and verifying authority for the exact organizer/target address. Native review resolves the current recipient server-side, with independent receive/list/summary/source/dismiss gates and immutable preliminary/final context. Source claims and mail headers supply no authority. These separately approved checks do not authorize calendar adoption, participant responses or automatic updates.
+
+Accepted ADR 0137 implements bounded trusted non-recurring REQUEST intake and private review/dismissal, with separate source access, retained source ordering/receipts and three private tables. Receipt creates no calendar event, booking or reply. See [the implementation and limits](invitation-intake-and-review.md); calendar adoption, updates, recurrence/CANCEL and mail remain separate.

@@ -1,0 +1,9 @@
+class: CalendarInvitationReceipt
+immutable: true
+fields:
+  id: UuidValue
+  entryId: UuidValue
+  sourceId: UuidValue
+  outcome: CalendarInvitationOutcome
+  entryRevision: int
+  receivedAt: DateTime

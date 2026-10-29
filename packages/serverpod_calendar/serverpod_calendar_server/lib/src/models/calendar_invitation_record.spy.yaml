@@ -1,0 +1,24 @@
+class: CalendarInvitationRecord
+serverOnly: true
+table: serverpod_calendar_invitation
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  recipientKey: String
+  correlationDigest: String
+  uid: String
+  organizer: String
+  revision: int
+  currentSourceId: UuidValue?
+  sequence: int?
+  stamp: DateTime
+  digest: String
+  createdAt: DateTime
+  updatedAt: DateTime
+  dismissedAt: DateTime?
+indexes:
+  calendar_invitation_correlation_unique:
+    fields: scopeKey, recipientKey, correlationDigest
+    unique: true
+  calendar_invitation_recipient_idx:
+    fields: scopeKey, recipientKey

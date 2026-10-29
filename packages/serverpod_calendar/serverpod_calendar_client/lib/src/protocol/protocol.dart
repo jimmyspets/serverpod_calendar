@@ -19,6 +19,10 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_event_field_grou
     as _icxx5h8a;
 import 'package:serverpod_calendar_client/src/protocol/calendar_field_group.dart'
     as _ioi1smgh;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_source_view.dart'
+    as _i7zq6sue;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_view.dart'
+    as _igeeqe4z;
 import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_reply_source_view.dart'
     as _ibmpwk5c;
 import 'package:serverpod_calendar_client/src/protocol/calendar_subject_view.dart'
@@ -137,6 +141,11 @@ import 'calendar_free_busy_period.dart' as _i82zcrxb;
 import 'calendar_free_busy_query.dart' as _idid5g6i;
 import 'calendar_free_busy_view.dart' as _i3b615hg;
 import 'calendar_image_link.dart' as _igf45b52;
+import 'calendar_invitation_document.dart' as _iwcng7rp;
+import 'calendar_invitation_outcome.dart' as _i98zwsq8;
+import 'calendar_invitation_receipt.dart' as _iy372k0z;
+import 'calendar_invitation_source_view.dart' as _itix6re9;
+import 'calendar_invitation_view.dart' as _ifs5c7mj;
 import 'calendar_item_category_group.dart' as _i3iolgr8;
 import 'calendar_item_comment.dart' as _itx19m90;
 import 'calendar_item_text_metadata_field.dart' as _i12tuyl5;
@@ -324,6 +333,11 @@ export 'calendar_free_busy_period.dart';
 export 'calendar_free_busy_query.dart';
 export 'calendar_free_busy_view.dart';
 export 'calendar_image_link.dart';
+export 'calendar_invitation_document.dart';
+export 'calendar_invitation_outcome.dart';
+export 'calendar_invitation_receipt.dart';
+export 'calendar_invitation_source_view.dart';
+export 'calendar_invitation_view.dart';
 export 'calendar_item_category_group.dart';
 export 'calendar_item_comment.dart';
 export 'calendar_item_text_metadata_field.dart';
@@ -780,6 +794,21 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _igf45b52.CalendarImageLink) {
       return _igf45b52.CalendarImageLink.fromJson(data) as T;
+    }
+    if (t == _iwcng7rp.CalendarInvitationDocument) {
+      return _iwcng7rp.CalendarInvitationDocument.fromJson(data) as T;
+    }
+    if (t == _i98zwsq8.CalendarInvitationOutcome) {
+      return _i98zwsq8.CalendarInvitationOutcome.fromJson(data) as T;
+    }
+    if (t == _iy372k0z.CalendarInvitationReceipt) {
+      return _iy372k0z.CalendarInvitationReceipt.fromJson(data) as T;
+    }
+    if (t == _itix6re9.CalendarInvitationSourceView) {
+      return _itix6re9.CalendarInvitationSourceView.fromJson(data) as T;
+    }
+    if (t == _ifs5c7mj.CalendarInvitationView) {
+      return _ifs5c7mj.CalendarInvitationView.fromJson(data) as T;
     }
     if (t == _i3iolgr8.CalendarItemCategoryGroup) {
       return _i3iolgr8.CalendarItemCategoryGroup.fromJson(data) as T;
@@ -1661,6 +1690,36 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _isc.getType<_igf45b52.CalendarImageLink?>()) {
       return (data != null ? _igf45b52.CalendarImageLink.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iwcng7rp.CalendarInvitationDocument?>()) {
+      return (data != null
+              ? _iwcng7rp.CalendarInvitationDocument.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_i98zwsq8.CalendarInvitationOutcome?>()) {
+      return (data != null
+              ? _i98zwsq8.CalendarInvitationOutcome.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_iy372k0z.CalendarInvitationReceipt?>()) {
+      return (data != null
+              ? _iy372k0z.CalendarInvitationReceipt.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_itix6re9.CalendarInvitationSourceView?>()) {
+      return (data != null
+              ? _itix6re9.CalendarInvitationSourceView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ifs5c7mj.CalendarInvitationView?>()) {
+      return (data != null
+              ? _ifs5c7mj.CalendarInvitationView.fromJson(data)
+              : null)
           as T;
     }
     if (t == _isc.getType<_i3iolgr8.CalendarItemCategoryGroup?>()) {
@@ -2694,6 +2753,20 @@ class Protocol extends _isc.SerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_igeeqe4z.CalendarInvitationView>) {
+      return (data as List)
+              .map((e) => deserialize<_igeeqe4z.CalendarInvitationView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i7zq6sue.CalendarInvitationSourceView>) {
+      return (data as List)
+              .map(
+                (e) => deserialize<_i7zq6sue.CalendarInvitationSourceView>(e),
+              )
+              .toList()
+          as T;
+    }
     if (t == List<_i6s1er1y.CalendarTaskFieldGroup>) {
       return (data as List)
               .map((e) => deserialize<_i6s1er1y.CalendarTaskFieldGroup>(e))
@@ -2852,6 +2925,11 @@ class Protocol extends _isc.SerializationManager {
       _idid5g6i.CalendarFreeBusyQuery => 'CalendarFreeBusyQuery',
       _i3b615hg.CalendarFreeBusyView => 'CalendarFreeBusyView',
       _igf45b52.CalendarImageLink => 'CalendarImageLink',
+      _iwcng7rp.CalendarInvitationDocument => 'CalendarInvitationDocument',
+      _i98zwsq8.CalendarInvitationOutcome => 'CalendarInvitationOutcome',
+      _iy372k0z.CalendarInvitationReceipt => 'CalendarInvitationReceipt',
+      _itix6re9.CalendarInvitationSourceView => 'CalendarInvitationSourceView',
+      _ifs5c7mj.CalendarInvitationView => 'CalendarInvitationView',
       _i3iolgr8.CalendarItemCategoryGroup => 'CalendarItemCategoryGroup',
       _itx19m90.CalendarItemComment => 'CalendarItemComment',
       _i12tuyl5.CalendarItemTextMetadataField =>
@@ -3196,6 +3274,16 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarFreeBusyView';
       case _igf45b52.CalendarImageLink():
         return 'CalendarImageLink';
+      case _iwcng7rp.CalendarInvitationDocument():
+        return 'CalendarInvitationDocument';
+      case _i98zwsq8.CalendarInvitationOutcome():
+        return 'CalendarInvitationOutcome';
+      case _iy372k0z.CalendarInvitationReceipt():
+        return 'CalendarInvitationReceipt';
+      case _itix6re9.CalendarInvitationSourceView():
+        return 'CalendarInvitationSourceView';
+      case _ifs5c7mj.CalendarInvitationView():
+        return 'CalendarInvitationView';
       case _i3iolgr8.CalendarItemCategoryGroup():
         return 'CalendarItemCategoryGroup';
       case _itx19m90.CalendarItemComment():
@@ -3750,6 +3838,21 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'CalendarImageLink') {
       return deserialize<_igf45b52.CalendarImageLink>(data['data']);
+    }
+    if (dataClassName == 'CalendarInvitationDocument') {
+      return deserialize<_iwcng7rp.CalendarInvitationDocument>(data['data']);
+    }
+    if (dataClassName == 'CalendarInvitationOutcome') {
+      return deserialize<_i98zwsq8.CalendarInvitationOutcome>(data['data']);
+    }
+    if (dataClassName == 'CalendarInvitationReceipt') {
+      return deserialize<_iy372k0z.CalendarInvitationReceipt>(data['data']);
+    }
+    if (dataClassName == 'CalendarInvitationSourceView') {
+      return deserialize<_itix6re9.CalendarInvitationSourceView>(data['data']);
+    }
+    if (dataClassName == 'CalendarInvitationView') {
+      return deserialize<_ifs5c7mj.CalendarInvitationView>(data['data']);
     }
     if (dataClassName == 'CalendarItemCategoryGroup') {
       return deserialize<_i3iolgr8.CalendarItemCategoryGroup>(data['data']);

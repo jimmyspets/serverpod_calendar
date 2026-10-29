@@ -1,6 +1,6 @@
 # ADR 0137: Trusted non-recurring invitation intake and private review
 
-Status: **Proposed. The maintainer confirmed review before adding a new authenticated invitation to a calendar. The concrete intake/review, storage, ordering, retention and dismissal mechanics below require explicit agreement.**
+Status: **Accepted by explicit maintainer approval on 2026-10-28 for the complete intake/review batch and three-table storage design. The scoped implementation and complete feature-batch validation finished on 2026-10-29; see the implementation guide and validation record.**
 
 ## Context and boundary
 
@@ -50,4 +50,6 @@ Automatic creation conflicts with the confirmed review-first policy. Reusing ord
 
 Test verified/spoofed/unknown origins and recipient isolation; DATE/UTC/named zones and unsupported recurrence/delegation; sequence omission/order/ties, normalized/cross-key duplicates and key conflicts; immutable final host context, rollback/overflow and unavailable policy; summary/source separation, dismissal/newer-source behavior, retention/reference/capacity boundaries and no event/feed/alarm/outbound mutations. Exercise two actual hosts racing duplicate/conflicting ingress and dismissal, actual loss before/after commit with stable retries, generated clients, synthetic-only Flutter review and fresh/upgrade schema. Run focused tests during development, then full batch checks before one implementation commit. MIME/real mail, calendar adoption, updates, recurrence and remaining iTIP methods stay required separate work.
 
-Open issues/PRs were checked for overlapping incoming-invitation work; none was found. This documentation proposal follows completed category-search implementation PR #102. No source model, SQL, generated client or runtime changes are included. Explicit agreement on the proposed three-table/API/retention mechanics is required before implementation.
+Open issues/PRs were checked for overlapping incoming-invitation work; none was found. The original documentation proposal followed category-search implementation PR #102 and included no runtime changes. The maintainer subsequently approved the concrete three-table/API/retention batch before implementation. See [the implementation guide](../invitation-intake-and-review.md).
+
+Implementation mapping: the approved dismissal marker stores current SEQUENCE presence, DTSTAMP and digest directly on the entry so eligible terminal bodies can be pruned without losing retained ordering. currentSourceId may become absent only for a dismissed marker after pruning, never for a committed pending entry. Receipts retain the original entry revision for stable retries. These fields implement the approved minimal version marker and retained-result mechanics; no event link or adoption state is added.
