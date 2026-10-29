@@ -1298,3 +1298,10 @@ The complete restarted `./tool/check.ps1` invocation exited successfully with **
 Owned interactive development runners were restored without resetting development storage. The generated additive invitation migration `20261028182538524-invitation-review` applied successfully. Actual Serverpod MCP hot reload and Flutter MCP hot reload succeeded; runtime-error inspection found none. The first Flutter VM connection used an HTTP URL and was rejected before connection; reconnecting with its actual WebSocket URI succeeded. Final static results follow below.
 
 Final static verification passed **2,851 relative links**, consecutive ADRs 0001–0137, **82 candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. The approved intake/review batch is complete before its single implementation commit. Calendar addition and remaining reconciliation/mail/release work remain separate.
+
+
+## Invitation calendar adoption proposal — 2026-10-29
+
+Documentation-only ADR 0138 follows the completed ADR 0137 implementation batch. The maintainer confirmed one event in one explicitly chosen calendar per recipient invitation, with stable retries; the concrete binding/API/authority/retention design remains proposed. Current Serverpod model guidance and RFC 5546 REQUEST/message sequencing were checked. All 102 open issues/PRs were checked across pages; no overlapping invitation calendar-addition work was found (alarm adoption PR #64 is separate). No model/generated/schema/runtime change or runtime suite repetition is included. Relative links, consecutive ADRs, changed files, credentials, LICENSE and whitespace are checked before committing the proposal.
+
+Documentation validation passed **2,861 relative links**, consecutive ADRs 0001–0138, **11 Markdown-only candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. Runtime suites were not repeated for this proposal; completed ADR 0137 runtime evidence remains separate.
