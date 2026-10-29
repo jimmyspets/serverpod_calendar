@@ -500,3 +500,12 @@ The approved review queue is calendar scheduling state, separate from the reusab
 - [x] Complete focused and broader batch validation in recorded phases before one implementation commit.
 
 Accepted [ADR 0138](adr/0138-explicit-single-event-invitation-adoption.md) implements explicit Add to calendar with one private stable-link table, atomic imported-origin event/link/review writes, independent source/create/import/link authority and retained retry checks. The maintainer approved the complete model/API/retention batch on 2026-10-29. See [the scoped guide](invitation-calendar-adoption.md) and the separate batch validation record. Adding a local copy sends no participation reply and grants no organizer authority; existing-meeting reconciliation remains separate.
+
+
+## Explicit linked invitation updates
+
+- [x] Confirm explicit Apply update and rejection of local content conflicts.
+- [ ] Review [ADR 0139](adr/0139-explicit-linked-invitation-updates.md): accepted-source checkpoint, atomic writes, authority, ordering and latest-result retry boundary.
+- [ ] Implement and validate the separately approved update batch before one code commit.
+
+The maintainer confirmed explicit Apply update with rejection of local content conflicts. [ADR 0139](adr/0139-explicit-linked-invitation-updates.md) proposes one current accepted-source checkpoint per stable link, atomic source replacement/review writes, independent authority and a latest-result retry contract. The original creation receipt remains immutable. Earlier update commands would become stale after a later different application; the checkpoint/API/retention mechanics await explicit review and are not implemented. Receiving a newer invitation still only reopens review; participation replies and reviewed overwrite/merge remain separate.
