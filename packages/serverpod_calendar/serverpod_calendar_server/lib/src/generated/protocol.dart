@@ -177,6 +177,7 @@ import 'calendar_invitation_outcome.dart' as _i98zwsq8;
 import 'calendar_invitation_receipt.dart' as _iy372k0z;
 import 'calendar_invitation_receipt_record.dart' as _i1bc5dpy;
 import 'calendar_invitation_record.dart' as _igigle43;
+import 'calendar_invitation_source_kind.dart' as _ilccsff7;
 import 'calendar_invitation_source_record.dart' as _i3yqoryt;
 import 'calendar_invitation_source_view.dart' as _itix6re9;
 import 'calendar_invitation_view.dart' as _ifs5c7mj;
@@ -426,6 +427,7 @@ export 'calendar_invitation_outcome.dart';
 export 'calendar_invitation_receipt.dart';
 export 'calendar_invitation_receipt_record.dart';
 export 'calendar_invitation_record.dart';
+export 'calendar_invitation_source_kind.dart';
 export 'calendar_invitation_source_record.dart';
 export 'calendar_invitation_source_view.dart';
 export 'calendar_invitation_view.dart';
@@ -1893,6 +1895,13 @@ class Protocol extends _is.DatabaseSerializationManager {
           isNullable: false,
           dartType: 'UuidValue?',
           columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'kind',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:CalendarInvitationSourceKind',
+          columnDefault: '\'request\'',
         ),
         _isp.ColumnDefinition(
           name: 'scopeKey',
@@ -4683,6 +4692,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _igigle43.CalendarInvitationRecord) {
       return _igigle43.CalendarInvitationRecord.fromJson(data) as T;
     }
+    if (t == _ilccsff7.CalendarInvitationSourceKind) {
+      return _ilccsff7.CalendarInvitationSourceKind.fromJson(data) as T;
+    }
     if (t == _i3yqoryt.CalendarInvitationSourceRecord) {
       return _i3yqoryt.CalendarInvitationSourceRecord.fromJson(data) as T;
     }
@@ -5851,6 +5863,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_igigle43.CalendarInvitationRecord?>()) {
       return (data != null
               ? _igigle43.CalendarInvitationRecord.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ilccsff7.CalendarInvitationSourceKind?>()) {
+      return (data != null
+              ? _ilccsff7.CalendarInvitationSourceKind.fromJson(data)
               : null)
           as T;
     }
@@ -7434,6 +7452,7 @@ class Protocol extends _is.DatabaseSerializationManager {
       _i1bc5dpy.CalendarInvitationReceiptRecord =>
         'CalendarInvitationReceiptRecord',
       _igigle43.CalendarInvitationRecord => 'CalendarInvitationRecord',
+      _ilccsff7.CalendarInvitationSourceKind => 'CalendarInvitationSourceKind',
       _i3yqoryt.CalendarInvitationSourceRecord =>
         'CalendarInvitationSourceRecord',
       _itix6re9.CalendarInvitationSourceView => 'CalendarInvitationSourceView',
@@ -7886,6 +7905,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarInvitationReceiptRecord';
       case _igigle43.CalendarInvitationRecord():
         return 'CalendarInvitationRecord';
+      case _ilccsff7.CalendarInvitationSourceKind():
+        return 'CalendarInvitationSourceKind';
       case _i3yqoryt.CalendarInvitationSourceRecord():
         return 'CalendarInvitationSourceRecord';
       case _itix6re9.CalendarInvitationSourceView():
@@ -8629,6 +8650,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'CalendarInvitationRecord') {
       return deserialize<_igigle43.CalendarInvitationRecord>(data['data']);
+    }
+    if (dataClassName == 'CalendarInvitationSourceKind') {
+      return deserialize<_ilccsff7.CalendarInvitationSourceKind>(data['data']);
     }
     if (dataClassName == 'CalendarInvitationSourceRecord') {
       return deserialize<_i3yqoryt.CalendarInvitationSourceRecord>(

@@ -71,6 +71,31 @@ Future<void> runInvitationJourney(WidgetTester tester, Client client) async {
     await tap(find.byKey(const Key('invitations-refresh')));
     expect(find.byKey(const Key('invitation-error')), findsNothing);
     expect(find.text('Updated invitation review'), findsOneWidget);
+    await tap(find.byKey(ValueKey('invitation-cancel-${receipt.entryId}')));
+    expect(find.text('Meeting cancellation notice'), findsOneWidget);
+    expect(find.text('No start time supplied.'), findsOneWidget);
+    expect(
+      find.text('Review only. The calendar event is unchanged.'),
+      findsOneWidget,
+    );
+    final cancellation = await api.getInvitation(receipt.entryId);
+    expect(
+      cancellation.kind,
+      cal.CalendarInvitationSourceKind.meetingCancellation,
+    );
+    expect(cancellation.timing, isNull);
+    await tap(find.byKey(ValueKey('invitation-source-${receipt.entryId}')));
+    await tap(
+      find.byKey(ValueKey('invitation-history-${cancellation.sourceId}')),
+    );
+    expect(
+      tester
+          .widget<SelectableText>(find.byKey(const Key('invitation-document')))
+          .data,
+      contains('METHOD:CANCEL'),
+    );
+    navigator.pop();
+    await tester.pumpAndSettle();
     await tap(find.byKey(ValueKey('invitation-dismiss-${receipt.entryId}')));
     expect(find.byKey(ValueKey('invitation-${receipt.entryId}')), findsNothing);
     final retained = await client.invitationDemo.simulate(

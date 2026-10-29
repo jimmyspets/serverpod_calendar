@@ -52,4 +52,46 @@ class InvitationDemoEndpoint extends Endpoint {
       ),
     );
   }
+
+  Future<CalendarInvitationReceipt> simulateCancellation(
+    Session session,
+    UuidValue invitationId,
+    UuidValue commandId,
+    int sequence,
+  ) async {
+    if (!{'development', 'test'}.contains(session.serverpod.runMode) ||
+        sequence < 1 ||
+        sequence > 2147483647) {
+      throw CalendarException(
+        code: CalendarFailureCode.validation,
+        message: 'Invalid simulation',
+      );
+    }
+    final user = session.authenticated!.userIdentifier;
+    final source = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Synthetic invitation//EN',
+      'METHOD:CANCEL',
+      'BEGIN:VEVENT',
+      'UID:synthetic-invitation:$user:$invitationId',
+      'DTSTAMP:20260101T000000Z',
+      'SEQUENCE:$sequence',
+      'STATUS:CANCELLED',
+      'ORGANIZER:mailto:organizer@example.invalid',
+      'ATTENDEE:mailto:demo-$user@example.invalid',
+      'END:VEVENT',
+      'END:VCALENDAR',
+      '',
+    ].join('\r\n');
+    return CalendarModule.receiveSchedulingInvitation(
+      session,
+      CalendarInvitationDelivery(
+        namespace: 'example.invitation',
+        deliveryKey: commandId.toString(),
+        originReference: 'synthetic:$user',
+        bytes: Uint8List.fromList(utf8.encode(source)),
+      ),
+    );
+  }
 }

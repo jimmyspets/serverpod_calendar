@@ -575,6 +575,43 @@ class _InvitationDemoEndpoint {
       }
     });
   }
+
+  _ida.Future<_ipn35bcd.CalendarInvitationReceipt> simulateCancellation(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue invitationId,
+    _is.UuidValue commandId,
+    int sequence,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'invitationDemo',
+            method: 'simulateCancellation',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'invitationDemo',
+          methodName: 'simulateCancellation',
+          parameters: _ist.testObjectToJson({
+            'invitationId': invitationId,
+            'commandId': commandId,
+            'sequence': sequence,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ipn35bcd.CalendarInvitationReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 }
 
 class _NotificationStreamEndpoint {

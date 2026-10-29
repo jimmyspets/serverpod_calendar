@@ -162,6 +162,50 @@ Future<void> invitationApplicationSmoke(List<Client> clients) async {
       (await api.calendarInvitation.adopt(creation)).id == link.id,
       'Creation retry failed after updates/local edits',
     );
+
+    final cancelCommand = const cal.Uuid().v4obj();
+    final cancellations = await Future.wait([
+      a.invitationDemo.simulateCancellation(id, cancelCommand, 4),
+      b.invitationDemo.simulateCancellation(id, cancelCommand, 4),
+    ]);
+    require(
+      cancellations.first.id == cancellations.last.id,
+      'Cancellation duplicate receipts differ',
+    );
+    final cancelled = await other.calendarInvitation.application(
+      source.entryId,
+    );
+    require(
+      cancelled.incomingKind ==
+              cal.CalendarInvitationSourceKind.meetingCancellation &&
+          !cancelled.canApply &&
+          cancelled.incomingContent == null &&
+          cancelled.currentContent.summary == conflict.currentContent.summary &&
+          cancelled.eventRevision == conflict.eventRevision &&
+          cancelled.applicationRevision == conflict.applicationRevision,
+      'Cancellation receipt mutated event/checkpoint or implied application',
+    );
+    require(
+      (await api.calendarInvitation.applyUpdate(latest)).id ==
+              latestResult.id &&
+          (await other.calendarInvitation.adopt(creation)).id == link.id &&
+          (await api.calendarInvitation.getInvitation(source.entryId))
+                  .dismissedAt ==
+              null,
+      'Retained REQUEST retries changed cancellation review',
+    );
+    final history = await other.calendarInvitation.sources(source.entryId);
+    require(
+      history.any((s) => s.kind == cal.CalendarInvitationSourceKind.request) &&
+          history.any(
+            (s) =>
+                s.kind == cal.CalendarInvitationSourceKind.meetingCancellation,
+          ),
+      'Historical source kinds were flattened',
+    );
+    stdout.writeln(
+      'PASS: two-host cancellation review, stable ingress and retained REQUEST retries, unchanged local drafts/checkpoint and independent source kinds.',
+    );
     stdout.writeln(
       'PASS: two-host explicit source updates, stable latest results, native-save races, superseded retries and local-edit protection with unchanged creation identity.',
     );

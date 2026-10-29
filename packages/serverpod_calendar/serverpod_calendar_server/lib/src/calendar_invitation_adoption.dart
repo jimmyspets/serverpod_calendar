@@ -85,7 +85,16 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
     CalendarInvitationLinkRecord link,
     CalendarHostContext actor,
     Transaction tx,
+  ) => _invLinkedEventScope(link, actor.scopeKey, tx);
+
+  Future<_Event> _invLinkedEventScope(
+    CalendarInvitationLinkRecord link,
+    String scopeKey,
+    Transaction tx,
   ) async {
+    if (link.scopeKey != scopeKey) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
     final identity = await CalendarEventRecord.db.findById(
       _session,
       link.eventId,
@@ -98,7 +107,12 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
         identity.calendarId != link.calendarId) {
       throw _failure(CalendarFailureCode.unavailable);
     }
-    final event = await _event(actor, link.eventId, tx, identity: identity);
+    final event = await _eventInScope(
+      scopeKey,
+      link.eventId,
+      tx,
+      identity: identity,
+    );
     if (event.data.origin != CalendarEventOrigin.imported ||
         event.data.protocolUid != link.uid ||
         event.data.importBaseline == null) {
@@ -112,6 +126,9 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
     IcalendarSchedulingMessage message,
     UuidValue id,
   ) => _eventReplacementValue(() {
+    if (message.method != IcalendarSchedulingMethod.request) {
+      throw _failure(CalendarFailureCode.validation);
+    }
     final envelope = message.source.components.single;
     final document = IcalendarSyntaxDocument([
       IcalendarSyntaxComponent(

@@ -149,13 +149,15 @@ Future<void> main(List<String> args) async {
               'BEGIN:VCALENDAR',
               'VERSION:2.0',
               'PRODID:-//Synthetic probe//EN',
-              'METHOD:REQUEST',
+              input['cancel'] == true ? 'METHOD:CANCEL' : 'METHOD:REQUEST',
               'BEGIN:VEVENT',
               'UID:invitation:$caseId',
               'DTSTAMP:20260101T000000Z',
               if (input['sequence'] != null) 'SEQUENCE:${input['sequence']}',
-              'DTSTART:20300101T090000Z',
-              'SUMMARY:${encodeIcalendarText(input['summary'] as String? ?? 'Review')}',
+              if (input['cancel'] == true) 'STATUS:CANCELLED',
+              if (input['cancel'] != true) 'DTSTART:20300101T090000Z',
+              if (input['cancel'] != true)
+                'SUMMARY:${encodeIcalendarText(input['summary'] as String? ?? 'Review')}',
               'ORGANIZER:mailto:organizer@example.invalid',
               'ATTENDEE:mailto:recipient@example.invalid',
               'END:VEVENT',
@@ -278,6 +280,7 @@ Future<void> main(List<String> args) async {
                     parameters: QueryParameters.named({'scope': host.scope}),
                   )
                   .then((r) => r.firstOrNull?.first),
+              'kind': entries.firstOrNull?.kind.name,
               'entries': entries.length,
               'sources': sources.length,
               'receipts': await CalendarInvitationReceiptRecord.db.count(

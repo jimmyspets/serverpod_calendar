@@ -100,7 +100,9 @@ class _InvitationAdoptionScreenState extends State<InvitationAdoptionScreen> {
       if (mounted) {
         setState(() => _entry = current);
       }
-      await _page();
+      if (current.kind == cal.CalendarInvitationSourceKind.request) {
+        await _page();
+      }
     }
   });
   Future<void> _add() => _run(() async {
@@ -167,7 +169,9 @@ class _InvitationAdoptionScreenState extends State<InvitationAdoptionScreen> {
             child: const Text('Review incoming update'),
           ),
         if (_checked && _link == null) ...[
-          if (_entry.dismissedAt != null || _entry.sourceId == null)
+          if (_entry.kind != cal.CalendarInvitationSourceKind.request ||
+              _entry.dismissedAt != null ||
+              _entry.sourceId == null)
             const Text('This version is not available for calendar addition.')
           else ...[
             DropdownButtonFormField<cal.UuidValue>(
