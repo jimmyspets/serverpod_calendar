@@ -200,6 +200,14 @@ Future<void> runInvitationAdoptionJourney(
           .onPressed,
       isNull,
     );
+    expect(
+      tester
+          .widget<ElevatedButton>(
+            find.byKey(const Key('invitation-cancellation-apply')),
+          )
+          .onPressed,
+      isNull,
+    );
     final afterCancellation = await module.calendarInvitation.application(
       entry.id,
     );

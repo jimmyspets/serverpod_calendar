@@ -11,11 +11,13 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
+import 'calendar_invitation_source_kind.dart' as _ilccsff7;
 
 abstract class CalendarInvitationApplicationRecord
     implements _is.TableRow<_is.UuidValue?>, _is.ProtocolSerialization {
   CalendarInvitationApplicationRecord._({
     this.id,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     required this.scopeKey,
     required this.recipientKey,
     required this.linkId,
@@ -32,10 +34,11 @@ abstract class CalendarInvitationApplicationRecord
     required this.appliedAt,
     required this.requestDigest,
     required this.resultId,
-  });
+  }) : kind = kind ?? _ilccsff7.CalendarInvitationSourceKind.request;
 
   factory CalendarInvitationApplicationRecord({
     _is.UuidValue? id,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     required String scopeKey,
     required String recipientKey,
     required _is.UuidValue linkId,
@@ -61,6 +64,11 @@ abstract class CalendarInvitationApplicationRecord
       id: jsonSerialization['id'] == null
           ? null
           : _is.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
+      kind: jsonSerialization['kind'] == null
+          ? null
+          : _ilccsff7.CalendarInvitationSourceKind.fromJson(
+              (jsonSerialization['kind'] as String),
+            ),
       scopeKey: jsonSerialization['scopeKey'] as String,
       recipientKey: jsonSerialization['recipientKey'] as String,
       linkId: _is.UuidValueJsonExtension.fromJson(jsonSerialization['linkId']),
@@ -94,6 +102,8 @@ abstract class CalendarInvitationApplicationRecord
 
   @override
   _is.UuidValue? id;
+
+  _ilccsff7.CalendarInvitationSourceKind kind;
 
   String scopeKey;
 
@@ -135,6 +145,7 @@ abstract class CalendarInvitationApplicationRecord
   @_is.useResult
   CalendarInvitationApplicationRecord copyWith({
     _is.UuidValue? id,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     String? scopeKey,
     String? recipientKey,
     _is.UuidValue? linkId,
@@ -157,6 +168,7 @@ abstract class CalendarInvitationApplicationRecord
     return {
       '__className__': 'serverpod_calendar.CalendarInvitationApplicationRecord',
       if (id != null) 'id': id?.toJson(),
+      'kind': kind.toJson(),
       'scopeKey': scopeKey,
       'recipientKey': recipientKey,
       'linkId': linkId.toJson(),
@@ -216,6 +228,7 @@ class _CalendarInvitationApplicationRecordImpl
     extends CalendarInvitationApplicationRecord {
   _CalendarInvitationApplicationRecordImpl({
     _is.UuidValue? id,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     required String scopeKey,
     required String recipientKey,
     required _is.UuidValue linkId,
@@ -234,6 +247,7 @@ class _CalendarInvitationApplicationRecordImpl
     required _is.UuidValue resultId,
   }) : super._(
          id: id,
+         kind: kind,
          scopeKey: scopeKey,
          recipientKey: recipientKey,
          linkId: linkId,
@@ -258,6 +272,7 @@ class _CalendarInvitationApplicationRecordImpl
   @override
   CalendarInvitationApplicationRecord copyWith({
     Object? id = _Undefined,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     String? scopeKey,
     String? recipientKey,
     _is.UuidValue? linkId,
@@ -277,6 +292,7 @@ class _CalendarInvitationApplicationRecordImpl
   }) {
     return CalendarInvitationApplicationRecord(
       id: id is _is.UuidValue? ? id : this.id,
+      kind: kind ?? this.kind,
       scopeKey: scopeKey ?? this.scopeKey,
       recipientKey: recipientKey ?? this.recipientKey,
       linkId: linkId ?? this.linkId,
@@ -300,6 +316,15 @@ class _CalendarInvitationApplicationRecordImpl
 class CalendarInvitationApplicationRecordUpdateTable
     extends _is.UpdateTable<CalendarInvitationApplicationRecordTable> {
   CalendarInvitationApplicationRecordUpdateTable(super.table);
+
+  _is.ColumnValue<
+    _ilccsff7.CalendarInvitationSourceKind,
+    _ilccsff7.CalendarInvitationSourceKind
+  >
+  kind(_ilccsff7.CalendarInvitationSourceKind value) => _is.ColumnValue(
+    table.kind,
+    value,
+  );
 
   _is.ColumnValue<String, String> scopeKey(String value) => _is.ColumnValue(
     table.scopeKey,
@@ -396,6 +421,12 @@ class CalendarInvitationApplicationRecordTable
   CalendarInvitationApplicationRecordTable({super.tableRelation})
     : super(tableName: 'serverpod_calendar_invitation_application') {
     updateTable = CalendarInvitationApplicationRecordUpdateTable(this);
+    kind = _is.ColumnEnum(
+      'kind',
+      this,
+      _is.EnumSerialization.byName,
+      hasDefault: true,
+    );
     scopeKey = _is.ColumnString(
       'scopeKey',
       this,
@@ -464,6 +495,8 @@ class CalendarInvitationApplicationRecordTable
 
   late final CalendarInvitationApplicationRecordUpdateTable updateTable;
 
+  late final _is.ColumnEnum<_ilccsff7.CalendarInvitationSourceKind> kind;
+
   late final _is.ColumnString scopeKey;
 
   late final _is.ColumnString recipientKey;
@@ -499,6 +532,7 @@ class CalendarInvitationApplicationRecordTable
   @override
   List<_is.Column> get columns => [
     id,
+    kind,
     scopeKey,
     recipientKey,
     linkId,

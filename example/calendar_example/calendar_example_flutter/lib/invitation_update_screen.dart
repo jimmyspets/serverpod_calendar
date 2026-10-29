@@ -21,6 +21,7 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
   cal.CalendarInvitationApplicationView? _view;
   cal.CalendarInvitationApplyRequest? _request;
   cal.CalendarInvitationApplyReceipt? _result;
+  cal.CalendarInvitationSourceKind? _requestKind;
   String? _error;
   bool _busy = true;
   @override
@@ -62,11 +63,15 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
       setState(() {
         _view = view;
         _request = null;
+        _requestKind = null;
         _result = null;
       });
     }
   });
-  Future<void> _apply() => _run(() async {
+  Future<void> _apply({bool cancellation = false}) => _run(() async {
+    _requestKind ??= cancellation
+        ? cal.CalendarInvitationSourceKind.meetingCancellation
+        : cal.CalendarInvitationSourceKind.request;
     final view = _view!;
     _request ??= cal.CalendarInvitationApplyRequest(
       invitationId: widget.invitationId,
@@ -77,16 +82,16 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
       expectedCalendarRevision: view.calendarRevision,
       expectedApplicationRevision: view.applicationRevision,
     );
-    final receipt = await widget
-        .client
-        .modules
-        .serverpod_calendar
-        .calendarInvitation
-        .applyUpdate(_request!);
+    final api = widget.client.modules.serverpod_calendar.calendarInvitation;
+    final receipt =
+        _requestKind == cal.CalendarInvitationSourceKind.meetingCancellation
+        ? await api.applyCancellation(_request!)
+        : await api.applyUpdate(_request!);
     if (mounted) {
       setState(() {
         _result = receipt;
         _request = null;
+        _requestKind = null;
       });
     }
     final next = await widget
@@ -117,14 +122,14 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
         padding: const EdgeInsets.all(24),
         children: [
           const Text(
-            'Apply replaces the linked local event from the selected incoming source. It sends no participation reply. Local changes are preserved by rejecting conflicts.',
+            'Apply update replaces content from a REQUEST. Apply cancellation retains content and records cancelled status/source version. Both require a clean baseline and send no participation reply.',
           ),
           if (_busy) const LinearProgressIndicator(),
           if (_error != null)
             Text(_error!, key: const Key('invitation-update-error')),
           if (_result != null)
             Text(
-              'Update applied. Event revision ${_result!.eventRevision}.',
+              '${_result!.kind == cal.CalendarInvitationSourceKind.meetingCancellation ? 'Cancellation' : 'Update'} applied. Event revision ${_result!.eventRevision}.',
               key: const Key('invitation-update-result'),
             ),
           if (view != null) ...[
@@ -132,6 +137,10 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
               'Current local event: ${view.currentContent.summary ?? 'Untitled event'}',
             ),
             Text(invitationTimingLabel(view.currentContent.timing)),
+            Text('Current status: ${view.currentContent.status.name}'),
+            Text(
+              'Last accepted source: ${view.acceptedKind == cal.CalendarInvitationSourceKind.meetingCancellation ? 'Cancellation' : 'REQUEST'}',
+            ),
             if (view.currentContent.description != null)
               Text(view.currentContent.description!),
             if (view.currentContent.location != null)
@@ -147,7 +156,7 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
             if (view.incomingKind ==
                 cal.CalendarInvitationSourceKind.meetingCancellation)
               const Text(
-                'Cancellation notice: review only. The calendar event is unchanged.',
+                'Cancellation notice. Explicit application changes status/version while retaining other event content. Other source properties remain review-only.',
                 key: Key('invitation-update-cancellation'),
               ),
             if (view.incomingKind ==
@@ -170,20 +179,62 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
                 key: const Key('invitation-update-source'),
               ),
             ],
-            if (!view.canApply && !view.hasLocalChanges)
+            if (!view.canApply &&
+                !view.canApplyCancellation &&
+                !view.hasLocalChanges)
               const Text('There is no pending newer source to apply.'),
             ElevatedButton(
               key: const Key('invitation-update-apply'),
               onPressed:
                   _busy ||
                       _result != null ||
-                      (!view.canApply && _request == null)
+                      (_requestKind != null &&
+                          _requestKind !=
+                              cal.CalendarInvitationSourceKind.request) ||
+                      (!view.canApply &&
+                          _requestKind !=
+                              cal.CalendarInvitationSourceKind.request)
                   ? null
-                  : _apply,
+                  : () => _apply(),
               child: Text(
-                _request == null ? 'Apply update' : 'Retry the same update',
+                _requestKind == cal.CalendarInvitationSourceKind.request
+                    ? 'Retry the same update'
+                    : view.currentContent.status ==
+                              cal.CalendarEventStatus.cancelled &&
+                          view.incomingKind ==
+                              cal.CalendarInvitationSourceKind.request
+                    ? 'Apply update / reopen'
+                    : 'Apply update',
               ),
             ),
+            if (view.incomingKind ==
+                    cal.CalendarInvitationSourceKind.meetingCancellation ||
+                _requestKind ==
+                    cal.CalendarInvitationSourceKind.meetingCancellation)
+              ElevatedButton(
+                key: const Key('invitation-cancellation-apply'),
+                onPressed:
+                    _busy ||
+                        _result != null ||
+                        (_requestKind != null &&
+                            _requestKind !=
+                                cal
+                                    .CalendarInvitationSourceKind
+                                    .meetingCancellation) ||
+                        (!view.canApplyCancellation &&
+                            _requestKind !=
+                                cal
+                                    .CalendarInvitationSourceKind
+                                    .meetingCancellation)
+                    ? null
+                    : () => _apply(cancellation: true),
+                child: Text(
+                  _requestKind ==
+                          cal.CalendarInvitationSourceKind.meetingCancellation
+                      ? 'Retry the same cancellation'
+                      : 'Apply cancellation',
+                ),
+              ),
             if (_request != null)
               const Text(
                 'Retry keeps the same request. Refresh explicitly loads the current accepted source and event.',

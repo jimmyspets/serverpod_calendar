@@ -1,6 +1,7 @@
 class: CalendarInvitationApplyReceipt
 immutable: true
 fields:
+  kind: CalendarInvitationSourceKind, default=request
   id: UuidValue
   linkId: UuidValue
   invitationId: UuidValue

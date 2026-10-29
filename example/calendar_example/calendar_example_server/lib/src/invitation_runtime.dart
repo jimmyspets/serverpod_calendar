@@ -86,6 +86,7 @@ final class DemoInvitationHost implements CalendarInvitationHost {
         {
           CalendarInvitationOperation.readLink,
           CalendarInvitationOperation.apply,
+          CalendarInvitationOperation.applyCancellation,
           CalendarInvitationOperation.readApplication,
         }.contains(context.operation)) {
       final message = context.message;
