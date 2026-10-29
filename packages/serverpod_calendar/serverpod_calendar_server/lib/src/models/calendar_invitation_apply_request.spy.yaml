@@ -1,0 +1,10 @@
+class: CalendarInvitationApplyRequest
+immutable: true
+fields:
+  invitationId: UuidValue
+  sourceId: UuidValue
+  expectedInvitationRevision: int
+  linkId: UuidValue
+  expectedEventRevision: int
+  expectedCalendarRevision: int
+  expectedApplicationRevision: int

@@ -721,6 +721,17 @@ The approved link references content-minimal identities, has unique logical corr
 `CalendarInvitationLinkSource` is an immutable host-only runtime descriptor, not a table or generated-client model. It supplies original inbox/source IDs, UID/organizer, digest, nullable source SEQUENCE and DTSTAMP independently of current native versions when the original body expires. It contains no reconstructed message.
 
 
-## Proposed linked invitation updates
+## Explicit linked invitation updates
 
-The maintainer confirmed explicit Apply update with rejection of local content conflicts. [ADR 0139](adr/0139-explicit-linked-invitation-updates.md) proposes one current accepted-source checkpoint per stable link, atomic source replacement/review writes, independent authority and a latest-result retry contract. The original creation receipt remains immutable. Earlier update commands would become stale after a later different application; the checkpoint/API/retention mechanics await explicit review and are not implemented. Receiving a newer invitation still only reopens review; participation replies and reviewed overwrite/merge remain separate.
+Accepted [ADR 0139](adr/0139-explicit-linked-invitation-updates.md) implements explicit conflict-protected application of newer linked non-recurring REQUEST sources. One private checkpoint tracks current acceptance and the latest retry result, while the creation receipt stays unchanged. See [the scope, permissions and retry limits](linked-invitation-updates.md) and separate batch validation. Receipt remains review-only; local changes reject replacement and no participation reply is sent.
+
+The approved generated update models are:
+
+| Model | Role |
+| --- | --- |
+| CalendarInvitationApplyRequest | Immutable public source/link/revision command; no client scope, recipient or replacement destination |
+| CalendarInvitationApplyReceipt | Immutable latest application result with link/source/event IDs, created revisions and audit time |
+| CalendarInvitationApplicationView | Protected current/accepted/incoming projection, eligibility and latest result; no private baseline |
+| CalendarInvitationApplicationRecord | One server-only checkpoint per link: accepted references/version/digests, revisions/time and latest request/result; no copied body |
+
+`CalendarInvitationApplicationState` is a host-only immutable runtime descriptor. It separates current/proposed acceptance from original `CalendarInvitationLinkSource` and native revisions. The generated one-table migration preserves prior rows and invents no application history.

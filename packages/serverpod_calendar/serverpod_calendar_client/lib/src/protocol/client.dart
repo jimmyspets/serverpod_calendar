@@ -110,6 +110,12 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_adopt
     as _il1wwrqd;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_adoption_request.dart'
     as _iclj8t3x;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_application_view.dart'
+    as _iy8rht57;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_apply_receipt.dart'
+    as _iephig57;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_apply_request.dart'
+    as _ilrmykvj;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_document.dart'
     as _ig6t0ro8;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_source_view.dart'
@@ -879,6 +885,22 @@ class EndpointCalendarInvitation extends _isc.EndpointRef {
   ) => caller.callServerEndpoint<_il1wwrqd.CalendarInvitationAdoptionReceipt>(
     'serverpod_calendar.calendarInvitation',
     'adopt',
+    {'request': request},
+  );
+
+  _ida.Future<_iy8rht57.CalendarInvitationApplicationView> application(
+    _isc.UuidValue id,
+  ) => caller.callServerEndpoint<_iy8rht57.CalendarInvitationApplicationView>(
+    'serverpod_calendar.calendarInvitation',
+    'application',
+    {'id': id},
+  );
+
+  _ida.Future<_iephig57.CalendarInvitationApplyReceipt> applyUpdate(
+    _ilrmykvj.CalendarInvitationApplyRequest request,
+  ) => caller.callServerEndpoint<_iephig57.CalendarInvitationApplyReceipt>(
+    'serverpod_calendar.calendarInvitation',
+    'applyUpdate',
     {'request': request},
   );
 }
