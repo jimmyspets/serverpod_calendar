@@ -94,15 +94,22 @@ Future<void> main(List<String> args) async {
         'tool/client_smoke.dart',
         if (args.contains('--feeds')) '--feeds',
         if (args.contains('--replies-only')) '--replies-only',
+        if (args.contains('--invitations-only')) '--invitations-only',
         'http://localhost:18180/',
         'http://localhost:18280/',
       ], workingDirectory: root);
       final out = client.stdout.transform(utf8.decoder).listen(stdout.write);
       final err = client.stderr.transform(utf8.decoder).listen(stderr.write);
       // The complete sequence includes all feature probes plus category races.
-      // Keep the narrower reply-only probe on its existing budget.
+      // Keep narrower reply/invitation-only probes on their existing budget.
       final code = await client.exitCode.timeout(
-        Duration(seconds: args.contains('--replies-only') ? 180 : 240),
+        Duration(
+          seconds:
+              args.contains('--replies-only') ||
+                  args.contains('--invitations-only')
+              ? 180
+              : 240,
+        ),
         onTimeout: () {
           unawaited(stop(client));
           throw TimeoutException('Generated-client smoke timed out.');
@@ -112,7 +119,9 @@ Future<void> main(List<String> args) async {
       await err.cancel();
       if (code != 0) throw StateError('Real-client smoke failed ($code).');
       if (args.contains('--feeds') && !args.contains('--flutter')) return;
-      if (!args.contains('--feeds') && !args.contains('--replies-only')) {
+      if (!args.contains('--feeds') &&
+          !args.contains('--replies-only') &&
+          !args.contains('--invitations-only')) {
         final recoveryClients = [
           for (final port in [18180, 18280])
             Client('http://localhost:$port/')
@@ -227,7 +236,9 @@ Future<void> main(List<String> args) async {
         '-d',
         'web-server',
         '--driver=test_driver/integration_test.dart',
-        args.contains('--categories')
+        args.contains('--invitations')
+            ? '--target=integration_test/invitation_smoke_test.dart'
+            : args.contains('--categories')
             ? '--target=integration_test/item_category_search_smoke_test.dart'
             : args.contains('--text-metadata')
             ? '--target=integration_test/item_text_metadata_smoke_test.dart'
@@ -260,6 +271,7 @@ Future<void> main(List<String> args) async {
       final output = result.stdout.transform(utf8.decoder).listen(stdout.write);
       final error = result.stderr.transform(utf8.decoder).listen(stderr.write);
       final focused =
+          args.contains('--invitations') ||
           args.contains('--categories') ||
           args.contains('--text-metadata') ||
           args.contains('--descriptive') ||

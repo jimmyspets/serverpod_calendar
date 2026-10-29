@@ -129,6 +129,7 @@ import '../endpoints/calendar_availability_search_endpoint.dart' as _icfitiep;
 import '../endpoints/calendar_diagnostics_endpoint.dart' as _icr8drn5;
 import '../endpoints/calendar_endpoint.dart' as _inx4l1vp;
 import '../endpoints/calendar_event_endpoint.dart' as _ibwv0suj;
+import '../endpoints/calendar_invitation_endpoint.dart' as _iolttv0d;
 import '../endpoints/calendar_task_endpoint.dart' as _i4tukef9;
 
 class Endpoints extends _is.EndpointDispatch {
@@ -169,6 +170,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'calendarEvent',
+          'serverpod_calendar',
+        ),
+      'calendarInvitation': _iolttv0d.CalendarInvitationEndpoint()
+        ..initialize(
+          server,
+          'calendarInvitation',
           'serverpod_calendar',
         ),
       'calendarTask': _i4tukef9.CalendarTaskEndpoint()
@@ -1594,6 +1601,120 @@ class Endpoints extends _is.EndpointDispatch {
                       .deleteEvent(
                         session,
                         params['eventId'],
+                        params['expectedRevision'],
+                      ),
+        ),
+      },
+    );
+    connectors['calendarInvitation'] = _is.EndpointConnector(
+      name: 'calendarInvitation',
+      endpoint: endpoints['calendarInvitation']!,
+      methodConnectors: {
+        'list': _is.MethodConnector(
+          name: 'list',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .list(session),
+        ),
+        'getInvitation': _is.MethodConnector(
+          name: 'getInvitation',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .getInvitation(
+                        session,
+                        params['id'],
+                      ),
+        ),
+        'sources': _is.MethodConnector(
+          name: 'sources',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .sources(
+                        session,
+                        params['id'],
+                      ),
+        ),
+        'source': _is.MethodConnector(
+          name: 'source',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'sourceId': _is.ParameterDescription(
+              name: 'sourceId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .source(
+                        session,
+                        params['id'],
+                        params['sourceId'],
+                      ),
+        ),
+        'dismiss': _is.MethodConnector(
+          name: 'dismiss',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'expectedRevision': _is.ParameterDescription(
+              name: 'expectedRevision',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .dismiss(
+                        session,
+                        params['id'],
                         params['expectedRevision'],
                       ),
         ),

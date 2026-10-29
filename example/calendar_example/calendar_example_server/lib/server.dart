@@ -13,6 +13,7 @@ import 'package:serverpod_auth_idp_server/providers/email.dart';
 import 'src/generated/serverpod.dart';
 import 'src/local_demo.dart';
 import 'src/calendar_policy.dart';
+import 'src/invitation_runtime.dart';
 import 'src/alarm_runtime.dart';
 import 'src/scheduling_runtime.dart';
 import 'src/feed_policy.dart';
@@ -69,6 +70,7 @@ Future<void> run(List<String> args) async {
     dependencies: [feedDependencies],
     publicationPolicy: DemoCalendarPublicationPolicy(),
     policy: DemoCalendarPolicy(),
+    invitations: CalendarInvitationRuntime(host: DemoInvitationHost()),
     scheduling: CalendarSchedulingRuntime(
       host: DemoSchedulingHost(),
       transport: DemoSchedulingTransport(),

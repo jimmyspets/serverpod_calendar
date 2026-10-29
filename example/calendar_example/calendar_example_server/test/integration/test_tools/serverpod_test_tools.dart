@@ -162,6 +162,8 @@ class TestEndpoints {
 
   late final _RefreshJwtTokensEndpoint refreshJwtTokens;
 
+  late final _InvitationDemoEndpoint invitationDemo;
+
   late final _NotificationStreamEndpoint notificationStream;
 
   late final _SchedulingDemoEndpoint schedulingDemo;
@@ -181,6 +183,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     refreshJwtTokens = _RefreshJwtTokensEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    invitationDemo = _InvitationDemoEndpoint(
       endpoints,
       serializationManager,
     );
@@ -513,6 +519,56 @@ class _RefreshJwtTokensEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_iacs.AuthSuccess>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _InvitationDemoEndpoint {
+  _InvitationDemoEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_ipn35bcd.CalendarInvitationReceipt> simulate(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue invitationId,
+    _is.UuidValue commandId,
+    int? sequence,
+    String summary,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'invitationDemo',
+            method: 'simulate',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'invitationDemo',
+          methodName: 'simulate',
+          parameters: _ist.testObjectToJson({
+            'invitationId': invitationId,
+            'commandId': commandId,
+            'sequence': sequence,
+            'summary': summary,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ipn35bcd.CalendarInvitationReceipt>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

@@ -1,3 +1,4 @@
+import 'invitation_smoke.dart';
 import 'item_category_smoke.dart';
 
 import 'dart:convert';
@@ -56,6 +57,7 @@ Future<void> main(List<String> args) async {
     }
     for (final module in [
       () => first.modules.serverpod_calendar.calendarDiagnostics.check(),
+      () => first.modules.serverpod_calendar.calendarInvitation.list(),
       () =>
           first.modules.serverpod_notifications.notificationDiagnostics.check(),
       () =>
@@ -119,13 +121,27 @@ Future<void> main(List<String> args) async {
     if (mode == 'test' &&
         clients.length == 2 &&
         !args.contains('--replies-only')) {
+      await invitationSmoke(clients);
+    }
+    if (mode == 'test' &&
+        clients.length == 2 &&
+        !args.contains('--replies-only') &&
+        !args.contains('--invitations-only')) {
       await itemCategorySmoke(clients);
     }
-    if (mode == 'test' && !args.contains('--replies-only')) {
+    if (mode == 'test' &&
+        !args.contains('--replies-only') &&
+        !args.contains('--invitations-only')) {
       await schedulingSmoke(clients);
     }
-    if (mode == 'test') await schedulingReplySmoke(clients);
-    if (args.contains('--replies-only')) {
+    if (mode == 'test' && !args.contains('--invitations-only')) {
+      await schedulingReplySmoke(clients);
+    }
+    if (args.contains('--invitations-only')) {
+      stdout.writeln(
+        'PASS: focused invitation clients; unrelated domain/feed/worker prerequisites skipped.',
+      );
+    } else if (args.contains('--replies-only')) {
       stdout.writeln(
         'PASS: focused reply clients; unrelated domain/feed/notification journeys skipped.',
       );
