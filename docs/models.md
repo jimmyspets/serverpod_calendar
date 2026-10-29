@@ -735,3 +735,10 @@ The approved generated update models are:
 | CalendarInvitationApplicationRecord | One server-only checkpoint per link: accepted references/version/digests, revisions/time and latest request/result; no copied body |
 
 `CalendarInvitationApplicationState` is a host-only immutable runtime descriptor. It separates current/proposed acceptance from original `CalendarInvitationLinkSource` and native revisions. The generated one-table migration preserves prior rows and invents no application history.
+
+
+## Proposed cancellation source kind
+
+Proposed [ADR 0140](adr/0140-trusted-cancellation-intake-and-review.md) covers trusted non-recurring whole-meeting CANCEL intake and private review only. It proposes current source-kind storage/DTOs, independent cancellation-ingress authority, known correlation and accepted-version ordering. No implementation is approved: receipt would change no linked event/baseline/checkpoint/alarm or outbound intent. Explicit application, attendee removal, recurring intake and mail remain separate.
+
+The proposed `CalendarInvitationSourceKind` enum distinguishes REQUEST and whole-meeting cancellation. One generated current-kind field on `CalendarInvitationRecord` would default known legacy REQUEST rows and survive source-body expiry; summary/source/application views would expose kind without inventing missing timing. Historical sources retain their independently validated method. No new table or second native-content snapshot is proposed. Source generation and migrations await explicit approval.
