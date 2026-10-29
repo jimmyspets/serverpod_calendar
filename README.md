@@ -213,3 +213,6 @@ Accepted [ADR 0139](docs/adr/0139-explicit-linked-invitation-updates.md) adds [e
 The scoped [incoming cancellation review](docs/invitation-cancellation-review.md) now accepts known, host-verified whole-meeting notices without applying them to the calendar event. Batch validation is recorded separately.
 
 [Explicit linked cancellation and reopening](docs/linked-invitation-cancellation.md) now use clean-baseline source actions: cancellation retains event content and changes status/version; a later newer REQUEST requires explicit application. Receipt alone changes nothing.
+
+
+The pure [decoded iMIP calendar-part adapter](docs/imip-calendar-parts.md) now validates the approved mail-specific event/free-busy payload profile. Whole-email processing, trusted mail integration and real delivery remain separate.

@@ -191,6 +191,6 @@ Accepted [ADR 0140](adr/0140-trusted-cancellation-intake-and-review.md) adds sco
 Accepted [ADR 0141](adr/0141-explicit-linked-cancellation-application.md) adds explicit clean-baseline cancellation application and later explicit newer REQUEST reopening. The existing checkpoint/latest result now records accepted kind, with legacy REQUEST digests preserved and cancellation actions separated. See [the projection, permissions and retry limits](linked-invitation-cancellation.md) and separate batch validation. Receipt still changes nothing; local changes reject and no participation message is sent.
 
 
-## Proposed decoded iMIP prerequisite
+## Scoped decoded iMIP prerequisite
 
-[ADR 0142](adr/0142-pure-decoded-imip-calendar-parts.md) proposes a pure already-transfer-decoded iMIP calendar-part gate, reusing the existing event/free-busy scheduling adapters. Its concrete MIME, mailbox, protection and resource-limit choices await explicit maintainer agreement. It would not parse whole email, establish sender authority, reconcile native state or send mail; complete host MIME/provider integration and external evidence remain required. No RFC 6047 implementation or conformance follows from this proposal.
+Accepted [ADR 0142](adr/0142-pure-decoded-imip-calendar-parts.md) implements a pure already-transfer-decoded iMIP calendar-part gate for existing event/free-busy scheduling payloads. It validates MIME method/component/charset, bounded mailto addresses, protection and resource limits without sender authority or side effects. See [the API/profile guide](imip-calendar-parts.md). Whole-email MIME/provider integration, native reconciliation, transport and external evidence remain separate required work; complete RFC 6047 conformance is not claimed.
