@@ -719,3 +719,8 @@ The generated adoption models are:
 The approved link references content-minimal identities, has unique logical correlation/original-inbox/event indexes, and retains no copied source body. Nullable source version remains distinct from zero. See the guide for permissions, capacity and deletion/purge limits.
 
 `CalendarInvitationLinkSource` is an immutable host-only runtime descriptor, not a table or generated-client model. It supplies original inbox/source IDs, UID/organizer, digest, nullable source SEQUENCE and DTSTAMP independently of current native versions when the original body expires. It contains no reconstructed message.
+
+
+## Proposed linked invitation updates
+
+The maintainer confirmed explicit Apply update with rejection of local content conflicts. [ADR 0139](adr/0139-explicit-linked-invitation-updates.md) proposes one current accepted-source checkpoint per stable link, atomic source replacement/review writes, independent authority and a latest-result retry contract. The original creation receipt remains immutable. Earlier update commands would become stale after a later different application; the checkpoint/API/retention mechanics await explicit review and are not implemented. Receiving a newer invitation still only reopens review; participation replies and reviewed overwrite/merge remain separate.

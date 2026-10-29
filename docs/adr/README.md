@@ -142,6 +142,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0136](0136-authorized-item-category-search.md) | Authorized event and task category search | Accepted 2026-10-28; bounded authorized master-category queries and criteria-bound cursors |
 | [0137](0137-trusted-invitation-intake-and-review.md) | Trusted non-recurring invitation intake and private review | Accepted 2026-10-28; trusted non-recurring intake and three-table private review profile |
 | [0138](0138-explicit-single-event-invitation-adoption.md) | Explicit single-event invitation calendar adoption | Accepted 2026-10-29; explicit stable-link calendar adoption and bounded retention/retry profile |
+| [0139](0139-explicit-linked-invitation-updates.md) | Explicit conflict-protected linked invitation updates | Proposed; explicit apply/local-conflict policy confirmed, checkpoint/latest-result mechanics await review |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

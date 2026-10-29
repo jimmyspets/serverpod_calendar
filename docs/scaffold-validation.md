@@ -1329,3 +1329,10 @@ The clean final `dart run tool/host_smoke.dart --flutter` sequence exited succes
 Owned interactive development runners were restored without resetting development data. Generated migration `20261029065023341-invitation-adoption` applied successfully. Actual Serverpod MCP and Flutter MCP hot reload succeeded; Flutter runtime-error inspection found none. These final phased results complete the agreed batch; they do not turn the earlier port-conflicted root invocation into a successful single frozen-source root run. Final static counts follow before the single implementation commit.
 
 Final static verification passed **2,878 relative links**, consecutive ADRs 0001–0138, **63 candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. The approved adoption batch is complete before its single implementation commit. Existing-meeting updates, participation responses and remaining reconciliation/mail/release requirements remain separate.
+
+
+## Linked invitation update proposal — 2026-10-29
+
+Documentation-only ADR 0139 follows completed ADR 0138. The maintainer confirmed explicit application and rejection of local content conflicts; the concrete accepted-source checkpoint/latest-result retry mechanics remain proposed. Existing baseline/replacement/version code and current Serverpod/RFC guidance were inspected. Paginated open issues/PRs showed no overlapping linked-update work. No model/generated/schema/runtime change or runtime suite repetition is included. Relative links, consecutive ADRs, candidate files, credentials, LICENSE and whitespace are checked before this documentation commit.
+
+Documentation validation passed **2,888 relative links**, consecutive ADRs 0001–0139, **11 Markdown-only candidate files**, the 17-value credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. No model/generated/schema/runtime change or runtime suite repetition is included in this proposal; completed ADR 0138 runtime evidence remains separate.
