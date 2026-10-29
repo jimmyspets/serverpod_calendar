@@ -1,3 +1,5 @@
+import 'invitation_adoption_screen.dart';
+
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
@@ -122,7 +124,7 @@ class _InvitationScreenState extends State<InvitationScreen> {
       padding: const EdgeInsets.all(24),
       children: [
         const Text(
-          'Unprocessed invitations. Receiving or dismissing one does not add an event, book time, accept/decline participation or send a reply. Calendar addition follows separately.',
+          'Unprocessed invitations. Receiving or dismissing one does not add an event, book time, accept/decline participation or send a reply. Use Add to calendar for an explicit local copy.',
         ),
         TextButton(
           key: const Key('invitation-simulate'),
@@ -155,6 +157,25 @@ class _InvitationScreenState extends State<InvitationScreen> {
                     ),
                   Wrap(
                     children: [
+                      TextButton(
+                        key: ValueKey('invitation-add-${entry.id}'),
+                        onPressed: _busy
+                            ? null
+                            : () async {
+                                await Navigator.of(context).push<void>(
+                                  MaterialPageRoute(
+                                    builder: (_) => InvitationAdoptionScreen(
+                                      client: widget.client,
+                                      entry: entry,
+                                    ),
+                                  ),
+                                );
+                                if (mounted) {
+                                  await _load();
+                                }
+                              },
+                        child: const Text('Add to calendar / view link'),
+                      ),
                       TextButton(
                         key: ValueKey('invitation-source-${entry.id}'),
                         onPressed: _busy

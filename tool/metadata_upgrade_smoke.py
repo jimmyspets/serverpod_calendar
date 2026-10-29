@@ -149,17 +149,70 @@ $verify_invitation_receipt_key$;
 """)
 
 
+def verify_invitation_adoption_upgrade(database):
+    sql(database, """
+CREATE TABLE adoption_upgrade_guard(table_name text, rows jsonb);
+DO $snapshot_adoption$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+  AND (tablename LIKE 'serverpod_calendar_%' OR tablename LIKE 'serverpod_notifications_%') LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s', item.tablename) INTO contents;
+  INSERT INTO adoption_upgrade_guard VALUES(item.tablename, contents);
+ END LOOP;
+END;
+$snapshot_adoption$;
+""")
+    sql(database, (SERVER / "migrations/20261029065023341-invitation-adoption/migration.sql").read_text(encoding="utf-8"))
+    sql(database, """
+DO $verify_adoption$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT * FROM adoption_upgrade_guard LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s', item.table_name) INTO contents;
+  IF contents IS DISTINCT FROM item.rows THEN RAISE EXCEPTION 'Adoption migration changed %', item.table_name; END IF;
+ END LOOP;
+ IF (SELECT count(*) FROM serverpod_calendar_invitation_link)<>0 THEN RAISE EXCEPTION 'Invented adoption links'; END IF;
+ IF (SELECT count(*) FROM pg_indexes WHERE indexname IN ('calendar_invitation_link_correlation_unique','calendar_invitation_link_original_unique','calendar_invitation_link_event_unique') AND indexdef LIKE 'CREATE UNIQUE%')<>3
+ THEN RAISE EXCEPTION 'Missing link uniqueness'; END IF;
+ IF (SELECT count(*) FROM pg_constraint WHERE conrelid='serverpod_calendar_invitation_link'::regclass AND contype='f' AND confdeltype='a' AND convalidated)<>2
+ THEN RAISE EXCEPTION 'Missing restrictive identity references'; END IF;
+END;
+$verify_adoption$;
+-- Structural synthetic references only; historical inbox/source IDs need no rows.
+INSERT INTO serverpod_calendar_invitation_link
+(id,"scopeKey","recipientKey",uid,organizer,"correlationDigest","invitationId","sourceId","sourceDigest",stamp,"calendarId","eventId","requestDigest","eventRevision","invitationRevision","adoptedAt")
+VALUES ('99999999-9999-4999-8999-999999999999','instance-upgrade-test','recipient',repeat('u',4096),'mailto:'||repeat('o',2048),repeat('a',64),
+'88888888-8888-4888-8888-888888888888','77777777-7777-4777-8777-777777777777',repeat('b',64),now(),
+'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',repeat('c',64),1,2,now());
+DO $verify_link_identity$
+BEGIN
+ BEGIN
+  DELETE FROM serverpod_calendar_event WHERE id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  RAISE EXCEPTION 'Physical identity deletion lost link';
+ EXCEPTION WHEN foreign_key_violation THEN NULL;
+ END;
+END;
+$verify_link_identity$;
+DROP TABLE adoption_upgrade_guard;
+""")
+
+
 def main():
     # Drop only a database this process successfully creates on the test service.
     database = f"calendar_metadata_upgrade_{os.getpid()}"
     assert re.fullmatch(r"calendar_metadata_upgrade_[0-9]+", database)
     sql("postgres", f"CREATE DATABASE {database};")
     try:
-        if any(arg in __import__("sys").argv for arg in ["--instance-replies-only", "--invitations-only"]):
+        if any(arg in __import__("sys").argv for arg in ["--instance-replies-only", "--invitations-only", "--adoption-only"]):
             sql(database, (SERVER / "migrations/20261027194429192-attendee-replies/definition.sql").read_text(encoding="utf-8"))
             verify_instance_reply_upgrade(database)
-            if "--invitations-only" in __import__("sys").argv:
+            if any(arg in __import__("sys").argv for arg in ["--invitations-only", "--adoption-only"]):
                 verify_invitation_upgrade(database)
+                if "--adoption-only" in __import__("sys").argv:
+                    verify_invitation_adoption_upgrade(database)
+                    print("PASS: populated invitation adoption upgrade preserves prior rows, invents no links, retains historical references and enforces identity/uniqueness constraints.")
+                    return
                 print("PASS: invitation upgrade preserves populated prior domain rows, creates no invitation state and enforces bounded digest correlation/delivery keys.")
                 return
             print("PASS: populated master reply source/response/receipt rows preserved, master defaults and target uniqueness verified.")
@@ -798,7 +851,8 @@ DROP TABLE reply_upgrade_guard;
 """)
         verify_instance_reply_upgrade(database)
         verify_invitation_upgrade(database)
-        print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated master replies/receipts through the instance-target and invitation-review upgrades.")
+        verify_invitation_adoption_upgrade(database)
+        print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated master replies/receipts through the instance-target, invitation-review and stable-link adoption upgrades.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")
 

@@ -44,6 +44,26 @@ enum CalendarInvitationOperation {
   readSummary,
   readSource,
   dismiss,
+  adopt,
+  readLink,
+}
+
+/// Original link source evidence, retained independently of a prunable body.
+/// This is a trusted descriptor, never a reconstructed source document.
+final class CalendarInvitationLinkSource {
+  const CalendarInvitationLinkSource({
+    required this.invitationId,
+    required this.sourceId,
+    required this.uid,
+    required this.organizer,
+    required this.digest,
+    required this.sequence,
+    required this.stamp,
+  });
+  final UuidValue invitationId, sourceId;
+  final String uid, organizer, digest;
+  final int? sequence;
+  final DateTime stamp;
 }
 
 /// Immutable actual source/target context; absent current means not yet loaded.
@@ -65,6 +85,13 @@ final class CalendarInvitationPolicyContext {
     this.receiptId,
     this.isRetry = false,
     this.receipt,
+    this.adoptionRequest,
+    this.link,
+    this.linkSource,
+    this.calendar,
+    this.currentEvent,
+    this.proposedEvent,
+    this.historicalSourceUnavailable,
   });
   final CalendarInvitationOperation operation;
   final CalendarInvitationRecipient recipient;
@@ -79,6 +106,14 @@ final class CalendarInvitationPolicyContext {
   final UuidValue? entryId, sourceId, receiptId;
   final bool isRetry;
   final CalendarInvitationReceipt? receipt;
+  final CalendarInvitationAdoptionRequest? adoptionRequest;
+  final CalendarInvitationAdoptionReceipt? link;
+  final CalendarInvitationLinkSource? linkSource;
+  final CalendarPolicySnapshot? calendar;
+  final CalendarEventPolicySnapshot? currentEvent, proposedEvent;
+
+  /// True only when the original retained body is actually unavailable.
+  final bool? historicalSourceUnavailable;
 }
 
 abstract interface class CalendarInvitationHost {
@@ -113,6 +148,7 @@ final class CalendarInvitationOptions {
     this.maxSourceBytes = 262144,
     this.maxRetainedBytes = 16777216,
     this.maxReceipts = 1024,
+    this.maxLinks = 1024,
     this.terminalRetention = const Duration(days: 30),
   }) {
     for (final pair in [
@@ -123,6 +159,7 @@ final class CalendarInvitationOptions {
       (maxSourceBytes, 262144),
       (maxRetainedBytes, 16777216),
       (maxReceipts, 1024),
+      (maxLinks, 1024),
     ]) {
       if (pair.$1 < 1 || pair.$1 > pair.$2) {
         throw ArgumentError('Invalid invitation limit');
@@ -139,7 +176,8 @@ final class CalendarInvitationOptions {
       maxSources,
       maxSourceBytes,
       maxRetainedBytes,
-      maxReceipts;
+      maxReceipts,
+      maxLinks;
   final Duration terminalRetention;
 }
 

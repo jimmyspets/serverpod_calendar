@@ -79,6 +79,38 @@ final class DemoInvitationHost implements CalendarInvitationHost {
         context.actor?.scopeKey != recipient.scopeKey) {
       return CalendarAuthorizationVerdict.deny;
     }
+    if (context.operation == CalendarInvitationOperation.adopt ||
+        context.operation == CalendarInvitationOperation.readLink) {
+      final message = context.message;
+      if (message != null &&
+          (message.events.single.participants.organizer?.address !=
+                  'mailto:organizer@example.invalid' ||
+              !message.uid.startsWith(
+                'synthetic-invitation:${recipient.key}:',
+              ) ||
+              !message.events.single.participants.attendees.any(
+                (a) => a.address == recipient.calendarAddress,
+              ))) {
+        return CalendarAuthorizationVerdict.deny;
+      }
+      if (context.historicalSourceUnavailable == true &&
+          (context.linkSource?.uid != context.currentEvent?.protocolUid ||
+              context.linkSource?.organizer !=
+                  'mailto:organizer@example.invalid' ||
+              context.currentEvent?.protocolUid.startsWith(
+                    'synthetic-invitation:${recipient.key}:',
+                  ) !=
+                  true ||
+              context
+                      .currentEvent
+                      ?.protocolState
+                      ?.sourceMetadata
+                      ?.organizer
+                      ?.address !=
+                  'mailto:organizer@example.invalid')) {
+        return CalendarAuthorizationVerdict.deny;
+      }
+    }
     return CalendarAuthorizationVerdict.allow;
   }
 }

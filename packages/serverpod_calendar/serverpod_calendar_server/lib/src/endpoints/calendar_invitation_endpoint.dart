@@ -21,4 +21,12 @@ class CalendarInvitationEndpoint extends Endpoint {
   ) => CalendarModule.service(session).invitationSource(id, sourceId);
   Future<void> dismiss(Session session, UuidValue id, int expectedRevision) =>
       CalendarModule.service(session).dismissInvitation(id, expectedRevision);
+  Future<CalendarInvitationAdoptionReceipt?> link(
+    Session session,
+    UuidValue id,
+  ) => CalendarModule.service(session).invitationLink(id);
+  Future<CalendarInvitationAdoptionReceipt> adopt(
+    Session session,
+    CalendarInvitationAdoptionRequest request,
+  ) => CalendarModule.service(session).adoptInvitation(request);
 }
