@@ -69,6 +69,8 @@ calendarInvitation:
   - sources:
   - source:
   - dismiss:
+  - link:
+  - adopt:
 calendarTask:
   - updateTextMetadata:
   - replaceFromImport:

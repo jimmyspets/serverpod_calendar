@@ -487,7 +487,7 @@ The bounded query implementation is now present; validation is recorded separate
 - [x] Review [ADR 0137](adr/0137-trusted-invitation-intake-and-review.md): trusted intake, private summary/source review, dismissal, three tables, ordering/idempotency and bounded retention.
 - [x] Implement the approved intake/private-review batch and synthetic-only example.
 - [x] Complete its focused/fresh-upgrade/two-host/process-loss/client/Flutter and broader batch checks before one code commit.
-- [ ] Implement separately reviewed calendar adoption, existing-meeting updates, participation responses, recurrence/CANCEL correlation and remaining mail/release requirements.
+- [ ] Complete the scoped adoption validation below, then separately reviewed existing-meeting updates, participation responses, recurrence/CANCEL correlation and remaining mail/release requirements.
 
 The approved review queue is calendar scheduling state, separate from the reusable notification module; it does not add a persistent notification inbox. The scoped implementation now exists; validation is recorded separately.
 
@@ -495,7 +495,8 @@ The approved review queue is calendar scheduling state, separate from the reusab
 ## Explicit invitation calendar addition
 
 - [x] Confirm one linked event in one explicitly chosen calendar per recipient invitation, with stable retries.
-- [ ] Review [ADR 0138](adr/0138-explicit-single-event-invitation-adoption.md): binding storage, atomic adoption, authority, retention and deletion/retry boundaries.
-- [ ] Implement and validate the separately approved batch before one implementation commit.
+- [x] Review [ADR 0138](adr/0138-explicit-single-event-invitation-adoption.md): binding storage, atomic adoption, authority, retention and deletion/retry boundaries.
+- [x] Implement the approved atomic adoption/storage/API/Flutter batch.
+- [x] Complete focused and broader batch validation in recorded phases before one implementation commit.
 
-The maintainer confirmed one linked event in one explicitly chosen calendar per recipient invitation, with stable retries. [ADR 0138](adr/0138-explicit-single-event-invitation-adoption.md) proposes the concrete explicit Add to calendar batch: one private immutable binding table, atomic event/link/review state, independent source/create/import/link authority and retained retry checks. These mechanics await model/ADR approval and are not implemented. It creates a local imported-origin copy without a participation reply or organizer authority; existing-meeting reconciliation remains separate.
+Accepted [ADR 0138](adr/0138-explicit-single-event-invitation-adoption.md) implements explicit Add to calendar with one private stable-link table, atomic imported-origin event/link/review writes, independent source/create/import/link authority and retained retry checks. The maintainer approved the complete model/API/retention batch on 2026-10-29. See [the scoped guide](invitation-calendar-adoption.md) and the separate batch validation record. Adding a local copy sends no participation reply and grants no organizer authority; existing-meeting reconciliation remains separate.

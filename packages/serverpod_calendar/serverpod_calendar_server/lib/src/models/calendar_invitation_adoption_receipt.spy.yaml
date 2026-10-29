@@ -1,0 +1,11 @@
+class: CalendarInvitationAdoptionReceipt
+immutable: true
+fields:
+  id: UuidValue
+  invitationId: UuidValue
+  sourceId: UuidValue
+  calendarId: UuidValue
+  eventId: UuidValue
+  eventRevision: int
+  invitationRevision: int
+  adoptedAt: DateTime
