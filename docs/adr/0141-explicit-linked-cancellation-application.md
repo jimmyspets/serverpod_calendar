@@ -1,14 +1,14 @@
 # ADR 0141: Explicit linked cancellation application and later REQUEST reopening
 
-Status: **Proposed; only the clean-baseline product policy is confirmed. Concrete mechanics require explicit maintainer agreement.**
+Status: **Accepted by explicit maintainer approval on 2026-10-29 for the complete application/projection/checkpoint/API/authority/reopening batch. Scoped implementation and complete local batch validation are recorded separately.**
 
 ## Context and confirmed policy
 
-Accepted [ADR 0140](0140-trusted-cancellation-intake-and-review.md) receives known, verified whole-meeting cancellation notices into private review without changing native events. The maintainer confirmed that an explicit Apply cancellation must require a clean accepted-source baseline and reject local content changes. This proposal completes the first non-recurring cancellation lifecycle, including a later explicit newer REQUEST through the existing update command. It sends no participation reply and grants no organizer authority.
+Accepted [ADR 0140](0140-trusted-cancellation-intake-and-review.md) receives known, verified whole-meeting cancellation notices into private review without changing native events. The maintainer confirmed that an explicit Apply cancellation must require a clean accepted-source baseline and reject local content changes. The approved batch completes the first non-recurring cancellation lifecycle, including a later explicit newer REQUEST through the existing update command. It sends no participation reply and grants no organizer authority.
 
 The [existing linked-update guide](../linked-invitation-updates.md) describes the current REQUEST baseline/retry behavior. [RFC 5546 cancellation constraints](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.5) and the [pure message profile](../itip-message-profile.md) describe source messages; the native projection, authority, storage and retry mechanics below are application policies.
 
-## Proposed action and projection
+## Approved action and projection
 
 Add an independently authorized applyCancellation endpoint using the existing immutable CalendarInvitationApplyRequest IDs and expected invitation/event/calendar/application revisions. Cancellation digests use an explicit literal action prefix in the existing length-framed encoding, disjoint from the UUID-led REQUEST format. Keep existing REQUEST digests unchanged so retained latest REQUEST retries survive the additive upgrade without rewriting hashes or guessing history. Identical command fields cannot alias a different action. The actual destination comes from the stored link and trusted recipient. Require the exact pending current whole-meeting CANCEL, supported non-recurring profile and exact UID/organizer/correlation, with a strictly newer version and incremented SEQUENCE over the accepted REQUEST. Existing intake validation is rechecked against stored evidence; receiving a notice proves no authority to apply it.
 
@@ -18,7 +18,7 @@ The action retains current event UID, timing/end form, text, descriptive metadat
 
 Record a normalized baseline of that complete agreed native projection, not a claim that the source supplied a complete VEVENT. Preserve the separately protected normalized CANCEL body under existing queue retention. Calendar metadata time/revision stays unchanged; event/API revision, nondecreasing database audit time, scope generation and feed invalidation advance. Source protocol times remain exact. Personal definitions/actions survive; ordinary generation/revalidation suppresses cancelled reminders. No notification or scheduling message is queued.
 
-## Proposed workflow after approval
+## Approved workflow
 
 ```mermaid
 flowchart TD
@@ -32,7 +32,7 @@ flowchart TD
   H --> I[Atomic complete REQUEST replacement; no participation message]
 ```
 
-## Proposed acceptance checkpoint and models
+## Approved acceptance checkpoint and models
 
 Reuse the existing one-row-per-link CalendarInvitationApplicationRecord, adding kind using CalendarInvitationSourceKind. Existing rows default to request because previous accepted application commands handled REQUEST only. No new table/body snapshot or expanded retention is proposed. The row continues to hold current accepted source IDs/digest/version, baseline/creation digests, revisions/time and latest request/result. For cancellation acceptance, its kind and baseline must agree with explicit cancelled native projection; never infer accepted source kind from native STATUS alone.
 
@@ -40,7 +40,7 @@ Add acceptedKind and canApplyCancellation to CalendarInvitationApplicationView a
 
 The immutable original creation receipt stays unchanged. The single latest application result now spans both explicit REQUEST and cancellation actions. Exact latest retries reauthorize and return the same result without replay, revision/generation change, alarm action or dismissal of a newer source. After a different application commits, older REQUEST or cancellation commands are no longer retained retries and reject stale. No historical receipt ledger is invented.
 
-## Proposed authority, transaction and reopening
+## Approved authority, transaction and reopening
 
 Require independent invitation applyCancellation plus summary/source/link/application-read rights; native import/replacement/update/full-detail/source-read rights; and lifecycle authority for every cancellation command, including an already-cancelled clean event receiving a newer cancellation version. Ordinary Apply update retains its own applicable change permissions. Hosts may map gates together. Preliminary authorization precedes private conflict classification; final complete current/proposed source/link/event/baseline/checkpoint/result authorization occurs inside the shared scope transaction after proposed writes, with final actor/recipient mapping and declared guarantee checks.
 
@@ -54,8 +54,8 @@ Add an explicit cancellation preview/action that shows retained content and the 
 
 Test source/kind/profile/version/identity checks, clean versus identical native saves, all independent gates/final rollback, exact latest retry and cross-action hash separation, superseded commands, source expiry, original creation identity, personal-state preservation, ordinary export/feed invalidation and explicit newer REQUEST reopening. Verify no outbound or automatic source alarm activation. Exercise generated populated upgrades, real two-host races/loss before/after commit, generated clients and Flutter actions. Run focused checks during development and broader batch checks before one code commit.
 
-## Alternatives, consequences and decision requested
+## Alternatives, consequences and accepted decision
 
 Automatic application would violate review-first policy. Status-only edits without an accepted projection would falsely classify the system's own cancellation as a local conflict and leave later source versions ambiguous. Copying every optional cancellation field would silently turn a lifecycle command into content replacement. A separate receipt/history table expands retention beyond the agreed latest-result policy. The proposed one-row kind plus explicit projection keeps the first lifecycle bounded, at the cost of stale rejection for older commands.
 
-Approve this concrete action/projection/checkpoint/API/authority/reopening batch before implementation. Reviewed overwrite/merge, recurring/instance/range cancellation, attendee removal, participant responses, organizer adoption, link purge/relink and RFC 6047 mail remain separate required work. No real mail is authorized.
+The maintainer explicitly approved the complete action/projection/checkpoint/API/authority/reopening batch on 2026-10-29 before source changes. See [the scoped implementation](../linked-invitation-cancellation.md) and separate validation evidence. Reviewed overwrite/merge, recurring/instance/range cancellation, attendee removal, participant responses, organizer adoption, link purge/relink and RFC 6047 mail remain separate required work. No real mail is authorized.

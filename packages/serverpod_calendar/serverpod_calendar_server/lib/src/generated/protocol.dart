@@ -2039,6 +2039,13 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnDefault: 'random',
         ),
         _isp.ColumnDefinition(
+          name: 'kind',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:CalendarInvitationSourceKind',
+          columnDefault: '\'request\'',
+        ),
+        _isp.ColumnDefinition(
           name: 'scopeKey',
           columnType: _isp.ColumnType.text,
           isNullable: false,

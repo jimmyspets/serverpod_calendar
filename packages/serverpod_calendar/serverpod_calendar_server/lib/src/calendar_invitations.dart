@@ -559,7 +559,8 @@ extension CalendarInvitationOperations on CalendarService {
         final requestSequences = <int>[
           if (entry?.kind == CalendarInvitationSourceKind.request)
             entry!.sequence ?? 0,
-          if (accepted != null) accepted.sequence ?? 0,
+          if (accepted?.kind == CalendarInvitationSourceKind.request)
+            accepted!.sequence ?? 0,
           for (final historical in sources.where((s) => s.entryId == entry?.id))
             if (_invKind(_invStored(historical, entry!)) ==
                 CalendarInvitationSourceKind.request)

@@ -1806,6 +1806,27 @@ class Endpoints extends _is.EndpointDispatch {
                         params['request'],
                       ),
         ),
+        'applyCancellation': _is.MethodConnector(
+          name: 'applyCancellation',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i3h34hei.CalendarInvitationApplyRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .applyCancellation(
+                        session,
+                        params['request'],
+                      ),
+        ),
       },
     );
     connectors['calendarTask'] = _is.EndpointConnector(

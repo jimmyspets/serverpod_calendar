@@ -29,6 +29,7 @@ abstract class CalendarInvitationApplicationView
     required this.calendarRevision,
     required this.eventRevision,
     required this.applicationRevision,
+    _ilccsff7.CalendarInvitationSourceKind? acceptedKind,
     required this.acceptedInvitationId,
     required this.acceptedSourceId,
     this.acceptedSequence,
@@ -42,9 +43,12 @@ abstract class CalendarInvitationApplicationView
     this.invitationRevision,
     this.incomingContent,
     this.incomingSourceText,
+    bool? canApplyCancellation,
     required this.canApply,
     this.latestResult,
-  });
+  }) : acceptedKind =
+           acceptedKind ?? _ilccsff7.CalendarInvitationSourceKind.request,
+       canApplyCancellation = canApplyCancellation ?? false;
 
   const factory CalendarInvitationApplicationView({
     required _isc.UuidValue linkId,
@@ -54,6 +58,7 @@ abstract class CalendarInvitationApplicationView
     required int calendarRevision,
     required int eventRevision,
     required int applicationRevision,
+    _ilccsff7.CalendarInvitationSourceKind? acceptedKind,
     required _isc.UuidValue acceptedInvitationId,
     required _isc.UuidValue acceptedSourceId,
     int? acceptedSequence,
@@ -67,6 +72,7 @@ abstract class CalendarInvitationApplicationView
     int? invitationRevision,
     _id4cvk34.CalendarEventContent? incomingContent,
     String? incomingSourceText,
+    bool? canApplyCancellation,
     required bool canApply,
     _ic2yh4ry.CalendarInvitationApplyReceipt? latestResult,
   }) = _CalendarInvitationApplicationViewImpl;
@@ -88,6 +94,11 @@ abstract class CalendarInvitationApplicationView
       calendarRevision: jsonSerialization['calendarRevision'] as int,
       eventRevision: jsonSerialization['eventRevision'] as int,
       applicationRevision: jsonSerialization['applicationRevision'] as int,
+      acceptedKind: jsonSerialization['acceptedKind'] == null
+          ? null
+          : _ilccsff7.CalendarInvitationSourceKind.fromJson(
+              (jsonSerialization['acceptedKind'] as String),
+            ),
       acceptedInvitationId: _isc.UuidValueJsonExtension.fromJson(
         jsonSerialization['acceptedInvitationId'],
       ),
@@ -129,6 +140,11 @@ abstract class CalendarInvitationApplicationView
               jsonSerialization['incomingContent'],
             ),
       incomingSourceText: jsonSerialization['incomingSourceText'] as String?,
+      canApplyCancellation: jsonSerialization['canApplyCancellation'] == null
+          ? null
+          : _isc.BoolJsonExtension.fromJson(
+              jsonSerialization['canApplyCancellation'],
+            ),
       canApply: _isc.BoolJsonExtension.fromJson(jsonSerialization['canApply']),
       latestResult: jsonSerialization['latestResult'] == null
           ? null
@@ -152,6 +168,8 @@ abstract class CalendarInvitationApplicationView
   final int eventRevision;
 
   final int applicationRevision;
+
+  final _ilccsff7.CalendarInvitationSourceKind acceptedKind;
 
   final _isc.UuidValue acceptedInvitationId;
 
@@ -179,6 +197,8 @@ abstract class CalendarInvitationApplicationView
 
   final String? incomingSourceText;
 
+  final bool canApplyCancellation;
+
   final bool canApply;
 
   final _ic2yh4ry.CalendarInvitationApplyReceipt? latestResult;
@@ -194,6 +214,7 @@ abstract class CalendarInvitationApplicationView
     int? calendarRevision,
     int? eventRevision,
     int? applicationRevision,
+    _ilccsff7.CalendarInvitationSourceKind? acceptedKind,
     _isc.UuidValue? acceptedInvitationId,
     _isc.UuidValue? acceptedSourceId,
     int? acceptedSequence,
@@ -207,6 +228,7 @@ abstract class CalendarInvitationApplicationView
     int? invitationRevision,
     _id4cvk34.CalendarEventContent? incomingContent,
     String? incomingSourceText,
+    bool? canApplyCancellation,
     bool? canApply,
     _ic2yh4ry.CalendarInvitationApplyReceipt? latestResult,
   });
@@ -253,6 +275,11 @@ abstract class CalendarInvitationApplicationView
                   applicationRevision,
                 ) ||
                 other.applicationRevision == applicationRevision) &&
+            (identical(
+                  other.acceptedKind,
+                  acceptedKind,
+                ) ||
+                other.acceptedKind == acceptedKind) &&
             (identical(
                   other.acceptedInvitationId,
                   acceptedInvitationId,
@@ -319,6 +346,11 @@ abstract class CalendarInvitationApplicationView
                 ) ||
                 other.incomingSourceText == incomingSourceText) &&
             (identical(
+                  other.canApplyCancellation,
+                  canApplyCancellation,
+                ) ||
+                other.canApplyCancellation == canApplyCancellation) &&
+            (identical(
                   other.canApply,
                   canApply,
                 ) ||
@@ -341,6 +373,7 @@ abstract class CalendarInvitationApplicationView
       calendarRevision,
       eventRevision,
       applicationRevision,
+      acceptedKind,
       acceptedInvitationId,
       acceptedSourceId,
       acceptedSequence,
@@ -354,6 +387,7 @@ abstract class CalendarInvitationApplicationView
       invitationRevision,
       incomingContent,
       incomingSourceText,
+      canApplyCancellation,
       canApply,
       latestResult,
     ]);
@@ -370,6 +404,7 @@ abstract class CalendarInvitationApplicationView
       'calendarRevision': calendarRevision,
       'eventRevision': eventRevision,
       'applicationRevision': applicationRevision,
+      'acceptedKind': acceptedKind.toJson(),
       'acceptedInvitationId': acceptedInvitationId.toJson(),
       'acceptedSourceId': acceptedSourceId.toJson(),
       if (acceptedSequence != null) 'acceptedSequence': acceptedSequence,
@@ -384,6 +419,7 @@ abstract class CalendarInvitationApplicationView
       if (invitationRevision != null) 'invitationRevision': invitationRevision,
       if (incomingContent != null) 'incomingContent': incomingContent?.toJson(),
       if (incomingSourceText != null) 'incomingSourceText': incomingSourceText,
+      'canApplyCancellation': canApplyCancellation,
       'canApply': canApply,
       if (latestResult != null) 'latestResult': latestResult?.toJson(),
     };
@@ -400,6 +436,7 @@ abstract class CalendarInvitationApplicationView
       'calendarRevision': calendarRevision,
       'eventRevision': eventRevision,
       'applicationRevision': applicationRevision,
+      'acceptedKind': acceptedKind.toJson(),
       'acceptedInvitationId': acceptedInvitationId.toJson(),
       'acceptedSourceId': acceptedSourceId.toJson(),
       if (acceptedSequence != null) 'acceptedSequence': acceptedSequence,
@@ -415,6 +452,7 @@ abstract class CalendarInvitationApplicationView
       if (incomingContent != null)
         'incomingContent': incomingContent?.toJsonForProtocol(),
       if (incomingSourceText != null) 'incomingSourceText': incomingSourceText,
+      'canApplyCancellation': canApplyCancellation,
       'canApply': canApply,
       if (latestResult != null)
         'latestResult': latestResult?.toJsonForProtocol(),
@@ -439,6 +477,7 @@ class _CalendarInvitationApplicationViewImpl
     required int calendarRevision,
     required int eventRevision,
     required int applicationRevision,
+    _ilccsff7.CalendarInvitationSourceKind? acceptedKind,
     required _isc.UuidValue acceptedInvitationId,
     required _isc.UuidValue acceptedSourceId,
     int? acceptedSequence,
@@ -452,6 +491,7 @@ class _CalendarInvitationApplicationViewImpl
     int? invitationRevision,
     _id4cvk34.CalendarEventContent? incomingContent,
     String? incomingSourceText,
+    bool? canApplyCancellation,
     required bool canApply,
     _ic2yh4ry.CalendarInvitationApplyReceipt? latestResult,
   }) : super._(
@@ -462,6 +502,7 @@ class _CalendarInvitationApplicationViewImpl
          calendarRevision: calendarRevision,
          eventRevision: eventRevision,
          applicationRevision: applicationRevision,
+         acceptedKind: acceptedKind,
          acceptedInvitationId: acceptedInvitationId,
          acceptedSourceId: acceptedSourceId,
          acceptedSequence: acceptedSequence,
@@ -475,6 +516,7 @@ class _CalendarInvitationApplicationViewImpl
          invitationRevision: invitationRevision,
          incomingContent: incomingContent,
          incomingSourceText: incomingSourceText,
+         canApplyCancellation: canApplyCancellation,
          canApply: canApply,
          latestResult: latestResult,
        );
@@ -491,6 +533,7 @@ class _CalendarInvitationApplicationViewImpl
     int? calendarRevision,
     int? eventRevision,
     int? applicationRevision,
+    _ilccsff7.CalendarInvitationSourceKind? acceptedKind,
     _isc.UuidValue? acceptedInvitationId,
     _isc.UuidValue? acceptedSourceId,
     Object? acceptedSequence = _Undefined,
@@ -504,6 +547,7 @@ class _CalendarInvitationApplicationViewImpl
     Object? invitationRevision = _Undefined,
     Object? incomingContent = _Undefined,
     Object? incomingSourceText = _Undefined,
+    bool? canApplyCancellation,
     bool? canApply,
     Object? latestResult = _Undefined,
   }) {
@@ -515,6 +559,7 @@ class _CalendarInvitationApplicationViewImpl
       calendarRevision: calendarRevision ?? this.calendarRevision,
       eventRevision: eventRevision ?? this.eventRevision,
       applicationRevision: applicationRevision ?? this.applicationRevision,
+      acceptedKind: acceptedKind ?? this.acceptedKind,
       acceptedInvitationId: acceptedInvitationId ?? this.acceptedInvitationId,
       acceptedSourceId: acceptedSourceId ?? this.acceptedSourceId,
       acceptedSequence: acceptedSequence is int?
@@ -540,6 +585,7 @@ class _CalendarInvitationApplicationViewImpl
       incomingSourceText: incomingSourceText is String?
           ? incomingSourceText
           : this.incomingSourceText,
+      canApplyCancellation: canApplyCancellation ?? this.canApplyCancellation,
       canApply: canApply ?? this.canApply,
       latestResult: latestResult is _ic2yh4ry.CalendarInvitationApplyReceipt?
           ? latestResult

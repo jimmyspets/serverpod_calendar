@@ -278,7 +278,10 @@ Future<void> main() async {
         18780,
       );
     }
-    Future<Map<String, Object?>> updateRequest(String id) async {
+    Future<Map<String, Object?>> updateRequest(
+      String id, {
+      bool cancellation = false,
+    }) async {
       final received = await b.command({
         'command': 'receive',
         'caseId': id,
@@ -297,6 +300,7 @@ Future<void> main() async {
         'key': 'update',
         'sequence': 1,
         'summary': 'Updated',
+        'cancel': cancellation,
       });
       final view = await b.command({
         'command': 'application',
@@ -380,6 +384,84 @@ Future<void> main() async {
       );
     }
 
+    final cancelApplyCase = nextCase(),
+        cancelApplyBody = await updateRequest(
+          cancelApplyCase,
+          cancellation: true,
+        );
+    final cancelledRace = await Future.wait([
+      for (final p in [a, b])
+        p.command({
+          'command': 'apply',
+          'caseId': cancelApplyCase,
+          'request': cancelApplyBody,
+          'cancel': true,
+        }),
+    ]);
+    require(
+      (cancelledRace.first as Map)['id'] != null &&
+          (cancelledRace.first as Map)['id'] ==
+              (cancelledRace.last as Map)['id'] &&
+          (cancelledRace.first as Map)['kind'] == 'meetingCancellation',
+      'Competing cancellation application changed result',
+    );
+    for (final pause in ['cancel-apply-before', 'cancel-apply-after']) {
+      final id = nextCase(),
+          request = await updateRequest(id, cancellation: true);
+      a.paused = Completer<Map<String, dynamic>>();
+      final lost = a
+          .command({
+            'command': 'apply',
+            'caseId': id,
+            'request': request,
+            'cancel': true,
+            'pause': pause,
+          })
+          .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+      final submitted = await a.paused!.future.timeout(
+        const Duration(seconds: 40),
+      );
+      final visible =
+          await b.command({'command': 'inspect', 'caseId': id}) as Map;
+      final committed = pause == 'cancel-apply-after';
+      require(
+        visible['eventStatus'] == (committed ? 'cancelled' : 'confirmed') &&
+            visible['acceptedKind'] ==
+                (committed ? 'meetingCancellation' : null) &&
+            visible['applications'] == (committed ? 1 : 0) &&
+            visible['dismissed'] == committed,
+        'Cancellation application was partially visible',
+      );
+      await a.stop();
+      await lost;
+      final recovered = await b.command({
+        'command': 'apply',
+        'caseId': id,
+        'request': request,
+        'cancel': true,
+      }) as Map;
+      require(
+        recovered['id'] != null &&
+            committed == (recovered['id'] == submitted['id']),
+        'Cancellation application lost stable retry identity',
+      );
+      final state =
+          await b.command({'command': 'inspect', 'caseId': id}) as Map;
+      require(
+        state['eventStatus'] == 'cancelled' &&
+            state['acceptedKind'] == 'meetingCancellation' &&
+            state['events'] == 1 &&
+            state['links'] == 1 &&
+            state['applications'] == 1 &&
+            state['eventRevision'] == 2 &&
+            state['dismissed'] == true,
+        'Cancellation application recovery duplicated or lost state',
+      );
+      a = await start(
+        'a-cancel-apply-recovered-${committed ? 'after' : 'before'}',
+        18780,
+      );
+    }
     final cancellationRace = nextCase();
     await b.command({
       'command': 'receive',
@@ -503,7 +585,7 @@ Future<void> main() async {
       if (pause == 'before') a = await start('a-recovered', 18780);
     }
     stdout.writeln(
-      'PASS: independent invitation hosts, duplicate/conflicting ingress and dismissal races, actual loss before/after commit, stable receipt recovery, one-event adoption and latest-update races/loss plus REQUEST/CANCEL races and cancellation loss/retry with no native mutation or partial state.',
+      'PASS: independent invitation hosts, duplicate/conflicting ingress and dismissal races, actual loss before/after commit, stable receipt recovery, one-event adoption and latest-update races/loss plus REQUEST/CANCEL races and cancellation intake loss/retry without native mutation and explicit cancellation-application races/loss with atomic native state.',
     );
   } finally {
     final live = probes.where((p) => !p.stopped && !p.exited).toList();

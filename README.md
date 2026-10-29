@@ -211,3 +211,5 @@ Accepted [ADR 0138](docs/adr/0138-explicit-single-event-invitation-adoption.md) 
 Accepted [ADR 0139](docs/adr/0139-explicit-linked-invitation-updates.md) adds [explicit linked invitation updates](docs/linked-invitation-updates.md): preserve local edits by rejecting conflicts, keep creation identity stable and recover the latest update result without replay. Receipt remains private review; native application sends no participation reply. See validation for the scoped batch.
 
 The scoped [incoming cancellation review](docs/invitation-cancellation-review.md) now accepts known, host-verified whole-meeting notices without applying them to the calendar event. Batch validation is recorded separately.
+
+[Explicit linked cancellation and reopening](docs/linked-invitation-cancellation.md) now use clean-baseline source actions: cancellation retains event content and changes status/version; a later newer REQUEST requires explicit application. Receipt alone changes nothing.
