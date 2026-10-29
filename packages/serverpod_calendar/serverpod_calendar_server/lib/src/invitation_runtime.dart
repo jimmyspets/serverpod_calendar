@@ -40,6 +40,7 @@ final class CalendarInvitationRecipient {
 
 enum CalendarInvitationOperation {
   receive,
+  receiveCancellation,
   list,
   readSummary,
   readSource,
@@ -124,6 +125,7 @@ final class CalendarInvitationPolicyContext {
     this.applicationReceipt,
     this.proposedBaseline,
     this.localChanges,
+    this.linkedEventUnavailable,
   });
   final CalendarInvitationOperation operation;
   final CalendarInvitationRecipient recipient;
@@ -152,6 +154,42 @@ final class CalendarInvitationPolicyContext {
   final CalendarInvitationApplyReceipt? applicationReceipt;
   final CalendarEventImportBaseline? proposedBaseline;
   final bool? localChanges;
+  final bool? linkedEventUnavailable;
+
+  CalendarInvitationPolicyContext forOperation(
+    CalendarInvitationOperation value,
+  ) => CalendarInvitationPolicyContext(
+    operation: value,
+    recipient: recipient,
+    actor: actor,
+    delivery: delivery,
+    message: message,
+    normalizedSource: normalizedSource,
+    sourceDigest: sourceDigest,
+    current: current,
+    proposedOutcome: proposedOutcome,
+    proposedRevision: proposedRevision,
+    proposedDismissed: proposedDismissed,
+    entryId: entryId,
+    sourceId: sourceId,
+    receiptId: receiptId,
+    isRetry: isRetry,
+    receipt: receipt,
+    adoptionRequest: adoptionRequest,
+    link: link,
+    linkSource: linkSource,
+    calendar: calendar,
+    currentEvent: currentEvent,
+    proposedEvent: proposedEvent,
+    historicalSourceUnavailable: historicalSourceUnavailable,
+    applyRequest: applyRequest,
+    currentApplication: currentApplication,
+    proposedApplication: proposedApplication,
+    applicationReceipt: applicationReceipt,
+    proposedBaseline: proposedBaseline,
+    localChanges: localChanges,
+    linkedEventUnavailable: linkedEventUnavailable,
+  );
 }
 
 abstract interface class CalendarInvitationHost {

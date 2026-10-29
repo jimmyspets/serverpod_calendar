@@ -12,12 +12,14 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'calendar_invitation_outcome.dart' as _i98zwsq8;
+import 'calendar_invitation_source_kind.dart' as _ilccsff7;
 
 @_isc.immutable
 abstract class CalendarInvitationSourceView
     implements _isc.SerializableModel, _isc.ProtocolSerialization {
   const CalendarInvitationSourceView._({
     required this.id,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     required this.entryId,
     this.sequence,
     required this.stamp,
@@ -25,10 +27,11 @@ abstract class CalendarInvitationSourceView
     required this.isCurrent,
     required this.receivedAt,
     this.inactiveAt,
-  });
+  }) : kind = kind ?? _ilccsff7.CalendarInvitationSourceKind.request;
 
   const factory CalendarInvitationSourceView({
     required _isc.UuidValue id,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     required _isc.UuidValue entryId,
     int? sequence,
     required DateTime stamp,
@@ -43,6 +46,11 @@ abstract class CalendarInvitationSourceView
   ) {
     return CalendarInvitationSourceView(
       id: _isc.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
+      kind: jsonSerialization['kind'] == null
+          ? null
+          : _ilccsff7.CalendarInvitationSourceKind.fromJson(
+              (jsonSerialization['kind'] as String),
+            ),
       entryId: _isc.UuidValueJsonExtension.fromJson(
         jsonSerialization['entryId'],
       ),
@@ -65,6 +73,8 @@ abstract class CalendarInvitationSourceView
     );
   }
 
+  final _ilccsff7.CalendarInvitationSourceKind kind;
+
   final _isc.UuidValue id;
 
   final _isc.UuidValue entryId;
@@ -86,6 +96,7 @@ abstract class CalendarInvitationSourceView
   @_isc.useResult
   CalendarInvitationSourceView copyWith({
     _isc.UuidValue? id,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     _isc.UuidValue? entryId,
     int? sequence,
     DateTime? stamp,
@@ -107,6 +118,11 @@ abstract class CalendarInvitationSourceView
                   id,
                 ) ||
                 other.id == id) &&
+            (identical(
+                  other.kind,
+                  kind,
+                ) ||
+                other.kind == kind) &&
             (identical(
                   other.entryId,
                   entryId,
@@ -149,6 +165,7 @@ abstract class CalendarInvitationSourceView
     return Object.hash(
       runtimeType,
       id,
+      kind,
       entryId,
       sequence,
       stamp,
@@ -164,6 +181,7 @@ abstract class CalendarInvitationSourceView
     return {
       '__className__': 'serverpod_calendar.CalendarInvitationSourceView',
       'id': id.toJson(),
+      'kind': kind.toJson(),
       'entryId': entryId.toJson(),
       if (sequence != null) 'sequence': sequence,
       'stamp': stamp.toJson(),
@@ -179,6 +197,7 @@ abstract class CalendarInvitationSourceView
     return {
       '__className__': 'serverpod_calendar.CalendarInvitationSourceView',
       'id': id.toJson(),
+      'kind': kind.toJson(),
       'entryId': entryId.toJson(),
       if (sequence != null) 'sequence': sequence,
       'stamp': stamp.toJson(),
@@ -200,6 +219,7 @@ class _Undefined {}
 class _CalendarInvitationSourceViewImpl extends CalendarInvitationSourceView {
   const _CalendarInvitationSourceViewImpl({
     required _isc.UuidValue id,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     required _isc.UuidValue entryId,
     int? sequence,
     required DateTime stamp,
@@ -209,6 +229,7 @@ class _CalendarInvitationSourceViewImpl extends CalendarInvitationSourceView {
     DateTime? inactiveAt,
   }) : super._(
          id: id,
+         kind: kind,
          entryId: entryId,
          sequence: sequence,
          stamp: stamp,
@@ -224,6 +245,7 @@ class _CalendarInvitationSourceViewImpl extends CalendarInvitationSourceView {
   @override
   CalendarInvitationSourceView copyWith({
     _isc.UuidValue? id,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     _isc.UuidValue? entryId,
     Object? sequence = _Undefined,
     DateTime? stamp,
@@ -234,6 +256,7 @@ class _CalendarInvitationSourceViewImpl extends CalendarInvitationSourceView {
   }) {
     return CalendarInvitationSourceView(
       id: id ?? this.id,
+      kind: kind ?? this.kind,
       entryId: entryId ?? this.entryId,
       sequence: sequence is int? ? sequence : this.sequence,
       stamp: stamp ?? this.stamp,

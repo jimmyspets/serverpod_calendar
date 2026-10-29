@@ -2,6 +2,7 @@ class: CalendarInvitationRecord
 serverOnly: true
 table: serverpod_calendar_invitation
 fields:
+  kind: CalendarInvitationSourceKind, default=request
   id: UuidValue?, defaultPersist=random
   scopeKey: String
   recipientKey: String

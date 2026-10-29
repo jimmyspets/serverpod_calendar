@@ -1,6 +1,7 @@
 class: CalendarInvitationView
 immutable: true
 fields:
+  kind: CalendarInvitationSourceKind, default=request
   id: UuidValue
   revision: int
   uid: String

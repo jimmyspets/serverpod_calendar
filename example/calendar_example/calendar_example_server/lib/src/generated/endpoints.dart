@@ -322,6 +322,39 @@ class Endpoints extends _is.EndpointDispatch {
                         params['summary'],
                       ),
         ),
+        'simulateCancellation': _is.MethodConnector(
+          name: 'simulateCancellation',
+          params: {
+            'invitationId': _is.ParameterDescription(
+              name: 'invitationId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'commandId': _is.ParameterDescription(
+              name: 'commandId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'sequence': _is.ParameterDescription(
+              name: 'sequence',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['invitationDemo']
+                          as _i9j0zg07.InvitationDemoEndpoint)
+                      .simulateCancellation(
+                        session,
+                        params['invitationId'],
+                        params['commandId'],
+                        params['sequence'],
+                      ),
+        ),
       },
     );
     connectors['notificationStream'] = _is.EndpointConnector(

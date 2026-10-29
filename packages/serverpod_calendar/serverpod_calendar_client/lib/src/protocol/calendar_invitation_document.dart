@@ -11,16 +11,19 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import 'calendar_invitation_source_kind.dart' as _ilccsff7;
 
 @_isc.immutable
 abstract class CalendarInvitationDocument
     implements _isc.SerializableModel, _isc.ProtocolSerialization {
   const CalendarInvitationDocument._({
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     required this.sourceId,
     required this.text,
-  });
+  }) : kind = kind ?? _ilccsff7.CalendarInvitationSourceKind.request;
 
   const factory CalendarInvitationDocument({
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     required _isc.UuidValue sourceId,
     required String text,
   }) = _CalendarInvitationDocumentImpl;
@@ -29,12 +32,19 @@ abstract class CalendarInvitationDocument
     Map<String, dynamic> jsonSerialization,
   ) {
     return CalendarInvitationDocument(
+      kind: jsonSerialization['kind'] == null
+          ? null
+          : _ilccsff7.CalendarInvitationSourceKind.fromJson(
+              (jsonSerialization['kind'] as String),
+            ),
       sourceId: _isc.UuidValueJsonExtension.fromJson(
         jsonSerialization['sourceId'],
       ),
       text: jsonSerialization['text'] as String,
     );
   }
+
+  final _ilccsff7.CalendarInvitationSourceKind kind;
 
   final _isc.UuidValue sourceId;
 
@@ -44,6 +54,7 @@ abstract class CalendarInvitationDocument
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
   CalendarInvitationDocument copyWith({
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     _isc.UuidValue? sourceId,
     String? text,
   });
@@ -55,6 +66,11 @@ abstract class CalendarInvitationDocument
         ) ||
         other.runtimeType == runtimeType &&
             other is CalendarInvitationDocument &&
+            (identical(
+                  other.kind,
+                  kind,
+                ) ||
+                other.kind == kind) &&
             (identical(
                   other.sourceId,
                   sourceId,
@@ -71,6 +87,7 @@ abstract class CalendarInvitationDocument
   int get hashCode {
     return Object.hash(
       runtimeType,
+      kind,
       sourceId,
       text,
     );
@@ -80,6 +97,7 @@ abstract class CalendarInvitationDocument
   Map<String, dynamic> toJson() {
     return {
       '__className__': 'serverpod_calendar.CalendarInvitationDocument',
+      'kind': kind.toJson(),
       'sourceId': sourceId.toJson(),
       'text': text,
     };
@@ -89,6 +107,7 @@ abstract class CalendarInvitationDocument
   Map<String, dynamic> toJsonForProtocol() {
     return {
       '__className__': 'serverpod_calendar.CalendarInvitationDocument',
+      'kind': kind.toJson(),
       'sourceId': sourceId.toJson(),
       'text': text,
     };
@@ -102,9 +121,11 @@ abstract class CalendarInvitationDocument
 
 class _CalendarInvitationDocumentImpl extends CalendarInvitationDocument {
   const _CalendarInvitationDocumentImpl({
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     required _isc.UuidValue sourceId,
     required String text,
   }) : super._(
+         kind: kind,
          sourceId: sourceId,
          text: text,
        );
@@ -114,10 +135,12 @@ class _CalendarInvitationDocumentImpl extends CalendarInvitationDocument {
   @_isc.useResult
   @override
   CalendarInvitationDocument copyWith({
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     _isc.UuidValue? sourceId,
     String? text,
   }) {
     return CalendarInvitationDocument(
+      kind: kind ?? this.kind,
       sourceId: sourceId ?? this.sourceId,
       text: text ?? this.text,
     );
