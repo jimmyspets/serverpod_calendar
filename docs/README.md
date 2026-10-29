@@ -272,3 +272,6 @@ Accepted ADR 0137 implements bounded trusted non-recurring REQUEST intake and pr
 - [Cancellation intake/private review](invitation-cancellation-review.md): source kind, authority, known correlation, ordering and unchanged native state.
 
 - [Explicit linked cancellation/reopening](linked-invitation-cancellation.md): clean baseline, status/version projection, accepted kind and stable action retries.
+
+
+- [Proposed decoded iMIP calendar-part profile](adr/0142-pure-decoded-imip-calendar-parts.md): pure semantic gate only; concrete mechanics await review, with host MIME/transport and native authority separate.

@@ -533,3 +533,12 @@ The maintainer confirmed that the next explicit Apply cancellation design must r
 - [x] Complete focused and broader validation before one implementation commit.
 
 Accepted [ADR 0141](adr/0141-explicit-linked-cancellation-application.md) adds explicit clean-baseline cancellation application and later explicit newer REQUEST reopening. The existing checkpoint/latest result now records accepted kind, with legacy REQUEST digests preserved and cancellation actions separated. See [the projection, permissions and retry limits](linked-invitation-cancellation.md) and separate batch validation. Receipt still changes nothing; local changes reject and no participation message is sent.
+
+
+## Decoded iMIP calendar-part prerequisite
+
+- [ ] Review [ADR 0142](adr/0142-pure-decoded-imip-calendar-parts.md): pure carrier, method/component/charset checks, bounded mailbox subset, protection rejection and limits.
+- [ ] Implement and validate the approved pure profile; no source changes until explicit agreement.
+- [ ] Separately select/evaluate host MIME/provider integration, complete message handling, trusted ingress/outbound authority and synthetic delivery before external mail evidence.
+
+This proposed prerequisite does not complete the RFC 6047 mail requirement or imply authority from parsed addresses. Existing event/free-busy iTIP payloads remain independent of mail binding. No real sending is authorized.
