@@ -1,0 +1,27 @@
+class: CalendarInvitationResponseStateRecord
+serverOnly: true
+table: serverpod_calendar_invitation_response_state
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  recipientKey: String
+  entryId: UuidValue, relation(parent=serverpod_calendar_invitation)
+  recipientAddress: String
+  revision: int
+  latestResponseId: UuidValue
+  lastStamp: DateTime
+  choice: CalendarInvitationResponseChoice
+  sourceId: UuidValue
+  sourceRevision: int
+  sourceDigest: String
+  sourceSequence: int?
+  sourceStamp: DateTime
+  outcome: CalendarInvitationResponseDeliveryState
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  calendar_invitation_response_state_unique:
+    fields: scopeKey, recipientKey, entryId
+    unique: true
+  calendar_invitation_response_state_scope_idx:
+    fields: scopeKey, recipientKey

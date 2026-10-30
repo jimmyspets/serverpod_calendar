@@ -1,0 +1,10 @@
+enum: CalendarInvitationResponseDeliveryState
+serialized: byName
+values:
+  - queued
+  - retrying
+  - claimed
+  - accepted
+  - withdrawn
+  - expired
+  - failed

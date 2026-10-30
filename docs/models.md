@@ -765,14 +765,14 @@ Accepted [ADR 0144](adr/0144-bounded-host-raw-imip-mime.md) adds only a host-loc
 Accepted [ADR 0145](adr/0145-host-mime-native-ingress.md) adds example-local receiveHostImipInvitation/receiveHostImipReply functions using existing delivery carriers and native receipts, plus bounded synthetic fixture composition. There is no new Serverpod model/table, persistence field, generated endpoint or provider identity model. Explicit target/origin references remain host-supplied and are verified by existing installed policies; MIME fields provide no identity or permission. See [the implementation guide](host-imip-ingress.md).
 
 
-## Proposed private attendee response storage
+## Private attendee response storage
 
-[ADR 0146](adr/0146-explicit-private-attendee-responses.md) proposes three server-only tables, still pending explicit model/workflow approval.
+Accepted [ADR 0146](adr/0146-explicit-private-attendee-responses.md) approves three server-only tables, generated request/receipt/view models and additive migrations. See [the implementation guide](private-attendee-responses.md).
 
-| Proposed model | Responsibility |
+| Model | Responsibility |
 | --- | --- |
 | CalendarInvitationResponseStateRecord | Per-recipient/invitation personal choice revision, last protocol stamp and bounded latest-source/outcome descriptors; independent of calendar contents |
 | CalendarInvitationResponseRecord | Immutable command/source/minimal reply plus fenced one-organizer delivery/retry state and stable receipt |
 | CalendarInvitationResponseAttemptRecord | Bounded operational attempts and fixed outcome/receipt fields without credentials or arbitrary diagnostics |
 
-The source document specifies bounds, pinned-entry/source pruning, terminal history versus active personal state, missing-state upgrade behavior and generated request/receipt/view models. No model source, migration or runtime change is authorized by this proposal alone.
+The source document specifies bounds, pinned-entry/source pruning, terminal history versus active personal state, missing-state upgrade behavior and generated request/receipt/view models. The accepted implementation generates model/client/test tools and fresh/upgrade migrations from sources; it creates no response history for existing invitations.

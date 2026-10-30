@@ -92,6 +92,136 @@ Future<void> main() async {
   try {
     var a = await start('a', 18780);
     final b = await start('b', 18880);
+    // Explicit responses run in real independent hosts against the same storage.
+    for (final pause in ['response-before', 'response-after']) {
+      final id = nextCase();
+      final incoming = await b.command({
+        'command': 'receive',
+        'caseId': id,
+        'key': 'response',
+      }) as Map;
+      final request = cal.CalendarInvitationResponseRequest(
+        invitationId: cal.UuidValue.fromString(incoming['entryId'] as String),
+        expectedInvitationRevision: incoming['entryRevision'] as int,
+        sourceId: cal.UuidValue.fromString(incoming['sourceId'] as String),
+        expectedResponseRevision: 0,
+        commandId: const cal.Uuid().v4obj(),
+        choice: cal.CalendarInvitationResponseChoice.declined,
+      );
+      final raced = await Future.wait(
+        [a, b].map(
+          (p) => p.command({
+            'command': 'response',
+            'caseId': id,
+            'request': request.toJson(),
+          }),
+        ),
+      );
+      require(
+        (raced.first as Map)['id'] == (raced.last as Map)['id'] &&
+            (raced.first as Map)['id'] != null,
+        'Cross-host command retry duplicated response',
+      );
+      a.paused = Completer<Map<String, dynamic>>();
+      final lost = a
+          .command({'command': 'response-work', 'caseId': id, 'pause': pause})
+          .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+      final submitted = await a.paused!.future.timeout(
+        const Duration(seconds: 40),
+      );
+      await b.command({'command': 'response-work', 'caseId': id});
+      final claimed =
+          await b.command({'command': 'inspect', 'caseId': id}) as Map;
+      require(
+        ((claimed['responses'] as List).single as Map)['attempts'] == 1,
+        'Competing host bypassed active response lease',
+      );
+      await a.stop();
+      await lost;
+      await b.command({'command': 'response-expire-lease', 'caseId': id});
+      await b.command({'command': 'response-work', 'caseId': id});
+      final recovered =
+          await b.command({'command': 'inspect', 'caseId': id}) as Map;
+      final row = (recovered['responses'] as List).single as Map;
+      require(
+        row['state'] == 'accepted' &&
+            row['attempts'] == 2 &&
+            recovered['events'] == 0 &&
+            recovered['links'] == 0,
+        'Response loss recovery changed calendar state or failed takeover',
+      );
+      final records = await File(
+        '$root/.local/invitation-response-probe-$id.jsonl',
+      ).readAsLines();
+      require(
+        records.length == (pause == 'response-after' ? 2 : 1),
+        'Incorrect synthetic acceptance evidence',
+      );
+      for (final line in records) {
+        final evidence = jsonDecode(line) as Map;
+        require(
+          evidence['key'] == submitted['key'] &&
+              evidence['digest'] == submitted['digest'],
+          'Response recovery changed stable delivery identity or bytes',
+        );
+      }
+      a = await start('a-response-recovered-$pause', 18780);
+    }
+    for (final revoke in [false, true]) {
+      final id = nextCase();
+      final incoming = await a.command({
+        'command': 'receive',
+        'caseId': id,
+        'key': 'response',
+      }) as Map;
+      final request = cal.CalendarInvitationResponseRequest(
+        invitationId: cal.UuidValue.fromString(incoming['entryId'] as String),
+        expectedInvitationRevision: incoming['entryRevision'] as int,
+        sourceId: cal.UuidValue.fromString(incoming['sourceId'] as String),
+        expectedResponseRevision: 0,
+        commandId: const cal.Uuid().v4obj(),
+        choice: cal.CalendarInvitationResponseChoice.accepted,
+      );
+      final commands = await Future.wait(
+        [a, b].map(
+          (p) => p.command({
+            'command': 'response',
+            'caseId': id,
+            'request': request
+                .copyWith(commandId: const cal.Uuid().v4obj())
+                .toJson(),
+          }),
+        ),
+      );
+      require(
+        commands.where((r) => (r as Map)['id'] != null).length == 1 &&
+            commands
+                    .where((r) => (r as Map)['error'] == 'staleRevision')
+                    .length ==
+                1,
+        'Response CAS race did not have exactly one winner',
+      );
+      if (revoke) {
+        await a.command({'command': 'response-revoke', 'caseId': id});
+      } else {
+        await a.command({
+          'command': 'receive',
+          'caseId': id,
+          'key': 'new-source',
+          'sequence': 1,
+        });
+      }
+      await b.command({'command': 'response-work', 'caseId': id});
+      final inspected =
+          await a.command({'command': 'inspect', 'caseId': id}) as Map;
+      require(
+        ((inspected['responses'] as List).single as Map)['state'] ==
+                'withdrawn' &&
+            !await File('$root/.local/invitation-response-probe-$id.jsonl')
+                .exists(),
+        'Changed source/access dispatched a stale response',
+      );
+    }
     final duplicate = nextCase();
     final raced = await Future.wait(
       [a, b].map(
@@ -585,7 +715,7 @@ Future<void> main() async {
       if (pause == 'before') a = await start('a-recovered', 18780);
     }
     stdout.writeln(
-      'PASS: independent invitation hosts, duplicate/conflicting ingress and dismissal races, actual loss before/after commit, stable receipt recovery, one-event adoption and latest-update races/loss plus REQUEST/CANCEL races and cancellation intake loss/retry without native mutation and explicit cancellation-application races/loss with atomic native state.',
+      'PASS: independent invitation hosts, response command/CAS races, competing response leases, actual loss before/after response acceptance with stable key/bytes, cross-host source/access withdrawal, duplicate ingress/dismissal, adoption/update/cancellation races and commit-loss recovery.',
     );
   } finally {
     final live = probes.where((p) => !p.stopped && !p.exited).toList();

@@ -10,6 +10,80 @@ import 'package:calendar_example_server/src/generated/serverpod.dart'
 
 import 'package:calendar_example_server/src/imip_ingress.dart';
 import 'package:calendar_example_server/src/synthetic_imip_input.dart';
+import 'package:crypto/crypto.dart';
+
+File _responseFile(String scope, String suffix) => File(
+  '../../../.local/invitation-response-probe-${scope.split(':').last}.$suffix',
+);
+
+final class _ResponseHost implements CalendarInvitationResponseHost {
+  _ResponseHost(this.host);
+  final _Host host;
+  @override
+  CalendarAuthorizationGuarantee get guarantee =>
+      CalendarAuthorizationGuarantee.freshCheck;
+  @override
+  Future<CalendarInvitationResponseAuthority> resolve(
+    Session s,
+    CalendarInvitationResponsePolicyContext c,
+    Transaction tx,
+  ) async => CalendarInvitationResponseAuthority(
+    attendeeAddress: host.recipient.calendarAddress,
+    authorityRef: 'verified-probe',
+    organizer: CalendarSchedulingRoute(
+      c.invitation.organizer,
+      'verified-probe-route',
+    ),
+  );
+  @override
+  Future<CalendarAuthorizationVerdict> authorize(
+    Session s,
+    CalendarInvitationResponsePolicyContext c,
+    Transaction tx,
+    CalendarAuthorizationPhase phase,
+  ) async {
+    if (!c.recipient.same(host.recipient) ||
+        await _responseFile(host.scope, 'revoked').exists()) {
+      return CalendarAuthorizationVerdict.deny;
+    }
+    if (c.operation == CalendarInvitationResponseOperation.dispatch &&
+        c.actor != null) {
+      throw StateError('Fabricated dispatch actor');
+    }
+    return CalendarAuthorizationVerdict.allow;
+  }
+}
+
+final class _ResponseTransport implements CalendarInvitationResponseTransport {
+  _ResponseTransport(this.host);
+  final _Host host;
+  @override
+  Future<CalendarSchedulingTransportResult> submit(
+    Session s,
+    CalendarInvitationResponseSubmission input,
+  ) async {
+    final evidence = {
+      'key': input.deliveryKey.toString(),
+      'digest': sha256.convert(utf8.encode(input.payload)).toString(),
+    };
+    if (host.pause == 'response-before') {
+      stdout.writeln('INVITATION_PAUSED ${jsonEncode(evidence)}');
+      await Completer<void>().future;
+    }
+    await _responseFile(input.scopeKey, 'jsonl').writeAsString(
+      '${jsonEncode(evidence)}\n',
+      mode: FileMode.append,
+      flush: true,
+    );
+    if (host.pause == 'response-after') {
+      stdout.writeln('INVITATION_PAUSED ${jsonEncode(evidence)}');
+      await Completer<void>().future;
+    }
+    return const CalendarSchedulingTransportResult(
+      CalendarSchedulingTransportOutcome.accepted,
+    );
+  }
+}
 
 final class _Host implements CalendarInvitationHost {
   String scope = '', pause = '';
@@ -140,7 +214,13 @@ Future<void> main(List<String> args) async {
       requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
       policyTimeout: Duration(seconds: 30),
     ),
-    invitations: CalendarInvitationRuntime(host: host),
+    invitations: CalendarInvitationRuntime(
+      host: host,
+      responses: CalendarInvitationResponseRuntime(
+        host: _ResponseHost(host),
+        transport: _ResponseTransport(host),
+      ),
+    ),
   );
   await pod.start();
   stdout.writeln('INVITATION_READY');
@@ -154,6 +234,40 @@ Future<void> main(List<String> args) async {
       Object? result;
       try {
         switch (input['command']) {
+          case 'response':
+            session.updateAuthenticated(
+              AuthenticationInfo('recipient', {}, authId: 'invitation-probe'),
+            );
+            try {
+              result =
+                  (await CalendarModule.service(session).sendInvitationResponse(
+                    CalendarInvitationResponseRequest.fromJson(
+                      input['request'] as Map<String, dynamic>,
+                    ),
+                  )).toJson();
+            } finally {
+              session.updateAuthenticated(null);
+            }
+          case 'response-work':
+            await CalendarModule.runInvitationResponseMaintenance(session);
+            result = true;
+          case 'response-expire-lease':
+            final rows = await CalendarInvitationResponseRecord.db.find(
+              session,
+              where: (t) => t.scopeKey.equals(host.scope),
+            );
+            for (final row in rows.where((r) => r.terminalAt == null)) {
+              row.nextAttemptAt = DateTime.utc(2020);
+              row.leaseUntil = DateTime.utc(2020);
+              await CalendarInvitationResponseRecord.db.updateRow(session, row);
+            }
+            result = true;
+          case 'response-revoke':
+            await _responseFile(
+              host.scope,
+              'revoked',
+            ).writeAsString('Synthetic test revocation');
+            result = true;
           case 'receive':
             final body = [
               'BEGIN:VCALENDAR',
@@ -294,6 +408,18 @@ Future<void> main(List<String> args) async {
                   where: (t) => t.scopeKey.equals(host.scope),
                 );
             result = {
+              'responses': [
+                for (final r in await CalendarInvitationResponseRecord.db.find(
+                  session,
+                  where: (t) => t.scopeKey.equals(host.scope),
+                ))
+                  {
+                    'id': r.id.toString(),
+                    'state': r.state.name,
+                    'attempts': r.attemptCount,
+                    'digest': r.payloadDigest,
+                  },
+              ],
               'acceptedKind': application?.kind.name,
               'eventStatus': eventRows.firstOrNull?.content.status.name,
               'events': await session.db
@@ -339,6 +465,25 @@ Future<void> main(List<String> args) async {
             }
             result = true;
           case 'cleanup':
+            final responseRows = await CalendarInvitationResponseRecord.db.find(
+              session,
+              where: (t) => t.scopeKey.equals(host.scope),
+            );
+            if (responseRows.isNotEmpty) {
+              await CalendarInvitationResponseAttemptRecord.db.deleteWhere(
+                session,
+                where: (t) =>
+                    t.responseId.inSet(responseRows.map((r) => r.id!).toSet()),
+              );
+              await CalendarInvitationResponseRecord.db.delete(
+                session,
+                responseRows,
+              );
+            }
+            await CalendarInvitationResponseStateRecord.db.deleteWhere(
+              session,
+              where: (t) => t.scopeKey.equals(host.scope),
+            );
             await CalendarInvitationApplicationRecord.db.deleteWhere(
               session,
               where: (t) => t.scopeKey.equals(host.scope),

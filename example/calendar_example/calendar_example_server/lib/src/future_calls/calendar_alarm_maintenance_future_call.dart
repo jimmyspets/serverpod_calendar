@@ -10,6 +10,7 @@ class CalendarAlarmMaintenanceFutureCall extends FutureCall {
   Future<void> sweep(Session session) async {
     await CalendarModule.runAlarmMaintenance(session);
     await CalendarModule.runSchedulingMaintenance(session);
+    await CalendarModule.runInvitationResponseMaintenance(session);
     await notify.NotificationModule.runMaintenance(session);
     await feed.CalendarFeedModule.runMaintenance(session);
   }
