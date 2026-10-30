@@ -152,6 +152,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0143](0143-synthetic-host-outbound-imip-composition.md) | Synthetic host-owned outbound iMIP composition | Accepted 2026-10-30; scoped host implementation and local batch validation complete |
 
+| [0144](0144-bounded-host-raw-imip-mime.md) | Bounded host-owned raw iMIP MIME extraction | Proposed; framing/ambiguity/multipart/transfer/limit mechanics await explicit review |
+
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
 Use the next consecutive number for a new ADR covering a material decision. Include context, proposal/decision, alternatives, consequences, and acceptance conditions. Preserve committed/accepted decision history; supersede accepted decisions with a linked ADR. Superseded uncommitted drafts may be removed under the maintainer-authorized cleanup. Mark an ADR accepted only after explicit maintainer agreement recorded in the PR or issue.

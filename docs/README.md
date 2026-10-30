@@ -278,3 +278,6 @@ Accepted ADR 0137 implements bounded trusted non-recurring REQUEST intake and pr
 
 
 - [MIME library evaluation](mime-library-evaluation.md) and [implemented synthetic outbound composition](outbound-imip-composition.md): accepted host-only composition remains separate from complete mail integration.
+
+
+- [Proposed bounded raw iMIP MIME extraction](adr/0144-bounded-host-raw-imip-mime.md): grouped framing/ambiguity/multipart/transfer profile awaiting review, with native/provider authority and delivery separate.

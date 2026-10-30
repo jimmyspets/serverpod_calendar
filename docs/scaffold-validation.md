@@ -1439,3 +1439,11 @@ The complete broader `./tool/check.ps1` exited successfully on the frozen runtim
 
 
 Owned interactive development runners were restored without a database reset; the latest existing migration was already applied. The current IDE DTD was rediscovered and connected after its URI changed. Actual Serverpod MCP hot reload and Flutter VM connection/hot reload succeeded, with no Flutter runtime errors. Final static verification passed **3,005 relative links**, consecutive ADRs 0001–0143, **27 candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. The complete approved outbound MIME batch is ready for its single implementation commit.
+
+
+## Bounded host raw MIME proposal — ADR 0144 (2026-10-30)
+
+Documentation-only next group after completed ADR 0143. The verified pinned library source plus RFC 2045/2046/5322 framing/transfer sections informed the proposed strict host guards, simple quoted-token parameter subset, flat alternative shape and budgets. Isolated nonrecursive framing and flat multipart probes passed byte preservation for 7bit/base64/quoted-printable; a nullable-header compile assumption in the first evaluation script was corrected before successful execution. These scratch probes used no Serverpod ports/database, changed no frozen runtime and established no native authority. All **115 open PRs** and **zero standalone open issues** were checked across pagination; only the completed own iMIP/MIME proposal/implementation stack overlapped. No source/model/schema/dependency or real transport change belongs to this proposal. Relative links, consecutive ADRs, Markdown-only scope, credential/LICENSE and whitespace are checked before its documentation commit; runtime suites are not repeated, and completed ADR 0143 full-root/MCP evidence remains separate.
+
+
+Documentation validation passed **3,019 relative links**, consecutive ADRs 0001–0144, **10 Markdown-only candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. No repository runtime suite was repeated for this proposal; isolated evaluation probes and completed ADR 0143 full-root/MCP evidence remain distinct.
