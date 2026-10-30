@@ -1,6 +1,6 @@
 # ADR 0146: Explicit private attendee responses with durable synthetic delivery
 
-Status: **Proposed. The maintainer confirmed separate response/calendar actions on 2026-10-30; the concrete workflow, three tables, limits and worker mechanics below still require explicit agreement.**
+Status: **Accepted by explicit maintainer approval on 2026-10-30 for the complete response workflow, three tables, limits and worker mechanics. Scoped implementation and complete local batch validation are complete.**
 
 ## Context and evidence
 
@@ -54,4 +54,4 @@ Test new/changed-source/revision/recipient denial, independent permissions, fina
 
 ## Decision gate and remaining work
 
-The confirmed separate-action policy does not approve these storage/worker mechanics. AGENTS.md requires explicit maintainer agreement before implementation/model sources. Recurring/instance/range attendee sending, delegation, counters, comments, participant editing, wider inbound lifecycle, real provider trust/delivery and external interoperability remain separate required work. No complete iTIP/iMIP claim follows.
+The maintainer explicitly approved the complete proposed batch and storage on 2026-10-30, satisfying the AGENTS.md model/ADR gate. The [implementation guide](../private-attendee-responses.md) describes the scoped runtime; validation remains separate from approval. Recurring/instance/range attendee sending, delegation, counters, comments, participant editing, wider inbound lifecycle, real provider trust/delivery and external interoperability remain separate required work. No complete iTIP/iMIP claim follows.

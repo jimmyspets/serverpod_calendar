@@ -14,6 +14,7 @@ import 'src/generated/serverpod.dart';
 import 'src/local_demo.dart';
 import 'src/calendar_policy.dart';
 import 'src/invitation_runtime.dart';
+import 'src/invitation_response_runtime.dart';
 import 'src/alarm_runtime.dart';
 import 'src/scheduling_runtime.dart';
 import 'src/feed_policy.dart';
@@ -70,7 +71,13 @@ Future<void> run(List<String> args) async {
     dependencies: [feedDependencies],
     publicationPolicy: DemoCalendarPublicationPolicy(),
     policy: DemoCalendarPolicy(),
-    invitations: CalendarInvitationRuntime(host: DemoInvitationHost()),
+    invitations: CalendarInvitationRuntime(
+      host: DemoInvitationHost(),
+      responses: CalendarInvitationResponseRuntime(
+        host: DemoInvitationResponseHost(),
+        transport: DemoInvitationResponseTransport(),
+      ),
+    ),
     scheduling: CalendarSchedulingRuntime(
       host: DemoSchedulingHost(),
       transport: DemoSchedulingTransport(),

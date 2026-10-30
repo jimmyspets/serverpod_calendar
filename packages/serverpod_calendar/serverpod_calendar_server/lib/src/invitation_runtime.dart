@@ -4,6 +4,7 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 
 import 'calendar_authorization.dart';
+import 'invitation_response_runtime.dart';
 import 'generated/protocol.dart';
 
 /// Trusted server input. Neither this carrier nor parsed source proves origin.
@@ -263,8 +264,10 @@ final class CalendarInvitationOptions {
 final class CalendarInvitationRuntime {
   CalendarInvitationRuntime({
     required this.host,
+    this.responses,
     CalendarInvitationOptions? options,
   }) : options = options ?? CalendarInvitationOptions();
   final CalendarInvitationHost host;
+  final CalendarInvitationResponseRuntime? responses;
   final CalendarInvitationOptions options;
 }

@@ -225,3 +225,5 @@ The example also provides [bounded raw iMIP MIME extraction](docs/raw-imip-extra
 
 
 The example also includes [explicit MIME ingress wrappers](docs/host-imip-ingress.md) for existing invitation/reply handling, preserving host authority and native receipt rules. Provider authentication and real delivery remain separate.
+
+The example now includes [explicit private attendee responses](docs/private-attendee-responses.md), independent of calendar addition and source application, with durable synthetic delivery. Real email and broader scheduling remain separate.

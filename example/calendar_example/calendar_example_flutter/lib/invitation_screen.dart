@@ -1,4 +1,5 @@
 import 'invitation_adoption_screen.dart';
+import 'invitation_response_screen.dart';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
@@ -178,6 +179,20 @@ class _InvitationScreenState extends State<InvitationScreen> {
                     ),
                   Wrap(
                     children: [
+                      TextButton(
+                        key: ValueKey('invitation-response-${entry.id}'),
+                        onPressed: _busy
+                            ? null
+                            : () => Navigator.of(context).push<void>(
+                                MaterialPageRoute(
+                                  builder: (_) => InvitationResponseScreen(
+                                    client: widget.client,
+                                    id: entry.id,
+                                  ),
+                                ),
+                              ),
+                        child: const Text('Participation response'),
+                      ),
                       if (entry.kind ==
                               cal.CalendarInvitationSourceKind.request &&
                           _cancellationEntry == null)

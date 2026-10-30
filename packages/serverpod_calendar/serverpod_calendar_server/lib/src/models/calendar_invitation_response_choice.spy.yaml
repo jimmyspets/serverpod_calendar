@@ -1,0 +1,6 @@
+enum: CalendarInvitationResponseChoice
+serialized: byName
+values:
+  - accepted
+  - tentative
+  - declined

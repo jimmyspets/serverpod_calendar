@@ -1,0 +1,16 @@
+class: CalendarInvitationResponseActivityView
+fields:
+  id: UuidValue
+  stateRevision: int
+  choice: CalendarInvitationResponseChoice
+  sourceId: UuidValue
+  sourceRevision: int
+  sourceSequence: int?
+  sourceStamp: DateTime
+  stamp: DateTime
+  deliveryState: CalendarInvitationResponseDeliveryState
+  attemptCount: int
+  queuedAt: DateTime
+  expiresAt: DateTime
+  terminalAt: DateTime?
+  resultCode: String?

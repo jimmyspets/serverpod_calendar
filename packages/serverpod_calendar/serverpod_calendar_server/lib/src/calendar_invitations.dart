@@ -286,11 +286,32 @@ extension CalendarInvitationOperations on CalendarService {
         transaction: tx,
       );
     }
+    // Retained personal responses pin their exact authorization evidence, even
+    // when this particular host has not installed its optional response worker.
+    final responsePins = await CalendarInvitationResponseRecord.db.find(
+      _session,
+      where: (t) =>
+          t.scopeKey.equals(recipient.scopeKey) &
+          t.recipientKey.equals(recipient.key),
+      limit: 513,
+      transaction: tx,
+    );
+    if (responsePins.length > 512) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
     final protectedSources = receipts
         .where((r) => r.expiresAt.isAfter(now))
         .map((r) => r.sourceId)
         .toSet();
+    protectedSources.addAll(responsePins.map((r) => r.sourceId));
     final sources = await _invSources(entries, tx);
+    if (responsePins.any(
+      (r) =>
+          !entries.any((e) => e.id == r.entryId) ||
+          !sources.any((v) => v.id == r.sourceId && v.entryId == r.entryId),
+    )) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
     final threshold = now.subtract(_invOptions.terminalRetention);
     final removable = <CalendarInvitationSourceRecord>[];
     for (final source in sources) {
@@ -331,6 +352,17 @@ extension CalendarInvitationOperations on CalendarService {
           !sources.any(
             (s) => s.entryId == entry.id && !removable.contains(s),
           )) {
+        if (responsePins.any((r) => r.entryId == entry.id)) {
+          throw _failure(CalendarFailureCode.unavailable);
+        }
+        await CalendarInvitationResponseStateRecord.db.deleteWhere(
+          _session,
+          where: (t) =>
+              t.entryId.equals(entry.id!) &
+              t.scopeKey.equals(recipient.scopeKey) &
+              t.recipientKey.equals(recipient.key),
+          transaction: tx,
+        );
         await CalendarInvitationRecord.db.deleteRow(
           _session,
           entry,
