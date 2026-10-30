@@ -497,3 +497,6 @@ Accepted [ADR 0146](adr/0146-explicit-private-attendee-responses.md) implements 
 ## Bounded FR-04 occurrence-query increment
 
 Accepted [ADR 0147](adr/0147-bounded-calendar-occurrence-queries.md) implements one-calendar overlapping event/occurrence pages with mandatory timing/state disclosure, optional text, cancellation-aware read projections, authorized exhaustion and bound opaque cursors. The [implementation guide](calendar-occurrence-queries.md) records the nullable private cursor field, limits and host/example integration; validation evidence is separate. This scoped FR-04 increment does not reduce the original release requirements or claim indexed scale, task/multi-calendar querying or availability.
+
+
+Proposed [ADR 0148](adr/0148-recurring-master-invitation-workflow.md) is the next grouped FR-20/23 recipient workflow: recurring-master review, explicit stable adoption/update, clean-baseline whole-series cancellation/reopening and independent master responses. The one-field mode storage and lifecycle mechanics require explicit approval before implementation. Current non-recurring evidence remains unchanged; instance/range reconciliation, other methods, provider transport and release evidence remain required.
