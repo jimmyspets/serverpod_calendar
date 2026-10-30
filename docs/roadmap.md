@@ -587,3 +587,13 @@ The raw MIME/parser and explicit-wrapper boundaries do not establish production 
 - [x] Validate privacy, atomicity, ordering/retention, fresh/populated upgrades, independent workers/loss, generated clients, Flutter and complete batch checks before one code commit.
 
 The maintainer explicitly approved the complete contract. See [the scoped guide](private-attendee-responses.md). Recurring attendee sending, wider scheduling/provider work and external interoperability retain their existing required scope.
+
+## Proposed calendar-wide occurrence query batch
+
+[ADR 0147](adr/0147-bounded-calendar-occurrence-queries.md) proposes the next FR-04 increment after completed private attendee responses: bounded one-calendar occurrence pages, mandatory timing/state plus optional text disclosure, cancellation-aware projections, deterministic ordering, and one nullable private JSON field on existing cursor rows. No model/API/schema work is approved or implemented by this proposal.
+
+- [ ] Review the complete query/authorization/overlap/cancellation, limits and cursor-storage contract.
+- [ ] Implement only after explicit maintainer agreement, with generated clients and the example view.
+- [ ] Validate boundary/privacy/cursor/budget cases, fresh/populated upgrades, two hosts and Flutter, then complete batch checks before one code commit.
+
+The original release scope remains; this native detail query does not establish availability or complete the remaining scheduling/interoperability/release gates.

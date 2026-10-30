@@ -776,3 +776,7 @@ Accepted [ADR 0146](adr/0146-explicit-private-attendee-responses.md) approves th
 | CalendarInvitationResponseAttemptRecord | Bounded operational attempts and fixed outcome/receipt fields without credentials or arbitrary diagnostics |
 
 The source document specifies bounds, pinned-entry/source pruning, terminal history versus active personal state, missing-state upgrade behavior and generated request/receipt/view models. The accepted implementation generates model/client/test tools and fresh/upgrade migrations from sources; it creates no response history for existing invitations.
+
+## Proposed occurrence-query cursor state
+
+[ADR 0147](adr/0147-bounded-calendar-occurrence-queries.md) proposes one nullable server-only nested JSON field on CalendarCursorRecord for versioned occurrence-window/options, last effective-start/original key and exact timezone identity. Existing actor/scope/parent/projection/data-policy/last-event/expiry fields remain authoritative. No new table, copied event content or permanent snapshot is proposed. Immutable public query/page/item carriers and the private nested state require explicit review before model sources, generation or migration. Existing cursor rows would keep the new field absent.
