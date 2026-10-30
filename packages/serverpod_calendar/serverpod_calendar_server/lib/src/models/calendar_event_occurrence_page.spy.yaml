@@ -1,0 +1,5 @@
+class: CalendarEventOccurrencePage
+immutable: true
+fields:
+  occurrences: List<CalendarEventOccurrenceListItem>
+  nextCursor: String?

@@ -2,6 +2,7 @@ import 'calendar_date.dart';
 import 'date_event_expansion.dart';
 import 'date_event_span.dart';
 import 'date_recurrence_set.dart';
+import 'date_recurrence_generator.dart';
 
 /// A DATE-only recurrence set paired with one validated event-span template.
 ///
@@ -29,6 +30,7 @@ final class DateEventSeries {
     required int maxCandidateDays,
     required int maxRuleOccurrences,
     required int maxResults,
+    RecurrenceWorkBudget? sharedWorkBudget,
   }) {
     if (from.compareTo(until) >= 0) {
       throw ArgumentError('from must precede until');
@@ -41,6 +43,7 @@ final class DateEventSeries {
       maxCandidateDays: maxCandidateDays,
       maxRuleOccurrences: maxRuleOccurrences,
       maxResults: maxResults,
+      sharedWorkBudget: sharedWorkBudget,
     );
     return List.unmodifiable(
       starts.map((start) => dateEventSpanAt(span, start)),

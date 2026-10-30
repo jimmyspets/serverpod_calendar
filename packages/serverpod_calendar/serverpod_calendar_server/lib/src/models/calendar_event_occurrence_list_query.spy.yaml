@@ -1,0 +1,10 @@
+class: CalendarEventOccurrenceListQuery
+immutable: true
+fields:
+  calendarId: UuidValue
+  fromUtc: DateTime
+  untilUtc: DateTime
+  pageSize: int, default=50
+  includeCancelled: bool, default=true
+  fieldGroups: List<CalendarEventFieldGroup>
+  cursor: String?

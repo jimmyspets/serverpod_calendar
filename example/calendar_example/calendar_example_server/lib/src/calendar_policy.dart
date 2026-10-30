@@ -82,6 +82,16 @@ final class DemoCalendarPolicy implements CalendarHostPolicy {
     CalendarCategoryQuery? categoryFilter,
   }) async => CalendarTaskCandidatePlan();
   @override
+  Future<CalendarEventCandidatePlan> planEventOccurrenceQuery(
+    Session s,
+    CalendarHostContext c,
+    CalendarPolicySnapshot calendar,
+    CalendarEventOccurrenceListQuery query,
+    Set<CalendarEventFieldGroup> groups,
+    Transaction transaction,
+  ) async => CalendarEventCandidatePlan();
+
+  @override
   Future<CalendarEventCandidatePlan> planEventQuery(
     Session s,
     CalendarHostContext c,

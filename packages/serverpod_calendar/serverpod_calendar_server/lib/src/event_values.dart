@@ -6,6 +6,7 @@ import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 import 'generated/protocol.dart';
 
 part 'event_override_values.dart';
+part 'event_occurrence_query_values.dart';
 part 'event_alarm_candidates.dart';
 part 'event_occurrence_content_values.dart';
 part 'event_source_metadata_values.dart';
@@ -113,7 +114,10 @@ CalendarTextParameters? _eventTextParameter(
   return p.language == null && uri == null ? null : p;
 }
 
-CalendarEventContent validateEventContent(CalendarEventContent value) {
+CalendarEventContent validateEventContent(
+  CalendarEventContent value, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
   if (value.summary != null) {
     validateCalendarPlainText(value.summary!, maxCodePoints: 4096);
   }
@@ -124,7 +128,11 @@ CalendarEventContent validateEventContent(CalendarEventContent value) {
     validateCalendarPlainText(value.location!, maxCodePoints: 4096);
   }
   validateEventTiming(value.timing);
-  final recurrence = validateEventRecurrence(value.timing, value.recurrence);
+  final recurrence = validateEventRecurrence(
+    value.timing,
+    value.recurrence,
+    sharedWorkBudget: sharedWorkBudget,
+  );
   final periods = value.periods ?? <CalendarEventTiming>[];
   if (periods.length +
           (recurrence?.inclusions.length ?? 0) +
@@ -263,8 +271,9 @@ TimedRecurrenceRule? eventTimedRule(CalendarEventRule? r) {
 
 CalendarEventRecurrence? validateEventRecurrence(
   CalendarEventTiming timing,
-  CalendarEventRecurrence? input,
-) {
+  CalendarEventRecurrence? input, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
   if (input == null) return null;
   if (input.inclusions.length + input.exclusions.length >
       eventMaxExplicitDates) {
@@ -319,6 +328,7 @@ CalendarEventRecurrence? validateEventRecurrence(
       maxCandidateDays: eventMaxCandidateWork,
       maxRuleOccurrences: eventMaxRuleOccurrences,
       maxResults: eventMaxPreviewResults,
+      sharedWorkBudget: sharedWorkBudget,
     );
   } else {
     tr = eventTimedRule(r);
@@ -341,6 +351,7 @@ CalendarEventRecurrence? validateEventRecurrence(
       maxCandidateWork: eventMaxCandidateWork,
       maxRuleOccurrences: eventMaxRuleOccurrences,
       maxResults: eventMaxPreviewResults,
+      sharedWorkBudget: sharedWorkBudget,
     );
   }
   List<CalendarEventTiming> canonical(List<CalendarEventTiming> values) {

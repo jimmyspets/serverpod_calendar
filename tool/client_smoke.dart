@@ -1,3 +1,4 @@
+import 'occurrence_query_smoke.dart';
 import 'invitation_smoke.dart';
 import 'item_category_smoke.dart';
 
@@ -102,6 +103,24 @@ Future<void> main(List<String> args) async {
     if (auth.authStrategy != AuthStrategy.jwt.name ||
         auth.refreshToken == null) {
       throw StateError('Expected JWT access and refresh credentials.');
+    }
+    if (mode == 'test' &&
+        clients.length == 2 &&
+        !args.any(
+          {
+            '--feeds',
+            '--invitations-only',
+            '--replies-only',
+            '--scheduling-only',
+          }.contains,
+        )) {
+      await occurrenceQuerySmoke(clients);
+    }
+    if (args.contains('--occurrences-only')) {
+      stdout.writeln(
+        'PASS: focused occurrence clients; unrelated feature/recovery and JWT-refresh flows skipped.',
+      );
+      return;
     }
     Future<void> runFeeds() => feedSmoke(
       clients,

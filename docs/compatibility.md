@@ -472,6 +472,6 @@ Accepted [ADR 0145](adr/0145-host-mime-native-ingress.md) implements two example
 
 Accepted [ADR 0146](adr/0146-explicit-private-attendee-responses.md) implements the bounded non-recurring response workflow: dedicated host-approved minimal REPLYs, three private state/delivery/attempt tables, exact retries, database-clock ordering, source pins/retention, fenced workers and synthetic MIME/Flutter controls. See [the scoped guide](private-attendee-responses.md) and validation record for actual checks. Response actions remain independent of calendar addition/application. Queue and transport acceptance do not prove organizer receipt. Provider authentication, real transport, recurring attendee sending and broader lifecycle remain separate required work.
 
-## Proposed calendar occurrence window queries
+## Calendar occurrence window queries
 
-[ADR 0147](adr/0147-bounded-calendar-occurrence-queries.md) proposes native one-calendar occurrence pages for the supported DATE/UTC/named-zone and recurrence/exception profiles. Temporal meaning, ISO presentation and recurrence WKST remain distinct. Current per-event previews do not establish this API; the proposal is unimplemented and makes no subscription-client or free-time claim.
+Accepted [ADR 0147](adr/0147-bounded-calendar-occurrence-queries.md) implements native one-calendar occurrence pages across the supported DATE/UTC/named-zone and recurrence/exception profiles, including explicit cancellation-aware read projections. See [the bounded API guide](calendar-occurrence-queries.md) and actual validation evidence. ISO presentation and recurrence WKST remain distinct. This does not establish subscription-client compatibility, task/multi-calendar querying or free time.

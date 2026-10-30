@@ -14,6 +14,7 @@ fields:
   taskFieldGroups: List<CalendarTaskFieldGroup>?
   eventCalendarId: UuidValue?
   eventFieldGroups: List<CalendarEventFieldGroup>?
+  eventOccurrenceState: CalendarEventOccurrenceCursorState?
   categoryFilter: CalendarCategoryFilter?
   alarmActivityId: UuidValue?
   alarmActivityKind: CalendarAlarmActivityKind?

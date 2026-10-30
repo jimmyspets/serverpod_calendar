@@ -70,6 +70,7 @@ final class DateEventRangeSet {
     required int maxRuleOccurrences,
     required int maxBaseOccurrences,
     required int maxResults,
+    RecurrenceWorkBudget? sharedWorkBudget,
   }) {
     _budget(maxCandidateDays, 'maxCandidateDays');
     _budget(maxRuleOccurrences, 'maxRuleOccurrences');
@@ -118,6 +119,7 @@ final class DateEventRangeSet {
           maxCandidateDays: maxCandidateDays,
           maxRuleOccurrences: maxRuleOccurrences,
           maxResults: maxBaseOccurrences,
+          sharedWorkBudget: sharedWorkBudget,
         );
       } on RecurrenceLimitException catch (error) {
         if (error.limit == 'maxResults') {
