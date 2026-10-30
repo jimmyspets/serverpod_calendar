@@ -120,11 +120,13 @@ Future<void> main(List<String> args) async {
     );
     if (mode == 'test' &&
         clients.length == 2 &&
+        !args.contains('--scheduling-only') &&
         !args.contains('--replies-only')) {
       await invitationSmoke(clients);
     }
     if (mode == 'test' &&
         clients.length == 2 &&
+        !args.contains('--scheduling-only') &&
         !args.contains('--replies-only') &&
         !args.contains('--invitations-only')) {
       await itemCategorySmoke(clients);
@@ -134,7 +136,9 @@ Future<void> main(List<String> args) async {
         !args.contains('--invitations-only')) {
       await schedulingSmoke(clients);
     }
-    if (mode == 'test' && !args.contains('--invitations-only')) {
+    if (mode == 'test' &&
+        !args.contains('--invitations-only') &&
+        !args.contains('--scheduling-only')) {
       await schedulingReplySmoke(clients);
     }
     if (args.contains('--invitations-only')) {
@@ -144,6 +148,10 @@ Future<void> main(List<String> args) async {
     } else if (args.contains('--replies-only')) {
       stdout.writeln(
         'PASS: focused reply clients; unrelated domain/feed/notification journeys skipped.',
+      );
+    } else if (args.contains('--scheduling-only')) {
+      stdout.writeln(
+        'PASS: focused scheduling clients; unrelated domain/notification journeys skipped.',
       );
     } else if (args.contains('--feeds')) {
       await runFeeds();

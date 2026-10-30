@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:enough_mail/mime.dart' as mail;
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_calendar_server/serverpod_calendar_server.dart';
 import 'package:serverpod_calendar_server/src/event_protocol_values.dart';
@@ -13,6 +14,7 @@ import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 import 'package:calendar_example_server/src/generated/serverpod.dart'
     as generated;
 import 'package:calendar_example_server/src/calendar_policy.dart';
+import 'package:calendar_example_server/src/scheduling_mime.dart';
 
 final class _Host implements CalendarSchedulingHost {
   @override
@@ -46,13 +48,22 @@ final class _Transport implements CalendarSchedulingTransport {
     Session s,
     CalendarSchedulingSubmission v,
   ) async {
+    final mime = composeSyntheticSchedulingMime(v, requireProtection: false);
+    final decoded = mail.MimeMessage.parseFromData(
+      Uint8List.fromList(ascii.encode(mime)),
+    ).decodeContentBinary();
+    final payloadDigest = sha256.convert(utf8.encode(v.payload)).toString();
+    if (decoded == null ||
+        sha256.convert(decoded).toString() != payloadDigest) {
+      throw StateError('Synthetic MIME changed authorized calendar bytes');
+    }
     if (pause == 'before') {
       stdout.writeln('SCHEDULING_SUBMITTED');
       await Completer<void>().future;
     }
     final file = File('../../../.local/scheduling-worker-acceptance.jsonl');
     await file.writeAsString(
-      '${jsonEncode({'key': v.deliveryKey.toString(), 'publication': v.publicationId.toString(), 'digest': sha256.convert(utf8.encode(v.payload)).toString()})}\n',
+      '${jsonEncode({'key': v.deliveryKey.toString(), 'publication': v.publicationId.toString(), 'digest': payloadDigest, 'mimeDigest': sha256.convert(ascii.encode(mime)).toString(), 'decodedDigest': sha256.convert(decoded).toString()})}\n',
       mode: FileMode.append,
       flush: true,
     );
