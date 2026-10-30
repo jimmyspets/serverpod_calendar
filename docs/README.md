@@ -287,3 +287,5 @@ Accepted ADR 0137 implements bounded trusted non-recurring REQUEST intake and pr
 
 
 Accepted [ADR 0146](adr/0146-explicit-private-attendee-responses.md) adds [private attendee responses](private-attendee-responses.md): explicit non-recurring choices, host authority, durable synthetic delivery and independent calendar actions.
+
+[Calendar-wide occurrence queries](adr/0147-bounded-calendar-occurrence-queries.md) are the next proposed FR-04 batch. Concrete overlap/disclosure/cursor storage and limits require explicit review; per-series previews remain the implemented API.

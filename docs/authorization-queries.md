@@ -105,3 +105,7 @@ No executable validation is claimed for these proposed services. Calendar domain
 ## Read-only event source metadata, 2026-10-24
 
 [ADR 0107](adr/0107-read-only-event-source-metadata.md) and [the metadata guide](event-source-metadata.md) add source-preserved CLASS/URL and grouped CATEGORIES/COMMENT/CONTACT with legal annotations. Native editors retain these values; source-only values grant no authority and cause no retrieval. Independent `readEventSource` gates complete export and source replacement, including no-op/final paths. Omitted occurrence metadata inherits and explicit values must match the master; native metadata-only originals preserve timing inheritance and reject lossy export. Nullable server-only JSON fields preserve v2 baseline compatibility, with no new table columns or automatic reset. Broader/native metadata editors and other profiles remain separate. Broader batch verification is recorded in scaffold-validation.md.
+
+## Proposed calendar-wide occurrence pages
+
+[ADR 0147](adr/0147-bounded-calendar-occurrence-queries.md) proposes a dedicated collection query gate plus per-series read/preview authority, mandatory timing/state and optional text groups. Its normalized window/options enter immutable policy context; hidden text is never a filter/order key. Criteria/data/policy/timezone-bound cursors and genuine authorized exhaustion require review. No runtime/API/storage mechanics are approved or implemented by this proposal.

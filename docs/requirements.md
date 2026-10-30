@@ -493,3 +493,7 @@ Accepted [ADR 0145](adr/0145-host-mime-native-ingress.md) implements two example
 ## Explicit private attendee response sending
 
 Accepted [ADR 0146](adr/0146-explicit-private-attendee-responses.md) implements the bounded non-recurring response workflow: dedicated host-approved minimal REPLYs, three private state/delivery/attempt tables, exact retries, database-clock ordering, source pins/retention, fenced workers and synthetic MIME/Flutter controls. See [the scoped guide](private-attendee-responses.md) and validation record for actual checks. Response actions remain independent of calendar addition/application. Queue and transport acceptance do not prove organizer receipt. Provider authentication, real transport, recurring attendee sending and broader lifecycle remain separate required work.
+
+## Proposed FR-04 occurrence-query increment
+
+[ADR 0147](adr/0147-bounded-calendar-occurrence-queries.md) proposes one-calendar overlapping event/occurrence pages with explicit temporal/state disclosure, cancellation-aware read projections, true authorized exhaustion and bound opaque cursors. The proposal includes one nullable private cursor JSON field, resource limits, generated-client/example and multi-host evidence. It does not implement FR-04 or reduce the original release requirements.
