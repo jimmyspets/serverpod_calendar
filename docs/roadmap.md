@@ -567,3 +567,12 @@ No real sending or complete mail conformance follows from this synthetic batch.
 - [ ] Separately design verified provider ingress/native dispatch and real transport, remaining MIME/participant lifecycle and interoperability.
 
 This scoped extraction group grants no authority, applies no native state and sends no mail.
+
+
+## Proposed host MIME native-ingress prerequisite
+
+- [ ] Review [ADR 0145](adr/0145-host-mime-native-ingress.md): explicit invitation/reply wrappers, existing host trust, exact bytes and native receipt boundaries.
+- [ ] Implement only after explicit agreement.
+- [ ] Complete route/auth/limit/retry, two-host/process-loss, Flutter and broader batch checks before one code commit.
+
+The preceding raw MIME extraction remains an untrusted-data boundary; native/provider ingress is not complete. This proposal adds no production sender verification or real transport. Remaining scheduling/mail and release requirements retain their existing scope.
