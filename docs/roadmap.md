@@ -597,3 +597,14 @@ Accepted [ADR 0147](adr/0147-bounded-calendar-occurrence-queries.md) implements 
 - [x] Validate boundary/privacy/cursor/budget cases, fresh/populated upgrades, two hosts and Flutter, then complete batch checks before one code commit.
 
 The original release scope remains; this native detail query does not establish availability or complete the remaining scheduling/interoperability/release gates.
+
+
+## Recurring-master recipient workflow proposal
+
+Proposed [ADR 0148](adr/0148-recurring-master-invitation-workflow.md) follows completed occurrence-query implementation PR #124 and groups the recipient path before further instance/range reconciliation. It proposes one private recurring-mode boolean and read-only view flag, reusing current source/link/checkpoint/response tables and limits. Current recipient support remains non-recurring until explicit agreement, implementation and validation.
+
+- [ ] Review the complete recurring-master intake/adoption/update/cancellation/response contract, immutable mode and additive storage.
+- [ ] Implement the approved group with generated clients/migration and explicit whole-series Flutter controls.
+- [ ] Run focused temporal/privacy/conflict/retry tests during development, then fresh/populated upgrades, two-host/process-loss, complete Flutter and full batch checks before one implementation commit.
+
+This proposal leaves detached/bundled exceptions, instance/range recipient reconciliation, delegation, other methods and real transport in the original remaining scope.
