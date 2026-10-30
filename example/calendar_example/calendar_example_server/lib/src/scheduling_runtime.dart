@@ -5,6 +5,8 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_calendar_server/serverpod_calendar_server.dart';
 
+import 'scheduling_mime.dart';
+
 /// Local demo authority only. Synthetic addresses never establish a real mailbox.
 final class DemoSchedulingHost implements CalendarSchedulingHost {
   @override
@@ -146,7 +148,7 @@ final class DemoSchedulingReplyHost implements CalendarSchedulingReplyHost {
   }
 }
 
-/// Recording only: no SMTP/MIME/mobile provider and no body in application logs.
+/// Synthetic MIME recording only: no network provider or body in application logs.
 final class DemoSchedulingTransport implements CalendarSchedulingTransport {
   @override
   Future<CalendarSchedulingTransportResult> submit(
@@ -154,9 +156,23 @@ final class DemoSchedulingTransport implements CalendarSchedulingTransport {
     CalendarSchedulingSubmission submission,
   ) async {
     if (!{'development', 'test'}.contains(session.serverpod.runMode) ||
-        !submission.recipient.address.endsWith('@example.invalid')) {
+        !isSyntheticSchedulingMailbox(submission.organizerAddress) ||
+        !isSyntheticSchedulingMailbox(submission.recipient.address)) {
       return const CalendarSchedulingTransportResult(
         CalendarSchedulingTransportOutcome.permanentFailure,
+      );
+    }
+    String mime;
+    try {
+      mime = composeSyntheticSchedulingMime(
+        submission,
+        requireProtection: false,
+      );
+    } on SyntheticSchedulingMimeException catch (e) {
+      return CalendarSchedulingTransportResult(
+        e.kind == SyntheticSchedulingMimeError.unavailable
+            ? CalendarSchedulingTransportOutcome.transientFailure
+            : CalendarSchedulingTransportOutcome.permanentFailure,
       );
     }
     final file = File(
@@ -171,6 +187,7 @@ final class DemoSchedulingTransport implements CalendarSchedulingTransport {
         'organizer': submission.organizerAddress,
         'recipient': submission.recipient.address,
         'payload': submission.payload,
+        'mime': mime,
       }),
       flush: true,
     );

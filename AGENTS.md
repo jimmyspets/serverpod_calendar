@@ -279,3 +279,6 @@ Accepted ADR 0141 adds [explicit linked cancellation application/reopening](docs
 
 
 Accepted ADR 0142 implements the pure [decoded iMIP part profile](docs/imip-calendar-parts.md). Preserve ordered MIME parameters and raw transfer-decoded bytes, existing scheduling omissions/budgets and exact address spelling. Enforce method/component/charset, bounded mailto and protection checks, non-echo diagnostics and immutable carriers. Whole-email MIME/transfer/provider integration remains host-owned and unimplemented; parsed addresses establish no authority or native effects. Never strip protection, silently downgrade required confidentiality, invent transport trust or claim complete RFC 6047 conformance. No real mail follows.
+
+
+Accepted ADR 0143 adds [synthetic host-owned MIME composition](docs/outbound-imip-composition.md), with the approved enough_mail pin only in the example host. Preserve exact authorized calendar bytes, fixed deterministic envelope fields, current worker authority/fencing and bounded non-echo failure handling. Recording adds only synthetic MIME to ignored attempt fixtures; it establishes no delivery/receipt or inbound authority. Keep reusable modules provider-independent and upstream notices intact. No SMTP/IMAP/POP client, real mail, protection downgrade, raw-message table or inbound parser follows.

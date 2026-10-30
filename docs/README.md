@@ -277,4 +277,4 @@ Accepted ADR 0137 implements bounded trusted non-recurring REQUEST intake and pr
 - [Decoded iMIP calendar-part API/profile](imip-calendar-parts.md): implemented pure semantic gate under accepted ADR 0142; whole-message MIME/transport and native authority remain separate.
 
 
-- [MIME library evaluation](mime-library-evaluation.md) and [proposed synthetic outbound composition](adr/0143-synthetic-host-outbound-imip-composition.md): source evidence is separate from approval or complete mail integration.
+- [MIME library evaluation](mime-library-evaluation.md) and [implemented synthetic outbound composition](outbound-imip-composition.md): accepted host-only composition remains separate from complete mail integration.

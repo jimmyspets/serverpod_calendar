@@ -216,3 +216,6 @@ The scoped [incoming cancellation review](docs/invitation-cancellation-review.md
 
 
 The pure [decoded iMIP calendar-part adapter](docs/imip-calendar-parts.md) now validates the approved mail-specific event/free-busy payload profile. Whole-email processing, trusted mail integration and real delivery remain separate.
+
+
+The example now includes [synthetic outbound iMIP composition](docs/outbound-imip-composition.md): deterministic MIME is recorded locally, with no real email delivery.
