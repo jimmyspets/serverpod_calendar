@@ -480,6 +480,6 @@ Accepted [ADR 0142](adr/0142-pure-decoded-imip-calendar-parts.md) implements a p
 Accepted [ADR 0143](adr/0143-synthetic-host-outbound-imip-composition.md) implements example-host-only enough_mail composition for existing authorized REQUEST/CANCEL synthetic deliveries. It preserves exact calendar bytes, uses bounded deterministic UTF-8/base64 MIME and adds a local fixture field. See [the guide](outbound-imip-composition.md). No network delivery, inbound parser, schema or complete RFC 6047 conformance follows; reusable modules remain MIME-provider independent.
 
 
-## Proposed bounded raw MIME extraction
+## Scoped bounded raw MIME extraction
 
-[ADR 0144](adr/0144-bounded-host-raw-imip-mime.md) proposes bounded host-only raw MIME extraction using the already selected library: single calendar or flat alternative shapes, raw ambiguity/protection guards, 7bit/base64/quoted-printable and fixed resource limits. The concrete mechanics require explicit agreement before implementation. [Source/probe evidence](mime-library-evaluation.md#follow-up-raw-framing-probes-for-proposed-adr-0144) is separate from that approval. No native routing/state, new dependency/schema, provider authority or real delivery follows.
+Accepted [ADR 0144](adr/0144-bounded-host-raw-imip-mime.md) implements host-only bounded raw MIME extraction over the existing library: single/flat alternative shapes, critical-header/parameter guards, selected transfer decoding, protection checks and fixed budgets. See [the profile/API guide](raw-imip-extraction.md). It returns untrusted calendar data only; verified provider ingress/native dispatch, broader MIME/transport and external evidence remain separate. No schema, endpoint, identity inference or real sending is added.
