@@ -1470,3 +1470,27 @@ Documentation-only next batch after completed ADR 0144. Local source inspection 
 
 
 Documentation validation passed **3,037 relative links**, consecutive ADRs 0001–0145, **10 Markdown-only candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. Runtime suites were not repeated for this proposal; the completed ADR 0144 full-root/MCP evidence remains separate.
+
+
+## Host MIME native ingress — ADR 0145 (2026-10-30)
+
+The maintainer explicitly approved the complete concrete bridge batch before source changes. The owned interactive runners were verified/stopped without a development reset. Package-exploration MCP initially reported no registered roots, so pinned-source/CLI inspection was used. Registering the repository with the Dart MCP roots tool then repaired package access: actual dependency reading and directory-scoped search succeeded. An initial file-valued searchDir was corrected to its required directory form. Runtime MCP success from ADR 0144 remains separate. No model/table/migration, generated API or dependency changed.
+
+The focused 15-unit boundary group passed after correcting a test-only session-stub assumption and invalid pure-method/large-source fixtures without relaxing production validation. New database assertions were corrected to the existing native receipt fields and to intake-only policy context; the final focused database group passed **18** cases, including quoted-printable retry and conflicting invitation keys. Review added explicit synthetic-composer BOM rejection rather than relying on Dart's BOM-stripping UTF-8 decoder. All **135** host unit cases then passed; a trailing shell redirection failed after that successful suite, so its shell exit is not reported as a clean test command. Final workspace fatal-info analysis passed. Complete root validation will capture the final host suite normally.
+
+The independent invitation process probe is running through the new wrappers. Remaining focused recovery/example and broader/root/MCP/static evidence follows before one complete-batch code commit. Production provider authentication and real sending remain unimplemented.
+
+
+Focused `dart run tool/invitation_work_smoke.dart` and `dart run tool/scheduling_work_smoke.dart --replies --instances` passed actual independent-host races and before/after-commit loss through the MIME wrappers. The owned bundle rebuilt successfully with `./tool/build-host.ps1`; focused invitation/reply generated-client/Flutter checks follow before freezing the broader run.
+
+
+`dart run tool/host_smoke.dart --invitations-only --invitations --flutter` passed the focused two-host invitation generated-client/JWT checks and invitation Flutter journey through MIME, explicitly skipping unrelated prerequisites. The focused reply journey is running next; no code changed after the analyzed/unit-tested BOM guard.
+
+
+`dart run tool/host_smoke.dart --replies-only --replies --flutter` also passed its focused two-host reply/JWT clients and master/instance Flutter journey. Runtime sources are frozen for the complete `./tool/check.ps1` sequence. SDK/database/worker/browser checks run serially on owned ports; unrelated integration suites are not overlapped with it. Broader evidence follows before the single code commit.
+
+
+The complete broader `./tool/check.ps1` exited successfully on the frozen runtime. Stable generation/lockfile, authored formatting and workspace fatal-info analysis passed; complete core **502 VM/502 Chrome**, iCalendar **620 VM/620 Chrome**, module **227 VM/17 Chrome**, feed **13**, Flutter **9** and example host **135** tests passed. All **797** database cases passed. Populated upgrades, independent invitation/alarm/notification recovery, all six scheduling recovery modes with exact synthetic MIME and all three reply recovery profiles through the wrappers passed. Full two-host generated clients, synthetic MIME/native receipt assertions and connected Flutter journeys passed. Release web and its Wasm compilation dry run passed; Wasm runtime and external mail/calendar conformance are not claimed. No SDK suite shared configured host ports. Actual restored interactive MCP and final static evidence follow before the single complete-batch commit.
+
+
+Owned interactive server/Chrome runners were restored without a development reset; the latest existing migration was already applied. The actual IDE DTD and owned Chrome VM service connected successfully. Serverpod MCP and Flutter hot reload succeeded, with no runtime errors. Package browsing/search had already been repaired by workspace root registration. Final static verification passed **3,050 relative links**, consecutive ADRs 0001–0145, **24 candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. All 118 open PRs and zero standalone issues were checked across pagination; existing attendee-reply PRs cover organizer-side intake, with no competing outgoing response implementation. The complete approved host ingress batch is ready for its single implementation commit.

@@ -283,4 +283,4 @@ Accepted ADR 0137 implements bounded trusted non-recurring REQUEST intake and pr
 - [Bounded raw iMIP MIME extraction](raw-imip-extraction.md): accepted host-only framing/ambiguity/multipart/transfer profile, with native/provider authority and delivery separate.
 
 
-The next proposed integration is [host MIME ingress into existing invitation/reply handlers](adr/0145-host-mime-native-ingress.md). It requires explicit review; current raw extraction still returns untrusted data only.
+[Host MIME ingress into existing invitation/reply handlers](host-imip-ingress.md) implements the accepted ADR 0145 example bridge, with native authority/receipts preserved and production provider verification still separate.

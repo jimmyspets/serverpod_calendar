@@ -2,6 +2,9 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_calendar_server/serverpod_calendar_server.dart';
 import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 
+import '../imip_ingress.dart';
+import '../synthetic_imip_input.dart';
+
 /// Synthetic private-owner test ingress, deliberately unavailable in production.
 class SchedulingDemoEndpoint extends Endpoint {
   @override
@@ -106,15 +109,17 @@ class SchedulingDemoEndpoint extends Endpoint {
       ]),
     );
     final id = session.authenticated!.userIdentifier;
-    return CalendarModule.receiveSchedulingReply(
+    return receiveHostImipReply(
       session,
-      CalendarSchedulingReplyDelivery(
-        scopeKey: 'demo:user:$id',
-        eventId: eventId,
-        namespace: 'demo-synthetic-reply',
-        deliveryKey: commandId.toString(),
-        originReference: 'demo-owner:$id',
-        bytes: bytes,
+      scopeKey: 'demo:user:$id',
+      eventId: eventId,
+      namespace: 'demo-synthetic-reply',
+      deliveryKey: commandId.toString(),
+      originReference: 'demo-owner:$id',
+      outerProtection: ImipProtection.none,
+      raw: composeSyntheticIngressMime(
+        bytes,
+        method: IcalendarSchedulingMethod.reply,
       ),
     );
   }

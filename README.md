@@ -222,3 +222,6 @@ The example now includes [synthetic outbound iMIP composition](docs/outbound-imi
 
 
 The example also provides [bounded raw iMIP MIME extraction](docs/raw-imip-extraction.md), returning untrusted calendar data without native routing, sender authority or real mail.
+
+
+The example also includes [explicit MIME ingress wrappers](docs/host-imip-ingress.md) for existing invitation/reply handling, preserving host authority and native receipt rules. Provider authentication and real delivery remain separate.

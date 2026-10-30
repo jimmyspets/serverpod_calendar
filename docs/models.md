@@ -760,6 +760,6 @@ Accepted [ADR 0143](adr/0143-synthetic-host-outbound-imip-composition.md) adds a
 Accepted [ADR 0144](adr/0144-bounded-host-raw-imip-mime.md) adds only a host-local raw MIME extractor and bounded error enum over existing immutable ImipCalendarPart results. Internal framing/budget objects are not Serverpod models or native actor/proof contexts; no raw-mail table, endpoint or automatic dispatcher is introduced. See [the profile](raw-imip-extraction.md).
 
 
-## Proposed host MIME ingress helpers
+## Host MIME ingress helpers
 
-[ADR 0145](adr/0145-host-mime-native-ingress.md) proposes example-local functions using existing native invitation/reply delivery carriers and receipts, without a new Serverpod model/table, persistence field or generated endpoint. Explicit native route metadata remains host-supplied and must be verified by the installed policy; MIME fields provide no identity or permission. The concrete API mechanics remain unapproved.
+Accepted [ADR 0145](adr/0145-host-mime-native-ingress.md) adds example-local receiveHostImipInvitation/receiveHostImipReply functions using existing delivery carriers and native receipts, plus bounded synthetic fixture composition. There is no new Serverpod model/table, persistence field, generated endpoint or provider identity model. Explicit target/origin references remain host-supplied and are verified by existing installed policies; MIME fields provide no identity or permission. See [the implementation guide](host-imip-ingress.md).
