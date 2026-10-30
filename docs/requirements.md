@@ -473,3 +473,8 @@ Accepted [ADR 0141](adr/0141-explicit-linked-cancellation-application.md) adds e
 ## Scoped decoded iMIP prerequisite
 
 Accepted [ADR 0142](adr/0142-pure-decoded-imip-calendar-parts.md) implements a pure already-transfer-decoded iMIP calendar-part gate for existing event/free-busy scheduling payloads. It validates MIME method/component/charset, bounded mailto addresses, protection and resource limits without sender authority or side effects. See [the API/profile guide](imip-calendar-parts.md). Whole-email MIME/provider integration, native reconciliation, transport and external evidence remain separate required work; complete RFC 6047 conformance is not claimed.
+
+
+## Proposed outbound MIME prerequisite
+
+[ADR 0143](adr/0143-synthetic-host-outbound-imip-composition.md) proposes example-host-only outbound MIME composition for the existing REQUEST/CANCEL synthetic sink. It requires separate approval of the exact enough_mail pin/license notice, deterministic bounded envelope and additive local recording. [Evaluated source/probe evidence](mime-library-evaluation.md) supports that narrow candidate; no workspace dependency, real mail, inbound parser or complete RFC 6047 support is introduced by this proposal.
