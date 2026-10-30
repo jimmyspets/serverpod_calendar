@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:serverpod/serverpod.dart';
@@ -15,6 +14,8 @@ import 'package:calendar_example_server/src/generated/serverpod.dart'
 import 'package:calendar_example_server/src/calendar_policy.dart';
 import 'package:calendar_example_server/src/scheduling_mime.dart';
 import 'package:calendar_example_server/src/imip_mime_input.dart';
+import 'package:calendar_example_server/src/imip_ingress.dart';
+import 'package:calendar_example_server/src/synthetic_imip_input.dart';
 
 final class _Host implements CalendarSchedulingHost {
   @override
@@ -165,15 +166,17 @@ Future<void> main(List<String> args) async {
             'END:VCALENDAR',
             '',
           ].join('\r\n');
-          final receipt = await CalendarModule.receiveSchedulingReply(
+          final receipt = await receiveHostImipReply(
             s,
-            CalendarSchedulingReplyDelivery(
-              scopeKey: meeting.scopeKey,
-              eventId: eventId,
-              namespace: 'process-loss-fixture',
-              deliveryKey: input['key'] as String,
-              originReference: 'synthetic-verified-bob',
-              bytes: Uint8List.fromList(utf8.encode(body)),
+            scopeKey: meeting.scopeKey,
+            eventId: eventId,
+            namespace: 'process-loss-fixture',
+            deliveryKey: input['key'] as String,
+            originReference: 'synthetic-verified-bob',
+            outerProtection: ImipProtection.none,
+            raw: composeSyntheticIngressMime(
+              utf8.encode(body),
+              method: IcalendarSchedulingMethod.reply,
             ),
           );
           if (replies.pause == 'after') {

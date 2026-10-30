@@ -73,7 +73,7 @@ The initial workspace/authentication milestone under [ADR 0021](adr/0021-initial
 - [x] Supply local setup, synthetic database seed/reset, generation, formatting/analysis, database/upgrade and real generated-client/Flutter checks. Namespaced calendar/event tables and fresh/upgrade migrations are exercised.
 - [x] Run two independent local host processes sharing test storage with distinct ports and real cross-instance operations. This foundation now exercises calendar/event features as well as JWT.
 - [ ] Add CI orchestration for the existing local checks and single-/two-host topologies. CI remains a release requirement, not completed by local execution.
-- [ ] Complete evaluation/profiles for remaining MIME/provider integration. ADR 0143 selects and pins the scoped example outbound composer with notices; inbound and complete host mail adapters remain required. Native recurrence, timezone calculation and strict iCalendar codecs have scoped validation; the optional HTTP feed pair is scaffolded under ADR 0116.
+- [ ] Complete evaluation/profiles for remaining MIME/provider integration. ADR 0143 selects and pins the scoped example outbound composer with notices; bounded raw extraction and explicit native ingress wrappers are implemented under ADRs 0144/0145; complete provider trust/mail adapters remain required. Native recurrence, timezone calculation and strict iCalendar codecs have scoped validation; the optional HTTP feed pair is scaffolded under ADR 0116.
 
 ## Temporal core
 
@@ -564,15 +564,16 @@ No real sending or complete mail conformance follows from this synthetic batch.
 - [x] Review [ADR 0144](adr/0144-bounded-host-raw-imip-mime.md): raw ambiguity/protection, shapes, transfer semantics and fixed budgets.
 - [x] Implement the approved extraction group.
 - [x] Complete focused/broader batch validation before one code commit.
-- [ ] Separately design verified provider ingress/native dispatch and real transport, remaining MIME/participant lifecycle and interoperability.
+- [x] Add the scoped explicit native invitation/reply bridge under ADR 0145.
+- [ ] Separately complete verified provider ingress and real transport, remaining MIME/participant lifecycle and interoperability.
 
 This scoped extraction group grants no authority, applies no native state and sends no mail.
 
 
-## Proposed host MIME native-ingress prerequisite
+## Host MIME native-ingress prerequisite
 
-- [ ] Review [ADR 0145](adr/0145-host-mime-native-ingress.md): explicit invitation/reply wrappers, existing host trust, exact bytes and native receipt boundaries.
-- [ ] Implement only after explicit agreement.
-- [ ] Complete route/auth/limit/retry, two-host/process-loss, Flutter and broader batch checks before one code commit.
+- [x] Review [ADR 0145](adr/0145-host-mime-native-ingress.md): explicit invitation/reply wrappers, existing host trust, exact bytes and native receipt boundaries.
+- [x] Implement the explicitly approved host wrappers, synthetic example and native process-probe integration.
+- [x] Complete route/auth/limit/retry, two-host/process-loss, Flutter and broader batch checks before one code commit.
 
-The preceding raw MIME extraction remains an untrusted-data boundary; native/provider ingress is not complete. This proposal adds no production sender verification or real transport. Remaining scheduling/mail and release requirements retain their existing scope.
+The raw MIME/parser and explicit-wrapper boundaries do not establish production provider trust. The scoped native bridge is implemented; complete provider ingress, real transport and remaining scheduling/mail/release requirements retain their existing scope. See [the guide](host-imip-ingress.md).

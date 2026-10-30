@@ -1,9 +1,11 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_calendar_server/serverpod_calendar_server.dart';
 import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
+
+import '../imip_ingress.dart';
+import '../synthetic_imip_input.dart';
 
 /// Development/test simulator. No untrusted sender proof or bytes are accepted.
 class InvitationDemoEndpoint extends Endpoint {
@@ -42,13 +44,15 @@ class InvitationDemoEndpoint extends Endpoint {
       'END:VCALENDAR',
       '',
     ].join('\r\n');
-    return CalendarModule.receiveSchedulingInvitation(
+    return receiveHostImipInvitation(
       session,
-      CalendarInvitationDelivery(
-        namespace: 'example.invitation',
-        deliveryKey: commandId.toString(),
-        originReference: 'synthetic:$user',
-        bytes: Uint8List.fromList(utf8.encode(source)),
+      namespace: 'example.invitation',
+      deliveryKey: commandId.toString(),
+      originReference: 'synthetic:$user',
+      outerProtection: ImipProtection.none,
+      raw: composeSyntheticIngressMime(
+        utf8.encode(source),
+        method: IcalendarSchedulingMethod.request,
       ),
     );
   }
@@ -84,13 +88,15 @@ class InvitationDemoEndpoint extends Endpoint {
       'END:VCALENDAR',
       '',
     ].join('\r\n');
-    return CalendarModule.receiveSchedulingInvitation(
+    return receiveHostImipInvitation(
       session,
-      CalendarInvitationDelivery(
-        namespace: 'example.invitation',
-        deliveryKey: commandId.toString(),
-        originReference: 'synthetic:$user',
-        bytes: Uint8List.fromList(utf8.encode(source)),
+      namespace: 'example.invitation',
+      deliveryKey: commandId.toString(),
+      originReference: 'synthetic:$user',
+      outerProtection: ImipProtection.none,
+      raw: composeSyntheticIngressMime(
+        utf8.encode(source),
+        method: IcalendarSchedulingMethod.cancel,
       ),
     );
   }

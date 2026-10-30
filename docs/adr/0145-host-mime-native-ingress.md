@@ -1,6 +1,6 @@
 # ADR 0145: Host-owned MIME ingress into existing scheduling handlers
 
-Status: **Proposed; concrete API/protocol mechanics require explicit maintainer agreement before implementation.**
+Status: **Accepted by explicit maintainer approval on 2026-10-30 for the complete host MIME invitation/reply bridge batch. Scoped implementation and complete local batch validation are recorded separately.**
 
 ## Context and verified boundary
 
@@ -8,7 +8,7 @@ Accepted [ADR 0144](0144-bounded-host-raw-imip-mime.md) extracts bounded origina
 
 The inspected invitation delivery carrier caps decoded source at 256 KiB; the reply carrier caps it at 512 KiB. Runtime options can lower those limits. The raw parser permits up to 1 MiB of transport and 512 KiB decoded calendar data. Preserve these distinct limits. Existing invitation/reply demo endpoints construct synthetic data and trusted demo origin references on the server after their own checks; they do not accept raw sender proof or arbitrary mail bytes from a client.
 
-## Proposed complete batch
+## Approved complete batch
 
 Add two example-host-only wrappers in a new imip_ingress.dart source file, named receiveHostImipInvitation and receiveHostImipReply. Each accepts the actual Session, original raw bytes and a required actual outer-protection marker. Invitation calls also require the existing namespace/deliveryKey/originReference metadata. Reply calls additionally require an explicitly host-resolved scopeKey and eventId. Return the respective existing native receipt; add no union routing response, generated model, endpoint signature, table, migration, new dependency or reusable-module MIME import.
 
@@ -34,6 +34,6 @@ Test wrapper route rejection, raw/protected/malformed failures before native eff
 
 Use actual two-host generated-client simulator calls and process loss before/after invitation/reply commits, preserving stable receipt and native state assertions. Exercise the existing invitation and reply Flutter journeys through their unchanged APIs. Run focused tests during work, then complete root checks before one batch implementation commit. Keep provider trust, receipt/apply separation, synthetic-only status and remaining mail/release requirements explicit in requirements, RFC tables, roadmap and validation records.
 
-## Decision gate
+## Accepted decision
 
-This document proposes one complete host bridge batch. Explicit maintainer approval is required under AGENTS.md before adding these API/protocol mechanics. No implementation or provider trust is approved by merging this proposal alone.
+The maintainer explicitly approved the complete concrete host bridge batch before implementation. See [the scoped implementation guide](../host-imip-ingress.md) and separate validation record. This approval does not add production provider trust, broader native scheduling methods or real delivery.
