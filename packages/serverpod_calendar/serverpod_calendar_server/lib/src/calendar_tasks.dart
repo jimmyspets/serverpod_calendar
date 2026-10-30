@@ -625,6 +625,7 @@ extension CalendarTaskOperations on CalendarService {
           transaction: tx,
         );
         if (saved == null ||
+            saved.eventOccurrenceState != null ||
             saved.alarmActivityId != null ||
             saved.alarmActivityKind != null ||
             saved.taskHistoryTaskId != null ||

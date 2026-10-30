@@ -1,0 +1,12 @@
+class: CalendarEventOccurrenceListItem
+immutable: true
+fields:
+  eventId: UuidValue
+  calendarId: UuidValue
+  revision: int
+  originalStart: CalendarEventTiming
+  occurrence: CalendarEventOccurrence
+  status: CalendarEventStatus
+  transparency: CalendarEventTransparency
+  cancelled: bool
+  disclosedGroups: List<CalendarEventFieldGroup>

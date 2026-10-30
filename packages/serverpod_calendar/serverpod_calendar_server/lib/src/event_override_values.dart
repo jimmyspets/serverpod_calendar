@@ -46,6 +46,7 @@ DateEventRangeSet _dateOverrides(
   CalendarEventContent c,
   CalendarEventTimingOverrides? v, {
   bool validateContentOnly = false,
+  RecurrenceWorkBudget? sharedWorkBudget,
 }) => DateEventRangeSet(
   base: DateEventExceptionSet(
     series: _dateMaster(c),
@@ -62,6 +63,7 @@ DateEventRangeSet _dateOverrides(
             replacement: validateEventTiming(item.replacement!).$1!,
           ),
     ],
+    sharedWorkBudget: sharedWorkBudget,
     maxExceptions: eventMaxOverrides,
     maxValidationCandidateDays: eventMaxCandidateWork,
     maxValidationRuleOccurrences: eventMaxRuleOccurrences,
@@ -74,6 +76,7 @@ DateEventRangeSet _dateOverrides(
         replacement: validateEventTiming(item.replacement).$1!,
       ),
   ],
+  sharedWorkBudget: sharedWorkBudget,
   maxRangeChanges: eventMaxOverrides,
   maxValidationCandidateDays: eventMaxCandidateWork,
   maxValidationRuleOccurrences: eventMaxRuleOccurrences,
@@ -140,6 +143,7 @@ CalendarEventTimingOverrides? validateEventOverrides(
   CalendarEventContent c,
   CalendarEventTimingOverrides? input, {
   List<CalendarEventTiming>? periods,
+  RecurrenceWorkBudget? sharedWorkBudget,
 }) {
   if (input == null) return null;
   if (input.singles.length + input.future.length > eventMaxOverrides) {
@@ -204,9 +208,20 @@ CalendarEventTimingOverrides? validateEventOverrides(
     ),
   );
   if (c.timing.kind == CalendarEventTimeKind.date) {
-    _dateOverrides(c, result, validateContentOnly: true);
+    _dateOverrides(
+      c,
+      result,
+      validateContentOnly: true,
+      sharedWorkBudget: sharedWorkBudget,
+    );
   } else {
-    _timedOverrides(c, result, periods: periods, validateContentOnly: true);
+    _timedOverrides(
+      c,
+      result,
+      periods: periods,
+      validateContentOnly: true,
+      sharedWorkBudget: sharedWorkBudget,
+    );
   }
   return result;
 }

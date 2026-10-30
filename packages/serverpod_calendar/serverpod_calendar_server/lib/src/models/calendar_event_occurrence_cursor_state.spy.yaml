@@ -1,0 +1,11 @@
+class: CalendarEventOccurrenceCursorState
+serverOnly: true
+immutable: true
+fields:
+  version: int
+  fromUtc: DateTime
+  untilUtc: DateTime
+  includeCancelled: bool
+  afterStartUtc: DateTime
+  afterOriginalKey: String
+  timezoneIdentity: String
