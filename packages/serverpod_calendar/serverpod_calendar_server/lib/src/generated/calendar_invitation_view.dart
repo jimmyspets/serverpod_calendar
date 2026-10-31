@@ -23,6 +23,7 @@ abstract class CalendarInvitationView
     required this.id,
     _ilccsff7.CalendarInvitationSourceKind? kind,
     bool? recurring,
+    this.originalStart,
     required this.revision,
     required this.uid,
     required this.organizer,
@@ -40,6 +41,7 @@ abstract class CalendarInvitationView
     required _is.UuidValue id,
     _ilccsff7.CalendarInvitationSourceKind? kind,
     bool? recurring,
+    _ieswiaty.CalendarEventTiming? originalStart,
     required int revision,
     required String uid,
     required String organizer,
@@ -65,6 +67,11 @@ abstract class CalendarInvitationView
       recurring: jsonSerialization['recurring'] == null
           ? null
           : _is.BoolJsonExtension.fromJson(jsonSerialization['recurring']),
+      originalStart: jsonSerialization['originalStart'] == null
+          ? null
+          : _ix00hwbf.Protocol().deserialize<_ieswiaty.CalendarEventTiming>(
+              jsonSerialization['originalStart'],
+            ),
       revision: jsonSerialization['revision'] as int,
       uid: jsonSerialization['uid'] as String,
       organizer: jsonSerialization['organizer'] as String,
@@ -93,6 +100,8 @@ abstract class CalendarInvitationView
   final _ilccsff7.CalendarInvitationSourceKind kind;
 
   final bool recurring;
+
+  final _ieswiaty.CalendarEventTiming? originalStart;
 
   final _is.UuidValue id;
 
@@ -123,6 +132,7 @@ abstract class CalendarInvitationView
     _is.UuidValue? id,
     _ilccsff7.CalendarInvitationSourceKind? kind,
     bool? recurring,
+    _ieswiaty.CalendarEventTiming? originalStart,
     int? revision,
     String? uid,
     String? organizer,
@@ -157,6 +167,11 @@ abstract class CalendarInvitationView
                   recurring,
                 ) ||
                 other.recurring == recurring) &&
+            (identical(
+                  other.originalStart,
+                  originalStart,
+                ) ||
+                other.originalStart == originalStart) &&
             (identical(
                   other.revision,
                   revision,
@@ -216,6 +231,7 @@ abstract class CalendarInvitationView
       id,
       kind,
       recurring,
+      originalStart,
       revision,
       uid,
       organizer,
@@ -236,6 +252,7 @@ abstract class CalendarInvitationView
       'id': id.toJson(),
       'kind': kind.toJson(),
       'recurring': recurring,
+      if (originalStart != null) 'originalStart': originalStart?.toJson(),
       'revision': revision,
       'uid': uid,
       'organizer': organizer,
@@ -256,6 +273,8 @@ abstract class CalendarInvitationView
       'id': id.toJson(),
       'kind': kind.toJson(),
       'recurring': recurring,
+      if (originalStart != null)
+        'originalStart': originalStart?.toJsonForProtocol(),
       'revision': revision,
       'uid': uid,
       'organizer': organizer,
@@ -282,6 +301,7 @@ class _CalendarInvitationViewImpl extends CalendarInvitationView {
     required _is.UuidValue id,
     _ilccsff7.CalendarInvitationSourceKind? kind,
     bool? recurring,
+    _ieswiaty.CalendarEventTiming? originalStart,
     required int revision,
     required String uid,
     required String organizer,
@@ -296,6 +316,7 @@ class _CalendarInvitationViewImpl extends CalendarInvitationView {
          id: id,
          kind: kind,
          recurring: recurring,
+         originalStart: originalStart,
          revision: revision,
          uid: uid,
          organizer: organizer,
@@ -316,6 +337,7 @@ class _CalendarInvitationViewImpl extends CalendarInvitationView {
     _is.UuidValue? id,
     _ilccsff7.CalendarInvitationSourceKind? kind,
     bool? recurring,
+    Object? originalStart = _Undefined,
     int? revision,
     String? uid,
     String? organizer,
@@ -331,6 +353,9 @@ class _CalendarInvitationViewImpl extends CalendarInvitationView {
       id: id ?? this.id,
       kind: kind ?? this.kind,
       recurring: recurring ?? this.recurring,
+      originalStart: originalStart is _ieswiaty.CalendarEventTiming?
+          ? originalStart
+          : this.originalStart?.copyWith(),
       revision: revision ?? this.revision,
       uid: uid ?? this.uid,
       organizer: organizer ?? this.organizer,

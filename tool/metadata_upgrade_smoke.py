@@ -417,12 +417,69 @@ DROP TABLE recurring_invitation_upgrade_guard;
 """)
 
 
+
+def verify_instance_invitation_upgrade(database):
+    sql(database, """
+INSERT INTO serverpod_calendar_invitation
+ (id,"scopeKey","recipientKey","correlationDigest",kind,recurring,uid,organizer,revision,sequence,stamp,digest,"createdAt","updatedAt")
+VALUES
+ ('14901490-1490-4490-8490-149014901499','instance-upgrade','recipient',repeat('9',64),'request',true,'synthetic-recurring-master','mailto:organizer@example.invalid',1,1,'2026-01-01',repeat('8',64),'2026-01-01','2026-01-01');
+CREATE TABLE instance_invitation_upgrade_guard(table_name text, rows jsonb);
+DO $snapshot_instances$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+  AND (tablename LIKE 'serverpod_calendar_%' OR tablename LIKE 'serverpod_notifications_%') LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s', item.tablename) INTO contents;
+  INSERT INTO instance_invitation_upgrade_guard VALUES(item.tablename, contents);
+ END LOOP;
+END;
+$snapshot_instances$;
+""")
+    sql(database, (SERVER / "migrations/20261031085639016/migration.sql").read_text(encoding="utf-8"))
+    sql(database, """
+DO $verify_instances$
+DECLARE item record; contents jsonb; projection text;
+BEGIN
+ FOR item IN SELECT * FROM instance_invitation_upgrade_guard LOOP
+  projection := CASE WHEN item.table_name='serverpod_calendar_invitation'
+    THEN concat('to_jsonb(t)-',quote_literal('targetKey'),'-',quote_literal('originalStart')) ELSE 'to_jsonb(t)' END;
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT %s AS v FROM %I t) s', projection,item.table_name) INTO contents;
+  IF contents IS DISTINCT FROM item.rows THEN RAISE EXCEPTION 'Instance invitation migration changed %',item.table_name; END IF;
+ END LOOP;
+ IF EXISTS (SELECT 1 FROM serverpod_calendar_invitation WHERE "targetKey" <> 'master' OR "originalStart" IS NOT NULL)
+ THEN RAISE EXCEPTION 'Upgrade invented instance target history'; END IF;
+ INSERT INTO serverpod_calendar_invitation
+  (id,"scopeKey","recipientKey","correlationDigest","targetKey",kind,recurring,uid,organizer,revision,stamp,digest,"createdAt","updatedAt")
+ SELECT '14901490-1490-4490-8490-149014901490',"scopeKey","recipientKey","correlationDigest",'instance-v1:synthetic-index-probe',kind,true,uid,organizer,revision,stamp,digest,"createdAt","updatedAt"
+ FROM serverpod_calendar_invitation ORDER BY id LIMIT 1;
+ BEGIN
+  INSERT INTO serverpod_calendar_invitation
+   (id,"scopeKey","recipientKey","correlationDigest","targetKey",kind,recurring,uid,organizer,revision,stamp,digest,"createdAt","updatedAt")
+  SELECT '14901490-1490-4490-8490-149014901491',"scopeKey","recipientKey","correlationDigest","targetKey",kind,recurring,uid,organizer,revision,stamp,digest,"createdAt","updatedAt"
+  FROM serverpod_calendar_invitation WHERE id='14901490-1490-4490-8490-149014901490';
+  RAISE EXCEPTION 'Duplicate target admitted';
+ EXCEPTION WHEN unique_violation THEN NULL;
+ END;
+ DELETE FROM serverpod_calendar_invitation WHERE id='14901490-1490-4490-8490-149014901490';
+END;
+$verify_instances$;
+DROP TABLE instance_invitation_upgrade_guard;
+""")
+
+
 def main():
     # Drop only a database this process successfully creates on the test service.
     database = f"calendar_metadata_upgrade_{os.getpid()}"
     assert re.fullmatch(r"calendar_metadata_upgrade_[0-9]+", database)
     sql("postgres", f"CREATE DATABASE {database};")
     try:
+        if "--instance-invitations-only" in __import__("sys").argv:
+            sql(database, (SERVER / "migrations/20261030180336464/definition.sql").read_text(encoding="utf-8"))
+            verify_recurring_invitation_upgrade(database)
+            verify_instance_invitation_upgrade(database)
+            print("PASS: populated master invitation targets and all prior rows survive target/index refinement; distinct originals coexist and duplicate targets reject.")
+            return
         if "--recurring-invitations-only" in __import__("sys").argv:
             sql(database, (SERVER / "migrations/20261030180336464/definition.sql").read_text(encoding="utf-8"))
             verify_recurring_invitation_upgrade(database)
@@ -1099,6 +1156,7 @@ DROP TABLE reply_upgrade_guard;
         verify_invitation_response_upgrade(database)
         verify_occurrence_cursor_upgrade(database)
         verify_recurring_invitation_upgrade(database)
+        verify_instance_invitation_upgrade(database)
         print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated replies/invitations/links/checkpoints through instance, adoption, cancellation and private attendee-response upgrades; no personal response history is invented and ordinary cursor rows survive the occurrence-state addition without invented query state; known old invitation modes remain false without invented recurrence history.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

@@ -13,6 +13,8 @@ String _invitationHash(Iterable<String> parts) {
 CalendarInvitationSourceKind _invKind(IcalendarSchedulingMessage message) =>
     message.method == IcalendarSchedulingMethod.request
     ? CalendarInvitationSourceKind.request
+    : message.events.single.isOverride
+    ? CalendarInvitationSourceKind.instanceCancellation
     : CalendarInvitationSourceKind.meetingCancellation;
 
 CalendarEventTiming? _invitationTiming(IcalendarSchedulingEvent event) {
@@ -47,7 +49,47 @@ CalendarEventTiming? _invitationTiming(IcalendarSchedulingEvent event) {
   );
 }
 
+String _invTargetKey(CalendarEventTiming? point) {
+  if (point == null) return 'master';
+  if (point.end != null || point.duration != null) {
+    throw _failure(CalendarFailureCode.validation);
+  }
+  validateEventTiming(point);
+  final c = point.start;
+  return 'instance-v1:${_invitationHash([
+    point.kind.name,
+    point.zoneId ?? '',
+    '${c.year}',
+    '${c.month}',
+    '${c.day}',
+    '${c.hour}',
+    '${c.minute}',
+    '${c.second}',
+  ])}';
+}
+
 extension CalendarInvitationOperations on CalendarService {
+  void _invTargetValid(CalendarInvitationRecord entry) {
+    try {
+      if (entry.targetKey != _invTargetKey(entry.originalStart) ||
+          entry.originalStart != null && !entry.recurring ||
+          entry.kind == CalendarInvitationSourceKind.instanceCancellation &&
+              entry.originalStart == null ||
+          entry.kind == CalendarInvitationSourceKind.meetingCancellation &&
+              entry.originalStart != null) {
+        throw StateError('Invalid invitation target');
+      }
+    } catch (_) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
+  }
+
+  void _invMasterOnly(CalendarInvitationRecord? entry) {
+    if (entry?.originalStart != null) {
+      throw _failure(CalendarFailureCode.validation);
+    }
+  }
+
   CalendarInvitationRuntime get _invitations =>
       _runtime.invitations ?? (throw _failure(CalendarFailureCode.unavailable));
   CalendarInvitationOptions get _invOptions => _invitations.options;
@@ -98,6 +140,14 @@ extension CalendarInvitationOperations on CalendarService {
         phase,
       );
     }
+    if (request.operation == CalendarInvitationOperation.receive &&
+        request.message?.events.single.isOverride == true) {
+      await _invAuthorize(
+        request.forOperation(CalendarInvitationOperation.receiveOccurrence),
+        tx,
+        phase,
+      );
+    }
     return true;
   }
 
@@ -119,7 +169,8 @@ extension CalendarInvitationOperations on CalendarService {
       final event = message.events.single;
       if (message.method == IcalendarSchedulingMethod.cancel &&
               event.status != IcalendarEventStatus.cancelled ||
-          event.isOverride ||
+          event.isThisAndFuture ||
+          event.isOverride && event.recurrence != null ||
           message.method == IcalendarSchedulingMethod.cancel &&
               event.recurrence != null ||
           event.source.entries.whereType<IcalendarSyntaxProperty>().any(
@@ -128,10 +179,8 @@ extension CalendarInvitationOperations on CalendarService {
                   'RRULE',
                   'RDATE',
                   'EXDATE',
-                  'RECURRENCE-ID',
                 }.contains(p.canonicalName) &&
-                (p.canonicalName == 'RECURRENCE-ID' ||
-                    message.method == IcalendarSchedulingMethod.cancel),
+                message.method == IcalendarSchedulingMethod.cancel,
           ) ||
           event.participants.organizer == null ||
           event.participants.organizer!.sentBy != null ||
@@ -159,6 +208,7 @@ extension CalendarInvitationOperations on CalendarService {
     CalendarInvitationSourceRecord source,
     CalendarInvitationRecord entry,
   ) {
+    _invTargetValid(entry);
     final bytes = utf8.encode(source.normalizedSource);
     if (source.entryId != entry.id ||
         bytes.length != source.byteCount ||
@@ -170,8 +220,10 @@ extension CalendarInvitationOperations on CalendarService {
         event = message.events.single;
     if ((entry.currentSourceId == source.id &&
             _invKind(message) != entry.kind) ||
+        !_replySamePoint(_replyOriginal(event), entry.originalStart) ||
         message.uid != entry.uid ||
         message.method == IcalendarSchedulingMethod.request &&
+            !event.isOverride &&
             (event.recurrence != null) != entry.recurring ||
         event.participants.organizer!.address != entry.organizer ||
         event.sequence != source.sequence ||
@@ -208,6 +260,7 @@ extension CalendarInvitationOperations on CalendarService {
     return CalendarInvitationView(
       kind: entry.kind,
       recurring: entry.recurring,
+      originalStart: entry.originalStart,
       id: entry.id!,
       revision: entry.revision,
       uid: entry.uid,
@@ -244,6 +297,9 @@ extension CalendarInvitationOperations on CalendarService {
               e.correlationDigest != _invitationHash([e.uid, e.organizer]),
         )) {
       throw _failure(CalendarFailureCode.unavailable);
+    }
+    for (final entry in entries) {
+      _invTargetValid(entry);
     }
     return entries;
   }
@@ -413,6 +469,8 @@ extension CalendarInvitationOperations on CalendarService {
       message.uid,
       event.participants.organizer!.address,
     ]);
+    final original = _replyOriginal(event);
+    final targetKey = _invTargetKey(original);
     final ingress = _invitationHash([delivery.namespace, delivery.deliveryKey]);
     final origin = _invitationHash([
       delivery.namespace,
@@ -424,6 +482,7 @@ extension CalendarInvitationOperations on CalendarService {
       _Event? linkedEvent;
       CalendarInvitationApplicationState? accepted;
       bool? linkedUnavailable;
+      CalendarInvitationOccurrenceBasis? occurrenceBasis;
       CalendarInvitationPolicyContext context({
         CalendarInvitationView? current,
         CalendarInvitationOutcome? outcome,
@@ -458,6 +517,7 @@ extension CalendarInvitationOperations on CalendarService {
         currentEvent: linkedEvent?.snapshot,
         currentApplication: accepted,
         linkedEventUnavailable: linkedUnavailable,
+        occurrenceBasis: occurrenceBasis,
       );
       await _invAuthorize(
         context(),
@@ -468,16 +528,91 @@ extension CalendarInvitationOperations on CalendarService {
       await _invCleanup(recipient, tx, now);
       final entries = await _invEntries(recipient, tx);
       var entry = entries
-          .where((e) => e.correlationDigest == correlation)
+          .where(
+            (e) =>
+                e.correlationDigest == correlation && e.targetKey == targetKey,
+          )
           .firstOrNull;
       if (entry != null &&
-          (entry.uid != message.uid ||
+          (!_replySamePoint(entry.originalStart, original) ||
+              entry.uid != message.uid ||
               entry.organizer != event.participants.organizer!.address)) {
         throw _failure(CalendarFailureCode.unavailable);
       }
       final current = entry == null ? null : await _invView(entry, tx);
       final cancellation = message.method == IcalendarSchedulingMethod.cancel;
-      if (cancellation || entry == null) {
+      Future<CalendarInvitationReceipt?> retainedReceipt() async {
+        final retained = await CalendarInvitationReceiptRecord.db.findFirstRow(
+          _session,
+          where: (t) =>
+              t.scopeKey.equals(recipient.scopeKey) &
+              t.recipientKey.equals(recipient.key) &
+              t.ingressDigest.equals(ingress),
+          transaction: tx,
+        );
+        if (retained != null) {
+          final source = await CalendarInvitationSourceRecord.db.findById(
+            _session,
+            retained.sourceId,
+            transaction: tx,
+          );
+          if (entry == null ||
+              source == null ||
+              source.entryId != entry.id ||
+              source.digest != digest ||
+              source.normalizedSource != normalized ||
+              retained.originDigest != origin) {
+            throw _failure(CalendarFailureCode.validation);
+          }
+          _invStored(source, entry);
+          final result = CalendarInvitationReceipt(
+            id: retained.id!,
+            entryId: entry.id!,
+            sourceId: source.id!,
+            outcome: retained.outcome,
+            entryRevision: retained.entryRevision,
+            receivedAt: retained.receivedAt,
+          );
+          final retry = context(
+            current: current,
+            outcome: retained.outcome,
+            revision: entry.revision,
+            entryId: entry.id,
+            sourceId: source.id,
+            receiptId: retained.id,
+            retry: true,
+            receipt: result,
+          );
+          await _invAuthorize(
+            retry,
+            tx,
+            CalendarAuthorizationPhase.preliminaryWrite,
+          );
+          await _invAuthorize(retry, tx, CalendarAuthorizationPhase.finalWrite);
+          return result;
+        }
+        return null;
+      }
+
+      if (original != null) {
+        final retry = await retainedReceipt();
+        if (retry != null) return retry;
+        occurrenceBasis = await _invOccurrenceBasis(
+          recipient,
+          entries,
+          correlation,
+          message.uid,
+          event.participants.organizer!.address,
+          original,
+          tx,
+        );
+        await _invAuthorize(
+          context(current: current, entryId: entry?.id),
+          tx,
+          CalendarAuthorizationPhase.preliminaryWrite,
+        );
+      }
+      if (original == null && (cancellation || entry == null)) {
         final candidate = await CalendarInvitationLinkRecord.db.findFirstRow(
           _session,
           where: (t) =>
@@ -535,61 +670,18 @@ extension CalendarInvitationOperations on CalendarService {
           entry.recurring != linkedRecurring) {
         throw _failure(CalendarFailureCode.unavailable);
       }
-      final knownRecurring = entry?.recurring ?? linkedRecurring;
-      final recurring = cancellation
-          ? knownRecurring!
-          : event.recurrence != null;
+      final knownRecurring = original != null
+          ? true
+          : entry?.recurring ?? linkedRecurring;
+      final recurring =
+          original != null ||
+          (cancellation ? knownRecurring! : event.recurrence != null);
       if (knownRecurring != null && knownRecurring != recurring) {
         throw _failure(CalendarFailureCode.validation);
       }
-      final retained = await CalendarInvitationReceiptRecord.db.findFirstRow(
-        _session,
-        where: (t) =>
-            t.scopeKey.equals(recipient.scopeKey) &
-            t.recipientKey.equals(recipient.key) &
-            t.ingressDigest.equals(ingress),
-        transaction: tx,
-      );
-      if (retained != null) {
-        final source = await CalendarInvitationSourceRecord.db.findById(
-          _session,
-          retained.sourceId,
-          transaction: tx,
-        );
-        if (entry == null ||
-            source == null ||
-            source.entryId != entry.id ||
-            source.digest != digest ||
-            source.normalizedSource != normalized ||
-            retained.originDigest != origin) {
-          throw _failure(CalendarFailureCode.validation);
-        }
-        _invStored(source, entry);
-        final result = CalendarInvitationReceipt(
-          id: retained.id!,
-          entryId: entry.id!,
-          sourceId: source.id!,
-          outcome: retained.outcome,
-          entryRevision: retained.entryRevision,
-          receivedAt: retained.receivedAt,
-        );
-        final retry = context(
-          current: current,
-          outcome: retained.outcome,
-          revision: entry.revision,
-          entryId: entry.id,
-          sourceId: source.id,
-          receiptId: retained.id,
-          retry: true,
-          receipt: result,
-        );
-        await _invAuthorize(
-          retry,
-          tx,
-          CalendarAuthorizationPhase.preliminaryWrite,
-        );
-        await _invAuthorize(retry, tx, CalendarAuthorizationPhase.finalWrite);
-        return result;
+      if (original == null) {
+        final retry = await retainedReceipt();
+        if (retry != null) return retry;
       }
       final sources = await _invSources(entries, tx);
       var source = sources
@@ -617,6 +709,8 @@ extension CalendarInvitationOperations on CalendarService {
         final requestSequences = <int>[
           if (entry?.kind == CalendarInvitationSourceKind.request)
             entry!.sequence ?? 0,
+          if (entry == null && occurrenceBasis != null)
+            occurrenceBasis.sequence ?? 0,
           if (accepted?.kind == CalendarInvitationSourceKind.request)
             accepted!.sequence ?? 0,
           for (final historical in sources.where((s) => s.entryId == entry?.id))
@@ -707,6 +801,8 @@ extension CalendarInvitationOperations on CalendarService {
             scopeKey: recipient.scopeKey,
             recipientKey: recipient.key,
             correlationDigest: correlation,
+            targetKey: targetKey,
+            originalStart: original,
             kind: _invKind(message),
             recurring: recurring,
             uid: message.uid,
@@ -862,6 +958,7 @@ extension CalendarInvitationOperations on CalendarService {
         entry.revision > CalendarService._maxRevision) {
       throw _failure(CalendarFailureCode.unavailable);
     }
+    _invTargetValid(entry);
     return entry;
   }
 

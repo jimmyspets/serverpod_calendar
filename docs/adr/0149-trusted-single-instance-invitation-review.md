@@ -1,6 +1,6 @@
 # ADR 0149: Trusted single-instance invitation intake and private review
 
-Status: **Proposed on 2026-10-31. The bounded profile, target identity/index refinement and host/API mechanics below require explicit maintainer agreement before implementation.**
+Status: **Accepted on 2026-10-31 by explicit maintainer agreement covering the review batch and model refinement. Implementation and validation are recorded separately.**
 
 ## Context and sources
 
@@ -61,4 +61,4 @@ Test unknown/denied/corrupt/whole-cancelled bases, retained master versus accept
 
 Exercise generated clients, protected Flutter notice/source/dismiss journeys, MIME ingress, two actual hosts racing target/receipt writes and loss around commit. Verify fresh and populated target/index upgrades, then complete grouped checks before one implementation commit. Unknown detached notices could instead be quarantined by a host outside this bounded module profile; treating them as known instances or auto-creating a master would invent identity. Applying updates during intake would violate the confirmed review-first boundary.
 
-Open issues/PRs were checked; no overlapping incoming-instance implementation was found. This document proposes the concrete next increment and changes no model/runtime source. [AGENTS.md](../../AGENTS.md) requires: “Proposed ADRs become accepted only after explicit maintainer agreement.” Approval must cover the known-series profile, private target retention, index/model refinement, authority and review-only API guards before implementation.
+Open issues/PRs were checked; no overlapping incoming-instance implementation was found. The maintainer explicitly approved the proposed review batch and model refinement on 2026-10-31, including the known-series profile, private target retention, index mechanics, authority and master-only guards. The scoped [implementation guide](../single-instance-invitation-review.md) and separate validation record distinguish implementation from complete batch evidence. [AGENTS.md](../../AGENTS.md) retains the explicit approval gate for later material changes.

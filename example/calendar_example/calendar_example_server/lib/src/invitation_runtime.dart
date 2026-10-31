@@ -69,6 +69,7 @@ final class DemoInvitationHost implements CalendarInvitationHost {
     if ({
       CalendarInvitationOperation.receive,
       CalendarInvitationOperation.receiveCancellation,
+      CalendarInvitationOperation.receiveOccurrence,
     }.contains(context.operation)) {
       final resolved = await resolveDelivery(
         session,

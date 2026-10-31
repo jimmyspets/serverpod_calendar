@@ -233,3 +233,5 @@ The example now includes [explicit private attendee responses](docs/private-atte
 Accepted ADR 0148 adds the scoped [recurring-master recipient workflow](docs/recurring-master-invitations.md): explicit review, calendar application/cancellation and independent synthetic responses. Remaining scheduling and release gates stay in the roadmap.
 
 See [CI checks](docs/continuous-integration.md) for pull-request documentation/runtime validation and the existing local-check workflow.
+
+[Single-instance invitation review](docs/single-instance-invitation-review.md) adds known-series occurrence updates/cancellations as private unapplied notices. Receiving or dismissing them changes no calendar or participation state; instance application and replies remain separate work.

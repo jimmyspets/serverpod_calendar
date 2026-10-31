@@ -1963,6 +1963,19 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'String',
         ),
         _isp.ColumnDefinition(
+          name: 'targetKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+          columnDefault: '\'master\'',
+        ),
+        _isp.ColumnDefinition(
+          name: 'originalStart',
+          columnType: _isp.ColumnType.json,
+          isNullable: true,
+          dartType: 'protocol:CalendarEventTiming?',
+        ),
+        _isp.ColumnDefinition(
           name: 'uid',
           columnType: _isp.ColumnType.text,
           isNullable: false,
@@ -2040,6 +2053,10 @@ class Protocol extends _is.DatabaseSerializationManager {
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
               definition: 'correlationDigest',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'targetKey',
             ),
           ],
           type: 'btree',
