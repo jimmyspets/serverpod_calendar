@@ -510,3 +510,5 @@ Accepted [ADR 0149](adr/0149-trusted-single-instance-invitation-review.md) adds 
 The maintainer confirmed a clean entire linked series for future explicit instance application: any local series/occurrence change blocks it. Accepted [ADR 0150](adr/0150-pure-instance-invitation-projection.md) validates the pure REQUEST/CANCEL projection first, without database mutation, authorization or freshness claims. Durable application, instance replies and RANGE remain required subsequent work.
 
 ADR 0150 pure projection implementation and its bounded source/canonical distinctions are documented in [the guide](instance-invitation-projection.md). FR-20/23 durable instance application and replies remain incomplete; this helper neither authorizes nor writes.
+
+Proposed [ADR 0151](adr/0151-explicit-single-instance-invitation-application.md) profiles the next FR-20/23 durable instance-application increment. Clean entire-series protection is confirmed; one-table acceptance/retention, version/retry/API rules and temporary master-composition guards await review. No remaining application, composition, instance reply or RANGE requirement is marked complete by this proposal.
