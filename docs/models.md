@@ -785,3 +785,8 @@ Accepted [ADR 0147](adr/0147-bounded-calendar-occurrence-queries.md) adds nullab
 ## Recurring invitation identity
 
 Accepted [ADR 0148](adr/0148-recurring-master-invitation-workflow.md) adds one non-null recurring boolean, default false, on the existing private CalendarInvitationRecord and a read-only immutable view flag. Validated REQUEST mode survives cancellation/dismissal/pruning; known mode conversions reject. Surviving links supply accepted-source baseline evidence after queue expiry, never current local content. Existing non-recurring rows justify false on upgrade; no new tables/indexes or invented response history are added. See [the implementation guide](recurring-master-invitations.md) and separate validation evidence.
+
+
+## Proposed private instance targets
+
+Proposed [ADR 0149](adr/0149-trusted-single-instance-invitation-review.md) adds targetKey (default master) and nullable typed originalStart JSON to CalendarInvitationRecord, extends correlation uniqueness with targetKey, exposes a read-only original in the view and appends an instanceCancellation kind. Existing master rows would retain master/null without invented targets. Private typed identities would survive bounded marker/body pruning; no parent proof snapshot, new table or retention-cap expansion is proposed. Known-series admission, immutable host context and explicit rejection by master-only native APIs remain unimplemented pending review.
