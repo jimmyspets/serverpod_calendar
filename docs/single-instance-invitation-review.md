@@ -26,7 +26,7 @@ The existing shared caps and retention apply: 64 pending plus 64 dismissed marke
 
 The invitation screen labels unapplied occurrence updates/cancellations, shows original and replacement timing separately, and supports protected source review and dismissal. A recurring synthetic invitation can generate a fixed Jan 3, 2030 update, then its minimal cancellation. Uncertain retries retain their command and source-defining values. No network address or source claim grants authority.
 
-Instance cards hide Add/link/application/participation controls. The module also rejects instance entries server-side before master-link correlation fallback, including direct generated-client requests. Receiving/dismissing a notice changes no event, accepted baseline, participation, alarm, feed generation or outbound intent. Instance application/replies and RANGE reconciliation remain required separate reviewed work.
+Instance cards hide master Add/link/application/participation controls; the independently authorized [ADR 0151 occurrence application screen](instance-invitation-application.md) now follows this review-only slice. The module also rejects instance entries server-side before master-link correlation fallback, including direct generated-client requests. Receiving/dismissing a notice changes no event, accepted baseline, participation, alarm, feed generation or outbound intent. Instance application is implemented separately under ADR 0151; instance replies and RANGE reconciliation remain required separate reviewed work.
 
 ## Validation commands
 

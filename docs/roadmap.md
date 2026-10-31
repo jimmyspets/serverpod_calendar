@@ -627,15 +627,15 @@ Completed ADR 0149 implementation is in PR #129. The maintainer confirmed whole-
 
 - [x] Review selected REQUEST replacement and CANCEL retain/reject rules, source/canonical separation and bounded pure result.
 - [x] Implement the approved [pure projection](instance-invitation-projection.md), with focused VM tests and broader package/database checks recorded separately.
-- [ ] Separately review durable application/checkpoints, master-update composition and retry/retention mechanics.
+- [x] Review and implement scoped durable application/checkpoints and retry/retention under ADR 0151; master-update composition remains a following contract.
 
 Instance mutation/replies and RANGE remain original-scope requirements; this prerequisite alone completes none of those runtime paths.
 
-## Explicit occurrence application proposal
+## Explicit occurrence application
 
-Completed ADR 0150 implementation is in PR #131. Proposed [ADR 0151](adr/0151-explicit-single-instance-invitation-application.md) groups the next durable batch; the clean entire-series rule is already confirmed.
+Completed ADR 0150 implementation is in PR #131. Accepted [ADR 0151](adr/0151-explicit-single-instance-invitation-application.md) groups the approved durable batch; the clean entire-series rule is enforced.
 
-- [ ] Review one private acceptance table, independent target versions, bounded active source retention/quotas, latest-only per-link retries and explicit master-composition guard.
-- [ ] Implement approved transactional preview/apply, generated migrations/clients, independent authority and Flutter controls.
-- [ ] Verify focused boundaries, fresh/populated upgrades, actual two-host/process-loss recovery and complete batch checks before one implementation commit.
+- [x] Review one private acceptance table, independent target versions, bounded active source retention/quotas, latest-only per-link retries and explicit master-composition guard.
+- [x] Implement approved transactional preview/apply, generated migrations/clients, independent authority and Flutter controls.
+- [x] Verify focused boundaries, fresh/populated upgrades, actual two-host/process-loss recovery and complete batch checks before one implementation commit.
 - [ ] Follow with reviewed master/instance composition, instance responses and RANGE reconciliation; do not treat the temporary guard as completed lifecycle support.

@@ -640,10 +640,11 @@ extension CalendarInvitationOperations on CalendarService {
               recipient.scopeKey,
               tx,
             );
-            accepted = _invApplicationState(
+            accepted = await _invApplicationState(
               bound,
               linkedEvent,
               await _invCheckpoint(bound, linkedEvent, tx),
+              tx,
             );
             linkedUnavailable = false;
           } on CalendarException {

@@ -1,0 +1,16 @@
+class: CalendarInvitationOccurrenceApplicationRecord
+serverOnly: true
+table: serverpod_calendar_invitation_occurrence_application
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  recipientKey: String
+  linkId: UuidValue, relation(parent=serverpod_calendar_invitation_link)
+  revision: int
+  stateJson: String
+  eventRevision: int
+  updatedAt: DateTime
+indexes:
+  calendar_invitation_occurrence_application_link_unique:
+    fields: linkId
+    unique: true

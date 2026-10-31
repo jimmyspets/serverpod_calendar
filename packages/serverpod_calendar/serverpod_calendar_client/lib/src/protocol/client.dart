@@ -122,6 +122,12 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_apply
     as _ilrmykvj;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_document.dart'
     as _ig6t0ro8;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_occurrence_application_view.dart'
+    as _iot0h05u;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_occurrence_apply_receipt.dart'
+    as _irwikun7;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_occurrence_apply_request.dart'
+    as _idv4uqrm;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_response_activity_view.dart'
     as _ihlye3x3;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_response_receipt.dart'
@@ -931,6 +937,36 @@ class EndpointCalendarInvitation extends _isc.EndpointRef {
     'applyCancellation',
     {'request': request},
   );
+
+  _ida.Future<_iot0h05u.CalendarInvitationOccurrenceApplicationView>
+  occurrenceApplication(_isc.UuidValue id) =>
+      caller.callServerEndpoint<
+        _iot0h05u.CalendarInvitationOccurrenceApplicationView
+      >(
+        'serverpod_calendar.calendarInvitation',
+        'occurrenceApplication',
+        {'id': id},
+      );
+
+  _ida.Future<_irwikun7.CalendarInvitationOccurrenceApplyReceipt>
+  applyOccurrenceUpdate(
+    _idv4uqrm.CalendarInvitationOccurrenceApplyRequest request,
+  ) => caller
+      .callServerEndpoint<_irwikun7.CalendarInvitationOccurrenceApplyReceipt>(
+        'serverpod_calendar.calendarInvitation',
+        'applyOccurrenceUpdate',
+        {'request': request},
+      );
+
+  _ida.Future<_irwikun7.CalendarInvitationOccurrenceApplyReceipt>
+  applyOccurrenceCancellation(
+    _idv4uqrm.CalendarInvitationOccurrenceApplyRequest request,
+  ) => caller
+      .callServerEndpoint<_irwikun7.CalendarInvitationOccurrenceApplyReceipt>(
+        'serverpod_calendar.calendarInvitation',
+        'applyOccurrenceCancellation',
+        {'request': request},
+      );
 
   _ida.Future<_ikd0esaz.CalendarInvitationResponseView> response(
     _isc.UuidValue id,

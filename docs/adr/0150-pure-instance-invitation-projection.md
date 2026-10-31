@@ -44,3 +44,6 @@ Approve the pure projection prerequisite and its explicit reject/retain boundari
 ## Implementation
 
 The scoped pure helper and its validation are described in [the implementation guide](../instance-invitation-projection.md). CANCEL alone may retain a positive DURATION without DTSTART; comparison uses the known accepted occurrence without adding a source start. Other methods retain their existing start requirements. This supersedes the earlier blanket start-required duration profile only for CANCEL. No durable application endpoint or schema follows.
+
+
+Subsequent accepted [ADR 0151](0151-explicit-single-instance-invitation-application.md) now integrates this helper into separately authorized durable application. The pure helper itself still provides no authority/freshness/baseline proof.

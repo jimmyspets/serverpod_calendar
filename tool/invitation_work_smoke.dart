@@ -54,8 +54,9 @@ void require(bool value, String message) {
 }
 
 Future<void> main(List<String> args) async {
+  final occurrenceApply = args.contains('--occurrence-applications');
   final instance = args.contains('--instances');
-  final recurring = instance || args.contains('--recurring');
+  final recurring = occurrenceApply || instance || args.contains('--recurring');
   final root = Directory.current.absolute.path,
       probes = <_Probe>[],
       cases = <String>[];
@@ -95,6 +96,122 @@ Future<void> main(List<String> args) async {
   try {
     var a = await start('a', 18780);
     final b = await start('b', 18880);
+    if (occurrenceApply) {
+      Future<Map> prepare(String id) async {
+        final master = await b.command({
+          'command': 'receive',
+          'caseId': id,
+          'key': 'master',
+          'sequence': 1,
+        }) as Map;
+        final calendar = await b.command({'command': 'calendar', 'caseId': id});
+        final link = await b.command({
+          'command': 'adopt',
+          'caseId': id,
+          'request': {
+            'invitationId': master['entryId'],
+            'sourceId': master['sourceId'],
+            'expectedRevision': master['entryRevision'],
+            'calendarId': calendar,
+            'expectedCalendarRevision': 1,
+          },
+        }) as Map;
+        require(link['eventId'] != null, 'Probe adoption failed');
+        final source = await b.command({
+          'command': 'receive',
+          'caseId': id,
+          'key': 'instance',
+          'instance': true,
+          'sequence': 2,
+        }) as Map;
+        final v = await b.command({
+          'command': 'occurrence-view',
+          'caseId': id,
+          'entryId': source['entryId'],
+        }) as Map;
+        require(
+          v['canApply'] == true,
+          'Occurrence preview unexpectedly blocked',
+        );
+        return {
+          'invitationId': v['invitationId'],
+          'sourceId': v['incomingSourceId'],
+          'linkId': v['linkId'],
+          'expectedInvitationRevision': v['invitationRevision'],
+          'expectedEventRevision': v['eventRevision'],
+          'expectedCalendarRevision': v['calendarRevision'],
+          'expectedApplicationRevision': v['applicationRevision'],
+          'expectedOccurrenceRevision': v['occurrenceRevision'],
+        };
+      }
+
+      final raceId = nextCase();
+      final raceRequest = await prepare(raceId);
+      final race = await Future.wait(
+        [a, b].map(
+          (p) => p.command({
+            'command': 'occurrence-apply',
+            'caseId': raceId,
+            'request': raceRequest,
+          }),
+        ),
+      );
+      require(
+        (race.first as Map)['id'] != null &&
+            (race.first as Map)['id'] == (race.last as Map)['id'],
+        'Occurrence race duplicated effect/result',
+      );
+      for (final pause in ['occurrence-before', 'occurrence-after']) {
+        final id = nextCase(), request = await prepare(id);
+        a.paused = Completer<Map<String, dynamic>>();
+        final lost = a
+            .command({
+              'command': 'occurrence-apply',
+              'caseId': id,
+              'request': request,
+              'pause': pause,
+            })
+            .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+        final submitted = await a.paused!.future.timeout(
+          const Duration(seconds: 40),
+        );
+        final visible =
+            await b.command({'command': 'inspect', 'caseId': id}) as Map;
+        require(
+          visible['occurrenceApplications'] ==
+                  (pause == 'occurrence-before' ? 0 : 1) &&
+              visible['eventRevision'] ==
+                  (pause == 'occurrence-before' ? 1 : 2),
+          'Partial occurrence application visible',
+        );
+        await a.stop();
+        await lost;
+        final recovered = await b.command({
+          'command': 'occurrence-apply',
+          'caseId': id,
+          'request': request,
+        }) as Map;
+        require(
+          recovered['id'] != null &&
+              ((pause == 'occurrence-after') ==
+                  (recovered['id'] == submitted['id'])),
+          'Occurrence loss recovery changed retry semantics',
+        );
+        final complete =
+            await b.command({'command': 'inspect', 'caseId': id}) as Map;
+        require(
+          complete['occurrenceApplications'] == 1 &&
+              complete['eventRevision'] == 2 &&
+              complete['applications'] == 0,
+          'Occurrence recovery duplicated state or overwrote master acceptance',
+        );
+        a = await start('a-occurrence-recovered-$pause', 18780);
+      }
+      stdout.writeln(
+        'PASS: independent occurrence-application hosts, same-command race, atomic event/checkpoint/review visibility and actual loss before/after commit with exact retry recovery.',
+      );
+      return;
+    }
     if (instance) {
       final id = nextCase();
       await b.command({'command': 'receive', 'caseId': id, 'key': 'master'});

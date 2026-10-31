@@ -1,0 +1,25 @@
+class: CalendarInvitationOccurrenceApplicationView
+immutable: true
+fields:
+  linkId: UuidValue
+  invitationId: UuidValue
+  calendarId: UuidValue
+  eventId: UuidValue
+  calendarRevision: int
+  eventRevision: int
+  applicationRevision: int
+  occurrenceRevision: int
+  originalStart: CalendarEventTiming
+  hasLocalChanges: bool
+  acceptedVersion: CalendarEventProtocolVersion
+  acceptedKind: CalendarInvitationSourceKind
+  currentOccurrence: CalendarEventContent?
+  proposedOccurrence: CalendarEventContent?
+  incomingKind: CalendarInvitationSourceKind?
+  incomingSourceId: UuidValue?
+  invitationRevision: int
+  incomingVersion: CalendarEventProtocolVersion?
+  incomingSourceText: String?
+  acceptedSourceText: String?
+  canApply: bool
+  latestResult: CalendarInvitationOccurrenceApplyReceipt?

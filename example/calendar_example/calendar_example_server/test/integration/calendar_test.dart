@@ -14863,6 +14863,8 @@ final class TestPolicy implements CalendarHostPolicy {
   void Function(CalendarAuthorizationRequest)? onTaskReplacement;
   void Function(CalendarAuthorizationRequest)? onEventReplacement;
   void Function(CalendarAuthorizationRequest, CalendarAuthorizationPhase)?
+  onEventLifecycle;
+  void Function(CalendarAuthorizationRequest, CalendarAuthorizationPhase)?
   onItemTextMetadata;
   String? denyEventImportUid, hideEventImportUid;
   bool hideEventImportBatch = false, hideEventLifecycleReceipt = false;
@@ -15056,6 +15058,9 @@ final class TestPolicy implements CalendarHostPolicy {
         if (phase == CalendarAuthorizationPhase.finalWrite) {
           await Future<void>.delayed(alarmActionFinalDelay);
         }
+      }
+      if (request.operation == CalendarPermission.changeEventStatus) {
+        onEventLifecycle?.call(request, phase);
       }
       if (request.eventReplacement != null ||
           request.operation == CalendarPermission.replaceEventsFromImport) {

@@ -152,6 +152,9 @@ import 'calendar_invitation_application_view.dart' as _i8svxjh1;
 import 'calendar_invitation_apply_receipt.dart' as _ic2yh4ry;
 import 'calendar_invitation_apply_request.dart' as _iivrx0vm;
 import 'calendar_invitation_document.dart' as _iwcng7rp;
+import 'calendar_invitation_occurrence_application_view.dart' as _i15b7t0e;
+import 'calendar_invitation_occurrence_apply_receipt.dart' as _iyajy5op;
+import 'calendar_invitation_occurrence_apply_request.dart' as _ioottw62;
 import 'calendar_invitation_outcome.dart' as _i98zwsq8;
 import 'calendar_invitation_receipt.dart' as _iy372k0z;
 import 'calendar_invitation_response_activity_view.dart' as _ip5pithb;
@@ -359,6 +362,9 @@ export 'calendar_invitation_application_view.dart';
 export 'calendar_invitation_apply_receipt.dart';
 export 'calendar_invitation_apply_request.dart';
 export 'calendar_invitation_document.dart';
+export 'calendar_invitation_occurrence_application_view.dart';
+export 'calendar_invitation_occurrence_apply_receipt.dart';
+export 'calendar_invitation_occurrence_apply_request.dart';
 export 'calendar_invitation_outcome.dart';
 export 'calendar_invitation_receipt.dart';
 export 'calendar_invitation_response_activity_view.dart';
@@ -853,6 +859,20 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _iwcng7rp.CalendarInvitationDocument) {
       return _iwcng7rp.CalendarInvitationDocument.fromJson(data) as T;
+    }
+    if (t == _i15b7t0e.CalendarInvitationOccurrenceApplicationView) {
+      return _i15b7t0e.CalendarInvitationOccurrenceApplicationView.fromJson(
+            data,
+          )
+          as T;
+    }
+    if (t == _iyajy5op.CalendarInvitationOccurrenceApplyReceipt) {
+      return _iyajy5op.CalendarInvitationOccurrenceApplyReceipt.fromJson(data)
+          as T;
+    }
+    if (t == _ioottw62.CalendarInvitationOccurrenceApplyRequest) {
+      return _ioottw62.CalendarInvitationOccurrenceApplyRequest.fromJson(data)
+          as T;
     }
     if (t == _i98zwsq8.CalendarInvitationOutcome) {
       return _i98zwsq8.CalendarInvitationOutcome.fromJson(data) as T;
@@ -1822,6 +1842,36 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_iwcng7rp.CalendarInvitationDocument?>()) {
       return (data != null
               ? _iwcng7rp.CalendarInvitationDocument.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t ==
+        _isc
+            .getType<
+              _i15b7t0e.CalendarInvitationOccurrenceApplicationView?
+            >()) {
+      return (data != null
+              ? _i15b7t0e.CalendarInvitationOccurrenceApplicationView.fromJson(
+                  data,
+                )
+              : null)
+          as T;
+    }
+    if (t ==
+        _isc.getType<_iyajy5op.CalendarInvitationOccurrenceApplyReceipt?>()) {
+      return (data != null
+              ? _iyajy5op.CalendarInvitationOccurrenceApplyReceipt.fromJson(
+                  data,
+                )
+              : null)
+          as T;
+    }
+    if (t ==
+        _isc.getType<_ioottw62.CalendarInvitationOccurrenceApplyRequest?>()) {
+      return (data != null
+              ? _ioottw62.CalendarInvitationOccurrenceApplyRequest.fromJson(
+                  data,
+                )
               : null)
           as T;
     }
@@ -3132,6 +3182,12 @@ class Protocol extends _isc.SerializationManager {
       _iivrx0vm.CalendarInvitationApplyRequest =>
         'CalendarInvitationApplyRequest',
       _iwcng7rp.CalendarInvitationDocument => 'CalendarInvitationDocument',
+      _i15b7t0e.CalendarInvitationOccurrenceApplicationView =>
+        'CalendarInvitationOccurrenceApplicationView',
+      _iyajy5op.CalendarInvitationOccurrenceApplyReceipt =>
+        'CalendarInvitationOccurrenceApplyReceipt',
+      _ioottw62.CalendarInvitationOccurrenceApplyRequest =>
+        'CalendarInvitationOccurrenceApplyRequest',
       _i98zwsq8.CalendarInvitationOutcome => 'CalendarInvitationOutcome',
       _iy372k0z.CalendarInvitationReceipt => 'CalendarInvitationReceipt',
       _ip5pithb.CalendarInvitationResponseActivityView =>
@@ -3511,6 +3567,12 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarInvitationApplyRequest';
       case _iwcng7rp.CalendarInvitationDocument():
         return 'CalendarInvitationDocument';
+      case _i15b7t0e.CalendarInvitationOccurrenceApplicationView():
+        return 'CalendarInvitationOccurrenceApplicationView';
+      case _iyajy5op.CalendarInvitationOccurrenceApplyReceipt():
+        return 'CalendarInvitationOccurrenceApplyReceipt';
+      case _ioottw62.CalendarInvitationOccurrenceApplyRequest():
+        return 'CalendarInvitationOccurrenceApplyRequest';
       case _i98zwsq8.CalendarInvitationOutcome():
         return 'CalendarInvitationOutcome';
       case _iy372k0z.CalendarInvitationReceipt():
@@ -4128,6 +4190,21 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'CalendarInvitationDocument') {
       return deserialize<_iwcng7rp.CalendarInvitationDocument>(data['data']);
+    }
+    if (dataClassName == 'CalendarInvitationOccurrenceApplicationView') {
+      return deserialize<_i15b7t0e.CalendarInvitationOccurrenceApplicationView>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarInvitationOccurrenceApplyReceipt') {
+      return deserialize<_iyajy5op.CalendarInvitationOccurrenceApplyReceipt>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarInvitationOccurrenceApplyRequest') {
+      return deserialize<_ioottw62.CalendarInvitationOccurrenceApplyRequest>(
+        data['data'],
+      );
     }
     if (dataClassName == 'CalendarInvitationOutcome') {
       return deserialize<_i98zwsq8.CalendarInvitationOutcome>(data['data']);

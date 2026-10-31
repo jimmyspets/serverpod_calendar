@@ -519,8 +519,8 @@ void main() {
             r.entryId,
             r.sourceId,
           );
-        expect(document.text, contains('DURATION:PT1H'));
-        expect(document.text, isNot(contains('DTSTART:')));
+          expect(document.text, contains('DURATION:PT1H'));
+          expect(document.text, isNot(contains('DTSTART:')));
           expect(
             jsonEncode(
               (await CalendarEventDataRecord.db.find(session))

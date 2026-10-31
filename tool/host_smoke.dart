@@ -102,7 +102,9 @@ Future<void> main(List<String> args) async {
       ], workingDirectory: root);
       final out = client.stdout.transform(utf8.decoder).listen(stdout.write);
       final err = client.stderr.transform(utf8.decoder).listen(stderr.write);
-      // The complete sequence includes all feature probes plus category races.
+      // The complete sequence includes all feature probes, category races,
+      // source application and live-reminder recovery. Bound individual waits
+      // separately; allow the complete growing sequence six minutes.
       // Keep narrower reply/invitation-only probes on their existing budget.
       final code = await client.exitCode.timeout(
         Duration(
@@ -112,7 +114,7 @@ Future<void> main(List<String> args) async {
                   args.contains('--invitations-only') ||
                   args.contains('--scheduling-only')
               ? 180
-              : 240,
+              : 360,
         ),
         onTimeout: () {
           unawaited(stop(client));
@@ -244,6 +246,8 @@ Future<void> main(List<String> args) async {
         '--driver=test_driver/integration_test.dart',
         args.contains('--occurrences')
             ? '--target=integration_test/occurrence_query_smoke_test.dart'
+            : args.contains('--occurrence-applications')
+            ? '--target=integration_test/instance_invitation_application_smoke_test.dart'
             : args.contains('--invitations')
             ? '--target=integration_test/invitation_smoke_test.dart'
             : args.contains('--categories')
@@ -279,6 +283,7 @@ Future<void> main(List<String> args) async {
       final output = result.stdout.transform(utf8.decoder).listen(stdout.write);
       final error = result.stderr.transform(utf8.decoder).listen(stderr.write);
       final focused =
+          args.contains('--occurrence-applications') ||
           args.contains('--occurrences') ||
           args.contains('--invitations') ||
           args.contains('--categories') ||
@@ -290,10 +295,12 @@ Future<void> main(List<String> args) async {
           args.contains('--task-replacement') ||
           args.contains('--event-replacement') ||
           args.contains('--event-content');
-      // The full journey includes all delivered features and process shutdown.
+      // The full journey includes all delivered features, occurrence source
+      // application and process shutdown. Its aggregate budget grows with the
+      // sequence; focused suites and per-action waits remain short.
       // Keep the focused feature targets short; per-action waits stay bounded.
       final browserCode = await result.exitCode.timeout(
-        Duration(minutes: focused ? 4 : 8),
+        Duration(minutes: focused ? 4 : 10),
         onTimeout: () {
           unawaited(stop(result));
           throw TimeoutException('Flutter browser smoke timed out.');

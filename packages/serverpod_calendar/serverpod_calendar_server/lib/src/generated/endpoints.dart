@@ -77,6 +77,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_invitation_adop
     as _ia1wppub;
 import 'package:serverpod_calendar_server/src/generated/calendar_invitation_apply_request.dart'
     as _i3h34hei;
+import 'package:serverpod_calendar_server/src/generated/calendar_invitation_occurrence_apply_request.dart'
+    as _ituh8bkh;
 import 'package:serverpod_calendar_server/src/generated/calendar_invitation_response_request.dart'
     as _iemmwj8c;
 import 'package:serverpod_calendar_server/src/generated/calendar_metadata_update_request.dart'
@@ -1848,6 +1850,75 @@ class Endpoints extends _is.EndpointDispatch {
                   (endpoints['calendarInvitation']
                           as _iolttv0d.CalendarInvitationEndpoint)
                       .applyCancellation(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'occurrenceApplication': _is.MethodConnector(
+          name: 'occurrenceApplication',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .occurrenceApplication(
+                        session,
+                        params['id'],
+                      ),
+        ),
+        'applyOccurrenceUpdate': _is.MethodConnector(
+          name: 'applyOccurrenceUpdate',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is
+                  .getType<
+                    _ituh8bkh.CalendarInvitationOccurrenceApplyRequest
+                  >(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .applyOccurrenceUpdate(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'applyOccurrenceCancellation': _is.MethodConnector(
+          name: 'applyOccurrenceCancellation',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is
+                  .getType<
+                    _ituh8bkh.CalendarInvitationOccurrenceApplyRequest
+                  >(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .applyOccurrenceCancellation(
                         session,
                         params['request'],
                       ),
