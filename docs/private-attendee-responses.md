@@ -1,5 +1,7 @@
 # Explicit private attendee responses
 
+Accepted [ADR 0148](adr/0148-recurring-master-invitation-workflow.md) extends this workflow to the bounded [recurring-master recipient profile](recurring-master-invitations.md). Its earlier non-recurring-only statements below are superseded for that slice; instance/range/bundled reconciliation and real mail remain separate. Actual batch checks are recorded in the validation guide.
+
 [ADR 0146](adr/0146-explicit-private-attendee-responses.md) approves this bounded non-recurring response workflow. Accept, Tentative and Decline are explicit commands independent of Add to calendar, Apply update/cancellation and dismissal. Receiving a message or editing an event sends nothing. Declining requires no calendar event. The example records synthetic mail only.
 
 ## Integration and authority

@@ -125,6 +125,10 @@ class _InvitationResponseScreenState extends State<InvitationResponseScreen> {
             'Send an explicit participation response. Adding to a calendar, applying updates and dismissing the invitation are separate actions. This example records synthetic mail only.',
           ),
           if (_busy) const LinearProgressIndicator(),
+          if (_invitation?.recurring == true)
+            const Text(
+              'Recurring series: this response applies to the whole series.',
+            ),
           if (_error != null) Text(_error!, key: const Key('response-error')),
           if (_response != null) ...[
             Text(

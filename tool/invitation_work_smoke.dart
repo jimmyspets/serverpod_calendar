@@ -53,7 +53,8 @@ void require(bool value, String message) {
   if (!value) throw StateError(message);
 }
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
+  final recurring = args.contains('--recurring');
   final root = Directory.current.absolute.path,
       probes = <_Probe>[],
       cases = <String>[];
@@ -64,6 +65,7 @@ Future<void> main() async {
       workingDirectory:
           '$root/example/calendar_example/calendar_example_server',
       environment: {
+        'CALENDAR_INVITATION_PROBE_RECURRING': '$recurring',
         'SERVERPOD_API_SERVER_PORT': '$port',
         'SERVERPOD_INSIGHTS_SERVER_PORT': '${port + 1}',
         'SERVERPOD_WEB_SERVER_PORT': '${port + 2}',
@@ -715,7 +717,7 @@ Future<void> main() async {
       if (pause == 'before') a = await start('a-recovered', 18780);
     }
     stdout.writeln(
-      'PASS: independent invitation hosts, response command/CAS races, competing response leases, actual loss before/after response acceptance with stable key/bytes, cross-host source/access withdrawal, duplicate ingress/dismissal, adoption/update/cancellation races and commit-loss recovery.',
+      'PASS: ${recurring ? 'recurring-master' : 'non-recurring'} independent invitation hosts, response command/CAS races, competing response leases, actual loss before/after response acceptance with stable key/bytes, cross-host source/access withdrawal, duplicate ingress/dismissal, adoption/update/cancellation races and commit-loss recovery.',
     );
   } finally {
     final live = probes.where((p) => !p.stopped && !p.exited).toList();

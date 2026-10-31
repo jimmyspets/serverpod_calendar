@@ -1,3 +1,4 @@
+import 'recurring_invitation_smoke.dart';
 import 'invitation_cancellation_application_smoke.dart';
 import 'invitation_application_smoke.dart';
 import 'invitation_adoption_smoke.dart';
@@ -136,4 +137,5 @@ Future<void> invitationSmoke(List<Client> clients) async {
   await invitationApplicationSmoke(clients);
   await invitationCancellationApplicationSmoke(clients);
   await invitationResponseSmoke(clients);
+  await recurringInvitationSmoke(clients);
 }
