@@ -608,3 +608,14 @@ Accepted [ADR 0148](adr/0148-recurring-master-invitation-workflow.md) follows co
 - [x] Run focused temporal/privacy/conflict/retry tests during development, then fresh/populated upgrades, two-host/process-loss, complete Flutter and full batch checks before one implementation commit.
 
 This increment leaves detached/bundled exceptions, instance/range recipient reconciliation, delegation, other methods and real transport in the original remaining scope.
+
+
+## Single-instance recipient intake/review proposal
+
+Proposed [ADR 0149](adr/0149-trusted-single-instance-invitation-review.md) follows recurring-master implementation PR #126 and CI wiring PR #127. The first slice separates private original targets and validates a known series at receipt; native instance application/responses follow separately. Existing master workflows stay independent.
+
+- [ ] Review known-series admission, private typed target retention, target/index refinement, authority and master-action guards.
+- [ ] Implement the approved review-only storage/API/host/MIME/Flutter batch.
+- [ ] Verify target/privacy/version/retry and populated upgrade boundaries, two hosts/process loss and complete grouped checks before one implementation commit.
+
+This proposal retains the original remaining instance/range reconciliation and response requirements; receipt alone never changes calendars or participation.
