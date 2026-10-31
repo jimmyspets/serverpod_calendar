@@ -44,6 +44,7 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
     CalendarInvitationRecipient recipient,
     Transaction tx,
   ) async {
+    _invMasterOnly(entry);
     final original = await CalendarInvitationLinkRecord.db.findFirstRow(
       _session,
       where: (t) =>

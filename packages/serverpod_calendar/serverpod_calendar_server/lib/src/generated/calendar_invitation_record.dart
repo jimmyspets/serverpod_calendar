@@ -11,6 +11,9 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_calendar_server/src/generated/protocol.dart'
+    as _ix00hwbf;
+import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_invitation_source_kind.dart' as _ilccsff7;
 
 abstract class CalendarInvitationRecord
@@ -22,6 +25,8 @@ abstract class CalendarInvitationRecord
     required this.scopeKey,
     required this.recipientKey,
     required this.correlationDigest,
+    String? targetKey,
+    this.originalStart,
     required this.uid,
     required this.organizer,
     required this.revision,
@@ -33,7 +38,8 @@ abstract class CalendarInvitationRecord
     required this.updatedAt,
     this.dismissedAt,
   }) : kind = kind ?? _ilccsff7.CalendarInvitationSourceKind.request,
-       recurring = recurring ?? false;
+       recurring = recurring ?? false,
+       targetKey = targetKey ?? 'master';
 
   factory CalendarInvitationRecord({
     _is.UuidValue? id,
@@ -42,6 +48,8 @@ abstract class CalendarInvitationRecord
     required String scopeKey,
     required String recipientKey,
     required String correlationDigest,
+    String? targetKey,
+    _ieswiaty.CalendarEventTiming? originalStart,
     required String uid,
     required String organizer,
     required int revision,
@@ -72,6 +80,12 @@ abstract class CalendarInvitationRecord
       scopeKey: jsonSerialization['scopeKey'] as String,
       recipientKey: jsonSerialization['recipientKey'] as String,
       correlationDigest: jsonSerialization['correlationDigest'] as String,
+      targetKey: jsonSerialization['targetKey'] as String?,
+      originalStart: jsonSerialization['originalStart'] == null
+          ? null
+          : _ix00hwbf.Protocol().deserialize<_ieswiaty.CalendarEventTiming>(
+              jsonSerialization['originalStart'],
+            ),
       uid: jsonSerialization['uid'] as String,
       organizer: jsonSerialization['organizer'] as String,
       revision: jsonSerialization['revision'] as int,
@@ -114,6 +128,10 @@ abstract class CalendarInvitationRecord
 
   String correlationDigest;
 
+  String targetKey;
+
+  _ieswiaty.CalendarEventTiming? originalStart;
+
   String uid;
 
   String organizer;
@@ -147,6 +165,8 @@ abstract class CalendarInvitationRecord
     String? scopeKey,
     String? recipientKey,
     String? correlationDigest,
+    String? targetKey,
+    _ieswiaty.CalendarEventTiming? originalStart,
     String? uid,
     String? organizer,
     int? revision,
@@ -168,6 +188,8 @@ abstract class CalendarInvitationRecord
       'scopeKey': scopeKey,
       'recipientKey': recipientKey,
       'correlationDigest': correlationDigest,
+      'targetKey': targetKey,
+      if (originalStart != null) 'originalStart': originalStart?.toJson(),
       'uid': uid,
       'organizer': organizer,
       'revision': revision,
@@ -224,6 +246,8 @@ class _CalendarInvitationRecordImpl extends CalendarInvitationRecord {
     required String scopeKey,
     required String recipientKey,
     required String correlationDigest,
+    String? targetKey,
+    _ieswiaty.CalendarEventTiming? originalStart,
     required String uid,
     required String organizer,
     required int revision,
@@ -241,6 +265,8 @@ class _CalendarInvitationRecordImpl extends CalendarInvitationRecord {
          scopeKey: scopeKey,
          recipientKey: recipientKey,
          correlationDigest: correlationDigest,
+         targetKey: targetKey,
+         originalStart: originalStart,
          uid: uid,
          organizer: organizer,
          revision: revision,
@@ -264,6 +290,8 @@ class _CalendarInvitationRecordImpl extends CalendarInvitationRecord {
     String? scopeKey,
     String? recipientKey,
     String? correlationDigest,
+    String? targetKey,
+    Object? originalStart = _Undefined,
     String? uid,
     String? organizer,
     int? revision,
@@ -282,6 +310,10 @@ class _CalendarInvitationRecordImpl extends CalendarInvitationRecord {
       scopeKey: scopeKey ?? this.scopeKey,
       recipientKey: recipientKey ?? this.recipientKey,
       correlationDigest: correlationDigest ?? this.correlationDigest,
+      targetKey: targetKey ?? this.targetKey,
+      originalStart: originalStart is _ieswiaty.CalendarEventTiming?
+          ? originalStart
+          : this.originalStart?.copyWith(),
       uid: uid ?? this.uid,
       organizer: organizer ?? this.organizer,
       revision: revision ?? this.revision,
@@ -331,6 +363,17 @@ class CalendarInvitationRecordUpdateTable
         table.correlationDigest,
         value,
       );
+
+  _is.ColumnValue<String, String> targetKey(String value) => _is.ColumnValue(
+    table.targetKey,
+    value,
+  );
+
+  _is.ColumnValue<_ieswiaty.CalendarEventTiming, _ieswiaty.CalendarEventTiming>
+  originalStart(_ieswiaty.CalendarEventTiming? value) => _is.ColumnValue(
+    table.originalStart,
+    value,
+  );
 
   _is.ColumnValue<String, String> uid(String value) => _is.ColumnValue(
     table.uid,
@@ -415,6 +458,15 @@ class CalendarInvitationRecordTable extends _is.Table<_is.UuidValue?> {
       'correlationDigest',
       this,
     );
+    targetKey = _is.ColumnString(
+      'targetKey',
+      this,
+      hasDefault: true,
+    );
+    originalStart = _is.ColumnSerializable<_ieswiaty.CalendarEventTiming>(
+      'originalStart',
+      this,
+    );
     uid = _is.ColumnString(
       'uid',
       this,
@@ -469,6 +521,11 @@ class CalendarInvitationRecordTable extends _is.Table<_is.UuidValue?> {
 
   late final _is.ColumnString correlationDigest;
 
+  late final _is.ColumnString targetKey;
+
+  late final _is.ColumnSerializable<_ieswiaty.CalendarEventTiming>
+  originalStart;
+
   late final _is.ColumnString uid;
 
   late final _is.ColumnString organizer;
@@ -497,6 +554,8 @@ class CalendarInvitationRecordTable extends _is.Table<_is.UuidValue?> {
     scopeKey,
     recipientKey,
     correlationDigest,
+    targetKey,
+    originalStart,
     uid,
     organizer,
     revision,

@@ -72,7 +72,11 @@ extension CalendarInvitationApplicationOperations on CalendarService {
     final stamp = row?.stamp ?? link.stamp;
     final kind = row?.kind ?? CalendarInvitationSourceKind.request;
     final content = decoded['content'] as Map<String, dynamic>;
-    if ((kind == CalendarInvitationSourceKind.meetingCancellation &&
+    if (!{
+          CalendarInvitationSourceKind.request,
+          CalendarInvitationSourceKind.meetingCancellation,
+        }.contains(kind) ||
+        (kind == CalendarInvitationSourceKind.meetingCancellation &&
             (content['status'] != 'cancelled' ||
                 protocol['statusPresent'] != true ||
                 sequence == null)) ||

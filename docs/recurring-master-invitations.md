@@ -1,5 +1,7 @@
 # Recurring-master recipient invitations
 
+Accepted [ADR 0149](adr/0149-trusted-single-instance-invitation-review.md) now adds separate [known-series single-instance review](single-instance-invitation-review.md). It supersedes the detached-instance intake rejection below only for that bounded review profile. Calendar application and participation actions remain master-only; RANGE and bundled input still reject.
+
 Accepted [ADR 0148](adr/0148-recurring-master-invitation-workflow.md) extends the existing private recipient workflow to one supported recurring master. Its implementation builds on [review](invitation-intake-and-review.md), [calendar addition](invitation-calendar-adoption.md), [source updates](linked-invitation-updates.md), [cancellation/reopening](linked-invitation-cancellation.md) and [explicit responses](private-attendee-responses.md). Those guides' earlier non-recurring restriction is superseded only for this master profile. See [validation](scaffold-validation.md) for actual checks; the full release remains incomplete.
 
 ## Accepted source and preserved meaning

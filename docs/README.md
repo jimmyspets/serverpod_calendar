@@ -296,4 +296,4 @@ Accepted [ADR 0148](adr/0148-recurring-master-invitation-workflow.md) adds the s
 [Repository CI checks](continuous-integration.md) run documentation validation and the existing full runtime/two-host/recovery/Flutter checks on disposable GitHub runners. Hosted results belong to their tested commit; remaining release scope is unchanged.
 
 
-Proposed [ADR 0149](adr/0149-trusted-single-instance-invitation-review.md) defines known-series single-instance REQUEST/CANCEL intake and private review. Target identity/index changes and master-action guards await explicit review; no instance application or response support is claimed.
+Accepted [ADR 0149](adr/0149-trusted-single-instance-invitation-review.md) adds [single-instance invitation review](single-instance-invitation-review.md), separate typed targets, known-series membership and master-action guards. Instance application/replies remain separate; complete batch evidence is recorded independently.

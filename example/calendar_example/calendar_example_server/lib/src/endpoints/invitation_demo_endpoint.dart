@@ -11,6 +11,60 @@ import '../synthetic_imip_input.dart';
 class InvitationDemoEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
+
+  /// Fixed synthetic original from the recurring demo; no sender proof input.
+  Future<CalendarInvitationReceipt> simulateOccurrence(
+    Session session,
+    UuidValue invitationId,
+    UuidValue commandId,
+    int sequence,
+    bool cancel,
+  ) async {
+    if (!{'development', 'test'}.contains(session.serverpod.runMode) ||
+        sequence < 1 ||
+        sequence > 2147483647) {
+      throw CalendarException(
+        code: CalendarFailureCode.validation,
+        message: 'Invalid simulation',
+      );
+    }
+    final user = session.authenticated!.userIdentifier;
+    final method = cancel
+        ? IcalendarSchedulingMethod.cancel
+        : IcalendarSchedulingMethod.request;
+    final source = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Synthetic invitation//EN',
+      'METHOD:${cancel ? 'CANCEL' : 'REQUEST'}',
+      'BEGIN:VEVENT',
+      'UID:synthetic-invitation:$user:$invitationId',
+      'DTSTAMP:20260101T000000Z',
+      'SEQUENCE:$sequence',
+      'RECURRENCE-ID:20300103T090000Z',
+      if (cancel)
+        'STATUS:CANCELLED'
+      else ...[
+        'DTSTART:20300103T110000Z',
+        'DTEND:20300103T120000Z',
+        'SUMMARY:Synthetic occurrence update',
+      ],
+      'ORGANIZER:mailto:organizer@example.invalid',
+      'ATTENDEE:mailto:demo-$user@example.invalid',
+      'END:VEVENT',
+      'END:VCALENDAR',
+      '',
+    ].join('\r\n');
+    return receiveHostImipInvitation(
+      session,
+      namespace: 'example.invitation',
+      deliveryKey: commandId.toString(),
+      originReference: 'synthetic:$user',
+      outerProtection: ImipProtection.none,
+      raw: composeSyntheticIngressMime(utf8.encode(source), method: method),
+    );
+  }
+
   Future<CalendarInvitationReceipt> simulate(
     Session session,
     UuidValue invitationId,
