@@ -492,3 +492,5 @@ Accepted [ADR 0151](adr/0151-explicit-single-instance-invitation-application.md)
 The [ADR 0151 native application slice](instance-invitation-application.md) is implemented with generated APIs and explicit Flutter actions. No external mail-client interoperability, master/instance composition or instance-reply claim follows.
 
 Accepted [ADR 0152](adr/0152-master-invitation-application-with-accepted-occurrences.md) implements explicit master/instance composition with preserved occurrence identities, independent versions and reject-orphan protection. Its whole-CANCEL sequence floor is a conservative application rule, not a universal RFC requirement. No external-client interoperability, instance response, RANGE or real-mail claim follows; actual validation remains separate.
+
+Proposed [ADR 0153](adr/0153-explicit-single-instance-attendee-responses.md) would add native selected-instance participation sending through synthetic adapters, retaining original identity and independent versions. It remains unimplemented; no RANGE, arbitrary-original selection, real transport or external scheduling-client compatibility is claimed.
