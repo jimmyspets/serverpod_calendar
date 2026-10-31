@@ -1,6 +1,6 @@
 # ADR 0150: Pure single-instance invitation application projection
 
-Status: **Proposed on 2026-10-31. The maintainer confirmed a clean entire linked-series baseline for later explicit application; the concrete projection mechanics below require review.**
+Status: **Accepted on 2026-10-31 by explicit maintainer approval of the pure projection batch. Durable application/storage is not approved by this decision.**
 
 ## Context and source evidence
 
@@ -10,7 +10,7 @@ Inspected event wire storage/output, single overrides, protocol-state/source-pre
 
 Primary sources checked 2026-10-31: [RFC 5546 REQUEST](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.2), [CANCEL](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.5) and [RFC 5545 RECURRENCE-ID](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.4.4). Original identity remains separate from moved timing. The stricter project profile below is not a claim that the RFC prohibits other payloads.
 
-## Proposed pure prerequisite batch
+## Accepted pure prerequisite batch
 
 Implement one bounded pure projection in the Serverpod module's value-adaptation layer, before proposing new durable target checkpoints. It receives a validated complete accepted series projection (UID/content/overrides/protocol state), one parsed detached REQUEST/CANCEL and the expected recipient address. It returns immutable proposed canonical values plus the original parsed source/omissions and exact original. It allocates no API revision, timestamp, outgoing version, identity or baseline history and performs no database access, authorization, mutation, arming, network operation or reply.
 
@@ -18,7 +18,7 @@ The caller-provided recipient and accepted values are data, not proof of trusted
 
 Require exact UID/organizer/recipient correlation, an active recurring accepted master, one supported detached original and exact original kind/zone/membership. Reuse RRULE/RDATE/PERIOD/EXDATE and earlier-addition semantics; charge bounded work across existing state and incoming target, with the existing 200,000 candidate ceiling and existing 128 native override slots. Preserve ordinary whole-second 1970–2099 dates, exclusive endpoint rules and full-horizon known-zone validation. RANGE/bundles/mode conversion/delegation and unsupported source differences reject explicitly.
 
-## Proposed projection behavior
+## Accepted projection behavior
 
 - REQUEST replaces only the selected single-occurrence component. Preserve its complete source timing/end-or-duration form and supported own text/annotations, with omitted text inheriting from the master and explicit empty text remaining an own override. Reuse existing occurrence wire/native profile checks; differing metadata outside that profile rejects rather than being discarded. A REQUEST may replace an accepted cancellation for this target; no other target is reopened.
 - CANCEL sets only this original's cancellation state while retaining its accepted timing/content/inheritance. Missing DTSTART is not filled into the source or pinned into native replacement timing. Independently supplied timing/text/metadata must agree with the retained effective target under this first bounded application profile; reject unsupported differences. Preserve the exact parsed cancellation source and independently optional fields separately from the canonical cancellation projection. An end-only or duration-only payload is checked only for the fields actually supplied, without native defaults.
@@ -40,3 +40,7 @@ Implementing durable writes immediately would require committing to target-check
 ## Review gate
 
 Approve the pure projection prerequisite and its explicit reject/retain boundaries before implementation. Acceptance of this ADR would not approve a database schema or enable instance calendar mutation. [AGENTS.md](../../AGENTS.md) requires: “Proposed ADRs become accepted only after explicit maintainer agreement.” This review covers the pure mechanics only; later storage/API approval remains separate.
+
+## Implementation
+
+The scoped pure helper and its validation are described in [the implementation guide](../instance-invitation-projection.md). CANCEL alone may retain a positive DURATION without DTSTART; comparison uses the known accepted occurrence without adding a source start. Other methods retain their existing start requirements. This supersedes the earlier blanket start-required duration profile only for CANCEL. No durable application endpoint or schema follows.

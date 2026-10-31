@@ -498,6 +498,45 @@ void main() {
         );
       },
     );
+    for (final linked in [false, true]) {
+      test(
+        'duration-only cancellation remains review-only; linked=$linked',
+        () async {
+          final m = await master();
+          if (linked) await adopt(m);
+          final before = jsonEncode(
+            (await CalendarEventDataRecord.db.find(session))
+                .map((v) => v.toJson())
+                .toList(),
+          );
+          final r = await receive(
+            instanceInvitationBytes(cancel: true, extra: ['DURATION:PT1H']),
+          );
+          final view = await service.getInvitation(r.entryId);
+          expect(view.kind, CalendarInvitationSourceKind.instanceCancellation);
+          expect(view.timing, isNull);
+          final document = await service.invitationSource(
+            r.entryId,
+            r.sourceId,
+          );
+        expect(document.text, contains('DURATION:PT1H'));
+        expect(document.text, isNot(contains('DTSTART:')));
+          expect(
+            jsonEncode(
+              (await CalendarEventDataRecord.db.find(session))
+                  .map((v) => v.toJson())
+                  .toList(),
+            ),
+            before,
+          );
+          expect(
+            await CalendarInvitationApplicationRecord.db.count(session),
+            0,
+          );
+          expect(await CalendarInvitationResponseRecord.db.count(session), 0);
+        },
+      );
+    }
     test('candidate exhaustion is explicit and commits no target', () async {
       await receive(invitationBytes(extra: ['RRULE:FREQ=MINUTELY']));
       await expectLater(
