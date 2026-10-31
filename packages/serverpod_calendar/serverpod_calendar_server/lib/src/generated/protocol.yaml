@@ -75,6 +75,9 @@ calendarInvitation:
   - application:
   - applyUpdate:
   - applyCancellation:
+  - occurrenceApplication:
+  - applyOccurrenceUpdate:
+  - applyOccurrenceCancellation:
   - response:
   - responseActivity:
   - sendResponse:

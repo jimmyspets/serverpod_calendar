@@ -72,10 +72,11 @@ extension CalendarInvitationOccurrenceOperations on CalendarService {
           throw _failure(CalendarFailureCode.unavailable);
         }
         final event = await _invLinkedEventScope(link, recipient.scopeKey, tx);
-        final accepted = _invApplicationState(
+        final accepted = await _invApplicationState(
           link,
           event,
           await _invCheckpoint(link, event, tx),
+          tx,
         );
         if (accepted.kind != CalendarInvitationSourceKind.request) {
           throw _failure(CalendarFailureCode.validation);

@@ -52,6 +52,9 @@ enum CalendarInvitationOperation {
   apply,
   applyCancellation,
   readApplication,
+  readOccurrenceApplication,
+  applyOccurrenceUpdate,
+  applyOccurrenceCancellation,
 }
 
 /// Original link source evidence, retained independently of a prunable body.
@@ -162,6 +165,10 @@ final class CalendarInvitationPolicyContext {
     this.localChanges,
     this.linkedEventUnavailable,
     this.occurrenceBasis,
+    this.occurrenceRequest,
+    this.currentOccurrenceApplication,
+    this.proposedOccurrenceApplication,
+    this.occurrenceReceipt,
   });
   final CalendarInvitationOperation operation;
   final CalendarInvitationRecipient recipient;
@@ -192,6 +199,11 @@ final class CalendarInvitationPolicyContext {
   final bool? localChanges;
   final bool? linkedEventUnavailable;
   final CalendarInvitationOccurrenceBasis? occurrenceBasis;
+  final CalendarInvitationOccurrenceApplyRequest? occurrenceRequest;
+  final CalendarInvitationOccurrenceApplicationSnapshot?
+  currentOccurrenceApplication,
+  proposedOccurrenceApplication;
+  final CalendarInvitationOccurrenceApplyReceipt? occurrenceReceipt;
 
   CalendarInvitationPolicyContext forOperation(
     CalendarInvitationOperation value,
@@ -227,7 +239,24 @@ final class CalendarInvitationPolicyContext {
     localChanges: localChanges,
     linkedEventUnavailable: linkedEventUnavailable,
     occurrenceBasis: occurrenceBasis,
+    occurrenceRequest: occurrenceRequest,
+    currentOccurrenceApplication: currentOccurrenceApplication,
+    proposedOccurrenceApplication: proposedOccurrenceApplication,
+    occurrenceReceipt: occurrenceReceipt,
   );
+}
+
+/// Complete immutable private state for host policy; never an ordinary API view.
+final class CalendarInvitationOccurrenceApplicationSnapshot {
+  const CalendarInvitationOccurrenceApplicationSnapshot({
+    required this.revision,
+    required this.stateJson,
+    required this.eventRevision,
+    required this.updatedAt,
+  });
+  final int revision, eventRevision;
+  final String stateJson;
+  final DateTime updatedAt;
 }
 
 abstract interface class CalendarInvitationHost {
@@ -263,6 +292,9 @@ final class CalendarInvitationOptions {
     this.maxRetainedBytes = 16777216,
     this.maxReceipts = 1024,
     this.maxLinks = 1024,
+    this.maxOccurrenceCheckpointBytes = 4194304,
+    this.maxRecipientOccurrenceBytes = 16777216,
+    this.maxScopeOccurrenceBytes = 67108864,
     this.terminalRetention = const Duration(days: 30),
   }) {
     for (final pair in [
@@ -274,6 +306,9 @@ final class CalendarInvitationOptions {
       (maxRetainedBytes, 16777216),
       (maxReceipts, 1024),
       (maxLinks, 1024),
+      (maxOccurrenceCheckpointBytes, 4194304),
+      (maxRecipientOccurrenceBytes, 16777216),
+      (maxScopeOccurrenceBytes, 67108864),
     ]) {
       if (pair.$1 < 1 || pair.$1 > pair.$2) {
         throw ArgumentError('Invalid invitation limit');
@@ -291,7 +326,10 @@ final class CalendarInvitationOptions {
       maxSourceBytes,
       maxRetainedBytes,
       maxReceipts,
-      maxLinks;
+      maxLinks,
+      maxOccurrenceCheckpointBytes,
+      maxRecipientOccurrenceBytes,
+      maxScopeOccurrenceBytes;
   final Duration terminalRetention;
 }
 

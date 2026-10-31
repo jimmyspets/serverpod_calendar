@@ -1,6 +1,6 @@
 # Pure occurrence invitation projection
 
-Accepted [ADR 0150](adr/0150-pure-instance-invitation-projection.md) implements `projectInvitationOccurrence` in the Serverpod module's value-adaptation layer. It accepts a complete accepted series, its independent component protocol state, one parsed detached REQUEST/CANCEL and the expected recipient address. It returns an immutable proposal and the original immutable parsed source. No endpoint calls it yet.
+Accepted [ADR 0150](adr/0150-pure-instance-invitation-projection.md) implements `projectInvitationOccurrence` in the Serverpod module's value-adaptation layer. It accepts a complete accepted series, its independent component protocol state, one parsed detached REQUEST/CANCEL and the expected recipient address. It returns an immutable proposal and the original immutable parsed source. The separately authorized [ADR 0151 application service](instance-invitation-application.md) now calls it after clean-series and source-version checks.
 
 The accepted values and recipient are caller-supplied data. Success proves no sender authority, freshness, clean database baseline or permission. The helper reads no database and allocates no UUID, API revision, clock time, history or outbound intent. It does not read or change personal alarms. Later transactional application must independently resolve the actual link, reauthorize and verify the **entire linked series** against its accepted source baseline. Any local series or occurrence change must block that later application under the maintainer's confirmed policy.
 
@@ -30,4 +30,4 @@ The default syntax envelope is reapplied even when a caller parsed with larger l
 
 Focused tests cover DATE/UTC/zoned values, DST, PERIOD and earlier additions, exclusions, independent versions/omissions, minimal/end-only/duration-only cancellation, annotations and grouped values, preservation/reopening, slot/work/syntax exhaustion and immutable results. Existing trusted intake also tests duration-only cancellation as review-only for linked and unlinked series. Actual commands and broader results are recorded in [validation](scaffold-validation.md).
 
-Durable target checkpoints, source retention, master-update composition, latest-only retries and independently authorized application actions require a subsequent concrete review. Instance replies, RANGE reconciliation and real mail remain separate first-release work.
+Durable target checkpoints, source retention, latest-only retries and independently authorized application are now implemented separately under [ADR 0151](instance-invitation-application.md). Master-update composition, instance replies, RANGE reconciliation and real mail remain separate first-release work.

@@ -487,4 +487,6 @@ Accepted [ADR 0150](adr/0150-pure-instance-invitation-projection.md) is a pure m
 
 Accepted ADR 0150 provides a [pure occurrence proposal](instance-invitation-projection.md), including CANCEL-only unanchored duration preservation. This does not extend native instance-application or external-client compatibility claims; durable writes, instance replies and RANGE remain separate.
 
-Proposed [ADR 0151](adr/0151-explicit-single-instance-invitation-application.md) would enable explicit single-instance calendar application with clean entire-series checks and independent acceptance evidence. Its proposed master-composition guard, table, quotas and retained source state are not implemented. No new client interoperability or real transport evidence follows.
+Accepted [ADR 0151](adr/0151-explicit-single-instance-invitation-application.md) implements scoped explicit single-instance calendar application with clean entire-series checks and independent acceptance evidence. Its approved master-composition guard, table, quotas and retained source state are implemented. No new client interoperability or real transport evidence follows.
+
+The [ADR 0151 native application slice](instance-invitation-application.md) is implemented with generated APIs and explicit Flutter actions. No external mail-client interoperability, master/instance composition or instance-reply claim follows.

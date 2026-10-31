@@ -144,6 +144,17 @@ final class _Host implements CalendarInvitationHost {
       );
       await Completer<void>().future;
     }
+    if (pause == 'occurrence-before' &&
+        {
+          CalendarInvitationOperation.applyOccurrenceUpdate,
+          CalendarInvitationOperation.applyOccurrenceCancellation,
+        }.contains(c.operation) &&
+        phase == CalendarAuthorizationPhase.finalWrite) {
+      stdout.writeln(
+        'INVITATION_PAUSED ${jsonEncode(c.occurrenceReceipt!.toJson())}',
+      );
+      await Completer<void>().future;
+    }
     if (pause == 'cancel-apply-before' &&
         c.operation == CalendarInvitationOperation.applyCancellation &&
         phase == CalendarAuthorizationPhase.finalWrite) {
@@ -355,6 +366,42 @@ Future<void> main(List<String> args) async {
             } finally {
               session.updateAuthenticated(null);
             }
+          case 'occurrence-view':
+            session.updateAuthenticated(
+              AuthenticationInfo('recipient', {}, authId: 'invitation-probe'),
+            );
+            try {
+              result =
+                  (await CalendarModule.service(session)
+                          .invitationOccurrenceApplication(
+                            UuidValue.fromString(input['entryId'] as String),
+                          ))
+                      .toJson();
+            } finally {
+              session.updateAuthenticated(null);
+            }
+          case 'occurrence-apply':
+            session.updateAuthenticated(
+              AuthenticationInfo('recipient', {}, authId: 'invitation-probe'),
+            );
+            try {
+              final service = CalendarModule.service(session);
+              final request = CalendarInvitationOccurrenceApplyRequest.fromJson(
+                input['request'] as Map<String, dynamic>,
+              );
+              final receipt = input['cancel'] == true
+                  ? await service.applyInvitationOccurrenceCancellation(request)
+                  : await service.applyInvitationOccurrenceUpdate(request);
+              if (host.pause == 'occurrence-after') {
+                stdout.writeln(
+                  'INVITATION_PAUSED ${jsonEncode(receipt.toJson())}',
+                );
+                await Completer<void>().future;
+              }
+              result = receipt.toJson();
+            } finally {
+              session.updateAuthenticated(null);
+            }
           case 'application':
             session.updateAuthenticated(
               AuthenticationInfo('recipient', {}, authId: 'invitation-probe'),
@@ -431,6 +478,11 @@ Future<void> main(List<String> args) async {
                     'digest': r.payloadDigest,
                   },
               ],
+              'occurrenceApplications':
+                  await CalendarInvitationOccurrenceApplicationRecord.db.count(
+                    session,
+                    where: (t) => t.scopeKey.equals(host.scope),
+                  ),
               'acceptedKind': application?.kind.name,
               'eventStatus': eventRows.firstOrNull?.content.status.name,
               'events': await session.db
@@ -502,6 +554,10 @@ Future<void> main(List<String> args) async {
               );
             }
             await CalendarInvitationResponseStateRecord.db.deleteWhere(
+              session,
+              where: (t) => t.scopeKey.equals(host.scope),
+            );
+            await CalendarInvitationOccurrenceApplicationRecord.db.deleteWhere(
               session,
               where: (t) => t.scopeKey.equals(host.scope),
             );

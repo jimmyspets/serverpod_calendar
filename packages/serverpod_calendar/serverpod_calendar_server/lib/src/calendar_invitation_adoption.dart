@@ -257,10 +257,11 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
         transaction: tx,
       );
       if (actualLink == null) throw _failure(CalendarFailureCode.unavailable);
-      application = _invApplicationState(
+      application = await _invApplicationState(
         actualLink,
         event,
         await _invCheckpoint(actualLink, event, tx),
+        tx,
       );
     }
     for (final op in [

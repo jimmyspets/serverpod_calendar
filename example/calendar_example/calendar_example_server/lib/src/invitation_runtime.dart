@@ -89,6 +89,9 @@ final class DemoInvitationHost implements CalendarInvitationHost {
           CalendarInvitationOperation.apply,
           CalendarInvitationOperation.applyCancellation,
           CalendarInvitationOperation.readApplication,
+          CalendarInvitationOperation.readOccurrenceApplication,
+          CalendarInvitationOperation.applyOccurrenceUpdate,
+          CalendarInvitationOperation.applyOccurrenceCancellation,
         }.contains(context.operation)) {
       final message = context.message;
       if (message != null &&
