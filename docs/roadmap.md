@@ -638,13 +638,13 @@ Completed ADR 0150 implementation is in PR #131. Accepted [ADR 0151](adr/0151-ex
 - [x] Review one private acceptance table, independent target versions, bounded active source retention/quotas, latest-only per-link retries and explicit master-composition guard.
 - [x] Implement approved transactional preview/apply, generated migrations/clients, independent authority and Flutter controls.
 - [x] Verify focused boundaries, fresh/populated upgrades, actual two-host/process-loss recovery and complete batch checks before one implementation commit.
-- [ ] Follow with reviewed master/instance composition, instance responses and RANGE reconciliation; do not treat the temporary guard as completed lifecycle support.
+- [x] Add reviewed master/instance composition under ADR 0152 below; instance responses and RANGE reconciliation remain incomplete.
 
-## Master application with accepted occurrences proposal
+## Master application with accepted occurrences
 
-Completed ADR 0151 implementation is in PR #133. The maintainer confirmed preservation of accepted occurrences and rejection of orphaning master changes. Proposed [ADR 0152](adr/0152-master-invitation-application-with-accepted-occurrences.md) makes the next mechanics reviewable.
+Completed ADR 0151 implementation is in PR #133. The maintainer confirmed preservation of accepted occurrences and rejection of orphaning master changes. Accepted [ADR 0152](adr/0152-master-invitation-application-with-accepted-occurrences.md) implements the scoped composition batch; see [the guide](master-invitation-occurrence-composition.md) and actual validation record.
 
 - [x] Confirm preserve/reject-orphan product policy.
-- [ ] Review existing-table JSON v2/master-layer separation, command revision fencing, composition authority, preserved historical retries and conservative whole-cancellation floor.
-- [ ] Implement approved master REQUEST/CANCEL/reopening composition with clients/Flutter and actual two-host/loss validation.
+- [x] Review existing-table JSON v2/master-layer separation, command revision fencing, composition authority, preserved historical retries and conservative whole-cancellation floor.
+- [x] Implement approved master REQUEST/CANCEL/reopening composition and clients/Flutter; actual two-host/loss and complete batch checks passed and are recorded in validation.
 - [ ] Continue instance responses, RANGE and remaining original-scope reconciliation/transport work separately.

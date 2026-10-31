@@ -14,8 +14,10 @@ function Assert-Toolchain {
   if ($flutterInfo.frameworkVersion -ne $pins.flutter -or $flutterInfo.dartSdkVersion -notlike "$($pins.dart)*") {
     throw "Use Flutter $($pins.flutter) with Dart $($pins.dart); see toolchain.json."
   }
-  $serverpodInfo = & serverpod version
-  if ($LASTEXITCODE -ne 0 -or $serverpodInfo -notmatch [regex]::Escape($pins.serverpod)) {
+  # Update notices add stdout lines; PowerShell array -notmatch is not a scalar
+  # version check. Require the actual version line, including when a notice is present.
+  $serverpodInfo = (& serverpod --no-analytics version | Out-String)
+  if ($LASTEXITCODE -ne 0 -or $serverpodInfo -notmatch "(?m)^Serverpod version: $([regex]::Escape($pins.serverpod))\s*$") {
     throw "Use Serverpod CLI $($pins.serverpod); see toolchain.json."
   }
 }

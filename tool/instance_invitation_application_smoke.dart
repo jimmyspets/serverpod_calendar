@@ -105,13 +105,50 @@ Future<void> instanceInvitationApplicationSmoke(List<Client> clients) async {
       command(await api.calendarInvitation.occurrenceApplication(entry)),
     );
     require(reopened.eventRevision == 4, 'Explicit occurrence reopen failed');
+    await a.invitationDemo.simulateRecurring(
+      id,
+      const cal.Uuid().v4obj(),
+      5,
+      'Composed master',
+    );
+    final masterView = await api.calendarInvitation.application(master.entryId);
     require(
-      (await api.calendarInvitation.application(master.entryId))
-          .occurrenceCompositionBlocked,
-      'Master composition guard missing',
+      masterView.canApply &&
+          masterView.occurrenceRevision == 3 &&
+          !masterView.occurrenceCompositionBlocked,
+      'Master composition unavailable',
+    );
+    final masterRequest = cal.CalendarInvitationApplyRequest(
+      invitationId: masterView.invitationId,
+      sourceId: masterView.incomingSourceId!,
+      linkId: masterView.linkId,
+      expectedInvitationRevision: masterView.invitationRevision!,
+      expectedEventRevision: masterView.eventRevision,
+      expectedCalendarRevision: masterView.calendarRevision,
+      expectedApplicationRevision: masterView.applicationRevision,
+      expectedOccurrenceRevision: masterView.occurrenceRevision,
+    );
+    final composed = await Future.wait(
+      clients.map(
+        (c) => c.modules.serverpod_calendar.calendarInvitation.applyUpdate(
+          masterRequest,
+        ),
+      ),
+    );
+    require(
+      composed.first.id == composed.last.id &&
+          composed.first.eventRevision == 5,
+      'Master race duplicated composition',
+    );
+    final retained = await api.calendarInvitation.occurrenceApplication(entry);
+    require(
+      retained.occurrenceRevision == 4 &&
+          retained.acceptedVersion.sequence == 4 &&
+          retained.currentOccurrence!.summary == 'Synthetic occurrence update',
+      'Master erased accepted occurrence',
     );
     stdout.writeln(
-      'PASS: generated-client two-host occurrence preview/update race, minimal cancellation, explicit reopening and master-composition guard.',
+      'PASS: generated-client two-host occurrence preview/update race, minimal cancellation, explicit reopening, master composition race and independent occurrence preservation.',
     );
   } finally {
     if (link != null) {
