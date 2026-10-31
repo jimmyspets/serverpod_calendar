@@ -483,4 +483,6 @@ Accepted [ADR 0148](adr/0148-recurring-master-invitation-workflow.md) extends th
 Accepted [ADR 0149](adr/0149-trusted-single-instance-invitation-review.md) adds bounded [single-instance recipient review](single-instance-invitation-review.md), requiring known-series evidence and preserving original identity. Instance calendar application/replies remain unavailable. Pure parsing, review success and synthetic transport do not establish external-client interoperability; batch evidence is recorded separately.
 
 
-Proposed [ADR 0150](adr/0150-pure-instance-invitation-projection.md) is a pure mapping prerequisite, not implemented native instance application. Minimal CANCEL omissions and retained canonical timing/inheritance remain distinct; unsupported differences must reject. Existing file-export mapping guards and all external-client evidence gates remain unchanged.
+Accepted [ADR 0150](adr/0150-pure-instance-invitation-projection.md) is a pure mapping prerequisite, not implemented native instance application. Minimal CANCEL omissions and retained canonical timing/inheritance remain distinct; unsupported differences must reject. Existing file-export mapping guards and all external-client evidence gates remain unchanged.
+
+Accepted ADR 0150 provides a [pure occurrence proposal](instance-invitation-projection.md), including CANCEL-only unanchored duration preservation. This does not extend native instance-application or external-client compatibility claims; durable writes, instance replies and RANGE remain separate.

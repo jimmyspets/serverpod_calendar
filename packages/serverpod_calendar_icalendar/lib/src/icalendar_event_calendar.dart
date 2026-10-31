@@ -128,6 +128,7 @@ IcalendarEventCalendar validateIcalendarEventCalendar(
   IcalendarSyntaxDocument source, {
   IcalendarSyntaxLimits syntaxLimits = const IcalendarSyntaxLimits(),
   IcalendarComponentLimits limits = const IcalendarComponentLimits(),
+  RecurrenceWorkBudget? sharedWorkBudget,
 }) {
   limits.validate();
   // Also bounds/validates manually constructed trees; never trust constructors
@@ -154,7 +155,7 @@ IcalendarEventCalendar validateIcalendarEventCalendar(
         componentFail(IcalendarComponentError.invalidValue);
       }
     }
-    final budget = ComponentBudget(limits);
+    final budget = ComponentBudget(limits, sharedWorkBudget: sharedWorkBudget);
     final zones = <String, IcalendarValidatedTimeZone>{};
     final rawEvents = <IcalendarSyntaxComponent>[];
     for (final c in calendar.entries.whereType<IcalendarSyntaxComponent>()) {

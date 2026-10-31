@@ -434,7 +434,7 @@ IcalendarSchedulingEvent _schedulingEvent(
     if (duration.sign < 0 || duration.isZero) {
       componentFail(IcalendarComponentError.invalidValue);
     }
-    if (start == null) {
+    if (start == null && method != IcalendarSchedulingMethod.cancel) {
       componentFail(IcalendarComponentError.missing);
     }
     if (start is CalendarDate &&

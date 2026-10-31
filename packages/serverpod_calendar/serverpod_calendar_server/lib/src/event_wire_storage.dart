@@ -188,7 +188,10 @@ typedef EventWireProjection = ({
 });
 
 /// Validated semantic projection, without allocating an import-history snapshot.
-EventWireProjection eventWireProjection(IcalendarEventSeries source) {
+EventWireProjection eventWireProjection(
+  IcalendarEventSeries source, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
   final m = source.master;
   CalendarEventOccurrenceContent? own(IcalendarEvent value) =>
       validateEventOccurrenceContent(
@@ -224,6 +227,7 @@ EventWireProjection eventWireProjection(IcalendarEventSeries source) {
       recurrence: _recurrence(m.recurrence),
       periods: m.recurrence?.timedSet?.periods.values.map(_timedSpan).toList(),
     ),
+    sharedWorkBudget: sharedWorkBudget,
   );
   final edits = validateEventOverrides(
     content,
@@ -248,6 +252,7 @@ EventWireProjection eventWireProjection(IcalendarEventSeries source) {
           ),
       ],
     ),
+    sharedWorkBudget: sharedWorkBudget,
   );
   final state = validateEventProtocolState(
     CalendarEventProtocolState(
