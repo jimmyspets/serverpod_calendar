@@ -793,3 +793,7 @@ Accepted [ADR 0149](adr/0149-trusted-single-instance-invitation-review.md) adds 
 
 
 Accepted [ADR 0150](adr/0150-pure-instance-invitation-projection.md) adds no table, generated model or endpoint. Its pure immutable result keeps parsed source omissions separate from proposed canonical occurrence state; model fields must not be invented to bypass representability limits. Independent durable target checkpoints, retention and API mechanics require later review.
+
+## Proposed occurrence acceptance checkpoint
+
+[ADR 0151](adr/0151-explicit-single-instance-invitation-application.md) proposes one server-only CalendarInvitationOccurrenceApplicationRecord per link, with bounded versioned state holding frozen master acceptance, current composed-baseline digest, up to 128 typed targets/latest accepted sources and one latest occurrence command/result per link. Proposed byte ceilings are 4 MiB/link, 16 MiB/recipient and 64 MiB/scope; each source retains the existing 256 KiB cap. Active source retention and deletion scrubbing require approval. No table/model sources or migrations are added by this proposal; the master checkpoint must never be relabeled as an instance version.

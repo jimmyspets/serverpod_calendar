@@ -300,3 +300,5 @@ Accepted [ADR 0149](adr/0149-trusted-single-instance-invitation-review.md) adds 
 
 
 Accepted [ADR 0150](adr/0150-pure-instance-invitation-projection.md) implements the [pure occurrence-application projection](instance-invitation-projection.md) prerequisite before durable target checkpoints. The confirmed clean-entire-series policy remains required for later explicit writes; no instance application API is implemented by this pure helper.
+
+Proposed [ADR 0151](adr/0151-explicit-single-instance-invitation-application.md) groups explicit occurrence REQUEST/CANCEL application, one private acceptance table, independent versions/latest retries, deletion scrubbing and example/recovery evidence. The temporary master-composition guard and active copied-source retention are review questions, not implemented behavior.
