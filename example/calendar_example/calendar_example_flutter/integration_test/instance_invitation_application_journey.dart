@@ -1,5 +1,6 @@
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:calendar_example_flutter/invitation_occurrence_application_screen.dart';
+import 'package:calendar_example_flutter/invitation_update_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
@@ -120,6 +121,41 @@ Future<void> runInstanceInvitationApplicationJourney(
           .acceptedKind,
       cal.CalendarInvitationSourceKind.request,
     );
+    navigator.pop();
+    await tester.pumpAndSettle();
+    await client.invitationDemo.simulateRecurring(
+      id,
+      const cal.Uuid().v4obj(),
+      5,
+      'Composed master journey',
+    );
+    navigator.push(
+      MaterialPageRoute<void>(
+        builder: (_) => InvitationUpdateScreen(
+          client: client,
+          invitationId: master.entryId,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await loaded();
+    expect(
+      find.byKey(const Key('invitation-master-composition-guard')),
+      findsNothing,
+    );
+    expect(
+      (await api.calendarInvitation.application(master.entryId))
+          .occurrenceRevision,
+      3,
+    );
+    await tap('invitation-update-apply');
+    expect(find.byKey(const Key('invitation-update-result')), findsOneWidget);
+    final retained = await api.calendarInvitation.occurrenceApplication(
+      incoming.entryId,
+    );
+    expect(retained.occurrenceRevision, 4);
+    expect(retained.acceptedVersion.sequence, 4);
+    expect(retained.currentOccurrence!.summary, 'Synthetic occurrence update');
     navigator.pop();
     await tester.pumpAndSettle();
   } finally {

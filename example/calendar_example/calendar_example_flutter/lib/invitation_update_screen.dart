@@ -81,6 +81,7 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
       expectedEventRevision: view.eventRevision,
       expectedCalendarRevision: view.calendarRevision,
       expectedApplicationRevision: view.applicationRevision,
+      expectedOccurrenceRevision: view.occurrenceRevision,
     );
     final api = widget.client.modules.serverpod_calendar.calendarInvitation;
     final receipt =
@@ -110,6 +111,12 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Review invitation update'),
+        bottom: _busy
+            ? const PreferredSize(
+                preferredSize: Size.fromHeight(4),
+                child: LinearProgressIndicator(),
+              )
+            : null,
         actions: [
           IconButton(
             key: const Key('invitation-update-refresh'),
@@ -124,7 +131,6 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
           const Text(
             'Apply update replaces content from a REQUEST. Apply cancellation retains content and records cancelled status/source version. Both require a clean baseline and send no participation reply.',
           ),
-          if (_busy) const LinearProgressIndicator(),
           if (_error != null)
             Text(_error!, key: const Key('invitation-update-error')),
           if (_result != null)
@@ -153,9 +159,13 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
             Text(
               'Accepted source SEQUENCE: ${view.acceptedSequence?.toString() ?? 'omitted (effective 0)'}; DTSTAMP: ${view.acceptedStamp.toIso8601String()}',
             ),
+            if (view.occurrenceRevision > 0)
+              const Text(
+                'Accepted occurrence edits and individual cancellations will be preserved. Reopening the series does not restore individually cancelled occurrences.',
+              ),
             if (view.occurrenceCompositionBlocked)
               const Text(
-                'Accepted occurrence updates exist. New whole-series application is guarded until master/instance composition is implemented.',
+                'This source cannot preserve the accepted occurrences within the supported profile or cancellation version rules. Nothing will be replaced.',
                 key: Key('invitation-master-composition-guard'),
               ),
             if (view.hasLocalChanges)

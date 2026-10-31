@@ -36,7 +36,7 @@ An exact latest command retry is recognized before new-source/revision eligibili
 
 ## Master composition and authorization
 
-**New master Apply update/Apply cancellation is guarded once an occurrence acceptance checkpoint exists.** A complete replacement would otherwise discard accepted exceptions. The master preview reports `occurrenceCompositionBlocked`; it does not misclassify that state as a local edit or corrupt checkpoint. Master intake/review, participation actions, retained exact retries and native local edits remain available. Master/instance composition is the next separate required batch; this guard does not complete that reconciliation requirement.
+Accepted [ADR 0152](adr/0152-master-invitation-application-with-accepted-occurrences.md) supersedes the temporary master guard with [explicit layer composition](master-invitation-occurrence-composition.md). New master REQUEST/CANCEL/reopening preserves accepted targets, rejects orphans, requires the current occurrence revision and independent composition authority, and preserves historical occurrence retries. The preview flag now identifies an actually blocked combination/version/capacity rather than all links with an occurrence checkpoint.
 
 Independent invitation operations protect reading occurrence application, applying an update and applying cancellation, in addition to summary/source/link/master-application access. Native full event/detail/source disclosure, import/replacement/update and applicable metadata/lifecycle rights also apply. Reopening requires lifecycle permission even though the master stays active. Preliminary checks precede private conflict/version/quota classification; final checks include immutable actual current/proposed event, source, link, master acceptance, complete checkpoint and receipt. Host context owns trusted recipient/scope resolution and the declared coordinated or fresh-external guarantee; a final external check retains its documented revocation race.
 
@@ -44,10 +44,10 @@ The client preview shows the selected original, current native and proposed effe
 
 ## Example, upgrade and evidence
 
-The Flutter invitation list opens **Preview / apply occurrence notice**. The screen separates original from replacement timing, explains clean-series conflicts and the master-composition guard, retains uncertain command fields for retry and offers an explicit reload. Synthetic simulators use the same authenticated endpoints and host MIME boundary.
+The Flutter invitation list opens **Preview / apply occurrence notice**. The screen separates original from replacement timing, explains clean-series conflicts and preserved master/occurrence layers, retains uncertain command fields for retry and offers an explicit reload. Synthetic simulators use the same authenticated endpoints and host MIME boundary.
 
 The generated module migration is `20261031120611007-instance-invitation-application`; the example migration is `20261031120641063-instance-invitation-application`. Existing links acquire no acceptance row or invented history. Upgrade all hosts and generated clients together; mixed old/new writers are unsupported.
 
-Focused database tests, populated upgrades, independent-host/process-loss probes, generated-client and connected Flutter journeys are wired into `tool/check.ps1`. [Validation](scaffold-validation.md) records actual outcomes and any deferred checks. Instance replies, master/instance composition, RANGE, participant changes, overwrite/merge and real mail remain separate release work.
+Focused database tests, populated upgrades, independent-host/process-loss probes, generated-client and connected Flutter journeys are wired into `tool/check.ps1`. [Validation](scaffold-validation.md) records actual outcomes and any deferred checks. Instance replies, RANGE, participant changes, overwrite/merge and real mail remain separate release work.
 
 For focused UI work after the normal host/browser setup, run `dart run tool/host_smoke.dart --browser-only --flutter --occurrence-applications`. The complete root check still runs the full connected journey. Progress remains visible in the app bar while long source text is scrolled; Reload and uncertain-command retries wait for the current request to finish.

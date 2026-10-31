@@ -109,6 +109,52 @@ void main() {
       return command(v);
     }
 
+    CalendarInvitationApplyRequest masterCommand(
+      CalendarInvitationApplicationView v,
+    ) => CalendarInvitationApplyRequest(
+      invitationId: v.invitationId,
+      sourceId: v.incomingSourceId!,
+      linkId: v.linkId,
+      expectedInvitationRevision: v.invitationRevision!,
+      expectedEventRevision: v.eventRevision,
+      expectedCalendarRevision: v.calendarRevision,
+      expectedApplicationRevision: v.applicationRevision,
+      expectedOccurrenceRevision: v.occurrenceRevision,
+    );
+    Future<CalendarInvitationApplicationView> newerMaster({
+      int sequence = 3,
+      bool date = false,
+      String? zone,
+      String summary = 'New master',
+      List<String> extra = const ['RRULE:FREQ=DAILY;COUNT=4'],
+    }) async {
+      final source = await receive(
+        invitationBytes(
+          sequence: sequence,
+          date: date,
+          zone: zone,
+          summary: summary,
+          extra: extra,
+        ),
+      );
+      return service.invitationApplication(source.entryId);
+    }
+
+    Future<CalendarInvitationApplicationView> wholeCancel(int sequence) async {
+      final bytes = utf8
+          .decode(invitationBytes(sequence: sequence))
+          .replaceFirst('METHOD:REQUEST', 'METHOD:CANCEL')
+          .replaceFirst('BEGIN:VEVENT', 'BEGIN:VEVENT\r\nSTATUS:CANCELLED');
+      final source = await receive(Uint8List.fromList(utf8.encode(bytes)));
+      return service.invitationApplication(source.entryId);
+    }
+
+    Future<CalendarEventDataRecord> data() async =>
+        (await CalendarEventDataRecord.db.findFirstRow(session))!;
+    Future<CalendarInvitationOccurrenceApplicationRecord> occRow() async =>
+        (await CalendarInvitationOccurrenceApplicationRecord.db.findFirstRow(
+          session,
+        ))!;
     for (final profile in ['utc', 'date', 'Europe/Stockholm']) {
       test(
         '$profile replaces one occurrence and preserves master/version/identity',
@@ -156,7 +202,7 @@ void main() {
           expect(
             (await service.invitationApplication(link.invitationId))
                 .occurrenceCompositionBlocked,
-            isTrue,
+            isFalse,
           );
         },
       );
@@ -283,7 +329,7 @@ void main() {
         );
       });
     }
-    test('master new application guarded; creation retry and event deletion remain safe', () async {
+    test('master new application requires occurrence revision; deletion remains safe', () async {
       final link = await setup();
       final input = await update();
       await service.applyInvitationOccurrenceUpdate(input);
@@ -291,8 +337,8 @@ void main() {
         invitationBytes(sequence: 3, extra: ['RRULE:FREQ=DAILY;COUNT=4']),
       );
       final v = await service.invitationApplication(incoming.entryId);
-      expect(v.occurrenceCompositionBlocked, isTrue);
-      expect(v.canApply, isFalse);
+      expect(v.occurrenceCompositionBlocked, isFalse);
+      expect(v.canApply, isTrue);
       expect(v.hasLocalChanges, isFalse);
       await expectLater(
         service.applyInvitationUpdate(
@@ -306,7 +352,7 @@ void main() {
             expectedApplicationRevision: v.applicationRevision,
           ),
         ),
-        failure(CalendarFailureCode.dependencyConflict),
+        failure(CalendarFailureCode.staleRevision),
       );
       await service.deleteEvent(link.eventId, 2);
       expect(
@@ -335,7 +381,7 @@ void main() {
       await service.applyInvitationOccurrenceUpdate(input);
       final row = (await CalendarInvitationOccurrenceApplicationRecord.db
           .findFirstRow(session))!;
-      row.stateJson = row.stateJson.replaceFirst('"version":1', '"version":2');
+      row.stateJson = row.stateJson.replaceFirst('"version":1', '"version":99');
       await CalendarInvitationOccurrenceApplicationRecord.db.updateRow(
         session,
         row,
@@ -621,6 +667,413 @@ void main() {
       expect(sawLoaded, isTrue);
     });
 
+    for (final profile in ['utc', 'date', 'Europe/Stockholm']) {
+      test(
+        '$profile master composition preserves moved instance and historical retries',
+        () async {
+          final date = profile == 'date',
+              zone = profile == 'Europe/Stockholm' ? profile : null;
+          await setup(date: date, zone: zone);
+          final input = await update(sequence: 20, date: date, zone: zone);
+          final receipt = await service.applyInvitationOccurrenceUpdate(input);
+          final old = await data(), checkpoint = await occRow();
+          final preview = await newerMaster(
+            sequence: 2,
+            date: date,
+            zone: zone,
+          );
+          expect(preview.canApply, isTrue);
+          expect(preview.occurrenceRevision, 1);
+          final master = masterCommand(preview);
+          final result = await service.applyInvitationUpdate(master);
+          final saved = await data();
+          expect(saved.content.summary, 'New master');
+          expect(
+            saved.timingOverrides!.toJson(),
+            old.timingOverrides!.toJson(),
+          );
+          expect(saved.protocolState!.overrides.single.version.sequence, 20);
+          expect(saved.protocolState!.version.sequence, 2);
+          expect(saved.origin, old.origin);
+          final row = await occRow(), state = jsonDecode(row.stateJson) as Map;
+          expect(row.revision, 2);
+          expect(row.eventRevision, 3);
+          expect(state['version'], 2);
+          expect(
+            state['receipt'],
+            (jsonDecode(checkpoint.stateJson) as Map)['receipt'],
+          );
+          expect(
+            (await service.applyInvitationOccurrenceUpdate(input)).toJson(),
+            receipt.toJson(),
+          );
+          expect(
+            (await service.applyInvitationUpdate(master)).toJson(),
+            result.toJson(),
+          );
+          expect((await occRow()).revision, 2);
+          // Another occurrence action remains valid on the converted v2 checkpoint.
+          final next = await update(sequence: 21, date: date, zone: zone);
+          await service.applyInvitationOccurrenceUpdate(next);
+          expect((jsonDecode((await occRow()).stateJson) as Map)['version'], 2);
+          expect(
+            (await service.invitationApplication(preview.invitationId))
+                .occurrenceRevision,
+            3,
+          );
+        },
+      );
+    }
+    test('whole cancel floor exceeds all targets; reopen preserves independent cancellation and inheritance', () async {
+      await setup();
+      final input = await update(sequence: 20, cancel: true);
+      final historical = await service.applyInvitationOccurrenceCancellation(
+        input,
+      );
+      final before = await data();
+      final blocked = await wholeCancel(3);
+      expect(blocked.canApplyCancellation, isFalse);
+      expect(blocked.occurrenceCompositionBlocked, isTrue);
+      await expectLater(
+        service.applyInvitationCancellation(masterCommand(blocked)),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      expect(
+        (await data()).importBaseline!.canonicalValue,
+        before.importBaseline!.canonicalValue,
+      );
+      final cancel = await wholeCancel(21);
+      expect(cancel.canApplyCancellation, isTrue);
+      final command = masterCommand(cancel);
+      final cancellation = await service.applyInvitationCancellation(command);
+      expect((await data()).content.status, CalendarEventStatus.cancelled);
+      expect((await data()).timingOverrides!.singles.single.cancelled, isTrue);
+      expect(
+        (await service.applyInvitationOccurrenceCancellation(input)).id,
+        historical.id,
+      );
+      final reopen = await newerMaster(sequence: 22);
+      expect(reopen.canApply, isTrue);
+      await service.applyInvitationUpdate(masterCommand(reopen));
+      final current = await data();
+      expect(current.content.status, CalendarEventStatus.confirmed);
+      expect(current.timingOverrides!.singles.single.cancelled, isTrue);
+      expect(current.timingOverrides!.singles.single.replacement, isNull);
+      expect(current.protocolState!.overrides.single.version.sequence, 20);
+      expect(
+        (await service.applyInvitationOccurrenceCancellation(input)).id,
+        historical.id,
+      );
+      expect(cancellation.eventRevision, 3);
+    });
+    for (final pattern in [
+      <String>['RRULE:FREQ=DAILY;COUNT=1'],
+      <String>['RRULE:FREQ=DAILY;COUNT=4', 'EXDATE:20300102T090000Z'],
+    ]) {
+      test('reject orphaning master $pattern atomically', () async {
+        await setup();
+        await service.applyInvitationOccurrenceUpdate(await update());
+        final before = await data(), row = await occRow();
+        final preview = await newerMaster(extra: pattern);
+        expect(preview.occurrenceCompositionBlocked, isTrue);
+        expect(preview.canApply, isFalse);
+        await expectLater(
+          service.applyInvitationUpdate(masterCommand(preview)),
+          throwsA(isA<CalendarException>()),
+        );
+        expect(
+          (await data()).importBaseline!.canonicalValue,
+          before.importBaseline!.canonicalValue,
+        );
+        expect((await occRow()).stateJson, row.stateJson);
+        expect(
+          (await service.getInvitation(preview.invitationId)).dismissedAt,
+          isNull,
+        );
+      });
+    }
+    for (final op in [
+      CalendarInvitationOperation.composeAcceptedOccurrences,
+      CalendarInvitationOperation.readOccurrenceApplication,
+    ]) {
+      test(
+        'composition requires $op independently and rolls back final denial',
+        () async {
+          await setup();
+          await service.applyInvitationOccurrenceUpdate(await update());
+          final preview = await newerMaster();
+          final input = masterCommand(preview);
+          final before = await data();
+          var finalSeen = false;
+          host.onAuthorize = (c, tx, phase) async {
+            if (c.operation == op &&
+                phase == CalendarAuthorizationPhase.finalWrite) {
+              finalSeen = true;
+              expect(c.currentOccurrenceApplication!.revision, 1);
+              expect(c.proposedOccurrenceApplication!.revision, 2);
+              expect(c.currentApplication!.revision, 0);
+              expect(c.proposedApplication!.revision, 1);
+              expect(c.proposedEvent!.timingOverrides!.singles, hasLength(1));
+              host.denied.add(op);
+            }
+          };
+          await expectLater(
+            service.applyInvitationUpdate(input),
+            failure(CalendarFailureCode.accessDenied),
+          );
+          expect(finalSeen, isTrue);
+          host.onAuthorize = null;
+          expect((await occRow()).revision, 1);
+          expect(
+            (await data()).importBaseline!.canonicalValue,
+            before.importBaseline!.canonicalValue,
+          );
+        },
+      );
+    }
+    test('PERIOD originals, cancelled inheritance and own text survive master changes', () async {
+      final master = await receive(
+        invitationBytes(
+          sequence: 1,
+          extra: [
+            'RRULE:FREQ=DAILY;COUNT=4',
+            'RDATE;VALUE=PERIOD:20300107T090000Z/PT2H',
+          ],
+        ),
+      );
+      final calendar = (await service.create(createInput()))!;
+      await service.adoptInvitation(
+        CalendarInvitationAdoptionRequest(
+          invitationId: master.entryId,
+          sourceId: master.sourceId,
+          expectedRevision: master.entryRevision,
+          calendarId: calendar.calendarId,
+          expectedCalendarRevision: 1,
+        ),
+      );
+      final original = await update(original: '20300107T090000Z', cancel: true);
+      await service.applyInvitationOccurrenceCancellation(original);
+      await service.applyInvitationOccurrenceUpdate(
+        await update(original: '20300102T090000Z', sequence: 7),
+      );
+      final preview = await newerMaster(
+        sequence: 3,
+        extra: [
+          'RRULE:FREQ=DAILY;COUNT=5',
+          'RDATE;VALUE=PERIOD:20300107T090000Z/PT3H',
+        ],
+      );
+      expect(preview.canApply, isTrue);
+      await service.applyInvitationUpdate(masterCommand(preview));
+      final cancelled = await service.invitationOccurrenceApplication(
+        original.invitationId,
+      );
+      expect(cancelled.currentOccurrence!.summary, 'New master');
+      expect(cancelled.currentOccurrence!.timing.duration!.hours, 3);
+      expect(
+        cancelled.currentOccurrence!.status,
+        CalendarEventStatus.cancelled,
+      );
+      final saved = await data();
+      final own = saved.timingOverrides!.singles.singleWhere(
+        (v) => v.originalStart.start.day == 2,
+      );
+      expect(own.contentOverrides!.summary, 'Review');
+      expect(
+        saved.protocolState!.overrides.map((v) => v.version.sequence),
+        containsAll([2, 7]),
+      );
+    });
+    test(
+      'DST-bound named original survives composition without being retargeted',
+      () async {
+        Uint8List march(Uint8List bytes) => Uint8List.fromList(
+          utf8.encode(
+            utf8.decode(bytes).replaceAll('20300101T090000', '20300330T090000'),
+          ),
+        );
+        final master = await receive(
+          march(
+            invitationBytes(
+              sequence: 1,
+              zone: 'Europe/Stockholm',
+              extra: ['RRULE:FREQ=DAILY;COUNT=4'],
+            ),
+          ),
+        );
+        final calendar = (await service.create(createInput()))!;
+        await service.adoptInvitation(
+          CalendarInvitationAdoptionRequest(
+            invitationId: master.entryId,
+            sourceId: master.sourceId,
+            expectedRevision: master.entryRevision,
+            calendarId: calendar.calendarId,
+            expectedCalendarRevision: 1,
+          ),
+        );
+        final input = await update(
+          zone: 'Europe/Stockholm',
+          original: '20300331T090000',
+        );
+        await service.applyInvitationOccurrenceUpdate(input);
+        final before = (await data()).timingOverrides!.toJson();
+        final source = await receive(
+          march(
+            invitationBytes(
+              sequence: 3,
+              summary: 'DST master',
+              zone: 'Europe/Stockholm',
+              extra: ['RRULE:FREQ=DAILY;COUNT=5'],
+            ),
+          ),
+        );
+        final preview = await service.invitationApplication(source.entryId);
+        expect(preview.canApply, isTrue);
+        await service.applyInvitationUpdate(masterCommand(preview));
+        expect((await data()).timingOverrides!.toJson(), before);
+        expect(
+          (await service.applyInvitationOccurrenceUpdate(input)).eventRevision,
+          2,
+        );
+      },
+    );
+    test('master composition rejects local edits, incompatible DATE profile and lower host quotas', () async {
+      await setup();
+      await service.applyInvitationOccurrenceUpdate(await update());
+      final incompatible = await newerMaster(date: true);
+      expect(incompatible.occurrenceCompositionBlocked, isTrue);
+      final preview = await newerMaster(sequence: 4);
+      final input = masterCommand(preview), before = await data();
+      install(
+        options: CalendarInvitationOptions(maxOccurrenceCheckpointBytes: 1),
+      );
+      service = CalendarModule.service(session);
+      expect(
+        (await service.invitationApplication(preview.invitationId))
+            .occurrenceCompositionBlocked,
+        isTrue,
+      );
+      await expectLater(
+        service.applyInvitationUpdate(input),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      install();
+      service = CalendarModule.service(session);
+      final local = before.copyWith(
+        content: before.content.copyWith(summary: 'Private draft'),
+      );
+      await CalendarEventDataRecord.db.updateRow(session, local);
+      expect(
+        (await service.invitationApplication(preview.invitationId))
+            .hasLocalChanges,
+        isTrue,
+      );
+      await expectLater(
+        service.applyInvitationUpdate(input),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      expect((await data()).content.summary, 'Private draft');
+      expect((await occRow()).revision, 1);
+    });
+    test('v2 historical retries survive pruning; deletion scrubs composed evidence', () async {
+      final link = await setup();
+      final input = await update();
+      final result = await service.applyInvitationOccurrenceUpdate(input);
+      final preview = await newerMaster();
+      await service.applyInvitationUpdate(masterCommand(preview));
+      final entry = (await CalendarInvitationRecord.db.findById(
+        session,
+        input.invitationId,
+      ))!;
+      entry.currentSourceId = null;
+      await CalendarInvitationRecord.db.updateRow(session, entry);
+      await CalendarInvitationReceiptRecord.db.deleteWhere(
+        session,
+        where: (t) => t.sourceId.equals(input.sourceId),
+      );
+      await CalendarInvitationSourceRecord.db.deleteWhere(
+        session,
+        where: (t) => t.id.equals(input.sourceId),
+      );
+      final pending = await receive(instanceInvitationBytes(sequence: 4));
+      expect(
+        (await service.applyInvitationOccurrenceUpdate(input)).toJson(),
+        result.toJson(),
+      );
+      expect(
+        (await service.getInvitation(pending.entryId)).dismissedAt,
+        isNull,
+      );
+      expect(
+        (await service.invitationOccurrenceApplication(input.invitationId))
+            .acceptedSourceText,
+        contains('RECURRENCE-ID'),
+      );
+      await service.deleteEvent(link.eventId, 3);
+      expect(
+        await CalendarInvitationOccurrenceApplicationRecord.db.count(session),
+        0,
+      );
+      expect(await CalendarEventDataRecord.db.count(session), 0);
+    });
+    test('composition refuses occurrence revision overflow without altering accepted layers', () async {
+      await setup();
+      await service.applyInvitationOccurrenceUpdate(await update());
+      final preview = await newerMaster();
+      await service.applyInvitationUpdate(masterCommand(preview));
+      final row = await occRow();
+      row.revision = 9007199254740991;
+      await CalendarInvitationOccurrenceApplicationRecord.db.updateRow(
+        session,
+        row,
+      );
+      final incoming = await newerMaster(sequence: 4);
+      expect(incoming.occurrenceCompositionBlocked, isTrue);
+      final before = await data();
+      await expectLater(
+        service.applyInvitationUpdate(masterCommand(incoming)),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      expect(
+        (await data()).importBaseline!.canonicalValue,
+        before.importBaseline!.canonicalValue,
+      );
+      expect((await occRow()).revision, row.revision);
+    });
+    test(
+      'v2 composition rejects corrupt master layer and historical receipt',
+      () async {
+        await setup();
+        await service.applyInvitationOccurrenceUpdate(await update());
+        final preview = await newerMaster();
+        await service.applyInvitationUpdate(masterCommand(preview));
+        final row = await occRow(), valid = (await occRow()).stateJson;
+        for (final corrupt in ['master', 'receipt']) {
+          final state = jsonDecode(valid) as Map<String, dynamic>;
+          if (corrupt == 'master') {
+            state['masterBaseline'] =
+                (jsonDecode(valid) as Map)['masterBaseline'];
+            state['masterBaselineDigest'] = '0' * 64;
+          } else {
+            state['receipt']['appliedAt'] = '20000101T000000Z';
+          }
+          row.stateJson = jsonEncode(state);
+          await CalendarInvitationOccurrenceApplicationRecord.db.updateRow(
+            session,
+            row,
+          );
+          await expectLater(
+            service.invitationApplication(preview.invitationId),
+            failure(CalendarFailureCode.unavailable),
+          );
+          row.stateJson = valid;
+          await CalendarInvitationOccurrenceApplicationRecord.db.updateRow(
+            session,
+            row,
+          );
+        }
+      },
+    );
     test('pending instance preview identifies an accepted whole-master cancellation', () async {
       final link = await setup();
       final pending = await receive(instanceInvitationBytes(sequence: 2));

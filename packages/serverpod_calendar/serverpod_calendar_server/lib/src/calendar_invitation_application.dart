@@ -191,12 +191,18 @@ extension CalendarInvitationApplicationOperations on CalendarService {
     bool retry = false,
     UuidValue? lookupId,
     bool? historicalUnavailable,
+    CalendarInvitationOccurrenceApplicationSnapshot? occurrence,
+    CalendarInvitationOccurrenceApplicationSnapshot? nextOccurrence,
   }) async {
     for (final op in [
       CalendarInvitationOperation.readSummary,
       CalendarInvitationOperation.readSource,
       CalendarInvitationOperation.readLink,
       CalendarInvitationOperation.readApplication,
+      if (occurrence != null)
+        CalendarInvitationOperation.readOccurrenceApplication,
+      if (occurrence != null && input != null && !retry)
+        CalendarInvitationOperation.composeAcceptedOccurrences,
       if ({
         CalendarInvitationOperation.apply,
         CalendarInvitationOperation.applyCancellation,
@@ -222,6 +228,8 @@ extension CalendarInvitationApplicationOperations on CalendarService {
           applyRequest: input,
           currentApplication: accepted,
           proposedApplication: next,
+          currentOccurrenceApplication: occurrence,
+          proposedOccurrenceApplication: nextOccurrence,
           applicationReceipt: receipt,
           proposedBaseline: baseline,
           localChanges: dirty,
@@ -393,7 +401,16 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       CalendarAuthorizationPhase.read,
     );
     final dirty = _invLocalChanges(event);
-    final compositionBlocked = await _occRow(link.id!, tx) != null;
+    final occurrenceRow = await _occRow(link.id!, tx);
+    final occurrenceState = occurrenceRow == null
+        ? null
+        : _occDecode(
+            link,
+            event,
+            occurrenceRow,
+            await _invCheckpoint(link, event, tx),
+          );
+    var compositionBlocked = false;
     CalendarInvitationSourceRecord? source;
     IcalendarSchedulingMessage? message;
     CalendarEventImportMember? incoming;
@@ -411,6 +428,59 @@ extension CalendarInvitationApplicationOperations on CalendarService {
     } else {
       (source, message) = await _invAcceptedBody(accepted, link, recipient, tx);
     }
+    if (occurrenceState != null &&
+        message != null &&
+        entry?.currentSourceId != null) {
+      try {
+        final master =
+            incoming ??
+            _invCancellationMember(
+              message,
+              event,
+              masterBaseline: CalendarEventImportBaseline.fromJson(
+                occurrenceState['masterBaseline'],
+              ),
+            );
+        final composed = _invCompose(master, event, occurrenceState);
+        final composedBaseline = eventImportBaseline(
+          composed.protocolUid,
+          composed.content,
+          composed.timingOverrides,
+          composed.protocolState,
+        );
+        final masterBaseline = eventImportBaseline(
+          master.protocolUid,
+          master.content,
+          master.timingOverrides,
+          master.protocolState,
+        );
+        await _occQuota(
+          recipient,
+          occurrenceRow!.copyWith(
+            stateJson: jsonEncode({
+              ...occurrenceState,
+              'version': 2,
+              'receiptDigest': '0' * 64,
+              'masterBaseline': masterBaseline.toJson(),
+              'masterBaselineDigest': _invBaselineDigest(masterBaseline),
+              'baselineDigest': _invBaselineDigest(composedBaseline),
+            }),
+          ),
+          tx,
+        );
+        compositionBlocked =
+            occurrenceRow.revision == CalendarService._maxRevision ||
+            message.method == IcalendarSchedulingMethod.cancel &&
+                !_invCancelFloor(message, occurrenceState);
+      } on CalendarException catch (e) {
+        if (e.code == CalendarFailureCode.unavailable) rethrow;
+        compositionBlocked = true;
+      } on ArgumentError {
+        compositionBlocked = true;
+      } on RecurrenceLimitException {
+        compositionBlocked = true;
+      }
+    }
     await _invApplicationHost(
       actor,
       recipient,
@@ -427,6 +497,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       dirty: dirty,
       lookupId: id,
       historicalUnavailable: source == null,
+      occurrence: _occSnapshot(occurrenceRow),
     );
     return CalendarInvitationApplicationView(
       linkId: link.id!,
@@ -455,6 +526,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
           ? null
           : source?.normalizedSource,
       occurrenceCompositionBlocked: compositionBlocked,
+      occurrenceRevision: occurrenceRow?.revision ?? 0,
       canApplyCancellation:
           !compositionBlocked &&
           entry?.currentSourceId != null &&
@@ -486,20 +558,104 @@ extension CalendarInvitationApplicationOperations on CalendarService {
     );
   });
 
+  // Compose retained canonical components, never replay historical messages.
+  CalendarEventImportMember _invCompose(
+    CalendarEventImportMember master,
+    _Event event,
+    Map<String, dynamic> state,
+  ) => _eventProtocolValue(() {
+    final work = RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
+    final accepted = _occAccepted(event.data.importBaseline!);
+    final keys = (state['targets'] as List)
+        .map(
+          (t) => eventComponentKey(
+            CalendarEventTiming.fromJson(t['original']),
+            false,
+          ),
+        )
+        .toSet();
+    final singles =
+        accepted.edits?.singles
+            .where(
+              (v) => keys.contains(eventComponentKey(v.originalStart, false)),
+            )
+            .toList() ??
+        [];
+    if (singles.length != keys.length ||
+        (master.timingOverrides?.singles ?? []).any(
+          (v) => keys.contains(eventComponentKey(v.originalStart, false)),
+        ) ||
+        (master.timingOverrides?.future ?? []).any(
+          (v) => keys.contains(eventComponentKey(v.originalStart, false)),
+        )) {
+      throw ArgumentError('Incompatible accepted components');
+    }
+    final content = validateEventContent(
+      master.content,
+      sharedWorkBudget: work,
+    );
+    final edits = validateEventOverrides(
+      content,
+      CalendarEventTimingOverrides(
+        singles: [...?master.timingOverrides?.singles, ...singles],
+        future: master.timingOverrides?.future ?? [],
+      ),
+      sharedWorkBudget: work,
+    );
+    final protocol = validateEventProtocolState(
+      master.protocolState.copyWith(
+        overrides: [
+          ...master.protocolState.overrides,
+          ...accepted.protocol.overrides.where(
+            (v) =>
+                !v.isThisAndFuture &&
+                keys.contains(eventComponentKey(v.originalStart, false)),
+          ),
+        ],
+      ),
+      content,
+      edits,
+    );
+    return CalendarEventImportMember(
+      eventId: master.eventId,
+      protocolUid: master.protocolUid,
+      content: content,
+      timingOverrides: edits,
+      protocolState: protocol,
+    );
+  });
+
+  bool _invCancelFloor(
+    IcalendarSchedulingMessage message,
+    Map<String, dynamic> state,
+  ) =>
+      (state['targets'] as List).every(
+        (t) =>
+            (message.events.single.sequence ?? 0) >
+            (CalendarEventProtocolVersion.fromJson(t['version']).sequence ?? 0),
+      ) &&
+      (message.events.single.sequence ?? 0) >
+          (_occAccepted(
+                CalendarEventImportBaseline.fromJson(state['masterBaseline']),
+              ).protocol.version.sequence ??
+              0);
+
   CalendarEventImportMember _invCancellationMember(
     IcalendarSchedulingMessage message,
-    _Event event,
-  ) => _eventProtocolValue(() {
+    _Event event, {
+    CalendarEventImportBaseline? masterBaseline,
+  }) => _eventProtocolValue(() {
     if (message.method != IcalendarSchedulingMethod.cancel ||
         message.events.single.status != IcalendarEventStatus.cancelled) {
       throw _failure(CalendarFailureCode.validation);
     }
     final source = message.events.single;
+    final base = _occAccepted(masterBaseline ?? event.data.importBaseline!);
     final content = validateEventContent(
-      event.data.content.copyWith(status: CalendarEventStatus.cancelled),
+      base.content.copyWith(status: CalendarEventStatus.cancelled),
     );
     final state = validateEventProtocolState(
-      event.data.protocolState!.copyWith(
+      base.protocol.copyWith(
         statusPresent: true,
         version: CalendarEventProtocolVersion(
           sequence: source.sequence,
@@ -509,14 +665,14 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         ),
       ),
       content,
-      event.data.timingOverrides,
+      base.edits,
     );
     return CalendarEventImportMember(
       eventId: event.identity.id!,
       protocolUid: event.data.protocolUid,
       content: content,
       protocolState: state,
-      timingOverrides: event.data.timingOverrides,
+      timingOverrides: base.edits,
     );
   });
 
@@ -542,10 +698,15 @@ extension CalendarInvitationApplicationOperations on CalendarService {
           input.expectedCalendarRevision,
         ].any((r) => r < 1 || r > CalendarService._maxRevision) ||
         input.expectedApplicationRevision < 0 ||
-        input.expectedApplicationRevision > CalendarService._maxRevision) {
+        input.expectedApplicationRevision > CalendarService._maxRevision ||
+        input.expectedOccurrenceRevision < 0 ||
+        input.expectedOccurrenceRevision > CalendarService._maxRevision) {
       throw _failure(CalendarFailureCode.validation);
     }
     final requestDigest = _invitationHash([
+      if (input.expectedOccurrenceRevision != 0) 'composed-master-v2',
+      if (input.expectedOccurrenceRevision != 0)
+        '${input.expectedOccurrenceRevision}',
       if (cancellation) 'apply-cancellation-v1',
       input.invitationId.toString(),
       input.sourceId.toString(),
@@ -604,6 +765,11 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         cancellation: cancellation,
       );
       final dirty = _invLocalChanges(event);
+      final occurrenceRow = await _occRow(link.id!, tx);
+      final occurrenceState = occurrenceRow == null
+          ? null
+          : _occDecode(link, event, occurrenceRow, checkpoint);
+      final occurrence = _occSnapshot(occurrenceRow);
       if (checkpoint != null && checkpoint.requestDigest == requestDigest) {
         if (checkpoint.kind != kind) {
           throw _failure(CalendarFailureCode.unavailable);
@@ -644,6 +810,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
             receipt: receipt,
             dirty: dirty,
             retry: true,
+            occurrence: occurrence,
             historicalUnavailable: source == null,
           );
         }
@@ -661,11 +828,10 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         current: before,
         accepted: accepted,
         input: input,
+        occurrence: occurrence,
       );
-      if (await _occRow(link.id!, tx) != null) {
-        throw _failure(CalendarFailureCode.dependencyConflict);
-      }
       if (entry == null ||
+          (occurrenceRow?.revision ?? 0) != input.expectedOccurrenceRevision ||
           entry.revision != input.expectedInvitationRevision ||
           entry.currentSourceId != input.sourceId ||
           entry.dismissedAt != null ||
@@ -689,9 +855,33 @@ extension CalendarInvitationApplicationOperations on CalendarService {
               link.organizer) {
         throw _failure(CalendarFailureCode.validation);
       }
-      final member = cancellation
-          ? _invCancellationMember(message, event)
+      final masterMember = cancellation
+          ? _invCancellationMember(
+              message,
+              event,
+              masterBaseline: occurrenceState == null
+                  ? null
+                  : CalendarEventImportBaseline.fromJson(
+                      occurrenceState['masterBaseline'],
+                    ),
+            )
           : _invImportMember(message, event.identity.id!);
+      final masterBaseline = _eventProtocolValue(
+        () => eventImportBaseline(
+          masterMember.protocolUid,
+          masterMember.content,
+          masterMember.timingOverrides,
+          masterMember.protocolState,
+        ),
+      );
+      final member = occurrenceState == null
+          ? masterMember
+          : _invCompose(masterMember, event, occurrenceState);
+      if (cancellation &&
+          occurrenceState != null &&
+          !_invCancelFloor(message, occurrenceState)) {
+        throw _failure(CalendarFailureCode.dependencyConflict);
+      }
       if (member.protocolUid != link.uid ||
           member.protocolState.sourceMetadata?.organizer?.address !=
               link.organizer) {
@@ -707,7 +897,8 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       );
       if (event.identity.revision == CalendarService._maxRevision ||
           entry.revision == CalendarService._maxRevision ||
-          accepted.revision == CalendarService._maxRevision) {
+          accepted.revision == CalendarService._maxRevision ||
+          occurrenceRow?.revision == CalendarService._maxRevision) {
         throw _failure(CalendarFailureCode.limitExceeded);
       }
       final previous = event.data.updatedAt.isAfter(entry.updatedAt)
@@ -726,7 +917,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         digest: source.digest,
         sequence: source.sequence,
         stamp: source.stamp,
-        baselineDigest: _invBaselineDigest(baseline),
+        baselineDigest: _invBaselineDigest(masterBaseline),
         creationDigest: _invCreationDigest(link),
         eventRevision: event.identity.revision + 1,
         invitationRevision: entry.revision + 1,
@@ -735,6 +926,36 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         resultId: const Uuid().v4obj(),
       );
       final receipt = _invApplyReceipt(link, next);
+      final nextOccurrenceRow = occurrenceRow?.copyWith(
+        revision: occurrenceRow.revision + 1,
+        eventRevision: next.eventRevision,
+        updatedAt: now,
+        stateJson: jsonEncode({
+          ...occurrenceState!,
+          'version': 2,
+          'receiptDigest': _invitationHash([
+            occurrenceState['requestDigest'] as String,
+            jsonEncode(_occOrdered(occurrenceState['receipt'])),
+            ((occurrenceState['targets'] as List).singleWhere(
+                  (t) =>
+                      t['key'] ==
+                      _invTargetKey(
+                        CalendarInvitationOccurrenceApplyReceipt.fromJson(
+                          occurrenceState['receipt'],
+                        ).originalStart,
+                      ),
+                ))['digest']
+                as String,
+          ]),
+          'masterBaseline': masterBaseline.toJson(),
+          'masterBaselineDigest': _invBaselineDigest(masterBaseline),
+          'masterDigest': _occMasterDigest(link, next),
+          'baselineDigest': _invBaselineDigest(baseline),
+        }),
+      );
+      if (nextOccurrenceRow != null) {
+        await _occQuota(recipient, nextOccurrenceRow, tx);
+      }
       final proposed = CalendarEventPolicySnapshot(
         event.identity.id!,
         link.calendarId,
@@ -779,6 +1000,8 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         input: input,
         receipt: receipt,
         baseline: baseline,
+        occurrence: occurrence,
+        nextOccurrence: _occSnapshot(nextOccurrenceRow),
         dirty: dirty,
       );
       if (dirty ||
@@ -841,6 +1064,13 @@ extension CalendarInvitationApplicationOperations on CalendarService {
           transaction: tx,
         );
       }
+      if (nextOccurrenceRow != null) {
+        await CalendarInvitationOccurrenceApplicationRecord.db.updateRow(
+          _session,
+          nextOccurrenceRow,
+          transaction: tx,
+        );
+      }
       entry.revision = next.invitationRevision;
       entry.dismissedAt = now;
       entry.updatedAt = now;
@@ -884,6 +1114,8 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         input: input,
         receipt: receipt,
         baseline: baseline,
+        occurrence: occurrence,
+        nextOccurrence: _occSnapshot(nextOccurrenceRow),
         dirty: false,
       );
       return receipt;

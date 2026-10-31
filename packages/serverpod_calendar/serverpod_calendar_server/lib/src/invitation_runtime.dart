@@ -55,6 +55,7 @@ enum CalendarInvitationOperation {
   readOccurrenceApplication,
   applyOccurrenceUpdate,
   applyOccurrenceCancellation,
+  composeAcceptedOccurrences,
 }
 
 /// Original link source evidence, retained independently of a prunable body.
