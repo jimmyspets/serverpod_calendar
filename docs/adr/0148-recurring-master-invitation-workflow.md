@@ -1,6 +1,6 @@
 # ADR 0148: Recurring-master invitation review, application and responses
 
-Status: **Proposed on 2026-10-30. The complete workflow, storage and validation mechanics below require explicit maintainer agreement before implementation.**
+Status: **Accepted by explicit maintainer approval on 2026-10-30 for the complete workflow and one-field storage refinement. The scoped implementation and complete batch validation finished on 2026-10-31; see the implementation guide and validation record.**
 
 ## Context and inspected evidence
 
@@ -58,4 +58,4 @@ Test DATE, UTC, DST-sensitive named zones, RRULE/RDATE/EXDATE/PERIOD, source omi
 
 Generate the additive boolean migration after approval. Verify fresh databases and populated false-mode upgrades without changing previous sources, links, checkpoints or response state. Exercise two actual hosts racing intake/add/apply/respond/cancel, competing delivery leases and loss before/after commits or synthetic acceptance. Run focused tests during the grouped work, then stable generation, formatting/analysis, complete VM/Chrome/database/upgrade/recovery and connected Flutter checks before one implementation commit. External-client/mail evidence remains a separate release gate.
 
-Open issues and PRs were checked: no standalone open issue or competing recurring-recipient implementation was found; existing invitation/response and occurrence-query PRs are prerequisites. AGENTS.md requires: “Proposed ADRs become accepted only after explicit maintainer agreement.” This document and its draft PR request that agreement; they add no model source or runtime support.
+Open issues and PRs were checked: no standalone open issue or competing recurring-recipient implementation was found; existing invitation/response and occurrence-query PRs are prerequisites. AGENTS.md requires: “Proposed ADRs become accepted only after explicit maintainer agreement.” The maintainer explicitly approved the complete batch and model field on 2026-10-30, satisfying that gate. Implementation and validation remain separate from approval.

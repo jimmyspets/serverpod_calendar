@@ -17,6 +17,23 @@ class InvitationDemoEndpoint extends Endpoint {
     UuidValue commandId,
     int? sequence,
     String summary,
+  ) => _simulate(session, invitationId, commandId, sequence, summary, false);
+
+  Future<CalendarInvitationReceipt> simulateRecurring(
+    Session session,
+    UuidValue invitationId,
+    UuidValue commandId,
+    int? sequence,
+    String summary,
+  ) => _simulate(session, invitationId, commandId, sequence, summary, true);
+
+  Future<CalendarInvitationReceipt> _simulate(
+    Session session,
+    UuidValue invitationId,
+    UuidValue commandId,
+    int? sequence,
+    String summary,
+    bool recurring,
   ) async {
     if (!{'development', 'test'}.contains(session.serverpod.runMode) ||
         summary.runes.length > 256 ||
@@ -37,6 +54,12 @@ class InvitationDemoEndpoint extends Endpoint {
       'DTSTAMP:20260101T000000Z',
       if (sequence != null) 'SEQUENCE:$sequence',
       'DTSTART:20300101T090000Z',
+      if (recurring) ...[
+        'DTEND:20300101T100000Z',
+        'RRULE:FREQ=DAILY;COUNT=3',
+        'EXDATE:20300102T090000Z',
+        'RDATE;VALUE=PERIOD:20300105T090000Z/PT2H',
+      ],
       'SUMMARY:${encodeIcalendarText(summary)}',
       'ORGANIZER:mailto:organizer@example.invalid',
       'ATTENDEE:mailto:demo-$user@example.invalid',

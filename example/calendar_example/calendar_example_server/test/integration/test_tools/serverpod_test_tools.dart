@@ -576,6 +576,45 @@ class _InvitationDemoEndpoint {
     });
   }
 
+  _ida.Future<_ipn35bcd.CalendarInvitationReceipt> simulateRecurring(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue invitationId,
+    _is.UuidValue commandId,
+    int? sequence,
+    String summary,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'invitationDemo',
+            method: 'simulateRecurring',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'invitationDemo',
+          methodName: 'simulateRecurring',
+          parameters: _ist.testObjectToJson({
+            'invitationId': invitationId,
+            'commandId': commandId,
+            'sequence': sequence,
+            'summary': summary,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ipn35bcd.CalendarInvitationReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _ida.Future<_ipn35bcd.CalendarInvitationReceipt> simulateCancellation(
     _ist.TestSessionBuilder sessionBuilder,
     _is.UuidValue invitationId,

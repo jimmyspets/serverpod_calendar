@@ -229,3 +229,5 @@ The example also includes [explicit MIME ingress wrappers](docs/host-imip-ingres
 The example now includes [explicit private attendee responses](docs/private-attendee-responses.md), independent of calendar addition and source application, with durable synthetic delivery. Real email and broader scheduling remain separate.
 
 [Calendar-wide occurrence queries](docs/calendar-occurrence-queries.md) now provide bounded authorized pages across a calendar, including recurrence/exception timing and explicit cancellation state. Detail results remain separate from availability.
+
+Accepted ADR 0148 adds the scoped [recurring-master recipient workflow](docs/recurring-master-invitations.md): explicit review, calendar application/cancellation and independent synthetic responses. Remaining scheduling and release gates stay in the roadmap.

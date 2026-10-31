@@ -2,6 +2,7 @@ class: CalendarInvitationView
 immutable: true
 fields:
   kind: CalendarInvitationSourceKind, default=request
+  recurring: bool, default=false
   id: UuidValue
   revision: int
   uid: String

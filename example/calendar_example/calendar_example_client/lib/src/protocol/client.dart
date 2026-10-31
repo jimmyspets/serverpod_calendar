@@ -273,6 +273,22 @@ class EndpointInvitationDemo extends _isc.EndpointRef {
     },
   );
 
+  _ida.Future<_imrxcdin.CalendarInvitationReceipt> simulateRecurring(
+    _isc.UuidValue invitationId,
+    _isc.UuidValue commandId,
+    int? sequence,
+    String summary,
+  ) => caller.callServerEndpoint<_imrxcdin.CalendarInvitationReceipt>(
+    'invitationDemo',
+    'simulateRecurring',
+    {
+      'invitationId': invitationId,
+      'commandId': commandId,
+      'sequence': sequence,
+      'summary': summary,
+    },
+  );
+
   _ida.Future<_imrxcdin.CalendarInvitationReceipt> simulateCancellation(
     _isc.UuidValue invitationId,
     _isc.UuidValue commandId,

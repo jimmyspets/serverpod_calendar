@@ -145,6 +145,10 @@ class _InvitationAdoptionScreenState extends State<InvitationAdoptionScreen> {
         const Text(
           'Adds one local event. It may block time under the calendar rules. This does not accept participation or send a reply. Later invitations do not automatically update it.',
         ),
+        if (_entry.recurring)
+          const Text(
+            'Recurring series: adds the complete supported schedule as one local series.',
+          ),
         if (_busy) const LinearProgressIndicator(),
         if (_error != null)
           Text(_error!, key: const Key('invitation-adoption-error')),
@@ -200,7 +204,9 @@ class _InvitationAdoptionScreenState extends State<InvitationAdoptionScreen> {
               onPressed: _busy || _selected == null ? null : _add,
               child: Text(
                 _request == null
-                    ? 'Add to selected calendar'
+                    ? (_entry.recurring
+                          ? 'Add series to selected calendar'
+                          : 'Add to selected calendar')
                     : 'Retry the same calendar addition',
               ),
             ),

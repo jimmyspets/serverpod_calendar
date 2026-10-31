@@ -280,6 +280,14 @@ Future<void> main(List<String> args) async {
               if (input['sequence'] != null) 'SEQUENCE:${input['sequence']}',
               if (input['cancel'] == true) 'STATUS:CANCELLED',
               if (input['cancel'] != true) 'DTSTART:20300101T090000Z',
+              if (input['cancel'] != true &&
+                  Platform.environment['CALENDAR_INVITATION_PROBE_RECURRING'] ==
+                      'true') ...[
+                'DTEND:20300101T100000Z',
+                'RRULE:FREQ=DAILY;COUNT=3',
+                'EXDATE:20300102T090000Z',
+                'RDATE;VALUE=PERIOD:20300105T090000Z/PT2H',
+              ],
               if (input['cancel'] != true)
                 'SUMMARY:${encodeIcalendarText(input['summary'] as String? ?? 'Review')}',
               'ORGANIZER:mailto:organizer@example.invalid',

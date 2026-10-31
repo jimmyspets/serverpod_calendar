@@ -1,5 +1,7 @@
 # Explicit linked cancellation application and reopening
 
+Accepted [ADR 0148](adr/0148-recurring-master-invitation-workflow.md) extends this workflow to the bounded [recurring-master recipient profile](recurring-master-invitations.md). Its earlier non-recurring-only statements below are superseded for that slice; instance/range/bundled reconciliation and real mail remain separate. Actual batch checks are recorded in the validation guide.
+
 Accepted [ADR 0141](adr/0141-explicit-linked-cancellation-application.md) adds a dedicated cancellation action and later explicit REQUEST reopening to the existing [linked update flow](linked-invitation-updates.md). Implementation is under batch validation; see [the evidence](scaffold-validation.md). [Receipt/private review](invitation-cancellation-review.md) still changes no calendar event and sends no participation reply.
 
 ## Command, projection and source distinctions

@@ -7,8 +7,12 @@ import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
 
 Future<void> runInvitationAdoptionJourney(
   WidgetTester tester,
-  Client client,
-) async {
+  Client client, {
+  bool recurring = false,
+}) async {
+  final simulate = recurring
+      ? client.invitationDemo.simulateRecurring
+      : client.invitationDemo.simulate;
   final module = client.modules.serverpod_calendar;
   final label = 'Invitation copy ${const cal.Uuid().v4obj()}';
   final calendar = (await module.calendar.create(
@@ -19,7 +23,7 @@ Future<void> runInvitationAdoptionJourney(
     ),
   ))!.calendarId;
   final id = const cal.Uuid().v4obj();
-  final source = await client.invitationDemo.simulate(
+  final source = await simulate(
     id,
     const cal.Uuid().v4obj(),
     null,
@@ -73,6 +77,14 @@ Future<void> runInvitationAdoptionJourney(
     );
     await tester.pumpAndSettle();
     await loaded();
+    if (recurring) {
+      expect(
+        find.text(
+          'Recurring series: adds the complete supported schedule as one local series.',
+        ),
+        findsOneWidget,
+      );
+    }
     expect(
       tester
           .widget<ElevatedButton>(
@@ -112,7 +124,7 @@ Future<void> runInvitationAdoptionJourney(
       (await module.calendarInvitation.getInvitation(entry.id)).dismissedAt,
       isNotNull,
     );
-    await client.invitationDemo.simulate(
+    await simulate(
       id,
       const cal.Uuid().v4obj(),
       1,
@@ -144,7 +156,7 @@ Future<void> runInvitationAdoptionJourney(
     final applied = await module.calendarInvitation.application(entry.id);
     expect(applied.applicationRevision, 1);
     expect(applied.currentContent.summary, 'New invitation review');
-    await client.invitationDemo.simulate(
+    await simulate(
       id,
       const cal.Uuid().v4obj(),
       2,

@@ -327,15 +327,17 @@ void main() {
       await emptyInvitations();
     });
     test(
-      'native non-recurring invitation restriction is not bypassed',
+      'native detached-instance invitation restriction is not bypassed',
       () async {
-        final bytes = invitationBytes(extra: ['RRULE:FREQ=DAILY;COUNT=2']);
+        final bytes = invitationBytes(
+          extra: ['RECURRENCE-ID:20300101T090000Z'],
+        );
         expect(
           parseHostImipMime(
             mime(bytes),
             outerProtection: ImipProtection.none,
-          ).eventMessage!.events.single.recurrence,
-          isNotNull,
+          ).eventMessage!.events.single.isOverride,
+          isTrue,
         );
         await expectLater(
           intake(mime(bytes)),
