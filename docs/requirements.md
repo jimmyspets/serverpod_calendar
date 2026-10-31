@@ -505,3 +505,6 @@ Accepted [ADR 0148](adr/0148-recurring-master-invitation-workflow.md) adds the s
 
 
 Accepted [ADR 0149](adr/0149-trusted-single-instance-invitation-review.md) adds scoped FR-20/23 [single-instance review](single-instance-invitation-review.md): known recurring evidence, exact original membership, private targets and server-side master-action guards. Receipt/dismissal changes no calendar or participation state. Instance application/responses, RANGE and other methods remain required separate work; complete batch validation is recorded independently.
+
+
+The maintainer confirmed a clean entire linked series for future explicit instance application: any local series/occurrence change blocks it. Proposed [ADR 0150](adr/0150-pure-instance-invitation-projection.md) validates the pure REQUEST/CANCEL projection first, without database mutation, authorization or freshness claims. Durable application, instance replies and RANGE remain required subsequent work.
