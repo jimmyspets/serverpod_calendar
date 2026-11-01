@@ -453,23 +453,27 @@ void main() {
         );
       },
     );
-    test('profile mismatch and future range reject explicitly', () async {
-      await master(zone: 'Europe/Stockholm');
-      await expectLater(
-        receive(instanceInvitationBytes()),
-        failure(CalendarFailureCode.validation),
-      );
-      final text = utf8
-          .decode(instanceInvitationBytes(zone: 'Europe/Stockholm'))
-          .replaceFirst(
-            'RECURRENCE-ID;TZID=',
-            'RECURRENCE-ID;RANGE=THISANDFUTURE;TZID=',
-          );
-      await expectLater(
-        receive(Uint8List.fromList(utf8.encode(text))),
-        failure(CalendarFailureCode.validation),
-      );
-    });
+    test(
+      'profile mismatch rejects; future range has a separate review target',
+      () async {
+        await master(zone: 'Europe/Stockholm');
+        await expectLater(
+          receive(instanceInvitationBytes()),
+          failure(CalendarFailureCode.validation),
+        );
+        final text = utf8
+            .decode(instanceInvitationBytes(zone: 'Europe/Stockholm'))
+            .replaceFirst(
+              'RECURRENCE-ID;TZID=',
+              'RECURRENCE-ID;RANGE=THISANDFUTURE;TZID=',
+            );
+        final range = await receive(Uint8List.fromList(utf8.encode(text)));
+        expect(
+          (await service.getInvitation(range.entryId)).isThisAndFuture,
+          isTrue,
+        );
+      },
+    );
     test(
       'master checkpoint rejects the new instance-only source kind',
       () async {
