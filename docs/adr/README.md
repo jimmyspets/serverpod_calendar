@@ -169,6 +169,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0156](0156-explicit-range-invitation-application.md) | Explicit range REQUEST application and master composition | Accepted 2026-11-01; explicit range REQUEST application and canonical master composition; validation separate |
 
+| [0157](0157-pure-future-event-cancellation.md) | Pure event future-cancellation cutoff | Proposed; product policy confirmed; concrete core API/budget mechanics await approval |
+
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
 Use the next consecutive number for a new ADR covering a material decision. Include context, proposal/decision, alternatives, consequences, and acceptance conditions. Preserve committed/accepted decision history; supersede accepted decisions with a linked ADR. Superseded uncommitted drafts may be removed under the maintainer-authorized cleanup. Mark an ADR accepted only after explicit maintainer agreement recorded in the PR or issue.

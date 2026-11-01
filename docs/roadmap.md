@@ -688,3 +688,13 @@ Completed pure projection implementation is in PR #141; grouped local evidence p
 - [x] Validate focused rejection/atomicity, legacy/corrupt checkpoints, actual two-host/loss recovery, generated clients/feed and Flutter; grouped checks passed as recorded in validation.
 - [ ] Pass full exact-head hosted CI before PR readiness.
 - [ ] Keep future cancellation/restoration, range responses, same-anchor conversion and remaining method reconciliation separate. Range review/pure projection alone enables none of these native actions.
+
+## Event future-cancellation prerequisite
+
+ADR 0156 implementation is in PR #143; grouped checks passed and full hosted CI remains a separate gate. The maintainer confirmed cancellation of every original at/after the anchor, including later moved/edited exceptions, with their data preserved. [Proposed ADR 0157](adr/0157-pure-future-event-cancellation.md) is the next pure prerequisite; its mechanics are not approved or implemented.
+
+- [x] Inspect DATE/timed range expansion and original membership/work limits; verify primary RFC context.
+- [x] Confirm cancel-all/preserve-exceptions policy.
+- [ ] Obtain review of optional original-identity cutoffs, same-anchor coexistence, bounded validation/expansion and pure-only boundaries.
+- [ ] Implement and validate the approved pure DATE/UTC/named-zone batch before one code commit.
+- [ ] Review durable source/native/query/alarm/feed integration, explicit restoration and outgoing scheduling separately. Range CANCEL application and responses remain guarded.

@@ -657,3 +657,8 @@ At group completion, from repository root unless noted:
 An initial 556-test full VM/Chrome run and a subsequent 564-test combined-feature run passed. Final review added always-validated constructor budgets and a distinct base-occurrence diagnostic/regression; the final 565-test runs above include that correction. Analysis/format findings were resolved before final checks. The group adds 59 tests beyond the prior 506-test core; several contain finite independent oracles and cross-zone/query loops.
 
 All 255 changed-document relative links/anchors, ADR numbering 0001–0040, requirements/model/RFC/roadmap consistency, changed-file scope and `git diff --check` passed. No intermediate check-in was made. LICENSE, dependencies, generated files/migrations, endpoints, Flutter UI and the main README/2037 warning are unchanged. Full database/two-host/Flutter-journey checks were not repeated for pure-core changes; full repository checks remain required before PR readiness. Native API/conflict-policy proposals stay reviewable; no wire or external-client support follows from these tests.
+
+
+## Proposed future-cancellation prerequisite
+
+The maintainer confirmed that cancellation from an original onward must suppress all later originals, including moved/edited exceptions, while retaining their timing/content for explicit restoration. [Proposed ADR 0157](adr/0157-pure-future-event-cancellation.md) profiles a pure DATE/UTC/named-zone cutoff with existing budgets and unchanged retained timing data. The API/validation mechanics await approval and are unimplemented. This adds no native cancellation action, stored source state, restoration, free/busy/alarm/feed integration or scheduling reconciliation; existing range CANCEL guards remain.
