@@ -46,7 +46,10 @@ final class _ResponseHost implements CalendarInvitationResponseHost {
         await _responseFile(host.scope, 'revoked').exists()) {
       return CalendarAuthorizationVerdict.deny;
     }
-    if (c.operation == CalendarInvitationResponseOperation.dispatch &&
+    if ({
+          CalendarInvitationResponseOperation.dispatch,
+          CalendarInvitationResponseOperation.dispatchOccurrence,
+        }.contains(c.operation) &&
         c.actor != null) {
       throw StateError('Fabricated dispatch actor');
     }

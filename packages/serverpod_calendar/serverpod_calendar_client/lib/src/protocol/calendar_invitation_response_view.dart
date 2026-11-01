@@ -10,14 +10,20 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
+    as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_invitation_response_choice.dart' as _il64jj9v;
 import 'calendar_invitation_response_delivery_state.dart' as _iw51ozry;
 
+@_isc.immutable
 abstract class CalendarInvitationResponseView
     implements _isc.SerializableModel, _isc.ProtocolSerialization {
-  CalendarInvitationResponseView._({
+  const CalendarInvitationResponseView._({
     required this.invitationId,
+    this.originalStart,
+    bool? canSend,
     required this.revision,
     this.responseId,
     this.choice,
@@ -28,10 +34,12 @@ abstract class CalendarInvitationResponseView
     this.sourceStamp,
     required this.appliesToCurrentSource,
     this.deliveryState,
-  });
+  }) : canSend = canSend ?? false;
 
-  factory CalendarInvitationResponseView({
+  const factory CalendarInvitationResponseView({
     required _isc.UuidValue invitationId,
+    _ieswiaty.CalendarEventTiming? originalStart,
+    bool? canSend,
     required int revision,
     _isc.UuidValue? responseId,
     _il64jj9v.CalendarInvitationResponseChoice? choice,
@@ -51,6 +59,14 @@ abstract class CalendarInvitationResponseView
       invitationId: _isc.UuidValueJsonExtension.fromJson(
         jsonSerialization['invitationId'],
       ),
+      originalStart: jsonSerialization['originalStart'] == null
+          ? null
+          : _ie4a1wrz.Protocol().deserialize<_ieswiaty.CalendarEventTiming>(
+              jsonSerialization['originalStart'],
+            ),
+      canSend: jsonSerialization['canSend'] == null
+          ? null
+          : _isc.BoolJsonExtension.fromJson(jsonSerialization['canSend']),
       revision: jsonSerialization['revision'] as int,
       responseId: jsonSerialization['responseId'] == null
           ? null
@@ -86,33 +102,39 @@ abstract class CalendarInvitationResponseView
     );
   }
 
-  _isc.UuidValue invitationId;
+  final _isc.UuidValue invitationId;
 
-  int revision;
+  final _ieswiaty.CalendarEventTiming? originalStart;
 
-  _isc.UuidValue? responseId;
+  final bool canSend;
 
-  _il64jj9v.CalendarInvitationResponseChoice? choice;
+  final int revision;
 
-  DateTime? stamp;
+  final _isc.UuidValue? responseId;
 
-  _isc.UuidValue? sourceId;
+  final _il64jj9v.CalendarInvitationResponseChoice? choice;
 
-  int? sourceRevision;
+  final DateTime? stamp;
 
-  int? sourceSequence;
+  final _isc.UuidValue? sourceId;
 
-  DateTime? sourceStamp;
+  final int? sourceRevision;
 
-  bool appliesToCurrentSource;
+  final int? sourceSequence;
 
-  _iw51ozry.CalendarInvitationResponseDeliveryState? deliveryState;
+  final DateTime? sourceStamp;
+
+  final bool appliesToCurrentSource;
+
+  final _iw51ozry.CalendarInvitationResponseDeliveryState? deliveryState;
 
   /// Returns a shallow copy of this [CalendarInvitationResponseView]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
   CalendarInvitationResponseView copyWith({
     _isc.UuidValue? invitationId,
+    _ieswiaty.CalendarEventTiming? originalStart,
+    bool? canSend,
     int? revision,
     _isc.UuidValue? responseId,
     _il64jj9v.CalendarInvitationResponseChoice? choice,
@@ -125,10 +147,107 @@ abstract class CalendarInvitationResponseView
     _iw51ozry.CalendarInvitationResponseDeliveryState? deliveryState,
   });
   @override
+  bool operator ==(Object other) {
+    return identical(
+          other,
+          this,
+        ) ||
+        other.runtimeType == runtimeType &&
+            other is CalendarInvitationResponseView &&
+            (identical(
+                  other.invitationId,
+                  invitationId,
+                ) ||
+                other.invitationId == invitationId) &&
+            (identical(
+                  other.originalStart,
+                  originalStart,
+                ) ||
+                other.originalStart == originalStart) &&
+            (identical(
+                  other.canSend,
+                  canSend,
+                ) ||
+                other.canSend == canSend) &&
+            (identical(
+                  other.revision,
+                  revision,
+                ) ||
+                other.revision == revision) &&
+            (identical(
+                  other.responseId,
+                  responseId,
+                ) ||
+                other.responseId == responseId) &&
+            (identical(
+                  other.choice,
+                  choice,
+                ) ||
+                other.choice == choice) &&
+            (identical(
+                  other.stamp,
+                  stamp,
+                ) ||
+                other.stamp == stamp) &&
+            (identical(
+                  other.sourceId,
+                  sourceId,
+                ) ||
+                other.sourceId == sourceId) &&
+            (identical(
+                  other.sourceRevision,
+                  sourceRevision,
+                ) ||
+                other.sourceRevision == sourceRevision) &&
+            (identical(
+                  other.sourceSequence,
+                  sourceSequence,
+                ) ||
+                other.sourceSequence == sourceSequence) &&
+            (identical(
+                  other.sourceStamp,
+                  sourceStamp,
+                ) ||
+                other.sourceStamp == sourceStamp) &&
+            (identical(
+                  other.appliesToCurrentSource,
+                  appliesToCurrentSource,
+                ) ||
+                other.appliesToCurrentSource == appliesToCurrentSource) &&
+            (identical(
+                  other.deliveryState,
+                  deliveryState,
+                ) ||
+                other.deliveryState == deliveryState);
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      runtimeType,
+      invitationId,
+      originalStart,
+      canSend,
+      revision,
+      responseId,
+      choice,
+      stamp,
+      sourceId,
+      sourceRevision,
+      sourceSequence,
+      sourceStamp,
+      appliesToCurrentSource,
+      deliveryState,
+    );
+  }
+
+  @override
   Map<String, dynamic> toJson() {
     return {
       '__className__': 'serverpod_calendar.CalendarInvitationResponseView',
       'invitationId': invitationId.toJson(),
+      if (originalStart != null) 'originalStart': originalStart?.toJson(),
+      'canSend': canSend,
       'revision': revision,
       if (responseId != null) 'responseId': responseId?.toJson(),
       if (choice != null) 'choice': choice?.toJson(),
@@ -147,6 +266,9 @@ abstract class CalendarInvitationResponseView
     return {
       '__className__': 'serverpod_calendar.CalendarInvitationResponseView',
       'invitationId': invitationId.toJson(),
+      if (originalStart != null)
+        'originalStart': originalStart?.toJsonForProtocol(),
+      'canSend': canSend,
       'revision': revision,
       if (responseId != null) 'responseId': responseId?.toJson(),
       if (choice != null) 'choice': choice?.toJson(),
@@ -170,8 +292,10 @@ class _Undefined {}
 
 class _CalendarInvitationResponseViewImpl
     extends CalendarInvitationResponseView {
-  _CalendarInvitationResponseViewImpl({
+  const _CalendarInvitationResponseViewImpl({
     required _isc.UuidValue invitationId,
+    _ieswiaty.CalendarEventTiming? originalStart,
+    bool? canSend,
     required int revision,
     _isc.UuidValue? responseId,
     _il64jj9v.CalendarInvitationResponseChoice? choice,
@@ -184,6 +308,8 @@ class _CalendarInvitationResponseViewImpl
     _iw51ozry.CalendarInvitationResponseDeliveryState? deliveryState,
   }) : super._(
          invitationId: invitationId,
+         originalStart: originalStart,
+         canSend: canSend,
          revision: revision,
          responseId: responseId,
          choice: choice,
@@ -202,6 +328,8 @@ class _CalendarInvitationResponseViewImpl
   @override
   CalendarInvitationResponseView copyWith({
     _isc.UuidValue? invitationId,
+    Object? originalStart = _Undefined,
+    bool? canSend,
     int? revision,
     Object? responseId = _Undefined,
     Object? choice = _Undefined,
@@ -215,6 +343,10 @@ class _CalendarInvitationResponseViewImpl
   }) {
     return CalendarInvitationResponseView(
       invitationId: invitationId ?? this.invitationId,
+      originalStart: originalStart is _ieswiaty.CalendarEventTiming?
+          ? originalStart
+          : this.originalStart?.copyWith(),
+      canSend: canSend ?? this.canSend,
       revision: revision ?? this.revision,
       responseId: responseId is _isc.UuidValue? ? responseId : this.responseId,
       choice: choice is _il64jj9v.CalendarInvitationResponseChoice?

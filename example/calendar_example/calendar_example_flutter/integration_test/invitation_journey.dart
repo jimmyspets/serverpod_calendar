@@ -128,6 +128,7 @@ Future<void> runInvitationJourney(WidgetTester tester, Client client) async {
     recurring: true,
   );
   await runInvitationResponseJourney(tester, client, recurring: true);
+  await runInvitationResponseJourney(tester, client, instance: true);
   await runInstanceInvitationJourney(tester, client);
   await runInstanceInvitationApplicationJourney(tester, client);
 }

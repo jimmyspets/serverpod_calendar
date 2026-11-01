@@ -359,7 +359,19 @@ final class _InvitationResponseWorker {
         )) {
           return false;
         }
-        return _owns(row, claim, await s._revisionTime(tx));
+        final fresh = await s._revisionTime(tx);
+        if (!_owns(row, claim, fresh)) return false;
+        if (!fresh.isBefore(row.expiresAt)) {
+          await s._irStop(
+            row,
+            tx,
+            fresh,
+            CalendarInvitationResponseDeliveryState.expired,
+            'expired',
+          );
+          return false;
+        }
+        return true;
       });
   String? _receipt(String? value) {
     if (value == null) return null;
@@ -437,6 +449,30 @@ final class _InvitationResponseWorker {
         'expired',
       );
       return;
+    }
+    if (entry.originalStart != null) {
+      if (!await _authorize(
+        row,
+        tx,
+        now,
+        CalendarAuthorizationPhase.finalWrite,
+      )) {
+        return;
+      }
+      // A final external check can consume the remainder of a short lease.
+      // Preserve the actual attempt evidence, but let a fresh holder finalize.
+      final fresh = await s._revisionTime(tx);
+      if (!_owns(row, claim, fresh)) return;
+      if (!fresh.isBefore(row.expiresAt)) {
+        await s._irStop(
+          row,
+          tx,
+          fresh,
+          CalendarInvitationResponseDeliveryState.expired,
+          'expired',
+        );
+        return;
+      }
     }
     switch (result.outcome) {
       case CalendarSchedulingTransportOutcome.accepted:

@@ -649,11 +649,11 @@ Completed ADR 0151 implementation is in PR #133. The maintainer confirmed preser
 - [x] Implement approved master REQUEST/CANCEL/reopening composition and clients/Flutter; actual two-host/loss and complete batch checks passed and are recorded in validation.
 - [ ] Continue instance responses, RANGE and remaining original-scope reconciliation/transport work separately.
 
-## Selected-instance attendee response proposal
+## Selected-instance attendee responses
 
-Completed ADR 0152 implementation is in PR #135. Proposed [ADR 0153](adr/0153-explicit-single-instance-attendee-responses.md) groups the next recipient response increment; calendar actions remain independent.
+Completed ADR 0152 implementation is in PR #135. Accepted [ADR 0153](adr/0153-explicit-single-instance-attendee-responses.md) implements the scoped recipient response increment; calendar actions remain independent.
 
 - [x] Inspect existing response service/worker/tables, known-series resolver, host/MIME/Flutter and primary RFC 5546 instance REPLY rules.
-- [ ] Review selected-notice admission, exact target/version projection, known-series lifecycle checks, separate authority, reused storage and protected view/host refinements.
-- [ ] Implement approved native/worker/MIME/client/Flutter behavior and focused plus complete batch evidence before one code check-in.
+- [x] Review selected-notice admission, exact target/version projection, known-series lifecycle checks, separate authority, reused storage and protected view/host refinements.
+- [x] Implement approved native/worker/MIME/client/Flutter behavior; focused and complete batch checks passed across the documented full run and browser/build continuation.
 - [ ] Keep arbitrary master-original selection, RANGE, delegation, wider reconciliation and real mail as separate required work.

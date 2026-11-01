@@ -57,6 +57,14 @@ String composeSyntheticInvitationResponseMime(
       );
     }
     final event = message.events.single;
+    final zone = event.originalTime?.zoneId;
+    if (event.isThisAndFuture ||
+        message.timeZones.length != (zone == null ? 0 : 1) ||
+        zone != null && !message.timeZones.containsKey(zone)) {
+      throw const SyntheticSchedulingMimeException(
+        SyntheticSchedulingMimeError.profile,
+      );
+    }
     if (event.participants.organizer?.address != submission.organizer.address ||
         event.participants.attendees.length != 1 ||
         event.participants.attendees.single.address !=
@@ -80,6 +88,8 @@ String composeSyntheticInvitationResponseMime(
           );
         }
       } else if (entry is IcalendarSyntaxComponent) {
+        // The pure adapter validated the single zone used by RECURRENCE-ID.
+        if (entry.canonicalName == 'VTIMEZONE') continue;
         if (entry.canonicalName != 'VEVENT') {
           throw const SyntheticSchedulingMimeException(
             SyntheticSchedulingMimeError.profile,
@@ -91,13 +101,19 @@ String composeSyntheticInvitationResponseMime(
                 'UID',
                 'DTSTAMP',
                 'SEQUENCE',
+                'RECURRENCE-ID',
                 'ORGANIZER',
                 'ATTENDEE',
               }.contains(field.canonicalName) ||
               field.parameters.any(
-                (p) =>
-                    field.canonicalName != 'ATTENDEE' ||
-                    p.name.toUpperCase() != 'PARTSTAT',
+                (p) => switch (field.canonicalName) {
+                  'ATTENDEE' => p.canonicalName != 'PARTSTAT',
+                  'RECURRENCE-ID' => !{
+                    'VALUE',
+                    'TZID',
+                  }.contains(p.canonicalName),
+                  _ => true,
+                },
               )) {
             throw const SyntheticSchedulingMimeException(
               SyntheticSchedulingMimeError.profile,
