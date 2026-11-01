@@ -1,6 +1,6 @@
 # ADR 0156: Explicit range REQUEST application and master composition
 
-Status: **Proposed 2026-11-01. No durable range approval is inferred from the pure ADR 0155 batch.**
+Status: **Accepted 2026-11-01 by explicit maintainer approval of the proposed application batch and model/API mechanics. Implementation evidence is recorded separately.**
 
 ## Context and inspected evidence
 
@@ -8,7 +8,7 @@ ADRs 0154/0155 provide trusted range review and a pure REQUEST projection. Calen
 
 Inspected target-aware intake/source binding, `_occDecode` v1/v2, effective-component version floors, `_occComponent`, latest receipt binding, canonical `_invCompose`, master cancellation floors, existing request/view/receipt carriers, native write/parent cleanup and host/client/Flutter adaptation. The existing composition retains canonical single components rather than replaying their historical messages; this proposal extends that approach to future components. Primary context is [RFC 5545 RECURRENCE-ID](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.4.4) and [RFC 5546 REQUEST](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.2). Native freshness, checkpoint, permission and retry policies below remain application policy.
 
-## Proposed grouped behavior
+## Approved grouped behavior
 
 Add explicit preview/application of the current selected known-series range REQUEST to its existing linked calendar event. Require exact source/invitation/link/parent identity and expected calendar/event/master-application/occurrence-checkpoint revisions. The entire native series must still match its accepted source baseline: any local master, timing, content or occurrence change blocks a new application. No implicit adoption, relink, overwrite/merge or arbitrary-original input is added.
 
@@ -18,7 +18,7 @@ Use the existing strict source ordering against the effective accepted component
 
 Source intake/dismissal stays independent. A range CANCEL can remain reviewable and expose an authorized read-only application view, but has no apply action. It neither changes native future status nor creates accepted cancellation state. The only new mutating command is range REQUEST application; range responses remain unavailable.
 
-## Proposed model, APIs and authorization
+## Approved model, APIs and authorization
 
 Reuse the existing `CalendarInvitationOccurrenceApplicationRecord` row and its active-data string column. Add version-three JSON only when range state is written; retain validated v1/v2 reads and existing single criteria/component hashes. Bind every range target to its exact range-v1 key, typed original, original source text/digest, UID/organizer/recipient, independently optional source version and the actual canonical future component/protocol state. Legacy single bindings remain single-only. Unknown namespaces, wrong RANGE presence/kind, ambiguous single/range canonical anchors or corrupt bindings fail unavailable.
 
@@ -42,4 +42,4 @@ Flutter exposes explicit range preview/apply for REQUEST, labels anchor-local co
 
 Test DATE/UTC/named zones/DST, PERIOD/earlier inclusions/exclusions, prior/later ranges and singles, effective-component source floors, dirty-baseline and orphan/collision rejection, independent/final authority rollback, JSON/source corruption, quotas, exact latest-only retries across pruning/master updates, deletion scrubbing, alarm generation and feed changes. Exercise actual two-host same/different-command races and loss before/after commit, generated clients and Flutter. Use focused development checks, then broader grouped and full CI gates before readiness; no intermediate implementation check-ins.
 
-This batch would implement range REQUEST application/composition only. Future cancellation/restoration, same-anchor conversion/explicit reconciliation, range replies, wider scheduling methods and real transport remain separate required work. Maintainer agreement is required on the concrete JSON/view/API/authority mechanics before implementation.
+This batch implements scoped range REQUEST application/composition only. Future cancellation/restoration, same-anchor conversion/explicit reconciliation, range replies, wider scheduling methods and real transport remain separate required work. The maintainer explicitly approved these concrete JSON/view/API/authority mechanics on 2026-11-01. See [the scoped guide](../range-invitation-application.md) and [actual validation](../scaffold-validation.md); no future cancellation or response approval follows.

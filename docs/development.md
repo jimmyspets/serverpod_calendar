@@ -270,3 +270,9 @@ Pop-Location
 ```
 
 End-of-batch checks include workspace formatting/analysis, complete core/iCalendar VM+Chrome and module suites plus affected example database application/guard tests. A full repository CI pass is still required before PR readiness; pure projection adds no Flutter control or range endpoint.
+
+## Focused range application checks
+
+Accepted [ADR 0156](adr/0156-explicit-range-invitation-application.md) adds [explicit range REQUEST application](range-invitation-application.md). From the example server, run `dart test --concurrency=1 test/integration/range_invitation_application_test.dart test/integration/instance_invitation_application_test.dart`. Use isolated synthetic test storage and keep database suites serial. From the root, `dart run tool/invitation_work_smoke.dart --range-applications` exercises independent hosts, competing commands and actual loss before/after range and master commits.
+
+After stopping owned test hosts and running `./tool/build-host.ps1`, run `dart run tool/host_smoke.dart --invitations-only` for generated invitation clients and feed ETags, then `dart run tool/host_smoke.dart --browser-only --flutter --range-applications` for the focused Flutter flow. Root checks retain the new database/process coverage and the complete browser journey. These focused commands do not replace grouped end-of-batch checks or the full repository readiness gate. No SQL migration or development database reset is needed.

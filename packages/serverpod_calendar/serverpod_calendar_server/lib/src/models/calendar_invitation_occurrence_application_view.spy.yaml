@@ -1,6 +1,7 @@
 class: CalendarInvitationOccurrenceApplicationView
 immutable: true
 fields:
+  isThisAndFuture: bool, default=false
   linkId: UuidValue
   invitationId: UuidValue
   calendarId: UuidValue

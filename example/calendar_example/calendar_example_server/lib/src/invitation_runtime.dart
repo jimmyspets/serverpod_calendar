@@ -91,6 +91,8 @@ final class DemoInvitationHost implements CalendarInvitationHost {
           CalendarInvitationOperation.applyCancellation,
           CalendarInvitationOperation.readApplication,
           CalendarInvitationOperation.readOccurrenceApplication,
+          CalendarInvitationOperation.readRangeApplication,
+          CalendarInvitationOperation.applyRangeUpdate,
           CalendarInvitationOperation.applyOccurrenceUpdate,
           CalendarInvitationOperation.applyOccurrenceCancellation,
           CalendarInvitationOperation.composeAcceptedOccurrences,

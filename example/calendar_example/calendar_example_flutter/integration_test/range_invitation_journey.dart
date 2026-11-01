@@ -55,6 +55,10 @@ Future<void> runRangeInvitationJourney(
     );
     expect(instance.isThisAndFuture, isTrue);
     expect(
+      find.byKey(ValueKey('invitation-range-apply-view-${instance.id}')),
+      findsOneWidget,
+    );
+    expect(
       find.byKey(ValueKey('invitation-occurrence-apply-view-${instance.id}')),
       findsNothing,
     );
