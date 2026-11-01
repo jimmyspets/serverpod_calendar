@@ -165,6 +165,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0154](0154-trusted-range-invitation-review.md) | Trusted range invitation intake and private review | Accepted 2026-11-01; scoped trusted range intake/private review; validation recorded separately |
 
+| [0155](0155-pure-range-invitation-projection.md) | Pure range REQUEST application projection | Proposed 2026-11-01; pure source/canonical mechanics require approval; no range mutation |
+
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
 Use the next consecutive number for a new ADR covering a material decision. Include context, proposal/decision, alternatives, consequences, and acceptance conditions. Preserve committed/accepted decision history; supersede accepted decisions with a linked ADR. Superseded uncommitted drafts may be removed under the maintainer-authorized cleanup. Mark an ADR accepted only after explicit maintainer agreement recorded in the PR or issue.
