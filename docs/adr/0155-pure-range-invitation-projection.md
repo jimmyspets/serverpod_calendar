@@ -1,14 +1,14 @@
 # ADR 0155: Pure range REQUEST application projection
 
-Status: **Proposed 2026-11-01. No implementation or durable range application approval is inferred from ADR 0154.**
+Status: **Accepted 2026-11-01 by explicit maintainer approval of the pure projection batch. Durable range application is not approved by this decision.**
 
 ## Context and evidence
 
-ADR 0154 admits trusted THISANDFUTURE REQUEST/CANCEL for private review only. Native timing-range overrides and the pure ordinary event adapter already support timing shifts with exact original identity, independent later range segments and explicit single exceptions. The existing detached invitation projection rejects RANGE. Its durable acceptance JSON/checkpoints describe singles; enabling range application there would assume unreviewed cross-target versions and cancellation coordination.
+ADR 0154 admits trusted THISANDFUTURE REQUEST/CANCEL for private review only. Native timing-range overrides and the pure ordinary event adapter already support timing shifts with exact original identity, independent later range segments and explicit single exceptions. Before this batch, the existing detached invitation projection rejected RANGE; that single helper still does. Its durable acceptance JSON/checkpoints describe singles; enabling range application there would assume unreviewed cross-target versions and cancellation coordination.
 
 Inspected invitation projection, event wire storage/series validation, future override/protocol carriers and the accepted master/instance composition contract. [RFC 5545 RECURRENCE-ID](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.4.4) defines subsequent instances by original identity, exempts separately defined instances and describes uniform timing/duration changes. [RFC 5546 REQUEST](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.2) supplies scheduling context (checked 2026-11-01). The bounded anchor-content and reject policies below describe this project profile, not complete RFC support.
 
-## Proposed grouped pure scope
+## Approved grouped pure scope
 
 Add a separate pure range-REQUEST projection in the existing Serverpod value-adaptation layer. Input is one complete accepted UID/content/overrides/protocol state, a parsed one-component detached THISANDFUTURE REQUEST and expected recipient address. Reuse the immutable projection result/source carrier where possible; add no generated model, database table, endpoint or Flutter action. Preserve the existing single REQUEST/CANCEL helper's rejects and behavior.
 
@@ -18,7 +18,7 @@ Replace only the future component at the selected original, or add it if absent.
 
 Map explicit replacement timing and end/duration through the existing bounded wire/core future policy, preserving source kind/zone/form and ordinary whole-second horizon/endpoint rules. Weeks/days retain calendar-unit/DST meaning. Do not flatten a range into enumerated singles, expand an unbounded series, change RRULE/RDATE/PERIOD/EXDATE, or turn a source component into a new master.
 
-Use the existing event wire profile for non-timing claims: omitted selected SUMMARY/DESCRIPTION/LOCATION inherit, explicit values (including empty text) remain local to the anchor; only timing propagates. Repeated richer metadata/participant/reference/alarm claims must satisfy the existing master-matching profile; differing unprofiled data rejects. STATUS/TRANSP follow existing matching rules. Keep this anchor-local content limitation explicit; this is not blanket range content propagation.
+Use the existing event wire profile for non-timing claims: text omission inherits where permitted, but the iTIP REQUEST parser still requires SUMMARY and no missing property is repaired. Omitted DESCRIPTION/LOCATION inherit; explicit values (including empty text) remain local to the anchor; only timing propagates. Repeated richer metadata/participant/reference claims must satisfy the existing master-matching profile; the current iTIP profile rejects source VALARM even when it would match. Accepted unarmed master alarms remain preserved and are never stripped or activated; differing unprofiled data rejects. STATUS/TRANSP follow existing matching rules. Keep this anchor-local content limitation explicit; this is not blanket range content propagation.
 
 Preserve incoming independent SEQUENCE, DTSTAMP and optional CREATED/LAST-MODIFIED, text/source-presence flags and accepted source distinctions on the selected future component. Allocate no native/API/protocol clocks, revisions, identities or accepted-source history. The result retains the original parsed message so source claims and canonical proposed values remain distinguishable. No stripping properties/alarms or inventing participant authority to manufacture a valid projection.
 
@@ -32,4 +32,6 @@ This is a pure prerequisite. Review-only intake and all current range mutation/r
 
 Implementing durable writes immediately would hide unresolved checkpoint/overlap choices. Flattening to singles loses range meaning and exceeds bounded storage; reusing the single helper by dropping RANGE changes source semantics. A separate pure helper exercises the existing range representation without authorizing persistence.
 
-The repository requires explicit maintainer agreement on these concrete pure protocol mechanics before implementation. Approval here would not approve durable range application or future cancellation.
+The maintainer explicitly approved these pure protocol mechanics on 2026-11-01. Durable range application and future cancellation still require separate review.
+
+Implementation: [the pure range guide](../range-invitation-projection.md) describes the helper and exact current source restrictions. Actual tests and deferred checks are recorded separately in [validation](../scaffold-validation.md). Durable range application is not enabled.
