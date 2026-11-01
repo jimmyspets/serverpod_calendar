@@ -25,7 +25,7 @@ final class CalendarInvitationOccurrenceProjection {
   final CalendarEventProtocolState protocolState;
   final CalendarEventTiming originalStart;
 
-  /// Keeps source omissions separate from retained canonical cancellation data.
+  /// Keeps source omissions separate from the proposed canonical values.
   final IcalendarSchedulingMessage sourceMessage;
 }
 
@@ -113,40 +113,13 @@ CalendarInvitationOccurrenceProjection projectInvitationOccurrence({
     late final CalendarEventSingleOverride replacement;
     late final CalendarEventOverrideProtocolState checkpoint;
     if (message.method == IcalendarSchedulingMethod.request) {
-      final writer = EventComponentWriter();
-      final master = writer
-          .components(
-            protocolUid,
-            accepted,
-            null,
-            state.copyWith(overrides: []),
-          )
-          .single;
-      final zones = {
-        for (final z in message.timeZones.values) z.zoneId: z.source,
-      };
-      for (final id in writer.zones) {
-        zones.putIfAbsent(id, () => createIcalendarTimeZone(id));
-      }
-      final calendar = validateIcalendarEventCalendar(
-        IcalendarSyntaxDocument([
-          IcalendarSyntaxComponent('VCALENDAR', [
-            IcalendarSyntaxProperty('VERSION', '2.0'),
-            IcalendarSyntaxProperty(
-              'PRODID',
-              '-//Serverpod Calendar//Occurrence proposal//EN',
-            ),
-            ...zones.values,
-            master,
-            source.source,
-          ]),
-        ]),
-        limits: IcalendarComponentLimits(maxCandidates: maxCandidateWork),
-        sharedWorkBudget: work,
-      );
-      final projected = eventWireProjection(
-        calendar.series.single,
-        sharedWorkBudget: work,
+      final projected = _invitationRequestProjection(
+        protocolUid,
+        accepted,
+        state,
+        message,
+        work,
+        maxCandidateWork,
       );
       replacement = projected.edits!.singles.single;
       checkpoint = projected.protocolState.overrides.single;
@@ -240,6 +213,177 @@ CalendarInvitationOccurrenceProjection projectInvitationOccurrence({
   } on StateError {
     throw ArgumentError('Unsupported occurrence projection');
   }
+}
+
+/// Pure THISANDFUTURE REQUEST proposal; it grants no application authority.
+/// Only timing propagates. Supported own text/metadata stays at the anchor.
+CalendarInvitationOccurrenceProjection projectInvitationRangeRequest({
+  required String protocolUid,
+  required CalendarEventContent content,
+  CalendarEventTimingOverrides? timingOverrides,
+  required CalendarEventProtocolState protocolState,
+  required IcalendarSchedulingMessage message,
+  required String recipientAddress,
+  int maxCandidateWork = eventMaxCandidateWork,
+}) {
+  try {
+    RangeError.checkValueInInterval(maxCandidateWork, 1, eventMaxCandidateWork);
+    serializeIcalendarSyntax(message.source);
+    if (message.timeZones.length > const IcalendarComponentLimits().maxZones) {
+      throw const RecurrenceLimitException('invitationProjectionZones');
+    }
+    final work = RecurrenceWorkBudget(maxWork: maxCandidateWork);
+    validateEventUid(protocolUid);
+    final accepted = validateEventContent(content, sharedWorkBudget: work);
+    final edits = validateEventOverrides(
+      accepted,
+      timingOverrides,
+      sharedWorkBudget: work,
+    );
+    final state = validateEventProtocolState(protocolState, accepted, edits);
+    if ((accepted.recurrence == null && (accepted.periods?.isEmpty ?? true)) ||
+        accepted.status == CalendarEventStatus.cancelled ||
+        message.uid != protocolUid ||
+        message.events.length != 1 ||
+        message.method != IcalendarSchedulingMethod.request) {
+      throw ArgumentError('Unsupported range projection');
+    }
+    final source = message.events.single;
+    final organizer = state.sourceMetadata?.organizer;
+    if (!source.isOverride ||
+        !source.isThisAndFuture ||
+        source.recurrence != null ||
+        organizer == null ||
+        source.participants.organizer?.address != organizer.address ||
+        source.participants.organizer?.sentBy != null ||
+        !(state.sourceMetadata?.attendees ?? <CalendarEventSourceParticipant>[])
+            .any((a) => a.address == recipientAddress) ||
+        !source.participants.attendees.any(
+          (a) => a.address == recipientAddress,
+        ) ||
+        source.participants.attendees.any(
+          (a) =>
+              a.sentBy != null ||
+              a.delegatedTo.isNotEmpty ||
+              a.delegatedFrom.isNotEmpty ||
+              a.participationStatus?.toUpperCase() == 'DELEGATED',
+        )) {
+      throw ArgumentError('Unsupported range projection');
+    }
+    final original = _point(source.originalDate ?? source.originalTime!);
+    final key = eventComponentKey(original, false);
+    if (!eventSchedulingMember(accepted, original, sharedWorkBudget: work) ||
+        (edits?.singles ?? <CalendarEventSingleOverride>[]).any(
+          (v) => eventComponentKey(v.originalStart, false) == key,
+        )) {
+      throw ArgumentError('Unsupported range projection');
+    }
+    final projected = _invitationRequestProjection(
+      protocolUid,
+      accepted,
+      state,
+      message,
+      work,
+      maxCandidateWork,
+    );
+    final replacement = projected.edits!.future.single;
+    final checkpoint = projected.protocolState.overrides.single;
+    final proposed = validateEventOverrides(
+      accepted,
+      CalendarEventTimingOverrides(
+        singles: edits?.singles ?? [],
+        future: [
+          for (final v in edits?.future ?? <CalendarEventFutureOverride>[])
+            if (eventComponentKey(v.originalStart, false) != key) v,
+          replacement,
+        ],
+      ),
+      sharedWorkBudget: work,
+    )!;
+    final nextState = validateEventProtocolState(
+      state.copyWith(
+        overrides: [
+          for (final v in state.overrides)
+            if (!v.isThisAndFuture ||
+                eventComponentKey(v.originalStart, false) != key)
+              v,
+          checkpoint,
+        ],
+      ),
+      accepted,
+      proposed,
+    );
+    return CalendarInvitationOccurrenceProjection._(
+      protocolUid,
+      accepted,
+      proposed,
+      nextState,
+      original,
+      message,
+    );
+  } on IcalendarSyntaxException catch (e) {
+    if (e.kind == IcalendarSyntaxError.limitExceeded) {
+      throw const RecurrenceLimitException('invitationProjectionSource');
+    }
+    throw ArgumentError('Unsupported range projection');
+  } on IcalendarComponentException catch (e) {
+    if (e.kind == IcalendarComponentError.limitExceeded) {
+      throw const RecurrenceLimitException('invitationProjectionWork');
+    }
+    throw ArgumentError('Unsupported range projection');
+  } on ArgumentError {
+    throw ArgumentError('Unsupported range projection');
+  } on StateError {
+    throw ArgumentError('Unsupported range projection');
+  }
+}
+
+// Validate only the required master and incoming component against the wire
+// profile. Unrelated native exceptions retain their separate, larger slot cap.
+EventWireProjection _invitationRequestProjection(
+  String protocolUid,
+  CalendarEventContent accepted,
+  CalendarEventProtocolState state,
+  IcalendarSchedulingMessage message,
+  RecurrenceWorkBudget work,
+  int maxCandidateWork,
+) {
+  final source = message.events.single;
+  final writer = EventComponentWriter();
+  final master = writer
+      .components(
+        protocolUid,
+        accepted,
+        null,
+        state.copyWith(overrides: []),
+      )
+      .single;
+  final zones = {
+    for (final z in message.timeZones.values) z.zoneId: z.source,
+  };
+  for (final id in writer.zones) {
+    zones.putIfAbsent(id, () => createIcalendarTimeZone(id));
+  }
+  final calendar = validateIcalendarEventCalendar(
+    IcalendarSyntaxDocument([
+      IcalendarSyntaxComponent('VCALENDAR', [
+        IcalendarSyntaxProperty('VERSION', '2.0'),
+        IcalendarSyntaxProperty(
+          'PRODID',
+          '-//Serverpod Calendar//Occurrence proposal//EN',
+        ),
+        ...zones.values,
+        master,
+        source.source,
+      ]),
+    ]),
+    limits: IcalendarComponentLimits(maxCandidates: maxCandidateWork),
+    sharedWorkBudget: work,
+  );
+  return eventWireProjection(
+    calendar.series.single,
+    sharedWorkBudget: work,
+  );
 }
 
 CalendarEventTiming _point(Object value) {
