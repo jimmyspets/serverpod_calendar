@@ -1,0 +1,45 @@
+# ADR 0156: Explicit range REQUEST application and master composition
+
+Status: **Proposed 2026-11-01. No durable range approval is inferred from the pure ADR 0155 batch.**
+
+## Context and inspected evidence
+
+ADRs 0154/0155 provide trusted range review and a pure REQUEST projection. Calendar actions and personal responses still reject ranges. ADRs 0151/0152 already implement clean-entire-series single application and canonical master composition with one private per-link checkpoint, independent source versions and retained latest-only occurrence retries.
+
+Inspected target-aware intake/source binding, `_occDecode` v1/v2, effective-component version floors, `_occComponent`, latest receipt binding, canonical `_invCompose`, master cancellation floors, existing request/view/receipt carriers, native write/parent cleanup and host/client/Flutter adaptation. The existing composition retains canonical single components rather than replaying their historical messages; this proposal extends that approach to future components. Primary context is [RFC 5545 RECURRENCE-ID](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.4.4) and [RFC 5546 REQUEST](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.2). Native freshness, checkpoint, permission and retry policies below remain application policy.
+
+## Proposed grouped behavior
+
+Add explicit preview/application of the current selected known-series range REQUEST to its existing linked calendar event. Require exact source/invitation/link/parent identity and expected calendar/event/master-application/occurrence-checkpoint revisions. The entire native series must still match its accepted source baseline: any local master, timing, content or occurrence change blocks a new application. No implicit adoption, relink, overwrite/merge or arbitrary-original input is added.
+
+Call the approved pure range helper against the actual accepted values. Preserve master, explicit singles/cancellations, other future components and their versions; replace/add only the selected future anchor. Reject selected single collisions, missing/excluded originals, profile changes, unsupported source claims and exhausted bounds without partial writes. Only timing propagates; supported own text stays local to the anchor. Existing source SUMMARY requirements, VALARM rejection and unarmed accepted metadata remain unchanged.
+
+Use the existing strict source ordering against the effective accepted component at the anchor: its own future component when present, otherwise the latest preceding range or master. Omitted SEQUENCE has effective zero for comparison while its source omission remains preserved. A higher sequence, or equal sequence with later DTSTAMP, may advance a REQUEST under the existing ordering; source values establish no authority. Do not borrow a later separate component's version or increment the master/other components. First-profile single/range conversion at the same anchor rejects.
+
+Source intake/dismissal stays independent. A range CANCEL can remain reviewable and expose an authorized read-only application view, but has no apply action. It neither changes native future status nor creates accepted cancellation state. The only new mutating command is range REQUEST application; range responses remain unavailable.
+
+## Proposed model, APIs and authorization
+
+Reuse the existing `CalendarInvitationOccurrenceApplicationRecord` row and its active-data string column. Add version-three JSON only when range state is written; retain validated v1/v2 reads and existing single criteria/component hashes. Bind every range target to its exact range-v1 key, typed original, original source text/digest, UID/organizer/recipient, independently optional source version and the actual canonical future component/protocol state. Legacy single bindings remain single-only. Unknown namespaces, wrong RANGE presence/kind, ambiguous single/range canonical anchors or corrupt bindings fail unavailable.
+
+The v3 envelope retains separate master/composed baseline descriptors and digests, current master binding and at most 128 combined accepted targets/native slots. Add an explicit latest-target key bound to the latest request/result/source digest so a range retry cannot become a single retry. Range commands use a separate criteria domain; existing single request hashes stay unchanged. Reuse the immutable occurrence apply request/receipt carriers; add a default-false derived `isThisAndFuture` to the protected occurrence-application view. No SQL table, column, index, migration or retention expansion is proposed; generation/schema inspection must verify this. Hosts/clients upgrade together; mixed old/new writers are unsupported.
+
+Add dedicated generated `rangeApplication` and `applyRangeUpdate` APIs, backed by independent host `readRangeApplication` / `applyRangeUpdate` operations plus existing raw-source/full native detail and applicable write permissions. Source/read authority must precede type-specific errors; server checks the actual stored target rather than accepting a client mode flag. Existing single APIs remain single-only, and master link/adoption remains master-only. Reuse actual scope/recipient/link/parent resolution, coordinated scope locks, preliminary/final authority and declared guarantees. A fresh external check retains its documented revocation race.
+
+Host context includes complete immutable current/proposed native overrides/protocol state, actual source, selected range and private current/proposed checkpoint. Pure projection grants none of these rights. Atomic accepted writes update event content/overrides/protocol/baseline, checkpoint, selected review state, revisions/audit data and scope generation using the existing write path. Source protocol timestamps/omissions remain distinct from database audit time. Existing personal-alarm invalidation/replanning and feed-validator changes follow the committed event change; no scheduling reply or alarm adoption is sent/inferred.
+
+## Master composition and retries
+
+In the same batch, extend canonical master composition to retain accepted future components as well as singles. New master REQUESTs preserve accepted range identities/values/independent versions and reject orphaning recurrence/profile changes or colliding supplied components. Do not replay historical range messages against new master metadata or silently retarget them. Existing independent compose permission applies with complete range context. Whole-master CANCEL/reopening retains accepted layers; the existing conservative CANCEL rule must exceed every accepted component's sequence, now including ranges. This is the existing native application floor, not a universal RFC requirement.
+
+Keep latest-only per-link occurrence command retries across single/range commands. Exact retained retries reauthorize current/private state and return their original receipt without reapplying or dismissing newer notices; after a newer occurrence command commits, older occurrence commands are stale. Master application/retry identity remains separate, including historical occurrence receipts preserved through master composition. Queue pruning does not discard accepted source evidence or invent missing source; deletion scrubs the accepted checkpoint/source copy with active event data, while independent inbox retention keeps its own rules.
+
+Keep the existing hard 4 MiB/link, 16 MiB/recipient and 64 MiB/scope checkpoint byte ceilings and configurable lower caps, source budgets and candidate/native-slot limits. No additional history store, expiry policy or automatic overwrite is introduced. JSON compatibility and corruption checks must cover v1/v2/v3 and no-write legacy reads.
+
+## Example and validation
+
+Flutter exposes explicit range preview/apply for REQUEST, labels anchor-local content versus propagated timing and preserves the same request across uncertain retries. Range CANCEL and participation stay review-only. Permission/cursor/error responses must not disclose hidden sources or allow a mode flag to bypass server target checks.
+
+Test DATE/UTC/named zones/DST, PERIOD/earlier inclusions/exclusions, prior/later ranges and singles, effective-component source floors, dirty-baseline and orphan/collision rejection, independent/final authority rollback, JSON/source corruption, quotas, exact latest-only retries across pruning/master updates, deletion scrubbing, alarm generation and feed changes. Exercise actual two-host same/different-command races and loss before/after commit, generated clients and Flutter. Use focused development checks, then broader grouped and full CI gates before readiness; no intermediate implementation check-ins.
+
+This batch would implement range REQUEST application/composition only. Future cancellation/restoration, same-anchor conversion/explicit reconciliation, range replies, wider scheduling methods and real transport remain separate required work. Maintainer agreement is required on the concrete JSON/view/API/authority mechanics before implementation.
