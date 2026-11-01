@@ -577,6 +577,27 @@ void main() {
         },
       );
     }
+    test('retained single reply cannot become a range reply', () async {
+      await master();
+      final source = await occurrence();
+      await service.sendInvitationResponse(command(source));
+      final stored = await row();
+      stored.payload = stored.payload.replaceFirst(
+        'RECURRENCE-ID:',
+        'RECURRENCE-ID;RANGE=THISANDFUTURE:',
+      );
+      stored.byteCount = utf8.encode(stored.payload).length;
+      stored.payloadDigest = sha256
+          .convert(utf8.encode(stored.payload))
+          .toString();
+      await CalendarInvitationResponseRecord.db.updateRow(session, stored);
+      await expectLater(
+        service.invitationResponseActivity(source.entryId),
+        failure(CalendarFailureCode.unavailable),
+      );
+      await CalendarModule.runInvitationResponseMaintenance(session);
+      expect(transport.submissions, isEmpty);
+    });
     test('retained payload cannot be rebound to a sibling original', () async {
       await master();
       final source = await occurrence();

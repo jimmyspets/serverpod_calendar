@@ -117,3 +117,112 @@ Future<void> instanceInvitationSmoke(List<Client> clients) async {
     }
   }
 }
+
+Future<void> rangeInvitationSmoke(List<Client> clients) async {
+  final a = clients.first, b = clients.last;
+  final api = b.modules.serverpod_calendar.calendarInvitation;
+  final id = const cal.Uuid().v4obj(), key = const cal.Uuid().v4obj();
+  final master = await a.invitationDemo.simulateRecurring(
+    id,
+    const cal.Uuid().v4obj(),
+    null,
+    'Range review basis',
+  );
+  final entries = <cal.UuidValue>[master.entryId];
+  void require(bool value, String message) {
+    if (!value) throw StateError(message);
+  }
+
+  Future<void> rejects(Future<Object?> Function() call) async {
+    try {
+      await call();
+    } on cal.CalendarException catch (e) {
+      require(
+        e.code == cal.CalendarFailureCode.validation,
+        'Wrong range guard failure',
+      );
+      return;
+    }
+    throw StateError('Range crossed a master/single action boundary');
+  }
+
+  try {
+    final raced = await Future.wait(
+      clients.map((c) => c.invitationDemo.simulateRange(id, key, 1, false)),
+    );
+    require(
+      raced.first.id == raced.last.id,
+      'Range ingress race duplicated receipt',
+    );
+    final r = raced.first;
+    entries.add(r.entryId);
+    final v = await api.getInvitation(r.entryId);
+    require(
+      v.isThisAndFuture &&
+          v.originalStart?.start.day == 3 &&
+          v.timing?.start.hour == 11,
+      'Range projection lost source identity',
+    );
+    final single = await a.invitationDemo.simulateOccurrence(
+      id,
+      const cal.Uuid().v4obj(),
+      1,
+      false,
+    );
+    entries.add(single.entryId);
+    require(
+      single.entryId != r.entryId &&
+          !(await api.getInvitation(single.entryId)).isThisAndFuture,
+      'Single and range review targets collided',
+    );
+    final source = await api.source(r.entryId, r.sourceId);
+    require(
+      source.text.contains(
+        'RECURRENCE-ID;RANGE=THISANDFUTURE:20300103T090000Z',
+      ),
+      'MIME lost RANGE',
+    );
+    for (final call in <Future<Object?> Function()>[
+      () => api.link(r.entryId),
+      () => api.application(r.entryId),
+      () => api.occurrenceApplication(r.entryId),
+      () => api.response(r.entryId),
+      () => api.responseActivity(r.entryId),
+    ]) {
+      await rejects(call);
+    }
+    await a.invitationDemo.simulateRange(id, const cal.Uuid().v4obj(), 2, true);
+    final notice = await api.getInvitation(r.entryId);
+    require(
+      notice.kind == cal.CalendarInvitationSourceKind.rangeCancellation &&
+          notice.isThisAndFuture &&
+          notice.timing == null,
+      'Range cancellation manufactured timing or lost kind',
+    );
+    require(
+      (await api.getInvitation(single.entryId)).revision == 1 &&
+          (await api.response(single.entryId)).canSend,
+      'Review-only range altered single response eligibility',
+    );
+    await api.dismiss(notice.id, notice.revision);
+    require(
+      (await a.invitationDemo.simulateRange(id, key, 1, false)).id == r.id &&
+          (await api.getInvitation(r.entryId)).dismissedAt != null,
+      'Historical range retry reactivated notice',
+    );
+    require(
+      (await api.getInvitation(master.entryId)).revision == 1,
+      'Range altered master',
+    );
+    stdout.writeln(
+      'PASS: generated-client two-host range MIME, distinct single target, source/guards, cancellation/dismissal and historical retries.',
+    );
+  } finally {
+    for (final entry in entries) {
+      final current = await api.getInvitation(entry);
+      if (current.dismissedAt == null) {
+        await api.dismiss(entry, current.revision);
+      }
+    }
+  }
+}

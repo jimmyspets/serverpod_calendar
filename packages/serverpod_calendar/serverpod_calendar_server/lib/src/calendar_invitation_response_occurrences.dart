@@ -21,7 +21,7 @@ extension CalendarInvitationResponseOccurrenceOperations on CalendarService {
           context.recipient,
           tx,
         );
-        _invTargetValid(entry);
+        _invNonRange(entry);
         final entries = await _invEntries(context.recipient, tx);
         final master = entries
             .where(

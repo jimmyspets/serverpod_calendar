@@ -56,7 +56,8 @@ void require(bool value, String message) {
 Future<void> main(List<String> args) async {
   final occurrenceApply = args.contains('--occurrence-applications');
   final instanceResponses = args.contains('--instance-responses');
-  final instance = args.contains('--instances');
+  final ranges = args.contains('--ranges');
+  final instance = args.contains('--instances') || ranges;
   final recurring =
       instanceResponses ||
       occurrenceApply ||
@@ -505,6 +506,7 @@ Future<void> main(List<String> args) async {
         'caseId': id,
         'key': 'instance',
         'instance': true,
+        if (ranges) 'range': true,
         'sequence': 1,
       };
       final raced = await Future.wait([a, b].map((p) => p.command(incoming)));
@@ -523,7 +525,8 @@ Future<void> main(List<String> args) async {
         b.command({
           ...incoming,
           'key': 'period',
-          'original': '20300105T090000Z',
+          if (ranges) 'range': false,
+          'original': ranges ? '20300103T090000Z' : '20300105T090000Z',
         }),
       ]);
       require(
@@ -555,6 +558,7 @@ Future<void> main(List<String> args) async {
           'caseId': lossId,
           'key': 'loss',
           'instance': true,
+          if (ranges) 'range': true,
           'sequence': 1,
         };
         final lost = a
@@ -591,7 +595,7 @@ Future<void> main(List<String> args) async {
         a = await start('a-instance-recovered-$pause', 18780);
       }
       stdout.writeln(
-        'PASS: independent instance invitation hosts, shared-key and distinct-original races, master/native isolation, actual loss before/after commit and exact retained receipt recovery through synthetic MIME.',
+        'PASS: independent ${ranges ? 'range/single' : 'instance'} invitation hosts, shared-key and distinct-original races, master/native isolation, actual loss before/after commit and exact retained receipt recovery through synthetic MIME.',
       );
       return;
     }

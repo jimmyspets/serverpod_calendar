@@ -15,7 +15,8 @@ import 'package:serverpod_client/serverpod_client.dart' as _isc;
 enum CalendarInvitationSourceKind implements _isc.SerializableModel {
   request,
   meetingCancellation,
-  instanceCancellation;
+  instanceCancellation,
+  rangeCancellation;
 
   static CalendarInvitationSourceKind fromJson(String name) {
     switch (name) {
@@ -25,6 +26,8 @@ enum CalendarInvitationSourceKind implements _isc.SerializableModel {
         return CalendarInvitationSourceKind.meetingCancellation;
       case 'instanceCancellation':
         return CalendarInvitationSourceKind.instanceCancellation;
+      case 'rangeCancellation':
+        return CalendarInvitationSourceKind.rangeCancellation;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "CalendarInvitationSourceKind"',

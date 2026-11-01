@@ -245,3 +245,18 @@ After a current host build, `dart run tool/host_smoke.dart --invitations-only --
 ## Focused instance response checks
 
 See [selected-instance responses](single-instance-attendee-responses.md). From the example server, run `dart test test/integration/instance_invitation_responses_test.dart --concurrency=1`; use MIME/response regressions when changing the wire boundary. From the root, `dart run tool/invitation_work_smoke.dart --instance-responses` checks independent hosts and actual response-worker loss. After building the owned host bundle, `dart run tool/host_smoke.dart --browser-only --flutter --instance-responses` runs the focused Flutter journey. The full root check keeps all database, process, generated-client and browser coverage. No new SQL migration is required.
+
+Focused range-review development checks (isolated test storage):
+
+```powershell
+./tool/reset-test.ps1
+Push-Location example/calendar_example/calendar_example_server
+dart test --concurrency=1 test/integration/range_invitations_test.dart test/integration/instance_invitations_test.dart
+Pop-Location
+dart run tool/invitation_work_smoke.dart --ranges
+./tool/build-host.ps1
+dart run tool/host_smoke.dart --invitations-only
+dart run tool/host_smoke.dart --browser-only --flutter --ranges
+```
+
+The full check includes range DB/process/client/browser coverage. Stop owned hosts before rebuilding their bundle; development storage is separate. The focused commands do not replace end-of-batch checks.

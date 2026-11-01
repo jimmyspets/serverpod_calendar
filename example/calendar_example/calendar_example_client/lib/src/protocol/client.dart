@@ -274,6 +274,23 @@ class EndpointInvitationDemo extends _isc.EndpointRef {
     },
   );
 
+  /// Synthetic review-only range; never applies native future cancellation.
+  _ida.Future<_imrxcdin.CalendarInvitationReceipt> simulateRange(
+    _isc.UuidValue invitationId,
+    _isc.UuidValue commandId,
+    int sequence,
+    bool cancel,
+  ) => caller.callServerEndpoint<_imrxcdin.CalendarInvitationReceipt>(
+    'invitationDemo',
+    'simulateRange',
+    {
+      'invitationId': invitationId,
+      'commandId': commandId,
+      'sequence': sequence,
+      'cancel': cancel,
+    },
+  );
+
   _ida.Future<_imrxcdin.CalendarInvitationReceipt> simulate(
     _isc.UuidValue invitationId,
     _isc.UuidValue commandId,

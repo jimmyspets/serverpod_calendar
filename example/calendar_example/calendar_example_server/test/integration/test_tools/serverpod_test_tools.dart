@@ -576,6 +576,45 @@ class _InvitationDemoEndpoint {
     });
   }
 
+  _ida.Future<_ipn35bcd.CalendarInvitationReceipt> simulateRange(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue invitationId,
+    _is.UuidValue commandId,
+    int sequence,
+    bool cancel,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'invitationDemo',
+            method: 'simulateRange',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'invitationDemo',
+          methodName: 'simulateRange',
+          parameters: _ist.testObjectToJson({
+            'invitationId': invitationId,
+            'commandId': commandId,
+            'sequence': sequence,
+            'cancel': cancel,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ipn35bcd.CalendarInvitationReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _ida.Future<_ipn35bcd.CalendarInvitationReceipt> simulate(
     _ist.TestSessionBuilder sessionBuilder,
     _is.UuidValue invitationId,

@@ -43,6 +43,7 @@ enum CalendarInvitationOperation {
   receive,
   receiveCancellation,
   receiveOccurrence,
+  receiveRange,
   list,
   readSummary,
   readSource,

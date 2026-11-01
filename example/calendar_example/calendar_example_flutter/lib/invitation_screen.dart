@@ -27,6 +27,7 @@ class _InvitationScreenState extends State<InvitationScreen> {
   cal.CalendarInvitationView? _occurrenceEntry;
   cal.UuidValue? _occurrenceCommand;
   bool? _occurrenceCancellation;
+  bool? _occurrenceRange;
   @override
   void initState() {
     super.initState();
@@ -126,13 +127,18 @@ class _InvitationScreenState extends State<InvitationScreen> {
   });
   Future<void> _simulateOccurrence(
     cal.CalendarInvitationView entry,
-    bool cancel,
-  ) => _run(() async {
+    bool cancel, {
+    bool range = false,
+  }) => _run(() async {
     _occurrenceEntry ??= entry;
     _occurrenceCommand ??= const cal.Uuid().v4obj();
     _occurrenceCancellation ??= cancel;
+    _occurrenceRange ??= range;
     final selected = _occurrenceEntry!;
-    await widget.client.invitationDemo.simulateOccurrence(
+    final simulate = _occurrenceRange!
+        ? widget.client.invitationDemo.simulateRange
+        : widget.client.invitationDemo.simulateOccurrence;
+    await simulate(
       cal.UuidValue.fromString(selected.uid.split(':').last),
       _occurrenceCommand!,
       (selected.sequence ?? 0) + 1,
@@ -150,6 +156,7 @@ class _InvitationScreenState extends State<InvitationScreen> {
         _occurrenceEntry = null;
         _occurrenceCommand = null;
         _occurrenceCancellation = null;
+        _occurrenceRange = null;
       });
     }
   });
@@ -208,6 +215,7 @@ class _InvitationScreenState extends State<InvitationScreen> {
                 : () => _simulateOccurrence(
                     _occurrenceEntry!,
                     _occurrenceCancellation!,
+                    range: _occurrenceRange!,
                   ),
             child: const Text('Retry the same synthetic occurrence notice'),
           ),
@@ -225,7 +233,12 @@ class _InvitationScreenState extends State<InvitationScreen> {
                 children: [
                   Text(
                     entry.kind ==
-                            cal.CalendarInvitationSourceKind.meetingCancellation
+                            cal.CalendarInvitationSourceKind.rangeCancellation
+                        ? 'Range cancellation source'
+                        : entry.kind ==
+                              cal
+                                  .CalendarInvitationSourceKind
+                                  .meetingCancellation
                         ? 'Meeting cancellation notice'
                         : entry.kind ==
                               cal
@@ -234,7 +247,20 @@ class _InvitationScreenState extends State<InvitationScreen> {
                         ? 'Occurrence cancellation notice'
                         : entry.summary ?? 'Source unavailable',
                   ),
-                  if (entry.originalStart != null) ...[
+                  if (entry.isThisAndFuture) ...[
+                    Text(
+                      entry.kind ==
+                              cal.CalendarInvitationSourceKind.rangeCancellation
+                          ? 'This and future cancellation notice'
+                          : 'This and future update notice',
+                    ),
+                    Text(
+                      'First affected original: ${invitationTimingLabel(entry.originalStart!)}',
+                    ),
+                    const Text(
+                      'Review only. Calendar application and participation responses for ranges are not supported.',
+                    ),
+                  ] else if (entry.originalStart != null) ...[
                     Text(
                       entry.kind ==
                               cal
@@ -269,7 +295,7 @@ class _InvitationScreenState extends State<InvitationScreen> {
                     ),
                   Wrap(
                     children: [
-                      if (entry.originalStart != null)
+                      if (entry.originalStart != null && !entry.isThisAndFuture)
                         TextButton(
                           key: ValueKey(
                             'invitation-occurrence-apply-view-${entry.id}',
@@ -289,20 +315,21 @@ class _InvitationScreenState extends State<InvitationScreen> {
                             'Preview / apply occurrence notice',
                           ),
                         ),
-                      TextButton(
-                        key: ValueKey('invitation-response-${entry.id}'),
-                        onPressed: _busy
-                            ? null
-                            : () => Navigator.of(context).push<void>(
-                                MaterialPageRoute(
-                                  builder: (_) => InvitationResponseScreen(
-                                    client: widget.client,
-                                    id: entry.id,
+                      if (!entry.isThisAndFuture)
+                        TextButton(
+                          key: ValueKey('invitation-response-${entry.id}'),
+                          onPressed: _busy
+                              ? null
+                              : () => Navigator.of(context).push<void>(
+                                  MaterialPageRoute(
+                                    builder: (_) => InvitationResponseScreen(
+                                      client: widget.client,
+                                      id: entry.id,
+                                    ),
                                   ),
                                 ),
-                              ),
-                        child: const Text('Participation response'),
-                      ),
+                          child: const Text('Participation response'),
+                        ),
                       if (entry.originalStart == null &&
                           entry.kind ==
                               cal.CalendarInvitationSourceKind.request &&
@@ -339,7 +366,8 @@ class _InvitationScreenState extends State<InvitationScreen> {
                                 : 'View existing link',
                           ),
                         ),
-                      if (entry.recurring &&
+                      if (!entry.isThisAndFuture &&
+                          entry.recurring &&
                           entry.kind ==
                               cal.CalendarInvitationSourceKind.request &&
                           _occurrenceEntry == null)
@@ -355,6 +383,27 @@ class _InvitationScreenState extends State<InvitationScreen> {
                             entry.originalStart == null
                                 ? 'Simulate occurrence update'
                                 : 'Simulate occurrence cancellation',
+                          ),
+                        ),
+                      if (entry.recurring &&
+                          entry.kind ==
+                              cal.CalendarInvitationSourceKind.request &&
+                          (entry.originalStart == null ||
+                              entry.isThisAndFuture) &&
+                          _occurrenceEntry == null)
+                        TextButton(
+                          key: ValueKey('invitation-range-${entry.id}'),
+                          onPressed: _busy
+                              ? null
+                              : () => _simulateOccurrence(
+                                  entry,
+                                  entry.isThisAndFuture,
+                                  range: true,
+                                ),
+                          child: Text(
+                            entry.isThisAndFuture
+                                ? 'Simulate range cancellation'
+                                : 'Simulate this and future update',
                           ),
                         ),
                       TextButton(

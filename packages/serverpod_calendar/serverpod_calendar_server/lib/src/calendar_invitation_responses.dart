@@ -420,6 +420,7 @@ extension CalendarInvitationResponseOperations on CalendarService {
     CalendarInvitationRecord entry,
   ) {
     try {
+      _invNonRange(entry);
       _irRecordUnchecked(row, state, source, entry);
     } catch (_) {
       throw _failure(CalendarFailureCode.unavailable);
@@ -497,10 +498,10 @@ extension CalendarInvitationResponseOperations on CalendarService {
 
   Future<CalendarInvitationResponseView> invitationResponse(UuidValue id) =>
       _invNative((actor, recipient, tx) async {
-        _irGuarantee();
         final entry = await _invEntry(id, recipient, tx);
-        _invTargetValid(entry);
         await _irSourceRead(actor, recipient, entry, null, tx);
+        _invNonRange(entry);
+        _irGuarantee();
         final state = await _irState(recipient, id, tx);
         final source = entry.currentSourceId == null
             ? null
@@ -524,8 +525,8 @@ extension CalendarInvitationResponseOperations on CalendarService {
   invitationResponseActivity(UuidValue id) =>
       _invNative((actor, recipient, tx) async {
         final entry = await _invEntry(id, recipient, tx);
-        _invTargetValid(entry);
         await _irSourceRead(actor, recipient, entry, null, tx);
+        _invNonRange(entry);
         final state = await _irState(recipient, id, tx);
         final source = entry.currentSourceId == null
             ? null
@@ -591,10 +592,10 @@ extension CalendarInvitationResponseOperations on CalendarService {
       throw _failure(CalendarFailureCode.validation);
     }
     return _invNative((actor, recipient, tx) async {
-      _irGuarantee();
       final entry = await _invEntry(request.invitationId, recipient, tx);
-      _invTargetValid(entry);
       await _irSourceRead(actor, recipient, entry, null, tx);
+      _invNonRange(entry);
+      _irGuarantee();
       var state = await _irState(recipient, request.invitationId, tx);
       await _irAuthorize(
         _irContext(
