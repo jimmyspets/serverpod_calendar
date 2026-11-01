@@ -161,7 +161,7 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
             ),
             if (view.occurrenceRevision > 0)
               const Text(
-                'Accepted occurrence edits and individual cancellations will be preserved. Reopening the series does not restore individually cancelled occurrences.',
+                'Accepted occurrence and range edits will be preserved, including individual cancellations. Reopening the series does not restore individually cancelled occurrences.',
               ),
             if (view.occurrenceCompositionBlocked)
               const Text(

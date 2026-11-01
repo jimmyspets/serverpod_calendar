@@ -10,9 +10,11 @@ class InvitationOccurrenceApplicationScreen extends StatefulWidget {
     super.key,
     required this.client,
     required this.id,
+    this.range = false,
   });
   final Client client;
   final cal.UuidValue id;
+  final bool range;
   @override
   State<InvitationOccurrenceApplicationScreen> createState() => _State();
 }
@@ -51,8 +53,10 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
   }
 
   Future<void> _load() => _run(() async {
-    final v = await widget.client.modules.serverpod_calendar.calendarInvitation
-        .occurrenceApplication(widget.id);
+    final api = widget.client.modules.serverpod_calendar.calendarInvitation;
+    final v = await (widget.range
+        ? api.rangeApplication
+        : api.occurrenceApplication)(widget.id);
     if (mounted) {
       setState(() {
         _view = v;
@@ -77,7 +81,9 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
       expectedOccurrenceRevision: v.occurrenceRevision,
     );
     final api = widget.client.modules.serverpod_calendar.calendarInvitation;
-    final r = _cancel!
+    final r = widget.range
+        ? await api.applyRangeUpdate(_request!)
+        : _cancel!
         ? await api.applyOccurrenceCancellation(_request!)
         : await api.applyOccurrenceUpdate(_request!);
     if (mounted) {
@@ -87,7 +93,9 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
         _cancel = null;
       });
     }
-    final next = await api.occurrenceApplication(widget.id);
+    final next = await (widget.range
+        ? api.rangeApplication
+        : api.occurrenceApplication)(widget.id);
     if (mounted) {
       setState(() => _view = next);
     }
@@ -97,7 +105,9 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
     final v = _view;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Apply occurrence notice'),
+        title: Text(
+          widget.range ? 'Apply range update' : 'Apply occurrence notice',
+        ),
         bottom: _busy
             ? const PreferredSize(
                 preferredSize: Size.fromHeight(4),
@@ -111,11 +121,15 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
           const Text(
             'Explicit local calendar action. Receiving this notice sends no reply. Any local change anywhere in the linked series blocks application.',
           ),
+          if (widget.range)
+            const Text(
+              'This and future: timing propagates from the original anchor. Text changes stay at that anchor. Other explicit exceptions remain unchanged. Range cancellation and participation are not supported.',
+            ),
           if (_error != null)
             Text(_error!, key: const Key('invitation-occurrence-error')),
           if (_result != null)
             Text(
-              'Occurrence applied. Event revision ${_result!.eventRevision}.',
+              '${widget.range ? 'Range update' : 'Occurrence'} applied. Event revision ${_result!.eventRevision}.',
               key: const Key('invitation-occurrence-result'),
             ),
           if (v != null) ...[
@@ -158,13 +172,22 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
                   : _apply,
               child: Text(
                 _request != null
-                    ? 'Retry the same occurrence action'
+                    ? widget.range
+                          ? 'Retry the same range update'
+                          : 'Retry the same occurrence action'
+                    : widget.range
+                    ? 'Apply range update'
                     : v.incomingKind ==
                           cal.CalendarInvitationSourceKind.instanceCancellation
                     ? 'Apply occurrence cancellation'
                     : 'Apply occurrence update',
               ),
             ),
+            if (v.incomingKind ==
+                cal.CalendarInvitationSourceKind.rangeCancellation)
+              const Text(
+                'Range cancellation remains review-only. The calendar series is unchanged by this notice.',
+              ),
             const Text(
               'New whole-series sources preserve accepted occurrence edits and individual cancellations. Updates that remove an accepted original are rejected.',
             ),

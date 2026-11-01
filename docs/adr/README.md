@@ -167,7 +167,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0155](0155-pure-range-invitation-projection.md) | Pure range REQUEST application projection | Accepted 2026-11-01; scoped pure range REQUEST projection; no durable range mutation |
 
-| [0156](0156-explicit-range-invitation-application.md) | Explicit range REQUEST application and master composition | Proposed 2026-11-01; private JSON/view/API mechanics require agreement; no durable range implementation |
+| [0156](0156-explicit-range-invitation-application.md) | Explicit range REQUEST application and master composition | Accepted 2026-11-01; explicit range REQUEST application and canonical master composition; validation separate |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

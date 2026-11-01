@@ -23,6 +23,7 @@ import 'calendar_invitation_source_kind.dart' as _ilccsff7;
 abstract class CalendarInvitationOccurrenceApplicationView
     implements _is.SerializableModel, _is.ProtocolSerialization {
   const CalendarInvitationOccurrenceApplicationView._({
+    bool? isThisAndFuture,
     required this.linkId,
     required this.invitationId,
     required this.calendarId,
@@ -45,9 +46,10 @@ abstract class CalendarInvitationOccurrenceApplicationView
     this.acceptedSourceText,
     required this.canApply,
     this.latestResult,
-  });
+  }) : isThisAndFuture = isThisAndFuture ?? false;
 
   const factory CalendarInvitationOccurrenceApplicationView({
+    bool? isThisAndFuture,
     required _is.UuidValue linkId,
     required _is.UuidValue invitationId,
     required _is.UuidValue calendarId,
@@ -76,6 +78,11 @@ abstract class CalendarInvitationOccurrenceApplicationView
     Map<String, dynamic> jsonSerialization,
   ) {
     return CalendarInvitationOccurrenceApplicationView(
+      isThisAndFuture: jsonSerialization['isThisAndFuture'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(
+              jsonSerialization['isThisAndFuture'],
+            ),
       linkId: _is.UuidValueJsonExtension.fromJson(jsonSerialization['linkId']),
       invitationId: _is.UuidValueJsonExtension.fromJson(
         jsonSerialization['invitationId'],
@@ -142,6 +149,8 @@ abstract class CalendarInvitationOccurrenceApplicationView
     );
   }
 
+  final bool isThisAndFuture;
+
   final _is.UuidValue linkId;
 
   final _is.UuidValue invitationId;
@@ -190,6 +199,7 @@ abstract class CalendarInvitationOccurrenceApplicationView
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
   CalendarInvitationOccurrenceApplicationView copyWith({
+    bool? isThisAndFuture,
     _is.UuidValue? linkId,
     _is.UuidValue? invitationId,
     _is.UuidValue? calendarId,
@@ -221,6 +231,11 @@ abstract class CalendarInvitationOccurrenceApplicationView
         ) ||
         other.runtimeType == runtimeType &&
             other is CalendarInvitationOccurrenceApplicationView &&
+            (identical(
+                  other.isThisAndFuture,
+                  isThisAndFuture,
+                ) ||
+                other.isThisAndFuture == isThisAndFuture) &&
             (identical(
                   other.linkId,
                   linkId,
@@ -337,6 +352,7 @@ abstract class CalendarInvitationOccurrenceApplicationView
   int get hashCode {
     return Object.hashAll([
       runtimeType,
+      isThisAndFuture,
       linkId,
       invitationId,
       calendarId,
@@ -367,6 +383,7 @@ abstract class CalendarInvitationOccurrenceApplicationView
     return {
       '__className__':
           'serverpod_calendar.CalendarInvitationOccurrenceApplicationView',
+      'isThisAndFuture': isThisAndFuture,
       'linkId': linkId.toJson(),
       'invitationId': invitationId.toJson(),
       'calendarId': calendarId.toJson(),
@@ -400,6 +417,7 @@ abstract class CalendarInvitationOccurrenceApplicationView
     return {
       '__className__':
           'serverpod_calendar.CalendarInvitationOccurrenceApplicationView',
+      'isThisAndFuture': isThisAndFuture,
       'linkId': linkId.toJson(),
       'invitationId': invitationId.toJson(),
       'calendarId': calendarId.toJson(),
@@ -441,6 +459,7 @@ class _Undefined {}
 class _CalendarInvitationOccurrenceApplicationViewImpl
     extends CalendarInvitationOccurrenceApplicationView {
   const _CalendarInvitationOccurrenceApplicationViewImpl({
+    bool? isThisAndFuture,
     required _is.UuidValue linkId,
     required _is.UuidValue invitationId,
     required _is.UuidValue calendarId,
@@ -464,6 +483,7 @@ class _CalendarInvitationOccurrenceApplicationViewImpl
     required bool canApply,
     _iyajy5op.CalendarInvitationOccurrenceApplyReceipt? latestResult,
   }) : super._(
+         isThisAndFuture: isThisAndFuture,
          linkId: linkId,
          invitationId: invitationId,
          calendarId: calendarId,
@@ -493,6 +513,7 @@ class _CalendarInvitationOccurrenceApplicationViewImpl
   @_is.useResult
   @override
   CalendarInvitationOccurrenceApplicationView copyWith({
+    bool? isThisAndFuture,
     _is.UuidValue? linkId,
     _is.UuidValue? invitationId,
     _is.UuidValue? calendarId,
@@ -517,6 +538,7 @@ class _CalendarInvitationOccurrenceApplicationViewImpl
     Object? latestResult = _Undefined,
   }) {
     return CalendarInvitationOccurrenceApplicationView(
+      isThisAndFuture: isThisAndFuture ?? this.isThisAndFuture,
       linkId: linkId ?? this.linkId,
       invitationId: invitationId ?? this.invitationId,
       calendarId: calendarId ?? this.calendarId,
