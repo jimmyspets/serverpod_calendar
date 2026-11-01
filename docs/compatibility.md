@@ -486,3 +486,5 @@ Accepted [ADR 0149](adr/0149-trusted-single-instance-invitation-review.md) adds 
 Accepted [ADR 0150](adr/0150-pure-instance-invitation-projection.md) is a pure mapping prerequisite, not implemented native instance application. Minimal CANCEL omissions and retained canonical timing/inheritance remain distinct; unsupported differences must reject. Existing file-export mapping guards and all external-client evidence gates remain unchanged.
 
 Accepted ADR 0150 provides a [pure occurrence proposal](instance-invitation-projection.md), including CANCEL-only unanchored duration preservation. This does not extend native instance-application or external-client compatibility claims; durable writes, instance replies and RANGE remain separate.
+
+Proposed [ADR 0151](adr/0151-explicit-single-instance-invitation-application.md) would enable explicit single-instance calendar application with clean entire-series checks and independent acceptance evidence. Its proposed master-composition guard, table, quotas and retained source state are not implemented. No new client interoperability or real transport evidence follows.

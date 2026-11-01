@@ -630,3 +630,12 @@ Completed ADR 0149 implementation is in PR #129. The maintainer confirmed whole-
 - [ ] Separately review durable application/checkpoints, master-update composition and retry/retention mechanics.
 
 Instance mutation/replies and RANGE remain original-scope requirements; this prerequisite alone completes none of those runtime paths.
+
+## Explicit occurrence application proposal
+
+Completed ADR 0150 implementation is in PR #131. Proposed [ADR 0151](adr/0151-explicit-single-instance-invitation-application.md) groups the next durable batch; the clean entire-series rule is already confirmed.
+
+- [ ] Review one private acceptance table, independent target versions, bounded active source retention/quotas, latest-only per-link retries and explicit master-composition guard.
+- [ ] Implement approved transactional preview/apply, generated migrations/clients, independent authority and Flutter controls.
+- [ ] Verify focused boundaries, fresh/populated upgrades, actual two-host/process-loss recovery and complete batch checks before one implementation commit.
+- [ ] Follow with reviewed master/instance composition, instance responses and RANGE reconciliation; do not treat the temporary guard as completed lifecycle support.
