@@ -51,7 +51,8 @@ final class TimedEventRangeChange {
       utcMicroseconds(civilEncoding(originalStart.civil));
 }
 
-/// Native bounded timed series. Single overrides take precedence over ranges.
+/// Native bounded timed series. Single overrides take precedence over timing
+/// ranges; an optional original-identity cutoff suppresses both independently.
 /// Construction validates all anchors in one shared bounded membership scan.
 final class TimedEventSeries {
   /// Optional [sharedWorkBudget] charges anchor-membership candidate work across
@@ -61,6 +62,7 @@ final class TimedEventSeries {
     required this.span,
     List<TimedEventException> exceptions = const [],
     List<TimedEventRangeChange> changes = const [],
+    this.cancelledFrom,
     required int maxChanges,
     required int maxValidationCandidateWork,
     required int maxValidationOccurrences,
@@ -75,7 +77,8 @@ final class TimedEventSeries {
       DateRecurrenceRule.maxScalar,
       'maxChanges',
     );
-    if (exceptions.length + changes.length > maxChanges) {
+    if (exceptions.length + changes.length + (cancelledFrom == null ? 0 : 1) >
+        maxChanges) {
       throw const RecurrenceLimitException('maxChanges');
     }
     for (final e in {
@@ -104,6 +107,8 @@ final class TimedEventSeries {
         throw ArgumentError('Duplicate or ambiguous range anchor');
       }
     }
+    cancelledFrom?.civil.date.requireOrdinary('cancelledFrom');
+    if (cancelledFrom != null) anchors.add(cancelledFrom!);
     for (final a in anchors) {
       if (!span.start.sameProfile(a)) {
         throw ArgumentError('Anchor profile mismatch');
@@ -139,6 +144,10 @@ final class TimedEventSeries {
   final TimedEventSpan span;
   late final Map<TimedValue, TimedEventException> exceptions;
   late final List<TimedEventRangeChange> changes;
+
+  /// Inclusive original civil cutoff in the exact series profile. Retained
+  /// singles and timing ranges remain intact; this is not a source ledger.
+  final TimedValue? cancelledFrom;
 
   /// Scans original history once, including pre-query candidates, under shared
   /// caps. Conservative inverse range bounds include future originals moved in.
@@ -219,6 +228,9 @@ final class TimedEventSeries {
     }
 
     for (final original in originals) {
+      if (cancelledFrom != null && original.compareTo(cancelledFrom!) >= 0) {
+        continue;
+      }
       if (exceptions.containsKey(original)) continue;
       TimedEventRangeChange? active;
       for (final c in changes) {
@@ -242,6 +254,10 @@ final class TimedEventSeries {
     }
     // An overridden occurrence can move into the query from either direction.
     for (final e in exceptions.values) {
+      if (cancelledFrom != null &&
+          e.originalStart.compareTo(cancelledFrom!) >= 0) {
+        continue;
+      }
       if (e.replacement != null) {
         add(e.originalStart, e.replacement!.start, e.replacement!.resolved);
       }
