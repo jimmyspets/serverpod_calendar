@@ -1,6 +1,6 @@
 # ADR 0157: Pure event future-cancellation cutoff
 
-Status: **Proposed; cancel-all/preserve-exceptions policy is confirmed. Concrete core APIs and validation mechanics await explicit approval.**
+Status: **Accepted 2026-11-01 by explicit maintainer approval of the proposed core batch. Implementation evidence is recorded separately.**
 
 ## Context and inspected evidence
 
@@ -10,7 +10,7 @@ Inspected `DateEventRangeSet`, `DateEventExceptionSet`, `TimedEventSeries`, `Tim
 
 [RFC 5546 section 3.2.5](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.5) describes THISANDFUTURE cancellation of the specified instance and later instances. [RFC 5545 section 3.8.4.4](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.4.4) orders instances by original RECURRENCE-ID and discusses separately defined components under rescheduling. Our cancel-all policy is explicit; do not substitute timing-range single-exception precedence for cancellation or claim external-client behavior from pure tests.
 
-## Proposed grouped core increment
+## Approved grouped core increment
 
 Add optional immutable `cancelledFrom` original identity to `DateEventRangeSet` (`CalendarDate?`) and `TimedEventSeries` (`TimedValue?`). Omitted values preserve existing behavior. This is one effective open-ended cutoff, not a source-message ledger or restoration history.
 
@@ -42,6 +42,9 @@ A cancellation flag on timing changes mixes lifecycle with timing and risks late
 
 ## Acceptance conditions
 
-After explicit maintainer agreement, implement DATE and UTC/named-zone behavior together. Test inclusive cutoff, moved earlier/later originals, singles/later ranges, same-anchor coexistence, existing single cancellation, earlier RDATE/PERIOD, EXDATE/orphan/profile rejection, DST gaps/folds and supported horizon boundaries. Verify reconstruction without a cutoff, immutability/equality, change/work/raw/base/result limits, shared budgets, unchanged no-cutoff results and no partial output. Include an independently calculated finite expected-occurrence oracle.
+The maintainer explicitly approved these concrete mechanics on 2026-11-01. Implement DATE and UTC/named-zone behavior together. Test inclusive cutoff, moved earlier/later originals, singles/later ranges, same-anchor coexistence, existing single cancellation, earlier RDATE/PERIOD, EXDATE/orphan/profile rejection, DST gaps/folds and supported horizon boundaries. Verify reconstruction without a cutoff, immutability/equality, change/work/raw/base/result limits, shared budgets, unchanged no-cutoff results and no partial output. Include an independently calculated finite expected-occurrence oracle.
 
 Use focused core VM tests during development; at batch completion run formatting/workspace analysis, complete core/iCalendar VM+Chrome and directly affected module regressions. Full repository CI remains required before readiness. Record actual/deferred checks and commit only the completed batch. Approval enables only these pure mechanics, not later persistence, restoration, reconciliation or publication designs.
+
+
+The scoped implementation is described in [the core guide](../event-future-cancellation-core.md); actual checks are recorded in [validation](../scaffold-validation.md). Durable range cancellation and restoration remain separate.
