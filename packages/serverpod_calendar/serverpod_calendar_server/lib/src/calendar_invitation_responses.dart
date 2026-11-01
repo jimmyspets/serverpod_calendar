@@ -21,16 +21,41 @@ extension CalendarInvitationResponseOperations on CalendarService {
     CalendarAuthorizationPhase phase,
   ) async {
     _irGuarantee();
-    final verdict = await _bounded(
-      () => _irRuntime.host.authorize(_session, context, tx, phase),
-    );
-    _irGuarantee();
-    if (verdict != CalendarAuthorizationVerdict.allow) {
-      throw _failure(
-        verdict == CalendarAuthorizationVerdict.deny
-            ? CalendarFailureCode.accessDenied
-            : CalendarFailureCode.unavailable,
+    final evidence = await _irEvidence(context, tx);
+    final current = evidence.context;
+    final extra = current.invitation.originalStart == null
+        ? null
+        : switch (current.operation) {
+            CalendarInvitationResponseOperation.send =>
+              CalendarInvitationResponseOperation.sendOccurrence,
+            CalendarInvitationResponseOperation.dispatch =>
+              CalendarInvitationResponseOperation.dispatchOccurrence,
+            _ => null,
+          };
+    for (final op in [current.operation, ?extra]) {
+      final candidate = current.withOccurrence(
+        basis: current.occurrenceBasis,
+        unavailable: current.occurrenceBasisUnavailable,
+        state: current.currentState,
+        operation: op,
       );
+      final verdict = await _bounded(
+        () => _irRuntime.host.authorize(_session, candidate, tx, phase),
+      );
+      _irGuarantee();
+      if (verdict != CalendarAuthorizationVerdict.allow) {
+        throw _failure(
+          verdict == CalendarAuthorizationVerdict.deny
+              ? CalendarFailureCode.accessDenied
+              : CalendarFailureCode.unavailable,
+        );
+      }
+    }
+    if (evidence.error != null &&
+        (current.operation == CalendarInvitationResponseOperation.dispatch ||
+            current.operation == CalendarInvitationResponseOperation.send &&
+                !current.isRetry)) {
+      throw _failure(evidence.error!);
     }
   }
 
@@ -39,6 +64,10 @@ extension CalendarInvitationResponseOperations on CalendarService {
     CalendarInvitationResponseStateRecord? state,
   ) => CalendarInvitationResponseView(
     invitationId: entry.id!,
+    originalStart: entry.originalStart,
+    canSend:
+        entry.kind == CalendarInvitationSourceKind.request &&
+        entry.currentSourceId != null,
     revision: state?.revision ?? 0,
     responseId: state?.latestResponseId,
     choice: state?.choice,
@@ -212,9 +241,16 @@ extension CalendarInvitationResponseOperations on CalendarService {
             '-//Serverpod calendar attendee response//EN',
           ),
           IcalendarSyntaxProperty('METHOD', 'REPLY'),
+          if (event.originalTime?.zoneId != null)
+            createIcalendarTimeZone(event.originalTime!.zoneId!),
           IcalendarSyntaxComponent('VEVENT', [
             IcalendarSyntaxProperty('UID', encodeIcalendarText(event.uid)),
             IcalendarSyntaxProperty('DTSTAMP', date),
+            if (event.isOverride)
+              EventComponentWriter().time(
+                'RECURRENCE-ID',
+                _replyOriginal(event)!,
+              ),
             if (event.sequence != null)
               IcalendarSyntaxProperty('SEQUENCE', '${event.sequence}'),
             IcalendarSyntaxProperty('ORGANIZER', authority.organizer.address),
@@ -463,7 +499,7 @@ extension CalendarInvitationResponseOperations on CalendarService {
       _invNative((actor, recipient, tx) async {
         _irGuarantee();
         final entry = await _invEntry(id, recipient, tx);
-        _invMasterOnly(entry);
+        _invTargetValid(entry);
         await _irSourceRead(actor, recipient, entry, null, tx);
         final state = await _irState(recipient, id, tx);
         final source = entry.currentSourceId == null
@@ -482,13 +518,13 @@ extension CalendarInvitationResponseOperations on CalendarService {
               sourceMessage: source == null ? null : _invStored(source, entry),
             );
         await _irAuthorize(context, tx, CalendarAuthorizationPhase.read);
-        return view;
+        return (await _irEvidence(context, tx)).context.currentState;
       });
   Future<List<CalendarInvitationResponseActivityView>>
   invitationResponseActivity(UuidValue id) =>
       _invNative((actor, recipient, tx) async {
         final entry = await _invEntry(id, recipient, tx);
-        _invMasterOnly(entry);
+        _invTargetValid(entry);
         await _irSourceRead(actor, recipient, entry, null, tx);
         final state = await _irState(recipient, id, tx);
         final source = entry.currentSourceId == null
@@ -557,7 +593,7 @@ extension CalendarInvitationResponseOperations on CalendarService {
     return _invNative((actor, recipient, tx) async {
       _irGuarantee();
       final entry = await _invEntry(request.invitationId, recipient, tx);
-      _invMasterOnly(entry);
+      _invTargetValid(entry);
       await _irSourceRead(actor, recipient, entry, null, tx);
       var state = await _irState(recipient, request.invitationId, tx);
       await _irAuthorize(
@@ -680,7 +716,13 @@ extension CalendarInvitationResponseOperations on CalendarService {
         throw _failure(CalendarFailureCode.unavailable);
       }
       final authority = _irAuthority(
-        await _bounded(() => _irRuntime.host.resolve(_session, read, tx)),
+        await _bounded(
+          () async => _irRuntime.host.resolve(
+            _session,
+            (await _irEvidence(read, tx)).context,
+            tx,
+          ),
+        ),
         recipient,
         basis,
       );
@@ -744,6 +786,8 @@ extension CalendarInvitationResponseOperations on CalendarService {
         sourceSequence: source.sequence,
         sourceStamp: source.stamp,
         appliesToCurrentSource: true,
+        originalStart: entry.originalStart,
+        canSend: true,
         deliveryState: CalendarInvitationResponseDeliveryState.queued,
       );
       final context = _irContext(

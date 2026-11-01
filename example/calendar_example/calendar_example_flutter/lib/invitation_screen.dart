@@ -247,7 +247,7 @@ class _InvitationScreenState extends State<InvitationScreen> {
                       'Original: ${invitationTimingLabel(entry.originalStart!)}',
                     ),
                     const Text(
-                      'Review only. Calendar application and participation responses are unavailable for this notice.',
+                      'Occurrence notice. Calendar application and participation responses are separate explicit actions.',
                     ),
                   ] else if (entry.recurring)
                     const Text('Recurring series'),
@@ -289,21 +289,20 @@ class _InvitationScreenState extends State<InvitationScreen> {
                             'Preview / apply occurrence notice',
                           ),
                         ),
-                      if (entry.originalStart == null)
-                        TextButton(
-                          key: ValueKey('invitation-response-${entry.id}'),
-                          onPressed: _busy
-                              ? null
-                              : () => Navigator.of(context).push<void>(
-                                  MaterialPageRoute(
-                                    builder: (_) => InvitationResponseScreen(
-                                      client: widget.client,
-                                      id: entry.id,
-                                    ),
+                      TextButton(
+                        key: ValueKey('invitation-response-${entry.id}'),
+                        onPressed: _busy
+                            ? null
+                            : () => Navigator.of(context).push<void>(
+                                MaterialPageRoute(
+                                  builder: (_) => InvitationResponseScreen(
+                                    client: widget.client,
+                                    id: entry.id,
                                   ),
                                 ),
-                          child: const Text('Participation response'),
-                        ),
+                              ),
+                        child: const Text('Participation response'),
+                      ),
                       if (entry.originalStart == null &&
                           entry.kind ==
                               cal.CalendarInvitationSourceKind.request &&

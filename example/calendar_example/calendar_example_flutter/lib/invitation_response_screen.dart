@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
 
+import 'invitation_timing_label.dart';
+
 class InvitationResponseScreen extends StatefulWidget {
   const InvitationResponseScreen({
     super.key,
@@ -104,12 +106,16 @@ class _InvitationResponseScreenState extends State<InvitationResponseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final eligible =
-        _invitation?.kind == cal.CalendarInvitationSourceKind.request &&
-        _invitation?.sourceId != null;
+    final eligible = _response?.canSend ?? false;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Invitation response'),
+        bottom: _busy
+            ? const PreferredSize(
+                preferredSize: Size.fromHeight(4),
+                child: LinearProgressIndicator(),
+              )
+            : null,
         actions: [
           IconButton(
             key: const Key('response-refresh'),
@@ -124,8 +130,12 @@ class _InvitationResponseScreenState extends State<InvitationResponseScreen> {
           const Text(
             'Send an explicit participation response. Adding to a calendar, applying updates and dismissing the invitation are separate actions. This example records synthetic mail only.',
           ),
-          if (_busy) const LinearProgressIndicator(),
-          if (_invitation?.recurring == true)
+          if (_response?.originalStart != null)
+            Text(
+              'This response is only for original occurrence: ${invitationTimingLabel(_response!.originalStart!)}',
+              key: const Key('response-original'),
+            )
+          else if (_invitation?.recurring == true)
             const Text(
               'Recurring series: this response applies to the whole series.',
             ),

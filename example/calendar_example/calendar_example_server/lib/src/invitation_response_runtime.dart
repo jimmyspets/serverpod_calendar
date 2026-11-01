@@ -16,6 +16,26 @@ final class DemoInvitationResponseHost
   @override
   CalendarAuthorizationGuarantee get guarantee =>
       CalendarAuthorizationGuarantee.freshCheck;
+  String _original(IcalendarSchedulingEvent event) {
+    final date = event.originalDate, time = event.originalTime;
+    return jsonEncode(
+      date != null
+          ? ['date', date.year, date.month, date.day]
+          : time == null
+          ? null
+          : [
+              'time',
+              time.zoneId,
+              time.civil.date.year,
+              time.civil.date.month,
+              time.civil.date.day,
+              time.civil.hour,
+              time.civil.minute,
+              time.civil.second,
+            ],
+    );
+  }
+
   Future<bool> _allowed(
     Session session,
     CalendarInvitationResponsePolicyContext c,
@@ -45,7 +65,10 @@ final class DemoInvitationResponseHost
       return false;
     }
     if (c.actor == null &&
-        c.operation != CalendarInvitationResponseOperation.dispatch) {
+        !{
+          CalendarInvitationResponseOperation.dispatch,
+          CalendarInvitationResponseOperation.dispatchOccurrence,
+        }.contains(c.operation)) {
       return false;
     }
     if (c.operation != CalendarInvitationResponseOperation.read) {
@@ -61,6 +84,12 @@ final class DemoInvitationResponseHost
           ) ||
           outgoing.method != IcalendarSchedulingMethod.reply ||
           outgoing.uid != c.invitation.uid ||
+          source.events.single.isOverride !=
+              outgoing.events.single.isOverride ||
+          outgoing.events.single.isThisAndFuture ||
+          _original(source.events.single) !=
+              _original(outgoing.events.single) ||
+          source.events.single.sequence != outgoing.events.single.sequence ||
           outgoing.events.single.participants.attendees.single.address !=
               c.recipient.calendarAddress ||
           outgoing.events.single.participants.organizer?.address !=

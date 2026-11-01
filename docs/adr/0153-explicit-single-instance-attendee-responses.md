@@ -1,6 +1,6 @@
 # ADR 0153: Explicit single-instance attendee responses
 
-Status: **Proposed 2026-10-31. No runtime or model approval is inferred from the preceding batch.**
+Status: **Accepted 2026-10-31. The maintainer explicitly approved the complete response batch, including authority, carrier refinements and reused storage. Actual implementation validation is recorded separately.**
 
 ## Context and evidence
 
@@ -8,7 +8,7 @@ Accepted ADRs 0146/0148 implement explicit private non-recurring/recurring-maste
 
 Inspected the response service, worker, host context, three response tables, known-series basis resolver, generated views, MIME recording and Flutter controls. [RFC 5546 section 3.2.3](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.3) profiles REPLY and its instance identity; [section 3.7.1](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.7.1) describes independent recurring-instance references and versions. Primary text checked 2026-10-31. The narrower admission, persistence and lifecycle rules below are application policy.
 
-## Proposed grouped scope
+## Accepted grouped scope
 
 Extend the existing explicit Accept/Tentative/Decline workflow to a selected current single-instance REQUEST already admitted through trusted known-series intake. Require its exact original and source/revisions; reject RANGE, bundles, detached unknown-series claims and instance CANCEL as new response bases. Do not add arbitrary occurrence selection from a master in this increment. A response changes only private participation/outbound state for that selected entry, never the master response or sibling instances.
 
@@ -16,7 +16,7 @@ Keep calendar actions independent: adding/applying the meeting is not required t
 
 The minimal outgoing REPLY includes exact UID and original RECURRENCE-ID, the selected REQUEST's independently optional SEQUENCE, actual strictly later whole-second database DTSTAMP, verified ORGANIZER route and one verified ATTENDEE/PARTSTAT. Never substitute moved DTSTART, master SEQUENCE, a calendar label or an unverified address. Preserve DATE versus UTC versus exact named-zone original identity, use bounded pinned-zone output/validation when required, and retain existing 32 KiB payload limits. Omit range, timing, title, source alarms, links, participants beyond the verified responder and optional descriptive data. An older component version is not silently normalized; the organizer still validates freshness.
 
-## Proposed authority and lifecycle
+## Accepted authority and lifecycle
 
 Require existing invitation/source-read and personal response read/send/dispatch authority. Add `sendOccurrence` and `dispatchOccurrence` operations to the response host contract, checked in addition to ordinary send/dispatch for instance commands and workers; retained command retries still require the instance-send gate. Supply immutable actual selected invitation/source/original and available known-series basis, current/proposed private response, complete outgoing message/digest and trusted recipient/route to preliminary/final/dispatch authorization. Background workers fabricate no actor. Fresh external policy retains its documented after-check race.
 
@@ -24,7 +24,7 @@ Before dispatch/retry, recheck current selected source/generation, known-series 
 
 Preserve exact retained command retries before new admission. Reauthorize actual current/retained evidence, returning the original immutable receipt without resending, changing native state or dismissing a newer notice. Expose unavailable current basis explicitly to trusted policy rather than inventing it. Existing strictly later database-second clocks, command UUID criteria binding, CAS, source pins, terminal pruning, worker leases/fences, quotas and expiry remain.
 
-## Proposed storage and API
+## Accepted storage and API
 
 Reuse the existing state/delivery/attempt tables and limits. They already key state by invitation entry, and instance entries have separate stable identities. No new SQL table/column, retention expansion or invented progress/history is proposed. Master payload bytes and retained hashes remain unchanged; first instance deliveries use the approved new target-aware projection and record validation.
 
@@ -36,4 +36,4 @@ Test DATE/UTC/named zones and DST, moved originals, independent source sequence 
 
 Responding to arbitrary originals from a master requires a separate selection/version contract and is deferred. Requiring calendar adoption would break the confirmed separation between participation and calendar actions. Automatically copying master participation onto instances or changing local events would invent user intent. RANGE responses, delegation, counters, source adoption, broader reconciliation and real transport remain separate original-scope work. No external scheduling-client interoperability is claimed from synthetic evidence.
 
-The repository requires explicit agreement on this concrete protocol/authority/model batch before implementation. This proposal does not change runtime behavior.
+The maintainer explicitly approved this complete protocol/authority/model batch. See [the implementation guide](../single-instance-attendee-responses.md) and [actual validation](../scaffold-validation.md).
