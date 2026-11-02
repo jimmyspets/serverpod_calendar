@@ -10,6 +10,7 @@ import 'event_wire_storage.dart';
 import 'generated/protocol.dart';
 
 part 'invitation_range_cancellation_values.dart';
+part 'invitation_range_restoration_values.dart';
 
 /// A pure proposal, never proof of origin, freshness, a clean baseline or rights.
 final class CalendarInvitationOccurrenceProjection {

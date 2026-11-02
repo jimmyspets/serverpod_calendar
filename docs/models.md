@@ -845,6 +845,6 @@ Accepted [ADR 0159](adr/0159-pure-range-cancellation-projection.md) implements a
 [Accepted ADR 0162](adr/0162-master-lifecycle-with-accepted-range-cancellation.md) implements explicit whole-series CANCEL/reopening while preserving the accepted range cutoff, canonical exceptions and original source receipts. Existing JSON v6 binds current master kind/composition separately from frozen cancellation evidence. The conservative whole-CANCEL floor includes the historical range version; existing APIs/views/SQL and caps are reused. Source-cutoff restoration and new occurrence applications remain separate. See [the implementation profile](range-cancellation-master-lifecycle.md) and actual validation.
 
 
-## Proposed restore-only source projection
+## Pure restore-only source projection
 
-[Proposed ADR 0163](adr/0163-pure-restore-only-range-source-projection.md) follows the confirmed same-cutoff/retained-values policy. It proposes pure exact-identity/timing/content matching, a conservative independent source-version floor and an immutable candidate clearing only the cutoff while preserving exceptions and canonical versions. Concrete mechanics await explicit approval. No durable restoration, checkpoint/API change or relaxation of existing service guards is implemented by this proposal.
+[Accepted ADR 0163](adr/0163-pure-restore-only-range-source-projection.md) implements pure same-cutoff timing/content matching, a conservative independent source-version floor and an immutable candidate clearing only the cutoff. Retained exceptions and canonical versions stay unchanged. See [the exact profile](range-restoration-projection.md) and actual validation. No durable restoration, checkpoint/API change or relaxation of service guards follows.

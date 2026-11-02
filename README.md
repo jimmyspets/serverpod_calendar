@@ -236,4 +236,4 @@ See [CI checks](docs/continuous-integration.md) for pull-request documentation/r
 
 [Single-instance invitation review](docs/single-instance-invitation-review.md) adds known-series occurrence updates/cancellations as private unapplied notices. Receiving or dismissing them changes no calendar or participation state; instance application and replies remain separate work.
 
-The next [restore-only source projection proposal](docs/adr/0163-pure-restore-only-range-source-projection.md) is under review. Source-cutoff restoration remains unavailable; the proposal does not change runtime support.
+A [pure restore-only source validator](docs/range-restoration-projection.md) can now match the saved cutoff and retained values without rewriting exceptions. Durable source-cutoff restoration remains unavailable.
