@@ -9,7 +9,7 @@ typedef _OccurrenceAccepted = ({
 String _occLatestKey(
   Map<String, dynamic> state,
   CalendarInvitationOccurrenceApplyReceipt receipt,
-) => {3, 4, 5}.contains(state['version'])
+) => {3, 4, 5, 6}.contains(state['version'])
     ? state['latestTargetKey'] as String
     : _invTargetKey(receipt.originalStart);
 
@@ -20,10 +20,13 @@ String _occReceiptDigest(Map<String, dynamic> state) {
   final key = _occLatestKey(state, receipt);
   if (_occHasRangeCancellation(state)) {
     return _invitationHash([
-      state['version'] == 5
+      state['version'] == 6
+          ? 'range-cancel-receipt-v6'
+          : state['version'] == 5
           ? 'range-cancel-receipt-v5'
           : 'range-cancel-receipt-v4',
-      if (state['version'] == 5) state['compositionDigest'] as String,
+      if ({5, 6}.contains(state['version']))
+        state['compositionDigest'] as String,
       key,
       state['requestDigest'] as String,
       jsonEncode(_occOrdered(receipt.toJson())),
@@ -215,7 +218,7 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
         throw StateError('Invalid checkpoint');
       }
       final state = jsonDecode(row.stateJson) as Map<String, dynamic>;
-      if (!{1, 2, 3, 4, 5}.contains(state['version']) ||
+      if (!{1, 2, 3, 4, 5, 6}.contains(state['version']) ||
           state['masterDigest'] != _occMasterDigest(link, master) ||
           state['baselineDigest'] !=
               _invBaselineDigest(event.data.importBaseline!)) {
@@ -241,7 +244,7 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
         }
         final original = CalendarEventTiming.fromJson(target['original']);
         final range = (target['key'] as String).startsWith('range-v1:');
-        if (range && !{3, 4, 5}.contains(state['version'])) {
+        if (range && !{3, 4, 5, 6}.contains(state['version'])) {
           throw StateError('Legacy range target');
         }
         final key = _invTargetKey(original, range: range);
@@ -311,9 +314,21 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
       }
       final latestKey = _occLatestKey(state, receipt);
       final selected = _occLatestTarget(state);
-      if (state['version'] == 5 &&
+      if (state['version'] == 6 &&
           (master == null ||
-              master.kind != CalendarInvitationSourceKind.request ||
+              !{
+                CalendarInvitationSourceKind.request,
+                CalendarInvitationSourceKind.meetingCancellation,
+              }.contains(master.kind) ||
+              (accepted.content.status == CalendarEventStatus.cancelled) !=
+                  (master.kind ==
+                      CalendarInvitationSourceKind.meetingCancellation))) {
+        throw StateError('Invalid lifecycle kind/status');
+      }
+      if ({5, 6}.contains(state['version']) &&
+          (master == null ||
+              state['version'] == 5 &&
+                  master.kind != CalendarInvitationSourceKind.request ||
               receipt.occurrenceRevision >= row.revision ||
               receipt.eventRevision >= row.eventRevision)) {
         throw StateError('Invalid composed cancellation history');
@@ -342,7 +357,7 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
               .hasMatch(state['requestDigest'] as String)) {
         throw StateError('Invalid result');
       }
-      if ({2, 3, 4, 5}.contains(state['version'])) {
+      if ({2, 3, 4, 5, 6}.contains(state['version'])) {
         if (state['receiptDigest'] != _occReceiptDigest(state)) {
           throw StateError('Invalid retained result binding');
         }

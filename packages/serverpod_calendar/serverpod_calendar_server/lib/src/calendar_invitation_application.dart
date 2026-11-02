@@ -220,7 +220,10 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         CalendarInvitationOperation.composeAcceptedOccurrences,
       if (masked && (input != null || compositionPreview))
         CalendarInvitationOperation.composeAcceptedRangeCancellation,
-      if (compositionPreview) CalendarInvitationOperation.apply,
+      if (compositionPreview)
+        message?.method == IcalendarSchedulingMethod.cancel
+            ? CalendarInvitationOperation.applyCancellation
+            : CalendarInvitationOperation.apply,
       if ({
         CalendarInvitationOperation.apply,
         CalendarInvitationOperation.applyCancellation,
@@ -457,11 +460,6 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       (source, message) = await _invAcceptedBody(accepted, link, recipient, tx);
     }
     if (occurrenceState != null &&
-        (!_occHasRangeCancellation(occurrenceState) ||
-            message?.method == IcalendarSchedulingMethod.request &&
-                accepted.kind == CalendarInvitationSourceKind.request &&
-                _occAccepted(event.data.importBaseline!).content.status !=
-                    CalendarEventStatus.cancelled) &&
         message != null &&
         entry?.currentSourceId != null) {
       try {
@@ -502,6 +500,10 @@ extension CalendarInvitationApplicationOperations on CalendarService {
                     baseline: composedBaseline,
                     member: candidate,
                     master: null,
+                    lifecycle:
+                        message.method == IcalendarSchedulingMethod.cancel ||
+                        accepted.kind ==
+                            CalendarInvitationSourceKind.meetingCancellation,
                   ) // Fixed-width hash for size only; never persisted.
                 : {
                     ...occurrenceState,
@@ -521,6 +523,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
             tx,
             CalendarAuthorizationPhase.read,
             writing: true,
+            cancellation: message.method == IcalendarSchedulingMethod.cancel,
             member: candidate,
           );
           await _invApplicationHost(
@@ -741,7 +744,13 @@ extension CalendarInvitationApplicationOperations on CalendarService {
           (_occAccepted(
                 CalendarEventImportBaseline.fromJson(state['masterBaseline']),
               ).protocol.version.sequence ??
-              0);
+              0) &&
+      (!_occHasRangeCancellation(state) ||
+          (message.events.single.sequence ?? 0) >
+              (CalendarEventProtocolVersion.fromJson(
+                    _occLatestTarget(state)['version'],
+                  ).sequence ??
+                  0));
 
   CalendarEventImportMember _invCancellationMember(
     IcalendarSchedulingMessage message,
@@ -939,13 +948,6 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         }
         return receipt;
       }
-      if (_occHasRangeCancellation(occurrenceState) &&
-          (cancellation ||
-              accepted.kind != CalendarInvitationSourceKind.request ||
-              _occAccepted(event.data.importBaseline!).content.status ==
-                  CalendarEventStatus.cancelled)) {
-        throw _failure(CalendarFailureCode.dependencyConflict);
-      }
       await _invApplicationHost(
         actor,
         recipient,
@@ -1076,6 +1078,10 @@ extension CalendarInvitationApplicationOperations on CalendarService {
                   baseline: baseline,
                   member: member,
                   master: next,
+                  lifecycle:
+                      cancellation ||
+                      accepted.kind ==
+                          CalendarInvitationSourceKind.meetingCancellation,
                 )
               : {
                   ...occurrenceState!,
