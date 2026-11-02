@@ -746,3 +746,13 @@ The maintainer confirmed preserve-cutoff/reject-orphan behavior. [Accepted ADR 0
 - [x] Implement/test the approved batch with existing byte/work limits, two-host recovery and Flutter; grouped checks and final integrity regressions passed before the single code commit.
 - [ ] Pass full implementation-head repository CI before readiness.
 - [ ] Review source restoration, cancellation replacement/whole-series lifecycle and remaining range scheduling separately.
+
+
+## Whole-master lifecycle preserving accepted range cancellation
+
+[Proposed ADR 0162](adr/0162-master-lifecycle-with-accepted-range-cancellation.md) follows PR #153. It reuses the confirmed cutoff-preservation policy for whole-series cancellation and explicit reopening, with a concrete strict source floor and v6 current-kind/composition/receipt binding. Existing APIs/views/SQL and retention caps remain. No implementation is approved by this proposal; source restoration and occurrence applications stay guarded.
+
+- [x] Inspect existing master status/version projection, conservative component floors, v4/v5 frozen/current bindings, source authority, views and atomic invalidation.
+- [ ] Obtain explicit review of the added floor, lifecycle/kind binding, stable retries and v4/v5/v6 compatibility.
+- [ ] Implement/test the approved lifecycle batch with focused and grouped checks before one code commit; full CI remains required before readiness.
+- [ ] Review source-cutoff restoration/replacement and remaining range scheduling separately.
