@@ -700,3 +700,13 @@ ADR 0156 implementation is in PR #143; grouped checks passed and full hosted CI 
 - [x] Complete grouped core/iCalendar/module VM+Chrome and affected DB checks before one code commit; all passed as recorded in validation.
 - [ ] Pass full exact-head hosted CI before readiness.
 - [ ] Review durable source/native/query/alarm/feed integration, explicit restoration and outgoing scheduling separately. Range CANCEL application and responses remain guarded.
+
+## Native event future cancellation and restoration
+
+Pure-core implementation PR #145 passed full hosted inspect/runtime CI. The maintainer confirmed restoration by clearing the complete saved cutoff using current retained timing/content, preserving individually cancelled occurrences. [Proposed ADR 0158](adr/0158-native-event-future-cancellation.md) groups the next native increment; its storage/API/integration mechanics remain unapproved and unimplemented.
+
+- [x] Confirm clear-cutoff/preserve-individual-cancellations policy.
+- [x] Inspect existing override JSON/actions, protocol/baseline comparison, occurrence views, busy/alarm projections, worker digests and export boundaries.
+- [ ] Obtain model/ADR review of the nullable JSON cutoff, typed native actions and complete query/worker/publication integration.
+- [ ] Implement native actions, generated clients, complete projections and Flutter after approval; validate focused and grouped/two-host behavior before one code commit.
+- [ ] Pass full repository CI before readiness. Keep incoming/outgoing range CANCEL, range replies, wire mapping and broader reconciliation separate.

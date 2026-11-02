@@ -315,3 +315,6 @@ Accepted ADR 0156 adds [explicit range REQUEST application and master compositio
 
 
 The maintainer confirmed that future cancellation must suppress every original at/after its anchor, including later moved/edited exceptions, while preserving their data for explicit restoration. Accepted ADR 0157 implements the pure core prerequisite: optional original-identity cancelledFrom on DateEventRangeSet/TimedEventSeries, inclusive suppression across singles/later ranges, exact membership/profile validation, independently counted cutoff capacity and unchanged raw/work/base budgets. Retain immutable timing data and do not infer durable restoration, persistence, source application or outgoing cancellation approval. See docs/event-future-cancellation-core.md.
+
+
+The maintainer confirmed native future restoration by clearing the whole saved cutoff using current retained timing/content while preserving individual cancellations. Proposed ADR 0158 records the concrete next JSON/action/protocol/query/worker/publication design; those mechanics are not accepted or implemented yet. This policy does not approve incoming/outgoing range CANCEL reconciliation, partial restoration or wire mapping.
