@@ -178,7 +178,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0160](0160-first-range-cancellation-acceptance.md) | First durable incoming range cancellation | Accepted; v4 private cancellation layer and explicit first-acceptance command; composition/source restoration remain separate |
 | [0161](0161-master-updates-with-accepted-range-cancellation.md) | Master updates with accepted range cancellation | Accepted; frozen cancellation basis, v5 composition binding, independent authority and protected view |
 | [0162](0162-master-lifecycle-with-accepted-range-cancellation.md) | Master lifecycle with accepted range cancellation | Accepted; whole cancellation/reopening with retained cutoff, strict source floor and v6 kind binding |
-| [0163](0163-pure-restore-only-range-source-projection.md) | Pure restore-only range source projection | Proposed; policy confirmed, exact matching/version-floor mechanics await approval; no durable restoration |
+| [0163](0163-pure-restore-only-range-source-projection.md) | Pure restore-only range source projection | Accepted; pure exact matching/source floor with unchanged canonical versions; durable restoration separate |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
