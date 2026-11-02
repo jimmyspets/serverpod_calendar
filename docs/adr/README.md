@@ -175,6 +175,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0159](0159-pure-range-cancellation-projection.md) | Pure incoming range CANCEL projection | Accepted 2026-11-02; scoped pure CANCEL cutoff/source-version result and conservative floor; no durable application |
 
+| [0160](0160-first-range-cancellation-acceptance.md) | First durable incoming range cancellation | Proposed; v4 private cancellation layer and explicit first-acceptance command; composition/source restoration remain separate |
+
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
 Use the next consecutive number for a new ADR covering a material decision. Include context, proposal/decision, alternatives, consequences, and acceptance conditions. Preserve committed/accepted decision history; supersede accepted decisions with a linked ADR. Superseded uncommitted drafts may be removed under the maintainer-authorized cleanup. Mark an ADR accepted only after explicit maintainer agreement recorded in the PR or issue.
