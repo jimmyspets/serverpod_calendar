@@ -1,9 +1,12 @@
 part of 'calendar_module.dart';
 
 bool _occHasRangeCancellation(Map<String, dynamic>? state) =>
-    {4, 5, 6}.contains(state?['version']);
+    {4, 5, 6, 7}.contains(state?['version']);
 
 Map<String, dynamic> _occLatestTarget(Map<String, dynamic> state) {
+  if (_occHasRangeRestoration(state)) {
+    return state['restoration'] as Map<String, dynamic>;
+  }
   if (_occHasRangeCancellation(state)) {
     return state['rangeCancellation'] as Map<String, dynamic>;
   }
@@ -130,6 +133,7 @@ extension CalendarInvitationRangeCancellationOperations on CalendarService {
     CalendarEventImportMember member,
     Map<String, dynamic> state,
   ) {
+    if (_occHasRangeRestoration(state)) return member;
     final original = CalendarEventTiming.fromJson(
       _occLatestTarget(state)['original'],
     );
@@ -276,6 +280,30 @@ extension CalendarInvitationRangeCancellationOperations on CalendarService {
     Map<String, dynamic>? state,
   ) async {
     if (!_occHasRangeCancellation(state)) return;
+    if (_occHasRangeRestoration(state)) {
+      await _occAuthorizeCancellation(
+        actor,
+        recipient,
+        tx,
+        phase,
+        link,
+        event,
+        row,
+        (state!['preRestoration'] as Map<String, dynamic>)['state']
+            as Map<String, dynamic>,
+      );
+      await _occAuthorizeCancellation(
+        actor,
+        recipient,
+        tx,
+        phase,
+        link,
+        event,
+        row,
+        {'version': 4, 'rangeCancellation': state['restoration']},
+      );
+      return;
+    }
     final layer = _occLatestTarget(state!);
     if (layer['recipientAddress'] != recipient.calendarAddress) {
       throw _failure(CalendarFailureCode.accessDenied);

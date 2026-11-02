@@ -153,6 +153,7 @@ final class _Host implements CalendarInvitationHost {
           CalendarInvitationOperation.applyOccurrenceCancellation,
           CalendarInvitationOperation.applyRangeUpdate,
           CalendarInvitationOperation.applyRangeCancellation,
+          CalendarInvitationOperation.applyRangeRestoration,
         }.contains(c.operation) &&
         phase == CalendarAuthorizationPhase.finalWrite) {
       stdout.writeln(
@@ -398,7 +399,9 @@ Future<void> main(List<String> args) async {
               if (input['instance'] == true)
                 'RECURRENCE-ID${input['range'] == true ? ';RANGE=THISANDFUTURE' : ''}:${input['original'] ?? '20300103T090000Z'}',
               if (input['cancel'] == true) 'STATUS:CANCELLED',
-              if (input['cancel'] != true) 'DTSTART:20300101T090000Z',
+              if (input['cancel'] != true)
+                'DTSTART:${input['restore'] == true ? '20300103T090000Z' : '20300101T090000Z'}',
+              if (input['restore'] == true) 'DTEND:20300103T100000Z',
               if (input['cancel'] != true &&
                   input['instance'] != true &&
                   Platform.environment['CALENDAR_INVITATION_PROBE_RECURRING'] ==
@@ -478,7 +481,10 @@ Future<void> main(List<String> args) async {
             );
             try {
               result =
-                  (await (input['range'] == true
+                  (await (input['restore'] == true
+                          ? CalendarModule.service(session)
+                                .invitationRangeRestorationApplication
+                          : input['range'] == true
                           ? CalendarModule.service(session)
                                 .invitationRangeApplication
                           : CalendarModule.service(session)
@@ -498,7 +504,9 @@ Future<void> main(List<String> args) async {
               final request = CalendarInvitationOccurrenceApplyRequest.fromJson(
                 input['request'] as Map<String, dynamic>,
               );
-              final receipt = input['range'] == true
+              final receipt = input['restore'] == true
+                  ? await service.applyInvitationRangeRestoration(request)
+                  : input['range'] == true
                   ? input['cancel'] == true
                         ? await service.applyInvitationRangeCancellation(
                             request,

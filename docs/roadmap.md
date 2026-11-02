@@ -755,7 +755,7 @@ The maintainer confirmed preserve-cutoff/reject-orphan behavior. [Accepted ADR 0
 - [x] Inspect existing master status/version projection, conservative component floors, v4/v5 frozen/current bindings, source authority, views and atomic invalidation.
 - [x] Obtain explicit review of the added floor, lifecycle/kind binding, stable retries and v4/v5/v6 compatibility.
 - [x] Implement/test the approved lifecycle batch with focused and grouped checks before the single code commit; all grouped checks passed.
-- [ ] Pass full new implementation-head repository CI before readiness.
+- [x] Pass full new implementation-head repository CI before readiness (PR #155, run 41499432959).
 - [ ] Review source-cutoff restoration/replacement and remaining range scheduling separately.
 
 The maintainer confirmed the next source-restoration scope: a restore-only action at the exact saved cutoff with matching retained uncancelled values, clearing the whole cutoff while preserving exceptions. Rescheduling or another anchor follows separately; concrete projection/acceptance mechanics still require ADR review.
@@ -773,11 +773,13 @@ The maintainer confirmed the next source-restoration scope: a restore-only actio
 
 ## First durable source range restoration
 
-[Proposed ADR 0164](adr/0164-first-durable-source-range-restoration.md) follows the [pure validator](range-restoration-projection.md) in PR #157. It separates accepted restoration evidence from unchanged canonical component versions.
+[Accepted ADR 0164](adr/0164-first-durable-source-range-restoration.md) follows the [pure validator](range-restoration-projection.md) in PR #157. It separates accepted restoration evidence from unchanged canonical component versions.
 
 - [x] Inspect current v4/v5/v6 source/basis/receipt validation, clean-state comparison, native invalidation and latest-only command slots.
 - [x] Prepare explicit acceptance, bounded predecessor v7, separate authority, retries, protected flags and temporary composition guard for review.
-- [ ] Obtain explicit agreement on the concrete storage/API mechanics.
-- [ ] Implement/test the approved batch with generated APIs, focused/grouped checks, two-host recovery and Flutter before one code commit.
+- [x] Obtain explicit agreement on the concrete storage/API mechanics.
+- [x] Implement/test the approved batch with generated APIs, focused/grouped checks, two-host recovery and Flutter before one code commit.
 - [ ] Pass full implementation-head repository CI before readiness.
 - [ ] Review post-restoration composition/version floors, repeated cancellation cycles and remaining range scheduling separately.
+
+The maintainer confirmed the next post-restoration master REQUEST policy: preserve restored state and individual cancellations, rejecting updates that remove the original restoration anchor. Concrete frozen-evidence/composition mechanics require the next ADR review; current v7 guards remain.
