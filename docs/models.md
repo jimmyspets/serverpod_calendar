@@ -852,3 +852,7 @@ Accepted [ADR 0159](adr/0159-pure-range-cancellation-projection.md) implements a
 ## First durable source restoration
 
 [Accepted ADR 0164](adr/0164-first-durable-source-range-restoration.md) implements explicit clean-series same-cutoff acceptance with independent read/apply/source/lifecycle authority. Existing-table v7 retains one validated predecessor and independent restoration evidence, stable latest-only retries and protected history flags; generated clients/Flutter expose explicit actions. No SQL or cap expansion. New source applications remain guarded after restoration until composition is reviewed. See [the scoped profile](source-range-restoration.md) and actual validation.
+
+## Proposed master composition after restoration
+
+[Proposed ADR 0165](adr/0165-master-updates-after-source-range-restoration.md) follows PR #159 and the confirmed preserve-restoration/reject-orphan policy. It proposes one frozen v7 acceptance/baseline/master descriptor and separate current v8 bindings in existing JSON, independent composition authority and stable restoration/master retries under unchanged caps. Frozen superseded content remains private until event deletion. No SQL, endpoint or view-field expansion is expected; concrete mechanics await approval. Whole-series lifecycle and new occurrence/range transitions stay guarded.

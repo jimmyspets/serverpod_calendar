@@ -783,3 +783,14 @@ The maintainer confirmed the next source-restoration scope: a restore-only actio
 - [ ] Review post-restoration composition/version floors, repeated cancellation cycles and remaining range scheduling separately.
 
 The maintainer confirmed the next post-restoration master REQUEST policy: preserve restored state and individual cancellations, rejecting updates that remove the original restoration anchor. Concrete frozen-evidence/composition mechanics require the next ADR review; current v7 guards remain.
+
+## Master REQUEST composition after restoration
+
+[Proposed ADR 0165](adr/0165-master-updates-after-source-range-restoration.md) follows PR #159. The maintainer confirmed preservation of restored state/individual cancellations and rejection of orphaned restoration originals.
+
+- [x] Confirm the preservation/orphan policy and inspect v7 predecessor/master/baseline/receipt bindings.
+- [x] Prepare bounded frozen acceptance versus current v8 composition, private retention/caps, independent authority and stable retry mechanics.
+- [ ] Obtain explicit agreement on the concrete JSON/authority mechanics.
+- [ ] Implement/test the approved active-master REQUEST batch with focused/grouped checks, two-host recovery and Flutter before one code commit.
+- [ ] Pass full implementation-head repository CI before readiness.
+- [ ] Review whole-series lifecycle, new range transitions, further cycles and remaining scheduling separately.
