@@ -182,10 +182,10 @@ Future<void> rangeInvitationApplicationSmoke(List<Client> clients) async {
     await a.invitationDemo.simulateRange(id, const cal.Uuid().v4obj(), 4, true);
     final cancelled = await api.calendarInvitation.rangeApplication(entry);
     require(
-      !cancelled.canApply &&
+      cancelled.canApply &&
           cancelled.incomingKind ==
               cal.CalendarInvitationSourceKind.rangeCancellation,
-      'Range CANCEL enabled a native write',
+      'Range CANCEL preview did not enable explicit application',
     );
     require(
       (await fetch(url, currentFeed.$2)).$1 == 304,
@@ -198,8 +198,36 @@ Future<void> rangeInvitationApplicationSmoke(List<Client> clients) async {
               null,
       'Retained range retry dismissed a newer notice',
     );
+    final cancelInput = command(cancelled);
+    final cancelledRace = await Future.wait(
+      clients.map(
+        (c) => c.modules.serverpod_calendar.calendarInvitation
+            .applyRangeCancellation(cancelInput),
+      ),
+    );
+    require(
+      cancelledRace.first.id == cancelledRace.last.id,
+      'Range cancellation duplicated effects',
+    );
+    final masked = await api.calendarInvitation.rangeApplication(entry);
+    require(
+      masked.hasAcceptedRangeCancellation &&
+          !masked.hasLocalChanges &&
+          masked.currentOccurrence!.status == cal.CalendarEventStatus.cancelled,
+      'Accepted cancellation projection/clean-state lost',
+    );
+    require(
+      (await fetch(url, currentFeed.$2)).$1 != 304 &&
+          (await fetch(url)).$1 != 200,
+      'Masked unrepresentable series leaked stale 304 or a lossy feed',
+    );
+    require(
+      (await api.calendarInvitation.applyRangeCancellation(cancelInput)).id ==
+          cancelledRace.first.id,
+      'Cancellation exact retry changed receipt',
+    );
     stdout.writeln(
-      'PASS: generated-client two-host range preview/apply and master races, preserved source versions/retries, receipt-only versus applied feed ETags and read-only range cancellation.',
+      'PASS: generated-client two-host range preview/apply and master races, preserved source versions/retries, receipt-only versus applied feed ETags and explicit range cancellation, masked-feed rejection and stable retries.',
     );
   } finally {
     if (subscription != null) {

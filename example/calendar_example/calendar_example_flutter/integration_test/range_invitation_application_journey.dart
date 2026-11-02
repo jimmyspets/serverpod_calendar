@@ -157,10 +157,20 @@ Future<void> runRangeInvitationApplicationJourney(
         maxScrolls: 30,
       );
     }
-    expect(tester.widget<ElevatedButton>(button).onPressed, isNull);
+    expect(tester.widget<ElevatedButton>(button).onPressed, isNotNull);
     expect(
       (await api.calendarInvitation.rangeApplication(source.entryId)).canApply,
-      isFalse,
+      isTrue,
+    );
+    await tap('invitation-occurrence-apply');
+    final acceptedCancellation = await api.calendarInvitation.rangeApplication(
+      source.entryId,
+    );
+    expect(acceptedCancellation.hasAcceptedRangeCancellation, isTrue);
+    expect(acceptedCancellation.hasLocalChanges, isFalse);
+    expect(
+      acceptedCancellation.currentOccurrence!.status,
+      cal.CalendarEventStatus.cancelled,
     );
     navigator.pop();
     await tester.pumpAndSettle();

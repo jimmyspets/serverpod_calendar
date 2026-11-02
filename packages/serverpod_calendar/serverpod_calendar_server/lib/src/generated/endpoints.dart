@@ -1920,6 +1920,30 @@ class Endpoints extends _is.EndpointDispatch {
                         params['request'],
                       ),
         ),
+        'applyRangeCancellation': _is.MethodConnector(
+          name: 'applyRangeCancellation',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is
+                  .getType<
+                    _ituh8bkh.CalendarInvitationOccurrenceApplyRequest
+                  >(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .applyRangeCancellation(
+                        session,
+                        params['request'],
+                      ),
+        ),
         'applyOccurrenceUpdate': _is.MethodConnector(
           name: 'applyOccurrenceUpdate',
           params: {

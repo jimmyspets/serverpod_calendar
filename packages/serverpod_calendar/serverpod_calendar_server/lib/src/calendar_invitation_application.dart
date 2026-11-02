@@ -39,16 +39,23 @@ extension CalendarInvitationApplicationOperations on CalendarService {
     return (baseline['content'] as Map<String, dynamic>)['recurrence'] != null;
   });
 
-  bool _invLocalChanges(_Event e) => _eventProtocolValue(
-    () =>
-        eventImportBaseline(
-          e.data.protocolUid,
-          e.data.content,
-          e.data.timingOverrides,
-          e.data.protocolState!,
-        ).canonicalValue !=
-        e.data.importBaseline!.canonicalValue,
-  );
+  bool _invLocalChanges(_Event e, {Map<String, dynamic>? occurrenceState}) =>
+      _eventProtocolValue(
+        () => _occHasRangeCancellation(occurrenceState)
+            ? _occNativeDigest(e.data.protocolUid, (
+                    content: e.data.content,
+                    edits: e.data.timingOverrides,
+                    protocol: e.data.protocolState!,
+                  )) !=
+                  occurrenceState!['expectedNativeDigest']
+            : eventImportBaseline(
+                    e.data.protocolUid,
+                    e.data.content,
+                    e.data.timingOverrides,
+                    e.data.protocolState!,
+                  ).canonicalValue !=
+                  e.data.importBaseline!.canonicalValue,
+      );
 
   Future<CalendarInvitationApplicationRecord?> _invCheckpoint(
     CalendarInvitationLinkRecord link,
@@ -400,7 +407,6 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       tx,
       CalendarAuthorizationPhase.read,
     );
-    final dirty = _invLocalChanges(event);
     final occurrenceRow = await _occRow(link.id!, tx);
     final occurrenceState = occurrenceRow == null
         ? null
@@ -410,7 +416,18 @@ extension CalendarInvitationApplicationOperations on CalendarService {
             occurrenceRow,
             await _invCheckpoint(link, event, tx),
           );
-    var compositionBlocked = false;
+    await _occAuthorizeCancellation(
+      actor,
+      recipient,
+      tx,
+      CalendarAuthorizationPhase.read,
+      link,
+      event,
+      occurrenceRow,
+      occurrenceState,
+    );
+    final dirty = _invLocalChanges(event, occurrenceState: occurrenceState);
+    var compositionBlocked = _occHasRangeCancellation(occurrenceState);
     CalendarInvitationSourceRecord? source;
     IcalendarSchedulingMessage? message;
     CalendarEventImportMember? incoming;
@@ -429,6 +446,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       (source, message) = await _invAcceptedBody(accepted, link, recipient, tx);
     }
     if (occurrenceState != null &&
+        !_occHasRangeCancellation(occurrenceState) &&
         message != null &&
         entry?.currentSourceId != null) {
       try {
@@ -779,11 +797,21 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         writing: true,
         cancellation: cancellation,
       );
-      final dirty = _invLocalChanges(event);
       final occurrenceRow = await _occRow(link.id!, tx);
       final occurrenceState = occurrenceRow == null
           ? null
           : _occDecode(link, event, occurrenceRow, checkpoint);
+      await _occAuthorizeCancellation(
+        actor,
+        recipient,
+        tx,
+        CalendarAuthorizationPhase.preliminaryWrite,
+        link,
+        event,
+        occurrenceRow,
+        occurrenceState,
+      );
+      final dirty = _invLocalChanges(event, occurrenceState: occurrenceState);
       final occurrence = _occSnapshot(occurrenceRow);
       if (checkpoint != null && checkpoint.requestDigest == requestDigest) {
         if (checkpoint.kind != kind) {
@@ -808,6 +836,16 @@ extension CalendarInvitationApplicationOperations on CalendarService {
             writing: true,
             cancellation: cancellation,
           );
+          await _occAuthorizeCancellation(
+            actor,
+            recipient,
+            tx,
+            phase,
+            link,
+            event,
+            occurrenceRow,
+            occurrenceState,
+          );
           await _invApplicationHost(
             actor,
             recipient,
@@ -830,6 +868,9 @@ extension CalendarInvitationApplicationOperations on CalendarService {
           );
         }
         return receipt;
+      }
+      if (_occHasRangeCancellation(occurrenceState)) {
+        throw _failure(CalendarFailureCode.dependencyConflict);
       }
       await _invApplicationHost(
         actor,
