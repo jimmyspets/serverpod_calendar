@@ -770,3 +770,14 @@ The maintainer confirmed the next source-restoration scope: a restore-only actio
 - [x] Implement focused pure tests and complete grouped checks before one code commit.
 - [ ] Pass full implementation-head repository CI before readiness.
 - [ ] Review durable restoration authority, checkpoint/version evidence, clean-state concurrency and retries separately.
+
+## First durable source range restoration
+
+[Proposed ADR 0164](adr/0164-first-durable-source-range-restoration.md) follows the [pure validator](range-restoration-projection.md) in PR #157. It separates accepted restoration evidence from unchanged canonical component versions.
+
+- [x] Inspect current v4/v5/v6 source/basis/receipt validation, clean-state comparison, native invalidation and latest-only command slots.
+- [x] Prepare explicit acceptance, bounded predecessor v7, separate authority, retries, protected flags and temporary composition guard for review.
+- [ ] Obtain explicit agreement on the concrete storage/API mechanics.
+- [ ] Implement/test the approved batch with generated APIs, focused/grouped checks, two-host recovery and Flutter before one code commit.
+- [ ] Pass full implementation-head repository CI before readiness.
+- [ ] Review post-restoration composition/version floors, repeated cancellation cycles and remaining range scheduling separately.
