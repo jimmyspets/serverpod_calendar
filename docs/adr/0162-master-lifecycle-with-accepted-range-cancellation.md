@@ -1,6 +1,6 @@
 # ADR 0162: Master lifecycle with accepted range cancellation
 
-Status: **Proposed; concrete lifecycle, version-floor and v6 checkpoint mechanics require explicit maintainer approval.**
+Status: **Accepted — explicit maintainer agreement on 2026-11-02 covering lifecycle, source-floor and v6 checkpoint mechanics. Implementation evidence is recorded separately.**
 
 ## Context and scope
 

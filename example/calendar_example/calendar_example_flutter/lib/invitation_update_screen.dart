@@ -161,7 +161,7 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
             ),
             if (view.hasAcceptedRangeCancellation)
               const Text(
-                'An accepted range cancellation remains in force. Apply update preserves its cutoff and does not reopen the cancelled suffix. Source restoration is a separate action.',
+                'An accepted range cancellation remains in force. Whole-meeting cancellation and reopening preserve this cutoff and individual cancellations; the cancelled suffix stays cancelled.',
                 key: Key('invitation-master-range-cancellation'),
               ),
             if (view.occurrenceRevision > 0 &&

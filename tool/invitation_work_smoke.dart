@@ -55,7 +55,8 @@ void require(bool value, String message) {
 
 Future<void> main(List<String> args) async {
   final nativeFuture = args.contains('--native-future');
-  final rangeCompose = args.contains('--range-compositions');
+  final rangeLifecycle = args.contains('--range-lifecycle');
+  final rangeCompose = args.contains('--range-compositions') || rangeLifecycle;
   final rangeCancel = args.contains('--range-cancellations') || rangeCompose;
   final rangeApply = args.contains('--range-applications') || rangeCancel;
   final occurrenceApply =
@@ -416,13 +417,15 @@ Future<void> main(List<String> args) async {
       if (rangeCompose) {
         Future<Map<String, dynamic>> masterInput(
           String id,
-          int sequence,
-        ) async {
+          int sequence, {
+          bool cancel = false,
+        }) async {
           final incoming = await b.command({
             'command': 'receive',
             'caseId': id,
             'key': 'master-$sequence',
             'sequence': sequence,
+            'cancel': cancel,
             'summary': 'Composed-$sequence',
           }) as Map;
           final v = await b.command({
@@ -432,7 +435,7 @@ Future<void> main(List<String> args) async {
           }) as Map;
           require(
             v['hasAcceptedRangeCancellation'] == true &&
-                v['canApply'] == true &&
+                v[cancel ? 'canApplyCancellation' : 'canApply'] == true &&
                 v['occurrenceCompositionBlocked'] == false,
             'Masked master preview failed',
           );
@@ -448,6 +451,19 @@ Future<void> main(List<String> args) async {
           };
         }
 
+        Future<Map> apply(
+          _Probe p,
+          String id,
+          Map request, {
+          bool cancel = false,
+          String? pause,
+        }) async => await p.command({
+          'command': 'apply',
+          'caseId': id,
+          'request': request,
+          'cancel': cancel,
+          'pause': pause,
+        }) as Map;
         Future<Map<String, dynamic>> cancellation(String id) async {
           final request = await prepare(id);
           final result = await b.command({
@@ -476,39 +492,46 @@ Future<void> main(List<String> args) async {
           final state =
               await b.command({'command': 'inspect', 'caseId': id}) as Map;
           require(
-            state['checkpointVersion'] == 5 && state['cutoff'] != null,
-            'Composition lost v5 or the native cutoff',
+            state['checkpointVersion'] == (rangeLifecycle ? 6 : 5) &&
+                state['cutoff'] != null,
+            'Composition lost its checkpoint or native cutoff',
           );
         }
 
         final id = nextCase(),
             cancelled = await cancellation(id),
-            request = await masterInput(id, 5);
+            request = await masterInput(id, 5, cancel: rangeLifecycle);
         final race = await Future.wait(
-          [a, b].map(
-            (p) => p.command({
-              'command': 'apply',
-              'caseId': id,
-              'request': request,
-            }),
-          ),
+          [a, b].map((p) => apply(p, id, request, cancel: rangeLifecycle)),
         );
         require(
-          (race.first as Map)['id'] != null &&
-              (race.first as Map)['id'] == (race.last as Map)['id'],
+          race.first['id'] != null && race.first['id'] == race.last['id'],
           'Masked master race duplicated a commit',
         );
         await retained(id, cancelled);
+        if (rangeLifecycle) {
+          final reopen = await masterInput(id, 6);
+          final results = await Future.wait(
+            [a, b].map((p) => apply(p, id, reopen)),
+          );
+          require(
+            results.first['id'] != null &&
+                results.first['id'] == results.last['id'],
+            'Masked reopening race duplicated a commit',
+          );
+          await retained(id, cancelled);
+        }
         final changed = nextCase(),
             changedCancel = await cancellation(changed),
-            older = await masterInput(changed, 5);
+            older = await masterInput(changed, 5, cancel: rangeLifecycle);
         final replaced = await Future.wait([
-          a.command({'command': 'apply', 'caseId': changed, 'request': older}),
+          apply(a, changed, older, cancel: rangeLifecycle),
           b.command({
             'command': 'receive',
             'caseId': changed,
             'key': 'newer-6',
             'sequence': 6,
+            'cancel': rangeLifecycle,
             'summary': 'Newer-6',
           }),
         ]);
@@ -523,7 +546,7 @@ Future<void> main(List<String> args) async {
           'entryId': older['invitationId'],
         }) as Map;
         require(
-          newer['canApply'] == true &&
+          newer[rangeLifecycle ? 'canApplyCancellation' : 'canApply'] == true &&
               newer['incomingSourceId'] != older['sourceId'],
           'Old command dismissed or replaced the newer notice',
         );
@@ -536,58 +559,83 @@ Future<void> main(List<String> args) async {
           'expectedOccurrenceRevision': newer['occurrenceRevision'],
         };
         require(
-          (await b.command({
-                'command': 'apply',
-                'caseId': changed,
-                'request': finalInput,
-              }) as Map)['id'] !=
+          (await apply(b, changed, finalInput, cancel: rangeLifecycle))['id'] !=
               null,
           'Survivor could not apply newest master',
         );
         await retained(changed, changedCancel);
-        for (final pause in ['apply-before', 'apply-after']) {
-          final id = nextCase(),
-              cancelled = await cancellation(id),
-              request = await masterInput(id, 5);
-          a.paused = Completer<Map<String, dynamic>>();
-          final lost = a
-              .command({
-                'command': 'apply',
-                'caseId': id,
-                'request': request,
-                'pause': pause,
-              })
-              .then<void>((_) {}, onError: (Object _, StackTrace _) {});
-          final submitted = await a.paused!.future.timeout(
-            const Duration(seconds: 40),
-          );
-          final visible =
-              await b.command({'command': 'inspect', 'caseId': id}) as Map;
-          require(
-            visible['eventRevision'] == (pause == 'apply-before' ? 2 : 3) &&
-                visible['checkpointVersion'] ==
-                    (pause == 'apply-before' ? 4 : 5) &&
-                visible['cutoff'] != null,
-            'Masked master commit was partially visible',
-          );
-          await a.stop();
-          await lost;
-          final recovered = await b.command({
-            'command': 'apply',
-            'caseId': id,
-            'request': request,
-          }) as Map;
-          require(
-            recovered['id'] != null &&
-                ((pause == 'apply-after') ==
-                    (recovered['id'] == submitted['id'])),
-            'Masked master process loss broke receipt semantics',
-          );
-          await retained(id, cancelled);
-          a = await start('a-range-compose-recovered-$pause', 18780);
+        for (final cancelling in rangeLifecycle ? [true, false] : [false]) {
+          for (final pause in ['apply-before', 'apply-after']) {
+            final id = nextCase(), cancelled = await cancellation(id);
+            if (rangeLifecycle && !cancelling) {
+              require(
+                (await apply(
+                      b,
+                      id,
+                      await masterInput(id, 5, cancel: true),
+                      cancel: true,
+                    ))['id'] !=
+                    null,
+                'Reopening seed failed',
+              );
+            }
+            final request = await masterInput(
+              id,
+              rangeLifecycle && !cancelling ? 6 : 5,
+              cancel: cancelling,
+            );
+            final actualPause = cancelling
+                ? pause.replaceFirst('apply', 'cancel-apply')
+                : pause;
+            final oldRevision = rangeLifecycle && !cancelling ? 3 : 2;
+            final oldVersion = rangeLifecycle && !cancelling ? 6 : 4;
+            a.paused = Completer<Map<String, dynamic>>();
+            final lost = apply(
+              a,
+              id,
+              request,
+              cancel: cancelling,
+              pause: actualPause,
+            ).then<void>((_) {}, onError: (Object _, StackTrace _) {});
+            final submitted = await a.paused!.future.timeout(
+              const Duration(seconds: 40),
+            );
+            final visible =
+                await b.command({'command': 'inspect', 'caseId': id}) as Map;
+            require(
+              visible['eventRevision'] ==
+                      (pause == 'apply-before'
+                          ? oldRevision
+                          : oldRevision + 1) &&
+                  visible['checkpointVersion'] ==
+                      (pause == 'apply-before'
+                          ? oldVersion
+                          : rangeLifecycle
+                          ? 6
+                          : 5) &&
+                  visible['cutoff'] != null,
+              'Masked master commit was partially visible',
+            );
+            await a.stop();
+            await lost;
+            final recovered = await apply(b, id, request, cancel: cancelling);
+            require(
+              recovered['id'] != null &&
+                  ((pause == 'apply-after') ==
+                      (recovered['id'] == submitted['id'])),
+              'Masked master process loss broke receipt semantics',
+            );
+            await retained(id, cancelled);
+            a = await start(
+              'a-range-${cancelling ? 'cancel' : 'request'}-recovered-$pause',
+              18780,
+            );
+          }
         }
         stdout.writeln(
-          'PASS: masked master two-host races, competing newer sources, actual before/after commit loss, frozen v5 state and original cancellation retries.',
+          rangeLifecycle
+              ? 'PASS: masked whole cancellation/reopening races, competing sources, actual before/after commit loss, frozen v6 state and independent retries.'
+              : 'PASS: masked master two-host races, competing newer sources, actual before/after commit loss, frozen v5 state and original cancellation retries.',
         );
         return;
       }

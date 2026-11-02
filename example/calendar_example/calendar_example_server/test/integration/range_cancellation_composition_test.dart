@@ -521,7 +521,7 @@ void main() {
         expect((await row()).toJson(), oldRow);
       },
     );
-    test('new occurrence and whole cancellation commands remain guarded after composition', () async {
+    test('new occurrence commands remain guarded while whole cancellation retains the cutoff', () async {
       await setup();
       final input = await cancel();
       final cancelled = await service.applyInvitationRangeCancellation(input);
@@ -557,12 +557,11 @@ void main() {
           .join('\r\n');
       final notice = await receive(Uint8List.fromList(utf8.encode(text)));
       final whole = await service.invitationApplication(notice.entryId);
-      expect(whole.canApplyCancellation, isFalse);
-      expect(whole.occurrenceCompositionBlocked, isTrue);
-      await expectLater(
-        service.applyInvitationCancellation(masterCommand(whole)),
-        failure(CalendarFailureCode.dependencyConflict),
-      );
+      expect(whole.canApplyCancellation, isTrue);
+      expect(whole.occurrenceCompositionBlocked, isFalse);
+      await service.applyInvitationCancellation(masterCommand(whole));
+      expect((await data()).content.status, CalendarEventStatus.cancelled);
+      expect((await data()).timingOverrides!.cancelledFrom, isNotNull);
       expect(
         (await service.applyInvitationRangeCancellation(input)).id,
         cancelled.id,
