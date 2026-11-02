@@ -54,3 +54,8 @@ Historical scheduling commands using their already published snapshot retain the
 Flutter exposes cancel-future on active original rows and a restore-saved-cutoff control even when the suffix has no active rows. It explains retained state, separate individual flags and local-only actions, and refreshes after stale/uncertain outcomes.
 
 Focused unit/database tests cover DATE/UTC/zoned values, moved/later exceptions, exact restoration, capacity/profile/orphan rejection, legacy JSON, protocol/source preservation, lifecycle/disclosure/final rollback, query/availability behavior and reminder suppression/deduplication. Actual two-host races and before/after commit process loss verify revision reconciliation. Generated clients test HTTP feed rejection/no stale 304/restored ETags; Flutter tests the explicit controls. See [actual commands/results](scaffold-validation.md) and [development](development.md). These synthetic/native checks establish no external-client scheduling compatibility.
+
+
+## Proposed pure incoming range cancellation
+
+The maintainer confirmed incoming range CANCEL must have a SEQUENCE newer than all affected accepted components. [Proposed ADR 0159](adr/0159-pure-range-cancellation-projection.md) profiles a separate pure candidate with an inclusive cutoff and independent cancellation source version, preserving retained master/occurrence versions. It explicitly proposes checking the underlying segment beneath an anchor single too. The concrete carrier/version-floor mechanics await approval and are unimplemented. No native write, accepted baseline, generated protocol, endpoint or wire export changes; durable range CANCEL/retry/composition/restoration remains separate.
