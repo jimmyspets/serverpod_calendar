@@ -460,6 +460,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       (source, message) = await _invAcceptedBody(accepted, link, recipient, tx);
     }
     if (occurrenceState != null &&
+        !_occHasRangeRestoration(occurrenceState) &&
         message != null &&
         entry?.currentSourceId != null) {
       try {
@@ -616,6 +617,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
           ? null
           : source?.normalizedSource,
       hasAcceptedRangeCancellation: _occHasRangeCancellation(occurrenceState),
+      hasAcceptedRangeRestoration: _occHasRangeRestoration(occurrenceState),
       occurrenceCompositionBlocked: compositionBlocked,
       occurrenceRevision: occurrenceRow?.revision ?? 0,
       canApplyCancellation:
@@ -986,6 +988,9 @@ extension CalendarInvitationApplicationOperations on CalendarService {
           message.events.single.participants.organizer?.address !=
               link.organizer) {
         throw _failure(CalendarFailureCode.validation);
+      }
+      if (_occHasRangeRestoration(occurrenceState)) {
+        throw _failure(CalendarFailureCode.dependencyConflict);
       }
       final masterMember = cancellation
           ? _invCancellationMember(

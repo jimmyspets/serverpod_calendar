@@ -1969,3 +1969,31 @@ No generator/migration was required because model/endpoint sources did not chang
 ## ADR 0164 documentation proposal, 2026-11-02
 
 Pure restoration implementation PR #157 at `a7b9c03` completed its recorded local grouped checks before the single code commit. Proposed ADR 0164 describes first durable restoration, bounded predecessor/evidence JSON, independent permissions, clean-state atomicity, stable retries, protected flags and a temporary post-restoration composition guard. These mechanics require explicit review. This branch changes documentation only; link/ADR/RFC/requirement consistency, whitespace/UTF-8, local credential absence, unchanged LICENSE and changed-file scope are checked. Runtime tests are not rerun for documentation, and hosted implementation-head CI remains separately tracked.
+
+## ADR 0164 focused durable restoration implementation, 2026-11-02
+
+The maintainer explicitly approved ADR 0164 / PR #158. Added separate restoration preview/apply operations, two derived history fields and generated endpoint/client/test sources through pinned `./tool/generate.ps1`. Private v7 stores one bounded predecessor descriptor and independent restoration source/receipt bindings; canonical versions and the ordinary cutoff-free baseline remain unchanged. No SQL source/migration/dependency or cap expansion. Ordinary source APIs retain their guards, and new source applications remain blocked after restoration.
+
+The initial focused `--name "utc v4"` database case passed, followed by all 22 initial cases. The expanded focused `dart test test/integration/range_restoration_application_test.dart --reporter expanded` passed all 29 cases. Coverage includes DATE/UTC/named-zone v4/v5/v6 to v7, exact retries/old-command supersession, authority rollback, local cutoff/content conflicts, retained individual cancellation, quota, source authority, pruning/deletion, nesting/corruption, restored bookings and alarm plan fencing.
+
+`dart run tool/invitation_work_smoke.dart --range-restorations` passed actual two-host same-command races, competing source commands, atomic v7 visibility and process loss before/after commit with stable retries. The first harness run expected only staleRevision for the competing loser; it observed the correct dependencyConflict after the winner installed v7. The assertion now accepts either legitimate rejection and still requires exactly one commit; the rerun passed.
+
+Deterministic regeneration hashes, changed-source formatting and full workspace analysis passed. Complete core VM/Chrome passed 540/540, iCalendar 629/629, calendar module 449/17, feed units 13 and Flutter widgets 9. The stopped owned test host bundle rebuilt successfully. Serverpod MCP hot restart and Flutter hot reload succeeded; runtime inspection returned no errors, preserving development data. Broader database/client/browser results and exact-head hosted CI are recorded separately after completion. No real mail or platform delivery was used.
+
+## ADR 0162 exact-head hosted completion, verified 2026-11-02
+
+PR #155 at `a1216fa4225acf8adf0be4a25309caabd855e9bd` passed hosted inspect and full runtime in [run 41499432959](https://github.com/jimmyspets/serverpod_calendar/actions/runs/41499432959), with runtime completed 2026-11-02 19:24:02 UTC. This updates its earlier pending report; it is not evidence for the new restoration implementation head.
+
+## ADR 0164 grouped database and final source checks, 2026-11-02
+
+Fresh isolated test reset/migrations and host units passed (150). The serial affected group passed 226 cases: restoration 29, first cancellation 26, cancellation composition 31, master lifecycle 32, range application 30, single application/composition 45, native cutoff 10 and collection queries 23. The selected calendar alarm regressions passed 53. SDK suites and compiled-host/browser harnesses ran serially; development storage was not reset.
+
+Final review scoped the added post-write evidence authorization/decode to restoration only, preserving existing write paths. Repeated full analysis and the stopped owned host rebuild passed. The final `dart test --concurrency=1 test/integration/range_restoration_application_test.dart test/integration/range_cancellation_application_test.dart --reporter expanded` passed all 55 cases after that adjustment. `dart run tool/host_smoke.dart --invitations-only` passed the actual two-host generated-client invitation group, including same-command v7 restoration, unchanged private/source versions, original retries, restored feed content/fresh ETag and conditional 304. JWT cross-host identity/refresh/rotation/logout checks passed. The separate connected Flutter journey follows below after completion.
+
+Final Serverpod/Flutter MCP hot reloads succeeded with no reported runtime errors. Full new implementation-head hosted inspect/runtime CI remains required before readiness; predecessor-head results do not establish the new head.
+
+## ADR 0164 connected Flutter completion, 2026-11-02
+
+`dart run tool/host_smoke.dart --browser-only --flutter --range-applications` passed the final connected range/master/cancel/reopen/restoration journey with clean source and no temporary tracing. It explicitly reviews restoration, checks eligibility/button state, applies through the UI, and verifies accepted restoration/source version and preserved master history/guard through the generated API. Initial browser attempts exposed a tap before the changed scrolled layout settled; the helper now pumps the settled layout before tapping. A temporary receipt-widget assertion was removed because that top-of-list text can be outside the lazy viewport; committed API state verifies the actual effect. Both the traced diagnostic run and final trace-free rerun passed after the interaction fix.
+
+Final full workspace analysis passed after trace removal. All temporary RESTORATION_UI logging was removed. Documentation/ADR/RFC/roadmap consistency, relative links, UTF-8/whitespace, local credential absence, unchanged LICENSE and changed-file/migration scope checks passed before the single complete-batch code commit. Exact-head hosted CI is tracked on the implementation PR; it remains separate from these local results.

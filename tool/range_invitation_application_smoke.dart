@@ -368,8 +368,61 @@ Future<void> rangeInvitationApplicationSmoke(List<Client> clients) async {
           cancelledRace.first.id,
       'Lifecycle transitions superseded original range cancellation receipt',
     );
+    await a.invitationDemo.simulateRange(
+      id,
+      const cal.Uuid().v4obj(),
+      8,
+      false,
+    );
+    final restoreView = await api.calendarInvitation
+        .rangeRestorationApplication(entry);
+    require(
+      restoreView.canApply && !restoreView.hasLocalChanges,
+      'Restoration preview blocked',
+    );
+    final restoreInput = command(restoreView);
+    final restoredRace = await Future.wait(
+      clients.map(
+        (c) => c.modules.serverpod_calendar.calendarInvitation
+            .applyRangeRestoration(restoreInput),
+      ),
+    );
+    require(
+      restoredRace.first.id == restoredRace.last.id &&
+          restoredRace.first.eventRevision == 8,
+      'Restoration race duplicated effects',
+    );
+    final restored = await api.calendarInvitation.rangeRestorationApplication(
+      entry,
+    );
+    require(
+      restored.hasAcceptedRangeRestoration &&
+          restored.hasAcceptedRangeCancellation &&
+          !restored.hasLocalChanges &&
+          restored.currentOccurrence!.status ==
+              cal.CalendarEventStatus.confirmed &&
+          restored.acceptedKind == cal.CalendarInvitationSourceKind.request &&
+          restored.acceptedVersion.sequence == 8,
+      'Restored history/version/native state incorrect',
+    );
+    final restoredFeed = await fetch(url, currentFeed.$2);
+    require(
+      restoredFeed.$1 == 200 &&
+          restoredFeed.$2 != null &&
+          restoredFeed.$2 != currentFeed.$2,
+      'Restored feed did not become representable with fresh ETag',
+    );
+    require(
+      (await fetch(url, restoredFeed.$2)).$1 == 304,
+      'Restored feed validator failed',
+    );
+    require(
+      (await api.calendarInvitation.applyRangeRestoration(restoreInput)).id ==
+          restoredRace.first.id,
+      'Restoration retry changed receipt',
+    );
     stdout.writeln(
-      'PASS: generated-client two-host range preview/apply and master races, preserved source versions/retries, receipt-only versus applied feed ETags and explicit range cancellation, masked-feed rejection, v5/v6 master composition/cancellation/reopening and stable independent retries.',
+      'PASS: generated-client two-host range preview/apply and master races, preserved source versions/retries, receipt-only versus applied feed ETags and explicit range cancellation, masked-feed rejection, v5/v6 master composition/cancellation/reopening and stable independent retries, explicit v7 restoration and restored feed validators.',
     );
   } finally {
     if (subscription != null) {

@@ -958,6 +958,26 @@ class EndpointCalendarInvitation extends _isc.EndpointRef {
         {'id': id},
       );
 
+  _ida.Future<_iot0h05u.CalendarInvitationOccurrenceApplicationView>
+  rangeRestorationApplication(_isc.UuidValue id) =>
+      caller.callServerEndpoint<
+        _iot0h05u.CalendarInvitationOccurrenceApplicationView
+      >(
+        'serverpod_calendar.calendarInvitation',
+        'rangeRestorationApplication',
+        {'id': id},
+      );
+
+  _ida.Future<_irwikun7.CalendarInvitationOccurrenceApplyReceipt>
+  applyRangeRestoration(
+    _idv4uqrm.CalendarInvitationOccurrenceApplyRequest request,
+  ) => caller
+      .callServerEndpoint<_irwikun7.CalendarInvitationOccurrenceApplyReceipt>(
+        'serverpod_calendar.calendarInvitation',
+        'applyRangeRestoration',
+        {'request': request},
+      );
+
   _ida.Future<_irwikun7.CalendarInvitationOccurrenceApplyReceipt>
   applyRangeUpdate(
     _idv4uqrm.CalendarInvitationOccurrenceApplyRequest request,
