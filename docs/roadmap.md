@@ -721,14 +721,17 @@ Native cutoff implementation PR #147 passed full hosted inspect/runtime CI. The 
 - [x] Review separate pure result/source version, bounded original-order floors (including the segment beneath an anchor single), and no persistence/baseline weakening.
 - [x] Implement the approved projection and focused regressions.
 - [x] Complete grouped pure/module VM+Chrome and affected database checks before one code commit; all passed as recorded in validation.
-- [ ] Pass full exact-head hosted CI before readiness.
+- [x] Pass full exact-head hosted CI before readiness (PR #149, run 41433233920).
 - [ ] Review durable acceptance layers, exact retries, master composition and source restoration separately. Range CANCEL application and replies remain guarded.
 
 ## First durable incoming range cancellation
 
-Pure projection implementation is in PR #149; grouped local checks passed and full hosted runtime CI remains a separate readiness gate. [Proposed ADR 0160](adr/0160-first-range-cancellation-acceptance.md) defines explicit first acceptance with a private cancellation layer in existing checkpoint JSON. Its storage/view/API mechanics and temporary composition guards are not approved or implemented.
+Pure projection implementation is in PR #149; grouped local and full exact-head hosted checks passed. The ADR 0160 implementation has its own readiness gate. [Accepted ADR 0160](adr/0160-first-range-cancellation-acceptance.md) defines explicit first acceptance with a private cancellation layer in existing checkpoint JSON. The approved first-acceptance implementation adds private v4 source binding, protected views and explicit application with temporary composition guards; see [the scoped profile](range-cancellation-acceptance.md). Composition, source restoration and wider range scheduling remain required separate work.
 
 - [x] Inspect cutoff-free baselines, v1/v2/v3 target/source/component/receipt bindings, native/host rights, views and invalidation/deletion paths.
-- [ ] Obtain review of v4 binding/expected-native comparison, separate cancel authority/API, protected derived view state, latest-only retries and first-acceptance guards.
-- [ ] Implement the approved batch with generated clients/Flutter, atomic query/reminder/feed effects and actual two-host recovery; finish grouped checks before one code commit.
+- [x] Obtain review of v4 binding/expected-native comparison, separate cancel authority/API, protected derived view state, latest-only retries and first-acceptance guards.
+- [x] Implement the approved batch with generated clients/Flutter, atomic query/reminder/feed effects and actual two-host recovery; grouped checks passed before the single code commit.
+- [ ] Pass full repository CI for this implementation head before readiness.
 - [ ] Design subsequent cancellation replacement/multiple anchors, accepted-mask master composition and explicit source restoration next. Outgoing range CANCEL, wire mapping and replies remain separate requirements.
+
+The maintainer confirmed the next master-composition policy: preserve the accepted cutoff and reject updates that remove its original anchor. A higher master SEQUENCE alone must not reopen the range. Concrete storage/version/API mechanics remain subject to separate ADR review.

@@ -2867,6 +2867,40 @@ class _CalendarInvitationEndpoint {
   }
 
   _ida.Future<_ihn04pvw.CalendarInvitationOccurrenceApplyReceipt>
+  applyRangeCancellation(
+    _ist.TestSessionBuilder sessionBuilder,
+    _ituh8bkh.CalendarInvitationOccurrenceApplyRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarInvitation',
+            method: 'applyRangeCancellation',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarInvitation',
+          methodName: 'applyRangeCancellation',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<
+                  _ihn04pvw.CalendarInvitationOccurrenceApplyReceipt
+                >);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ihn04pvw.CalendarInvitationOccurrenceApplyReceipt>
   applyOccurrenceUpdate(
     _ist.TestSessionBuilder sessionBuilder,
     _ituh8bkh.CalendarInvitationOccurrenceApplyRequest request,
