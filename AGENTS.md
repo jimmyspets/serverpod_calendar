@@ -330,3 +330,6 @@ Accepted ADR 0161 implements active-master REQUEST updates preserving the accept
 
 
 Accepted ADR 0162 implements explicit whole-master CANCEL/reopening with the accepted cutoff intact. Keep the conservative whole-CANCEL SEQUENCE floor above current master, all canonical accepted components and original range cancellation; source DTSTAMP does not waive that floor. V6 binds verified current master kind/status/composition while retaining original frozen basis/version/receipt; later active updates never downgrade it to v5. Preserve strict v4/v5 reads, ordinary cutoff-free baselines, actual-source authority, native/host lifecycle/compose rights and atomic revisions/feed/alarm fencing. Exact range/latest-master retries stay write-free; local restoration remains dirty. New occurrence applications and source-cutoff restoration remain guarded. No SQL, new view field or cap expansion; see docs/range-cancellation-master-lifecycle.md and validation.
+
+
+Proposed ADR 0163 records the confirmed restore-only/same-cutoff/retained-values policy. Pure exact matching, independent source-version floors and unchanged canonical versions still require explicit approval before implementation. Do not lift durable restoration guards or infer source authority from a native cutoff/version argument; later acceptance/checkpoint mechanics remain separate.

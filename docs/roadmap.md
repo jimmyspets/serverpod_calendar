@@ -759,3 +759,14 @@ The maintainer confirmed preserve-cutoff/reject-orphan behavior. [Accepted ADR 0
 - [ ] Review source-cutoff restoration/replacement and remaining range scheduling separately.
 
 The maintainer confirmed the next source-restoration scope: a restore-only action at the exact saved cutoff with matching retained uncancelled values, clearing the whole cutoff while preserving exceptions. Rescheduling or another anchor follows separately; concrete projection/acceptance mechanics still require ADR review.
+
+## Restore-only range source projection
+
+[Proposed ADR 0163](adr/0163-pure-restore-only-range-source-projection.md) separates pure matching from later durable acceptance.
+
+- [x] Confirm same-cutoff restoration, matching retained uncancelled values and preservation of exceptions.
+- [x] Prepare exact identity/timing/content, independent version-floor and unchanged canonical-state mechanics for review.
+- [ ] Obtain explicit approval of the concrete pure proposal.
+- [ ] Implement focused pure tests and complete grouped checks before one code commit.
+- [ ] Pass full implementation-head repository CI before readiness.
+- [ ] Review durable restoration authority, checkpoint/version evidence, clean-state concurrency and retries separately.
