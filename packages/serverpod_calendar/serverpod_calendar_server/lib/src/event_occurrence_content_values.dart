@@ -33,11 +33,12 @@ CalendarEventTimingOverrides? eventDisclosedOverrides(
         ),
       ),
   ];
-  return singles.isEmpty && future.isEmpty
+  return singles.isEmpty && future.isEmpty && value.cancelledFrom == null
       ? null
       : CalendarEventTimingOverrides(
           singles: List.unmodifiable(singles),
           future: List.unmodifiable(future),
+          cancelledFrom: value.cancelledFrom,
         );
 }
 
@@ -249,6 +250,10 @@ CalendarEventTimingOverrides? changeEventContentOverrides(
   }
   return validateEventOverrides(
     content,
-    CalendarEventTimingOverrides(singles: singles, future: future),
+    CalendarEventTimingOverrides(
+      singles: singles,
+      future: future,
+      cancelledFrom: current?.cancelledFrom,
+    ),
   );
 }

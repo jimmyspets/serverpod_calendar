@@ -711,7 +711,9 @@ extension CalendarEventOperations on CalendarService {
       final e = await _event(c, input.eventId, tx);
       final lifecycle =
           input.action == CalendarEventOccurrenceAction.cancelSingle ||
-          input.action == CalendarEventOccurrenceAction.restoreSingle;
+          input.action == CalendarEventOccurrenceAction.restoreSingle ||
+          input.action == CalendarEventOccurrenceAction.cancelFuture ||
+          input.action == CalendarEventOccurrenceAction.restoreFuture;
       final operation = lifecycle
           ? CalendarPermission.changeEventStatus
           : CalendarPermission.updateEvent;

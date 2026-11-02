@@ -7,3 +7,5 @@ values:
   - restoreSingle
   - replaceFutureTiming
   - clearFutureTiming
+  - cancelFuture
+  - restoreFuture

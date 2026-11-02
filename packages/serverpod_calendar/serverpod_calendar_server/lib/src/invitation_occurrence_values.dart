@@ -44,6 +44,11 @@ CalendarInvitationOccurrenceProjection projectInvitationOccurrence({
   int maxCandidateWork = eventMaxCandidateWork,
 }) {
   try {
+    if (timingOverrides?.cancelledFrom != null) {
+      throw ArgumentError(
+        'Native future cancellation requires explicit reconciliation',
+      );
+    }
     RangeError.checkValueInInterval(maxCandidateWork, 1, eventMaxCandidateWork);
     // A parsed message may have been accepted with larger caller limits.
     // Reapply this projection's syntax/shape ceilings before traversing claims.
@@ -226,6 +231,11 @@ CalendarInvitationOccurrenceProjection projectInvitationRangeRequest({
   required String recipientAddress,
   int maxCandidateWork = eventMaxCandidateWork,
 }) {
+  if (timingOverrides?.cancelledFrom != null) {
+    throw ArgumentError(
+      'Native future cancellation requires explicit reconciliation',
+    );
+  }
   try {
     RangeError.checkValueInInterval(maxCandidateWork, 1, eventMaxCandidateWork);
     serializeIcalendarSyntax(message.source);

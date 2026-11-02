@@ -222,6 +222,7 @@ extension CalendarEventOccurrenceQueries on CalendarService {
               dateZone: parent.data.availabilityZoneId,
               groups: disclosed,
               work: work,
+              includeCancelled: query.includeCancelled,
             );
             for (final row in projected) {
               if (row.cancelled && !query.includeCancelled) continue;

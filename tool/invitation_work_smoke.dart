@@ -54,6 +54,7 @@ void require(bool value, String message) {
 }
 
 Future<void> main(List<String> args) async {
+  final nativeFuture = args.contains('--native-future');
   final rangeApply = args.contains('--range-applications');
   final occurrenceApply =
       args.contains('--occurrence-applications') || rangeApply;
@@ -104,6 +105,102 @@ Future<void> main(List<String> args) async {
   try {
     var a = await start('a', 18780);
     final b = await start('b', 18880);
+    if (nativeFuture) {
+      for (final restore in [false, true]) {
+        for (final pause in ['native-before', 'native-after']) {
+          final id = nextCase();
+          final seed =
+              await b.command({'command': 'native-seed', 'caseId': id}) as Map;
+          final anchor = cal.CalendarEventTiming(
+            kind: cal.CalendarEventTimeKind.utc,
+            start: cal.CalendarEventCivil(
+              year: 2026,
+              month: 1,
+              day: 3,
+              hour: 9,
+            ),
+          );
+          var input = cal.CalendarEventOccurrenceChange(
+            eventId: cal.UuidValue.fromString(seed['eventId'] as String),
+            expectedRevision: 1,
+            originalStart: anchor,
+            action: cal.CalendarEventOccurrenceAction.cancelFuture,
+          );
+          final race = await Future.wait(
+            [a, b].map(
+              (p) => p.command({
+                'command': 'native-change',
+                'caseId': id,
+                'request': input.toJson(),
+              }),
+            ),
+          );
+          require(
+            race.where((v) => (v as Map)['error'] == 'staleRevision').length ==
+                1,
+            'Native race must have one stale writer',
+          );
+          input = input.copyWith(
+            expectedRevision: 2,
+            action: restore
+                ? cal.CalendarEventOccurrenceAction.restoreFuture
+                : cal.CalendarEventOccurrenceAction.cancelFuture,
+            originalStart: restore
+                ? anchor
+                : anchor.copyWith(start: anchor.start.copyWith(day: 2)),
+          );
+          a.paused = Completer<Map<String, dynamic>>();
+          final lost = a
+              .command({
+                'command': 'native-change',
+                'caseId': id,
+                'request': input.toJson(),
+                'pause': pause,
+              })
+              .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+          await a.paused!.future.timeout(const Duration(seconds: 40));
+          await a.stop();
+          await lost;
+          final current = await b.command({
+            'command': 'native-inspect',
+            'caseId': id,
+            'eventId': seed['eventId'],
+          }) as Map;
+          require(
+            current['revision'] == (pause == 'native-before' ? 2 : 3),
+            'Native loss left partial revision',
+          );
+          require(
+            current['cutoff'] ==
+                (pause == 'native-before'
+                    ? 3
+                    : restore
+                    ? null
+                    : 2),
+            'Native loss left partial cutoff',
+          );
+          final retried = await b.command({
+            'command': 'native-change',
+            'caseId': id,
+            'request': input.toJson(),
+          }) as Map;
+          require(
+            pause == 'native-before'
+                ? retried['revision'] == 3
+                : retried['error'] == 'staleRevision',
+            'Native uncertain-write revision fencing failed',
+          );
+          a = await start(
+            'native-recovered-${restore ? 'restore' : 'cancel'}-$pause',
+            18780,
+          );
+        }
+      }
+      stdout.writeln(
+        'PASS: actual two-host native cutoff races and before/after cancellation/restoration commit loss; survivor revision reconciliation.',
+      );
+      return;
+    }
     if (instanceResponses) {
       for (final pause in ['response-before', 'response-after']) {
         final id = nextCase();
