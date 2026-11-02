@@ -25,3 +25,8 @@ After acceptance, **all new master, single and range source application commands
 Ordinary export, feeds and new organizer REQUEST publication reject an active cutoff until a faithful mapping is supported; cached feed responses must not return stale 304. Range participation, outgoing range cancellation, tasks/openings and real mail remain separate. This is synthetic/native validation, not external client interoperability certification.
 
 See [validation](scaffold-validation.md) and [development commands](development.md).
+
+
+## Proposed master composition with an accepted cutoff
+
+[Proposed ADR 0161](adr/0161-master-updates-with-accepted-range-cancellation.md) follows the confirmed preserve-cutoff/reject-orphan master-update policy. It proposes master REQUEST composition only, existing-table JSON v5 with one frozen original cancellation basis and separate current composition binding, independent composition authority, stable cancellation/master receipts and a protected master-view flag. The frozen basis retains superseded source content within the existing active-data lifetime and byte caps. New whole/single/range cancellation, occurrence applications and source restoration remain guarded. No SQL/cap expansion is proposed; concrete model/API mechanics await explicit approval and are not implemented.
