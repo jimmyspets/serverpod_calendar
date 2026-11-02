@@ -208,17 +208,15 @@ void main() {
         },
       );
     }
-    test('new source applications block; local restoration remains a draft; retry survives newer notice', () async {
+    test('occurrence applications block; local restoration remains a draft; retry survives newer notice', () async {
       final link = await setup();
       final input = await cancel();
       final result = await service.applyInvitationRangeCancellation(input);
       final master = await newerMaster(sequence: 5);
-      expect(master.occurrenceCompositionBlocked, isTrue);
+      expect(master.occurrenceCompositionBlocked, isFalse);
+      expect(master.hasAcceptedRangeCancellation, isTrue);
       expect(master.hasLocalChanges, isFalse);
-      await expectLater(
-        service.applyInvitationUpdate(masterCommand(master)),
-        failure(CalendarFailureCode.dependencyConflict),
-      );
+      expect(master.canApply, isTrue);
       final saved = await data();
       await service.changeOccurrence(
         CalendarEventOccurrenceChange(

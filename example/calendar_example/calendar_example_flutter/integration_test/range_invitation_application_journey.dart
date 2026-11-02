@@ -174,6 +174,47 @@ Future<void> runRangeInvitationApplicationJourney(
     );
     navigator.pop();
     await tester.pumpAndSettle();
+    await client.invitationDemo.simulateRecurring(
+      id,
+      const cal.Uuid().v4obj(),
+      5,
+      'Master retains cancelled suffix',
+    );
+    navigator.push(
+      MaterialPageRoute<void>(
+        builder: (_) => InvitationUpdateScreen(
+          client: client,
+          invitationId: master.entryId,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await loaded();
+    expect(
+      find.byKey(const Key('invitation-master-range-cancellation')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('invitation-master-composition-guard')),
+      findsNothing,
+    );
+    await tap('invitation-update-apply');
+    final composedMask = await api.calendarInvitation.application(
+      master.entryId,
+    );
+    expect(composedMask.hasAcceptedRangeCancellation, isTrue);
+    expect(composedMask.acceptedSequence, 5);
+    expect(composedMask.hasLocalChanges, isFalse);
+    final rangeAfterMaster = await api.calendarInvitation.rangeApplication(
+      source.entryId,
+    );
+    expect(rangeAfterMaster.acceptedVersion.sequence, 4);
+    expect(
+      rangeAfterMaster.currentOccurrence!.status,
+      cal.CalendarEventStatus.cancelled,
+    );
+    navigator.pop();
+    await tester.pumpAndSettle();
   } finally {
     final event = await api.calendarEvent.getEvent(link.eventId, []);
     await api.calendarEvent.deleteEvent(link.eventId, event.revision);

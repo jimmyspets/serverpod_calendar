@@ -159,7 +159,13 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
             Text(
               'Accepted source SEQUENCE: ${view.acceptedSequence?.toString() ?? 'omitted (effective 0)'}; DTSTAMP: ${view.acceptedStamp.toIso8601String()}',
             ),
-            if (view.occurrenceRevision > 0)
+            if (view.hasAcceptedRangeCancellation)
+              const Text(
+                'An accepted range cancellation remains in force. Apply update preserves its cutoff and does not reopen the cancelled suffix. Source restoration is a separate action.',
+                key: Key('invitation-master-range-cancellation'),
+              ),
+            if (view.occurrenceRevision > 0 &&
+                !view.hasAcceptedRangeCancellation)
               const Text(
                 'Accepted occurrence and range edits will be preserved, including individual cancellations. Reopening the series does not restore individually cancelled occurrences.',
               ),
