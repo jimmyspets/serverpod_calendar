@@ -321,3 +321,6 @@ The maintainer confirmed native future restoration by clearing the whole saved c
 
 
 The maintainer confirmed incoming range CANCEL requires SEQUENCE newer than all affected accepted components. Accepted ADR 0159 implements the pure projectInvitationRangeCancellation helper and distinct immutable candidate/source-version carrier, including the underlying range/master floor beneath an anchor single. Preserve retained master/component versions, flags, timing/content and exact source omissions. Reject current cutoffs, invalid claims/profiles and exhausted work/slots; do not weaken cutoff-free source baselines or durable guards. Pure success grants no authority/current-state proof. Durable source cancellation, retries/composition/restoration and wire mapping remain separate. See docs/range-cancellation-projection.md.
+
+
+Proposed ADR 0160 records the next first durable range-CANCEL acceptance design: separate private v4 cancellation/source binding and expected-native comparison, cutoff-free ordinary baselines, independent authority/API, protected view state and temporary new-command guards. These model/API mechanics await explicit approval. Do not infer accepted source cancellation from a native cutoff or overwrite component versions; composition/restoration remains separate.

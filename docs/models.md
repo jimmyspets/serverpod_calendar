@@ -828,3 +828,8 @@ Accepted [ADR 0158](adr/0158-native-event-future-cancellation.md) implements a n
 ## Pure incoming range cancellation
 
 Accepted [ADR 0159](adr/0159-pure-range-cancellation-projection.md) implements a separate pure cutoff candidate and independent cancellation source version, preserving retained master/occurrence data and versions. Incoming SEQUENCE must exceed all affected versions, including the underlying segment beneath an anchor single. See [the implementation guide](range-cancellation-projection.md) for the exact profile, floor, limits and omissions. Actual validation is recorded separately. No native write, accepted baseline, generated protocol, endpoint or wire export changes; durable range CANCEL/retry/composition/restoration remains separate.
+
+
+## Proposed first durable range cancellation
+
+[Proposed ADR 0160](adr/0160-first-range-cancellation-acceptance.md) adds explicit first incoming range-CANCEL acceptance using one private layer in existing checkpoint v4 JSON, keeping the ordinary accepted baseline cutoff-free and binding the complete expected native state separately. It proposes separate cancel authority/API, a protected derived view flag, exact latest receipt retries and native cutoff/query/reminder/feed effects. New source applications after acceptance would temporarily block until composition/restoration is designed. No new SQL or retention expansion is proposed. These mechanics are unapproved and unimplemented; current durable range CANCEL guards remain.
