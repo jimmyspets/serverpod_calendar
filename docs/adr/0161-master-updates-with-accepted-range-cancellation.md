@@ -1,6 +1,6 @@
 # ADR 0161: Master updates with accepted range cancellation
 
-Status: **Proposed. The maintainer confirmed preserve-cutoff/reject-orphan behavior; the concrete checkpoint, authority and view mechanics below require explicit approval.**
+Status: **Accepted — explicit maintainer agreement on 2026-11-02, including the v5 frozen/current storage, authority, retry and view mechanics. Implementation evidence is recorded separately.**
 
 ## Problem and bounded scope
 

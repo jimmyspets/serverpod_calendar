@@ -600,6 +600,19 @@ Future<void> main(List<String> args) async {
                   ),
               'acceptedKind': application?.kind.name,
               'eventStatus': eventRows.firstOrNull?.content.status.name,
+              'cutoff': eventRows.firstOrNull?.timingOverrides?.cancelledFrom
+                  ?.toJson(),
+              'checkpointVersion':
+                  await CalendarInvitationOccurrenceApplicationRecord.db
+                      .findFirstRow(
+                        session,
+                        where: (t) => t.scopeKey.equals(host.scope),
+                      )
+                      .then(
+                        (v) => v == null
+                            ? null
+                            : (jsonDecode(v.stateJson) as Map)['version'],
+                      ),
               'events': await session.db
                   .unsafeQuery(
                     'SELECT e.id FROM serverpod_calendar_event e JOIN serverpod_calendar_identity c ON c.id=e."calendarId" WHERE c."scopeKey"=@scope',

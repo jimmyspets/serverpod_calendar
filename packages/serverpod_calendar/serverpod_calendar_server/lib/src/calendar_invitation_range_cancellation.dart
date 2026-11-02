@@ -1,7 +1,7 @@
 part of 'calendar_module.dart';
 
 bool _occHasRangeCancellation(Map<String, dynamic>? state) =>
-    state?['version'] == 4;
+    {4, 5}.contains(state?['version']);
 
 Map<String, dynamic> _occLatestTarget(Map<String, dynamic> state) {
   if (_occHasRangeCancellation(state)) {
@@ -54,6 +54,11 @@ extension CalendarInvitationRangeCancellationOperations on CalendarService {
     CalendarInvitationOccurrenceApplicationRecord row,
     Map<String, dynamic> state,
   ) {
+    final composed = state['version'] == 5;
+    final basis = composed
+        ? CalendarEventImportBaseline.fromJson(state['cancellationBasis'])
+        : event.data.importBaseline!;
+    validateEventImportBaseline(basis, link.uid);
     final layer = state['rangeCancellation'] as Map<String, dynamic>;
     final original = CalendarEventTiming.fromJson(layer['original']);
     final text = layer['source'] as String;
@@ -64,7 +69,7 @@ extension CalendarInvitationRangeCancellationOperations on CalendarService {
         state['latestTargetKey'] != layer['key'] ||
         layer['key'] != _invTargetKey(original, range: true) ||
         layer['kind'] != CalendarInvitationSourceKind.rangeCancellation.name ||
-        layer['basisDigest'] != state['baselineDigest'] ||
+        layer['basisDigest'] != _invBaselineDigest(basis) ||
         utf8.encode(text).length > 262144 ||
         sha256.convert(utf8.encode(text)).toString() != layer['digest'] ||
         DateTime.parse(layer['acceptedAt']).isAfter(row.updatedAt) ||
@@ -72,7 +77,7 @@ extension CalendarInvitationRangeCancellationOperations on CalendarService {
         entryId.toString() != layer['invitationId']) {
       throw StateError('Invalid cancellation evidence');
     }
-    final accepted = _occAccepted(event.data.importBaseline!);
+    final accepted = _occAccepted(basis);
     final projection = projectInvitationRangeCancellation(
       protocolUid: link.uid,
       content: accepted.content,
@@ -90,10 +95,118 @@ extension CalendarInvitationRangeCancellationOperations on CalendarService {
         jsonEncode(_occOrdered(version.toJson())) !=
             jsonEncode(_occOrdered(projection.cancellationVersion.toJson())) ||
         layer['requiredAfterSequence'] != projection.requiredAfterSequence ||
-        state['expectedNativeDigest'] != expected ||
+        (composed
+                ? state['cancellationNativeDigest']
+                : state['expectedNativeDigest']) !=
+            expected ||
         layer['binding'] != _occCancellationBinding(link, layer, expected)) {
       throw StateError('Invalid cancellation projection binding');
     }
+    if (composed) {
+      final current = _occAccepted(event.data.importBaseline!);
+      final candidate = _occMaskMember(
+        CalendarEventImportMember(
+          eventId: link.eventId,
+          protocolUid: link.uid,
+          content: current.content,
+          timingOverrides: current.edits,
+          protocolState: current.protocol,
+        ),
+        state,
+      );
+      if (state['expectedNativeDigest'] !=
+              _occNativeDigest(link.uid, (
+                content: candidate.content,
+                edits: candidate.timingOverrides,
+                protocol: candidate.protocolState,
+              )) ||
+          state['compositionDigest'] != _occCompositionDigest(link, state)) {
+        throw StateError('Invalid current cancellation composition');
+      }
+    }
+  }
+
+  CalendarEventImportMember _occMaskMember(
+    CalendarEventImportMember member,
+    Map<String, dynamic> state,
+  ) {
+    final original = CalendarEventTiming.fromJson(
+      _occLatestTarget(state)['original'],
+    );
+    final edits = validateEventOverrides(
+      member.content,
+      CalendarEventTimingOverrides(
+        singles: member.timingOverrides?.singles ?? [],
+        future: member.timingOverrides?.future ?? [],
+        cancelledFrom: original,
+      ),
+      sharedWorkBudget: RecurrenceWorkBudget(maxWork: eventMaxCandidateWork),
+    );
+    final protocol = validateEventProtocolState(
+      member.protocolState,
+      member.content,
+      edits,
+    );
+    return CalendarEventImportMember(
+      eventId: member.eventId,
+      protocolUid: member.protocolUid,
+      content: member.content,
+      timingOverrides: edits,
+      protocolState: protocol,
+    );
+  }
+
+  String _occCompositionDigest(
+    CalendarInvitationLinkRecord link,
+    Map<String, dynamic> state,
+  ) => _invitationHash([
+    'range-cancel-composition-v5',
+    link.scopeKey,
+    link.recipientKey,
+    link.id.toString(),
+    link.calendarId.toString(),
+    link.eventId.toString(),
+    link.uid,
+    link.organizer,
+    state['masterDigest'] as String,
+    state['masterBaselineDigest'] as String,
+    state['baselineDigest'] as String,
+    _occLatestTarget(state)['binding'] as String,
+    state['cancellationNativeDigest'] as String,
+    state['expectedNativeDigest'] as String,
+  ]);
+
+  Map<String, dynamic> _occComposeCancellation({
+    required CalendarInvitationLinkRecord link,
+    required _Event event,
+    required Map<String, dynamic> state,
+    required CalendarEventImportBaseline masterBaseline,
+    required CalendarEventImportBaseline baseline,
+    required CalendarEventImportMember member,
+    required CalendarInvitationApplicationRecord? master,
+  }) {
+    final next = <String, dynamic>{
+      ...state,
+      'version': 5,
+      'cancellationBasis': state['version'] == 5
+          ? state['cancellationBasis']
+          : event.data.importBaseline!.toJson(),
+      'cancellationNativeDigest': state['version'] == 5
+          ? state['cancellationNativeDigest']
+          : state['expectedNativeDigest'],
+      'masterBaseline': masterBaseline.toJson(),
+      'masterBaselineDigest': _invBaselineDigest(masterBaseline),
+      'masterDigest': _occMasterDigest(link, master),
+      'baselineDigest': _invBaselineDigest(baseline),
+      'expectedNativeDigest': _occNativeDigest(link.uid, (
+        content: member.content,
+        edits: member.timingOverrides,
+        protocol: member.protocolState,
+      )),
+    };
+    next['compositionDigest'] = _occCompositionDigest(link, next);
+    next['receiptDigest'] = _occReceiptDigest(next);
+    return next;
   }
 
   Map<String, dynamic> _occCancellationState({
