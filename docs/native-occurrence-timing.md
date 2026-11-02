@@ -54,3 +54,8 @@ Per-occurrence content overrides, future cancellation, arbitrary future pattern 
 ## Selected event occurrence content, 2026-10-24
 
 [ADR 0106](adr/0106-single-event-content-overrides.md) and [the content guide](event-occurrence-content.md) extend events with selected summary/description/location exceptions, explicit clear/inherit, protected preview groups and anchor-local own wire text/annotations. Content-only exceptions preserve timing inheritance and reject lossy export; explicit timing components can round-trip local content. Master edits preserve pinned fields. Private event-source-v2 baselines supersede v1, which rejects fail-closed and requires explicit development recreation/reimport; no automatic reset/adoption is performed. This supersedes earlier timing-only/content-pending wording only for this scoped slice. Future content/cancellation, richer profiles, scheduling and feeds remain separate.
+
+
+## Proposed native future cancellation/restoration
+
+The maintainer confirmed clearing the entire saved cutoff using current retained timing/content, preserving individually cancelled occurrences. [Proposed ADR 0158](adr/0158-native-event-future-cancellation.md) adds a nullable start-only cancelledFrom to existing override JSON and typed cancelFuture/restoreFuture actions, with lifecycle authority, protocol bookkeeping, complete query/free-busy/alarm integration and Flutter. It proposes rejecting masked export/feed/new REQUEST projections until faithful wire mapping exists. No new SQL table/column or history is proposed. These mechanics await approval and are unimplemented; incoming/outgoing range CANCEL and replies remain separate.
