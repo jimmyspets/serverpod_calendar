@@ -96,6 +96,7 @@ Future<void> main(List<String> args) async {
         if (args.contains('--replies-only')) '--replies-only',
         if (args.contains('--invitations-only')) '--invitations-only',
         if (args.contains('--occurrences-only')) '--occurrences-only',
+        if (args.contains('--native-future-only')) '--native-future-only',
         if (args.contains('--scheduling-only')) '--scheduling-only',
         'http://localhost:18180/',
         'http://localhost:18280/',
@@ -110,6 +111,7 @@ Future<void> main(List<String> args) async {
         Duration(
           seconds:
               args.contains('--occurrences-only') ||
+                  args.contains('--native-future-only') ||
                   args.contains('--replies-only') ||
                   args.contains('--invitations-only') ||
                   args.contains('--scheduling-only')
@@ -126,6 +128,7 @@ Future<void> main(List<String> args) async {
       if (code != 0) throw StateError('Real-client smoke failed ($code).');
       if (args.contains('--feeds') && !args.contains('--flutter')) return;
       if (!args.contains('--occurrences-only') &&
+          !args.contains('--native-future-only') &&
           !args.contains('--feeds') &&
           !args.contains('--replies-only') &&
           !args.contains('--invitations-only') &&
@@ -244,7 +247,9 @@ Future<void> main(List<String> args) async {
         '-d',
         'web-server',
         '--driver=test_driver/integration_test.dart',
-        args.contains('--occurrences')
+        args.contains('--native-future')
+            ? '--target=integration_test/native_future_smoke_test.dart'
+            : args.contains('--occurrences')
             ? '--target=integration_test/occurrence_query_smoke_test.dart'
             : args.contains('--range-applications')
             ? '--target=integration_test/range_invitation_application_smoke_test.dart'
@@ -289,6 +294,7 @@ Future<void> main(List<String> args) async {
       final output = result.stdout.transform(utf8.decoder).listen(stdout.write);
       final error = result.stderr.transform(utf8.decoder).listen(stderr.write);
       final focused =
+          args.contains('--native-future') ||
           args.contains('--range-applications') ||
           args.contains('--ranges') ||
           args.contains('--instance-responses') ||

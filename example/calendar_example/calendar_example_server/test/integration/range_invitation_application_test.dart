@@ -300,6 +300,42 @@ void main() {
       );
       expect((await data()).content.summary, 'Local draft');
     });
+    test('native cutoff and restoration preserve source evidence and remain local changes', () async {
+      final link = await setup();
+      final input = await update();
+      final before = await data();
+      final baseline = jsonEncode(before.importBaseline!.toJson());
+      final original = before.content.timing.copyWith(
+        start: before.content.timing.start.copyWith(day: 2),
+        end: null,
+        duration: null,
+      );
+      var revision = 1;
+      for (final action in [
+        CalendarEventOccurrenceAction.cancelFuture,
+        CalendarEventOccurrenceAction.restoreFuture,
+      ]) {
+        await service.changeOccurrence(
+          CalendarEventOccurrenceChange(
+            eventId: link.eventId,
+            expectedRevision: revision++,
+            originalStart: original,
+            action: action,
+          ),
+        );
+        final view = await service.invitationRangeApplication(
+          input.invitationId,
+        );
+        expect(view.hasLocalChanges, isTrue);
+        expect(view.canApply, isFalse);
+        await expectLater(
+          service.applyInvitationRangeUpdate(command(view)),
+          failure(CalendarFailureCode.dependencyConflict),
+        );
+        expect(jsonEncode((await data()).importBaseline!.toJson()), baseline);
+      }
+      expect((await data()).timingOverrides, isNull);
+    });
     test('range CANCEL stays read-only and retained REQUEST retries do not dismiss it', () async {
       await setup();
       final input = await update();

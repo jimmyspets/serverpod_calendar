@@ -443,7 +443,8 @@ List<CalendarAvailabilityOpeningEdits>? validateAvailabilityEdits(
         throw ArgumentError('Opening replacements must have positive duration');
       }
     }
-    if (entry.overrides.singles.any(
+    if (entry.overrides.cancelledFrom != null ||
+        entry.overrides.singles.any(
           (v) => v.contentOverrides != null || v.sourceMetadata != null,
         ) ||
         entry.overrides.future.any(
@@ -469,6 +470,10 @@ List<CalendarAvailabilityOpeningEdits>? changeAvailabilityEdits(
   List<CalendarAvailabilityOpeningEdits>? current,
   CalendarAvailabilityOccurrenceChange request,
 ) {
+  if (request.action == CalendarEventOccurrenceAction.cancelFuture ||
+      request.action == CalendarEventOccurrenceAction.restoreFuture) {
+    throw ArgumentError('Opening future cancellation is not supported');
+  }
   final opening = content.openings.singleWhere(
     (o) => o.uid == request.openingUid,
     orElse: () => throw ArgumentError('Unknown opening'),

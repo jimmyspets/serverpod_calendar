@@ -16,6 +16,7 @@ import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
 import 'calendar_event_future_override.dart' as _imbjv41e;
 import 'calendar_event_single_override.dart' as _iq1kxi25;
+import 'calendar_event_timing.dart' as _ieswiaty;
 
 @_isc.immutable
 abstract class CalendarEventTimingOverrides
@@ -23,11 +24,13 @@ abstract class CalendarEventTimingOverrides
   const CalendarEventTimingOverrides._({
     required this.singles,
     required this.future,
+    this.cancelledFrom,
   });
 
   const factory CalendarEventTimingOverrides({
     required List<_iq1kxi25.CalendarEventSingleOverride> singles,
     required List<_imbjv41e.CalendarEventFutureOverride> future,
+    _ieswiaty.CalendarEventTiming? cancelledFrom,
   }) = _CalendarEventTimingOverridesImpl;
 
   factory CalendarEventTimingOverrides.fromJson(
@@ -42,6 +45,11 @@ abstract class CalendarEventTimingOverrides
           .deserialize<List<_imbjv41e.CalendarEventFutureOverride>>(
             jsonSerialization['future'],
           ),
+      cancelledFrom: jsonSerialization['cancelledFrom'] == null
+          ? null
+          : _ie4a1wrz.Protocol().deserialize<_ieswiaty.CalendarEventTiming>(
+              jsonSerialization['cancelledFrom'],
+            ),
     );
   }
 
@@ -49,12 +57,15 @@ abstract class CalendarEventTimingOverrides
 
   final List<_imbjv41e.CalendarEventFutureOverride> future;
 
+  final _ieswiaty.CalendarEventTiming? cancelledFrom;
+
   /// Returns a shallow copy of this [CalendarEventTimingOverrides]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
   CalendarEventTimingOverrides copyWith({
     List<_iq1kxi25.CalendarEventSingleOverride>? singles,
     List<_imbjv41e.CalendarEventFutureOverride>? future,
+    _ieswiaty.CalendarEventTiming? cancelledFrom,
   });
   @override
   bool operator ==(Object other) {
@@ -71,7 +82,12 @@ abstract class CalendarEventTimingOverrides
             const _iss.DeepCollectionEquality().equals(
               other.future,
               future,
-            );
+            ) &&
+            (identical(
+                  other.cancelledFrom,
+                  cancelledFrom,
+                ) ||
+                other.cancelledFrom == cancelledFrom);
   }
 
   @override
@@ -80,6 +96,7 @@ abstract class CalendarEventTimingOverrides
       runtimeType,
       const _iss.DeepCollectionEquality().hash(singles),
       const _iss.DeepCollectionEquality().hash(future),
+      cancelledFrom,
     );
   }
 
@@ -89,6 +106,7 @@ abstract class CalendarEventTimingOverrides
       '__className__': 'serverpod_calendar.CalendarEventTimingOverrides',
       'singles': singles.toJson(valueToJson: (v) => v.toJson()),
       'future': future.toJson(valueToJson: (v) => v.toJson()),
+      if (cancelledFrom != null) 'cancelledFrom': cancelledFrom?.toJson(),
     };
   }
 
@@ -98,6 +116,8 @@ abstract class CalendarEventTimingOverrides
       '__className__': 'serverpod_calendar.CalendarEventTimingOverrides',
       'singles': singles.toJson(valueToJson: (v) => v.toJsonForProtocol()),
       'future': future.toJson(valueToJson: (v) => v.toJsonForProtocol()),
+      if (cancelledFrom != null)
+        'cancelledFrom': cancelledFrom?.toJsonForProtocol(),
     };
   }
 
@@ -107,13 +127,17 @@ abstract class CalendarEventTimingOverrides
   }
 }
 
+class _Undefined {}
+
 class _CalendarEventTimingOverridesImpl extends CalendarEventTimingOverrides {
   const _CalendarEventTimingOverridesImpl({
     required List<_iq1kxi25.CalendarEventSingleOverride> singles,
     required List<_imbjv41e.CalendarEventFutureOverride> future,
+    _ieswiaty.CalendarEventTiming? cancelledFrom,
   }) : super._(
          singles: singles,
          future: future,
+         cancelledFrom: cancelledFrom,
        );
 
   /// Returns a shallow copy of this [CalendarEventTimingOverrides]
@@ -123,10 +147,14 @@ class _CalendarEventTimingOverridesImpl extends CalendarEventTimingOverrides {
   CalendarEventTimingOverrides copyWith({
     List<_iq1kxi25.CalendarEventSingleOverride>? singles,
     List<_imbjv41e.CalendarEventFutureOverride>? future,
+    Object? cancelledFrom = _Undefined,
   }) {
     return CalendarEventTimingOverrides(
       singles: singles ?? this.singles.map((e0) => e0.copyWith()).toList(),
       future: future ?? this.future.map((e0) => e0.copyWith()).toList(),
+      cancelledFrom: cancelledFrom is _ieswiaty.CalendarEventTiming?
+          ? cancelledFrom
+          : this.cancelledFrom?.copyWith(),
     );
   }
 }

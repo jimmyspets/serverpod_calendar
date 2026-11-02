@@ -58,6 +58,7 @@ final class _AlarmWorker {
             event.data.content.recurrence?.toJson(),
             event.data.content.periods?.map((v) => v.toJson()).toList(),
             event.data.content.status.name,
+            event.data.timingOverrides?.cancelledFrom?.toJson(),
             [
               for (final v
                   in event.data.timingOverrides?.singles ??
@@ -379,14 +380,38 @@ final class _AlarmWorker {
         for (final r in existing)
           (r.originalKey, r.repeatOrdinal, r.kind, r.snoozeRevision),
       };
+      // A cutoff restoration can expose the same due instant in a new plan
+      // generation. Retained transport acceptance must not become a new alert.
+      final acceptedAutomatic = await CalendarAlarmFiringRecord.db.find(
+        session,
+        where: (t) =>
+            t.alarmId.equals(lease.alarmId) &
+            t.kind.equals(CalendarAlarmFiringKind.automatic) &
+            t.state.equals(CalendarAlarmFiringState.accepted),
+        limit: runtime.options.maxRetainedFirings + 1,
+        transaction: tx,
+      );
+      if (acceptedAutomatic.length > runtime.options.maxRetainedFirings) {
+        throw const AlarmPlanLimitException();
+      }
+      final acceptedKeys = {
+        for (final r in acceptedAutomatic)
+          (r.originalKey, r.repeatOrdinal, r.dueAt),
+      };
+      bool alreadyAccepted(AlarmFiringCandidate candidate) =>
+          acceptedKeys.contains(
+            (candidate.originalKey, candidate.repeatOrdinal, candidate.dueAt),
+          );
       final additions = plan.firings
           .where(
-            (f) => !keys.contains((
-              f.candidate.originalKey,
-              f.candidate.repeatOrdinal,
-              CalendarAlarmFiringKind.automatic,
-              0,
-            )),
+            (f) =>
+                !alreadyAccepted(f.candidate) &&
+                !keys.contains((
+                  f.candidate.originalKey,
+                  f.candidate.repeatOrdinal,
+                  CalendarAlarmFiringKind.automatic,
+                  0,
+                )),
           )
           .length;
       // Accepted snooze revisions are one-shot across generation changes.
@@ -428,6 +453,7 @@ final class _AlarmWorker {
       }
       for (final firing in plan.firings) {
         final c = firing.candidate;
+        if (alreadyAccepted(c)) continue;
         if (keys.contains((
           c.originalKey,
           c.repeatOrdinal,
@@ -843,6 +869,14 @@ final class _AlarmWorker {
           t.originalKey.equals(intent.originalKey),
       transaction: tx,
     );
+    if (snapshot.parent.event?.data.timingOverrides?.cancelledFrom != null &&
+        !_alarmOriginalActive(
+          snapshot.parent,
+          intent.originalKey,
+          snapshot.records,
+        )) {
+      return CalendarAlarmDeliveryCheck.withdrawn;
+    }
     if (firing.kind == CalendarAlarmFiringKind.automatic &&
         (action?.acknowledgedAt != null ||
             action?.dismissedAt != null ||

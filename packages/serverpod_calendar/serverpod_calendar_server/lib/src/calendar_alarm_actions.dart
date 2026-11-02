@@ -58,6 +58,9 @@ bool _alarmOriginalActive(
     }
     final event = parent.event;
     if (event != null && original != null) {
+      if (eventFutureCancelled(event.data.timingOverrides, original)) {
+        return false;
+      }
       validateEventOverrides(
         event.data.content,
         CalendarEventTimingOverrides(
