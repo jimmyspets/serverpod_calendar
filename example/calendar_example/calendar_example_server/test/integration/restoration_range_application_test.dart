@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_calendar_server/serverpod_calendar_server.dart';
 import 'package:test/test.dart';
+import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 
 import 'calendar_test.dart'
     show
@@ -279,6 +280,60 @@ void main() {
       }
       final r = await receive(Uint8List.fromList(utf8.encode(text)));
       return service.invitationRangeApplication(r.entryId);
+    }
+
+    for (final advanced in [false, true]) {
+      test(
+        'pure re-cancellation never enables durable cycle at ${advanced ? "v11" : "v7"}',
+        () async {
+          await ready();
+          if (advanced) {
+            await service.applyInvitationRangeUpdate(
+              command(await rangeUpdate(sequence: 11)),
+            );
+          }
+          final bytes = Uint8List.fromList(
+            utf8.encode(
+              utf8
+                  .decode(rangeInvitationBytes(cancel: true, sequence: 20))
+                  .split('\r\n')
+                  .where((line) => !line.startsWith('SUMMARY:'))
+                  .join('\r\n'),
+            ),
+          );
+          final received = await receive(bytes),
+              d = await data(),
+              checkpoint = await row();
+          final pure = projectInvitationRangeRecancellation(
+            protocolUid: d.protocolUid,
+            content: d.content,
+            timingOverrides: d.timingOverrides,
+            protocolState: d.protocolState!,
+            previousRestorationVersion: CalendarEventProtocolVersion(
+              sequence: 10,
+              stamp: DateTime.utc(2026),
+            ),
+            message: parseIcalendarSchedulingMessage(bytes),
+            recipientAddress: 'mailto:alice@example.invalid',
+          );
+          expect(pure.timingOverrides.cancelledFrom, isNotNull);
+          final v = await service.invitationRangeApplication(received.entryId);
+          expect(v.canApply, isFalse);
+          await expectLater(
+            service.applyInvitationRangeCancellation(command(v)),
+            failure(CalendarFailureCode.dependencyConflict),
+          );
+          expect((await data()).toJson(), d.toJson());
+          expect((await row()).toJson(), checkpoint.toJson());
+          expect(
+            (await CalendarInvitationRecord.db.findById(
+              session,
+              received.entryId,
+            ))!.dismissedAt,
+            isNull,
+          );
+        },
+      );
     }
 
     for (final profile in ['utc', 'date', 'Europe/Stockholm']) {

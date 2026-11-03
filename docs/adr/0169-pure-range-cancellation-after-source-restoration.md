@@ -1,6 +1,6 @@
 # ADR 0169: Pure range cancellation after source restoration
 
-Status: **Proposed. Existing cancel-all/preserve-exceptions policy remains confirmed. The additional historical version floor and pure API/result mechanics below require explicit maintainer agreement.**
+Status: **Accepted by explicit maintainer agreement on 2026-11-03, including the historical restoration floor and pure API/result mechanics.**
 
 ## Context and next batch
 
@@ -10,7 +10,7 @@ A later THISANDFUTURE CANCEL is still blocked after restoration. Complete repeat
 
 [RFC 5546 section 3.2.5](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.5) defines range cancellation through RECURRENCE-ID with RANGE=THISANDFUTURE. Our current stricter freshness and source profiles remain application choices, rather than a claim of unrestricted RFC support.
 
-## Proposed pure API and result
+## Approved pure API and result
 
 Add a separate exported projectInvitationRangeRecancellation helper alongside projectInvitationRangeCancellation. Require the same protocol UID, current canonical content/overrides/protocol state, source message, recipient address and bounded candidate-work input, plus a previousRestorationVersion. The distinct entry point makes the extra requirement explicit; the existing first-cancellation helper and its callers retain their current behavior.
 
@@ -31,7 +31,7 @@ The maximum of those values is requiredAfterSequence. Missing retained canonical
 
 For example, canonical floor 4 plus previous restoration 10 rejects CANCEL 10 even with a later clock, and permits 11 only if all other checks pass. Canonical floor 20 plus restoration 10 still rejects 11 or 20. Backwards incoming source timestamps may remain exact when the sequence and existing profile checks succeed; timestamps are not authority or a database audit clock.
 
-This historical floor is a new conservative application proposal, not a universal RFC rule and not already implied by the approved range REQUEST policy. A later durable workflow must establish which restoration is actually accepted and bind it to the current series; callers cannot establish that by passing a version to this pure function.
+This historical floor is the approved conservative application policy, not a universal RFC rule and not already implied by the approved range REQUEST policy. A later durable workflow must establish which restoration is actually accepted and bind it to the current series; callers cannot establish that by passing a version to this pure function.
 
 ## Candidate semantics and preserved data
 
@@ -57,6 +57,11 @@ This increment deliberately does not solve repeated durable cycles. Their bounde
 
 ## Validation and acceptance
 
-After approval add focused pure VM cases for DATE/UTC/named zones, gap/fold anchors, exact versus moved originals, earlier/PERIOD additions and exclusions; same-anchor singles/underlying ranges/later components; both independent floors, missing/zero/equal/maximum sequences, later/backwards timestamps and source omissions; unchanged inheritance/flags/versions/metadata/alarms; input nonmutation, detached result ownership, immutable source messages and bounded work/source/zone/slot failures. Retain all existing first-CANCEL and restore-only regressions. Include repeated pure CANCEL/restore-only round trips, at the same and different anchors, using the existing restore helper with each new independent cancellation version; verify that every successive control version advances without rewriting canonical versions. This closes the pure cycle prerequisite as one batch.
+The approved batch adds focused pure VM cases for DATE/UTC/named zones, gap/fold anchors, exact versus moved originals, earlier/PERIOD additions and exclusions; same-anchor singles/underlying ranges/later components; both independent floors, missing/zero/equal/maximum sequences, later/backwards timestamps and source omissions; unchanged inheritance/flags/versions/metadata/alarms; input nonmutation, detached result ownership, immutable source messages and bounded work/source/zone/slot failures. Retain all existing first-CANCEL and restore-only regressions. Include repeated pure CANCEL/restore-only round trips, at the same and different anchors, using the existing restore helper with each new independent cancellation version; verify that every successive control version advances without rewriting canonical versions. This closes the pure cycle prerequisite as one batch.
 
 At batch completion run formatting and full fatal-info analysis, complete module VM/Chrome suites and directly affected native guard regressions. Core/iCalendar semantics are unchanged; rerun their suites only if source/dependency changes or failures justify it, with the full repository CI still required before readiness. No database or Flutter execution claim follows from pure tests. Commit/push code only after the complete approved batch; documentation approval is not implied by merging this proposed ADR.
+
+
+## Scoped implementation
+
+See [the pure helper profile](../range-recancellation-projection.md) and [actual validation](../scaffold-validation.md). Durable cycle guards remain unchanged; their history format and workflows require separate review.
