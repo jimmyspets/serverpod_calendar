@@ -807,3 +807,14 @@ The maintainer confirmed the next post-restoration master REQUEST policy: preser
 - [x] Implement/test the approved batch with focused/grouped checks, two-host recovery and Flutter before one code commit.
 - [ ] Pass full implementation-head repository CI before readiness.
 - [ ] Review new range transitions, additional cycles and remaining scheduling separately.
+
+## Single-instance applications after source restoration
+
+[Proposed ADR 0167](adr/0167-single-instance-applications-after-source-range-restoration.md) follows PR #163. The maintainer confirmed that a new occurrence command supersedes the restoration retry receipt while retaining its evidence privately.
+
+- [x] Confirm latest-only receipt policy and inspect restored-state guards, target/source bindings and independent master/lifecycle receipts.
+- [x] Prepare existing-table v10 current-ledger/frozen-proof, effective-component version, authority, quota and composition mechanics for review.
+- [ ] Obtain explicit maintainer agreement on the concrete proposal.
+- [ ] Implement/test the approved single-instance batch with focused/grouped checks, actual two-host recovery and Flutter before one code commit.
+- [ ] Pass full implementation-head repository CI before readiness.
+- [ ] Review new range transitions, other selected scheduling methods and remaining release requirements separately.

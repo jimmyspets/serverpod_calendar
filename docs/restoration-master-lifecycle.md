@@ -13,3 +13,5 @@ Independent action, native lifecycle, full source/link/read and accepted-occurre
 Native/master/checkpoint writes, revisions, selected notice dismissal and scope/feed/alarm invalidation commit atomically. Calendar metadata time, personal definitions/actions and accepted-reminder deduplication remain independent. Exact latest-master and original-restoration retries reauthorize and return their original results without touching newer drafts, notices or generations. Earlier master commands retain existing supersession rules.
 
 Existing complete-state byte/work/slot limits and private deletion scrubbing apply. No SQL, generated model/endpoint, dependency or cap expansion is added. New occurrence/range applications and repeated source cutoff transitions remain guarded pending separate review. Real mail and external-client certification remain separate. See [actual validation](scaffold-validation.md).
+
+The next [single-instance application proposal](adr/0167-single-instance-applications-after-source-range-restoration.md) is under review. Its v10/effective-version mechanics do not lift the current occurrence guard.
