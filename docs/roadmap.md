@@ -794,7 +794,7 @@ The maintainer confirmed the next post-restoration master REQUEST policy: preser
 - [x] Prepare bounded frozen acceptance versus current v8 composition, private retention/caps, independent authority and stable retry mechanics.
 - [x] Obtain explicit agreement on the concrete JSON/authority mechanics.
 - [x] Implement/test the approved active-master REQUEST batch with focused/grouped checks, two-host recovery and Flutter before one code commit.
-- [ ] Pass full implementation-head repository CI before readiness.
+- [x] Pass full implementation-head repository CI before readiness (PR #161 exact head; see validation).
 - [ ] Review whole-series lifecycle, new range transitions, further cycles and remaining scheduling separately.
 
 ## Whole-master lifecycle after restoration
@@ -810,11 +810,11 @@ The maintainer confirmed the next post-restoration master REQUEST policy: preser
 
 ## Single-instance applications after source restoration
 
-[Proposed ADR 0167](adr/0167-single-instance-applications-after-source-range-restoration.md) follows PR #163. The maintainer confirmed that a new occurrence command supersedes the restoration retry receipt while retaining its evidence privately.
+[Accepted ADR 0167](adr/0167-single-instance-applications-after-source-range-restoration.md) follows PR #163. The maintainer confirmed that a new occurrence command supersedes the restoration retry receipt while retaining its evidence privately.
 
 - [x] Confirm latest-only receipt policy and inspect restored-state guards, target/source bindings and independent master/lifecycle receipts.
 - [x] Prepare existing-table v10 current-ledger/frozen-proof, effective-component version, authority, quota and composition mechanics for review.
-- [ ] Obtain explicit maintainer agreement on the concrete proposal.
-- [ ] Implement/test the approved single-instance batch with focused/grouped checks, actual two-host recovery and Flutter before one code commit.
+- [x] Obtain explicit maintainer agreement on the concrete proposal.
+- [x] Implement/test the approved single-instance batch with focused/grouped checks, actual two-host recovery and Flutter before one code commit.
 - [ ] Pass full implementation-head repository CI before readiness.
 - [ ] Review new range transitions, other selected scheduling methods and remaining release requirements separately.

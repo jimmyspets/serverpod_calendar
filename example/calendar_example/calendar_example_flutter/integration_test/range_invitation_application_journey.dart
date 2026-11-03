@@ -39,6 +39,7 @@ Future<void> runRangeInvitationApplicationJourney(
     2,
     false,
   );
+  cal.UuidValue? singleEntry;
   final navigator = tester.state<NavigatorState>(find.byType(Navigator).first);
   Future<void> loaded() async {
     for (var i = 0; i < 150; i++) {
@@ -416,11 +417,47 @@ Future<void> runRangeInvitationApplicationJourney(
       navigator.pop();
       await tester.pumpAndSettle();
     }
+    for (final sequence in [12, 13, 14]) {
+      final cancelled = sequence == 13;
+      final received = await client.invitationDemo.simulateOccurrence(
+        id,
+        const cal.Uuid().v4obj(),
+        sequence,
+        cancelled,
+      );
+      singleEntry = received.entryId;
+      navigator.push(
+        MaterialPageRoute<void>(
+          builder: (_) => InvitationOccurrenceApplicationScreen(
+            client: client,
+            id: received.entryId,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await loaded();
+      await tap('invitation-occurrence-apply');
+      final current = await api.calendarInvitation.occurrenceApplication(
+        received.entryId,
+      );
+      expect(current.hasAcceptedRangeRestoration, isTrue);
+      expect(current.hasLocalChanges, isFalse);
+      expect(current.originalStart.start.day, 5);
+      expect(current.acceptedVersion.sequence, sequence);
+      expect(
+        current.currentOccurrence!.status,
+        cancelled
+            ? cal.CalendarEventStatus.cancelled
+            : cal.CalendarEventStatus.confirmed,
+      );
+      navigator.pop();
+      await tester.pumpAndSettle();
+    }
   } finally {
     final event = await api.calendarEvent.getEvent(link.eventId, []);
     await api.calendarEvent.deleteEvent(link.eventId, event.revision);
     await api.calendar.delete(calendar, 1);
-    for (final e in [master.entryId, source.entryId]) {
+    for (final e in [master.entryId, source.entryId, ?singleEntry]) {
       final view = await api.calendarInvitation.getInvitation(e);
       if (view.dismissedAt == null) {
         await api.calendarInvitation.dismiss(e, view.revision);

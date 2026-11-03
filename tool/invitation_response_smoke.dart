@@ -74,7 +74,7 @@ Future<void> instanceInvitationResponseSmoke(List<Client> clients) async {
   );
   try {
     final view = await b.response(incoming.entryId);
-    if (!view.canSend || view.originalStart?.start.day != 3) {
+    if (!view.canSend || view.originalStart?.start.day != 5) {
       throw StateError('Wrong response original');
     }
     final request = cal.CalendarInvitationResponseRequest(

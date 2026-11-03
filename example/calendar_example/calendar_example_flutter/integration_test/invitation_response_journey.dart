@@ -63,7 +63,7 @@ Future<void> runInvitationResponseJourney(
       expect(find.byKey(const Key('response-original')), findsOneWidget);
       expect(
         (await api.response(incoming.entryId)).originalStart!.start.day,
-        3,
+        5,
       );
     } else if (recurring) {
       expect(
