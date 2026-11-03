@@ -11,6 +11,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_invitation_outcome.dart' as _i98zwsq8;
 
 @_isc.immutable

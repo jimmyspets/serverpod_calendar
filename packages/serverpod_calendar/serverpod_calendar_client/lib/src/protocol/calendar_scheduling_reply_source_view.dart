@@ -13,6 +13,7 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_scheduling_participation.dart' as _iot0xi24;
 import 'calendar_scheduling_reply_outcome.dart' as _ikqvfn4d;
@@ -118,7 +119,8 @@ abstract class CalendarSchedulingReplySourceView
   CalendarSchedulingReplySourceView copyWith({
     _isc.UuidValue? id,
     String? attendeeAddress,
-    _ieswiaty.CalendarEventTiming? originalStart,
+    _ieswiaty.CalendarEventTiming? originalStart =
+        const _UndefinedCalendarSchedulingReplySourceView$originalStart(),
     int? sourceSequence,
     DateTime? stamp,
     _iot0xi24.CalendarSchedulingParticipation? sourceParticipation,
@@ -267,6 +269,12 @@ abstract class CalendarSchedulingReplySourceView
 
 class _Undefined {}
 
+class _UndefinedCalendarSchedulingReplySourceView$originalStart
+    extends _isc.UndefinedSentinel
+    implements _ieswiaty.CalendarEventTiming {
+  const _UndefinedCalendarSchedulingReplySourceView$originalStart();
+}
+
 class _CalendarSchedulingReplySourceViewImpl
     extends CalendarSchedulingReplySourceView {
   const _CalendarSchedulingReplySourceViewImpl({
@@ -304,7 +312,8 @@ class _CalendarSchedulingReplySourceViewImpl
   CalendarSchedulingReplySourceView copyWith({
     _isc.UuidValue? id,
     String? attendeeAddress,
-    Object? originalStart = _Undefined,
+    _ieswiaty.CalendarEventTiming? originalStart =
+        const _UndefinedCalendarSchedulingReplySourceView$originalStart(),
     Object? sourceSequence = _Undefined,
     DateTime? stamp,
     Object? sourceParticipation = _Undefined,
@@ -318,9 +327,9 @@ class _CalendarSchedulingReplySourceViewImpl
     return CalendarSchedulingReplySourceView(
       id: id ?? this.id,
       attendeeAddress: attendeeAddress ?? this.attendeeAddress,
-      originalStart: originalStart is _ieswiaty.CalendarEventTiming?
-          ? originalStart
-          : this.originalStart?.copyWith(),
+      originalStart: originalStart is _isc.UndefinedSentinel
+          ? this.originalStart?.copyWith()
+          : originalStart,
       sourceSequence: sourceSequence is int?
           ? sourceSequence
           : this.sourceSequence,

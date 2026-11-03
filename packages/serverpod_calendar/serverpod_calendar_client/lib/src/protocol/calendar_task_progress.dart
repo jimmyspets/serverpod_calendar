@@ -11,6 +11,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_task_status.dart' as _iiahrdev;
 
 @_isc.immutable
@@ -58,7 +59,7 @@ abstract class CalendarTaskProgress
   CalendarTaskProgress copyWith({
     _iiahrdev.CalendarTaskStatus? status,
     int? percentComplete,
-    DateTime? completedAt,
+    DateTime? completedAt = const _isc.$UndefinedDateTime(),
   });
   @override
   bool operator ==(Object other) {
@@ -141,14 +142,16 @@ class _CalendarTaskProgressImpl extends CalendarTaskProgress {
   CalendarTaskProgress copyWith({
     Object? status = _Undefined,
     Object? percentComplete = _Undefined,
-    Object? completedAt = _Undefined,
+    DateTime? completedAt = const _isc.$UndefinedDateTime(),
   }) {
     return CalendarTaskProgress(
       status: status is _iiahrdev.CalendarTaskStatus? ? status : this.status,
       percentComplete: percentComplete is int?
           ? percentComplete
           : this.percentComplete,
-      completedAt: completedAt is DateTime? ? completedAt : this.completedAt,
+      completedAt: completedAt is _isc.UndefinedSentinel
+          ? this.completedAt
+          : completedAt,
     );
   }
 }

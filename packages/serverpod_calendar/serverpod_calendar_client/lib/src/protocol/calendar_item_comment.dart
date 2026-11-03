@@ -13,6 +13,7 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_text_parameters.dart' as _iffxqqc7;
 
 @_isc.immutable
@@ -48,7 +49,8 @@ abstract class CalendarItemComment
   @_isc.useResult
   CalendarItemComment copyWith({
     String? value,
-    _iffxqqc7.CalendarTextParameters? parameters,
+    _iffxqqc7.CalendarTextParameters? parameters =
+        const _UndefinedCalendarItemComment$parameters(),
   });
   @override
   bool operator ==(Object other) {
@@ -103,7 +105,10 @@ abstract class CalendarItemComment
   }
 }
 
-class _Undefined {}
+class _UndefinedCalendarItemComment$parameters extends _isc.UndefinedSentinel
+    implements _iffxqqc7.CalendarTextParameters {
+  const _UndefinedCalendarItemComment$parameters();
+}
 
 class _CalendarItemCommentImpl extends CalendarItemComment {
   const _CalendarItemCommentImpl({
@@ -120,13 +125,14 @@ class _CalendarItemCommentImpl extends CalendarItemComment {
   @override
   CalendarItemComment copyWith({
     String? value,
-    Object? parameters = _Undefined,
+    _iffxqqc7.CalendarTextParameters? parameters =
+        const _UndefinedCalendarItemComment$parameters(),
   }) {
     return CalendarItemComment(
       value: value ?? this.value,
-      parameters: parameters is _iffxqqc7.CalendarTextParameters?
-          ? parameters
-          : this.parameters?.copyWith(),
+      parameters: parameters is _isc.UndefinedSentinel
+          ? this.parameters?.copyWith()
+          : parameters,
     );
   }
 }

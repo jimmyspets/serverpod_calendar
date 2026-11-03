@@ -14,6 +14,7 @@ import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_event_geographic_position.dart' as _iloy79hd;
 import 'calendar_event_resource_group.dart' as _iiajf89w;
 
@@ -61,7 +62,8 @@ abstract class CalendarEventDescriptiveMetadata
   @_isc.useResult
   CalendarEventDescriptiveMetadata copyWith({
     int? priority,
-    _iloy79hd.CalendarEventGeographicPosition? geographicPosition,
+    _iloy79hd.CalendarEventGeographicPosition? geographicPosition =
+        const _UndefinedCalendarEventDescriptiveMetadata$geographicPosition(),
     List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups,
   });
   @override
@@ -130,6 +132,12 @@ abstract class CalendarEventDescriptiveMetadata
 
 class _Undefined {}
 
+class _UndefinedCalendarEventDescriptiveMetadata$geographicPosition
+    extends _isc.UndefinedSentinel
+    implements _iloy79hd.CalendarEventGeographicPosition {
+  const _UndefinedCalendarEventDescriptiveMetadata$geographicPosition();
+}
+
 class _CalendarEventDescriptiveMetadataImpl
     extends CalendarEventDescriptiveMetadata {
   const _CalendarEventDescriptiveMetadataImpl({
@@ -148,15 +156,15 @@ class _CalendarEventDescriptiveMetadataImpl
   @override
   CalendarEventDescriptiveMetadata copyWith({
     Object? priority = _Undefined,
-    Object? geographicPosition = _Undefined,
+    _iloy79hd.CalendarEventGeographicPosition? geographicPosition =
+        const _UndefinedCalendarEventDescriptiveMetadata$geographicPosition(),
     List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups,
   }) {
     return CalendarEventDescriptiveMetadata(
       priority: priority is int? ? priority : this.priority,
-      geographicPosition:
-          geographicPosition is _iloy79hd.CalendarEventGeographicPosition?
-          ? geographicPosition
-          : this.geographicPosition?.copyWith(),
+      geographicPosition: geographicPosition is _isc.UndefinedSentinel
+          ? this.geographicPosition?.copyWith()
+          : geographicPosition,
       resourceGroups:
           resourceGroups ??
           this.resourceGroups.map((e0) => e0.copyWith()).toList(),

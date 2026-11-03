@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_event_text_parameters.dart' as _isfojy12;
 import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_task_content.dart' as _if7nbvl8;
@@ -97,12 +98,14 @@ abstract class CalendarTaskSourceComponent
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
   CalendarTaskSourceComponent copyWith({
-    _ieswiaty.CalendarEventTiming? originalStart,
+    _ieswiaty.CalendarEventTiming? originalStart =
+        const _UndefinedCalendarTaskSourceComponent$originalStart(),
     bool? thisAndFuture,
     _iz9t6x1i.CalendarTaskProtocolVersion? version,
     _if7nbvl8.CalendarTaskContent? content,
     _ikcsq95s.CalendarTaskProgress? progress,
-    _isfojy12.CalendarEventTextParameters? textParameters,
+    _isfojy12.CalendarEventTextParameters? textParameters =
+        const _UndefinedCalendarTaskSourceComponent$textParameters(),
     _i76q6myt.CalendarTaskSourceMetadata? metadata,
   });
   @override
@@ -191,6 +194,18 @@ abstract class CalendarTaskSourceComponent
 
 class _Undefined {}
 
+class _UndefinedCalendarTaskSourceComponent$originalStart
+    extends _is.UndefinedSentinel
+    implements _ieswiaty.CalendarEventTiming {
+  const _UndefinedCalendarTaskSourceComponent$originalStart();
+}
+
+class _UndefinedCalendarTaskSourceComponent$textParameters
+    extends _is.UndefinedSentinel
+    implements _isfojy12.CalendarEventTextParameters {
+  const _UndefinedCalendarTaskSourceComponent$textParameters();
+}
+
 class _CalendarTaskSourceComponentImpl extends CalendarTaskSourceComponent {
   const _CalendarTaskSourceComponentImpl({
     _ieswiaty.CalendarEventTiming? originalStart,
@@ -215,27 +230,29 @@ class _CalendarTaskSourceComponentImpl extends CalendarTaskSourceComponent {
   @_is.useResult
   @override
   CalendarTaskSourceComponent copyWith({
-    Object? originalStart = _Undefined,
+    _ieswiaty.CalendarEventTiming? originalStart =
+        const _UndefinedCalendarTaskSourceComponent$originalStart(),
     Object? thisAndFuture = _Undefined,
     _iz9t6x1i.CalendarTaskProtocolVersion? version,
     _if7nbvl8.CalendarTaskContent? content,
     _ikcsq95s.CalendarTaskProgress? progress,
-    Object? textParameters = _Undefined,
+    _isfojy12.CalendarEventTextParameters? textParameters =
+        const _UndefinedCalendarTaskSourceComponent$textParameters(),
     _i76q6myt.CalendarTaskSourceMetadata? metadata,
   }) {
     return CalendarTaskSourceComponent(
-      originalStart: originalStart is _ieswiaty.CalendarEventTiming?
-          ? originalStart
-          : this.originalStart?.copyWith(),
+      originalStart: originalStart is _is.UndefinedSentinel
+          ? this.originalStart?.copyWith()
+          : originalStart,
       thisAndFuture: thisAndFuture is bool?
           ? thisAndFuture
           : this.thisAndFuture,
       version: version ?? this.version.copyWith(),
       content: content ?? this.content.copyWith(),
       progress: progress ?? this.progress.copyWith(),
-      textParameters: textParameters is _isfojy12.CalendarEventTextParameters?
-          ? textParameters
-          : this.textParameters?.copyWith(),
+      textParameters: textParameters is _is.UndefinedSentinel
+          ? this.textParameters?.copyWith()
+          : textParameters,
       metadata: metadata ?? this.metadata.copyWith(),
     );
   }

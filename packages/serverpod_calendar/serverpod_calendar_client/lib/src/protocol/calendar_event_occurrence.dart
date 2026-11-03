@@ -13,6 +13,7 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_event_civil.dart' as _i1bb5k1r;
 import 'calendar_event_occurrence_content.dart' as _io4uvjqi;
 
@@ -95,11 +96,14 @@ abstract class CalendarEventOccurrence
   CalendarEventOccurrence copyWith({
     _i1bb5k1r.CalendarEventCivil? originalStart,
     _i1bb5k1r.CalendarEventCivil? start,
-    _i1bb5k1r.CalendarEventCivil? endDate,
-    DateTime? startUtc,
-    DateTime? endUtc,
-    _io4uvjqi.CalendarEventOccurrenceContent? content,
-    _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides,
+    _i1bb5k1r.CalendarEventCivil? endDate =
+        const _UndefinedCalendarEventOccurrence$endDate(),
+    DateTime? startUtc = const _isc.$UndefinedDateTime(),
+    DateTime? endUtc = const _isc.$UndefinedDateTime(),
+    _io4uvjqi.CalendarEventOccurrenceContent? content =
+        const _UndefinedCalendarEventOccurrence$content(),
+    _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides =
+        const _UndefinedCalendarEventOccurrence$content(),
   });
   @override
   Map<String, dynamic> toJson() {
@@ -137,7 +141,15 @@ abstract class CalendarEventOccurrence
   }
 }
 
-class _Undefined {}
+class _UndefinedCalendarEventOccurrence$endDate extends _isc.UndefinedSentinel
+    implements _i1bb5k1r.CalendarEventCivil {
+  const _UndefinedCalendarEventOccurrence$endDate();
+}
+
+class _UndefinedCalendarEventOccurrence$content extends _isc.UndefinedSentinel
+    implements _io4uvjqi.CalendarEventOccurrenceContent {
+  const _UndefinedCalendarEventOccurrence$content();
+}
 
 class _CalendarEventOccurrenceImpl extends CalendarEventOccurrence {
   _CalendarEventOccurrenceImpl({
@@ -165,27 +177,29 @@ class _CalendarEventOccurrenceImpl extends CalendarEventOccurrence {
   CalendarEventOccurrence copyWith({
     _i1bb5k1r.CalendarEventCivil? originalStart,
     _i1bb5k1r.CalendarEventCivil? start,
-    Object? endDate = _Undefined,
-    Object? startUtc = _Undefined,
-    Object? endUtc = _Undefined,
-    Object? content = _Undefined,
-    Object? contentOverrides = _Undefined,
+    _i1bb5k1r.CalendarEventCivil? endDate =
+        const _UndefinedCalendarEventOccurrence$endDate(),
+    DateTime? startUtc = const _isc.$UndefinedDateTime(),
+    DateTime? endUtc = const _isc.$UndefinedDateTime(),
+    _io4uvjqi.CalendarEventOccurrenceContent? content =
+        const _UndefinedCalendarEventOccurrence$content(),
+    _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides =
+        const _UndefinedCalendarEventOccurrence$content(),
   }) {
     return CalendarEventOccurrence(
       originalStart: originalStart ?? this.originalStart.copyWith(),
       start: start ?? this.start.copyWith(),
-      endDate: endDate is _i1bb5k1r.CalendarEventCivil?
-          ? endDate
-          : this.endDate?.copyWith(),
-      startUtc: startUtc is DateTime? ? startUtc : this.startUtc,
-      endUtc: endUtc is DateTime? ? endUtc : this.endUtc,
-      content: content is _io4uvjqi.CalendarEventOccurrenceContent?
-          ? content
-          : this.content?.copyWith(),
-      contentOverrides:
-          contentOverrides is _io4uvjqi.CalendarEventOccurrenceContent?
-          ? contentOverrides
-          : this.contentOverrides?.copyWith(),
+      endDate: endDate is _isc.UndefinedSentinel
+          ? this.endDate?.copyWith()
+          : endDate,
+      startUtc: startUtc is _isc.UndefinedSentinel ? this.startUtc : startUtc,
+      endUtc: endUtc is _isc.UndefinedSentinel ? this.endUtc : endUtc,
+      content: content is _isc.UndefinedSentinel
+          ? this.content?.copyWith()
+          : content,
+      contentOverrides: contentOverrides is _isc.UndefinedSentinel
+          ? this.contentOverrides?.copyWith()
+          : contentOverrides,
     );
   }
 }

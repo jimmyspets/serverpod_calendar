@@ -13,6 +13,7 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_event_text_parameters.dart' as _isfojy12;
 
 @_isc.immutable
@@ -63,7 +64,8 @@ abstract class CalendarEventOccurrenceContent
     String? summary,
     String? description,
     String? location,
-    _isfojy12.CalendarEventTextParameters? textParameters,
+    _isfojy12.CalendarEventTextParameters? textParameters =
+        const _UndefinedCalendarEventOccurrenceContent$textParameters(),
   });
   @override
   bool operator ==(Object other) {
@@ -137,6 +139,12 @@ abstract class CalendarEventOccurrenceContent
 
 class _Undefined {}
 
+class _UndefinedCalendarEventOccurrenceContent$textParameters
+    extends _isc.UndefinedSentinel
+    implements _isfojy12.CalendarEventTextParameters {
+  const _UndefinedCalendarEventOccurrenceContent$textParameters();
+}
+
 class _CalendarEventOccurrenceContentImpl
     extends CalendarEventOccurrenceContent {
   const _CalendarEventOccurrenceContentImpl({
@@ -159,15 +167,16 @@ class _CalendarEventOccurrenceContentImpl
     Object? summary = _Undefined,
     Object? description = _Undefined,
     Object? location = _Undefined,
-    Object? textParameters = _Undefined,
+    _isfojy12.CalendarEventTextParameters? textParameters =
+        const _UndefinedCalendarEventOccurrenceContent$textParameters(),
   }) {
     return CalendarEventOccurrenceContent(
       summary: summary is String? ? summary : this.summary,
       description: description is String? ? description : this.description,
       location: location is String? ? location : this.location,
-      textParameters: textParameters is _isfojy12.CalendarEventTextParameters?
-          ? textParameters
-          : this.textParameters?.copyWith(),
+      textParameters: textParameters is _isc.UndefinedSentinel
+          ? this.textParameters?.copyWith()
+          : textParameters,
     );
   }
 }

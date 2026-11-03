@@ -14,6 +14,7 @@ import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_event_recurrence.dart' as _iqxs44bf;
 import 'calendar_event_status.dart' as _ivzxk9bc;
 import 'calendar_event_text_parameters.dart' as _isfojy12;
@@ -117,9 +118,12 @@ abstract class CalendarEventContent
     _ieswiaty.CalendarEventTiming? timing,
     _ivzxk9bc.CalendarEventStatus? status,
     _iwjkdwy7.CalendarEventTransparency? transparency,
-    _iqxs44bf.CalendarEventRecurrence? recurrence,
-    List<_ieswiaty.CalendarEventTiming>? periods,
-    _isfojy12.CalendarEventTextParameters? textParameters,
+    _iqxs44bf.CalendarEventRecurrence? recurrence =
+        const _UndefinedCalendarEventContent$recurrence(),
+    List<_ieswiaty.CalendarEventTiming>? periods =
+        const _isc.$UndefinedList<_ieswiaty.CalendarEventTiming>(),
+    _isfojy12.CalendarEventTextParameters? textParameters =
+        const _UndefinedCalendarEventContent$textParameters(),
   });
   @override
   bool operator ==(Object other) {
@@ -234,6 +238,17 @@ abstract class CalendarEventContent
 
 class _Undefined {}
 
+class _UndefinedCalendarEventContent$recurrence extends _isc.UndefinedSentinel
+    implements _iqxs44bf.CalendarEventRecurrence {
+  const _UndefinedCalendarEventContent$recurrence();
+}
+
+class _UndefinedCalendarEventContent$textParameters
+    extends _isc.UndefinedSentinel
+    implements _isfojy12.CalendarEventTextParameters {
+  const _UndefinedCalendarEventContent$textParameters();
+}
+
 class _CalendarEventContentImpl extends CalendarEventContent {
   const _CalendarEventContentImpl({
     String? summary,
@@ -268,9 +283,12 @@ class _CalendarEventContentImpl extends CalendarEventContent {
     _ieswiaty.CalendarEventTiming? timing,
     _ivzxk9bc.CalendarEventStatus? status,
     _iwjkdwy7.CalendarEventTransparency? transparency,
-    Object? recurrence = _Undefined,
-    Object? periods = _Undefined,
-    Object? textParameters = _Undefined,
+    _iqxs44bf.CalendarEventRecurrence? recurrence =
+        const _UndefinedCalendarEventContent$recurrence(),
+    List<_ieswiaty.CalendarEventTiming>? periods =
+        const _isc.$UndefinedList<_ieswiaty.CalendarEventTiming>(),
+    _isfojy12.CalendarEventTextParameters? textParameters =
+        const _UndefinedCalendarEventContent$textParameters(),
   }) {
     return CalendarEventContent(
       summary: summary is String? ? summary : this.summary,
@@ -279,15 +297,15 @@ class _CalendarEventContentImpl extends CalendarEventContent {
       timing: timing ?? this.timing.copyWith(),
       status: status ?? this.status,
       transparency: transparency ?? this.transparency,
-      recurrence: recurrence is _iqxs44bf.CalendarEventRecurrence?
-          ? recurrence
-          : this.recurrence?.copyWith(),
-      periods: periods is List<_ieswiaty.CalendarEventTiming>?
-          ? periods
-          : this.periods?.map((e0) => e0.copyWith()).toList(),
-      textParameters: textParameters is _isfojy12.CalendarEventTextParameters?
-          ? textParameters
-          : this.textParameters?.copyWith(),
+      recurrence: recurrence is _isc.UndefinedSentinel
+          ? this.recurrence?.copyWith()
+          : recurrence,
+      periods: periods is _isc.UndefinedSentinel
+          ? this.periods?.map((e0) => e0.copyWith()).toList()
+          : periods,
+      textParameters: textParameters is _isc.UndefinedSentinel
+          ? this.textParameters?.copyWith()
+          : textParameters,
     );
   }
 }

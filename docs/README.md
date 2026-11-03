@@ -354,3 +354,5 @@ Accepted [ADR 0159](adr/0159-pure-range-cancellation-projection.md) implements a
 ## Range updates after restoration
 
 See [the approved implementation](restoration-range-applications.md). Grouped checks include restoration_range_application_test.dart, the --restored-ranges two-host recovery profile, generated-client/feed coverage and the connected --range-applications Flutter journey. Actual conclusions are recorded separately in [validation](scaffold-validation.md).
+
+Current Serverpod dependency alignment is documented in [the 4.1.0 upgrade record](serverpod-4.1-upgrade.md); earlier tool observations retain their original dates and versions.

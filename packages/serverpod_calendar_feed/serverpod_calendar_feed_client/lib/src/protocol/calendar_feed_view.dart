@@ -97,8 +97,10 @@ abstract class CalendarFeedView
     List<_isc.UuidValue>? calendarIds,
     _isc.UuidValue? protocolUid,
     DateTime? protocolModifiedAt,
-    _imrxcdin.CalendarProtocolMetadata? protocolMetadata,
-    _imrxcdin.CalendarSupplementalMetadata? supplementalMetadata,
+    _imrxcdin.CalendarProtocolMetadata? protocolMetadata =
+        const _UndefinedCalendarFeedView$protocolMetadata(),
+    _imrxcdin.CalendarSupplementalMetadata? supplementalMetadata =
+        const _UndefinedCalendarFeedView$supplementalMetadata(),
   });
   @override
   bool operator ==(Object other) {
@@ -204,7 +206,16 @@ abstract class CalendarFeedView
   }
 }
 
-class _Undefined {}
+class _UndefinedCalendarFeedView$protocolMetadata extends _isc.UndefinedSentinel
+    implements _imrxcdin.CalendarProtocolMetadata {
+  const _UndefinedCalendarFeedView$protocolMetadata();
+}
+
+class _UndefinedCalendarFeedView$supplementalMetadata
+    extends _isc.UndefinedSentinel
+    implements _imrxcdin.CalendarSupplementalMetadata {
+  const _UndefinedCalendarFeedView$supplementalMetadata();
+}
 
 class _CalendarFeedViewImpl extends CalendarFeedView {
   const _CalendarFeedViewImpl({
@@ -238,8 +249,10 @@ class _CalendarFeedViewImpl extends CalendarFeedView {
     List<_isc.UuidValue>? calendarIds,
     _isc.UuidValue? protocolUid,
     DateTime? protocolModifiedAt,
-    Object? protocolMetadata = _Undefined,
-    Object? supplementalMetadata = _Undefined,
+    _imrxcdin.CalendarProtocolMetadata? protocolMetadata =
+        const _UndefinedCalendarFeedView$protocolMetadata(),
+    _imrxcdin.CalendarSupplementalMetadata? supplementalMetadata =
+        const _UndefinedCalendarFeedView$supplementalMetadata(),
   }) {
     return CalendarFeedView(
       id: id ?? this.id,
@@ -248,13 +261,12 @@ class _CalendarFeedViewImpl extends CalendarFeedView {
       calendarIds: calendarIds ?? this.calendarIds.map((e0) => e0).toList(),
       protocolUid: protocolUid ?? this.protocolUid,
       protocolModifiedAt: protocolModifiedAt ?? this.protocolModifiedAt,
-      protocolMetadata: protocolMetadata is _imrxcdin.CalendarProtocolMetadata?
-          ? protocolMetadata
-          : this.protocolMetadata?.copyWith(),
-      supplementalMetadata:
-          supplementalMetadata is _imrxcdin.CalendarSupplementalMetadata?
-          ? supplementalMetadata
-          : this.supplementalMetadata?.copyWith(),
+      protocolMetadata: protocolMetadata is _isc.UndefinedSentinel
+          ? this.protocolMetadata?.copyWith()
+          : protocolMetadata,
+      supplementalMetadata: supplementalMetadata is _isc.UndefinedSentinel
+          ? this.supplementalMetadata?.copyWith()
+          : supplementalMetadata,
     );
   }
 }

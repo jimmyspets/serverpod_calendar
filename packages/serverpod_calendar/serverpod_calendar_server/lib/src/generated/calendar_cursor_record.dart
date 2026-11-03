@@ -10,9 +10,12 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'dart:async' as _ida;
+
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_alarm_activity_kind.dart' as _ik5ajwd4;
 import 'calendar_category_filter.dart' as _i9j129by;
 import 'calendar_event_field_group.dart' as _iftiwkuj;
@@ -209,16 +212,20 @@ abstract class CalendarCursorRecord
     _is.UuidValue? afterId,
     int? pageSize,
     List<_i73hgz1s.CalendarFieldGroup>? fieldGroups,
-    _is.UuidValue? taskCalendarId,
-    List<_isemqyyv.CalendarTaskFieldGroup>? taskFieldGroups,
-    _is.UuidValue? eventCalendarId,
-    List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups,
-    _ij33d3qn.CalendarEventOccurrenceCursorState? eventOccurrenceState,
-    _i9j129by.CalendarCategoryFilter? categoryFilter,
-    _is.UuidValue? alarmActivityId,
+    _is.UuidValue? taskCalendarId = const _is.$UndefinedUuidValue(),
+    List<_isemqyyv.CalendarTaskFieldGroup>? taskFieldGroups =
+        const _is.$UndefinedList<_isemqyyv.CalendarTaskFieldGroup>(),
+    _is.UuidValue? eventCalendarId = const _is.$UndefinedUuidValue(),
+    List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups =
+        const _is.$UndefinedList<_iftiwkuj.CalendarEventFieldGroup>(),
+    _ij33d3qn.CalendarEventOccurrenceCursorState? eventOccurrenceState =
+        const _UndefinedCalendarCursorRecord$eventOccurrenceState(),
+    _i9j129by.CalendarCategoryFilter? categoryFilter =
+        const _UndefinedCalendarCursorRecord$categoryFilter(),
+    _is.UuidValue? alarmActivityId = const _is.$UndefinedUuidValue(),
     _ik5ajwd4.CalendarAlarmActivityKind? alarmActivityKind,
     DateTime? expiresAt,
-    _is.UuidValue? taskHistoryTaskId,
+    _is.UuidValue? taskHistoryTaskId = const _is.$UndefinedUuidValue(),
     String? taskHistoryOriginalKey,
     int? taskHistoryAfterRevision,
   });
@@ -296,6 +303,18 @@ abstract class CalendarCursorRecord
 
 class _Undefined {}
 
+class _UndefinedCalendarCursorRecord$eventOccurrenceState
+    extends _is.UndefinedSentinel
+    implements _ij33d3qn.CalendarEventOccurrenceCursorState {
+  const _UndefinedCalendarCursorRecord$eventOccurrenceState();
+}
+
+class _UndefinedCalendarCursorRecord$categoryFilter
+    extends _is.UndefinedSentinel
+    implements _i9j129by.CalendarCategoryFilter {
+  const _UndefinedCalendarCursorRecord$categoryFilter();
+}
+
 class _CalendarCursorRecordImpl extends CalendarCursorRecord {
   _CalendarCursorRecordImpl({
     int? id,
@@ -357,16 +376,20 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
     _is.UuidValue? afterId,
     int? pageSize,
     List<_i73hgz1s.CalendarFieldGroup>? fieldGroups,
-    Object? taskCalendarId = _Undefined,
-    Object? taskFieldGroups = _Undefined,
-    Object? eventCalendarId = _Undefined,
-    Object? eventFieldGroups = _Undefined,
-    Object? eventOccurrenceState = _Undefined,
-    Object? categoryFilter = _Undefined,
-    Object? alarmActivityId = _Undefined,
+    _is.UuidValue? taskCalendarId = const _is.$UndefinedUuidValue(),
+    List<_isemqyyv.CalendarTaskFieldGroup>? taskFieldGroups =
+        const _is.$UndefinedList<_isemqyyv.CalendarTaskFieldGroup>(),
+    _is.UuidValue? eventCalendarId = const _is.$UndefinedUuidValue(),
+    List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups =
+        const _is.$UndefinedList<_iftiwkuj.CalendarEventFieldGroup>(),
+    _ij33d3qn.CalendarEventOccurrenceCursorState? eventOccurrenceState =
+        const _UndefinedCalendarCursorRecord$eventOccurrenceState(),
+    _i9j129by.CalendarCategoryFilter? categoryFilter =
+        const _UndefinedCalendarCursorRecord$categoryFilter(),
+    _is.UuidValue? alarmActivityId = const _is.$UndefinedUuidValue(),
     Object? alarmActivityKind = _Undefined,
     DateTime? expiresAt,
-    Object? taskHistoryTaskId = _Undefined,
+    _is.UuidValue? taskHistoryTaskId = const _is.$UndefinedUuidValue(),
     Object? taskHistoryOriginalKey = _Undefined,
     Object? taskHistoryAfterRevision = _Undefined,
   }) {
@@ -380,38 +403,35 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
       afterId: afterId ?? this.afterId,
       pageSize: pageSize ?? this.pageSize,
       fieldGroups: fieldGroups ?? this.fieldGroups.map((e0) => e0).toList(),
-      taskCalendarId: taskCalendarId is _is.UuidValue?
-          ? taskCalendarId
-          : this.taskCalendarId,
-      taskFieldGroups:
-          taskFieldGroups is List<_isemqyyv.CalendarTaskFieldGroup>?
-          ? taskFieldGroups
-          : this.taskFieldGroups?.map((e0) => e0).toList(),
-      eventCalendarId: eventCalendarId is _is.UuidValue?
-          ? eventCalendarId
-          : this.eventCalendarId,
-      eventFieldGroups:
-          eventFieldGroups is List<_iftiwkuj.CalendarEventFieldGroup>?
-          ? eventFieldGroups
-          : this.eventFieldGroups?.map((e0) => e0).toList(),
-      eventOccurrenceState:
-          eventOccurrenceState is _ij33d3qn.CalendarEventOccurrenceCursorState?
-          ? eventOccurrenceState
-          : this.eventOccurrenceState?.copyWith(),
-      categoryFilter: categoryFilter is _i9j129by.CalendarCategoryFilter?
-          ? categoryFilter
-          : this.categoryFilter?.copyWith(),
-      alarmActivityId: alarmActivityId is _is.UuidValue?
-          ? alarmActivityId
-          : this.alarmActivityId,
+      taskCalendarId: taskCalendarId is _is.UndefinedSentinel
+          ? this.taskCalendarId
+          : taskCalendarId,
+      taskFieldGroups: taskFieldGroups is _is.UndefinedSentinel
+          ? this.taskFieldGroups?.map((e0) => e0).toList()
+          : taskFieldGroups,
+      eventCalendarId: eventCalendarId is _is.UndefinedSentinel
+          ? this.eventCalendarId
+          : eventCalendarId,
+      eventFieldGroups: eventFieldGroups is _is.UndefinedSentinel
+          ? this.eventFieldGroups?.map((e0) => e0).toList()
+          : eventFieldGroups,
+      eventOccurrenceState: eventOccurrenceState is _is.UndefinedSentinel
+          ? this.eventOccurrenceState?.copyWith()
+          : eventOccurrenceState,
+      categoryFilter: categoryFilter is _is.UndefinedSentinel
+          ? this.categoryFilter?.copyWith()
+          : categoryFilter,
+      alarmActivityId: alarmActivityId is _is.UndefinedSentinel
+          ? this.alarmActivityId
+          : alarmActivityId,
       alarmActivityKind:
           alarmActivityKind is _ik5ajwd4.CalendarAlarmActivityKind?
           ? alarmActivityKind
           : this.alarmActivityKind,
       expiresAt: expiresAt ?? this.expiresAt,
-      taskHistoryTaskId: taskHistoryTaskId is _is.UuidValue?
-          ? taskHistoryTaskId
-          : this.taskHistoryTaskId,
+      taskHistoryTaskId: taskHistoryTaskId is _is.UndefinedSentinel
+          ? this.taskHistoryTaskId
+          : taskHistoryTaskId,
       taskHistoryOriginalKey: taskHistoryOriginalKey is String?
           ? taskHistoryOriginalKey
           : this.taskHistoryOriginalKey,
@@ -808,6 +828,69 @@ class CalendarCursorRecordRepository {
       transaction: transaction,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+    );
+  }
+
+  /// Emits [CalendarCursorRecord]s matching the given query parameters every time the
+  /// source tables are modified.
+  ///
+  /// Use [where] to specify which items to include in the return value.
+  /// If none is specified, all items will be returned.
+  ///
+  /// To specify the order of the items use [orderBy] or [orderByList]
+  /// when sorting by multiple columns.
+  ///
+  /// The maximum number of items can be set by [limit]. If no limit is set,
+  /// all items matching the query will be returned.
+  ///
+  /// [offset] defines how many items to skip, after which [limit] (or all)
+  /// items are read from the database.
+  ///
+  /// Use [throttle] to specify the minimum interval between queries. It can
+  /// also be set to `null`, in which case the stream will only be throttled
+  /// when its subscription is paused.
+  ///
+  /// Source tables are collected from the queried table, [where], [orderBy],
+  /// [orderByList], and the [include] graph. [alsoTriggerOnTables] is added
+  /// to that set. Pass [Table] instances such as `CalendarCursorRecord.t`.
+  ///
+  /// Raw [Expression] SQL is not inspected. Tables referenced only in raw
+  /// SQL must be passed via [alsoTriggerOnTables].
+  ///
+  /// The stream always reads committed state and never joins an ambient
+  /// [Transaction]. Emissions for a write fire after that write commits.
+  ///
+  /// Currently only supported on SQLite. Calling this method on PostgreSQL
+  /// throws an [UnsupportedError].
+  ///
+  /// ```dart
+  /// var subscription = Persons.db.watch(
+  ///   session,
+  ///   where: (t) => t.lastName.equals('Jones'),
+  ///   orderBy: (t) => t.firstName,
+  ///   limit: 100,
+  /// ).listen((persons) {
+  ///   // Handle the latest matching rows.
+  /// });
+  /// ```
+  _ida.Stream<List<CalendarCursorRecord>> watch(
+    _is.DatabaseSession session, {
+    _is.WhereExpressionBuilder<CalendarCursorRecordTable>? where,
+    int? limit,
+    int? offset,
+    _is.OrderByBuilder<CalendarCursorRecordTable>? orderBy,
+    _is.OrderByListBuilder<CalendarCursorRecordTable>? orderByList,
+    Duration? throttle = const Duration(milliseconds: 30),
+    Iterable<_is.Table>? alsoTriggerOnTables,
+  }) {
+    return session.db.watch<CalendarCursorRecord>(
+      where: where?.call(CalendarCursorRecord.t),
+      orderBy: orderBy?.call(CalendarCursorRecord.t),
+      orderByList: orderByList?.call(CalendarCursorRecord.t),
+      limit: limit,
+      offset: offset,
+      throttle: throttle,
+      alsoTriggerOnTables: alsoTriggerOnTables,
     );
   }
 

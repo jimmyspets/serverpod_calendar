@@ -10,9 +10,12 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'dart:async' as _ida;
+
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_task_occurrence_content.dart' as _irmu5f0n;
 import 'calendar_task_progress.dart' as _ikcsq95s;
@@ -119,11 +122,15 @@ abstract class CalendarTaskOccurrenceRecord
     _is.UuidValue? taskId,
     String? originalKey,
     _ieswiaty.CalendarEventTiming? originalStart,
-    _i9h8y8lg.CalendarTaskTiming? replacementTiming,
-    _i9h8y8lg.CalendarTaskTiming? futureTiming,
-    _irmu5f0n.CalendarTaskOccurrenceContent? contentOverrides,
+    _i9h8y8lg.CalendarTaskTiming? replacementTiming =
+        const _UndefinedCalendarTaskOccurrenceRecord$replacementTiming(),
+    _i9h8y8lg.CalendarTaskTiming? futureTiming =
+        const _UndefinedCalendarTaskOccurrenceRecord$replacementTiming(),
+    _irmu5f0n.CalendarTaskOccurrenceContent? contentOverrides =
+        const _UndefinedCalendarTaskOccurrenceRecord$contentOverrides(),
     _ikcsq95s.CalendarTaskProgress? progress,
-    _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion,
+    _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion =
+        const _UndefinedCalendarTaskOccurrenceRecord$protocolVersion(),
   });
   @override
   Map<String, dynamic> toJson() {
@@ -178,6 +185,24 @@ abstract class CalendarTaskOccurrenceRecord
 
 class _Undefined {}
 
+class _UndefinedCalendarTaskOccurrenceRecord$replacementTiming
+    extends _is.UndefinedSentinel
+    implements _i9h8y8lg.CalendarTaskTiming {
+  const _UndefinedCalendarTaskOccurrenceRecord$replacementTiming();
+}
+
+class _UndefinedCalendarTaskOccurrenceRecord$contentOverrides
+    extends _is.UndefinedSentinel
+    implements _irmu5f0n.CalendarTaskOccurrenceContent {
+  const _UndefinedCalendarTaskOccurrenceRecord$contentOverrides();
+}
+
+class _UndefinedCalendarTaskOccurrenceRecord$protocolVersion
+    extends _is.UndefinedSentinel
+    implements _iz9t6x1i.CalendarTaskProtocolVersion {
+  const _UndefinedCalendarTaskOccurrenceRecord$protocolVersion();
+}
+
 class _CalendarTaskOccurrenceRecordImpl extends CalendarTaskOccurrenceRecord {
   _CalendarTaskOccurrenceRecordImpl({
     int? id,
@@ -210,31 +235,34 @@ class _CalendarTaskOccurrenceRecordImpl extends CalendarTaskOccurrenceRecord {
     _is.UuidValue? taskId,
     String? originalKey,
     _ieswiaty.CalendarEventTiming? originalStart,
-    Object? replacementTiming = _Undefined,
-    Object? futureTiming = _Undefined,
-    Object? contentOverrides = _Undefined,
+    _i9h8y8lg.CalendarTaskTiming? replacementTiming =
+        const _UndefinedCalendarTaskOccurrenceRecord$replacementTiming(),
+    _i9h8y8lg.CalendarTaskTiming? futureTiming =
+        const _UndefinedCalendarTaskOccurrenceRecord$replacementTiming(),
+    _irmu5f0n.CalendarTaskOccurrenceContent? contentOverrides =
+        const _UndefinedCalendarTaskOccurrenceRecord$contentOverrides(),
     _ikcsq95s.CalendarTaskProgress? progress,
-    Object? protocolVersion = _Undefined,
+    _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion =
+        const _UndefinedCalendarTaskOccurrenceRecord$protocolVersion(),
   }) {
     return CalendarTaskOccurrenceRecord(
       id: id is int? ? id : this.id,
       taskId: taskId ?? this.taskId,
       originalKey: originalKey ?? this.originalKey,
       originalStart: originalStart ?? this.originalStart.copyWith(),
-      replacementTiming: replacementTiming is _i9h8y8lg.CalendarTaskTiming?
-          ? replacementTiming
-          : this.replacementTiming?.copyWith(),
-      futureTiming: futureTiming is _i9h8y8lg.CalendarTaskTiming?
-          ? futureTiming
-          : this.futureTiming?.copyWith(),
-      contentOverrides:
-          contentOverrides is _irmu5f0n.CalendarTaskOccurrenceContent?
-          ? contentOverrides
-          : this.contentOverrides?.copyWith(),
+      replacementTiming: replacementTiming is _is.UndefinedSentinel
+          ? this.replacementTiming?.copyWith()
+          : replacementTiming,
+      futureTiming: futureTiming is _is.UndefinedSentinel
+          ? this.futureTiming?.copyWith()
+          : futureTiming,
+      contentOverrides: contentOverrides is _is.UndefinedSentinel
+          ? this.contentOverrides?.copyWith()
+          : contentOverrides,
       progress: progress ?? this.progress.copyWith(),
-      protocolVersion: protocolVersion is _iz9t6x1i.CalendarTaskProtocolVersion?
-          ? protocolVersion
-          : this.protocolVersion?.copyWith(),
+      protocolVersion: protocolVersion is _is.UndefinedSentinel
+          ? this.protocolVersion?.copyWith()
+          : protocolVersion,
     );
   }
 }
@@ -452,6 +480,69 @@ class CalendarTaskOccurrenceRecordRepository {
       transaction: transaction,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+    );
+  }
+
+  /// Emits [CalendarTaskOccurrenceRecord]s matching the given query parameters every time the
+  /// source tables are modified.
+  ///
+  /// Use [where] to specify which items to include in the return value.
+  /// If none is specified, all items will be returned.
+  ///
+  /// To specify the order of the items use [orderBy] or [orderByList]
+  /// when sorting by multiple columns.
+  ///
+  /// The maximum number of items can be set by [limit]. If no limit is set,
+  /// all items matching the query will be returned.
+  ///
+  /// [offset] defines how many items to skip, after which [limit] (or all)
+  /// items are read from the database.
+  ///
+  /// Use [throttle] to specify the minimum interval between queries. It can
+  /// also be set to `null`, in which case the stream will only be throttled
+  /// when its subscription is paused.
+  ///
+  /// Source tables are collected from the queried table, [where], [orderBy],
+  /// [orderByList], and the [include] graph. [alsoTriggerOnTables] is added
+  /// to that set. Pass [Table] instances such as `CalendarTaskOccurrenceRecord.t`.
+  ///
+  /// Raw [Expression] SQL is not inspected. Tables referenced only in raw
+  /// SQL must be passed via [alsoTriggerOnTables].
+  ///
+  /// The stream always reads committed state and never joins an ambient
+  /// [Transaction]. Emissions for a write fire after that write commits.
+  ///
+  /// Currently only supported on SQLite. Calling this method on PostgreSQL
+  /// throws an [UnsupportedError].
+  ///
+  /// ```dart
+  /// var subscription = Persons.db.watch(
+  ///   session,
+  ///   where: (t) => t.lastName.equals('Jones'),
+  ///   orderBy: (t) => t.firstName,
+  ///   limit: 100,
+  /// ).listen((persons) {
+  ///   // Handle the latest matching rows.
+  /// });
+  /// ```
+  _ida.Stream<List<CalendarTaskOccurrenceRecord>> watch(
+    _is.DatabaseSession session, {
+    _is.WhereExpressionBuilder<CalendarTaskOccurrenceRecordTable>? where,
+    int? limit,
+    int? offset,
+    _is.OrderByBuilder<CalendarTaskOccurrenceRecordTable>? orderBy,
+    _is.OrderByListBuilder<CalendarTaskOccurrenceRecordTable>? orderByList,
+    Duration? throttle = const Duration(milliseconds: 30),
+    Iterable<_is.Table>? alsoTriggerOnTables,
+  }) {
+    return session.db.watch<CalendarTaskOccurrenceRecord>(
+      where: where?.call(CalendarTaskOccurrenceRecord.t),
+      orderBy: orderBy?.call(CalendarTaskOccurrenceRecord.t),
+      orderByList: orderByList?.call(CalendarTaskOccurrenceRecord.t),
+      limit: limit,
+      offset: offset,
+      throttle: throttle,
+      alsoTriggerOnTables: alsoTriggerOnTables,
     );
   }
 

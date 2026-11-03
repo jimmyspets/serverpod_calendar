@@ -10,9 +10,12 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'dart:async' as _ida;
+
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_availability_content.dart' as _ifxxil5c;
 import 'calendar_availability_import_baseline.dart' as _ivv22qfn;
 import 'calendar_availability_opening_edits.dart' as _id5ke9r5;
@@ -131,9 +134,12 @@ abstract class CalendarAvailabilityDataRecord
     String? protocolUid,
     _is.UuidValue? calendarId,
     String? uidDigest,
-    _ib9yzivj.CalendarAvailabilityProtocolState? protocolState,
-    _ivv22qfn.CalendarAvailabilityImportBaseline? importBaseline,
-    List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
+    _ib9yzivj.CalendarAvailabilityProtocolState? protocolState =
+        const _UndefinedCalendarAvailabilityDataRecord$protocolState(),
+    _ivv22qfn.CalendarAvailabilityImportBaseline? importBaseline =
+        const _UndefinedCalendarAvailabilityDataRecord$importBaseline(),
+    List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides =
+        const _is.$UndefinedList<_id5ke9r5.CalendarAvailabilityOpeningEdits>(),
     _ifxxil5c.CalendarAvailabilityContent? content,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -194,6 +200,18 @@ abstract class CalendarAvailabilityDataRecord
 
 class _Undefined {}
 
+class _UndefinedCalendarAvailabilityDataRecord$protocolState
+    extends _is.UndefinedSentinel
+    implements _ib9yzivj.CalendarAvailabilityProtocolState {
+  const _UndefinedCalendarAvailabilityDataRecord$protocolState();
+}
+
+class _UndefinedCalendarAvailabilityDataRecord$importBaseline
+    extends _is.UndefinedSentinel
+    implements _ivv22qfn.CalendarAvailabilityImportBaseline {
+  const _UndefinedCalendarAvailabilityDataRecord$importBaseline();
+}
+
 class _CalendarAvailabilityDataRecordImpl
     extends CalendarAvailabilityDataRecord {
   _CalendarAvailabilityDataRecordImpl({
@@ -232,9 +250,12 @@ class _CalendarAvailabilityDataRecordImpl
     String? protocolUid,
     _is.UuidValue? calendarId,
     String? uidDigest,
-    Object? protocolState = _Undefined,
-    Object? importBaseline = _Undefined,
-    Object? timingOverrides = _Undefined,
+    _ib9yzivj.CalendarAvailabilityProtocolState? protocolState =
+        const _UndefinedCalendarAvailabilityDataRecord$protocolState(),
+    _ivv22qfn.CalendarAvailabilityImportBaseline? importBaseline =
+        const _UndefinedCalendarAvailabilityDataRecord$importBaseline(),
+    List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides =
+        const _is.$UndefinedList<_id5ke9r5.CalendarAvailabilityOpeningEdits>(),
     _ifxxil5c.CalendarAvailabilityContent? content,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -245,18 +266,15 @@ class _CalendarAvailabilityDataRecordImpl
       protocolUid: protocolUid ?? this.protocolUid,
       calendarId: calendarId ?? this.calendarId,
       uidDigest: uidDigest ?? this.uidDigest,
-      protocolState:
-          protocolState is _ib9yzivj.CalendarAvailabilityProtocolState?
-          ? protocolState
-          : this.protocolState?.copyWith(),
-      importBaseline:
-          importBaseline is _ivv22qfn.CalendarAvailabilityImportBaseline?
-          ? importBaseline
-          : this.importBaseline?.copyWith(),
-      timingOverrides:
-          timingOverrides is List<_id5ke9r5.CalendarAvailabilityOpeningEdits>?
-          ? timingOverrides
-          : this.timingOverrides?.map((e0) => e0.copyWith()).toList(),
+      protocolState: protocolState is _is.UndefinedSentinel
+          ? this.protocolState?.copyWith()
+          : protocolState,
+      importBaseline: importBaseline is _is.UndefinedSentinel
+          ? this.importBaseline?.copyWith()
+          : importBaseline,
+      timingOverrides: timingOverrides is _is.UndefinedSentinel
+          ? this.timingOverrides?.map((e0) => e0.copyWith()).toList()
+          : timingOverrides,
       content: content ?? this.content.copyWith(),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -515,6 +533,69 @@ class CalendarAvailabilityDataRecordRepository {
       transaction: transaction,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+    );
+  }
+
+  /// Emits [CalendarAvailabilityDataRecord]s matching the given query parameters every time the
+  /// source tables are modified.
+  ///
+  /// Use [where] to specify which items to include in the return value.
+  /// If none is specified, all items will be returned.
+  ///
+  /// To specify the order of the items use [orderBy] or [orderByList]
+  /// when sorting by multiple columns.
+  ///
+  /// The maximum number of items can be set by [limit]. If no limit is set,
+  /// all items matching the query will be returned.
+  ///
+  /// [offset] defines how many items to skip, after which [limit] (or all)
+  /// items are read from the database.
+  ///
+  /// Use [throttle] to specify the minimum interval between queries. It can
+  /// also be set to `null`, in which case the stream will only be throttled
+  /// when its subscription is paused.
+  ///
+  /// Source tables are collected from the queried table, [where], [orderBy],
+  /// [orderByList], and the [include] graph. [alsoTriggerOnTables] is added
+  /// to that set. Pass [Table] instances such as `CalendarAvailabilityDataRecord.t`.
+  ///
+  /// Raw [Expression] SQL is not inspected. Tables referenced only in raw
+  /// SQL must be passed via [alsoTriggerOnTables].
+  ///
+  /// The stream always reads committed state and never joins an ambient
+  /// [Transaction]. Emissions for a write fire after that write commits.
+  ///
+  /// Currently only supported on SQLite. Calling this method on PostgreSQL
+  /// throws an [UnsupportedError].
+  ///
+  /// ```dart
+  /// var subscription = Persons.db.watch(
+  ///   session,
+  ///   where: (t) => t.lastName.equals('Jones'),
+  ///   orderBy: (t) => t.firstName,
+  ///   limit: 100,
+  /// ).listen((persons) {
+  ///   // Handle the latest matching rows.
+  /// });
+  /// ```
+  _ida.Stream<List<CalendarAvailabilityDataRecord>> watch(
+    _is.DatabaseSession session, {
+    _is.WhereExpressionBuilder<CalendarAvailabilityDataRecordTable>? where,
+    int? limit,
+    int? offset,
+    _is.OrderByBuilder<CalendarAvailabilityDataRecordTable>? orderBy,
+    _is.OrderByListBuilder<CalendarAvailabilityDataRecordTable>? orderByList,
+    Duration? throttle = const Duration(milliseconds: 30),
+    Iterable<_is.Table>? alsoTriggerOnTables,
+  }) {
+    return session.db.watch<CalendarAvailabilityDataRecord>(
+      where: where?.call(CalendarAvailabilityDataRecord.t),
+      orderBy: orderBy?.call(CalendarAvailabilityDataRecord.t),
+      orderByList: orderByList?.call(CalendarAvailabilityDataRecord.t),
+      limit: limit,
+      offset: offset,
+      throttle: throttle,
+      alsoTriggerOnTables: alsoTriggerOnTables,
     );
   }
 

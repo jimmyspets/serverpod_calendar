@@ -14,6 +14,7 @@ import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_event_civil.dart' as _i1bb5k1r;
 import 'calendar_task_field_group.dart' as _isemqyyv;
 
@@ -91,11 +92,14 @@ abstract class CalendarTaskOccurrenceQuery
   CalendarTaskOccurrenceQuery copyWith({
     _isc.UuidValue? taskId,
     int? expectedRevision,
-    List<_isemqyyv.CalendarTaskFieldGroup>? fieldGroups,
-    _i1bb5k1r.CalendarEventCivil? fromDate,
-    _i1bb5k1r.CalendarEventCivil? untilDate,
-    DateTime? fromUtc,
-    DateTime? untilUtc,
+    List<_isemqyyv.CalendarTaskFieldGroup>? fieldGroups =
+        const _isc.$UndefinedList<_isemqyyv.CalendarTaskFieldGroup>(),
+    _i1bb5k1r.CalendarEventCivil? fromDate =
+        const _UndefinedCalendarTaskOccurrenceQuery$fromDate(),
+    _i1bb5k1r.CalendarEventCivil? untilDate =
+        const _UndefinedCalendarTaskOccurrenceQuery$fromDate(),
+    DateTime? fromUtc = const _isc.$UndefinedDateTime(),
+    DateTime? untilUtc = const _isc.$UndefinedDateTime(),
   });
   @override
   bool operator ==(Object other) {
@@ -191,7 +195,11 @@ abstract class CalendarTaskOccurrenceQuery
   }
 }
 
-class _Undefined {}
+class _UndefinedCalendarTaskOccurrenceQuery$fromDate
+    extends _isc.UndefinedSentinel
+    implements _i1bb5k1r.CalendarEventCivil {
+  const _UndefinedCalendarTaskOccurrenceQuery$fromDate();
+}
 
 class _CalendarTaskOccurrenceQueryImpl extends CalendarTaskOccurrenceQuery {
   const _CalendarTaskOccurrenceQueryImpl({
@@ -219,26 +227,29 @@ class _CalendarTaskOccurrenceQueryImpl extends CalendarTaskOccurrenceQuery {
   CalendarTaskOccurrenceQuery copyWith({
     _isc.UuidValue? taskId,
     int? expectedRevision,
-    Object? fieldGroups = _Undefined,
-    Object? fromDate = _Undefined,
-    Object? untilDate = _Undefined,
-    Object? fromUtc = _Undefined,
-    Object? untilUtc = _Undefined,
+    List<_isemqyyv.CalendarTaskFieldGroup>? fieldGroups =
+        const _isc.$UndefinedList<_isemqyyv.CalendarTaskFieldGroup>(),
+    _i1bb5k1r.CalendarEventCivil? fromDate =
+        const _UndefinedCalendarTaskOccurrenceQuery$fromDate(),
+    _i1bb5k1r.CalendarEventCivil? untilDate =
+        const _UndefinedCalendarTaskOccurrenceQuery$fromDate(),
+    DateTime? fromUtc = const _isc.$UndefinedDateTime(),
+    DateTime? untilUtc = const _isc.$UndefinedDateTime(),
   }) {
     return CalendarTaskOccurrenceQuery(
       taskId: taskId ?? this.taskId,
       expectedRevision: expectedRevision ?? this.expectedRevision,
-      fieldGroups: fieldGroups is List<_isemqyyv.CalendarTaskFieldGroup>?
-          ? fieldGroups
-          : this.fieldGroups?.map((e0) => e0).toList(),
-      fromDate: fromDate is _i1bb5k1r.CalendarEventCivil?
-          ? fromDate
-          : this.fromDate?.copyWith(),
-      untilDate: untilDate is _i1bb5k1r.CalendarEventCivil?
-          ? untilDate
-          : this.untilDate?.copyWith(),
-      fromUtc: fromUtc is DateTime? ? fromUtc : this.fromUtc,
-      untilUtc: untilUtc is DateTime? ? untilUtc : this.untilUtc,
+      fieldGroups: fieldGroups is _isc.UndefinedSentinel
+          ? this.fieldGroups?.map((e0) => e0).toList()
+          : fieldGroups,
+      fromDate: fromDate is _isc.UndefinedSentinel
+          ? this.fromDate?.copyWith()
+          : fromDate,
+      untilDate: untilDate is _isc.UndefinedSentinel
+          ? this.untilDate?.copyWith()
+          : untilDate,
+      fromUtc: fromUtc is _isc.UndefinedSentinel ? this.fromUtc : fromUtc,
+      untilUtc: untilUtc is _isc.UndefinedSentinel ? this.untilUtc : untilUtc,
     );
   }
 }

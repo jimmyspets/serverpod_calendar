@@ -6,7 +6,7 @@ resolution: workspace
 environment:
   sdk: '>=3.13.5 <3.14.0'
 dependencies:
-  serverpod: 4.0.4
+  serverpod: 4.1.0
   crypto: 3.0.7
   serverpod_calendar_core:
     path: ../../serverpod_calendar_core
@@ -16,5 +16,5 @@ dependencies:
     path: ../../serverpod_notifications/serverpod_notifications_server
 dev_dependencies:
   lints: 6.1.0
-  serverpod_test: 4.0.4
+  serverpod_test: 4.1.0
   test: ^1.25.5

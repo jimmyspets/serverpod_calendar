@@ -35,7 +35,9 @@ abstract class NotificationHint
   /// Returns a shallow copy of this [NotificationHint]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
-  NotificationHint copyWith({_isc.UuidValue? notificationId});
+  NotificationHint copyWith({
+    _isc.UuidValue? notificationId = const _isc.$UndefinedUuidValue(),
+  });
   @override
   bool operator ==(Object other) {
     return identical(
@@ -81,8 +83,6 @@ abstract class NotificationHint
   }
 }
 
-class _Undefined {}
-
 class _NotificationHintImpl extends NotificationHint {
   const _NotificationHintImpl({_isc.UuidValue? notificationId})
     : super._(notificationId: notificationId);
@@ -91,11 +91,13 @@ class _NotificationHintImpl extends NotificationHint {
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
   @override
-  NotificationHint copyWith({Object? notificationId = _Undefined}) {
+  NotificationHint copyWith({
+    _isc.UuidValue? notificationId = const _isc.$UndefinedUuidValue(),
+  }) {
     return NotificationHint(
-      notificationId: notificationId is _isc.UuidValue?
-          ? notificationId
-          : this.notificationId,
+      notificationId: notificationId is _isc.UndefinedSentinel
+          ? this.notificationId
+          : notificationId,
     );
   }
 }

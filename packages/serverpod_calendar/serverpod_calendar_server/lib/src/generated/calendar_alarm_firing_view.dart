@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_alarm_action_view.dart' as _ixqjnkie;
 import 'calendar_alarm_firing_kind.dart' as _i8okwxwj;
 import 'calendar_alarm_firing_state.dart' as _ihos0r46;
@@ -103,8 +104,9 @@ abstract class CalendarAlarmFiringView
     DateTime? dueAt,
     DateTime? expiresAt,
     _ihos0r46.CalendarAlarmFiringState? state,
-    DateTime? acceptedAt,
-    _ixqjnkie.CalendarAlarmActionView? action,
+    DateTime? acceptedAt = const _is.$UndefinedDateTime(),
+    _ixqjnkie.CalendarAlarmActionView? action =
+        const _UndefinedCalendarAlarmFiringView$action(),
   });
   @override
   bool operator ==(Object other) {
@@ -215,7 +217,10 @@ abstract class CalendarAlarmFiringView
   }
 }
 
-class _Undefined {}
+class _UndefinedCalendarAlarmFiringView$action extends _is.UndefinedSentinel
+    implements _ixqjnkie.CalendarAlarmActionView {
+  const _UndefinedCalendarAlarmFiringView$action();
+}
 
 class _CalendarAlarmFiringViewImpl extends CalendarAlarmFiringView {
   const _CalendarAlarmFiringViewImpl({
@@ -252,8 +257,9 @@ class _CalendarAlarmFiringViewImpl extends CalendarAlarmFiringView {
     DateTime? dueAt,
     DateTime? expiresAt,
     _ihos0r46.CalendarAlarmFiringState? state,
-    Object? acceptedAt = _Undefined,
-    Object? action = _Undefined,
+    DateTime? acceptedAt = const _is.$UndefinedDateTime(),
+    _ixqjnkie.CalendarAlarmActionView? action =
+        const _UndefinedCalendarAlarmFiringView$action(),
   }) {
     return CalendarAlarmFiringView(
       id: id ?? this.id,
@@ -263,10 +269,12 @@ class _CalendarAlarmFiringViewImpl extends CalendarAlarmFiringView {
       dueAt: dueAt ?? this.dueAt,
       expiresAt: expiresAt ?? this.expiresAt,
       state: state ?? this.state,
-      acceptedAt: acceptedAt is DateTime? ? acceptedAt : this.acceptedAt,
-      action: action is _ixqjnkie.CalendarAlarmActionView?
-          ? action
-          : this.action?.copyWith(),
+      acceptedAt: acceptedAt is _is.UndefinedSentinel
+          ? this.acceptedAt
+          : acceptedAt,
+      action: action is _is.UndefinedSentinel
+          ? this.action?.copyWith()
+          : action,
     );
   }
 }

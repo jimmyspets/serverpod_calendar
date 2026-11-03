@@ -14,6 +14,7 @@ import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_event_by_day.dart' as _iq7751s4;
 import 'calendar_event_civil.dart' as _i1bb5k1r;
 import 'calendar_event_frequency.dart' as _i2q54gr5;
@@ -135,8 +136,9 @@ abstract class CalendarEventRule
     _i2q54gr5.CalendarEventFrequency? frequency,
     int? interval,
     int? count,
-    _i1bb5k1r.CalendarEventCivil? untilDate,
-    DateTime? untilUtc,
+    _i1bb5k1r.CalendarEventCivil? untilDate =
+        const _UndefinedCalendarEventRule$untilDate(),
+    DateTime? untilUtc = const _isc.$UndefinedDateTime(),
     int? weekStart,
     List<_iq7751s4.CalendarEventByDay>? byDay,
     List<int>? byMonthDay,
@@ -290,6 +292,11 @@ abstract class CalendarEventRule
 
 class _Undefined {}
 
+class _UndefinedCalendarEventRule$untilDate extends _isc.UndefinedSentinel
+    implements _i1bb5k1r.CalendarEventCivil {
+  const _UndefinedCalendarEventRule$untilDate();
+}
+
 class _CalendarEventRuleImpl extends CalendarEventRule {
   const _CalendarEventRuleImpl({
     required _i2q54gr5.CalendarEventFrequency frequency,
@@ -331,8 +338,9 @@ class _CalendarEventRuleImpl extends CalendarEventRule {
     _i2q54gr5.CalendarEventFrequency? frequency,
     int? interval,
     Object? count = _Undefined,
-    Object? untilDate = _Undefined,
-    Object? untilUtc = _Undefined,
+    _i1bb5k1r.CalendarEventCivil? untilDate =
+        const _UndefinedCalendarEventRule$untilDate(),
+    DateTime? untilUtc = const _isc.$UndefinedDateTime(),
     int? weekStart,
     List<_iq7751s4.CalendarEventByDay>? byDay,
     List<int>? byMonthDay,
@@ -347,10 +355,10 @@ class _CalendarEventRuleImpl extends CalendarEventRule {
       frequency: frequency ?? this.frequency,
       interval: interval ?? this.interval,
       count: count is int? ? count : this.count,
-      untilDate: untilDate is _i1bb5k1r.CalendarEventCivil?
-          ? untilDate
-          : this.untilDate?.copyWith(),
-      untilUtc: untilUtc is DateTime? ? untilUtc : this.untilUtc,
+      untilDate: untilDate is _isc.UndefinedSentinel
+          ? this.untilDate?.copyWith()
+          : untilDate,
+      untilUtc: untilUtc is _isc.UndefinedSentinel ? this.untilUtc : untilUtc,
       weekStart: weekStart ?? this.weekStart,
       byDay: byDay ?? this.byDay.map((e0) => e0.copyWith()).toList(),
       byMonthDay: byMonthDay ?? this.byMonthDay.map((e0) => e0).toList(),

@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_invitation_source_kind.dart' as _ilccsff7;
 
@@ -143,17 +144,19 @@ abstract class CalendarInvitationView
     _ilccsff7.CalendarInvitationSourceKind? kind,
     bool? recurring,
     bool? isThisAndFuture,
-    _ieswiaty.CalendarEventTiming? originalStart,
+    _ieswiaty.CalendarEventTiming? originalStart =
+        const _UndefinedCalendarInvitationView$originalStart(),
     int? revision,
     String? uid,
     String? organizer,
     int? sequence,
     DateTime? stamp,
-    _is.UuidValue? sourceId,
+    _is.UuidValue? sourceId = const _is.$UndefinedUuidValue(),
     String? summary,
-    _ieswiaty.CalendarEventTiming? timing,
-    DateTime? receivedAt,
-    DateTime? dismissedAt,
+    _ieswiaty.CalendarEventTiming? timing =
+        const _UndefinedCalendarInvitationView$originalStart(),
+    DateTime? receivedAt = const _is.$UndefinedDateTime(),
+    DateTime? dismissedAt = const _is.$UndefinedDateTime(),
   });
   @override
   bool operator ==(Object other) {
@@ -315,6 +318,12 @@ abstract class CalendarInvitationView
 
 class _Undefined {}
 
+class _UndefinedCalendarInvitationView$originalStart
+    extends _is.UndefinedSentinel
+    implements _ieswiaty.CalendarEventTiming {
+  const _UndefinedCalendarInvitationView$originalStart();
+}
+
 class _CalendarInvitationViewImpl extends CalendarInvitationView {
   const _CalendarInvitationViewImpl({
     required _is.UuidValue id,
@@ -359,38 +368,44 @@ class _CalendarInvitationViewImpl extends CalendarInvitationView {
     _ilccsff7.CalendarInvitationSourceKind? kind,
     bool? recurring,
     bool? isThisAndFuture,
-    Object? originalStart = _Undefined,
+    _ieswiaty.CalendarEventTiming? originalStart =
+        const _UndefinedCalendarInvitationView$originalStart(),
     int? revision,
     String? uid,
     String? organizer,
     Object? sequence = _Undefined,
     DateTime? stamp,
-    Object? sourceId = _Undefined,
+    _is.UuidValue? sourceId = const _is.$UndefinedUuidValue(),
     Object? summary = _Undefined,
-    Object? timing = _Undefined,
-    Object? receivedAt = _Undefined,
-    Object? dismissedAt = _Undefined,
+    _ieswiaty.CalendarEventTiming? timing =
+        const _UndefinedCalendarInvitationView$originalStart(),
+    DateTime? receivedAt = const _is.$UndefinedDateTime(),
+    DateTime? dismissedAt = const _is.$UndefinedDateTime(),
   }) {
     return CalendarInvitationView(
       id: id ?? this.id,
       kind: kind ?? this.kind,
       recurring: recurring ?? this.recurring,
       isThisAndFuture: isThisAndFuture ?? this.isThisAndFuture,
-      originalStart: originalStart is _ieswiaty.CalendarEventTiming?
-          ? originalStart
-          : this.originalStart?.copyWith(),
+      originalStart: originalStart is _is.UndefinedSentinel
+          ? this.originalStart?.copyWith()
+          : originalStart,
       revision: revision ?? this.revision,
       uid: uid ?? this.uid,
       organizer: organizer ?? this.organizer,
       sequence: sequence is int? ? sequence : this.sequence,
       stamp: stamp ?? this.stamp,
-      sourceId: sourceId is _is.UuidValue? ? sourceId : this.sourceId,
+      sourceId: sourceId is _is.UndefinedSentinel ? this.sourceId : sourceId,
       summary: summary is String? ? summary : this.summary,
-      timing: timing is _ieswiaty.CalendarEventTiming?
-          ? timing
-          : this.timing?.copyWith(),
-      receivedAt: receivedAt is DateTime? ? receivedAt : this.receivedAt,
-      dismissedAt: dismissedAt is DateTime? ? dismissedAt : this.dismissedAt,
+      timing: timing is _is.UndefinedSentinel
+          ? this.timing?.copyWith()
+          : timing,
+      receivedAt: receivedAt is _is.UndefinedSentinel
+          ? this.receivedAt
+          : receivedAt,
+      dismissedAt: dismissedAt is _is.UndefinedSentinel
+          ? this.dismissedAt
+          : dismissedAt,
     );
   }
 }

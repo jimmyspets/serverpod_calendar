@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_event_occurrence_content.dart' as _io4uvjqi;
 import 'calendar_event_source_metadata.dart' as _ic57ts5d;
 import 'calendar_event_timing.dart' as _ieswiaty;
@@ -75,8 +76,10 @@ abstract class CalendarEventFutureOverride
   CalendarEventFutureOverride copyWith({
     _ieswiaty.CalendarEventTiming? originalStart,
     _ieswiaty.CalendarEventTiming? replacement,
-    _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides,
-    _ic57ts5d.CalendarEventSourceMetadata? sourceMetadata,
+    _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides =
+        const _UndefinedCalendarEventFutureOverride$contentOverrides(),
+    _ic57ts5d.CalendarEventSourceMetadata? sourceMetadata =
+        const _UndefinedCalendarEventFutureOverride$sourceMetadata(),
   });
   @override
   bool operator ==(Object other) {
@@ -148,7 +151,17 @@ abstract class CalendarEventFutureOverride
   }
 }
 
-class _Undefined {}
+class _UndefinedCalendarEventFutureOverride$contentOverrides
+    extends _is.UndefinedSentinel
+    implements _io4uvjqi.CalendarEventOccurrenceContent {
+  const _UndefinedCalendarEventFutureOverride$contentOverrides();
+}
+
+class _UndefinedCalendarEventFutureOverride$sourceMetadata
+    extends _is.UndefinedSentinel
+    implements _ic57ts5d.CalendarEventSourceMetadata {
+  const _UndefinedCalendarEventFutureOverride$sourceMetadata();
+}
 
 class _CalendarEventFutureOverrideImpl extends CalendarEventFutureOverride {
   const _CalendarEventFutureOverrideImpl({
@@ -170,19 +183,20 @@ class _CalendarEventFutureOverrideImpl extends CalendarEventFutureOverride {
   CalendarEventFutureOverride copyWith({
     _ieswiaty.CalendarEventTiming? originalStart,
     _ieswiaty.CalendarEventTiming? replacement,
-    Object? contentOverrides = _Undefined,
-    Object? sourceMetadata = _Undefined,
+    _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides =
+        const _UndefinedCalendarEventFutureOverride$contentOverrides(),
+    _ic57ts5d.CalendarEventSourceMetadata? sourceMetadata =
+        const _UndefinedCalendarEventFutureOverride$sourceMetadata(),
   }) {
     return CalendarEventFutureOverride(
       originalStart: originalStart ?? this.originalStart.copyWith(),
       replacement: replacement ?? this.replacement.copyWith(),
-      contentOverrides:
-          contentOverrides is _io4uvjqi.CalendarEventOccurrenceContent?
-          ? contentOverrides
-          : this.contentOverrides?.copyWith(),
-      sourceMetadata: sourceMetadata is _ic57ts5d.CalendarEventSourceMetadata?
-          ? sourceMetadata
-          : this.sourceMetadata?.copyWith(),
+      contentOverrides: contentOverrides is _is.UndefinedSentinel
+          ? this.contentOverrides?.copyWith()
+          : contentOverrides,
+      sourceMetadata: sourceMetadata is _is.UndefinedSentinel
+          ? this.sourceMetadata?.copyWith()
+          : sourceMetadata,
     );
   }
 }

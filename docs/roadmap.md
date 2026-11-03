@@ -831,3 +831,9 @@ The maintainer confirmed the next post-restoration master REQUEST policy: preser
 - [ ] Review further range cancellation/restoration cycles, replies, remaining selected methods and release requirements separately.
 
 The next toolchain batch will align Serverpod SDK dependencies and generation with the maintainer-installed CLI 4.1.0 after this approved feature pass; compatibility and exact-head validation remain required.
+
+## Serverpod 4.1.0 maintenance alignment
+
+The maintainer requested dependency alignment after ADR 0168. See [the upgrade record](serverpod-4.1-upgrade.md). Resolve and pin matching CLI/runtime/client/auth/test versions, regenerate all artifacts, inspect generated migrations, and verify existing/fresh synthetic storage plus affected workers and connected Flutter before one batch commit. Exact-head hosted checks remain a readiness gate; no new calendar capability is selected by the SDK update.
+
+The 4.1.0 maintenance batch completed local generation, analysis, existing/fresh migration and database checks, client/feed/JWT checks, actual competing-worker/process-loss recovery and the full connected Flutter journey. Exact-head hosted results remain separate; see validation.

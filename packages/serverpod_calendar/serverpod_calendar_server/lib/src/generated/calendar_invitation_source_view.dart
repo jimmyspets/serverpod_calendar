@@ -11,6 +11,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
+
 import 'calendar_invitation_outcome.dart' as _i98zwsq8;
 import 'calendar_invitation_source_kind.dart' as _ilccsff7;
 
@@ -99,7 +100,7 @@ abstract class CalendarInvitationSourceView
     _i98zwsq8.CalendarInvitationOutcome? outcome,
     bool? isCurrent,
     DateTime? receivedAt,
-    DateTime? inactiveAt,
+    DateTime? inactiveAt = const _is.$UndefinedDateTime(),
   });
   @override
   bool operator ==(Object other) {
@@ -248,7 +249,7 @@ class _CalendarInvitationSourceViewImpl extends CalendarInvitationSourceView {
     _i98zwsq8.CalendarInvitationOutcome? outcome,
     bool? isCurrent,
     DateTime? receivedAt,
-    Object? inactiveAt = _Undefined,
+    DateTime? inactiveAt = const _is.$UndefinedDateTime(),
   }) {
     return CalendarInvitationSourceView(
       id: id ?? this.id,
@@ -259,7 +260,9 @@ class _CalendarInvitationSourceViewImpl extends CalendarInvitationSourceView {
       outcome: outcome ?? this.outcome,
       isCurrent: isCurrent ?? this.isCurrent,
       receivedAt: receivedAt ?? this.receivedAt,
-      inactiveAt: inactiveAt is DateTime? ? inactiveAt : this.inactiveAt,
+      inactiveAt: inactiveAt is _is.UndefinedSentinel
+          ? this.inactiveAt
+          : inactiveAt,
     );
   }
 }

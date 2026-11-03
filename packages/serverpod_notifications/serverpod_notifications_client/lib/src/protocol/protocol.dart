@@ -12,6 +12,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'notification_delivery_state.dart' as _is3a40pv;
 import 'notification_exception.dart' as _i299pw2t;
 import 'notification_failure_code.dart' as _i909e29g;
@@ -26,7 +27,8 @@ export 'notification_page.dart';
 export 'notification_view.dart';
 export 'client.dart';
 
-class Protocol extends _isc.SerializationManager {
+class Protocol extends _isc.SerializationManager
+    implements _isc.ProtocolDeserializationProvider {
   Protocol._();
 
   factory Protocol() => _instance;
@@ -35,6 +37,37 @@ class Protocol extends _isc.SerializationManager {
 
   final Set<_isc.SerializationManager> _hostProtocols = {};
 
+  @override
+  _isc.ProtocolDeserialization get deserializationMetadata =>
+      _isc.ProtocolDeserialization.cached(
+        this,
+        types: const [
+          _isc.getType<_is3a40pv.NotificationDeliveryState>,
+          _isc.getType<_i299pw2t.NotificationException>,
+          _isc.getType<_i909e29g.NotificationFailureCode>,
+          _isc.getType<_i6bnr478.NotificationHint>,
+          _isc.getType<_iw4dnqzf.NotificationPage>,
+          _isc.getType<_i86vfscw.NotificationView>,
+          _isc.getType<_is3a40pv.NotificationDeliveryState?>,
+          _isc.getType<_i299pw2t.NotificationException?>,
+          _isc.getType<_i909e29g.NotificationFailureCode?>,
+          _isc.getType<_i6bnr478.NotificationHint?>,
+          _isc.getType<_iw4dnqzf.NotificationPage?>,
+          _isc.getType<_i86vfscw.NotificationView?>,
+          _isc.getType<List<_i86vfscw.NotificationView>>,
+        ],
+        modules: const [],
+        classNames: const [
+          'NotificationDeliveryState',
+          'NotificationException',
+          'NotificationFailureCode',
+          'NotificationHint',
+          'NotificationPage',
+          'NotificationView',
+        ],
+        classNamePrefix: 'serverpod_notifications.',
+      );
+
   void registerHostProtocol(
     String projectName,
     _isc.SerializationManager protocol,
@@ -42,13 +75,11 @@ class Protocol extends _isc.SerializationManager {
     _hostProtocols.add(protocol);
   }
 
-  static String? getClassNameFromObjectJson(dynamic data) {
-    if (data is! Map) return null;
-    final className = data['__className__'] as String?;
-    if (className == null) return null;
-    if (!className.startsWith('serverpod_notifications.')) return className;
-    return className.substring(24);
-  }
+  static String? getClassNameFromObjectJson(dynamic data) =>
+      _isc.ProtocolDeserialization.normalizeClassName(
+        _isc.ProtocolDeserialization.readClassName(data),
+        prefix: 'serverpod_notifications.',
+      );
 
   @override
   T deserialize<T>(
@@ -56,8 +87,11 @@ class Protocol extends _isc.SerializationManager {
     Type? t,
   ]) {
     t ??= T;
-
-    final dataClassName = getClassNameFromObjectJson(data);
+    final rawDataClassName = _isc.ProtocolDeserialization.readClassName(data);
+    final dataClassName = _isc.ProtocolDeserialization.normalizeClassName(
+      rawDataClassName,
+      prefix: 'serverpod_notifications.',
+    );
     if (dataClassName != null && dataClassName != getClassNameForType(t)) {
       try {
         return deserializeByClassName({

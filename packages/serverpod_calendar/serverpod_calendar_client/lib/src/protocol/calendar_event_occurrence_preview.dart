@@ -13,6 +13,7 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_event_field_group.dart' as _iftiwkuj;
 import 'calendar_event_occurrence.dart' as _isyqnyev;
 import 'calendar_event_time_kind.dart' as _idbnuf6y;

@@ -20,6 +20,7 @@ import 'package:serverpod_calendar_feed_client/src/protocol/calendar_feed_view.d
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_notifications_client/serverpod_notifications_client.dart'
     as _i9wvmat7;
+
 import 'calendar_feed_created_credential.dart' as _i6l7w5f5;
 import 'calendar_feed_credential_view.dart' as _i9qbm9qw;
 import 'calendar_feed_exception.dart' as _iqqb7mk1;
@@ -34,7 +35,8 @@ export 'calendar_feed_settings.dart';
 export 'calendar_feed_view.dart';
 export 'client.dart';
 
-class Protocol extends _isc.SerializationManager {
+class Protocol extends _isc.SerializationManager
+    implements _isc.ProtocolDeserializationProvider {
   Protocol._();
 
   factory Protocol() => _instance;
@@ -43,6 +45,42 @@ class Protocol extends _isc.SerializationManager {
 
   final Set<_isc.SerializationManager> _hostProtocols = {};
 
+  @override
+  _isc.ProtocolDeserialization get deserializationMetadata =>
+      _isc.ProtocolDeserialization.cached(
+        this,
+        types: const [
+          _isc.getType<_i6l7w5f5.CalendarFeedCreatedCredential>,
+          _isc.getType<_i9qbm9qw.CalendarFeedCredentialView>,
+          _isc.getType<_iqqb7mk1.CalendarFeedException>,
+          _isc.getType<_iuwqxkhl.CalendarFeedFailureCode>,
+          _isc.getType<_i7sjkcc2.CalendarFeedSettings>,
+          _isc.getType<_ibxmw9q3.CalendarFeedView>,
+          _isc.getType<_i6l7w5f5.CalendarFeedCreatedCredential?>,
+          _isc.getType<_i9qbm9qw.CalendarFeedCredentialView?>,
+          _isc.getType<_iqqb7mk1.CalendarFeedException?>,
+          _isc.getType<_iuwqxkhl.CalendarFeedFailureCode?>,
+          _isc.getType<_i7sjkcc2.CalendarFeedSettings?>,
+          _isc.getType<_ibxmw9q3.CalendarFeedView?>,
+          _isc.getType<List<_isc.UuidValue>>,
+          _isc.getType<List<_i8pso0cp.CalendarFeedView>>,
+          _isc.getType<List<_igll1u2j.CalendarFeedCredentialView>>,
+        ],
+        modules: const [
+          _imrxcdin.Protocol.new,
+          _i9wvmat7.Protocol.new,
+        ],
+        classNames: const [
+          'CalendarFeedCreatedCredential',
+          'CalendarFeedCredentialView',
+          'CalendarFeedException',
+          'CalendarFeedFailureCode',
+          'CalendarFeedSettings',
+          'CalendarFeedView',
+        ],
+        classNamePrefix: 'serverpod_calendar_feed.',
+      );
+
   void registerHostProtocol(
     String projectName,
     _isc.SerializationManager protocol,
@@ -50,13 +88,11 @@ class Protocol extends _isc.SerializationManager {
     _hostProtocols.add(protocol);
   }
 
-  static String? getClassNameFromObjectJson(dynamic data) {
-    if (data is! Map) return null;
-    final className = data['__className__'] as String?;
-    if (className == null) return null;
-    if (!className.startsWith('serverpod_calendar_feed.')) return className;
-    return className.substring(24);
-  }
+  static String? getClassNameFromObjectJson(dynamic data) =>
+      _isc.ProtocolDeserialization.normalizeClassName(
+        _isc.ProtocolDeserialization.readClassName(data),
+        prefix: 'serverpod_calendar_feed.',
+      );
 
   @override
   T deserialize<T>(
@@ -64,8 +100,11 @@ class Protocol extends _isc.SerializationManager {
     Type? t,
   ]) {
     t ??= T;
-
-    final dataClassName = getClassNameFromObjectJson(data);
+    final rawDataClassName = _isc.ProtocolDeserialization.readClassName(data);
+    final dataClassName = _isc.ProtocolDeserialization.normalizeClassName(
+      rawDataClassName,
+      prefix: 'serverpod_calendar_feed.',
+    );
     if (dataClassName != null && dataClassName != getClassNameForType(t)) {
       try {
         return deserializeByClassName({
@@ -147,12 +186,16 @@ class Protocol extends _isc.SerializationManager {
               .toList()
           as T;
     }
-    try {
-      return _imrxcdin.Protocol().deserialize<T>(data, t);
-    } on _isc.DeserializationTypeNotFoundException catch (_) {}
-    try {
-      return _i9wvmat7.Protocol().deserialize<T>(data, t);
-    } on _isc.DeserializationTypeNotFoundException catch (_) {}
+    final modules = deserializationMetadata.modulesForDeserialization(
+      t,
+      className: rawDataClassName,
+    );
+    for (final module in modules) {
+      try {
+        return module.deserialize<T>(data, t);
+      } on _isc.DeserializationTypeNotFoundException catch (_) {}
+    }
+
     return super.deserialize<T>(data, t);
   }
 
@@ -221,6 +264,18 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'CalendarFeedView') {
       return deserialize<_ibxmw9q3.CalendarFeedView>(data['data']);
+    }
+    if (dataClassName.startsWith('serverpod_calendar.')) {
+      return _imrxcdin.Protocol().deserializeByClassName({
+        ...data,
+        'className': dataClassName.substring(19),
+      });
+    }
+    if (dataClassName.startsWith('serverpod_notifications.')) {
+      return _i9wvmat7.Protocol().deserializeByClassName({
+        ...data,
+        'className': dataClassName.substring(24),
+      });
     }
     return super.deserializeByClassName(data);
   }

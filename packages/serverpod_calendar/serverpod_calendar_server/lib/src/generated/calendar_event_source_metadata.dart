@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_event_geographic_position.dart' as _iloy79hd;
 import 'calendar_event_resource_group.dart' as _iiajf89w;
 import 'calendar_event_source_alarm.dart' as _i4dai4jt;
@@ -157,14 +158,21 @@ abstract class CalendarEventSourceMetadata
     List<_iui013s0.CalendarEventSourceCategoryGroup>? categoryGroups,
     List<_iwa6orjz.CalendarEventSourceText>? comments,
     List<_iwa6orjz.CalendarEventSourceText>? contacts,
-    _iypom7ai.CalendarEventSourceParticipant? organizer,
-    List<_iypom7ai.CalendarEventSourceParticipant>? attendees,
-    List<_iksc4ly9.CalendarEventSourceRelationship>? relationships,
-    List<_i20i9qxn.CalendarEventSourceAttachment>? attachments,
-    List<_i4dai4jt.CalendarEventSourceAlarm>? alarms,
+    _iypom7ai.CalendarEventSourceParticipant? organizer =
+        const _UndefinedCalendarEventSourceMetadata$organizer(),
+    List<_iypom7ai.CalendarEventSourceParticipant>? attendees =
+        const _is.$UndefinedList<_iypom7ai.CalendarEventSourceParticipant>(),
+    List<_iksc4ly9.CalendarEventSourceRelationship>? relationships =
+        const _is.$UndefinedList<_iksc4ly9.CalendarEventSourceRelationship>(),
+    List<_i20i9qxn.CalendarEventSourceAttachment>? attachments =
+        const _is.$UndefinedList<_i20i9qxn.CalendarEventSourceAttachment>(),
+    List<_i4dai4jt.CalendarEventSourceAlarm>? alarms =
+        const _is.$UndefinedList<_i4dai4jt.CalendarEventSourceAlarm>(),
     int? priority,
-    _iloy79hd.CalendarEventGeographicPosition? geographicPosition,
-    List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups,
+    _iloy79hd.CalendarEventGeographicPosition? geographicPosition =
+        const _UndefinedCalendarEventSourceMetadata$geographicPosition(),
+    List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups =
+        const _is.$UndefinedList<_iiajf89w.CalendarEventResourceGroup>(),
   });
   @override
   bool operator ==(Object other) {
@@ -294,6 +302,18 @@ abstract class CalendarEventSourceMetadata
 
 class _Undefined {}
 
+class _UndefinedCalendarEventSourceMetadata$organizer
+    extends _is.UndefinedSentinel
+    implements _iypom7ai.CalendarEventSourceParticipant {
+  const _UndefinedCalendarEventSourceMetadata$organizer();
+}
+
+class _UndefinedCalendarEventSourceMetadata$geographicPosition
+    extends _is.UndefinedSentinel
+    implements _iloy79hd.CalendarEventGeographicPosition {
+  const _UndefinedCalendarEventSourceMetadata$geographicPosition();
+}
+
 class _CalendarEventSourceMetadataImpl extends CalendarEventSourceMetadata {
   const _CalendarEventSourceMetadataImpl({
     String? url,
@@ -335,14 +355,21 @@ class _CalendarEventSourceMetadataImpl extends CalendarEventSourceMetadata {
     List<_iui013s0.CalendarEventSourceCategoryGroup>? categoryGroups,
     List<_iwa6orjz.CalendarEventSourceText>? comments,
     List<_iwa6orjz.CalendarEventSourceText>? contacts,
-    Object? organizer = _Undefined,
-    Object? attendees = _Undefined,
-    Object? relationships = _Undefined,
-    Object? attachments = _Undefined,
-    Object? alarms = _Undefined,
+    _iypom7ai.CalendarEventSourceParticipant? organizer =
+        const _UndefinedCalendarEventSourceMetadata$organizer(),
+    List<_iypom7ai.CalendarEventSourceParticipant>? attendees =
+        const _is.$UndefinedList<_iypom7ai.CalendarEventSourceParticipant>(),
+    List<_iksc4ly9.CalendarEventSourceRelationship>? relationships =
+        const _is.$UndefinedList<_iksc4ly9.CalendarEventSourceRelationship>(),
+    List<_i20i9qxn.CalendarEventSourceAttachment>? attachments =
+        const _is.$UndefinedList<_i20i9qxn.CalendarEventSourceAttachment>(),
+    List<_i4dai4jt.CalendarEventSourceAlarm>? alarms =
+        const _is.$UndefinedList<_i4dai4jt.CalendarEventSourceAlarm>(),
     Object? priority = _Undefined,
-    Object? geographicPosition = _Undefined,
-    Object? resourceGroups = _Undefined,
+    _iloy79hd.CalendarEventGeographicPosition? geographicPosition =
+        const _UndefinedCalendarEventSourceMetadata$geographicPosition(),
+    List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups =
+        const _is.$UndefinedList<_iiajf89w.CalendarEventResourceGroup>(),
   }) {
     return CalendarEventSourceMetadata(
       url: url is String? ? url : this.url,
@@ -354,31 +381,28 @@ class _CalendarEventSourceMetadataImpl extends CalendarEventSourceMetadata {
           this.categoryGroups.map((e0) => e0.copyWith()).toList(),
       comments: comments ?? this.comments.map((e0) => e0.copyWith()).toList(),
       contacts: contacts ?? this.contacts.map((e0) => e0.copyWith()).toList(),
-      organizer: organizer is _iypom7ai.CalendarEventSourceParticipant?
-          ? organizer
-          : this.organizer?.copyWith(),
-      attendees: attendees is List<_iypom7ai.CalendarEventSourceParticipant>?
-          ? attendees
-          : this.attendees?.map((e0) => e0.copyWith()).toList(),
-      relationships:
-          relationships is List<_iksc4ly9.CalendarEventSourceRelationship>?
-          ? relationships
-          : this.relationships?.map((e0) => e0.copyWith()).toList(),
-      attachments: attachments is List<_i20i9qxn.CalendarEventSourceAttachment>?
-          ? attachments
-          : this.attachments?.map((e0) => e0.copyWith()).toList(),
-      alarms: alarms is List<_i4dai4jt.CalendarEventSourceAlarm>?
-          ? alarms
-          : this.alarms?.map((e0) => e0.copyWith()).toList(),
+      organizer: organizer is _is.UndefinedSentinel
+          ? this.organizer?.copyWith()
+          : organizer,
+      attendees: attendees is _is.UndefinedSentinel
+          ? this.attendees?.map((e0) => e0.copyWith()).toList()
+          : attendees,
+      relationships: relationships is _is.UndefinedSentinel
+          ? this.relationships?.map((e0) => e0.copyWith()).toList()
+          : relationships,
+      attachments: attachments is _is.UndefinedSentinel
+          ? this.attachments?.map((e0) => e0.copyWith()).toList()
+          : attachments,
+      alarms: alarms is _is.UndefinedSentinel
+          ? this.alarms?.map((e0) => e0.copyWith()).toList()
+          : alarms,
       priority: priority is int? ? priority : this.priority,
-      geographicPosition:
-          geographicPosition is _iloy79hd.CalendarEventGeographicPosition?
-          ? geographicPosition
-          : this.geographicPosition?.copyWith(),
-      resourceGroups:
-          resourceGroups is List<_iiajf89w.CalendarEventResourceGroup>?
-          ? resourceGroups
-          : this.resourceGroups?.map((e0) => e0.copyWith()).toList(),
+      geographicPosition: geographicPosition is _is.UndefinedSentinel
+          ? this.geographicPosition?.copyWith()
+          : geographicPosition,
+      resourceGroups: resourceGroups is _is.UndefinedSentinel
+          ? this.resourceGroups?.map((e0) => e0.copyWith()).toList()
+          : resourceGroups,
     );
   }
 }
