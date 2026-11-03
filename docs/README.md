@@ -350,3 +350,7 @@ Accepted [ADR 0159](adr/0159-pure-range-cancellation-projection.md) implements a
 ## Single-instance applications after restoration
 
 [Accepted ADR 0167](adr/0167-single-instance-applications-after-source-range-restoration.md) adds explicit active-master single REQUEST/CANCEL with effective-component freshness and latest-only occurrence receipts. Existing JSON v10 binds current targets beside unchanged frozen restoration proof, preserving subsequent master lifecycle and independent permissions under unchanged caps. See [the profile](restoration-single-applications.md); new range transitions and remaining scheduling stay separate.
+
+## Range updates after restoration
+
+See [the approved implementation](restoration-range-applications.md). Grouped checks include restoration_range_application_test.dart, the --restored-ranges two-host recovery profile, generated-client/feed coverage and the connected --range-applications Flutter journey. Actual conclusions are recorded separately in [validation](scaffold-validation.md).

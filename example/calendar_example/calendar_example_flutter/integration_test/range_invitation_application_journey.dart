@@ -453,6 +453,43 @@ Future<void> runRangeInvitationApplicationJourney(
       navigator.pop();
       await tester.pumpAndSettle();
     }
+    await client.invitationDemo.simulateRange(
+      id,
+      const cal.Uuid().v4obj(),
+      16,
+      false,
+    );
+    navigator.push(
+      MaterialPageRoute<void>(
+        builder: (_) => InvitationOccurrenceApplicationScreen(
+          client: client,
+          id: source.entryId,
+          range: true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await loaded();
+    await tap('invitation-occurrence-apply');
+    final rangeCurrent = await api.calendarInvitation.rangeApplication(
+      source.entryId,
+    );
+    expect(rangeCurrent.acceptedVersion.sequence, 16);
+    expect(rangeCurrent.hasAcceptedRangeRestoration, isTrue);
+    expect(rangeCurrent.hasLocalChanges, isFalse);
+    expect(
+      (await api.calendarInvitation.occurrenceApplication(singleEntry!))
+          .acceptedVersion
+          .sequence,
+      14,
+    );
+    expect(
+      (await api.calendarInvitation.rangeRestorationApplication(source.entryId))
+          .latestResult,
+      isNull,
+    );
+    navigator.pop();
+    await tester.pumpAndSettle();
   } finally {
     final event = await api.calendarEvent.getEvent(link.eventId, []);
     await api.calendarEvent.deleteEvent(link.eventId, event.revision);

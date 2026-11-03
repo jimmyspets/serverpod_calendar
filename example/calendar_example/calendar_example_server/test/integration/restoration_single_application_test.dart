@@ -433,7 +433,7 @@ void main() {
       expect((await data()).toJson(), before);
     });
     test(
-      'new ranges and restoration remain guarded after a single acceptance',
+      'same-anchor range collision rejects and old restoration stays superseded',
       () async {
         final restored = await ready();
         await service.applyInvitationOccurrenceUpdate(command(await single()));
@@ -442,7 +442,7 @@ void main() {
         expect(v.canApply, isFalse);
         await expectLater(
           service.applyInvitationRangeUpdate(command(v)),
-          failure(CalendarFailureCode.dependencyConflict),
+          failure(CalendarFailureCode.validation),
         );
         await expectLater(
           service.applyInvitationRangeRestoration(restored),

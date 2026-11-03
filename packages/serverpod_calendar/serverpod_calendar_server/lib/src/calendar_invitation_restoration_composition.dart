@@ -54,7 +54,7 @@ extension CalendarInvitationRestorationComposition on CalendarService {
     required CalendarEventImportMember member,
     required CalendarInvitationSourceKind kind,
   }) {
-    if (state['version'] == 10) {
+    if ({10, 11}.contains(state['version'])) {
       return _occRestoredTargetsState(
         link: link,
         event: event,

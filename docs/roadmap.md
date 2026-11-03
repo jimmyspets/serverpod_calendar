@@ -805,7 +805,7 @@ The maintainer confirmed the next post-restoration master REQUEST policy: preser
 - [x] Prepare preserved-clear-cutoff/individual-flag behavior, conservative source floor, v9 kind/status proof and existing API/authority mechanics for review.
 - [x] Obtain explicit maintainer agreement on the lifecycle/version proposal.
 - [x] Implement/test the approved batch with focused/grouped checks, two-host recovery and Flutter before one code commit.
-- [ ] Pass full implementation-head repository CI before readiness.
+- [x] Pass full implementation-head repository CI before readiness (exact-commit hosted inspect/runtime success recorded in validation).
 - [ ] Review new range transitions, additional cycles and remaining scheduling separately.
 
 ## Single-instance applications after source restoration
@@ -816,16 +816,18 @@ The maintainer confirmed the next post-restoration master REQUEST policy: preser
 - [x] Prepare existing-table v10 current-ledger/frozen-proof, effective-component version, authority, quota and composition mechanics for review.
 - [x] Obtain explicit maintainer agreement on the concrete proposal.
 - [x] Implement/test the approved single-instance batch with focused/grouped checks, actual two-host recovery and Flutter before one code commit.
-- [ ] Pass full implementation-head repository CI before readiness.
+- [x] Pass full implementation-head repository CI before readiness (exact-commit hosted inspect/runtime success recorded in validation).
 - [ ] Review new range transitions, other selected scheduling methods and remaining release requirements separately.
 
 ## Range REQUEST application after source restoration
 
-[Proposed ADR 0168](adr/0168-range-request-applications-after-source-restoration.md) follows PR #165. The maintainer confirmed both strict sequence floors; later independent exceptions remain preserved.
+[Accepted ADR 0168](adr/0168-range-request-applications-after-source-restoration.md) follows PR #165. The maintainer confirmed both strict sequence floors; later independent exceptions remain preserved.
 
 - [x] Confirm effective-anchor/historical-restoration floors and inspect current v10 range-key/receipt/composition guards.
 - [x] Prepare bounded v11 targets, unchanged historical proof, authority, latest-only retries and continued single/master lifecycle mechanics for review.
-- [ ] Obtain explicit maintainer agreement on the concrete proposal.
-- [ ] Implement/test the approved range REQUEST batch with focused/grouped checks, actual two-host recovery and Flutter before one code commit.
+- [x] Obtain explicit maintainer agreement on the concrete proposal.
+- [x] Implement/test the approved range REQUEST batch with focused/grouped checks, actual two-host recovery and Flutter before one code commit.
 - [ ] Pass full implementation-head repository CI before readiness.
 - [ ] Review further range cancellation/restoration cycles, replies, remaining selected methods and release requirements separately.
+
+The next toolchain batch will align Serverpod SDK dependencies and generation with the maintainer-installed CLI 4.1.0 after this approved feature pass; compatibility and exact-head validation remain required.
