@@ -24,12 +24,29 @@ import 'package:serverpod_calendar_server/serverpod_calendar_server.dart'
 import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
     as _ik9lwgjh;
 
-class Protocol extends _is.DatabaseSerializationManager {
+class Protocol extends _is.DatabaseSerializationManager
+    implements _is.DatabaseProtocolDeserializationProvider {
   Protocol._();
 
   factory Protocol() => _instance;
 
   static final Protocol _instance = Protocol._().._registerHostProtocols();
+
+  @override
+  _is.ProtocolDeserialization get deserializationMetadata =>
+      _is.ProtocolDeserialization.cached(
+        this,
+        types: const [],
+        modules: const [
+          _iais.Protocol.new,
+          _ipn35bcd.Protocol.new,
+          _i3lfs3vf.Protocol.new,
+          _ik9lwgjh.Protocol.new,
+          _iacs.Protocol.new,
+          _isp.Protocol.new,
+        ],
+        classNames: const [],
+      );
 
   static List<_isp.TableDefinition> get targetTableDefinitions => [
     ..._iais.Protocol.targetTableDefinitions,
@@ -40,11 +57,8 @@ class Protocol extends _is.DatabaseSerializationManager {
     ..._isp.Protocol.targetTableDefinitions,
   ];
 
-  static String? getClassNameFromObjectJson(dynamic data) {
-    if (data is! Map) return null;
-    final className = data['__className__'] as String?;
-    return className;
-  }
+  static String? getClassNameFromObjectJson(dynamic data) =>
+      _is.ProtocolDeserialization.readClassName(data);
 
   @override
   T deserialize<T>(
@@ -52,8 +66,8 @@ class Protocol extends _is.DatabaseSerializationManager {
     Type? t,
   ]) {
     t ??= T;
-
-    final dataClassName = getClassNameFromObjectJson(data);
+    final rawDataClassName = _is.ProtocolDeserialization.readClassName(data);
+    final dataClassName = rawDataClassName;
     if (dataClassName != null && dataClassName != getClassNameForType(t)) {
       try {
         return deserializeByClassName({
@@ -67,24 +81,16 @@ class Protocol extends _is.DatabaseSerializationManager {
       }
     }
 
-    try {
-      return _iais.Protocol().deserialize<T>(data, t);
-    } on _is.DeserializationTypeNotFoundException catch (_) {}
-    try {
-      return _ipn35bcd.Protocol().deserialize<T>(data, t);
-    } on _is.DeserializationTypeNotFoundException catch (_) {}
-    try {
-      return _i3lfs3vf.Protocol().deserialize<T>(data, t);
-    } on _is.DeserializationTypeNotFoundException catch (_) {}
-    try {
-      return _ik9lwgjh.Protocol().deserialize<T>(data, t);
-    } on _is.DeserializationTypeNotFoundException catch (_) {}
-    try {
-      return _iacs.Protocol().deserialize<T>(data, t);
-    } on _is.DeserializationTypeNotFoundException catch (_) {}
-    try {
-      return _isp.Protocol().deserialize<T>(data, t);
-    } on _is.DeserializationTypeNotFoundException catch (_) {}
+    final modules = deserializationMetadata.modulesForDeserialization(
+      t,
+      className: rawDataClassName,
+    );
+    for (final module in modules) {
+      try {
+        return module.deserialize<T>(data, t);
+      } on _is.DeserializationTypeNotFoundException catch (_) {}
+    }
+
     return super.deserialize<T>(data, t);
   }
 
@@ -150,28 +156,40 @@ class Protocol extends _is.DatabaseSerializationManager {
       return super.deserializeByClassName(data);
     }
     if (dataClassName.startsWith('serverpod_auth_idp.')) {
-      data['className'] = dataClassName.substring(19);
-      return _iais.Protocol().deserializeByClassName(data);
+      return _iais.Protocol().deserializeByClassName({
+        ...data,
+        'className': dataClassName.substring(19),
+      });
     }
     if (dataClassName.startsWith('serverpod_calendar.')) {
-      data['className'] = dataClassName.substring(19);
-      return _ipn35bcd.Protocol().deserializeByClassName(data);
+      return _ipn35bcd.Protocol().deserializeByClassName({
+        ...data,
+        'className': dataClassName.substring(19),
+      });
     }
     if (dataClassName.startsWith('serverpod_calendar_feed.')) {
-      data['className'] = dataClassName.substring(24);
-      return _i3lfs3vf.Protocol().deserializeByClassName(data);
+      return _i3lfs3vf.Protocol().deserializeByClassName({
+        ...data,
+        'className': dataClassName.substring(24),
+      });
     }
     if (dataClassName.startsWith('serverpod_notifications.')) {
-      data['className'] = dataClassName.substring(24);
-      return _ik9lwgjh.Protocol().deserializeByClassName(data);
+      return _ik9lwgjh.Protocol().deserializeByClassName({
+        ...data,
+        'className': dataClassName.substring(24),
+      });
     }
     if (dataClassName.startsWith('serverpod_auth_core.')) {
-      data['className'] = dataClassName.substring(20);
-      return _iacs.Protocol().deserializeByClassName(data);
+      return _iacs.Protocol().deserializeByClassName({
+        ...data,
+        'className': dataClassName.substring(20),
+      });
     }
     if (dataClassName.startsWith('serverpod.')) {
-      data['className'] = dataClassName.substring(10);
-      return _isp.Protocol().deserializeByClassName(data);
+      return _isp.Protocol().deserializeByClassName({
+        ...data,
+        'className': dataClassName.substring(10),
+      });
     }
     return super.deserializeByClassName(data);
   }

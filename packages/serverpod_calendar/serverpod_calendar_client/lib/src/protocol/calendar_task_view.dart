@@ -14,6 +14,7 @@ import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_event_recurrence.dart' as _iqxs44bf;
 import 'calendar_item_category_group.dart' as _i3iolgr8;
 import 'calendar_item_comment.dart' as _itx19m90;
@@ -175,17 +176,24 @@ abstract class CalendarTaskView
     String? summary,
     String? description,
     String? location,
-    _i9h8y8lg.CalendarTaskTiming? timing,
+    _i9h8y8lg.CalendarTaskTiming? timing =
+        const _UndefinedCalendarTaskView$timing(),
     int? priority,
-    _ikcsq95s.CalendarTaskProgress? progress,
-    List<_ih5e3u6u.CalendarTaskAssignee>? assignees,
+    _ikcsq95s.CalendarTaskProgress? progress =
+        const _UndefinedCalendarTaskView$progress(),
+    List<_ih5e3u6u.CalendarTaskAssignee>? assignees =
+        const _isc.$UndefinedList<_ih5e3u6u.CalendarTaskAssignee>(),
     String? protocolUid,
-    _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion,
-    _iqxs44bf.CalendarEventRecurrence? recurrence,
+    _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion =
+        const _UndefinedCalendarTaskView$protocolVersion(),
+    _iqxs44bf.CalendarEventRecurrence? recurrence =
+        const _UndefinedCalendarTaskView$recurrence(),
     String? url,
     String? classification,
-    List<_i3iolgr8.CalendarItemCategoryGroup>? categoryGroups,
-    List<_itx19m90.CalendarItemComment>? comments,
+    List<_i3iolgr8.CalendarItemCategoryGroup>? categoryGroups =
+        const _isc.$UndefinedList<_i3iolgr8.CalendarItemCategoryGroup>(),
+    List<_itx19m90.CalendarItemComment>? comments =
+        const _isc.$UndefinedList<_itx19m90.CalendarItemComment>(),
   });
   @override
   bool operator ==(Object other) {
@@ -379,6 +387,26 @@ abstract class CalendarTaskView
 
 class _Undefined {}
 
+class _UndefinedCalendarTaskView$timing extends _isc.UndefinedSentinel
+    implements _i9h8y8lg.CalendarTaskTiming {
+  const _UndefinedCalendarTaskView$timing();
+}
+
+class _UndefinedCalendarTaskView$progress extends _isc.UndefinedSentinel
+    implements _ikcsq95s.CalendarTaskProgress {
+  const _UndefinedCalendarTaskView$progress();
+}
+
+class _UndefinedCalendarTaskView$protocolVersion extends _isc.UndefinedSentinel
+    implements _iz9t6x1i.CalendarTaskProtocolVersion {
+  const _UndefinedCalendarTaskView$protocolVersion();
+}
+
+class _UndefinedCalendarTaskView$recurrence extends _isc.UndefinedSentinel
+    implements _iqxs44bf.CalendarEventRecurrence {
+  const _UndefinedCalendarTaskView$recurrence();
+}
+
 class _CalendarTaskViewImpl extends CalendarTaskView {
   const _CalendarTaskViewImpl({
     required _isc.UuidValue id,
@@ -432,17 +460,24 @@ class _CalendarTaskViewImpl extends CalendarTaskView {
     Object? summary = _Undefined,
     Object? description = _Undefined,
     Object? location = _Undefined,
-    Object? timing = _Undefined,
+    _i9h8y8lg.CalendarTaskTiming? timing =
+        const _UndefinedCalendarTaskView$timing(),
     Object? priority = _Undefined,
-    Object? progress = _Undefined,
-    Object? assignees = _Undefined,
+    _ikcsq95s.CalendarTaskProgress? progress =
+        const _UndefinedCalendarTaskView$progress(),
+    List<_ih5e3u6u.CalendarTaskAssignee>? assignees =
+        const _isc.$UndefinedList<_ih5e3u6u.CalendarTaskAssignee>(),
     Object? protocolUid = _Undefined,
-    Object? protocolVersion = _Undefined,
-    Object? recurrence = _Undefined,
+    _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion =
+        const _UndefinedCalendarTaskView$protocolVersion(),
+    _iqxs44bf.CalendarEventRecurrence? recurrence =
+        const _UndefinedCalendarTaskView$recurrence(),
     Object? url = _Undefined,
     Object? classification = _Undefined,
-    Object? categoryGroups = _Undefined,
-    Object? comments = _Undefined,
+    List<_i3iolgr8.CalendarItemCategoryGroup>? categoryGroups =
+        const _isc.$UndefinedList<_i3iolgr8.CalendarItemCategoryGroup>(),
+    List<_itx19m90.CalendarItemComment>? comments =
+        const _isc.$UndefinedList<_itx19m90.CalendarItemComment>(),
   }) {
     return CalendarTaskView(
       id: id ?? this.id,
@@ -453,34 +488,33 @@ class _CalendarTaskViewImpl extends CalendarTaskView {
       summary: summary is String? ? summary : this.summary,
       description: description is String? ? description : this.description,
       location: location is String? ? location : this.location,
-      timing: timing is _i9h8y8lg.CalendarTaskTiming?
-          ? timing
-          : this.timing?.copyWith(),
+      timing: timing is _isc.UndefinedSentinel
+          ? this.timing?.copyWith()
+          : timing,
       priority: priority is int? ? priority : this.priority,
-      progress: progress is _ikcsq95s.CalendarTaskProgress?
-          ? progress
-          : this.progress?.copyWith(),
-      assignees: assignees is List<_ih5e3u6u.CalendarTaskAssignee>?
-          ? assignees
-          : this.assignees?.map((e0) => e0.copyWith()).toList(),
+      progress: progress is _isc.UndefinedSentinel
+          ? this.progress?.copyWith()
+          : progress,
+      assignees: assignees is _isc.UndefinedSentinel
+          ? this.assignees?.map((e0) => e0.copyWith()).toList()
+          : assignees,
       protocolUid: protocolUid is String? ? protocolUid : this.protocolUid,
-      protocolVersion: protocolVersion is _iz9t6x1i.CalendarTaskProtocolVersion?
-          ? protocolVersion
-          : this.protocolVersion?.copyWith(),
-      recurrence: recurrence is _iqxs44bf.CalendarEventRecurrence?
-          ? recurrence
-          : this.recurrence?.copyWith(),
+      protocolVersion: protocolVersion is _isc.UndefinedSentinel
+          ? this.protocolVersion?.copyWith()
+          : protocolVersion,
+      recurrence: recurrence is _isc.UndefinedSentinel
+          ? this.recurrence?.copyWith()
+          : recurrence,
       url: url is String? ? url : this.url,
       classification: classification is String?
           ? classification
           : this.classification,
-      categoryGroups:
-          categoryGroups is List<_i3iolgr8.CalendarItemCategoryGroup>?
-          ? categoryGroups
-          : this.categoryGroups?.map((e0) => e0.copyWith()).toList(),
-      comments: comments is List<_itx19m90.CalendarItemComment>?
-          ? comments
-          : this.comments?.map((e0) => e0.copyWith()).toList(),
+      categoryGroups: categoryGroups is _isc.UndefinedSentinel
+          ? this.categoryGroups?.map((e0) => e0.copyWith()).toList()
+          : categoryGroups,
+      comments: comments is _isc.UndefinedSentinel
+          ? this.comments?.map((e0) => e0.copyWith()).toList()
+          : comments,
     );
   }
 }

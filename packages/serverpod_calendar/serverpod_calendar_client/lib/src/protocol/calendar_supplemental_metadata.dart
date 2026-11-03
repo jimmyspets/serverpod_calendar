@@ -13,6 +13,7 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_category.dart' as _icnza73c;
 import 'calendar_image_link.dart' as _igf45b52;
 import 'calendar_refresh_hint.dart' as _ifsfk5xq;
@@ -69,7 +70,8 @@ abstract class CalendarSupplementalMetadata
     String? url,
     List<_icnza73c.CalendarCategory>? categories,
     List<_igf45b52.CalendarImageLink>? images,
-    _ifsfk5xq.CalendarRefreshHint? refreshHint,
+    _ifsfk5xq.CalendarRefreshHint? refreshHint =
+        const _UndefinedCalendarSupplementalMetadata$refreshHint(),
   });
   @override
   Map<String, dynamic> toJson() {
@@ -103,6 +105,12 @@ abstract class CalendarSupplementalMetadata
 
 class _Undefined {}
 
+class _UndefinedCalendarSupplementalMetadata$refreshHint
+    extends _isc.UndefinedSentinel
+    implements _ifsfk5xq.CalendarRefreshHint {
+  const _UndefinedCalendarSupplementalMetadata$refreshHint();
+}
+
 class _CalendarSupplementalMetadataImpl extends CalendarSupplementalMetadata {
   _CalendarSupplementalMetadataImpl({
     String? url,
@@ -124,16 +132,17 @@ class _CalendarSupplementalMetadataImpl extends CalendarSupplementalMetadata {
     Object? url = _Undefined,
     List<_icnza73c.CalendarCategory>? categories,
     List<_igf45b52.CalendarImageLink>? images,
-    Object? refreshHint = _Undefined,
+    _ifsfk5xq.CalendarRefreshHint? refreshHint =
+        const _UndefinedCalendarSupplementalMetadata$refreshHint(),
   }) {
     return CalendarSupplementalMetadata(
       url: url is String? ? url : this.url,
       categories:
           categories ?? this.categories.map((e0) => e0.copyWith()).toList(),
       images: images ?? this.images.map((e0) => e0.copyWith()).toList(),
-      refreshHint: refreshHint is _ifsfk5xq.CalendarRefreshHint?
-          ? refreshHint
-          : this.refreshHint?.copyWith(),
+      refreshHint: refreshHint is _isc.UndefinedSentinel
+          ? this.refreshHint?.copyWith()
+          : refreshHint,
     );
   }
 }

@@ -10,6 +10,8 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'dart:async' as _ida;
+
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_feed_server/src/generated/protocol.dart'
     as _i0kswevi;
@@ -122,8 +124,10 @@ abstract class CalendarFeedDataRecord
     _is.UuidValue? feedId,
     String? displayName,
     _is.UuidValue? protocolUid,
-    _ipn35bcd.CalendarProtocolMetadata? protocolMetadata,
-    _ipn35bcd.CalendarSupplementalMetadata? supplementalMetadata,
+    _ipn35bcd.CalendarProtocolMetadata? protocolMetadata =
+        const _UndefinedCalendarFeedDataRecord$protocolMetadata(),
+    _ipn35bcd.CalendarSupplementalMetadata? supplementalMetadata =
+        const _UndefinedCalendarFeedDataRecord$supplementalMetadata(),
     DateTime? protocolModifiedAt,
     String? authorityReference,
     int? profileVersion,
@@ -185,6 +189,18 @@ abstract class CalendarFeedDataRecord
 
 class _Undefined {}
 
+class _UndefinedCalendarFeedDataRecord$protocolMetadata
+    extends _is.UndefinedSentinel
+    implements _ipn35bcd.CalendarProtocolMetadata {
+  const _UndefinedCalendarFeedDataRecord$protocolMetadata();
+}
+
+class _UndefinedCalendarFeedDataRecord$supplementalMetadata
+    extends _is.UndefinedSentinel
+    implements _ipn35bcd.CalendarSupplementalMetadata {
+  const _UndefinedCalendarFeedDataRecord$supplementalMetadata();
+}
+
 class _CalendarFeedDataRecordImpl extends CalendarFeedDataRecord {
   _CalendarFeedDataRecordImpl({
     int? id,
@@ -221,8 +237,10 @@ class _CalendarFeedDataRecordImpl extends CalendarFeedDataRecord {
     _is.UuidValue? feedId,
     String? displayName,
     _is.UuidValue? protocolUid,
-    Object? protocolMetadata = _Undefined,
-    Object? supplementalMetadata = _Undefined,
+    _ipn35bcd.CalendarProtocolMetadata? protocolMetadata =
+        const _UndefinedCalendarFeedDataRecord$protocolMetadata(),
+    _ipn35bcd.CalendarSupplementalMetadata? supplementalMetadata =
+        const _UndefinedCalendarFeedDataRecord$supplementalMetadata(),
     DateTime? protocolModifiedAt,
     String? authorityReference,
     int? profileVersion,
@@ -234,13 +252,12 @@ class _CalendarFeedDataRecordImpl extends CalendarFeedDataRecord {
       feedId: feedId ?? this.feedId,
       displayName: displayName ?? this.displayName,
       protocolUid: protocolUid ?? this.protocolUid,
-      protocolMetadata: protocolMetadata is _ipn35bcd.CalendarProtocolMetadata?
-          ? protocolMetadata
-          : this.protocolMetadata?.copyWith(),
-      supplementalMetadata:
-          supplementalMetadata is _ipn35bcd.CalendarSupplementalMetadata?
-          ? supplementalMetadata
-          : this.supplementalMetadata?.copyWith(),
+      protocolMetadata: protocolMetadata is _is.UndefinedSentinel
+          ? this.protocolMetadata?.copyWith()
+          : protocolMetadata,
+      supplementalMetadata: supplementalMetadata is _is.UndefinedSentinel
+          ? this.supplementalMetadata?.copyWith()
+          : supplementalMetadata,
       protocolModifiedAt: protocolModifiedAt ?? this.protocolModifiedAt,
       authorityReference: authorityReference ?? this.authorityReference,
       profileVersion: profileVersion ?? this.profileVersion,
@@ -485,6 +502,69 @@ class CalendarFeedDataRecordRepository {
       transaction: transaction,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+    );
+  }
+
+  /// Emits [CalendarFeedDataRecord]s matching the given query parameters every time the
+  /// source tables are modified.
+  ///
+  /// Use [where] to specify which items to include in the return value.
+  /// If none is specified, all items will be returned.
+  ///
+  /// To specify the order of the items use [orderBy] or [orderByList]
+  /// when sorting by multiple columns.
+  ///
+  /// The maximum number of items can be set by [limit]. If no limit is set,
+  /// all items matching the query will be returned.
+  ///
+  /// [offset] defines how many items to skip, after which [limit] (or all)
+  /// items are read from the database.
+  ///
+  /// Use [throttle] to specify the minimum interval between queries. It can
+  /// also be set to `null`, in which case the stream will only be throttled
+  /// when its subscription is paused.
+  ///
+  /// Source tables are collected from the queried table, [where], [orderBy],
+  /// [orderByList], and the [include] graph. [alsoTriggerOnTables] is added
+  /// to that set. Pass [Table] instances such as `CalendarFeedDataRecord.t`.
+  ///
+  /// Raw [Expression] SQL is not inspected. Tables referenced only in raw
+  /// SQL must be passed via [alsoTriggerOnTables].
+  ///
+  /// The stream always reads committed state and never joins an ambient
+  /// [Transaction]. Emissions for a write fire after that write commits.
+  ///
+  /// Currently only supported on SQLite. Calling this method on PostgreSQL
+  /// throws an [UnsupportedError].
+  ///
+  /// ```dart
+  /// var subscription = Persons.db.watch(
+  ///   session,
+  ///   where: (t) => t.lastName.equals('Jones'),
+  ///   orderBy: (t) => t.firstName,
+  ///   limit: 100,
+  /// ).listen((persons) {
+  ///   // Handle the latest matching rows.
+  /// });
+  /// ```
+  _ida.Stream<List<CalendarFeedDataRecord>> watch(
+    _is.DatabaseSession session, {
+    _is.WhereExpressionBuilder<CalendarFeedDataRecordTable>? where,
+    int? limit,
+    int? offset,
+    _is.OrderByBuilder<CalendarFeedDataRecordTable>? orderBy,
+    _is.OrderByListBuilder<CalendarFeedDataRecordTable>? orderByList,
+    Duration? throttle = const Duration(milliseconds: 30),
+    Iterable<_is.Table>? alsoTriggerOnTables,
+  }) {
+    return session.db.watch<CalendarFeedDataRecord>(
+      where: where?.call(CalendarFeedDataRecord.t),
+      orderBy: orderBy?.call(CalendarFeedDataRecord.t),
+      orderByList: orderByList?.call(CalendarFeedDataRecord.t),
+      limit: limit,
+      offset: offset,
+      throttle: throttle,
+      alsoTriggerOnTables: alsoTriggerOnTables,
     );
   }
 

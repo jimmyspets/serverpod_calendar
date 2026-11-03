@@ -97,8 +97,10 @@ abstract class CalendarFeedView
     List<_is.UuidValue>? calendarIds,
     _is.UuidValue? protocolUid,
     DateTime? protocolModifiedAt,
-    _ipn35bcd.CalendarProtocolMetadata? protocolMetadata,
-    _ipn35bcd.CalendarSupplementalMetadata? supplementalMetadata,
+    _ipn35bcd.CalendarProtocolMetadata? protocolMetadata =
+        const _UndefinedCalendarFeedView$protocolMetadata(),
+    _ipn35bcd.CalendarSupplementalMetadata? supplementalMetadata =
+        const _UndefinedCalendarFeedView$supplementalMetadata(),
   });
   @override
   bool operator ==(Object other) {
@@ -204,7 +206,16 @@ abstract class CalendarFeedView
   }
 }
 
-class _Undefined {}
+class _UndefinedCalendarFeedView$protocolMetadata extends _is.UndefinedSentinel
+    implements _ipn35bcd.CalendarProtocolMetadata {
+  const _UndefinedCalendarFeedView$protocolMetadata();
+}
+
+class _UndefinedCalendarFeedView$supplementalMetadata
+    extends _is.UndefinedSentinel
+    implements _ipn35bcd.CalendarSupplementalMetadata {
+  const _UndefinedCalendarFeedView$supplementalMetadata();
+}
 
 class _CalendarFeedViewImpl extends CalendarFeedView {
   const _CalendarFeedViewImpl({
@@ -238,8 +249,10 @@ class _CalendarFeedViewImpl extends CalendarFeedView {
     List<_is.UuidValue>? calendarIds,
     _is.UuidValue? protocolUid,
     DateTime? protocolModifiedAt,
-    Object? protocolMetadata = _Undefined,
-    Object? supplementalMetadata = _Undefined,
+    _ipn35bcd.CalendarProtocolMetadata? protocolMetadata =
+        const _UndefinedCalendarFeedView$protocolMetadata(),
+    _ipn35bcd.CalendarSupplementalMetadata? supplementalMetadata =
+        const _UndefinedCalendarFeedView$supplementalMetadata(),
   }) {
     return CalendarFeedView(
       id: id ?? this.id,
@@ -248,13 +261,12 @@ class _CalendarFeedViewImpl extends CalendarFeedView {
       calendarIds: calendarIds ?? this.calendarIds.map((e0) => e0).toList(),
       protocolUid: protocolUid ?? this.protocolUid,
       protocolModifiedAt: protocolModifiedAt ?? this.protocolModifiedAt,
-      protocolMetadata: protocolMetadata is _ipn35bcd.CalendarProtocolMetadata?
-          ? protocolMetadata
-          : this.protocolMetadata?.copyWith(),
-      supplementalMetadata:
-          supplementalMetadata is _ipn35bcd.CalendarSupplementalMetadata?
-          ? supplementalMetadata
-          : this.supplementalMetadata?.copyWith(),
+      protocolMetadata: protocolMetadata is _is.UndefinedSentinel
+          ? this.protocolMetadata?.copyWith()
+          : protocolMetadata,
+      supplementalMetadata: supplementalMetadata is _is.UndefinedSentinel
+          ? this.supplementalMetadata?.copyWith()
+          : supplementalMetadata,
     );
   }
 }

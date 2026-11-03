@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_task_source_alarm.dart' as _i00avof0;
 import 'calendar_task_source_attachment.dart' as _iuzk4pe3;
 import 'calendar_task_source_category_group.dart' as _iic8eifm;
@@ -122,7 +123,8 @@ abstract class CalendarTaskSourceMetadata
     List<_iic8eifm.CalendarTaskSourceCategoryGroup>? categoryGroups,
     List<_i9mnuab5.CalendarTaskSourceText>? comments,
     List<_i9mnuab5.CalendarTaskSourceText>? contacts,
-    _iw6fme2j.CalendarTaskSourceParticipant? organizer,
+    _iw6fme2j.CalendarTaskSourceParticipant? organizer =
+        const _UndefinedCalendarTaskSourceMetadata$organizer(),
     List<_iw6fme2j.CalendarTaskSourceParticipant>? attendees,
     List<_izyrs4yl.CalendarTaskSourceRelationship>? relationships,
     List<_iuzk4pe3.CalendarTaskSourceAttachment>? attachments,
@@ -228,6 +230,12 @@ abstract class CalendarTaskSourceMetadata
 
 class _Undefined {}
 
+class _UndefinedCalendarTaskSourceMetadata$organizer
+    extends _is.UndefinedSentinel
+    implements _iw6fme2j.CalendarTaskSourceParticipant {
+  const _UndefinedCalendarTaskSourceMetadata$organizer();
+}
+
 class _CalendarTaskSourceMetadataImpl extends CalendarTaskSourceMetadata {
   const _CalendarTaskSourceMetadataImpl({
     String? url,
@@ -263,7 +271,8 @@ class _CalendarTaskSourceMetadataImpl extends CalendarTaskSourceMetadata {
     List<_iic8eifm.CalendarTaskSourceCategoryGroup>? categoryGroups,
     List<_i9mnuab5.CalendarTaskSourceText>? comments,
     List<_i9mnuab5.CalendarTaskSourceText>? contacts,
-    Object? organizer = _Undefined,
+    _iw6fme2j.CalendarTaskSourceParticipant? organizer =
+        const _UndefinedCalendarTaskSourceMetadata$organizer(),
     List<_iw6fme2j.CalendarTaskSourceParticipant>? attendees,
     List<_izyrs4yl.CalendarTaskSourceRelationship>? relationships,
     List<_iuzk4pe3.CalendarTaskSourceAttachment>? attachments,
@@ -279,9 +288,9 @@ class _CalendarTaskSourceMetadataImpl extends CalendarTaskSourceMetadata {
           this.categoryGroups.map((e0) => e0.copyWith()).toList(),
       comments: comments ?? this.comments.map((e0) => e0.copyWith()).toList(),
       contacts: contacts ?? this.contacts.map((e0) => e0.copyWith()).toList(),
-      organizer: organizer is _iw6fme2j.CalendarTaskSourceParticipant?
-          ? organizer
-          : this.organizer?.copyWith(),
+      organizer: organizer is _is.UndefinedSentinel
+          ? this.organizer?.copyWith()
+          : organizer,
       attendees:
           attendees ?? this.attendees.map((e0) => e0.copyWith()).toList(),
       relationships:

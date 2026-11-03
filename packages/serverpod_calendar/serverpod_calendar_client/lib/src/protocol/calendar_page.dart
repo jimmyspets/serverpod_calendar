@@ -13,6 +13,7 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_view.dart' as _ivspd2q7;
 
 abstract class CalendarPage

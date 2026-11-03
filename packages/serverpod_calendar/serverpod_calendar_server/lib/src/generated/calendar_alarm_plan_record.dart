@@ -10,7 +10,10 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'dart:async' as _ida;
+
 import 'package:serverpod/serverpod.dart' as _is;
+
 import 'calendar_alarm_plan_status.dart' as _irtomk7p;
 
 abstract class CalendarAlarmPlanRecord
@@ -145,20 +148,20 @@ abstract class CalendarAlarmPlanRecord
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
   CalendarAlarmPlanRecord copyWith({
-    _is.UuidValue? id,
+    _is.UuidValue? id = const _is.$UndefinedUuidValue(),
     _is.UuidValue? alarmId,
     String? scopeKey,
     int? generation,
     String? timingDigest,
-    DateTime? windowStart,
-    DateTime? windowEnd,
+    DateTime? windowStart = const _is.$UndefinedDateTime(),
+    DateTime? windowEnd = const _is.$UndefinedDateTime(),
     _irtomk7p.CalendarAlarmPlanStatus? status,
     String? reason,
     bool? dirty,
     DateTime? nextScanAt,
-    DateTime? lastCompletedAt,
-    _is.UuidValue? leaseOwner,
-    DateTime? leaseUntil,
+    DateTime? lastCompletedAt = const _is.$UndefinedDateTime(),
+    _is.UuidValue? leaseOwner = const _is.$UndefinedUuidValue(),
+    DateTime? leaseUntil = const _is.$UndefinedDateTime(),
     int? leaseFence,
   });
   @override
@@ -258,39 +261,47 @@ class _CalendarAlarmPlanRecordImpl extends CalendarAlarmPlanRecord {
   @_is.useResult
   @override
   CalendarAlarmPlanRecord copyWith({
-    Object? id = _Undefined,
+    _is.UuidValue? id = const _is.$UndefinedUuidValue(),
     _is.UuidValue? alarmId,
     String? scopeKey,
     int? generation,
     Object? timingDigest = _Undefined,
-    Object? windowStart = _Undefined,
-    Object? windowEnd = _Undefined,
+    DateTime? windowStart = const _is.$UndefinedDateTime(),
+    DateTime? windowEnd = const _is.$UndefinedDateTime(),
     _irtomk7p.CalendarAlarmPlanStatus? status,
     Object? reason = _Undefined,
     bool? dirty,
     DateTime? nextScanAt,
-    Object? lastCompletedAt = _Undefined,
-    Object? leaseOwner = _Undefined,
-    Object? leaseUntil = _Undefined,
+    DateTime? lastCompletedAt = const _is.$UndefinedDateTime(),
+    _is.UuidValue? leaseOwner = const _is.$UndefinedUuidValue(),
+    DateTime? leaseUntil = const _is.$UndefinedDateTime(),
     int? leaseFence,
   }) {
     return CalendarAlarmPlanRecord(
-      id: id is _is.UuidValue? ? id : this.id,
+      id: id is _is.UndefinedSentinel ? this.id : id,
       alarmId: alarmId ?? this.alarmId,
       scopeKey: scopeKey ?? this.scopeKey,
       generation: generation ?? this.generation,
       timingDigest: timingDigest is String? ? timingDigest : this.timingDigest,
-      windowStart: windowStart is DateTime? ? windowStart : this.windowStart,
-      windowEnd: windowEnd is DateTime? ? windowEnd : this.windowEnd,
+      windowStart: windowStart is _is.UndefinedSentinel
+          ? this.windowStart
+          : windowStart,
+      windowEnd: windowEnd is _is.UndefinedSentinel
+          ? this.windowEnd
+          : windowEnd,
       status: status ?? this.status,
       reason: reason is String? ? reason : this.reason,
       dirty: dirty ?? this.dirty,
       nextScanAt: nextScanAt ?? this.nextScanAt,
-      lastCompletedAt: lastCompletedAt is DateTime?
-          ? lastCompletedAt
-          : this.lastCompletedAt,
-      leaseOwner: leaseOwner is _is.UuidValue? ? leaseOwner : this.leaseOwner,
-      leaseUntil: leaseUntil is DateTime? ? leaseUntil : this.leaseUntil,
+      lastCompletedAt: lastCompletedAt is _is.UndefinedSentinel
+          ? this.lastCompletedAt
+          : lastCompletedAt,
+      leaseOwner: leaseOwner is _is.UndefinedSentinel
+          ? this.leaseOwner
+          : leaseOwner,
+      leaseUntil: leaseUntil is _is.UndefinedSentinel
+          ? this.leaseUntil
+          : leaseUntil,
       leaseFence: leaseFence ?? this.leaseFence,
     );
   }
@@ -574,6 +585,69 @@ class CalendarAlarmPlanRecordRepository {
       transaction: transaction,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+    );
+  }
+
+  /// Emits [CalendarAlarmPlanRecord]s matching the given query parameters every time the
+  /// source tables are modified.
+  ///
+  /// Use [where] to specify which items to include in the return value.
+  /// If none is specified, all items will be returned.
+  ///
+  /// To specify the order of the items use [orderBy] or [orderByList]
+  /// when sorting by multiple columns.
+  ///
+  /// The maximum number of items can be set by [limit]. If no limit is set,
+  /// all items matching the query will be returned.
+  ///
+  /// [offset] defines how many items to skip, after which [limit] (or all)
+  /// items are read from the database.
+  ///
+  /// Use [throttle] to specify the minimum interval between queries. It can
+  /// also be set to `null`, in which case the stream will only be throttled
+  /// when its subscription is paused.
+  ///
+  /// Source tables are collected from the queried table, [where], [orderBy],
+  /// [orderByList], and the [include] graph. [alsoTriggerOnTables] is added
+  /// to that set. Pass [Table] instances such as `CalendarAlarmPlanRecord.t`.
+  ///
+  /// Raw [Expression] SQL is not inspected. Tables referenced only in raw
+  /// SQL must be passed via [alsoTriggerOnTables].
+  ///
+  /// The stream always reads committed state and never joins an ambient
+  /// [Transaction]. Emissions for a write fire after that write commits.
+  ///
+  /// Currently only supported on SQLite. Calling this method on PostgreSQL
+  /// throws an [UnsupportedError].
+  ///
+  /// ```dart
+  /// var subscription = Persons.db.watch(
+  ///   session,
+  ///   where: (t) => t.lastName.equals('Jones'),
+  ///   orderBy: (t) => t.firstName,
+  ///   limit: 100,
+  /// ).listen((persons) {
+  ///   // Handle the latest matching rows.
+  /// });
+  /// ```
+  _ida.Stream<List<CalendarAlarmPlanRecord>> watch(
+    _is.DatabaseSession session, {
+    _is.WhereExpressionBuilder<CalendarAlarmPlanRecordTable>? where,
+    int? limit,
+    int? offset,
+    _is.OrderByBuilder<CalendarAlarmPlanRecordTable>? orderBy,
+    _is.OrderByListBuilder<CalendarAlarmPlanRecordTable>? orderByList,
+    Duration? throttle = const Duration(milliseconds: 30),
+    Iterable<_is.Table>? alsoTriggerOnTables,
+  }) {
+    return session.db.watch<CalendarAlarmPlanRecord>(
+      where: where?.call(CalendarAlarmPlanRecord.t),
+      orderBy: orderBy?.call(CalendarAlarmPlanRecord.t),
+      orderByList: orderByList?.call(CalendarAlarmPlanRecord.t),
+      limit: limit,
+      offset: offset,
+      throttle: throttle,
+      alsoTriggerOnTables: alsoTriggerOnTables,
     );
   }
 

@@ -11,6 +11,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
+
 import 'calendar_subject_action.dart' as _i41idnki;
 
 abstract class CalendarSubjectChangeRequest

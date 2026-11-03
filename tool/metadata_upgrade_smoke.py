@@ -507,6 +507,40 @@ DROP TABLE occurrence_application_upgrade_guard;
 """)
 
 
+
+def verify_serverpod_41_upgrade(database):
+    # The upstream SDK adds OTP storage; existing application rows stay exact.
+    sql(database, """
+CREATE TABLE serverpod41_upgrade_guard (table_name text PRIMARY KEY, rows jsonb NOT NULL);
+DO $snapshot_serverpod41$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+   AND tablename NOT IN ('serverpod_migrations', 'serverpod41_upgrade_guard') LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s', item.tablename) INTO contents;
+  INSERT INTO serverpod41_upgrade_guard VALUES (item.tablename, contents);
+ END LOOP;
+END;
+$snapshot_serverpod41$;
+""")
+    sql(database, (SERVER / "migrations/20261103113437239-serverpod-4-1/migration.sql").read_text(encoding="utf-8"))
+    sql(database, """
+DO $verify_serverpod41$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT * FROM serverpod41_upgrade_guard LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s', item.table_name) INTO contents;
+  IF contents IS DISTINCT FROM item.rows THEN RAISE EXCEPTION 'Serverpod 4.1 migration changed %', item.table_name; END IF;
+ END LOOP;
+ IF (SELECT count(*) FROM serverpod_auth_idp_email_account_otp_login_request) <> 0
+ THEN RAISE EXCEPTION 'Serverpod 4.1 migration invented OTP requests'; END IF;
+END;
+$verify_serverpod41$;
+DROP TABLE serverpod41_upgrade_guard;
+""")
+    print("PASS: Serverpod 4.1 upgrade preserves all populated prior tables and initializes empty upstream OTP request storage.")
+
+
 def main():
     # Drop only a database this process successfully creates on the test service.
     database = f"calendar_metadata_upgrade_{os.getpid()}"
@@ -1202,6 +1236,7 @@ DROP TABLE reply_upgrade_guard;
         verify_recurring_invitation_upgrade(database)
         verify_instance_invitation_upgrade(database)
         verify_occurrence_application_upgrade(database)
+        verify_serverpod_41_upgrade(database)
         print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated replies/invitations/links/checkpoints through instance, adoption, cancellation and private attendee-response upgrades; no personal response history is invented and ordinary cursor rows survive the occurrence-state addition without invented query state; known old invitation modes remain false without invented recurrence history.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

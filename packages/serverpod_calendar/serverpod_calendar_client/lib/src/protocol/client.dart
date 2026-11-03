@@ -12,6 +12,7 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
 import 'dart:typed_data' as _idt;
+
 import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_action_request.dart'
     as _i5rmqzvd;
 import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_action_view.dart'

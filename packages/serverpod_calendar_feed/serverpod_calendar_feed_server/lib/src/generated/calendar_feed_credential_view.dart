@@ -71,7 +71,7 @@ abstract class CalendarFeedCredentialView
     int? revision,
     String? label,
     DateTime? createdAt,
-    DateTime? revokedAt,
+    DateTime? revokedAt = const _is.$UndefinedDateTime(),
   });
   @override
   bool operator ==(Object other) {
@@ -187,7 +187,7 @@ class _CalendarFeedCredentialViewImpl extends CalendarFeedCredentialView {
     int? revision,
     Object? label = _Undefined,
     DateTime? createdAt,
-    Object? revokedAt = _Undefined,
+    DateTime? revokedAt = const _is.$UndefinedDateTime(),
   }) {
     return CalendarFeedCredentialView(
       id: id ?? this.id,
@@ -195,7 +195,9 @@ class _CalendarFeedCredentialViewImpl extends CalendarFeedCredentialView {
       revision: revision ?? this.revision,
       label: label is String? ? label : this.label,
       createdAt: createdAt ?? this.createdAt,
-      revokedAt: revokedAt is DateTime? ? revokedAt : this.revokedAt,
+      revokedAt: revokedAt is _is.UndefinedSentinel
+          ? this.revokedAt
+          : revokedAt,
     );
   }
 }

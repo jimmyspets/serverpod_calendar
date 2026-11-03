@@ -10,9 +10,12 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'dart:async' as _ida;
+
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_alarm_definition.dart' as _irif99jb;
 import 'calendar_alarm_parent_kind.dart' as _ig3zti62;
 
@@ -124,7 +127,7 @@ abstract class CalendarAlarmRecord
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
   CalendarAlarmRecord copyWith({
-    _is.UuidValue? id,
+    _is.UuidValue? id = const _is.$UndefinedUuidValue(),
     String? scopeKey,
     _is.UuidValue? calendarId,
     _ig3zti62.CalendarAlarmParentKind? parentKind,
@@ -191,8 +194,6 @@ abstract class CalendarAlarmRecord
   }
 }
 
-class _Undefined {}
-
 class _CalendarAlarmRecordImpl extends CalendarAlarmRecord {
   _CalendarAlarmRecordImpl({
     _is.UuidValue? id,
@@ -229,7 +230,7 @@ class _CalendarAlarmRecordImpl extends CalendarAlarmRecord {
   @_is.useResult
   @override
   CalendarAlarmRecord copyWith({
-    Object? id = _Undefined,
+    _is.UuidValue? id = const _is.$UndefinedUuidValue(),
     String? scopeKey,
     _is.UuidValue? calendarId,
     _ig3zti62.CalendarAlarmParentKind? parentKind,
@@ -244,7 +245,7 @@ class _CalendarAlarmRecordImpl extends CalendarAlarmRecord {
     DateTime? updatedAt,
   }) {
     return CalendarAlarmRecord(
-      id: id is _is.UuidValue? ? id : this.id,
+      id: id is _is.UndefinedSentinel ? this.id : id,
       scopeKey: scopeKey ?? this.scopeKey,
       calendarId: calendarId ?? this.calendarId,
       parentKind: parentKind ?? this.parentKind,
@@ -516,6 +517,69 @@ class CalendarAlarmRecordRepository {
       transaction: transaction,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+    );
+  }
+
+  /// Emits [CalendarAlarmRecord]s matching the given query parameters every time the
+  /// source tables are modified.
+  ///
+  /// Use [where] to specify which items to include in the return value.
+  /// If none is specified, all items will be returned.
+  ///
+  /// To specify the order of the items use [orderBy] or [orderByList]
+  /// when sorting by multiple columns.
+  ///
+  /// The maximum number of items can be set by [limit]. If no limit is set,
+  /// all items matching the query will be returned.
+  ///
+  /// [offset] defines how many items to skip, after which [limit] (or all)
+  /// items are read from the database.
+  ///
+  /// Use [throttle] to specify the minimum interval between queries. It can
+  /// also be set to `null`, in which case the stream will only be throttled
+  /// when its subscription is paused.
+  ///
+  /// Source tables are collected from the queried table, [where], [orderBy],
+  /// [orderByList], and the [include] graph. [alsoTriggerOnTables] is added
+  /// to that set. Pass [Table] instances such as `CalendarAlarmRecord.t`.
+  ///
+  /// Raw [Expression] SQL is not inspected. Tables referenced only in raw
+  /// SQL must be passed via [alsoTriggerOnTables].
+  ///
+  /// The stream always reads committed state and never joins an ambient
+  /// [Transaction]. Emissions for a write fire after that write commits.
+  ///
+  /// Currently only supported on SQLite. Calling this method on PostgreSQL
+  /// throws an [UnsupportedError].
+  ///
+  /// ```dart
+  /// var subscription = Persons.db.watch(
+  ///   session,
+  ///   where: (t) => t.lastName.equals('Jones'),
+  ///   orderBy: (t) => t.firstName,
+  ///   limit: 100,
+  /// ).listen((persons) {
+  ///   // Handle the latest matching rows.
+  /// });
+  /// ```
+  _ida.Stream<List<CalendarAlarmRecord>> watch(
+    _is.DatabaseSession session, {
+    _is.WhereExpressionBuilder<CalendarAlarmRecordTable>? where,
+    int? limit,
+    int? offset,
+    _is.OrderByBuilder<CalendarAlarmRecordTable>? orderBy,
+    _is.OrderByListBuilder<CalendarAlarmRecordTable>? orderByList,
+    Duration? throttle = const Duration(milliseconds: 30),
+    Iterable<_is.Table>? alsoTriggerOnTables,
+  }) {
+    return session.db.watch<CalendarAlarmRecord>(
+      where: where?.call(CalendarAlarmRecord.t),
+      orderBy: orderBy?.call(CalendarAlarmRecord.t),
+      orderByList: orderByList?.call(CalendarAlarmRecord.t),
+      limit: limit,
+      offset: offset,
+      throttle: throttle,
+      alsoTriggerOnTables: alsoTriggerOnTables,
     );
   }
 

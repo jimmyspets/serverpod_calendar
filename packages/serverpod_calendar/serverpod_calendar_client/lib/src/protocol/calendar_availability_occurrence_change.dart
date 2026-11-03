@@ -13,6 +13,7 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_event_occurrence_action.dart' as _icnciyzp;
 import 'calendar_event_timing.dart' as _ieswiaty;
 
@@ -84,7 +85,8 @@ abstract class CalendarAvailabilityOccurrenceChange
     int? expectedRevision,
     _ieswiaty.CalendarEventTiming? originalStart,
     _icnciyzp.CalendarEventOccurrenceAction? action,
-    _ieswiaty.CalendarEventTiming? replacement,
+    _ieswiaty.CalendarEventTiming? replacement =
+        const _UndefinedCalendarAvailabilityOccurrenceChange$replacement(),
   });
   @override
   bool operator ==(Object other) {
@@ -173,7 +175,11 @@ abstract class CalendarAvailabilityOccurrenceChange
   }
 }
 
-class _Undefined {}
+class _UndefinedCalendarAvailabilityOccurrenceChange$replacement
+    extends _isc.UndefinedSentinel
+    implements _ieswiaty.CalendarEventTiming {
+  const _UndefinedCalendarAvailabilityOccurrenceChange$replacement();
+}
 
 class _CalendarAvailabilityOccurrenceChangeImpl
     extends CalendarAvailabilityOccurrenceChange {
@@ -203,7 +209,8 @@ class _CalendarAvailabilityOccurrenceChangeImpl
     int? expectedRevision,
     _ieswiaty.CalendarEventTiming? originalStart,
     _icnciyzp.CalendarEventOccurrenceAction? action,
-    Object? replacement = _Undefined,
+    _ieswiaty.CalendarEventTiming? replacement =
+        const _UndefinedCalendarAvailabilityOccurrenceChange$replacement(),
   }) {
     return CalendarAvailabilityOccurrenceChange(
       availabilityId: availabilityId ?? this.availabilityId,
@@ -211,9 +218,9 @@ class _CalendarAvailabilityOccurrenceChangeImpl
       expectedRevision: expectedRevision ?? this.expectedRevision,
       originalStart: originalStart ?? this.originalStart.copyWith(),
       action: action ?? this.action,
-      replacement: replacement is _ieswiaty.CalendarEventTiming?
-          ? replacement
-          : this.replacement?.copyWith(),
+      replacement: replacement is _isc.UndefinedSentinel
+          ? this.replacement?.copyWith()
+          : replacement,
     );
   }
 }

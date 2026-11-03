@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_availability_source_metadata.dart' as _i15w6qdl;
 import 'calendar_event_timing.dart' as _ieswiaty;
 
@@ -87,9 +88,10 @@ abstract class CalendarAvailabilityOverrideProtocolState
     _ieswiaty.CalendarEventTiming? originalStart,
     bool? isThisAndFuture,
     DateTime? stamp,
-    DateTime? created,
-    DateTime? lastModified,
-    _i15w6qdl.CalendarAvailabilitySourceMetadata? metadata,
+    DateTime? created = const _is.$UndefinedDateTime(),
+    DateTime? lastModified = const _is.$UndefinedDateTime(),
+    _i15w6qdl.CalendarAvailabilitySourceMetadata? metadata =
+        const _UndefinedCalendarAvailabilityOverrideProtocolState$metadata(),
   });
   @override
   bool operator ==(Object other) {
@@ -178,7 +180,11 @@ abstract class CalendarAvailabilityOverrideProtocolState
   }
 }
 
-class _Undefined {}
+class _UndefinedCalendarAvailabilityOverrideProtocolState$metadata
+    extends _is.UndefinedSentinel
+    implements _i15w6qdl.CalendarAvailabilitySourceMetadata {
+  const _UndefinedCalendarAvailabilityOverrideProtocolState$metadata();
+}
 
 class _CalendarAvailabilityOverrideProtocolStateImpl
     extends CalendarAvailabilityOverrideProtocolState {
@@ -206,21 +212,22 @@ class _CalendarAvailabilityOverrideProtocolStateImpl
     _ieswiaty.CalendarEventTiming? originalStart,
     bool? isThisAndFuture,
     DateTime? stamp,
-    Object? created = _Undefined,
-    Object? lastModified = _Undefined,
-    Object? metadata = _Undefined,
+    DateTime? created = const _is.$UndefinedDateTime(),
+    DateTime? lastModified = const _is.$UndefinedDateTime(),
+    _i15w6qdl.CalendarAvailabilitySourceMetadata? metadata =
+        const _UndefinedCalendarAvailabilityOverrideProtocolState$metadata(),
   }) {
     return CalendarAvailabilityOverrideProtocolState(
       originalStart: originalStart ?? this.originalStart.copyWith(),
       isThisAndFuture: isThisAndFuture ?? this.isThisAndFuture,
       stamp: stamp ?? this.stamp,
-      created: created is DateTime? ? created : this.created,
-      lastModified: lastModified is DateTime?
-          ? lastModified
-          : this.lastModified,
-      metadata: metadata is _i15w6qdl.CalendarAvailabilitySourceMetadata?
-          ? metadata
-          : this.metadata?.copyWith(),
+      created: created is _is.UndefinedSentinel ? this.created : created,
+      lastModified: lastModified is _is.UndefinedSentinel
+          ? this.lastModified
+          : lastModified,
+      metadata: metadata is _is.UndefinedSentinel
+          ? this.metadata?.copyWith()
+          : metadata,
     );
   }
 }

@@ -11,6 +11,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
+
 import '../endpoints/notification_endpoint.dart' as _ihb11yhk;
 import '../endpoints/notifications_diagnostics_endpoint.dart' as _iikyohz9;
 

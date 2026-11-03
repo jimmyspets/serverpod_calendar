@@ -17,6 +17,7 @@ import 'package:serverpod_calendar_server/serverpod_calendar_server.dart'
     as _ipn35bcd;
 import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
     as _ik9lwgjh;
+
 import '../endpoints/calendar_feed_endpoint.dart' as _ibvlwx2y;
 
 class Endpoints extends _is.EndpointDispatch {

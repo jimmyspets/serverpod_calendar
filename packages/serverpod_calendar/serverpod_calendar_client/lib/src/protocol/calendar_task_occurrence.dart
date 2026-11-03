@@ -13,6 +13,7 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_event_civil.dart' as _i1bb5k1r;
 import 'calendar_event_duration.dart' as _idn2i48l;
 import 'calendar_event_timing.dart' as _ieswiaty;
@@ -136,15 +137,22 @@ abstract class CalendarTaskOccurrence
   @_isc.useResult
   CalendarTaskOccurrence copyWith({
     _ieswiaty.CalendarEventTiming? originalStart,
-    _ieswiaty.CalendarEventTiming? actualStart,
-    _i9h8y8lg.CalendarTaskTiming? replacementTiming,
-    _i9h8y8lg.CalendarTaskTiming? futureTiming,
-    _irmu5f0n.CalendarTaskOccurrenceContent? content,
-    _irmu5f0n.CalendarTaskOccurrenceContent? contentOverrides,
-    DateTime? startUtc,
-    _idn2i48l.CalendarEventDuration? duration,
-    _i1bb5k1r.CalendarEventCivil? dueDate,
-    DateTime? dueUtc,
+    _ieswiaty.CalendarEventTiming? actualStart =
+        const _UndefinedCalendarTaskOccurrence$actualStart(),
+    _i9h8y8lg.CalendarTaskTiming? replacementTiming =
+        const _UndefinedCalendarTaskOccurrence$replacementTiming(),
+    _i9h8y8lg.CalendarTaskTiming? futureTiming =
+        const _UndefinedCalendarTaskOccurrence$replacementTiming(),
+    _irmu5f0n.CalendarTaskOccurrenceContent? content =
+        const _UndefinedCalendarTaskOccurrence$content(),
+    _irmu5f0n.CalendarTaskOccurrenceContent? contentOverrides =
+        const _UndefinedCalendarTaskOccurrence$content(),
+    DateTime? startUtc = const _isc.$UndefinedDateTime(),
+    _idn2i48l.CalendarEventDuration? duration =
+        const _UndefinedCalendarTaskOccurrence$duration(),
+    _i1bb5k1r.CalendarEventCivil? dueDate =
+        const _UndefinedCalendarTaskOccurrence$dueDate(),
+    DateTime? dueUtc = const _isc.$UndefinedDateTime(),
     _ikcsq95s.CalendarTaskProgress? progress,
   });
   @override
@@ -277,7 +285,32 @@ abstract class CalendarTaskOccurrence
   }
 }
 
-class _Undefined {}
+class _UndefinedCalendarTaskOccurrence$actualStart
+    extends _isc.UndefinedSentinel
+    implements _ieswiaty.CalendarEventTiming {
+  const _UndefinedCalendarTaskOccurrence$actualStart();
+}
+
+class _UndefinedCalendarTaskOccurrence$replacementTiming
+    extends _isc.UndefinedSentinel
+    implements _i9h8y8lg.CalendarTaskTiming {
+  const _UndefinedCalendarTaskOccurrence$replacementTiming();
+}
+
+class _UndefinedCalendarTaskOccurrence$content extends _isc.UndefinedSentinel
+    implements _irmu5f0n.CalendarTaskOccurrenceContent {
+  const _UndefinedCalendarTaskOccurrence$content();
+}
+
+class _UndefinedCalendarTaskOccurrence$duration extends _isc.UndefinedSentinel
+    implements _idn2i48l.CalendarEventDuration {
+  const _UndefinedCalendarTaskOccurrence$duration();
+}
+
+class _UndefinedCalendarTaskOccurrence$dueDate extends _isc.UndefinedSentinel
+    implements _i1bb5k1r.CalendarEventCivil {
+  const _UndefinedCalendarTaskOccurrence$dueDate();
+}
 
 class _CalendarTaskOccurrenceImpl extends CalendarTaskOccurrence {
   const _CalendarTaskOccurrenceImpl({
@@ -312,43 +345,49 @@ class _CalendarTaskOccurrenceImpl extends CalendarTaskOccurrence {
   @override
   CalendarTaskOccurrence copyWith({
     _ieswiaty.CalendarEventTiming? originalStart,
-    Object? actualStart = _Undefined,
-    Object? replacementTiming = _Undefined,
-    Object? futureTiming = _Undefined,
-    Object? content = _Undefined,
-    Object? contentOverrides = _Undefined,
-    Object? startUtc = _Undefined,
-    Object? duration = _Undefined,
-    Object? dueDate = _Undefined,
-    Object? dueUtc = _Undefined,
+    _ieswiaty.CalendarEventTiming? actualStart =
+        const _UndefinedCalendarTaskOccurrence$actualStart(),
+    _i9h8y8lg.CalendarTaskTiming? replacementTiming =
+        const _UndefinedCalendarTaskOccurrence$replacementTiming(),
+    _i9h8y8lg.CalendarTaskTiming? futureTiming =
+        const _UndefinedCalendarTaskOccurrence$replacementTiming(),
+    _irmu5f0n.CalendarTaskOccurrenceContent? content =
+        const _UndefinedCalendarTaskOccurrence$content(),
+    _irmu5f0n.CalendarTaskOccurrenceContent? contentOverrides =
+        const _UndefinedCalendarTaskOccurrence$content(),
+    DateTime? startUtc = const _isc.$UndefinedDateTime(),
+    _idn2i48l.CalendarEventDuration? duration =
+        const _UndefinedCalendarTaskOccurrence$duration(),
+    _i1bb5k1r.CalendarEventCivil? dueDate =
+        const _UndefinedCalendarTaskOccurrence$dueDate(),
+    DateTime? dueUtc = const _isc.$UndefinedDateTime(),
     _ikcsq95s.CalendarTaskProgress? progress,
   }) {
     return CalendarTaskOccurrence(
       originalStart: originalStart ?? this.originalStart.copyWith(),
-      actualStart: actualStart is _ieswiaty.CalendarEventTiming?
-          ? actualStart
-          : this.actualStart?.copyWith(),
-      replacementTiming: replacementTiming is _i9h8y8lg.CalendarTaskTiming?
-          ? replacementTiming
-          : this.replacementTiming?.copyWith(),
-      futureTiming: futureTiming is _i9h8y8lg.CalendarTaskTiming?
-          ? futureTiming
-          : this.futureTiming?.copyWith(),
-      content: content is _irmu5f0n.CalendarTaskOccurrenceContent?
-          ? content
-          : this.content?.copyWith(),
-      contentOverrides:
-          contentOverrides is _irmu5f0n.CalendarTaskOccurrenceContent?
-          ? contentOverrides
-          : this.contentOverrides?.copyWith(),
-      startUtc: startUtc is DateTime? ? startUtc : this.startUtc,
-      duration: duration is _idn2i48l.CalendarEventDuration?
-          ? duration
-          : this.duration?.copyWith(),
-      dueDate: dueDate is _i1bb5k1r.CalendarEventCivil?
-          ? dueDate
-          : this.dueDate?.copyWith(),
-      dueUtc: dueUtc is DateTime? ? dueUtc : this.dueUtc,
+      actualStart: actualStart is _isc.UndefinedSentinel
+          ? this.actualStart?.copyWith()
+          : actualStart,
+      replacementTiming: replacementTiming is _isc.UndefinedSentinel
+          ? this.replacementTiming?.copyWith()
+          : replacementTiming,
+      futureTiming: futureTiming is _isc.UndefinedSentinel
+          ? this.futureTiming?.copyWith()
+          : futureTiming,
+      content: content is _isc.UndefinedSentinel
+          ? this.content?.copyWith()
+          : content,
+      contentOverrides: contentOverrides is _isc.UndefinedSentinel
+          ? this.contentOverrides?.copyWith()
+          : contentOverrides,
+      startUtc: startUtc is _isc.UndefinedSentinel ? this.startUtc : startUtc,
+      duration: duration is _isc.UndefinedSentinel
+          ? this.duration?.copyWith()
+          : duration,
+      dueDate: dueDate is _isc.UndefinedSentinel
+          ? this.dueDate?.copyWith()
+          : dueDate,
+      dueUtc: dueUtc is _isc.UndefinedSentinel ? this.dueUtc : dueUtc,
       progress: progress ?? this.progress.copyWith(),
     );
   }

@@ -11,6 +11,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_event_content_action.dart' as _ing6pwn6;
 import 'calendar_event_content_field.dart' as _ipyf9yt3;
 

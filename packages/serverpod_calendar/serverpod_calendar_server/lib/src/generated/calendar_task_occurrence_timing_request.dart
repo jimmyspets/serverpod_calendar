@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_task_timing.dart' as _i9h8y8lg;
 
@@ -73,7 +74,8 @@ abstract class CalendarTaskOccurrenceTimingRequest
     _is.UuidValue? taskId,
     int? expectedRevision,
     _ieswiaty.CalendarEventTiming? originalStart,
-    _i9h8y8lg.CalendarTaskTiming? replacement,
+    _i9h8y8lg.CalendarTaskTiming? replacement =
+        const _UndefinedCalendarTaskOccurrenceTimingRequest$replacement(),
     bool? thisAndFuture,
   });
   @override
@@ -153,7 +155,11 @@ abstract class CalendarTaskOccurrenceTimingRequest
   }
 }
 
-class _Undefined {}
+class _UndefinedCalendarTaskOccurrenceTimingRequest$replacement
+    extends _is.UndefinedSentinel
+    implements _i9h8y8lg.CalendarTaskTiming {
+  const _UndefinedCalendarTaskOccurrenceTimingRequest$replacement();
+}
 
 class _CalendarTaskOccurrenceTimingRequestImpl
     extends CalendarTaskOccurrenceTimingRequest {
@@ -179,16 +185,17 @@ class _CalendarTaskOccurrenceTimingRequestImpl
     _is.UuidValue? taskId,
     int? expectedRevision,
     _ieswiaty.CalendarEventTiming? originalStart,
-    Object? replacement = _Undefined,
+    _i9h8y8lg.CalendarTaskTiming? replacement =
+        const _UndefinedCalendarTaskOccurrenceTimingRequest$replacement(),
     bool? thisAndFuture,
   }) {
     return CalendarTaskOccurrenceTimingRequest(
       taskId: taskId ?? this.taskId,
       expectedRevision: expectedRevision ?? this.expectedRevision,
       originalStart: originalStart ?? this.originalStart.copyWith(),
-      replacement: replacement is _i9h8y8lg.CalendarTaskTiming?
-          ? replacement
-          : this.replacement?.copyWith(),
+      replacement: replacement is _is.UndefinedSentinel
+          ? this.replacement?.copyWith()
+          : replacement,
       thisAndFuture: thisAndFuture ?? this.thisAndFuture,
     );
   }

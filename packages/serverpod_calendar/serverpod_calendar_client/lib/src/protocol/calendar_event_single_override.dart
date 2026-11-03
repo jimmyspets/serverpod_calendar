@@ -13,6 +13,7 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_event_occurrence_content.dart' as _io4uvjqi;
 import 'calendar_event_timing.dart' as _ieswiaty;
 
@@ -71,9 +72,11 @@ abstract class CalendarEventSingleOverride
   @_isc.useResult
   CalendarEventSingleOverride copyWith({
     _ieswiaty.CalendarEventTiming? originalStart,
-    _ieswiaty.CalendarEventTiming? replacement,
+    _ieswiaty.CalendarEventTiming? replacement =
+        const _UndefinedCalendarEventSingleOverride$replacement(),
     bool? cancelled,
-    _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides,
+    _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides =
+        const _UndefinedCalendarEventSingleOverride$contentOverrides(),
   });
   @override
   bool operator ==(Object other) {
@@ -146,7 +149,17 @@ abstract class CalendarEventSingleOverride
   }
 }
 
-class _Undefined {}
+class _UndefinedCalendarEventSingleOverride$replacement
+    extends _isc.UndefinedSentinel
+    implements _ieswiaty.CalendarEventTiming {
+  const _UndefinedCalendarEventSingleOverride$replacement();
+}
+
+class _UndefinedCalendarEventSingleOverride$contentOverrides
+    extends _isc.UndefinedSentinel
+    implements _io4uvjqi.CalendarEventOccurrenceContent {
+  const _UndefinedCalendarEventSingleOverride$contentOverrides();
+}
 
 class _CalendarEventSingleOverrideImpl extends CalendarEventSingleOverride {
   const _CalendarEventSingleOverrideImpl({
@@ -167,20 +180,21 @@ class _CalendarEventSingleOverrideImpl extends CalendarEventSingleOverride {
   @override
   CalendarEventSingleOverride copyWith({
     _ieswiaty.CalendarEventTiming? originalStart,
-    Object? replacement = _Undefined,
+    _ieswiaty.CalendarEventTiming? replacement =
+        const _UndefinedCalendarEventSingleOverride$replacement(),
     bool? cancelled,
-    Object? contentOverrides = _Undefined,
+    _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides =
+        const _UndefinedCalendarEventSingleOverride$contentOverrides(),
   }) {
     return CalendarEventSingleOverride(
       originalStart: originalStart ?? this.originalStart.copyWith(),
-      replacement: replacement is _ieswiaty.CalendarEventTiming?
-          ? replacement
-          : this.replacement?.copyWith(),
+      replacement: replacement is _isc.UndefinedSentinel
+          ? this.replacement?.copyWith()
+          : replacement,
       cancelled: cancelled ?? this.cancelled,
-      contentOverrides:
-          contentOverrides is _io4uvjqi.CalendarEventOccurrenceContent?
-          ? contentOverrides
-          : this.contentOverrides?.copyWith(),
+      contentOverrides: contentOverrides is _isc.UndefinedSentinel
+          ? this.contentOverrides?.copyWith()
+          : contentOverrides,
     );
   }
 }

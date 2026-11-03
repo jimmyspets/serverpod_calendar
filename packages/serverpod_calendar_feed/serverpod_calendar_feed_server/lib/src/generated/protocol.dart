@@ -21,6 +21,7 @@ import 'package:serverpod_calendar_server/serverpod_calendar_server.dart'
     as _ipn35bcd;
 import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
     as _ik9lwgjh;
+
 import 'calendar_feed_created_credential.dart' as _i6l7w5f5;
 import 'calendar_feed_credential_record.dart' as _i6jsk1k3;
 import 'calendar_feed_credential_view.dart' as _i9qbm9qw;
@@ -42,7 +43,8 @@ export 'calendar_feed_selection_record.dart';
 export 'calendar_feed_settings.dart';
 export 'calendar_feed_view.dart';
 
-class Protocol extends _is.DatabaseSerializationManager {
+class Protocol extends _is.DatabaseSerializationManager
+    implements _is.DatabaseProtocolDeserializationProvider {
   Protocol._();
 
   factory Protocol() => _instance;
@@ -50,6 +52,55 @@ class Protocol extends _is.DatabaseSerializationManager {
   static final Protocol _instance = Protocol._();
 
   final Set<_is.SerializationManager> _hostProtocols = {};
+
+  @override
+  _is.ProtocolDeserialization get deserializationMetadata =>
+      _is.ProtocolDeserialization.cached(
+        this,
+        types: const [
+          _is.getType<_i6l7w5f5.CalendarFeedCreatedCredential>,
+          _is.getType<_i6jsk1k3.CalendarFeedCredentialRecord>,
+          _is.getType<_i9qbm9qw.CalendarFeedCredentialView>,
+          _is.getType<_iah1koag.CalendarFeedDataRecord>,
+          _is.getType<_iqqb7mk1.CalendarFeedException>,
+          _is.getType<_iuwqxkhl.CalendarFeedFailureCode>,
+          _is.getType<_iwfghpln.CalendarFeedIdentityRecord>,
+          _is.getType<_ioqsxar9.CalendarFeedSelectionRecord>,
+          _is.getType<_i7sjkcc2.CalendarFeedSettings>,
+          _is.getType<_ibxmw9q3.CalendarFeedView>,
+          _is.getType<_i6l7w5f5.CalendarFeedCreatedCredential?>,
+          _is.getType<_i6jsk1k3.CalendarFeedCredentialRecord?>,
+          _is.getType<_i9qbm9qw.CalendarFeedCredentialView?>,
+          _is.getType<_iah1koag.CalendarFeedDataRecord?>,
+          _is.getType<_iqqb7mk1.CalendarFeedException?>,
+          _is.getType<_iuwqxkhl.CalendarFeedFailureCode?>,
+          _is.getType<_iwfghpln.CalendarFeedIdentityRecord?>,
+          _is.getType<_ioqsxar9.CalendarFeedSelectionRecord?>,
+          _is.getType<_i7sjkcc2.CalendarFeedSettings?>,
+          _is.getType<_ibxmw9q3.CalendarFeedView?>,
+          _is.getType<List<_is.UuidValue>>,
+          _is.getType<List<_it96frn4.CalendarFeedView>>,
+          _is.getType<List<_ixq1vi9c.CalendarFeedCredentialView>>,
+        ],
+        modules: const [
+          _ipn35bcd.Protocol.new,
+          _ik9lwgjh.Protocol.new,
+          _isp.Protocol.new,
+        ],
+        classNames: const [
+          'CalendarFeedCreatedCredential',
+          'CalendarFeedCredentialRecord',
+          'CalendarFeedCredentialView',
+          'CalendarFeedDataRecord',
+          'CalendarFeedException',
+          'CalendarFeedFailureCode',
+          'CalendarFeedIdentityRecord',
+          'CalendarFeedSelectionRecord',
+          'CalendarFeedSettings',
+          'CalendarFeedView',
+        ],
+        classNamePrefix: 'serverpod_calendar_feed.',
+      );
 
   static List<_isp.TableDefinition> get targetTableDefinitions => [
     _isp.TableDefinition(
@@ -408,13 +459,11 @@ class Protocol extends _is.DatabaseSerializationManager {
     _hostProtocols.add(protocol);
   }
 
-  static String? getClassNameFromObjectJson(dynamic data) {
-    if (data is! Map) return null;
-    final className = data['__className__'] as String?;
-    if (className == null) return null;
-    if (!className.startsWith('serverpod_calendar_feed.')) return className;
-    return className.substring(24);
-  }
+  static String? getClassNameFromObjectJson(dynamic data) =>
+      _is.ProtocolDeserialization.normalizeClassName(
+        _is.ProtocolDeserialization.readClassName(data),
+        prefix: 'serverpod_calendar_feed.',
+      );
 
   @override
   T deserialize<T>(
@@ -422,8 +471,11 @@ class Protocol extends _is.DatabaseSerializationManager {
     Type? t,
   ]) {
     t ??= T;
-
-    final dataClassName = getClassNameFromObjectJson(data);
+    final rawDataClassName = _is.ProtocolDeserialization.readClassName(data);
+    final dataClassName = _is.ProtocolDeserialization.normalizeClassName(
+      rawDataClassName,
+      prefix: 'serverpod_calendar_feed.',
+    );
     if (dataClassName != null && dataClassName != getClassNameForType(t)) {
       try {
         return deserializeByClassName({
@@ -541,15 +593,16 @@ class Protocol extends _is.DatabaseSerializationManager {
               .toList()
           as T;
     }
-    try {
-      return _ipn35bcd.Protocol().deserialize<T>(data, t);
-    } on _is.DeserializationTypeNotFoundException catch (_) {}
-    try {
-      return _ik9lwgjh.Protocol().deserialize<T>(data, t);
-    } on _is.DeserializationTypeNotFoundException catch (_) {}
-    try {
-      return _isp.Protocol().deserialize<T>(data, t);
-    } on _is.DeserializationTypeNotFoundException catch (_) {}
+    final modules = deserializationMetadata.modulesForDeserialization(
+      t,
+      className: rawDataClassName,
+    );
+    for (final module in modules) {
+      try {
+        return module.deserialize<T>(data, t);
+      } on _is.DeserializationTypeNotFoundException catch (_) {}
+    }
+
     return super.deserialize<T>(data, t);
   }
 
@@ -647,9 +700,23 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (dataClassName == 'CalendarFeedView') {
       return deserialize<_ibxmw9q3.CalendarFeedView>(data['data']);
     }
+    if (dataClassName.startsWith('serverpod_calendar.')) {
+      return _ipn35bcd.Protocol().deserializeByClassName({
+        ...data,
+        'className': dataClassName.substring(19),
+      });
+    }
+    if (dataClassName.startsWith('serverpod_notifications.')) {
+      return _ik9lwgjh.Protocol().deserializeByClassName({
+        ...data,
+        'className': dataClassName.substring(24),
+      });
+    }
     if (dataClassName.startsWith('serverpod.')) {
-      data['className'] = dataClassName.substring(10);
-      return _isp.Protocol().deserializeByClassName(data);
+      return _isp.Protocol().deserializeByClassName({
+        ...data,
+        'className': dataClassName.substring(10),
+      });
     }
     return super.deserializeByClassName(data);
   }

@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_protocol_metadata.dart' as _itchuj1l;
 
 abstract class CalendarProtocolMetadataUpdateRequest

@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_availability_category_group.dart' as _iywbqexh;
 import 'calendar_availability_extension.dart' as _ip5gybl4;
 import 'calendar_availability_text.dart' as _itw42wa3;
@@ -152,20 +153,26 @@ abstract class CalendarAvailabilityOpening
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
   CalendarAvailabilityOpening copyWith({
-    _is.UuidValue? uid,
+    _is.UuidValue? uid = const _is.$UndefinedUuidValue(),
     _ieswiaty.CalendarEventTiming? timing,
-    _iqxs44bf.CalendarEventRecurrence? recurrence,
+    _iqxs44bf.CalendarEventRecurrence? recurrence =
+        const _UndefinedCalendarAvailabilityOpening$recurrence(),
     String? summary,
     String? description,
     String? location,
-    List<String>? categories,
-    List<String>? comments,
-    _ipbm7ji7.CalendarAvailabilityTextParameters? textParameters,
-    List<_ip5gybl4.CalendarAvailabilityExtension>? extensions,
-    List<_iywbqexh.CalendarAvailabilityCategoryGroup>? categoryGroups,
-    List<_itw42wa3.CalendarAvailabilityText>? contacts,
+    List<String>? categories = const _is.$UndefinedList<String>(),
+    List<String>? comments = const _is.$UndefinedList<String>(),
+    _ipbm7ji7.CalendarAvailabilityTextParameters? textParameters =
+        const _UndefinedCalendarAvailabilityOpening$textParameters(),
+    List<_ip5gybl4.CalendarAvailabilityExtension>? extensions =
+        const _is.$UndefinedList<_ip5gybl4.CalendarAvailabilityExtension>(),
+    List<_iywbqexh.CalendarAvailabilityCategoryGroup>? categoryGroups =
+        const _is.$UndefinedList<_iywbqexh.CalendarAvailabilityCategoryGroup>(),
+    List<_itw42wa3.CalendarAvailabilityText>? contacts =
+        const _is.$UndefinedList<_itw42wa3.CalendarAvailabilityText>(),
     String? protocolUid,
-    List<_ieswiaty.CalendarEventTiming>? periods,
+    List<_ieswiaty.CalendarEventTiming>? periods =
+        const _is.$UndefinedList<_ieswiaty.CalendarEventTiming>(),
   });
   @override
   bool operator ==(Object other) {
@@ -327,6 +334,18 @@ abstract class CalendarAvailabilityOpening
 
 class _Undefined {}
 
+class _UndefinedCalendarAvailabilityOpening$recurrence
+    extends _is.UndefinedSentinel
+    implements _iqxs44bf.CalendarEventRecurrence {
+  const _UndefinedCalendarAvailabilityOpening$recurrence();
+}
+
+class _UndefinedCalendarAvailabilityOpening$textParameters
+    extends _is.UndefinedSentinel
+    implements _ipbm7ji7.CalendarAvailabilityTextParameters {
+  const _UndefinedCalendarAvailabilityOpening$textParameters();
+}
+
 class _CalendarAvailabilityOpeningImpl extends CalendarAvailabilityOpening {
   const _CalendarAvailabilityOpeningImpl({
     _is.UuidValue? uid,
@@ -365,54 +384,58 @@ class _CalendarAvailabilityOpeningImpl extends CalendarAvailabilityOpening {
   @_is.useResult
   @override
   CalendarAvailabilityOpening copyWith({
-    Object? uid = _Undefined,
+    _is.UuidValue? uid = const _is.$UndefinedUuidValue(),
     _ieswiaty.CalendarEventTiming? timing,
-    Object? recurrence = _Undefined,
+    _iqxs44bf.CalendarEventRecurrence? recurrence =
+        const _UndefinedCalendarAvailabilityOpening$recurrence(),
     Object? summary = _Undefined,
     Object? description = _Undefined,
     Object? location = _Undefined,
-    Object? categories = _Undefined,
-    Object? comments = _Undefined,
-    Object? textParameters = _Undefined,
-    Object? extensions = _Undefined,
-    Object? categoryGroups = _Undefined,
-    Object? contacts = _Undefined,
+    List<String>? categories = const _is.$UndefinedList<String>(),
+    List<String>? comments = const _is.$UndefinedList<String>(),
+    _ipbm7ji7.CalendarAvailabilityTextParameters? textParameters =
+        const _UndefinedCalendarAvailabilityOpening$textParameters(),
+    List<_ip5gybl4.CalendarAvailabilityExtension>? extensions =
+        const _is.$UndefinedList<_ip5gybl4.CalendarAvailabilityExtension>(),
+    List<_iywbqexh.CalendarAvailabilityCategoryGroup>? categoryGroups =
+        const _is.$UndefinedList<_iywbqexh.CalendarAvailabilityCategoryGroup>(),
+    List<_itw42wa3.CalendarAvailabilityText>? contacts =
+        const _is.$UndefinedList<_itw42wa3.CalendarAvailabilityText>(),
     Object? protocolUid = _Undefined,
-    Object? periods = _Undefined,
+    List<_ieswiaty.CalendarEventTiming>? periods =
+        const _is.$UndefinedList<_ieswiaty.CalendarEventTiming>(),
   }) {
     return CalendarAvailabilityOpening(
-      uid: uid is _is.UuidValue? ? uid : this.uid,
+      uid: uid is _is.UndefinedSentinel ? this.uid : uid,
       timing: timing ?? this.timing.copyWith(),
-      recurrence: recurrence is _iqxs44bf.CalendarEventRecurrence?
-          ? recurrence
-          : this.recurrence?.copyWith(),
+      recurrence: recurrence is _is.UndefinedSentinel
+          ? this.recurrence?.copyWith()
+          : recurrence,
       summary: summary is String? ? summary : this.summary,
       description: description is String? ? description : this.description,
       location: location is String? ? location : this.location,
-      categories: categories is List<String>?
-          ? categories
-          : this.categories?.map((e0) => e0).toList(),
-      comments: comments is List<String>?
-          ? comments
-          : this.comments?.map((e0) => e0).toList(),
-      textParameters:
-          textParameters is _ipbm7ji7.CalendarAvailabilityTextParameters?
-          ? textParameters
-          : this.textParameters?.copyWith(),
-      extensions: extensions is List<_ip5gybl4.CalendarAvailabilityExtension>?
-          ? extensions
-          : this.extensions?.map((e0) => e0.copyWith()).toList(),
-      categoryGroups:
-          categoryGroups is List<_iywbqexh.CalendarAvailabilityCategoryGroup>?
-          ? categoryGroups
-          : this.categoryGroups?.map((e0) => e0.copyWith()).toList(),
-      contacts: contacts is List<_itw42wa3.CalendarAvailabilityText>?
-          ? contacts
-          : this.contacts?.map((e0) => e0.copyWith()).toList(),
+      categories: categories is _is.UndefinedSentinel
+          ? this.categories?.map((e0) => e0).toList()
+          : categories,
+      comments: comments is _is.UndefinedSentinel
+          ? this.comments?.map((e0) => e0).toList()
+          : comments,
+      textParameters: textParameters is _is.UndefinedSentinel
+          ? this.textParameters?.copyWith()
+          : textParameters,
+      extensions: extensions is _is.UndefinedSentinel
+          ? this.extensions?.map((e0) => e0.copyWith()).toList()
+          : extensions,
+      categoryGroups: categoryGroups is _is.UndefinedSentinel
+          ? this.categoryGroups?.map((e0) => e0.copyWith()).toList()
+          : categoryGroups,
+      contacts: contacts is _is.UndefinedSentinel
+          ? this.contacts?.map((e0) => e0.copyWith()).toList()
+          : contacts,
       protocolUid: protocolUid is String? ? protocolUid : this.protocolUid,
-      periods: periods is List<_ieswiaty.CalendarEventTiming>?
-          ? periods
-          : this.periods?.map((e0) => e0.copyWith()).toList(),
+      periods: periods is _is.UndefinedSentinel
+          ? this.periods?.map((e0) => e0.copyWith()).toList()
+          : periods,
     );
   }
 }

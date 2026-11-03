@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_field_group.dart' as _i73hgz1s;
 import 'calendar_no_rule_fallback.dart' as _itts4qyp;
 import 'calendar_protocol_identity.dart' as _iyrimg3m;
@@ -135,11 +136,14 @@ abstract class CalendarView
     String? color,
     String? availabilityZoneId,
     _itts4qyp.CalendarNoRuleFallback? noRuleFallback,
-    _iyrimg3m.CalendarProtocolIdentity? protocolIdentity,
-    _itchuj1l.CalendarProtocolMetadata? protocolMetadata,
-    _ixppc388.CalendarSupplementalMetadata? supplementalMetadata,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    _iyrimg3m.CalendarProtocolIdentity? protocolIdentity =
+        const _UndefinedCalendarView$protocolIdentity(),
+    _itchuj1l.CalendarProtocolMetadata? protocolMetadata =
+        const _UndefinedCalendarView$protocolMetadata(),
+    _ixppc388.CalendarSupplementalMetadata? supplementalMetadata =
+        const _UndefinedCalendarView$supplementalMetadata(),
+    DateTime? createdAt = const _is.$UndefinedDateTime(),
+    DateTime? updatedAt = const _is.$UndefinedDateTime(),
   });
   @override
   Map<String, dynamic> toJson() {
@@ -195,6 +199,21 @@ abstract class CalendarView
 
 class _Undefined {}
 
+class _UndefinedCalendarView$protocolIdentity extends _is.UndefinedSentinel
+    implements _iyrimg3m.CalendarProtocolIdentity {
+  const _UndefinedCalendarView$protocolIdentity();
+}
+
+class _UndefinedCalendarView$protocolMetadata extends _is.UndefinedSentinel
+    implements _itchuj1l.CalendarProtocolMetadata {
+  const _UndefinedCalendarView$protocolMetadata();
+}
+
+class _UndefinedCalendarView$supplementalMetadata extends _is.UndefinedSentinel
+    implements _ixppc388.CalendarSupplementalMetadata {
+  const _UndefinedCalendarView$supplementalMetadata();
+}
+
 class _CalendarViewImpl extends CalendarView {
   _CalendarViewImpl({
     required _is.UuidValue id,
@@ -239,11 +258,14 @@ class _CalendarViewImpl extends CalendarView {
     Object? color = _Undefined,
     Object? availabilityZoneId = _Undefined,
     Object? noRuleFallback = _Undefined,
-    Object? protocolIdentity = _Undefined,
-    Object? protocolMetadata = _Undefined,
-    Object? supplementalMetadata = _Undefined,
-    Object? createdAt = _Undefined,
-    Object? updatedAt = _Undefined,
+    _iyrimg3m.CalendarProtocolIdentity? protocolIdentity =
+        const _UndefinedCalendarView$protocolIdentity(),
+    _itchuj1l.CalendarProtocolMetadata? protocolMetadata =
+        const _UndefinedCalendarView$protocolMetadata(),
+    _ixppc388.CalendarSupplementalMetadata? supplementalMetadata =
+        const _UndefinedCalendarView$supplementalMetadata(),
+    DateTime? createdAt = const _is.$UndefinedDateTime(),
+    DateTime? updatedAt = const _is.$UndefinedDateTime(),
   }) {
     return CalendarView(
       id: id ?? this.id,
@@ -259,18 +281,21 @@ class _CalendarViewImpl extends CalendarView {
       noRuleFallback: noRuleFallback is _itts4qyp.CalendarNoRuleFallback?
           ? noRuleFallback
           : this.noRuleFallback,
-      protocolIdentity: protocolIdentity is _iyrimg3m.CalendarProtocolIdentity?
-          ? protocolIdentity
-          : this.protocolIdentity?.copyWith(),
-      protocolMetadata: protocolMetadata is _itchuj1l.CalendarProtocolMetadata?
-          ? protocolMetadata
-          : this.protocolMetadata?.copyWith(),
-      supplementalMetadata:
-          supplementalMetadata is _ixppc388.CalendarSupplementalMetadata?
-          ? supplementalMetadata
-          : this.supplementalMetadata?.copyWith(),
-      createdAt: createdAt is DateTime? ? createdAt : this.createdAt,
-      updatedAt: updatedAt is DateTime? ? updatedAt : this.updatedAt,
+      protocolIdentity: protocolIdentity is _is.UndefinedSentinel
+          ? this.protocolIdentity?.copyWith()
+          : protocolIdentity,
+      protocolMetadata: protocolMetadata is _is.UndefinedSentinel
+          ? this.protocolMetadata?.copyWith()
+          : protocolMetadata,
+      supplementalMetadata: supplementalMetadata is _is.UndefinedSentinel
+          ? this.supplementalMetadata?.copyWith()
+          : supplementalMetadata,
+      createdAt: createdAt is _is.UndefinedSentinel
+          ? this.createdAt
+          : createdAt,
+      updatedAt: updatedAt is _is.UndefinedSentinel
+          ? this.updatedAt
+          : updatedAt,
     );
   }
 }

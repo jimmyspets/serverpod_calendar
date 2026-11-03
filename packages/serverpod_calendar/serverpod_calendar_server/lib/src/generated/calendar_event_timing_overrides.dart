@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_event_future_override.dart' as _imbjv41e;
 import 'calendar_event_single_override.dart' as _iq1kxi25;
 import 'calendar_event_timing.dart' as _ieswiaty;
@@ -65,7 +66,8 @@ abstract class CalendarEventTimingOverrides
   CalendarEventTimingOverrides copyWith({
     List<_iq1kxi25.CalendarEventSingleOverride>? singles,
     List<_imbjv41e.CalendarEventFutureOverride>? future,
-    _ieswiaty.CalendarEventTiming? cancelledFrom,
+    _ieswiaty.CalendarEventTiming? cancelledFrom =
+        const _UndefinedCalendarEventTimingOverrides$cancelledFrom(),
   });
   @override
   bool operator ==(Object other) {
@@ -127,7 +129,11 @@ abstract class CalendarEventTimingOverrides
   }
 }
 
-class _Undefined {}
+class _UndefinedCalendarEventTimingOverrides$cancelledFrom
+    extends _is.UndefinedSentinel
+    implements _ieswiaty.CalendarEventTiming {
+  const _UndefinedCalendarEventTimingOverrides$cancelledFrom();
+}
 
 class _CalendarEventTimingOverridesImpl extends CalendarEventTimingOverrides {
   const _CalendarEventTimingOverridesImpl({
@@ -147,14 +153,15 @@ class _CalendarEventTimingOverridesImpl extends CalendarEventTimingOverrides {
   CalendarEventTimingOverrides copyWith({
     List<_iq1kxi25.CalendarEventSingleOverride>? singles,
     List<_imbjv41e.CalendarEventFutureOverride>? future,
-    Object? cancelledFrom = _Undefined,
+    _ieswiaty.CalendarEventTiming? cancelledFrom =
+        const _UndefinedCalendarEventTimingOverrides$cancelledFrom(),
   }) {
     return CalendarEventTimingOverrides(
       singles: singles ?? this.singles.map((e0) => e0.copyWith()).toList(),
       future: future ?? this.future.map((e0) => e0.copyWith()).toList(),
-      cancelledFrom: cancelledFrom is _ieswiaty.CalendarEventTiming?
-          ? cancelledFrom
-          : this.cancelledFrom?.copyWith(),
+      cancelledFrom: cancelledFrom is _is.UndefinedSentinel
+          ? this.cancelledFrom?.copyWith()
+          : cancelledFrom,
     );
   }
 }

@@ -14,6 +14,7 @@ import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_availability_category_group.dart' as _iywbqexh;
 import 'calendar_availability_extension.dart' as _ip5gybl4;
 import 'calendar_availability_text.dart' as _itw42wa3;
@@ -108,13 +109,22 @@ abstract class CalendarAvailabilitySourceMetadata
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
   CalendarAvailabilitySourceMetadata copyWith({
-    _itw42wa3.CalendarAvailabilityText? summary,
-    _itw42wa3.CalendarAvailabilityText? description,
-    _itw42wa3.CalendarAvailabilityText? location,
-    List<_iywbqexh.CalendarAvailabilityCategoryGroup>? categories,
-    List<_itw42wa3.CalendarAvailabilityText>? comments,
-    List<_itw42wa3.CalendarAvailabilityText>? contacts,
-    List<_ip5gybl4.CalendarAvailabilityExtension>? extensions,
+    _itw42wa3.CalendarAvailabilityText? summary =
+        const _UndefinedCalendarAvailabilitySourceMetadata$summary(),
+    _itw42wa3.CalendarAvailabilityText? description =
+        const _UndefinedCalendarAvailabilitySourceMetadata$summary(),
+    _itw42wa3.CalendarAvailabilityText? location =
+        const _UndefinedCalendarAvailabilitySourceMetadata$summary(),
+    List<_iywbqexh.CalendarAvailabilityCategoryGroup>? categories =
+        const _isc.$UndefinedList<
+          _iywbqexh.CalendarAvailabilityCategoryGroup
+        >(),
+    List<_itw42wa3.CalendarAvailabilityText>? comments =
+        const _isc.$UndefinedList<_itw42wa3.CalendarAvailabilityText>(),
+    List<_itw42wa3.CalendarAvailabilityText>? contacts =
+        const _isc.$UndefinedList<_itw42wa3.CalendarAvailabilityText>(),
+    List<_ip5gybl4.CalendarAvailabilityExtension>? extensions =
+        const _isc.$UndefinedList<_ip5gybl4.CalendarAvailabilityExtension>(),
   });
   @override
   bool operator ==(Object other) {
@@ -217,7 +227,11 @@ abstract class CalendarAvailabilitySourceMetadata
   }
 }
 
-class _Undefined {}
+class _UndefinedCalendarAvailabilitySourceMetadata$summary
+    extends _isc.UndefinedSentinel
+    implements _itw42wa3.CalendarAvailabilityText {
+  const _UndefinedCalendarAvailabilitySourceMetadata$summary();
+}
 
 class _CalendarAvailabilitySourceMetadataImpl
     extends CalendarAvailabilitySourceMetadata {
@@ -244,37 +258,45 @@ class _CalendarAvailabilitySourceMetadataImpl
   @_isc.useResult
   @override
   CalendarAvailabilitySourceMetadata copyWith({
-    Object? summary = _Undefined,
-    Object? description = _Undefined,
-    Object? location = _Undefined,
-    Object? categories = _Undefined,
-    Object? comments = _Undefined,
-    Object? contacts = _Undefined,
-    Object? extensions = _Undefined,
+    _itw42wa3.CalendarAvailabilityText? summary =
+        const _UndefinedCalendarAvailabilitySourceMetadata$summary(),
+    _itw42wa3.CalendarAvailabilityText? description =
+        const _UndefinedCalendarAvailabilitySourceMetadata$summary(),
+    _itw42wa3.CalendarAvailabilityText? location =
+        const _UndefinedCalendarAvailabilitySourceMetadata$summary(),
+    List<_iywbqexh.CalendarAvailabilityCategoryGroup>? categories =
+        const _isc.$UndefinedList<
+          _iywbqexh.CalendarAvailabilityCategoryGroup
+        >(),
+    List<_itw42wa3.CalendarAvailabilityText>? comments =
+        const _isc.$UndefinedList<_itw42wa3.CalendarAvailabilityText>(),
+    List<_itw42wa3.CalendarAvailabilityText>? contacts =
+        const _isc.$UndefinedList<_itw42wa3.CalendarAvailabilityText>(),
+    List<_ip5gybl4.CalendarAvailabilityExtension>? extensions =
+        const _isc.$UndefinedList<_ip5gybl4.CalendarAvailabilityExtension>(),
   }) {
     return CalendarAvailabilitySourceMetadata(
-      summary: summary is _itw42wa3.CalendarAvailabilityText?
-          ? summary
-          : this.summary?.copyWith(),
-      description: description is _itw42wa3.CalendarAvailabilityText?
-          ? description
-          : this.description?.copyWith(),
-      location: location is _itw42wa3.CalendarAvailabilityText?
-          ? location
-          : this.location?.copyWith(),
-      categories:
-          categories is List<_iywbqexh.CalendarAvailabilityCategoryGroup>?
-          ? categories
-          : this.categories?.map((e0) => e0.copyWith()).toList(),
-      comments: comments is List<_itw42wa3.CalendarAvailabilityText>?
-          ? comments
-          : this.comments?.map((e0) => e0.copyWith()).toList(),
-      contacts: contacts is List<_itw42wa3.CalendarAvailabilityText>?
-          ? contacts
-          : this.contacts?.map((e0) => e0.copyWith()).toList(),
-      extensions: extensions is List<_ip5gybl4.CalendarAvailabilityExtension>?
-          ? extensions
-          : this.extensions?.map((e0) => e0.copyWith()).toList(),
+      summary: summary is _isc.UndefinedSentinel
+          ? this.summary?.copyWith()
+          : summary,
+      description: description is _isc.UndefinedSentinel
+          ? this.description?.copyWith()
+          : description,
+      location: location is _isc.UndefinedSentinel
+          ? this.location?.copyWith()
+          : location,
+      categories: categories is _isc.UndefinedSentinel
+          ? this.categories?.map((e0) => e0.copyWith()).toList()
+          : categories,
+      comments: comments is _isc.UndefinedSentinel
+          ? this.comments?.map((e0) => e0.copyWith()).toList()
+          : comments,
+      contacts: contacts is _isc.UndefinedSentinel
+          ? this.contacts?.map((e0) => e0.copyWith()).toList()
+          : contacts,
+      extensions: extensions is _isc.UndefinedSentinel
+          ? this.extensions?.map((e0) => e0.copyWith()).toList()
+          : extensions,
     );
   }
 }
