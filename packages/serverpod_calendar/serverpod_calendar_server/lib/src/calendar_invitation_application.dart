@@ -781,7 +781,9 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       (!_occHasRangeCancellation(state) ||
           (message.events.single.sequence ?? 0) >
               (CalendarEventProtocolVersion.fromJson(
-                    _occLatestTarget(state)['version'],
+                    (_occHasRangeRestoration(state)
+                        ? state['restoration'] as Map<String, dynamic>
+                        : _occLatestTarget(state))['version'],
                   ).sequence ??
                   0)) &&
       (!_occHasRangeRestoration(state) ||

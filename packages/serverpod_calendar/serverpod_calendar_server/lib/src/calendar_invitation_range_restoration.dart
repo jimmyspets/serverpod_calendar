@@ -1,7 +1,7 @@
 part of 'calendar_module.dart';
 
 bool _occHasRangeRestoration(Map<String, dynamic>? state) =>
-    {7, 8, 9}.contains(state?['version']);
+    {7, 8, 9, 10}.contains(state?['version']);
 
 String _occRestorationReceiptDigest(Map<String, dynamic> state) =>
     _invitationHash([

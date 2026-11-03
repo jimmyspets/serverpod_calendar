@@ -55,9 +55,12 @@ void require(bool value, String message) {
 
 Future<void> main(List<String> args) async {
   final nativeFuture = args.contains('--native-future');
+  final restoredSingles = args.contains('--restored-singles');
   final restoredLifecycle = args.contains('--restored-lifecycle');
   final restoredCompose =
-      args.contains('--restoration-compositions') || restoredLifecycle;
+      args.contains('--restoration-compositions') ||
+      restoredLifecycle ||
+      restoredSingles;
   final rangeRestoration =
       args.contains('--range-restorations') || restoredCompose;
   final rangeLifecycle = args.contains('--range-lifecycle');
@@ -560,6 +563,194 @@ Future<void> main(List<String> args) async {
                   result = await restore(b, id, request);
               require(result['id'] != null, 'Restored seed failed');
               return {'request': request, 'id': result['id']};
+            }
+
+            if (restoredSingles) {
+              Future<Map<String, dynamic>> singleInput(
+                String id,
+                int sequence, {
+                bool cancel = false,
+              }) async {
+                final incoming = await b.command({
+                  'command': 'receive',
+                  'caseId': id,
+                  'key': 'single-$sequence',
+                  'instance': true,
+                  'sequence': sequence,
+                  'cancel': cancel,
+                }) as Map;
+                final v = await b.command({
+                  'command': 'occurrence-view',
+                  'caseId': id,
+                  'entryId': incoming['entryId'],
+                }) as Map;
+                require(
+                  v['canApply'] == true,
+                  'Restored single preview blocked',
+                );
+                return {
+                  for (final key in [
+                    'invitationId',
+                    'linkId',
+                    'expectedInvitationRevision',
+                    'expectedEventRevision',
+                    'expectedCalendarRevision',
+                    'expectedApplicationRevision',
+                    'expectedOccurrenceRevision',
+                  ])
+                    key: switch (key) {
+                      'expectedInvitationRevision' => v['invitationRevision'],
+                      'expectedEventRevision' => v['eventRevision'],
+                      'expectedCalendarRevision' => v['calendarRevision'],
+                      'expectedApplicationRevision' => v['applicationRevision'],
+                      'expectedOccurrenceRevision' => v['occurrenceRevision'],
+                      _ => v[key],
+                    },
+                  'sourceId': v['incomingSourceId'],
+                };
+              }
+
+              Future<Map> change(
+                _Probe p,
+                String id,
+                Map request, {
+                bool cancel = false,
+                String? pause,
+              }) async => await p.command({
+                'command': 'occurrence-apply',
+                'caseId': id,
+                'request': request,
+                'cancel': cancel,
+                'pause': pause,
+              }) as Map;
+              Future<void> superseded(String id, Map saved) async {
+                require(
+                  (await restore(b, id, saved['request'] as Map))['error'] ==
+                      'dependencyConflict',
+                  'Old restoration receipt remained current',
+                );
+                final state = await b.command({
+                  'command': 'inspect',
+                  'caseId': id,
+                }) as Map;
+                require(
+                  state['checkpointVersion'] == 10 && state['cutoff'] == null,
+                  'Single lost restored evidence/native state',
+                );
+              }
+
+              final id = nextCase(),
+                  saved = await seed(id),
+                  input = await singleInput(id, 4);
+              final race = await Future.wait([
+                change(a, id, input),
+                change(b, id, input),
+              ]);
+              require(
+                race.first['id'] != null && race.first['id'] == race.last['id'],
+                'Same single command duplicated',
+              );
+              await superseded(id, saved);
+              await apply(b, id, await masterInput(id, 6));
+              require(
+                (await change(b, id, input))['id'] == race.first['id'],
+                'Master composition lost latest single receipt',
+              );
+              await apply(
+                b,
+                id,
+                await masterInput(id, 8, cancel: true),
+                cancel: true,
+              );
+              await apply(b, id, await masterInput(id, 9));
+              require(
+                (await change(b, id, input))['id'] == race.first['id'],
+                'Master lifecycle lost latest single receipt',
+              );
+              final competing = nextCase(),
+                  c = await seed(competing),
+                  older = await singleInput(competing, 4),
+                  newer = await singleInput(competing, 5);
+              final results = await Future.wait([
+                change(a, competing, older),
+                change(b, competing, newer),
+              ]);
+              require(
+                results.where((r) => r['id'] != null).length == 1 &&
+                    results
+                            .where((r) => r['error'] == 'staleRevision')
+                            .length ==
+                        1,
+                'Competing singles bypassed fence',
+              );
+              await superseded(competing, c);
+              final mixed = nextCase();
+              await seed(mixed);
+              final one = await singleInput(mixed, 4),
+                  master = await masterInput(mixed, 6);
+              final mixedResults = await Future.wait([
+                change(a, mixed, one),
+                apply(b, mixed, master),
+              ]);
+              require(
+                mixedResults.where((r) => r['id'] != null).length == 1 &&
+                    mixedResults
+                            .where((r) => r['error'] == 'staleRevision')
+                            .length ==
+                        1,
+                'Master/single race rebased silently',
+              );
+              for (final cancel in [false, true]) {
+                for (final stage in ['before', 'after']) {
+                  final id = nextCase(), saved = await seed(id);
+                  if (cancel) {
+                    await change(b, id, await singleInput(id, 4));
+                  }
+                  final input = await singleInput(
+                    id,
+                    cancel ? 5 : 4,
+                    cancel: cancel,
+                  );
+                  a.paused = Completer<Map<String, dynamic>>();
+                  final lost = change(
+                    a,
+                    id,
+                    input,
+                    cancel: cancel,
+                    pause: 'occurrence-$stage',
+                  ).then<void>((_) {}, onError: (Object _, StackTrace _) {});
+                  final submitted = await a.paused!.future.timeout(
+                    const Duration(seconds: 40),
+                  );
+                  final visible = await b.command({
+                    'command': 'inspect',
+                    'caseId': id,
+                  }) as Map;
+                  require(
+                    visible['checkpointVersion'] ==
+                            (cancel || stage == 'after' ? 10 : 7) &&
+                        visible['cutoff'] == null &&
+                        visible['eventRevision'] ==
+                            3 + (cancel ? 1 : 0) + (stage == 'after' ? 1 : 0),
+                    'Single transition partially visible',
+                  );
+                  await a.stop();
+                  await lost;
+                  final recovered = await change(b, id, input, cancel: cancel);
+                  require(
+                    recovered['id'] != null &&
+                        ((stage == 'after') ==
+                            (recovered['id'] == submitted['id'])),
+                    'Single recovery lost retry identity',
+                  );
+                  await superseded(id, saved);
+                  a = await start('a-restored-single-$cancel-$stage', 18780);
+                }
+              }
+              stdout.writeln(
+                'PASS: restored singles same/competing/master races, v7/v10 atomic visibility, lifecycle receipt preservation, restoration supersession and actual loss before/after update/cancel commits.',
+              );
+              return;
             }
 
             Future<void> preserved(
