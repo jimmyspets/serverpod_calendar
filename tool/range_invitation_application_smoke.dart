@@ -469,6 +469,69 @@ Future<void> rangeInvitationApplicationSmoke(List<Client> clients) async {
           composedFeed.$3.contains('Master after restoration'),
       'Restored master feed did not update',
     );
+    var lifecycleFeed = composedFeed;
+    for (final cancelled in [true, false]) {
+      if (cancelled) {
+        await a.invitationDemo.simulateCancellation(
+          id,
+          const cal.Uuid().v4obj(),
+          10,
+        );
+      } else {
+        await a.invitationDemo.simulateRecurring(
+          id,
+          const cal.Uuid().v4obj(),
+          11,
+          'Reopened restored meeting',
+        );
+      }
+      final view = await api.calendarInvitation.application(master.entryId);
+      require(
+        view.hasAcceptedRangeRestoration &&
+            (cancelled ? view.canApplyCancellation : view.canApply),
+        'Restored lifecycle preview blocked',
+      );
+      final request = masterCommand(view);
+      final results = await Future.wait(
+        clients.map(
+          (c) => cancelled
+              ? c.modules.serverpod_calendar.calendarInvitation
+                    .applyCancellation(request)
+              : c.modules.serverpod_calendar.calendarInvitation.applyUpdate(
+                  request,
+                ),
+        ),
+      );
+      require(
+        results.first.id == results.last.id,
+        'Restored lifecycle duplicated transition',
+      );
+      final current = await api.calendarInvitation.application(master.entryId);
+      require(
+        current.currentContent.status ==
+                (cancelled
+                    ? cal.CalendarEventStatus.cancelled
+                    : cal.CalendarEventStatus.confirmed) &&
+            !current.hasLocalChanges &&
+            current.hasAcceptedRangeRestoration,
+        'Restored lifecycle lost native/history state',
+      );
+      final nextFeed = await fetch(url, lifecycleFeed.$2);
+      require(
+        nextFeed.$1 == 200 && nextFeed.$2 != lifecycleFeed.$2,
+        'Restored lifecycle stale feed validator',
+      );
+      require(
+        (await fetch(url, nextFeed.$2)).$1 == 304,
+        'Restored lifecycle validator failed',
+      );
+      lifecycleFeed = nextFeed;
+      require(
+        (await api.calendarInvitation.applyRangeRestoration(restoreInput)).id ==
+            restoredRace.first.id,
+        'Restored lifecycle superseded original receipt',
+      );
+    }
     stdout.writeln(
       'PASS: generated-client two-host range preview/apply and master races, preserved source versions/retries, receipt-only versus applied feed ETags and explicit range cancellation, masked-feed rejection, v5/v6 master composition/cancellation/reopening and stable independent retries, explicit v7 restoration and restored feed validators.',
     );

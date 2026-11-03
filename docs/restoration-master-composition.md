@@ -26,4 +26,4 @@ The latest master command retains existing supersession and expected-occurrence-
 
 This batch lifts only active master REQUEST composition. Whole lifecycle, new occurrence/range messages and repeated cancellation/restoration cycles still need their own contracts. See [actual validation](scaffold-validation.md); local synthetic success is separate from implementation-head CI and external-client interoperability.
 
-The next [whole-master lifecycle proposal](adr/0166-master-lifecycle-after-source-range-restoration.md) is under review. Its v9/source-floor mechanics do not lift current active-only guards.
+[ADR 0166](adr/0166-master-lifecycle-after-source-range-restoration.md) supersedes the active-only guard for the separately approved [whole-master lifecycle](restoration-master-lifecycle.md); new range transitions remain guarded.

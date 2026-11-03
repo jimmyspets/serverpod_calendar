@@ -480,11 +480,6 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         message != null &&
         entry?.currentSourceId != null) {
       try {
-        if (_occHasRangeRestoration(occurrenceState) &&
-            (message.method != IcalendarSchedulingMethod.request ||
-                accepted.kind != CalendarInvitationSourceKind.request)) {
-          throw ArgumentError('Restored lifecycle remains guarded');
-        }
         final master =
             incoming ??
             _invCancellationMember(
@@ -524,6 +519,9 @@ extension CalendarInvitationApplicationOperations on CalendarService {
                     masterBaseline: masterBaseline,
                     baseline: composedBaseline,
                     member: candidate,
+                    kind: message.method == IcalendarSchedulingMethod.cancel
+                        ? CalendarInvitationSourceKind.meetingCancellation
+                        : CalendarInvitationSourceKind.request,
                   )
                 : masked
                 ? _occComposeCancellation(
@@ -785,6 +783,12 @@ extension CalendarInvitationApplicationOperations on CalendarService {
               (CalendarEventProtocolVersion.fromJson(
                     _occLatestTarget(state)['version'],
                   ).sequence ??
+                  0)) &&
+      (!_occHasRangeRestoration(state) ||
+          (message.events.single.sequence ?? 0) >
+              (CalendarEventProtocolVersion.fromJson(
+                    (state['rangeCancellation'] as Map)['version'],
+                  ).sequence ??
                   0));
 
   CalendarEventImportMember _invCancellationMember(
@@ -1022,11 +1026,6 @@ extension CalendarInvitationApplicationOperations on CalendarService {
               link.organizer) {
         throw _failure(CalendarFailureCode.validation);
       }
-      if (_occHasRangeRestoration(occurrenceState) &&
-          (cancellation ||
-              accepted.kind != CalendarInvitationSourceKind.request)) {
-        throw _failure(CalendarFailureCode.dependencyConflict);
-      }
       final masterMember = cancellation
           ? _invCancellationMember(
               message,
@@ -1051,7 +1050,11 @@ extension CalendarInvitationApplicationOperations on CalendarService {
           : _invCompose(masterMember, event, occurrenceState);
       if (_occHasRangeRestoration(occurrenceState)) {
         _eventReplacementValue(() {
-          _occCheckRestoredMember(composed, occurrenceState!);
+          _occCheckRestoredMember(
+            composed,
+            occurrenceState!,
+            allowCancelled: cancellation,
+          );
           return true;
         });
       }
@@ -1126,6 +1129,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
                   masterBaseline: masterBaseline,
                   baseline: baseline,
                   member: member,
+                  kind: kind,
                 )
               : masked
               ? _occComposeCancellation(
