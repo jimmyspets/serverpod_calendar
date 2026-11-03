@@ -146,7 +146,7 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
           if (v != null) ...[
             if (v.hasAcceptedRangeRestoration)
               const Text(
-                'Source restoration is accepted. Individual cancellations remain. New source changes await composition support; retained retries remain available.',
+                'Source restoration is accepted. Individual cancellations remain. Eligible master updates preserve restoration; other occurrence source actions remain blocked. Retained retries remain available.',
               ),
             if (v.hasAcceptedRangeCancellation &&
                 !v.hasAcceptedRangeRestoration)
