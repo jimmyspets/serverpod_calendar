@@ -861,3 +861,14 @@ The 4.1.0 maintenance batch completed local generation, analysis, existing/fresh
 - [x] Implement the approved complete pure batch and focused/grouped regressions before one code commit.
 - [ ] Pass full implementation-head repository CI before readiness.
 - [ ] Review bounded durable cycle history, source retention, permissions, receipts/composition and generated-client/Flutter behavior separately; existing guards remain until then.
+
+## Grouped bounded durable range cycles
+
+[Proposed ADR 0170](adr/0170-bounded-repeated-source-range-cycles.md) follows the pure prerequisite implementation in PR #170. Group repeated CANCEL/restore-only controls and continued composition/lifecycle into one feature batch rather than separate reviews for each state.
+
+- [x] Inspect legacy frozen proof, current targets/masking, source/version/receipt and authority boundaries.
+- [x] Prepare flat retained cycle evidence, unchanged caps, derived active-cutoff views, atomic retries and grouped validation for review.
+- [ ] Obtain explicit agreement on v12, retained history and derived view mechanics.
+- [ ] Implement the approved entire cycle/composition/client/Flutter group with focused tests and one broader related verification before committing code.
+- [ ] Pass full implementation-head hosted checks before readiness.
+- [ ] Keep overlapping cutoffs, partial/rescheduling restoration, outgoing range lifecycle/replies, other selected methods and real mail in their separate roadmap lanes.
