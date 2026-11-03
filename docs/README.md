@@ -356,3 +356,7 @@ Accepted [ADR 0159](adr/0159-pure-range-cancellation-projection.md) implements a
 See [the approved implementation](restoration-range-applications.md). Grouped checks include restoration_range_application_test.dart, the --restored-ranges two-host recovery profile, generated-client/feed coverage and the connected --range-applications Flutter journey. Actual conclusions are recorded separately in [validation](scaffold-validation.md).
 
 Current Serverpod dependency alignment is documented in [the 4.1.0 upgrade record](serverpod-4.1-upgrade.md); earlier tool observations retain their original dates and versions.
+
+## Proposed post-restoration range cancellation prerequisite
+
+[Proposed ADR 0169](adr/0169-pure-range-cancellation-after-source-restoration.md) adds a separate pure re-cancellation helper and an explicit historical-restoration SEQUENCE floor alongside the current affected-component floor. It preserves retained timing/content/flags/versions and bounded work. These mechanics require approval; no database, checkpoint, API, retention or runtime guard change is implemented. Repeated durable cycles and their history/authority/retry design remain separate.

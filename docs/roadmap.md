@@ -2,7 +2,7 @@
 
 Status reconciled **2026-11-03**, including durable alarm planning/actions, live notification delivery, timing-only adoption, optional feeds and pure scheduling-message increments under ADRs 0112–0121; scoped organizer publication/replies under ADRs 0122–0133; native metadata/category search under ADRs 0134–0136; and trusted non-recurring invitation review, addition, updates and cancellation application/reopening under ADRs 0137–0141, pure decoded iMIP under ADR 0142 and synthetic host-owned MIME composition under ADR 0143 (batch validation is recorded separately). ADRs 0144–0145 add bounded raw MIME and trusted native ingress; accepted ADR 0146 adds explicit private non-recurring attendee responses with independent calendar actions and durable synthetic delivery (complete batch checks recorded separately). Accepted ADR 0147 adds bounded calendar-wide occurrence pages with private cursors and mandatory timing/state disclosure (complete batch evidence recorded separately). Accepted ADR 0148 adds the scoped recurring-master recipient workflow; complete validation is recorded separately. The bounded temporal core, calendar/event/task services and scoped availability/interchange have local validation evidence. Read-only event source metadata, participants, references and unarmed alarms under ADRs 0107–0110 and native personal definitions/editors under ADR 0111 extend that scope; the validation record separates completed checks from remaining release gates. The full first release remains incomplete. The [RFC tables](rfc/README.md) are the latest feature-scope source; [requirements](requirements.md) define acceptance targets and [ADRs](adr/README.md) distinguish confirmed choices from reviewable mechanics.
 
-ADRs 0149-0166 further implement trusted instance/range review and explicit source application/composition, native future cancellation, first incoming range cancellation and restoration, and master REQUEST/CANCEL/reopening that preserves the active or explicitly cleared cutoff. Whole lifecycle after restoration is covered by ADR 0166; new range transitions, outgoing range cancellation, RANGE replies and the other selected scheduling methods remain incomplete. Detailed checkboxes and actual validation below take precedence over older increment summaries.
+ADRs 0149-0168 further implement trusted instance/range review and explicit source application/composition, native future cancellation, first incoming range cancellation and restoration, and master REQUEST/CANCEL/reopening that preserves the active or explicitly cleared cutoff. Whole lifecycle after restoration is covered by ADR 0166; ADRs 0167-0168 add subsequent single/range REQUEST application. Further cancellation/restoration cycles, outgoing range cancellation, RANGE replies and other selected scheduling methods remain incomplete. Serverpod 4.1.0 dependency alignment has complete local evidence and a separate exact-head hosted gate. Detailed checkboxes and actual validation below take precedence over older increment summaries.
 
 This roadmap tracks the implementation represented by the current branch, including stacked draft PRs; an implemented checkbox does not mean the change is merged into main, released, or that every ADR mechanic is accepted. Check existing GitHub work before filing issues, and link each implementation issue to the relevant requirements and roadmap section.
 
@@ -25,6 +25,19 @@ Tasks have a [confirmed create-only import contract](task-import.md) under ADR 0
 | Validation and release | Local unit/browser/database/upgrade checks, two real hosts and Flutter journeys; GitHub CI orchestration for implemented features | Remaining protocol/worker/recovery journeys, interoperability and publication readiness; verify hosted conclusions for each release commit |
 
 The timing-only single/future batch is implemented under [ADR 0055](adr/0055-native-occurrence-timing-edits.md). The first per-calendar booking/fallback free/busy increment is implemented under [ADR 0056](adr/0056-first-calendar-free-busy.md), including the accepted tentative-blocking classification. Scoped RFC 7953 working-hours rules and host-resolved person/resource/common-slot search are implemented under ADRs 0057–0058; source-preserving wire adaptation follows under ADRs 0069–0070. Scoped availability create/export/replacement APIs now exist; scoped event import/export now exist; remaining profiles and concrete mechanics still need implementation/review. Review and merge the draft PR stack separately; passing local checks does not approve unresolved design mechanics.
+
+## Execution priorities and batching
+
+The maintainer explicitly permits dependency-driven reordering of this roadmap. Use these lanes as the working priority, preserving the full selected release scope and the explicit ADR/model review gates:
+
+1. Establish the current baseline: resolve hosted checks for delivered batches and the 4.1.0 toolchain before treating them as release evidence. Fix failures ahead of new implementation.
+2. Finish shared recurring scheduling primitives, then their durable workflows. The next pure re-cancellation batch closes the historical-version gap and tests repeated CANCEL/restore-only round trips without inventing a storage format. Review durable bounded cycle evidence and composition together afterward, followed by outgoing range lifecycle and RANGE responses. Group code that shares original identity, version, source retention and retry machinery instead of repeatedly rebuilding the same boundary.
+3. Complete the other selected authenticated VEVENT/VFREEBUSY methods and participant/lifecycle reconciliation, reusing the stable series and outbox machinery. Pure parser support alone does not complete these operation rows. Host/provider trust and real-mail trials require their own concrete configuration and authorization.
+4. Close remaining native task/event metadata, future-content/cancellation, disclosure-safe query and availability gaps in coherent service/client/Flutter batches. Time-indexed candidates, timezone-update invalidation and production authorization coordination must retain existing completeness and concurrency guarantees.
+5. Consolidate operational cleanup/retention and feed/mail host integration, then collect external-client interoperability evidence against the declared subsets. Provider-specific mobile delivery remains outside repository implementation scope.
+6. Finish clean-checkout, full multi-host/Flutter/recovery and exact-commit hosted evidence, licenses, package metadata/changelogs and publication dry runs. Actual publication/deployment remains a separate decision.
+
+This is an execution order, not a reduction of requirements or blanket approval of future mechanics. Move independent work forward when a lane is waiting on explicit review or external evidence; avoid overlapping branches for the same implementation. Use focused checks during development, broader checks once per complete related batch, and no intermediate feature-code check-ins. New required decisions should be presented as concrete reviewable contracts.
 
 ## Work packages and dependencies
 
@@ -827,7 +840,7 @@ The maintainer confirmed the next post-restoration master REQUEST policy: preser
 - [x] Prepare bounded v11 targets, unchanged historical proof, authority, latest-only retries and continued single/master lifecycle mechanics for review.
 - [x] Obtain explicit maintainer agreement on the concrete proposal.
 - [x] Implement/test the approved range REQUEST batch with focused/grouped checks, actual two-host recovery and Flutter before one code commit.
-- [ ] Pass full implementation-head repository CI before readiness.
+- [x] Pass full implementation-head repository CI before readiness (PR #167 exact head, run 41628109855).
 - [ ] Review further range cancellation/restoration cycles, replies, remaining selected methods and release requirements separately.
 
 The next toolchain batch will align Serverpod SDK dependencies and generation with the maintainer-installed CLI 4.1.0 after this approved feature pass; compatibility and exact-head validation remain required.
@@ -837,3 +850,14 @@ The next toolchain batch will align Serverpod SDK dependencies and generation wi
 The maintainer requested dependency alignment after ADR 0168. See [the upgrade record](serverpod-4.1-upgrade.md). Resolve and pin matching CLI/runtime/client/auth/test versions, regenerate all artifacts, inspect generated migrations, and verify existing/fresh synthetic storage plus affected workers and connected Flutter before one batch commit. Exact-head hosted checks remain a readiness gate; no new calendar capability is selected by the SDK update.
 
 The 4.1.0 maintenance batch completed local generation, analysis, existing/fresh migration and database checks, client/feed/JWT checks, actual competing-worker/process-loss recovery and the full connected Flutter journey. Exact-head hosted results remain separate; see validation.
+
+## Post-restoration range cancellation prerequisite
+
+[Proposed ADR 0169](adr/0169-pure-range-cancellation-after-source-restoration.md) follows PR #168. First validate a new CANCEL against current canonical values and an independent previous-restoration version, before selecting durable multi-cycle storage.
+
+- [x] Inspect first-CANCEL, restoration and v7-v11 boundaries and existing source/version preservation.
+- [x] Prepare separate pure API/carrier, shared bounded projection and historical sequence floor for review.
+- [ ] Obtain explicit agreement on the additional floor and pure protocol mechanics.
+- [ ] Implement the approved complete pure batch and focused/grouped regressions before one code commit.
+- [ ] Pass full implementation-head repository CI before readiness.
+- [ ] Review bounded durable cycle history, source retention, permissions, receipts/composition and generated-client/Flutter behavior separately; existing guards remain until then.
