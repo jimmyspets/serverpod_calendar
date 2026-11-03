@@ -853,11 +853,11 @@ The 4.1.0 maintenance batch completed local generation, analysis, existing/fresh
 
 ## Post-restoration range cancellation prerequisite
 
-[Proposed ADR 0169](adr/0169-pure-range-cancellation-after-source-restoration.md) follows PR #168. First validate a new CANCEL against current canonical values and an independent previous-restoration version, before selecting durable multi-cycle storage.
+[Accepted ADR 0169](adr/0169-pure-range-cancellation-after-source-restoration.md) follows PR #168. First validate a new CANCEL against current canonical values and an independent previous-restoration version, before selecting durable multi-cycle storage.
 
 - [x] Inspect first-CANCEL, restoration and v7-v11 boundaries and existing source/version preservation.
 - [x] Prepare separate pure API/carrier, shared bounded projection and historical sequence floor for review.
-- [ ] Obtain explicit agreement on the additional floor and pure protocol mechanics.
-- [ ] Implement the approved complete pure batch and focused/grouped regressions before one code commit.
+- [x] Obtain explicit agreement on the additional floor and pure protocol mechanics.
+- [x] Implement the approved complete pure batch and focused/grouped regressions before one code commit.
 - [ ] Pass full implementation-head repository CI before readiness.
 - [ ] Review bounded durable cycle history, source retention, permissions, receipts/composition and generated-client/Flutter behavior separately; existing guards remain until then.
