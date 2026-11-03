@@ -596,6 +596,7 @@ Future<void> rangeInvitationApplicationSmoke(List<Client> clients) async {
       );
       lifecycleFeed = nextFeed;
     }
+    final currentSingle = singleEntry!;
     await a.invitationDemo.simulateRecurring(
       id,
       const cal.Uuid().v4obj(),
@@ -606,11 +607,70 @@ Future<void> rangeInvitationApplicationSmoke(List<Client> clients) async {
       masterCommand(await api.calendarInvitation.application(master.entryId)),
     );
     require(
-      (await api.calendarInvitation.occurrenceApplication(singleEntry!))
+      (await api.calendarInvitation.occurrenceApplication(currentSingle))
               .acceptedVersion
               .sequence ==
           14,
       'Master erased latest single version',
+    );
+    await a.invitationDemo.simulateRange(
+      id,
+      const cal.Uuid().v4obj(),
+      16,
+      false,
+    );
+    final rangeView = await api.calendarInvitation.rangeApplication(entry);
+    require(
+      rangeView.canApply && rangeView.hasAcceptedRangeRestoration,
+      'Post-restoration range preview blocked',
+    );
+    final rangeInput = command(rangeView);
+    final rangeRace = await Future.wait(
+      clients.map(
+        (c) => c.modules.serverpod_calendar.calendarInvitation.applyRangeUpdate(
+          rangeInput,
+        ),
+      ),
+    );
+    require(
+      rangeRace.first.id == rangeRace.last.id,
+      'Post-restoration range duplicated effect',
+    );
+    require(
+      (await api.calendarInvitation.occurrenceApplication(currentSingle))
+              .acceptedVersion
+              .sequence ==
+          14,
+      'Range changed later independent single',
+    );
+    require(
+      (await api.calendarInvitation.rangeRestorationApplication(entry))
+              .latestResult ==
+          null,
+      'Restoration view returned range-command receipt',
+    );
+    final rangeFeed = await fetch(url, lifecycleFeed.$2);
+    require(
+      rangeFeed.$1 == 200 && rangeFeed.$2 != lifecycleFeed.$2,
+      'Post-restoration range left stale ETag',
+    );
+    require(
+      (await fetch(url, rangeFeed.$2)).$1 == 304,
+      'Post-restoration range validator failed',
+    );
+    await a.invitationDemo.simulateRecurring(
+      id,
+      const cal.Uuid().v4obj(),
+      17,
+      'Master preserves new range',
+    );
+    await api.calendarInvitation.applyUpdate(
+      masterCommand(await api.calendarInvitation.application(master.entryId)),
+    );
+    require(
+      (await api.calendarInvitation.applyRangeUpdate(rangeInput)).id ==
+          rangeRace.first.id,
+      'Master lost current range receipt',
     );
     stdout.writeln(
       'PASS: generated-client two-host range preview/apply and master races, preserved source versions/retries, receipt-only versus applied feed ETags and explicit range cancellation, masked-feed rejection, v5/v6 master composition/cancellation/reopening and stable independent retries, explicit v7 restoration and restored feed validators.',

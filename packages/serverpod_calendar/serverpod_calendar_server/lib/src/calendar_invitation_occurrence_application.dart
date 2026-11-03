@@ -9,7 +9,7 @@ typedef _OccurrenceAccepted = ({
 String _occLatestKey(
   Map<String, dynamic> state,
   CalendarInvitationOccurrenceApplyReceipt receipt,
-) => {3, 4, 5, 6, 7, 8, 9, 10}.contains(state['version'])
+) => {3, 4, 5, 6, 7, 8, 9, 10, 11}.contains(state['version'])
     ? state['latestTargetKey'] as String
     : _invTargetKey(receipt.originalStart);
 
@@ -18,7 +18,9 @@ String _occReceiptDigest(Map<String, dynamic> state) {
     state['receipt'],
   );
   final key = _occLatestKey(state, receipt);
-  if (state['version'] == 10) return _occRestoredTargetsReceipt(state);
+  if ({10, 11}.contains(state['version'])) {
+    return _occRestoredTargetsReceipt(state);
+  }
   if (_occHasRangeRestoration(state)) {
     return _occRestorationReceiptDigest(state);
   }
@@ -222,7 +224,7 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
         throw StateError('Invalid checkpoint');
       }
       final state = jsonDecode(row.stateJson) as Map<String, dynamic>;
-      if (state['version'] == 10) {
+      if ({10, 11}.contains(state['version'])) {
         return _occDecodeRestoredTargets(link, event, row, master, state);
       }
       if ({8, 9}.contains(state['version'])) {
@@ -263,7 +265,8 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
         }
         final original = CalendarEventTiming.fromJson(target['original']);
         final range = (target['key'] as String).startsWith('range-v1:');
-        if (range && !{3, 4, 5, 6, 7, 8, 9, 10}.contains(state['version'])) {
+        if (range &&
+            !{3, 4, 5, 6, 7, 8, 9, 10, 11}.contains(state['version'])) {
           throw StateError('Legacy range target');
         }
         final key = _invTargetKey(original, range: range);
@@ -513,11 +516,16 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
           _occHasRangeRestoration(
             jsonDecode(current.stateJson) as Map<String, dynamic>,
           ) &&
-          ((jsonDecode(current.stateJson) as Map)['version'] == 10 ||
+          ({
+                10,
+                11,
+              }.contains((jsonDecode(current.stateJson) as Map)['version']) ||
               {
                 CalendarInvitationOperation.readOccurrenceApplication,
                 CalendarInvitationOperation.applyOccurrenceUpdate,
                 CalendarInvitationOperation.applyOccurrenceCancellation,
+                CalendarInvitationOperation.readRangeApplication,
+                CalendarInvitationOperation.applyRangeUpdate,
               }.contains(operation))) ...{
         CalendarInvitationOperation.composeAcceptedOccurrences,
         CalendarInvitationOperation.composeAcceptedRangeCancellation,
@@ -660,7 +668,10 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
               : _occLatestTarget(state!))
         : null;
     final selectedCancellation =
-        cancellationLayer?['invitationId'] == entry.id.toString();
+        cancellationLayer?['invitationId'] == entry.id.toString() &&
+        (restoration ||
+            state?['version'] != 11 ||
+            retainedTarget?['requiredAfterSequence'] == null);
     final target = selectedCancellation ? cancellationLayer : retainedTarget;
     final source = entry.currentSourceId == null
         ? null
@@ -748,7 +759,7 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
             edits: p.timingOverrides,
             protocol: p.protocolState,
           );
-          if (!range && _occHasRangeRestoration(state)) {
+          if (!restoration && _occHasRangeRestoration(state)) {
             final collision = (state!['targets'] as List)
                 .cast<Map<String, dynamic>>()
                 .any(
@@ -772,19 +783,39 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
                 writing: true,
                 cancellation:
                     message.method == IcalendarSchedulingMethod.cancel,
+                member: CalendarEventImportMember(
+                  eventId: link.eventId,
+                  protocolUid: link.uid,
+                  content: p.content,
+                  timingOverrides: p.timingOverrides,
+                  protocolState: p.protocolState,
+                ),
               );
               await _occHost(
                 actor,
                 recipient,
                 tx,
                 CalendarAuthorizationPhase.read,
-                operation: message.method == IcalendarSchedulingMethod.cancel
+                operation: range
+                    ? CalendarInvitationOperation.applyRangeUpdate
+                    : message.method == IcalendarSchedulingMethod.cancel
                     ? CalendarInvitationOperation.applyOccurrenceCancellation
                     : CalendarInvitationOperation.applyOccurrenceUpdate,
                 view: view,
                 link: link,
                 event: event,
                 message: message,
+                proposed: CalendarEventPolicySnapshot(
+                  link.eventId,
+                  link.calendarId,
+                  event.identity.revision + 1,
+                  p.content,
+                  link.uid,
+                  event.data.updatedAt,
+                  origin: event.data.origin,
+                  timingOverrides: p.timingOverrides,
+                  protocolState: p.protocolState,
+                ),
                 text: source!.normalizedSource,
                 master: master,
                 current: row,
@@ -808,7 +839,18 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
         target?['kind'] ==
         CalendarInvitationSourceKind.instanceCancellation.name;
     final newer =
-        message != null && _occNewer(message, floor, cancelled: cancelled);
+        message != null &&
+        _occNewer(message, floor, cancelled: cancelled) &&
+        (!range ||
+            restoration ||
+            !_occHasRangeRestoration(state) ||
+            (message.events.single.sequence != null &&
+                message.events.single.sequence! >
+                    _occRestoredRangeFloor(
+                      accepted,
+                      state!,
+                      entry.originalStart!,
+                    )));
     await _occHost(
       actor,
       recipient,
@@ -893,9 +935,14 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
           (restoration
               ? !_occHasRangeRestoration(state)
               : (!_occHasRangeCancellation(state) ||
+                    !restoration &&
+                        _occHasRangeRestoration(state) &&
+                        message.method == IcalendarSchedulingMethod.request ||
                     !range && _occHasRangeRestoration(state))),
       latestResult:
-          latest != null && _occLatestKey(state!, latest) == entry.targetKey
+          latest != null &&
+              !(restoration && {10, 11}.contains(state?['version'])) &&
+              _occLatestKey(state!, latest) == entry.targetKey
           ? latest
           : null,
     );
@@ -1096,9 +1143,11 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
         }
         return receipt;
       }
-      final restoredSingle =
-          !range && !restoration && _occHasRangeRestoration(state);
-      if (restoredSingle
+      final restoredChange =
+          !restoration &&
+          (!range || !cancellation) &&
+          _occHasRangeRestoration(state);
+      if (restoredChange
           ? event.data.content.status == CalendarEventStatus.cancelled ||
                 event.data.timingOverrides?.cancelledFrom != null
           : _occHasRangeRestoration(state) ||
@@ -1148,7 +1197,7 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
           ?.cast<Map<String, dynamic>>()
           .where((v) => v['key'] == entry.targetKey)
           .firstOrNull;
-      if (restoredSingle &&
+      if (restoredChange &&
           (state!['targets'] as List).cast<Map<String, dynamic>>().any(
             (target) =>
                 target['key'] != entry.targetKey &&
@@ -1184,6 +1233,15 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
         dirty: dirty,
       );
       if (dirty ||
+          (restoredChange &&
+              range &&
+              (message.events.single.sequence == null ||
+                  message.events.single.sequence! <=
+                      _occRestoredRangeFloor(
+                        accepted,
+                        state!,
+                        entry.originalStart!,
+                      ))) ||
           !_occNewer(
             message,
             _occFloor(accepted, entry.originalStart!),
@@ -1304,7 +1362,13 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
             'version': _occVersion(message).toJson(),
             'recipientAddress': recipient.calendarAddress,
             'acceptedAt': now.toIso8601String(),
-            'reopened': !cancellation && cancelled,
+            'reopened': !range && !cancellation && cancelled,
+            if (restoredChange && range)
+              'requiredAfterSequence': _occRestoredRangeFloor(
+                accepted,
+                state!,
+                entry.originalStart!,
+              ),
             'component': _occComponent(
               (
                 content: member.content,
@@ -1317,7 +1381,7 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
             ),
           },
       ];
-      if (targets.length + (range && cancellation || restoredSingle ? 1 : 0) >
+      if (targets.length + (range && cancellation || restoredChange ? 1 : 0) >
           128) {
         throw _failure(CalendarFailureCode.limitExceeded);
       }
@@ -1330,7 +1394,7 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
         eventRevision: receipt.eventRevision,
         updatedAt: now,
         stateJson: jsonEncode(
-          restoredSingle
+          restoredChange
               ? _occRestoredTargetsState(
                   link: link,
                   event: event,
@@ -1546,7 +1610,7 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
         baseline: baseline,
         dirty: dirty,
       );
-      if (restoration || restoredSingle) {
+      if (restoration || restoredChange) {
         await _occAuthorizeCancellation(
           actor,
           recipient,
