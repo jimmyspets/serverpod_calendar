@@ -423,7 +423,7 @@ void main() {
       );
     }
     test(
-      'whole cancellation remains guarded after active composition',
+      'whole cancellation is eligible after active composition under ADR 0166',
       () async {
         await setup();
         await service.applyInvitationRangeCancellation(await cancel());
@@ -434,11 +434,10 @@ void main() {
           masterCommand(await newerMaster(sequence: 2)),
         );
         final v = await whole();
-        expect(v.canApplyCancellation, isFalse);
-        await expectLater(
-          service.applyInvitationCancellation(masterCommand(v)),
-          failure(CalendarFailureCode.dependencyConflict),
-        );
+        expect(v.canApplyCancellation, isTrue);
+        await service.applyInvitationCancellation(masterCommand(v));
+        expect((await data()).content.status, CalendarEventStatus.cancelled);
+        expect((await data()).timingOverrides?.cancelledFrom, isNull);
       },
     );
     for (final op in [

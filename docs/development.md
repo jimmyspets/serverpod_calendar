@@ -310,3 +310,7 @@ ADR 0164 adds `test/integration/range_restoration_application_test.dart` to the 
 ## Restored-master composition verification
 
 ADR 0165 adds `test/integration/restoration_master_composition_test.dart` to the serial source group and `dart run tool/invitation_work_smoke.dart --restoration-compositions` to full checks. The synthetic two-host mode covers same/competing master commands, continued v8 writes, before/after-commit process loss and preserved original restoration receipts. Generated-client/feed and connected Flutter range journeys include the subsequent explicit master update. Run SDK integration and compiled-host/browser harnesses serially on shared test ports. See [the scoped profile](restoration-master-composition.md).
+
+## Restored-master lifecycle verification
+
+ADR 0166 adds `test/integration/restoration_master_lifecycle_test.dart` to the serial integration group and `dart run tool/invitation_work_smoke.dart --restored-lifecycle` to full checks. The two-host mode covers cancellation/reopening, competing commands and actual process loss before/after each commit. Generated-client/feed and Flutter range journeys exercise both existing explicit actions after restoration. Keep SDK database and compiled-host/browser checks serial on shared test ports; stop owned bundles before rebuilding and preserve development data. See [the scoped profile](restoration-master-lifecycle.md).
