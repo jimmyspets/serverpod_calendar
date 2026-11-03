@@ -55,7 +55,9 @@ void require(bool value, String message) {
 
 Future<void> main(List<String> args) async {
   final nativeFuture = args.contains('--native-future');
-  final rangeRestoration = args.contains('--range-restorations');
+  final restoredCompose = args.contains('--restoration-compositions');
+  final rangeRestoration =
+      args.contains('--range-restorations') || restoredCompose;
   final rangeLifecycle = args.contains('--range-lifecycle');
   final rangeCompose =
       args.contains('--range-compositions') ||
@@ -549,6 +551,103 @@ Future<void> main(List<String> args) async {
             'request': request,
             'pause': pause,
           }) as Map;
+          if (restoredCompose) {
+            Future<Map<String, dynamic>> seed(String id) async {
+              await cancellation(id);
+              final request = await restoreInput(id, 3),
+                  result = await restore(b, id, request);
+              require(result['id'] != null, 'Restored seed failed');
+              return {'request': request, 'id': result['id']};
+            }
+
+            Future<void> preserved(String id, Map saved) async {
+              require(
+                (await restore(b, id, saved['request'] as Map))['id'] ==
+                    saved['id'],
+                'Composition lost restoration retry',
+              );
+              final s =
+                  await b.command({'command': 'inspect', 'caseId': id}) as Map;
+              require(
+                s['checkpointVersion'] == 8 && s['cutoff'] == null,
+                'Composition did not preserve restored native state',
+              );
+            }
+
+            final id = nextCase(),
+                saved = await seed(id),
+                input = await masterInput(id, 5);
+            final result = await Future.wait([
+              apply(a, id, input),
+              apply(b, id, input),
+            ]);
+            require(
+              result.first['id'] != null &&
+                  result.first['id'] == result.last['id'],
+              'Restored master race duplicated commit',
+            );
+            await preserved(id, saved);
+            final second = await masterInput(id, 6);
+            require(
+              (await apply(b, id, second))['id'] != null,
+              'Continuing v8 composition failed',
+            );
+            await preserved(id, saved);
+            final competing = nextCase(),
+                c = await seed(competing),
+                older = await masterInput(competing, 5),
+                newer = await masterInput(competing, 6);
+            final races = await Future.wait([
+              apply(a, competing, older),
+              apply(b, competing, newer),
+            ]);
+            require(
+              races.where((r) => r['id'] != null).length == 1 &&
+                  races.where((r) => r['error'] == 'staleRevision').length == 1,
+              'Restored competing masters bypassed revision fence',
+            );
+            await preserved(competing, c);
+            for (final pause in ['apply-before', 'apply-after']) {
+              final id = nextCase(),
+                  saved = await seed(id),
+                  input = await masterInput(id, 5);
+              a.paused = Completer<Map<String, dynamic>>();
+              final lost = apply(
+                a,
+                id,
+                input,
+                pause: pause,
+              ).then<void>((_) {}, onError: (Object _, StackTrace _) {});
+              final submitted = await a.paused!.future.timeout(
+                const Duration(seconds: 40),
+              );
+              final visible =
+                  await b.command({'command': 'inspect', 'caseId': id}) as Map;
+              require(
+                visible['checkpointVersion'] ==
+                        (pause == 'apply-before' ? 7 : 8) &&
+                    visible['cutoff'] == null &&
+                    visible['eventRevision'] ==
+                        (pause == 'apply-before' ? 3 : 4),
+                'Restored master commit partially visible',
+              );
+              await a.stop();
+              await lost;
+              final recovered = await apply(b, id, input);
+              require(
+                recovered['id'] != null &&
+                    ((pause == 'apply-after') ==
+                        (recovered['id'] == submitted['id'])),
+                'Restored master process loss broke retry identity',
+              );
+              await preserved(id, saved);
+              a = await start('a-restored-compose-$pause', 18780);
+            }
+            stdout.writeln(
+              'PASS: restored-master same/competing-command hosts, v7/v8 atomic visibility, continuing composition, actual loss before/after commit and preserved restoration retries.',
+            );
+            return;
+          }
           final id = nextCase();
           await cancellation(id);
           final request = await restoreInput(id, 3);
