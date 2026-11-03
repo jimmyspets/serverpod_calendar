@@ -818,3 +818,14 @@ The maintainer confirmed the next post-restoration master REQUEST policy: preser
 - [x] Implement/test the approved single-instance batch with focused/grouped checks, actual two-host recovery and Flutter before one code commit.
 - [ ] Pass full implementation-head repository CI before readiness.
 - [ ] Review new range transitions, other selected scheduling methods and remaining release requirements separately.
+
+## Range REQUEST application after source restoration
+
+[Proposed ADR 0168](adr/0168-range-request-applications-after-source-restoration.md) follows PR #165. The maintainer confirmed both strict sequence floors; later independent exceptions remain preserved.
+
+- [x] Confirm effective-anchor/historical-restoration floors and inspect current v10 range-key/receipt/composition guards.
+- [x] Prepare bounded v11 targets, unchanged historical proof, authority, latest-only retries and continued single/master lifecycle mechanics for review.
+- [ ] Obtain explicit maintainer agreement on the concrete proposal.
+- [ ] Implement/test the approved range REQUEST batch with focused/grouped checks, actual two-host recovery and Flutter before one code commit.
+- [ ] Pass full implementation-head repository CI before readiness.
+- [ ] Review further range cancellation/restoration cycles, replies, remaining selected methods and release requirements separately.
