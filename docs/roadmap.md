@@ -891,13 +891,15 @@ The 4.1.0 maintenance batch completed local generation, analysis, existing/fresh
 - [ ] Review durable outgoing cancellation/restoration/composition, publication/reply targets and receipts separately; no new runtime action is enabled by the pure helper.
 
 
-## Proposed durable outgoing range controls
+## Durable outgoing range controls
 
-[Proposed ADR 0172](adr/0172-durable-published-range-controls.md) groups explicit published suffix cancellation/restoration, repeated cycles, preserved individual cancellations and private drafts, independent authority, bounded outgoing v7 current-state checkpoints in existing columns, and generated-client/Flutter/synthetic-delivery validation. The maintainer confirmed faithfully restorable anchors initially; the remaining model/API/checkpoint mechanics await explicit agreement. No runtime action, SQL change or real mail is implemented by this proposal. Active-cutoff lifecycle restrictions and conservative native revision ownership are proposed, not previously accepted behavior.
+[Accepted ADR 0172](adr/0172-durable-published-range-controls.md) groups explicit published suffix cancellation/restoration, repeated cycles, preserved individual cancellations and private drafts, independent authority, bounded outgoing v7 current-state checkpoints in existing columns, and generated-client/Flutter/synthetic-delivery validation. The maintainer confirmed faithfully restorable anchors initially; the maintainer explicitly approved the grouped model/API/checkpoint mechanics on 2026-11-04. The scoped runtime, generated clients and Flutter controls are implemented; there is no SQL change or real mail. Active-cutoff lifecycle restrictions and conservative native revision ownership are approved for this increment; local grouped runtime validation passed; exact-head hosted readiness is recorded separately.
 
 - [x] Confirm initial faithful-anchor restriction and inspect outgoing v1–v6, restoration masks, versions and receipts.
 - [x] Prepare the grouped cancel/restore/cycle, native ownership, v7, authority, retention and validation proposal.
-- [ ] Obtain explicit maintainer agreement on ADR 0172 before runtime/model changes.
-- [ ] Implement and validate the entire approved group before one code commit.
+- [x] Obtain explicit maintainer agreement on ADR 0172 before runtime/model changes (2026-11-04).
+- [x] Implement and locally validate the entire approved group before one code commit (pure/SDK/fresh storage, actual two-host/process-loss, generated-client and connected Flutter checks).
 - [ ] Pass full exact-head hosted checks before readiness.
 - [ ] Review arbitrary anchors, active-cutoff whole lifecycle, bundled recipient reconciliation, RANGE replies and remaining standards/client evidence separately.
+
+The scoped implementation is described in [published range controls](published-range-controls.md); local grouped validation passed, with full exact-head hosted checks remaining a separate readiness gate.

@@ -156,6 +156,10 @@ import 'package:serverpod_calendar_server/src/generated/calendar_protocol_metada
     as _i53ouodu;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_cancel_request.dart'
     as _ih6si8n9;
+import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_future_cancel_request.dart'
+    as _i94uqkmt;
+import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_future_restore_request.dart'
+    as _ik03rg78;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_instance_responses_view.dart'
     as _isrkk9n1;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_occurrence_cancel_request.dart'
@@ -1844,6 +1848,64 @@ class _CalendarEventEndpoint {
           createSessionCallback: (_) => _localUniqueSession,
           endpointPath: 'calendarEvent',
           methodName: 'cancelOccurrenceAndNotify',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_igqgquq7.CalendarSchedulingReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_igqgquq7.CalendarSchedulingReceipt> cancelFutureAndNotify(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i94uqkmt.CalendarSchedulingFutureCancelRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarEvent',
+            method: 'cancelFutureAndNotify',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarEvent',
+          methodName: 'cancelFutureAndNotify',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_igqgquq7.CalendarSchedulingReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_igqgquq7.CalendarSchedulingReceipt> restoreFutureAndNotify(
+    _ist.TestSessionBuilder sessionBuilder,
+    _ik03rg78.CalendarSchedulingFutureRestoreRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarEvent',
+            method: 'restoreFutureAndNotify',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarEvent',
+          methodName: 'restoreFutureAndNotify',
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );

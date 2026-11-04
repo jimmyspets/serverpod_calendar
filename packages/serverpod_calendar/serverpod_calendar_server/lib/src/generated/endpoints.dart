@@ -89,6 +89,10 @@ import 'package:serverpod_calendar_server/src/generated/calendar_protocol_metada
     as _i53ouodu;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_cancel_request.dart'
     as _ih6si8n9;
+import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_future_cancel_request.dart'
+    as _i94uqkmt;
+import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_future_restore_request.dart'
+    as _ik03rg78;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_occurrence_cancel_request.dart'
     as _ihunri6y;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_occurrence_restore_request.dart'
@@ -1280,6 +1284,50 @@ class Endpoints extends _is.EndpointDispatch {
                   (endpoints['calendarEvent']
                           as _ibwv0suj.CalendarEventEndpoint)
                       .cancelOccurrenceAndNotify(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'cancelFutureAndNotify': _is.MethodConnector(
+          name: 'cancelFutureAndNotify',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is
+                  .getType<_i94uqkmt.CalendarSchedulingFutureCancelRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .cancelFutureAndNotify(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'restoreFutureAndNotify': _is.MethodConnector(
+          name: 'restoreFutureAndNotify',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is
+                  .getType<_ik03rg78.CalendarSchedulingFutureRestoreRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .restoreFutureAndNotify(
                         session,
                         params['request'],
                       ),

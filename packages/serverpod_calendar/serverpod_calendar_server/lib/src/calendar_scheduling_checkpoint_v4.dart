@@ -34,7 +34,7 @@ CalendarSchedulingPublicationRecord _schedulingBasisRecord(
 ) {
   final v = input as Map<String, dynamic>;
   final snapshot = v['snapshot'] as String;
-  if ({4, 5, 6}.contains((jsonDecode(snapshot) as Map)['version'])) {
+  if ({4, 5, 6, 7}.contains((jsonDecode(snapshot) as Map)['version'])) {
     throw const FormatException();
   }
   final payload = v['payload'] as String;
@@ -301,6 +301,9 @@ _SchedulingCheckpoint _schedulingReadV4(
 CalendarEventPolicySnapshot _schedulingExpectedState(
   _SchedulingCheckpoint checkpoint,
 ) {
+  if (checkpoint.rangeControl != null) {
+    return _schedulingRangeExpectedState(checkpoint);
+  }
   if (checkpoint.individuals.isEmpty) {
     return checkpoint.message.method == IcalendarSchedulingMethod.cancel
         ? checkpoint.outgoing

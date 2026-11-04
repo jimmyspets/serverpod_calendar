@@ -221,6 +221,8 @@ import 'calendar_scheduling_cancel_request.dart' as _i4uu6f5m;
 import 'calendar_scheduling_delivery_record.dart' as _iuidcanh;
 import 'calendar_scheduling_delivery_state.dart' as _it5jr5tm;
 import 'calendar_scheduling_delivery_view.dart' as _i63ky642;
+import 'calendar_scheduling_future_cancel_request.dart' as _ihsj0hhk;
+import 'calendar_scheduling_future_restore_request.dart' as _irhn2ly4;
 import 'calendar_scheduling_instance_responses_view.dart' as _i8yevrne;
 import 'calendar_scheduling_meeting_record.dart' as _ihlqfuoo;
 import 'calendar_scheduling_occurrence_cancel_request.dart' as _ia8x0otq;
@@ -488,6 +490,8 @@ export 'calendar_scheduling_cancel_request.dart';
 export 'calendar_scheduling_delivery_record.dart';
 export 'calendar_scheduling_delivery_state.dart';
 export 'calendar_scheduling_delivery_view.dart';
+export 'calendar_scheduling_future_cancel_request.dart';
+export 'calendar_scheduling_future_restore_request.dart';
 export 'calendar_scheduling_instance_responses_view.dart';
 export 'calendar_scheduling_meeting_record.dart';
 export 'calendar_scheduling_occurrence_cancel_request.dart';
@@ -771,6 +775,8 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.getType<_iuidcanh.CalendarSchedulingDeliveryRecord>,
       _is.getType<_it5jr5tm.CalendarSchedulingDeliveryState>,
       _is.getType<_i63ky642.CalendarSchedulingDeliveryView>,
+      _is.getType<_ihsj0hhk.CalendarSchedulingFutureCancelRequest>,
+      _is.getType<_irhn2ly4.CalendarSchedulingFutureRestoreRequest>,
       _is.getType<_i8yevrne.CalendarSchedulingInstanceResponsesView>,
       _is.getType<_ihlqfuoo.CalendarSchedulingMeetingRecord>,
       _is.getType<_ia8x0otq.CalendarSchedulingOccurrenceCancelRequest>,
@@ -1038,6 +1044,8 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.getType<_iuidcanh.CalendarSchedulingDeliveryRecord?>,
       _is.getType<_it5jr5tm.CalendarSchedulingDeliveryState?>,
       _is.getType<_i63ky642.CalendarSchedulingDeliveryView?>,
+      _is.getType<_ihsj0hhk.CalendarSchedulingFutureCancelRequest?>,
+      _is.getType<_irhn2ly4.CalendarSchedulingFutureRestoreRequest?>,
       _is.getType<_i8yevrne.CalendarSchedulingInstanceResponsesView?>,
       _is.getType<_ihlqfuoo.CalendarSchedulingMeetingRecord?>,
       _is.getType<_ia8x0otq.CalendarSchedulingOccurrenceCancelRequest?>,
@@ -1408,6 +1416,8 @@ class Protocol extends _is.DatabaseSerializationManager
       'CalendarSchedulingDeliveryRecord',
       'CalendarSchedulingDeliveryState',
       'CalendarSchedulingDeliveryView',
+      'CalendarSchedulingFutureCancelRequest',
+      'CalendarSchedulingFutureRestoreRequest',
       'CalendarSchedulingInstanceResponsesView',
       'CalendarSchedulingMeetingRecord',
       'CalendarSchedulingOccurrenceCancelRequest',
@@ -6488,6 +6498,14 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _i63ky642.CalendarSchedulingDeliveryView) {
       return _i63ky642.CalendarSchedulingDeliveryView.fromJson(data) as T;
     }
+    if (t == _ihsj0hhk.CalendarSchedulingFutureCancelRequest) {
+      return _ihsj0hhk.CalendarSchedulingFutureCancelRequest.fromJson(data)
+          as T;
+    }
+    if (t == _irhn2ly4.CalendarSchedulingFutureRestoreRequest) {
+      return _irhn2ly4.CalendarSchedulingFutureRestoreRequest.fromJson(data)
+          as T;
+    }
     if (t == _i8yevrne.CalendarSchedulingInstanceResponsesView) {
       return _i8yevrne.CalendarSchedulingInstanceResponsesView.fromJson(data)
           as T;
@@ -7848,6 +7866,18 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _is.getType<_i63ky642.CalendarSchedulingDeliveryView?>()) {
       return (data != null
               ? _i63ky642.CalendarSchedulingDeliveryView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ihsj0hhk.CalendarSchedulingFutureCancelRequest?>()) {
+      return (data != null
+              ? _ihsj0hhk.CalendarSchedulingFutureCancelRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_irhn2ly4.CalendarSchedulingFutureRestoreRequest?>()) {
+      return (data != null
+              ? _irhn2ly4.CalendarSchedulingFutureRestoreRequest.fromJson(data)
               : null)
           as T;
     }
@@ -9386,6 +9416,10 @@ class Protocol extends _is.DatabaseSerializationManager
         'CalendarSchedulingDeliveryState',
       _i63ky642.CalendarSchedulingDeliveryView =>
         'CalendarSchedulingDeliveryView',
+      _ihsj0hhk.CalendarSchedulingFutureCancelRequest =>
+        'CalendarSchedulingFutureCancelRequest',
+      _irhn2ly4.CalendarSchedulingFutureRestoreRequest =>
+        'CalendarSchedulingFutureRestoreRequest',
       _i8yevrne.CalendarSchedulingInstanceResponsesView =>
         'CalendarSchedulingInstanceResponsesView',
       _ihlqfuoo.CalendarSchedulingMeetingRecord =>
@@ -9884,6 +9918,10 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'CalendarSchedulingDeliveryState';
       case _i63ky642.CalendarSchedulingDeliveryView():
         return 'CalendarSchedulingDeliveryView';
+      case _ihsj0hhk.CalendarSchedulingFutureCancelRequest():
+        return 'CalendarSchedulingFutureCancelRequest';
+      case _irhn2ly4.CalendarSchedulingFutureRestoreRequest():
+        return 'CalendarSchedulingFutureRestoreRequest';
       case _i8yevrne.CalendarSchedulingInstanceResponsesView():
         return 'CalendarSchedulingInstanceResponsesView';
       case _ihlqfuoo.CalendarSchedulingMeetingRecord():
@@ -10754,6 +10792,16 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (dataClassName == 'CalendarSchedulingDeliveryView') {
       return deserialize<_i63ky642.CalendarSchedulingDeliveryView>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarSchedulingFutureCancelRequest') {
+      return deserialize<_ihsj0hhk.CalendarSchedulingFutureCancelRequest>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarSchedulingFutureRestoreRequest') {
+      return deserialize<_irhn2ly4.CalendarSchedulingFutureRestoreRequest>(
         data['data'],
       );
     }

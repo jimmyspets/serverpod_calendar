@@ -14,6 +14,8 @@ enum CalendarPermission {
   cancelScheduling,
   cancelOccurrenceScheduling,
   restoreOccurrenceScheduling,
+  cancelFutureScheduling,
+  restoreFutureScheduling,
   reopenScheduling,
   readScheduling,
   readSchedulingResponses,

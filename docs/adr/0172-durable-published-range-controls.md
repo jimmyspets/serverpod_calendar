@@ -1,6 +1,6 @@
 # ADR 0172: Durable published range cancellation and restoration
 
-Status: **Proposed.** On 2026-11-04 the maintainer confirmed faithfully restorable anchors initially: reject an anchor with its own published single-occurrence override or individual cancellation. This policy confirmation does not yet approve the checkpoint, API, version, native-state or delivery mechanics below. Explicit agreement is required before implementation.
+Status: **Accepted by explicit maintainer agreement on 2026-11-04, including the grouped durable batch and model/API mechanics below.** The maintainer also confirmed faithfully restorable anchors initially: reject an anchor with its own published single-occurrence override or individual cancellation. Acceptance authorizes implementation; runtime and interoperability evidence remain separate.
 
 ## Context and evidence
 
@@ -8,7 +8,7 @@ Status: **Proposed.** On 2026-11-04 the maintainer confirmed faithfully restorab
 
 [RFC 5546 CANCEL](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.5) and [RFC 5545 recurrence identity](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.4.4) were consulted on 2026-11-04. The following restoration projection, conservative version floors, admission restrictions and storage are application policies. Synthetic tests will not establish external-client interoperability.
 
-## Proposed grouped scope
+## Approved grouped scope
 
 Implement explicit `cancelFutureAndNotify` and `restoreFutureAndNotify` together, including subsequent cycles, preserved individual cancellations, generated clients, host authorization, synthetic delivery and Flutter controls. Use only native-created organizer bindings with fixed host-approved organizer/recipients and supported recurring DATE/UTC/named-zone published values. Both published and native masters must be active for a new range command. Imported organizer adoption, recipient changes, arbitrary anchors, overlapping active cutoffs and partial suffix restoration remain required separate work.
 
@@ -16,7 +16,7 @@ Commands contain event UUID, expected native revision, command UUID and the exac
 
 At most one outgoing cutoff is active. While active, reject new Save and notify, individual controls, whole-series cancel/reopen and another range cancellation; private native edits remain available. Restoration is the supported exit. Retained exact retries still reauthorize and return their original result without requeueing or changing generation. After restoration, existing complete publication, individual controls and whole-series lifecycle must work with the new checkpoint, and another eligible range cancellation may follow. This grouping avoids implementing an irreversible outgoing control or approving each subsequent state separately.
 
-## Proposed faithful cancellation and restoration
+## Approved faithful cancellation and restoration
 
 Cancellation uses ADR 0171 against a revalidated unmasked active REQUEST basis. Include the primary range and every later explicit component in original order, including components moved across the cutoff. Preserve independent individual-cancellation state; an explicit redundant cancellation does not adopt or erase it. Retain the full active values privately for restoration. One complete bundle is one immutable publication and one delivery per fixed recipient.
 
@@ -26,13 +26,13 @@ Restoration queues one complete REQUEST using retained published values, with an
 
 Retain an added ordinary-anchor future identity in the publication projection ledger. Later Save and notify re-projects its effective current values under the existing reset policy without pinning native inheritance. Reject native pattern/profile/kind changes that make a retained identity orphaned or unrepresentable. Existing individual controls still reject future anchors. Restoration sends no private edits and does not claim to delete a remote exception record. Bundled recipient reconciliation and external-client evidence remain separate.
 
-## Proposed native-state ownership
+## Approved native-state ownership
 
 Use published values even if the exact original no longer exists in the current native draft. On cancellation, install the native cutoff only when its kind/zone/member match is exact and there is no pre-existing native cutoff. Otherwise leave native state unchanged and report the distinction. Never merge or replace a private cutoff to obtain a match.
 
 Record whether this publication installed the cutoff and the resulting native revision/state binding. Restoration may clear it only when that exact revision/state and cutoff still match. Any intervening accepted native edit, even a no-op that advances the revision, preserves the current native cutoff and drafts. This deliberately conservative rule needs no new native ownership column and prevents a later clear/re-cancel at the same original from being mistaken for publication-owned state. Restore the published suffix even when local cleanup cannot safely happen; disclose that local cancellation remains. No master lifecycle status or other occurrence flag changes implicitly. Native cutoff writes use the existing transactional protocol/query/free-busy/alarm behavior; preserved native drafts keep their existing effects.
 
-## Proposed version and response rules
+## Approved version and response rules
 
 Allocate outgoing versions in the active database transaction. Cancellation exceeds all retained published master/component/control versions and relevant current/final native protocol sequence bounds. Use actual whole-second database time, clamped only to known nondecreasing stamp bounds; overflow, unsupported dates and nonzero fractions reject atomically. These are conservative application floors, not universal RFC requirements.
 
@@ -40,7 +40,7 @@ Restoration advances the complete outgoing master and emitted components above t
 
 Reply resolution treats originals covered by the active cutoff as cancelled and unavailable for current participation changes, even if their unmasked basis remains stored. Prefix originals retain their effective component rules. After restoration, use the actual current master/range/single invitation version. Retain historical authenticated reply evidence under existing policy; never carry an older RSVP automatically onto a newer invitation or change native participation because a control was published.
 
-## Proposed existing-column checkpoint and model changes
+## Approved existing-column checkpoint and model changes
 
 Reuse organizer binding, immutable publication, delivery and attempt tables. No new SQL table, column, index, dependency or expanded retention is proposed. Add `rangeCancel`/`rangeRestore` publication kinds, immutable command DTOs and protected scheduling-view fields for active published cutoff and its original. Keep this distinct from a native cutoff and recipient-side source history. Add independent `cancelFutureScheduling`/`restoreFutureScheduling` operations and immutable host context for the exact control, current/final native state and complete outgoing message.
 
@@ -50,7 +50,7 @@ Preserve v1–v6 readers. Normalize supported existing state into detached curre
 
 Keep current 512 KiB snapshot/projection/payload ceilings, 64 shared retained original slots and 64 recipients, existing per-scope/outbox limits, lease/retry/expiry defaults and 30-day superseded terminal retention. The restoration anchor and any added explicit PERIOD projection consume slots; target/work/output validation is shared and bounded before allocation/commit. Capacity failure rejects the entire command without eviction, partial delivery or implicit history removal. Latest private active values remain while the organizer binding exists; existing parent deletion restrictions and scrubbing continue.
 
-## Proposed authority, atomicity and delivery
+## Approved authority, atomicity and delivery
 
 Require independent range authority plus scheduling read, full event/source disclosure and lifecycle permission, even if no native cutoff changes. Host checks receive trusted actor/scope, actual calendar/event/binding, the selected published original and separate native/published candidates. Approve the complete immutable outgoing message/digest and every fixed route at preliminary/final checks; preserve the declared coordinated versus external-check guarantees and their revocation race. Participant claims never establish authority.
 
@@ -62,10 +62,15 @@ Workers retain stable transport IDs and fenced leases, recheck current generatio
 
 Requiring a master-only reopen would not explicitly replace the range component. Enumerating the suffix cannot handle unbounded recurrences. Allowing a single-only anchor requires additional publication projection rules to avoid propagating its local timing/content. These alternatives remain separate design work. A normalized current-state checkpoint avoids repeated recursive snapshots but demands strict projection validation and regression coverage for every existing continuation. Strict native revision ownership may intentionally leave a local cutoff after remote restoration; the example must explain this rather than overwrite drafts.
 
-## Proposed acceptance and complete batch validation
+## Approved acceptance and complete batch validation
 
 Test DATE/UTC/exact aliases, DST gap/fold, finite/infinite rules, RDATE/PERIOD and EXDATE; ordinary/future anchors, rejected single/cancelled/colliding anchors; earlier/later moved exceptions; retained individual masks; source omissions/content/versions; restoration feasibility/slot failures before cancellation; and multiple cycles at same/different anchors. Prove no suffix timing/content changes merely from a restoration projection.
 
 Test native matched/missing/profile-divergent anchors, pre-existing cutoffs, intervening native edits/no-op writes/clear-recancel, local versus published flags, expiry/revocation, version overflow/corrections, denied preliminary/final/full-message authority, exact/no-op/mismatched retries, aggregate byte/work limits, corrupted v7 bindings and self-contained reads after predecessor pruning. Regress complete publication, individual controls, whole lifecycle and reply target versions after restoration; explicitly retain active-cutoff guards.
 
 Use focused VM/SDK checks while implementing. At batch end run formatting, fatal-info analysis, stable pinned generation, complete core/module/iCalendar VM and Chrome suites, migrations/fresh and existing synthetic storage, generated-client/feed/JWT regressions, actual two-host concurrent commands/workers and process-loss recovery, and connected Flutter cancel/restore/retry/draft-warning journeys. Record actual results; no SQL change is expected, and no migration should be invented. Commit/push runtime code only once the entire approved group passes. Full exact-head hosted repository checks remain a readiness gate; real mail and external-client interoperability are not inferred.
+
+
+## Implementation boundary
+
+See [published range controls](../published-range-controls.md) and [actual validation](../scaffold-validation.md). Outgoing v7 separates actual native state from expected published-native comparison and flattens existing ordinary/individual facts without embedding predecessor v7 or v6 envelopes. Generated command/view changes add no SQL schema or dependency change. Local grouped checks passed; full exact-head hosted readiness is recorded separately. Approval or synthetic tests alone establish no external-client success.
