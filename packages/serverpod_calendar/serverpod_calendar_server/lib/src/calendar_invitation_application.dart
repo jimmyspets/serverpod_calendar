@@ -67,6 +67,23 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       where: (t) => t.linkId.equals(link.id!),
       transaction: tx,
     );
+    if (link.bundledRequest) {
+      final occurrence = await _occRow(link.id!, tx);
+      if (row != null || occurrence != null) {
+        throw _failure(CalendarFailureCode.unavailable);
+      }
+      final baseline = event.data.importBaseline!;
+      final data = jsonDecode(baseline.canonicalValue) as Map<String, dynamic>;
+      final edits = data['edits'] as Map<String, dynamic>?;
+      if (edits == null ||
+          ((edits['singles'] as List?)?.length ?? 0) +
+                  ((edits['future'] as List?)?.length ?? 0) <
+              1) {
+        throw _failure(CalendarFailureCode.unavailable);
+      }
+      _invValidateMasterCheckpoint(link, event, null, baseline);
+      return null;
+    }
     final occurrence = await _occRow(link.id!, tx);
     final occurrenceState = occurrence == null
         ? null
@@ -170,7 +187,11 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         ? event.data.importBaseline!
         : CalendarEventImportBaseline.fromJson(state['masterBaseline']);
     return CalendarInvitationApplicationState(
-      kind: r?.kind ?? CalendarInvitationSourceKind.request,
+      kind:
+          r?.kind ??
+          (link.bundledRequest
+              ? CalendarInvitationSourceKind.requestBundle
+              : CalendarInvitationSourceKind.request),
       linkId: link.id!,
       revision: r?.revision ?? 0,
       invitationId: r?.invitationId ?? link.invitationId,

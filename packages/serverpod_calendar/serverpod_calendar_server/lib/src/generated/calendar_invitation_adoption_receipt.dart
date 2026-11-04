@@ -17,6 +17,7 @@ abstract class CalendarInvitationAdoptionReceipt
     implements _is.SerializableModel, _is.ProtocolSerialization {
   const CalendarInvitationAdoptionReceipt._({
     required this.id,
+    bool? bundledRequest,
     required this.invitationId,
     required this.sourceId,
     required this.calendarId,
@@ -24,10 +25,11 @@ abstract class CalendarInvitationAdoptionReceipt
     required this.eventRevision,
     required this.invitationRevision,
     required this.adoptedAt,
-  });
+  }) : bundledRequest = bundledRequest ?? false;
 
   const factory CalendarInvitationAdoptionReceipt({
     required _is.UuidValue id,
+    bool? bundledRequest,
     required _is.UuidValue invitationId,
     required _is.UuidValue sourceId,
     required _is.UuidValue calendarId,
@@ -42,6 +44,9 @@ abstract class CalendarInvitationAdoptionReceipt
   ) {
     return CalendarInvitationAdoptionReceipt(
       id: _is.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
+      bundledRequest: jsonSerialization['bundledRequest'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(jsonSerialization['bundledRequest']),
       invitationId: _is.UuidValueJsonExtension.fromJson(
         jsonSerialization['invitationId'],
       ),
@@ -61,6 +66,8 @@ abstract class CalendarInvitationAdoptionReceipt
       ),
     );
   }
+
+  final bool bundledRequest;
 
   final _is.UuidValue id;
 
@@ -83,6 +90,7 @@ abstract class CalendarInvitationAdoptionReceipt
   @_is.useResult
   CalendarInvitationAdoptionReceipt copyWith({
     _is.UuidValue? id,
+    bool? bundledRequest,
     _is.UuidValue? invitationId,
     _is.UuidValue? sourceId,
     _is.UuidValue? calendarId,
@@ -104,6 +112,11 @@ abstract class CalendarInvitationAdoptionReceipt
                   id,
                 ) ||
                 other.id == id) &&
+            (identical(
+                  other.bundledRequest,
+                  bundledRequest,
+                ) ||
+                other.bundledRequest == bundledRequest) &&
             (identical(
                   other.invitationId,
                   invitationId,
@@ -146,6 +159,7 @@ abstract class CalendarInvitationAdoptionReceipt
     return Object.hash(
       runtimeType,
       id,
+      bundledRequest,
       invitationId,
       sourceId,
       calendarId,
@@ -161,6 +175,7 @@ abstract class CalendarInvitationAdoptionReceipt
     return {
       '__className__': 'serverpod_calendar.CalendarInvitationAdoptionReceipt',
       'id': id.toJson(),
+      'bundledRequest': bundledRequest,
       'invitationId': invitationId.toJson(),
       'sourceId': sourceId.toJson(),
       'calendarId': calendarId.toJson(),
@@ -176,6 +191,7 @@ abstract class CalendarInvitationAdoptionReceipt
     return {
       '__className__': 'serverpod_calendar.CalendarInvitationAdoptionReceipt',
       'id': id.toJson(),
+      'bundledRequest': bundledRequest,
       'invitationId': invitationId.toJson(),
       'sourceId': sourceId.toJson(),
       'calendarId': calendarId.toJson(),
@@ -196,6 +212,7 @@ class _CalendarInvitationAdoptionReceiptImpl
     extends CalendarInvitationAdoptionReceipt {
   const _CalendarInvitationAdoptionReceiptImpl({
     required _is.UuidValue id,
+    bool? bundledRequest,
     required _is.UuidValue invitationId,
     required _is.UuidValue sourceId,
     required _is.UuidValue calendarId,
@@ -205,6 +222,7 @@ class _CalendarInvitationAdoptionReceiptImpl
     required DateTime adoptedAt,
   }) : super._(
          id: id,
+         bundledRequest: bundledRequest,
          invitationId: invitationId,
          sourceId: sourceId,
          calendarId: calendarId,
@@ -220,6 +238,7 @@ class _CalendarInvitationAdoptionReceiptImpl
   @override
   CalendarInvitationAdoptionReceipt copyWith({
     _is.UuidValue? id,
+    bool? bundledRequest,
     _is.UuidValue? invitationId,
     _is.UuidValue? sourceId,
     _is.UuidValue? calendarId,
@@ -230,6 +249,7 @@ class _CalendarInvitationAdoptionReceiptImpl
   }) {
     return CalendarInvitationAdoptionReceipt(
       id: id ?? this.id,
+      bundledRequest: bundledRequest ?? this.bundledRequest,
       invitationId: invitationId ?? this.invitationId,
       sourceId: sourceId ?? this.sourceId,
       calendarId: calendarId ?? this.calendarId,

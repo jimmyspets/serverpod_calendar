@@ -15,3 +15,4 @@ export 'src/invitation_runtime.dart';
 export 'src/invitation_response_runtime.dart';
 export 'src/invitation_occurrence_values.dart';
 export 'src/published_range_cancellation_values.dart';
+export 'src/invitation_bundle_values.dart';

@@ -280,8 +280,11 @@ EventWireProjection eventWireProjection(
   return (content: content, edits: edits, protocolState: state);
 }
 
-EventStorageProposal eventStorageProposal(IcalendarEventSeries source) {
-  final value = eventWireProjection(source);
+EventStorageProposal eventStorageProposal(
+  IcalendarEventSeries source, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
+  final value = eventWireProjection(source, sharedWorkBudget: sharedWorkBudget);
   return EventStorageProposal._(
     source.master.uid,
     value.content,
@@ -292,6 +295,7 @@ EventStorageProposal eventStorageProposal(IcalendarEventSeries source) {
       value.content,
       value.edits,
       value.protocolState,
+      sharedWorkBudget: sharedWorkBudget,
     ),
   );
 }
