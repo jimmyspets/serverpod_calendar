@@ -112,10 +112,12 @@ IcalendarSchedulingMessage parseIcalendarSchedulingMessage(
   List<int> bytes, {
   IcalendarSyntaxLimits syntaxLimits = const IcalendarSyntaxLimits(),
   IcalendarComponentLimits limits = const IcalendarComponentLimits(),
+  RecurrenceWorkBudget? sharedWorkBudget,
 }) => validateIcalendarSchedulingMessage(
   parseIcalendarSyntax(bytes, limits: syntaxLimits),
   syntaxLimits: syntaxLimits,
   limits: limits,
+  sharedWorkBudget: sharedWorkBudget,
 );
 
 /// One source UID; recurring and detached components are distinct from import.
@@ -123,6 +125,7 @@ IcalendarSchedulingMessage validateIcalendarSchedulingMessage(
   IcalendarSyntaxDocument source, {
   IcalendarSyntaxLimits syntaxLimits = const IcalendarSyntaxLimits(),
   IcalendarComponentLimits limits = const IcalendarComponentLimits(),
+  RecurrenceWorkBudget? sharedWorkBudget,
 }) {
   limits.validate();
   // Bounds manually built trees too. Syntax collections are immutable.
@@ -168,7 +171,7 @@ IcalendarSchedulingMessage validateIcalendarSchedulingMessage(
       'DECLINECOUNTER' => IcalendarSchedulingMethod.declineCounter,
       _ => componentFail(IcalendarComponentError.unsupportedProperty),
     };
-    final budget = ComponentBudget(limits);
+    final budget = ComponentBudget(limits, sharedWorkBudget: sharedWorkBudget);
     final zones = <String, IcalendarValidatedTimeZone>{};
     final rawEvents = <IcalendarSyntaxComponent>[];
     for (final c in calendar.entries.whereType<IcalendarSyntaxComponent>()) {

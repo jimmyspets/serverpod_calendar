@@ -1,6 +1,6 @@
 # ADR 0171: Pure published range-cancellation bundles
 
-Status: **Proposed; explicit maintainer agreement required before implementation.** This is a pure outgoing-message prerequisite. It does not approve a publication checkpoint, database/API change, native cancellation, restoration workflow or delivery.
+Status: **Accepted by explicit maintainer agreement on 2026-11-04, including the complete pure bundle/value/limit contract.** This is a pure outgoing-message prerequisite. It does not approve a publication checkpoint, database/API change, native cancellation, restoration workflow or delivery.
 
 ## Context and evidence
 
@@ -10,7 +10,7 @@ ADR 0170 completes the scoped repeated incoming source controls. The roadmap nex
 
 The confirmed native/incoming policy cancels every original in the suffix, including moved exceptions. For outgoing publication, propose conservatively covering later explicit components as well as the recurrence suffix in one CANCEL message. This explicit coverage is an application projection, not a claim that every receiver requires redundant components. A pure batch establishes and tests that message boundary before choosing durable control/restoration mechanics.
 
-## Proposed pure boundary
+## Approved pure boundary
 
 Add a separate pure helper and immutable result in the existing calendar server package's value/adaptation layer, independent of Session, policy adapters, SQL, clocks, workers and Flutter. Input is a supported active REQUEST basis containing exactly one recurring master and its supported occurrence components, an exact original point, an explicit proposed cancellation SEQUENCE/UTC DTSTAMP, and optional trusted lower sequence/stamp bounds for history absent from the supplied basis.
 
@@ -20,7 +20,7 @@ Require explicit source SEQUENCE and DTSTAMP on every basis component for this b
 
 Validate the selected original against the underlying supported recurrence set, preserving DATE/UTC/exact named-zone identity, exclusions, explicit earlier inclusions and PERIOD starts. Use original civil identity, never a moved start or an instant guessed to be equivalent. An exhausted membership scan is unavailable/limited, not absence or partial success. Reject a basis whose single/future identities collide at one original until that combination has its own supported profile.
 
-## Proposed complete CANCEL projection
+## Approved complete CANCEL projection
 
 Emit one deterministic METHOD:CANCEL document:
 
@@ -33,7 +33,7 @@ Use the existing pinned-zone writer for only the named definitions needed by emi
 
 Validate and serialize the entire output through the existing pure scheduling codec. Return the immutable validated message, a detached ordered target manifest and comparison bounds. No partial bundle is returned. Successful parsing/serialization proves only the selected wire profile; the current recipient runtime still rejects bundled application without a separately reviewed reconciliation contract.
 
-## Proposed version, limits and trust rules
+## Approved version, limits and trust rules
 
 Use one explicit cancellation version across this first bundle. Its sequence must exceed the maximum of **all** supplied master/occurrence sequences and the optional historical lower bound, including components before the selected anchor. Its whole-second UTC stamp must be nondecreasing against all supplied component stamps and the optional stamp bound. These conservative whole-basis floors are proposed application policy, not universal RFC requirements. Preserve input versions/omissions/content; never allocate a sequence, fabricate database time, wrap overflow or normalize fractions. Lower bounds cannot be treated as verified historical facts by later callers.
 
@@ -45,12 +45,17 @@ No SQL table/column/index, generated model/endpoint, dependency, checkpoint vers
 
 A single range component is smaller but does not explicitly cover separately published exceptions in this conservative projection. Enumerating generated instances cannot represent an unbounded suffix. Separate delivery messages would add ordering/uncertainty requirements to the current global generation fence. The proposed one-message bundle covers the finite explicit exception set with bounded work, while retaining clear all-or-nothing limits.
 
-Durable cancel/restore, whole-series composition, repeated outgoing cycles, exact receipts, published reply-target invalidation and native draft/alarm effects still need one subsequent concrete grouped contract. Restoration must faithfully clear the recipient's range state while preserving individual cancellations and current unpublished drafts; do not assume a newer master alone removes a remote exception. This proposal deliberately creates no durable state that lacks an approved restoration path. RANGE replies, other selected methods, transport trust, real mail and external-client evidence remain required separately.
+Durable cancel/restore, whole-series composition, repeated outgoing cycles, exact receipts, published reply-target invalidation and native draft/alarm effects still need one subsequent concrete grouped contract. Restoration must faithfully clear the recipient's range state while preserving individual cancellations and current unpublished drafts; do not assume a newer master alone removes a remote exception. This batch deliberately creates no durable state that lacks an approved restoration path. RANGE replies, other selected methods, transport trust, real mail and external-client evidence remain required separately.
 
-## Proposed grouped validation
+## Approved grouped validation
 
 Cover DATE/UTC/named-zone bases; ordinary/explicit gap/fold originals, exact aliases, earlier RDATE/PERIOD starts and exclusions; ordinary, moved single and later-future targets; exceptions moved across the cutoff in both directions; anchor-component deduplication; preserved input versions/text/participants/alarms; and detached immutable output ownership. Test deterministic complete serialization/parse round trips without inferring recipient application.
 
 Cover missing/wrong method/master/UID/profile/roster/version, invalid optional lower bounds, equal/older/maximum sequences, source clocks/corrections, fractions, exclusive boundaries, raw source/output/zone/component/target/work limits and one shared aggregate budget. Reject the whole operation on any unsupported or over-limit target, including an anchor that would exceed the 64-target profile. Keep existing pure and durable scheduling regressions; explicitly prove that new REQUEST publication with native future cancellation stays guarded.
 
 Use focused pure VM tests during development, then formatting, full fatal-info analysis, complete module VM/Chrome and directly affected existing native guard checks at batch completion. Rerun core/iCalendar suites if their source/dependencies change or failures warrant it; full exact-head repository CI remains a readiness gate. Commit/push code only after the complete approved pure batch. No database, Flutter, delivery or real-client success is established by these pure tests.
+
+
+## Scoped implementation
+
+See [the pure helper profile](../published-range-cancellation-bundles.md) and [actual validation](../scaffold-validation.md). The helper accepts a claimed REQUEST syntax document so inherited claims can use the existing required-field projection before strict scheduling validation. Shared-budget parameters are threaded through the scheduling codec and field projector; no database or native runtime guard is changed.

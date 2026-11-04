@@ -189,7 +189,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0170](0170-bounded-repeated-source-range-cycles.md) | Bounded repeated source range cycles | Accepted; flat v12 retained cycle evidence, repeated controls/composition and protected active-cutoff view flags |
 
-| [0171](0171-published-range-cancellation-bundles.md) | Pure published range-cancellation bundles | Proposed; one bounded CANCEL bundle covering the suffix and later explicit components; no durable/runtime changes |
+| [0171](0171-published-range-cancellation-bundles.md) | Pure published range-cancellation bundles | Accepted; pure bounded CANCEL bundle covering the suffix/later explicit components and shared validation budgets; no durable/runtime changes |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
