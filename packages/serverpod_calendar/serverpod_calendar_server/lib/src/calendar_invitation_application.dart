@@ -514,6 +514,10 @@ extension CalendarInvitationApplicationOperations on CalendarService {
                     event: event,
                     row: occurrenceRow,
                     state: occurrenceState,
+                    masterSource: _cycleMasterSource(
+                      source!,
+                      recipient.calendarAddress,
+                    ),
                     previousMaster: await _invCheckpoint(link, event, tx),
                     master: null,
                     masterBaseline: masterBaseline,
@@ -649,6 +653,9 @@ extension CalendarInvitationApplicationOperations on CalendarService {
           : source?.normalizedSource,
       hasAcceptedRangeCancellation: _occHasRangeCancellation(occurrenceState),
       hasAcceptedRangeRestoration: _occHasRangeRestoration(occurrenceState),
+      hasActiveAcceptedRangeCancellation: _occActiveCancellation(
+        occurrenceState,
+      ),
       occurrenceCompositionBlocked: compositionBlocked,
       occurrenceRevision: occurrenceRow?.revision ?? 0,
       canApplyCancellation:
@@ -686,9 +693,12 @@ extension CalendarInvitationApplicationOperations on CalendarService {
   CalendarEventImportMember _invCompose(
     CalendarEventImportMember master,
     _Event event,
-    Map<String, dynamic> state,
-  ) => _eventProtocolValue(() {
-    final work = RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
+    Map<String, dynamic> state, {
+    RecurrenceWorkBudget? sharedWorkBudget,
+  }) => _eventProtocolValue(() {
+    final work =
+        sharedWorkBudget ??
+        RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
     final accepted = _occAccepted(event.data.importBaseline!);
     final targets = (state['targets'] as List).cast<Map<String, dynamic>>();
     Set<String> keysFor(bool range) => targets
@@ -1126,6 +1136,10 @@ extension CalendarInvitationApplicationOperations on CalendarService {
                   event: event,
                   row: occurrenceRow,
                   state: occurrenceState!,
+                  masterSource: _cycleMasterSource(
+                    source,
+                    recipient.calendarAddress,
+                  ),
                   previousMaster: checkpoint,
                   master: next,
                   masterBaseline: masterBaseline,
@@ -1159,6 +1173,27 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         ),
       );
       if (nextOccurrenceRow != null) {
+        if (_occCycles(occurrenceState)) {
+          // A master edit can increase historical replay work too. Prove the
+          // complete new root is readable under the same aggregate ceiling
+          // before committing either the master or its composed checkpoint.
+          _occDecode(
+            link,
+            _Event(
+              event.identity.copyWith(revision: next.eventRevision),
+              event.data.copyWith(
+                content: member.content,
+                timingOverrides: member.timingOverrides,
+                protocolState: member.protocolState,
+                importBaseline: baseline,
+                updatedAt: now,
+              ),
+              event.parent,
+            ),
+            nextOccurrenceRow,
+            next,
+          );
+        }
         await _occQuota(recipient, nextOccurrenceRow, tx);
       }
       final proposed = CalendarEventPolicySnapshot(

@@ -6,6 +6,14 @@ extension CalendarInvitationRestorationComposition on CalendarService {
     Map<String, dynamic> state, {
     bool allowCancelled = false,
   }) {
+    if (_occCycles(state)) {
+      _cycleCheckAnchors(member, state);
+      if (member.content.status == CalendarEventStatus.cancelled &&
+          !allowCancelled) {
+        throw ArgumentError('Inactive composition');
+      }
+      return;
+    }
     if (member.content.status == CalendarEventStatus.cancelled &&
             !allowCancelled ||
         member.timingOverrides?.cancelledFrom != null ||
@@ -53,7 +61,21 @@ extension CalendarInvitationRestorationComposition on CalendarService {
     required CalendarEventImportBaseline baseline,
     required CalendarEventImportMember member,
     required CalendarInvitationSourceKind kind,
+    Map<String, dynamic>? masterSource,
   }) {
+    if (_occCycles(state)) {
+      return _cycleCompose(
+        link: link,
+        event: event,
+        state: state,
+        master: master,
+        masterBaseline: masterBaseline,
+        baseline: baseline,
+        member: member,
+        kind: kind,
+        masterSource: masterSource!,
+      );
+    }
     if ({10, 11}.contains(state['version'])) {
       return _occRestoredTargetsState(
         link: link,
@@ -117,13 +139,18 @@ extension CalendarInvitationRestorationComposition on CalendarService {
     CalendarInvitationLinkRecord link,
     _Event event,
     CalendarInvitationOccurrenceApplicationRecord row,
-    Map<String, dynamic> state,
-  ) {
+    Map<String, dynamic> state, {
+    RecurrenceWorkBudget? sharedWorkBudget,
+  }) {
     final frozen = state['frozenRestoration'] as Map<String, dynamic>;
     final descriptor = frozen['checkpoint'] as Map<String, dynamic>;
     final original = descriptor['state'] as Map<String, dynamic>;
     final baseline = CalendarEventImportBaseline.fromJson(frozen['baseline']);
-    validateEventImportBaseline(baseline, link.uid);
+    validateEventImportBaseline(
+      baseline,
+      link.uid,
+      sharedWorkBudget: sharedWorkBudget,
+    );
     final recordedMaster = frozen['master'] == null
         ? null
         : CalendarInvitationApplicationRecord.fromJson(frozen['master']);
@@ -157,6 +184,7 @@ extension CalendarInvitationRestorationComposition on CalendarService {
         stateJson: jsonEncode(original),
       ),
       recordedMaster,
+      sharedWorkBudget: sharedWorkBudget,
     );
     _invValidateMasterCheckpoint(
       link,

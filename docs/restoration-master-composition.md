@@ -1,5 +1,8 @@
 # Master updates after source restoration
 
+Later [ADR 0170](adr/0170-bounded-repeated-source-range-cycles.md) implements [bounded repeated source range cycles](bounded-source-range-cycles.md). Its verified v12 path supersedes earlier temporary repeated-cycle guards below while preserving strict legacy reads/retries and all stated source, authority and retention boundaries. Historical validation remains evidence for its original batch.
+
+
 [Accepted ADR 0165](adr/0165-master-updates-after-source-range-restoration.md) extends the explicit master `applyUpdate` workflow after [source range restoration](source-range-restoration.md). Eligible active master REQUESTs preserve the cleared cutoff state and individual cancellations. Receiving a notice still changes no calendar. Whole-series CANCEL/reopening and new single/range transitions remain guarded.
 
 The entire current series must match its verified expected restored state. Local timing, content, protocol, exception or cutoff edits are conflicts. Compose the incoming master with retained canonical single/future components and their independent versions, then require the exact restoration original to remain a member in the same DATE/UTC/named-zone profile. Earlier inclusions, PERIOD additions and EXDATE precedence apply. Orphaned/excluded originals, profile changes, component collisions, a proposed CANCELLED master or exhausted work reject without partial effects.

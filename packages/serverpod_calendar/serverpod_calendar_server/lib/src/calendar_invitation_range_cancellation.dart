@@ -1,9 +1,10 @@
 part of 'calendar_module.dart';
 
 bool _occHasRangeCancellation(Map<String, dynamic>? state) =>
-    {4, 5, 6, 7, 8, 9, 10, 11}.contains(state?['version']);
+    {4, 5, 6, 7, 8, 9, 10, 11, 12}.contains(state?['version']);
 
 Map<String, dynamic> _occLatestTarget(Map<String, dynamic> state) {
+  if (_occCycles(state)) return state['latestTarget'] as Map<String, dynamic>;
   if (_occHasRangeRestoration(state) && !{10, 11}.contains(state['version'])) {
     return state['restoration'] as Map<String, dynamic>;
   }
@@ -19,16 +20,20 @@ Map<String, dynamic> _occLatestTarget(Map<String, dynamic> state) {
 }
 
 // A native comparison only; this value is never accepted as an import baseline.
-String _occNativeDigest(String uid, _OccurrenceAccepted value) =>
-    _invitationHash([
-      'range-cancel-native-v4',
-      eventImportBaseline(
-        uid,
-        value.content,
-        value.edits,
-        value.protocol,
-      ).canonicalValue,
-    ]);
+String _occNativeDigest(
+  String uid,
+  _OccurrenceAccepted value, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) => _invitationHash([
+  'range-cancel-native-v4',
+  eventImportBaseline(
+    uid,
+    value.content,
+    value.edits,
+    value.protocol,
+    sharedWorkBudget: sharedWorkBudget,
+  ).canonicalValue,
+]);
 
 String _occCancellationBinding(
   CalendarInvitationLinkRecord link,
@@ -55,13 +60,18 @@ extension CalendarInvitationRangeCancellationOperations on CalendarService {
     CalendarInvitationLinkRecord link,
     _Event event,
     CalendarInvitationOccurrenceApplicationRecord row,
-    Map<String, dynamic> state,
-  ) {
+    Map<String, dynamic> state, {
+    RecurrenceWorkBudget? sharedWorkBudget,
+  }) {
     final composed = {5, 6}.contains(state['version']);
     final basis = composed
         ? CalendarEventImportBaseline.fromJson(state['cancellationBasis'])
         : event.data.importBaseline!;
-    validateEventImportBaseline(basis, link.uid);
+    validateEventImportBaseline(
+      basis,
+      link.uid,
+      sharedWorkBudget: sharedWorkBudget,
+    );
     final layer = state['rangeCancellation'] as Map<String, dynamic>;
     final original = CalendarEventTiming.fromJson(layer['original']);
     final text = layer['source'] as String;
@@ -88,12 +98,13 @@ extension CalendarInvitationRangeCancellationOperations on CalendarService {
       protocolState: accepted.protocol,
       message: _invParse(utf8.encode(text), stored: true),
       recipientAddress: layer['recipientAddress'] as String,
+      sharedWorkBudget: sharedWorkBudget,
     );
     final expected = _occNativeDigest(link.uid, (
       content: projection.content,
       edits: projection.timingOverrides,
       protocol: projection.protocolState,
-    ));
+    ), sharedWorkBudget: sharedWorkBudget);
     if (!_replySamePoint(original, projection.originalStart) ||
         jsonEncode(_occOrdered(version.toJson())) !=
             jsonEncode(_occOrdered(projection.cancellationVersion.toJson())) ||
@@ -116,13 +127,14 @@ extension CalendarInvitationRangeCancellationOperations on CalendarService {
           protocolState: current.protocol,
         ),
         state,
+        sharedWorkBudget: sharedWorkBudget,
       );
       if (state['expectedNativeDigest'] !=
               _occNativeDigest(link.uid, (
                 content: candidate.content,
                 edits: candidate.timingOverrides,
                 protocol: candidate.protocolState,
-              )) ||
+              ), sharedWorkBudget: sharedWorkBudget) ||
           state['compositionDigest'] != _occCompositionDigest(link, state)) {
         throw StateError('Invalid current cancellation composition');
       }
@@ -131,11 +143,15 @@ extension CalendarInvitationRangeCancellationOperations on CalendarService {
 
   CalendarEventImportMember _occMaskMember(
     CalendarEventImportMember member,
-    Map<String, dynamic> state,
-  ) {
-    if (_occHasRangeRestoration(state)) return member;
+    Map<String, dynamic> state, {
+    RecurrenceWorkBudget? sharedWorkBudget,
+  }) {
+    if (!_occActiveCancellation(state)) return member;
     final original = CalendarEventTiming.fromJson(
-      _occLatestTarget(state)['original'],
+      (_occCycles(state)
+          ? (state['cycles'] as List).last['cancellation']
+                as Map<String, dynamic>
+          : _occLatestTarget(state))['original'],
     );
     final edits = validateEventOverrides(
       member.content,
@@ -144,7 +160,9 @@ extension CalendarInvitationRangeCancellationOperations on CalendarService {
         future: member.timingOverrides?.future ?? [],
         cancelledFrom: original,
       ),
-      sharedWorkBudget: RecurrenceWorkBudget(maxWork: eventMaxCandidateWork),
+      sharedWorkBudget:
+          sharedWorkBudget ??
+          RecurrenceWorkBudget(maxWork: eventMaxCandidateWork),
     );
     final protocol = validateEventProtocolState(
       member.protocolState,
@@ -280,6 +298,72 @@ extension CalendarInvitationRangeCancellationOperations on CalendarService {
     Map<String, dynamic>? state,
   ) async {
     if (!_occHasRangeCancellation(state)) return;
+    if (_occCycles(state)) {
+      await _occAuthorizeCancellation(
+        actor,
+        recipient,
+        tx,
+        phase,
+        link,
+        event,
+        row,
+        state!['_legacyState'],
+      );
+      final layers = <Map<String, dynamic>>[
+        state['masterSource'],
+        for (final c in state['cycles'] as List) ...[
+          c['cancellation'],
+          c['cancellationBasis']['masterSource'],
+          if (c['restorationBasis'] != null)
+            c['restorationBasis']['masterSource'],
+          if (c['restoration'] != null) c['restoration'],
+          ...((c['cancellationBasis']['targets'] as List)
+              .cast<Map<String, dynamic>>()),
+          if (c['restorationBasis'] != null)
+            ...((c['restorationBasis']['targets'] as List)
+                .cast<Map<String, dynamic>>()),
+        ],
+        ...(state['targets'] as List).cast<Map<String, dynamic>>(),
+      ];
+      // Legacy proof can retain a canonical source later superseded before
+      // entry into v12. Its raw body is still protected historical content.
+      void historicalSources(Object? value) {
+        if (value is Map<String, dynamic>) {
+          if (value['key'] is String &&
+              value['invitationId'] is String &&
+              value['sourceId'] is String &&
+              value['source'] is String &&
+              value['digest'] is String) {
+            layers.add(value);
+          }
+          for (final child in value.values) {
+            historicalSources(child);
+          }
+        } else if (value is List) {
+          for (final child in value) {
+            historicalSources(child);
+          }
+        }
+      }
+
+      historicalSources(state['frozenRestoration']['checkpoint']['state']);
+      final seen = <String>{};
+      for (final layer in layers) {
+        if (seen.add('${layer['sourceId']}:${layer['digest']}')) {
+          await _occAuthorizeCancellation(
+            actor,
+            recipient,
+            tx,
+            phase,
+            link,
+            event,
+            row,
+            {'version': 4, 'rangeCancellation': layer},
+          );
+        }
+      }
+      return;
+    }
     if (_occHasRangeRestoration(state)) {
       await _occAuthorizeCancellation(
         actor,
@@ -341,7 +425,9 @@ extension CalendarInvitationRangeCancellationOperations on CalendarService {
       CalendarInvitationOperation.readSummary,
       CalendarInvitationOperation.readSource,
       CalendarInvitationOperation.readLink,
-      (layer['key'] as String).startsWith('range-v1:')
+      layer['key'] == 'master'
+          ? CalendarInvitationOperation.readApplication
+          : (layer['key'] as String).startsWith('range-v1:')
           ? CalendarInvitationOperation.readRangeApplication
           : CalendarInvitationOperation.readOccurrenceApplication,
     }) {

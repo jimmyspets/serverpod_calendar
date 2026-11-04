@@ -42,6 +42,37 @@ CalendarInvitationRangeRecancellationProjection recancel(
 );
 
 void main() {
+  test(
+    'shared replay work is cumulative and cannot widen the selected ceiling',
+    () {
+      final b = basis(), message = cancellation(sequence: 11);
+      CalendarInvitationRangeRecancellationProjection run(
+        RecurrenceWorkBudget budget,
+      ) => projectInvitationRangeRecancellation(
+        protocolUid: b.protocolUid,
+        content: b.content,
+        timingOverrides: b.edits,
+        protocolState: b.protocolState,
+        previousRestorationVersion: previous(),
+        message: message,
+        recipientAddress: 'mailto:alice@example.invalid',
+        sharedWorkBudget: budget,
+      );
+      final measured = RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
+      run(measured);
+      final first = measured.used;
+      expect(first, greaterThan(0));
+      run(measured);
+      expect(measured.used, greaterThan(first));
+      final bounded = RecurrenceWorkBudget(maxWork: first);
+      run(bounded);
+      expect(() => run(bounded), throwsA(isA<RecurrenceLimitException>()));
+      expect(
+        () => run(RecurrenceWorkBudget(maxWork: eventMaxCandidateWork + 1)),
+        throwsArgumentError,
+      );
+    },
+  );
   for (final profile in ['date', 'utc', 'Europe/Stockholm']) {
     final date = profile == 'date',
         zone = profile == 'Europe/Stockholm' ? profile : null;

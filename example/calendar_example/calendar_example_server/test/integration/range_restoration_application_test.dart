@@ -216,7 +216,7 @@ void main() {
     for (final profile in ['date', 'utc', 'Europe/Stockholm']) {
       for (final version in [4, 5, 6]) {
         test(
-          '$profile v$version to v7 preserves canonical values and guarded retries',
+          '$profile v$version to v7 preserves canonical values and rejects superseded cancellation retries',
           () async {
             final date = profile == 'date',
                 zone = profile == 'Europe/Stockholm' ? profile : null;
@@ -279,7 +279,7 @@ void main() {
             );
             await expectLater(
               service.applyInvitationRangeCancellation(originalCancel),
-              failure(CalendarFailureCode.dependencyConflict),
+              failure(CalendarFailureCode.staleRevision),
             );
             if (masterInput != null) {
               expect(
