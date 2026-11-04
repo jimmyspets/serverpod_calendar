@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
+    show Uuid;
+
 final class _Probe {
   _Probe(this.process, this.lines, this.log);
   final Process process;
@@ -142,13 +145,76 @@ Future<void> main(List<String> args) async {
       );
       return;
     }
-    final methods = args.contains('--mime-only')
+    if (args.isEmpty ||
+        args.contains('--range-commands') ||
+        args.contains('--range-group')) {
+      for (final restore in [false, true]) {
+        for (final pause in ['before', 'after']) {
+          final fixture = (await b.command({
+            'command': 'seed',
+            'method': 'REQUEST',
+          })) as Map<String, dynamic>;
+          fixtures.add(fixture);
+          await b.command({'command': 'work'});
+          if (restore) {
+            await b.command({
+              'command': 'range-command',
+              ...fixture,
+              'key': Uuid().v4(),
+              'revision': 2,
+            });
+            await b.command({'command': 'work'});
+          }
+          final command = {
+            'command': 'range-command',
+            ...fixture,
+            'restore': restore,
+            'revision': restore ? 3 : 2,
+            'key': Uuid().v4(),
+          };
+          a.submitted = Completer<void>();
+          final lost = a
+              .command({...command, 'pause': pause})
+              .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+          await a.submitted!.future.timeout(const Duration(seconds: 30));
+          await a.stop();
+          await lost;
+          final recovered = (await b.command(command)) as Map<String, dynamic>;
+          if (recovered['publications'] != (restore ? 3 : 2) ||
+              recovered['unchanged'] != (pause == 'after') ||
+              recovered['revision'] != (restore ? 4 : 3)) {
+            throw StateError(
+              'Range command loss failed atomic receipt recovery',
+            );
+          }
+          await b.command({'command': 'work'});
+          a = await start('a-range-command-$restore-$pause', 18580);
+        }
+      }
+      stdout.writeln(
+        'PASS: outgoing range cancel/restore actual process loss before transaction commit and after commit, exact receipt recovery and atomic single-intent writes.',
+      );
+      if (args.contains('--range-commands')) return;
+    }
+    final methods =
+        args.contains('--range-only') || args.contains('--range-group')
+        ? ['RANGE_CANCEL', 'RANGE_RESTORE']
+        : args.contains('--mime-only')
         ? ['REQUEST', 'CANCEL']
         : args.contains('--projected-only')
         ? ['REOPEN', 'MASKRESTORE']
         : args.contains('--restore-only')
         ? ['RESTORE']
-        : ['REQUEST', 'CANCEL', 'INSTANCE', 'RESTORE', 'REOPEN', 'MASKRESTORE'];
+        : [
+            'REQUEST',
+            'CANCEL',
+            'INSTANCE',
+            'RESTORE',
+            'REOPEN',
+            'MASKRESTORE',
+            'RANGE_CANCEL',
+            'RANGE_RESTORE',
+          ];
     for (final method in methods) {
       final first = (await a.command({
         'command': 'seed',

@@ -6,3 +6,5 @@ values:
   - occurrenceRestore
   - seriesReopen
   - occurrenceRestoreWithMaster
+  - rangeCancel
+  - rangeRestore

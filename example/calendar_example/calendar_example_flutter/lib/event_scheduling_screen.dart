@@ -34,6 +34,8 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
   cal.CalendarSchedulingOccurrenceCancelRequest? _pendingOccurrenceCancel;
   cal.CalendarSchedulingOccurrenceRestoreRequest? _pendingOccurrenceRestore;
   cal.CalendarSchedulingReopenRequest? _pendingReopen;
+  cal.CalendarSchedulingFutureCancelRequest? _pendingFutureCancel;
+  cal.CalendarSchedulingFutureRestoreRequest? _pendingFutureRestore;
   bool _busy = true;
   String? _error, _message;
   @override
@@ -94,6 +96,8 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
         _pendingOccurrenceCancel = null;
         _pendingOccurrenceRestore = null;
         _pendingReopen = null;
+        _pendingFutureCancel = null;
+        _pendingFutureRestore = null;
         _summary.text = event.summary ?? '';
         _description.text = event.description ?? '';
         _location.text = event.location ?? '';
@@ -211,6 +215,74 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
         _message = result.unchanged
             ? 'Occurrence cancellation already recorded.'
             : 'Occurrence cancellation queued; saved drafts preserved.';
+      });
+      await _reload();
+    } catch (e) {
+      if (mounted) setState(() => _error = _safe(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _restoreFuture() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+      _message = null;
+    });
+    try {
+      final input = _pendingFutureRestore ??=
+          cal.CalendarSchedulingFutureRestoreRequest(
+            eventId: _event.id,
+            expectedRevision: _event.revision,
+            commandId: cal.Uuid().v4obj(),
+            originalStart: _originalPoint(),
+          );
+      final result = await widget
+          .client
+          .modules
+          .serverpod_calendar
+          .calendarEvent
+          .restoreFutureAndNotify(input);
+      if (!mounted) return;
+      setState(() {
+        _pendingFutureRestore = null;
+        _message = result.unchanged ? 'Published suffix already restored.' : 'Published suffix restored and queued; newer drafts and individual cancellations preserved. A local cutoff edited since cancellation remains saved.';
+      });
+      await _reload();
+    } catch (e) {
+      if (mounted) setState(() => _error = _safe(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _cancelFuture() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+      _message = null;
+    });
+    try {
+      _pendingFutureCancel ??= cal.CalendarSchedulingFutureCancelRequest(
+        eventId: _event.id,
+        expectedRevision: _event.revision,
+        commandId: cal.Uuid().v4obj(),
+        originalStart: _originalPoint(),
+      );
+
+      final result = await widget
+          .client
+          .modules
+          .serverpod_calendar
+          .calendarEvent
+          .cancelFutureAndNotify(_pendingFutureCancel!);
+      if (!mounted) return;
+      setState(() {
+        _pendingFutureCancel = null;
+        _message = result.unchanged
+            ? 'Published suffix cancellation already recorded.'
+            : 'Published suffix cancellation queued; saved drafts preserved.';
       });
       await _reload();
     } catch (e) {
@@ -344,6 +416,8 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
         (_event.timingOverrides?.future.isNotEmpty ?? false);
     final locked =
         _busy ||
+        _pendingFutureCancel != null ||
+        _pendingFutureRestore != null ||
         _pendingReopen != null ||
         _pending != null ||
         _pendingCancel != null ||
@@ -391,6 +465,20 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
           const Text(
             'This workflow supports native events and representable recurring exceptions with fixed recipients. Cancel and notify uses the last published version and keeps saved local fields. It does not save unsaved form edits; reloading discards those edits.',
           ),
+          const Text(
+            'Range controls use retained published values. Only ordinary or future-timing anchors without a published single override or individual cancellation are supported. Restore the published suffix before another publication control.',
+          ),
+          Text(
+            _status?.hasPublishedRangeCancellation == true
+                ? 'Published suffix is cancelled. Restore it explicitly; private edits stay local.'
+                : 'No published range cancellation.',
+            key: const Key('scheduling-range-status'),
+          ),
+          if (_event.timingOverrides?.cancelledFrom != null)
+            const Text(
+              'A local future-cancellation cutoff is saved. Restoration only clears a publication-installed cutoff when its recorded revision is unchanged.',
+              key: Key('scheduling-local-cutoff'),
+            ),
           if (_busy) const LinearProgressIndicator(),
           if (_error != null) Text(_error!, key: const Key('scheduling-error')),
           if (_message != null)
@@ -454,6 +542,9 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
             key: const Key('scheduling-publish'),
             onPressed:
                 _busy ||
+                    _status?.hasPublishedRangeCancellation == true ||
+                    _pendingFutureCancel != null ||
+                    _pendingFutureRestore != null ||
                     !eligible ||
                     _pendingReopen != null ||
                     _pendingCancel != null ||
@@ -478,6 +569,9 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
               key: const Key('scheduling-reopen-published'),
               onPressed:
                   _busy ||
+                      _status?.hasPublishedRangeCancellation == true ||
+                      _pendingFutureCancel != null ||
+                      _pendingFutureRestore != null ||
                       !eligible ||
                       _pending != null ||
                       _pendingCancel != null ||
@@ -503,6 +597,9 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
               key: const Key('scheduling-cancel'),
               onPressed:
                   _busy ||
+                      _status?.hasPublishedRangeCancellation == true ||
+                      _pendingFutureCancel != null ||
+                      _pendingFutureRestore != null ||
                       !eligible ||
                       _pendingReopen != null ||
                       _pending != null ||
@@ -569,9 +666,55 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
                 ),
               ),
             OutlinedButton(
+              key: const Key('scheduling-cancel-future'),
+              onPressed:
+                  _busy ||
+                      !eligible ||
+                      _status?.publicationId == null ||
+                      _status?.hasPublishedRangeCancellation == true ||
+                      _pendingFutureRestore != null ||
+                      _pending != null ||
+                      _pendingCancel != null ||
+                      _pendingReopen != null ||
+                      _pendingOccurrenceCancel != null ||
+                      _pendingOccurrenceRestore != null ||
+                      _event.status == cal.CalendarEventStatus.cancelled
+                  ? null
+                  : _cancelFuture,
+              child: Text(
+                _pendingFutureCancel == null
+                    ? 'Cancel this and future and notify'
+                    : 'Retry suffix cancellation',
+              ),
+            ),
+            OutlinedButton(
+              key: const Key('scheduling-restore-future'),
+              onPressed:
+                  _busy ||
+                      !eligible ||
+                      _status?.hasPublishedRangeCancellation != true ||
+                      _pendingFutureCancel != null ||
+                      _pending != null ||
+                      _pendingCancel != null ||
+                      _pendingReopen != null ||
+                      _pendingOccurrenceCancel != null ||
+                      _pendingOccurrenceRestore != null ||
+                      _event.status == cal.CalendarEventStatus.cancelled
+                  ? null
+                  : _restoreFuture,
+              child: Text(
+                _pendingFutureRestore == null
+                    ? 'Restore published suffix and notify'
+                    : 'Retry suffix restoration',
+              ),
+            ),
+            OutlinedButton(
               key: const Key('scheduling-cancel-occurrence'),
               onPressed:
                   _busy ||
+                      _status?.hasPublishedRangeCancellation == true ||
+                      _pendingFutureCancel != null ||
+                      _pendingFutureRestore != null ||
                       !eligible ||
                       _pendingReopen != null ||
                       _pending != null ||
@@ -591,6 +734,9 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
               key: const Key('scheduling-restore-occurrence'),
               onPressed:
                   _busy ||
+                      _status?.hasPublishedRangeCancellation == true ||
+                      _pendingFutureCancel != null ||
+                      _pendingFutureRestore != null ||
                       !eligible ||
                       _pendingReopen != null ||
                       _pending != null ||
