@@ -366,6 +366,6 @@ Current Serverpod dependency alignment is documented in [the 4.1.0 upgrade recor
 [Accepted ADR 0170](adr/0170-bounded-repeated-source-range-cycles.md) implements [bounded repeated source range cycles](bounded-source-range-cycles.md): explicit cancellation/restore-only controls, continued composition/lifecycle, flat v12 retained evidence, unchanged byte/slot/shared-work caps and protected active-cutoff views. Historical proof stays private until deletion; capacity exhaustion rejects without compaction. Actual validation is recorded separately. No SQL migration or real mail is added.
 
 
-## Proposed outgoing range-cancellation projection
+## Pure outgoing range-cancellation projection
 
-[Proposed ADR 0171](adr/0171-published-range-cancellation-bundles.md) reviews one pure outgoing range-CANCEL bundle: a primary future cutoff plus explicit cancellation of later published components, exact originals, conservative whole-basis version bounds and unchanged resource limits. It establishes no accepted publication history, native mutation, storage/API change, restoration or delivery. These protocol mechanics require explicit agreement; current outgoing runtime guards remain.
+[Accepted ADR 0171](adr/0171-published-range-cancellation-bundles.md) implements [pure published range-cancellation bundles](published-range-cancellation-bundles.md): a primary suffix target plus explicit later-component cancellations, exact originals, conservative whole-basis version bounds and shared bounded validation. It proves no accepted publication history or authority and adds no native mutation, SQL/generated endpoint, restoration or delivery. Existing outgoing runtime guards remain; actual validation is recorded separately.

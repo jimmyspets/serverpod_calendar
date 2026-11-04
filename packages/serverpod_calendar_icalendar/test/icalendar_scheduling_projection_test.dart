@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 import 'package:test/test.dart';
+import 'package:serverpod_calendar_core/serverpod_calendar_core.dart';
 
 import 'support/icalendar_fixtures.dart' show fixedZone;
 import 'support/scheduling_fixtures.dart';
@@ -38,6 +39,28 @@ List<String> override({bool future = false, List<String> extra = const []}) => [
 ];
 
 void main() {
+  test('required-field projection shares its scheduling validation budget', () {
+    final zone = utf8
+        .decode(
+          serializeIcalendarSyntax(
+            IcalendarSyntaxDocument([
+              createIcalendarTimeZone('Europe/Stockholm'),
+            ]),
+          ),
+        )
+        .trimRight();
+    final value = source([master(), override()], zones: [zone]);
+    final measured = RecurrenceWorkBudget(maxWork: 200000);
+    projectIcalendarRequestFields(value, sharedWorkBudget: measured);
+    expect(measured.used, greaterThan(0));
+    expect(
+      () => projectIcalendarRequestFields(
+        value,
+        sharedWorkBudget: RecurrenceWorkBudget(maxWork: 1),
+      ),
+      rejects(IcalendarComponentError.limitExceeded),
+    );
+  });
   test(
     'projects missing required fields without changing source or versions',
     () {
