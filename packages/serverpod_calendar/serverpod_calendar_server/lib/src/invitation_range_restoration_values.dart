@@ -36,14 +36,20 @@ CalendarInvitationRangeRestorationProjection projectInvitationRangeRestoration({
   required IcalendarSchedulingMessage message,
   required String recipientAddress,
   int maxCandidateWork = eventMaxCandidateWork,
+  RecurrenceWorkBudget? sharedWorkBudget,
 }) {
   try {
     RangeError.checkValueInInterval(maxCandidateWork, 1, eventMaxCandidateWork);
+    if (sharedWorkBudget != null &&
+        sharedWorkBudget.maxWork > maxCandidateWork) {
+      throw ArgumentError('Shared work exceeds selected ceiling');
+    }
     serializeIcalendarSyntax(message.source);
     if (message.timeZones.length > const IcalendarComponentLimits().maxZones) {
       throw const RecurrenceLimitException('invitationProjectionZones');
     }
-    final work = RecurrenceWorkBudget(maxWork: maxCandidateWork);
+    final work =
+        sharedWorkBudget ?? RecurrenceWorkBudget(maxWork: maxCandidateWork);
     validateEventUid(protocolUid);
     final accepted = validateEventContent(content, sharedWorkBudget: work);
     final edits = validateEventOverrides(

@@ -1,7 +1,7 @@
 part of 'calendar_module.dart';
 
 bool _occHasRangeRestoration(Map<String, dynamic>? state) =>
-    {7, 8, 9, 10, 11}.contains(state?['version']);
+    {7, 8, 9, 10, 11, 12}.contains(state?['version']);
 
 String _occRestorationReceiptDigest(Map<String, dynamic> state) =>
     _invitationHash([
@@ -46,8 +46,9 @@ extension CalendarInvitationRangeRestorationOperations on CalendarService {
     _Event event,
     Map<String, dynamic> state,
     IcalendarSchedulingMessage message,
-    String address,
-  ) {
+    String address, {
+    RecurrenceWorkBudget? sharedWorkBudget,
+  }) {
     final accepted = _occAccepted(event.data.importBaseline!);
     final member = _occMaskMember(
       CalendarEventImportMember(
@@ -58,6 +59,7 @@ extension CalendarInvitationRangeRestorationOperations on CalendarService {
         protocolState: accepted.protocol,
       ),
       state,
+      sharedWorkBudget: sharedWorkBudget,
     );
     return projectInvitationRangeRestoration(
       protocolUid: link.uid,
@@ -69,6 +71,7 @@ extension CalendarInvitationRangeRestorationOperations on CalendarService {
       ),
       message: message,
       recipientAddress: address,
+      sharedWorkBudget: sharedWorkBudget,
     );
   }
 
@@ -130,8 +133,9 @@ extension CalendarInvitationRangeRestorationOperations on CalendarService {
     _Event event,
     CalendarInvitationOccurrenceApplicationRecord row,
     CalendarInvitationApplicationRecord? master,
-    Map<String, dynamic> state,
-  ) {
+    Map<String, dynamic> state, {
+    RecurrenceWorkBudget? sharedWorkBudget,
+  }) {
     final descriptor = state['preRestoration'] as Map<String, dynamic>;
     final previous = descriptor['state'] as Map<String, dynamic>;
     final priorRevision = descriptor['revision'] as int;
@@ -159,6 +163,7 @@ extension CalendarInvitationRangeRestorationOperations on CalendarService {
         stateJson: jsonEncode(previous),
       ),
       master,
+      sharedWorkBudget: sharedWorkBudget,
     );
     final layer = state['restoration'] as Map<String, dynamic>;
     final text = layer['source'] as String;
@@ -179,12 +184,13 @@ extension CalendarInvitationRangeRestorationOperations on CalendarService {
       prior,
       _invParse(utf8.encode(text), stored: true),
       layer['recipientAddress'] as String,
+      sharedWorkBudget: sharedWorkBudget,
     );
     final native = _occNativeDigest(link.uid, (
       content: projection.content,
       edits: projection.timingOverrides,
       protocol: projection.protocolState,
-    ));
+    ), sharedWorkBudget: sharedWorkBudget);
     if (jsonEncode(_occOrdered(projection.originalStart.toJson())) !=
             jsonEncode(_occOrdered(layer['original'])) ||
         jsonEncode(_occOrdered(projection.restorationVersion.toJson())) !=

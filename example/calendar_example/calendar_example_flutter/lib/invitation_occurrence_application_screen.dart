@@ -144,18 +144,22 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
               key: const Key('invitation-occurrence-result'),
             ),
           if (v != null) ...[
+            if (v.hasAcceptedRangeCancellation)
+              Text(
+                v.hasActiveAcceptedRangeCancellation
+                    ? 'Accepted suffix cancellation: active.'
+                    : 'Accepted suffix cancellation: none active.',
+              ),
             if (v.hasAcceptedRangeRestoration)
               const Text(
-                'Source restoration history is retained and its cutoff stays clear. Eligible single-occurrence updates/cancellations can be applied explicitly; a new occurrence command supersedes the previous retry receipt. Master changes preserve the latest receipt. New range timing updates require SEQUENCE above both the effective anchor and historical restoration. Range cancellation/restoration cycles remain blocked.',
+                'Source cancellation/restoration history is retained. Use explicit actions for later cancellation or matching restoration; only one suffix cancellation can be active. A new occurrence command replaces the previous retry receipt; master changes preserve the latest receipt.',
               ),
-            if (v.hasAcceptedRangeCancellation &&
-                !v.hasAcceptedRangeRestoration)
+            if (v.hasActiveAcceptedRangeCancellation)
               const Text(
                 'A source range cancellation is accepted. Ordinary occurrence source applications remain blocked. Review a matching source restoration explicitly. Whole-meeting changes preserve the cutoff; exact retained retries remain available.',
               ),
             if (widget.range &&
-                v.hasAcceptedRangeCancellation &&
-                !v.hasAcceptedRangeRestoration &&
+                v.hasActiveAcceptedRangeCancellation &&
                 v.incomingKind == cal.CalendarInvitationSourceKind.request &&
                 !_restoration)
               TextButton(
@@ -230,7 +234,7 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
             if (v.incomingKind ==
                 cal.CalendarInvitationSourceKind.rangeCancellation)
               const Text(
-                'Apply explicitly cancels all originals from the anchor, including moved exceptions. Timing, content and source versions are retained. Eligible master updates preserve the cutoff. Occurrence applications and source-cutoff restoration remain separate.',
+                'Apply explicitly cancels all originals from the anchor, including moved exceptions. Timing, content and source versions are retained. Eligible master updates preserve the cutoff. Review a matching restoration to clear the accepted cutoff.',
               ),
             const Text(
               'New whole-series sources preserve accepted occurrence edits and individual cancellations. Updates that remove an accepted original are rejected.',

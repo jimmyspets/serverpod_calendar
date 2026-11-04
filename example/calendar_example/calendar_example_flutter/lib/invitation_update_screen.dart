@@ -159,13 +159,18 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
             Text(
               'Accepted source SEQUENCE: ${view.acceptedSequence?.toString() ?? 'omitted (effective 0)'}; DTSTAMP: ${view.acceptedStamp.toIso8601String()}',
             ),
+            if (view.hasAcceptedRangeCancellation)
+              Text(
+                view.hasActiveAcceptedRangeCancellation
+                    ? 'Accepted suffix cancellation: active.'
+                    : 'Accepted suffix cancellation: none active.',
+              ),
             if (view.hasAcceptedRangeRestoration)
               const Text(
-                'An explicit source restoration cleared the suffix cutoff. Individual cancellations remain. Explicit master updates, cancellation and reopening preserve restoration history. Reopening keeps the old suffix cutoff cleared and individual cancellations intact. Eligible range timing updates use both strict sequence floors; new cancellation/restoration cycles remain unavailable.',
+                'Source cancellation/restoration history is retained. Whole-meeting changes preserve the current accepted suffix state and individual cancellations. Check the active-cancellation message below. Repeated source cancellation and matching restoration require explicit eligible actions.',
                 key: Key('invitation-master-range-restoration'),
               ),
-            if (view.hasAcceptedRangeCancellation &&
-                !view.hasAcceptedRangeRestoration)
+            if (view.hasActiveAcceptedRangeCancellation)
               const Text(
                 'An accepted range cancellation remains in force. Whole-meeting cancellation and reopening preserve this cutoff and individual cancellations; the cancelled suffix stays cancelled.',
                 key: Key('invitation-master-range-cancellation'),

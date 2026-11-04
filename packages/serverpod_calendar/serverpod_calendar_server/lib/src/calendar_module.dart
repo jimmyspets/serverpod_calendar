@@ -48,6 +48,7 @@ part 'calendar_invitation_range_cancellation.dart';
 part 'calendar_invitation_range_restoration.dart';
 part 'calendar_invitation_restoration_composition.dart';
 part 'calendar_invitation_restoration_targets.dart';
+part 'calendar_invitation_cycles.dart';
 part 'calendar_alarms.dart';
 part 'calendar_alarm_adoption.dart';
 part 'calendar_alarm_actions.dart';

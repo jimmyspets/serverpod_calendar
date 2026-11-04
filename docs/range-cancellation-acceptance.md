@@ -1,5 +1,8 @@
 # First durable incoming range cancellation
 
+Later [ADR 0170](adr/0170-bounded-repeated-source-range-cycles.md) implements [bounded repeated source range cycles](bounded-source-range-cycles.md). Its verified v12 path supersedes earlier temporary repeated-cycle guards below while preserving strict legacy reads/retries and all stated source, authority and retention boundaries. Historical validation remains evidence for its original batch.
+
+
 [Accepted ADR 0160](adr/0160-first-range-cancellation-acceptance.md) adds one explicit first range-CANCEL acceptance per linked recurring event. Receipt/review sends nothing and changes no calendar. The caller invokes `calendarInvitation.applyRangeCancellation` using the protected range preview and expected invitation, source, parent, event and checkpoint revisions. `applyRangeUpdate` accepts REQUEST only.
 
 The complete current series must match its accepted source and have no native cancellation cutoff. The pure [projection](range-cancellation-projection.md) checks exact original membership/profile and requires a SEQUENCE greater than every affected component, including the underlying segment beneath an anchor single. This is our conservative application policy. Independent source omissions and timestamps are retained; source values grant no authority.

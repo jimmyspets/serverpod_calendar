@@ -27,6 +27,7 @@ abstract class CalendarInvitationOccurrenceApplicationView
     bool? isThisAndFuture,
     bool? hasAcceptedRangeCancellation,
     bool? hasAcceptedRangeRestoration,
+    bool? hasActiveAcceptedRangeCancellation,
     required this.linkId,
     required this.invitationId,
     required this.calendarId,
@@ -51,12 +52,15 @@ abstract class CalendarInvitationOccurrenceApplicationView
     this.latestResult,
   }) : isThisAndFuture = isThisAndFuture ?? false,
        hasAcceptedRangeCancellation = hasAcceptedRangeCancellation ?? false,
-       hasAcceptedRangeRestoration = hasAcceptedRangeRestoration ?? false;
+       hasAcceptedRangeRestoration = hasAcceptedRangeRestoration ?? false,
+       hasActiveAcceptedRangeCancellation =
+           hasActiveAcceptedRangeCancellation ?? false;
 
   const factory CalendarInvitationOccurrenceApplicationView({
     bool? isThisAndFuture,
     bool? hasAcceptedRangeCancellation,
     bool? hasAcceptedRangeRestoration,
+    bool? hasActiveAcceptedRangeCancellation,
     required _is.UuidValue linkId,
     required _is.UuidValue invitationId,
     required _is.UuidValue calendarId,
@@ -101,6 +105,12 @@ abstract class CalendarInvitationOccurrenceApplicationView
           ? null
           : _is.BoolJsonExtension.fromJson(
               jsonSerialization['hasAcceptedRangeRestoration'],
+            ),
+      hasActiveAcceptedRangeCancellation:
+          jsonSerialization['hasActiveAcceptedRangeCancellation'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(
+              jsonSerialization['hasActiveAcceptedRangeCancellation'],
             ),
       linkId: _is.UuidValueJsonExtension.fromJson(jsonSerialization['linkId']),
       invitationId: _is.UuidValueJsonExtension.fromJson(
@@ -174,6 +184,8 @@ abstract class CalendarInvitationOccurrenceApplicationView
 
   final bool hasAcceptedRangeRestoration;
 
+  final bool hasActiveAcceptedRangeCancellation;
+
   final _is.UuidValue linkId;
 
   final _is.UuidValue invitationId;
@@ -225,6 +237,7 @@ abstract class CalendarInvitationOccurrenceApplicationView
     bool? isThisAndFuture,
     bool? hasAcceptedRangeCancellation,
     bool? hasAcceptedRangeRestoration,
+    bool? hasActiveAcceptedRangeCancellation,
     _is.UuidValue? linkId,
     _is.UuidValue? invitationId,
     _is.UuidValue? calendarId,
@@ -277,6 +290,12 @@ abstract class CalendarInvitationOccurrenceApplicationView
                 ) ||
                 other.hasAcceptedRangeRestoration ==
                     hasAcceptedRangeRestoration) &&
+            (identical(
+                  other.hasActiveAcceptedRangeCancellation,
+                  hasActiveAcceptedRangeCancellation,
+                ) ||
+                other.hasActiveAcceptedRangeCancellation ==
+                    hasActiveAcceptedRangeCancellation) &&
             (identical(
                   other.linkId,
                   linkId,
@@ -396,6 +415,7 @@ abstract class CalendarInvitationOccurrenceApplicationView
       isThisAndFuture,
       hasAcceptedRangeCancellation,
       hasAcceptedRangeRestoration,
+      hasActiveAcceptedRangeCancellation,
       linkId,
       invitationId,
       calendarId,
@@ -429,6 +449,7 @@ abstract class CalendarInvitationOccurrenceApplicationView
       'isThisAndFuture': isThisAndFuture,
       'hasAcceptedRangeCancellation': hasAcceptedRangeCancellation,
       'hasAcceptedRangeRestoration': hasAcceptedRangeRestoration,
+      'hasActiveAcceptedRangeCancellation': hasActiveAcceptedRangeCancellation,
       'linkId': linkId.toJson(),
       'invitationId': invitationId.toJson(),
       'calendarId': calendarId.toJson(),
@@ -465,6 +486,7 @@ abstract class CalendarInvitationOccurrenceApplicationView
       'isThisAndFuture': isThisAndFuture,
       'hasAcceptedRangeCancellation': hasAcceptedRangeCancellation,
       'hasAcceptedRangeRestoration': hasAcceptedRangeRestoration,
+      'hasActiveAcceptedRangeCancellation': hasActiveAcceptedRangeCancellation,
       'linkId': linkId.toJson(),
       'invitationId': invitationId.toJson(),
       'calendarId': calendarId.toJson(),
@@ -527,6 +549,7 @@ class _CalendarInvitationOccurrenceApplicationViewImpl
     bool? isThisAndFuture,
     bool? hasAcceptedRangeCancellation,
     bool? hasAcceptedRangeRestoration,
+    bool? hasActiveAcceptedRangeCancellation,
     required _is.UuidValue linkId,
     required _is.UuidValue invitationId,
     required _is.UuidValue calendarId,
@@ -553,6 +576,7 @@ class _CalendarInvitationOccurrenceApplicationViewImpl
          isThisAndFuture: isThisAndFuture,
          hasAcceptedRangeCancellation: hasAcceptedRangeCancellation,
          hasAcceptedRangeRestoration: hasAcceptedRangeRestoration,
+         hasActiveAcceptedRangeCancellation: hasActiveAcceptedRangeCancellation,
          linkId: linkId,
          invitationId: invitationId,
          calendarId: calendarId,
@@ -585,6 +609,7 @@ class _CalendarInvitationOccurrenceApplicationViewImpl
     bool? isThisAndFuture,
     bool? hasAcceptedRangeCancellation,
     bool? hasAcceptedRangeRestoration,
+    bool? hasActiveAcceptedRangeCancellation,
     _is.UuidValue? linkId,
     _is.UuidValue? invitationId,
     _is.UuidValue? calendarId,
@@ -618,6 +643,9 @@ class _CalendarInvitationOccurrenceApplicationViewImpl
           hasAcceptedRangeCancellation ?? this.hasAcceptedRangeCancellation,
       hasAcceptedRangeRestoration:
           hasAcceptedRangeRestoration ?? this.hasAcceptedRangeRestoration,
+      hasActiveAcceptedRangeCancellation:
+          hasActiveAcceptedRangeCancellation ??
+          this.hasActiveAcceptedRangeCancellation,
       linkId: linkId ?? this.linkId,
       invitationId: invitationId ?? this.invitationId,
       calendarId: calendarId ?? this.calendarId,

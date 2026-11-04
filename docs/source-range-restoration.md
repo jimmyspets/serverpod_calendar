@@ -1,5 +1,8 @@
 # Explicit source range restoration
 
+Later [ADR 0170](adr/0170-bounded-repeated-source-range-cycles.md) implements [bounded repeated source range cycles](bounded-source-range-cycles.md). Its verified v12 path supersedes earlier temporary repeated-cycle guards below while preserving strict legacy reads/retries and all stated source, authority and retention boundaries. Historical validation remains evidence for its original batch.
+
+
 [Accepted ADR 0164](adr/0164-first-durable-source-range-restoration.md) adds `rangeRestorationApplication` and `applyRangeRestoration`. Receiving a source REQUEST remains review-only. The recipient must explicitly review and apply a matching restoration of the exact accepted cancellation cutoff. Ordinary range-update APIs never infer this action.
 
 Require a clean entire linked series, a verified v4/v5/v6 cancellation checkpoint and an active accepted master. Whole-master cancellation must first be reopened separately. The [pure matcher](range-restoration-projection.md) checks exact original membership/profile, retained uncancelled timing/end form/nominal units and supported content/participant agreement. The source SEQUENCE must exceed the cancellation and effective/underlying/affected component floor. A later source timestamp alone is insufficient. Different anchors or rescheduling remain unsupported.
