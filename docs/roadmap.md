@@ -887,5 +887,17 @@ The 4.1.0 maintenance batch completed local generation, analysis, existing/fresh
 - [x] Prepare the complete minimal-bundle, participant, version, membership and resource-limit contract for review.
 - [x] Obtain explicit agreement on ADR 0171's protocol/API-value mechanics (2026-11-04).
 - [x] Implement the complete approved pure batch; focused bundle/codec/native-guard checks and complete module/iCalendar VM+Chrome passed before one code commit.
-- [ ] Pass full exact-head hosted checks before readiness.
+- [x] Pass full exact-head hosted checks before readiness (PR #174, f4c8a290, run 41821548615).
 - [ ] Review durable outgoing cancellation/restoration/composition, publication/reply targets and receipts separately; no new runtime action is enabled by the pure helper.
+
+
+## Proposed durable outgoing range controls
+
+[Proposed ADR 0172](adr/0172-durable-published-range-controls.md) groups explicit published suffix cancellation/restoration, repeated cycles, preserved individual cancellations and private drafts, independent authority, bounded outgoing v7 current-state checkpoints in existing columns, and generated-client/Flutter/synthetic-delivery validation. The maintainer confirmed faithfully restorable anchors initially; the remaining model/API/checkpoint mechanics await explicit agreement. No runtime action, SQL change or real mail is implemented by this proposal. Active-cutoff lifecycle restrictions and conservative native revision ownership are proposed, not previously accepted behavior.
+
+- [x] Confirm initial faithful-anchor restriction and inspect outgoing v1–v6, restoration masks, versions and receipts.
+- [x] Prepare the grouped cancel/restore/cycle, native ownership, v7, authority, retention and validation proposal.
+- [ ] Obtain explicit maintainer agreement on ADR 0172 before runtime/model changes.
+- [ ] Implement and validate the entire approved group before one code commit.
+- [ ] Pass full exact-head hosted checks before readiness.
+- [ ] Review arbitrary anchors, active-cutoff whole lifecycle, bundled recipient reconciliation, RANGE replies and remaining standards/client evidence separately.

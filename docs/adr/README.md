@@ -191,6 +191,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0171](0171-published-range-cancellation-bundles.md) | Pure published range-cancellation bundles | Accepted; pure bounded CANCEL bundle covering the suffix/later explicit components and shared validation budgets; no durable/runtime changes |
 
+| [0172](0172-durable-published-range-controls.md) | Durable published range cancellation and restoration | Proposed; faithful anchors confirmed, grouped v7/current-state, authority/API/native ownership and delivery mechanics await approval |
+
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
 Use the next consecutive number for a new ADR covering a material decision. Include context, proposal/decision, alternatives, consequences, and acceptance conditions. Preserve committed/accepted decision history; supersede accepted decisions with a linked ADR. Superseded uncommitted drafts may be removed under the maintainer-authorized cleanup. Mark an ADR accepted only after explicit maintainer agreement recorded in the PR or issue.
