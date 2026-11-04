@@ -114,14 +114,32 @@ class InvitationDemoEndpoint extends Endpoint {
     String summary,
   ) => _simulate(session, invitationId, commandId, sequence, summary, true);
 
+  /// Initial whole-series example; later bundle reconciliation is not enabled.
+  Future<CalendarInvitationReceipt> simulateBundle(
+    Session session,
+    UuidValue invitationId,
+    UuidValue commandId,
+    int? sequence,
+    String summary,
+  ) => _simulate(
+    session,
+    invitationId,
+    commandId,
+    sequence,
+    summary,
+    true,
+    bundle: true,
+  );
+
   Future<CalendarInvitationReceipt> _simulate(
     Session session,
     UuidValue invitationId,
     UuidValue commandId,
     int? sequence,
     String summary,
-    bool recurring,
-  ) async {
+    bool recurring, {
+    bool bundle = false,
+  }) async {
     if (!{'development', 'test'}.contains(session.serverpod.runMode) ||
         summary.runes.length > 256 ||
         sequence != null && (sequence < 0 || sequence > 2147483647)) {
@@ -151,6 +169,20 @@ class InvitationDemoEndpoint extends Endpoint {
       'ORGANIZER:mailto:organizer@example.invalid',
       'ATTENDEE:mailto:demo-$user@example.invalid',
       'END:VEVENT',
+      if (bundle)
+        for (final future in [false, true]) ...[
+          'BEGIN:VEVENT',
+          'UID:synthetic-invitation:$user:$invitationId',
+          'DTSTAMP:20260102T000000Z',
+          if (future) 'SEQUENCE:12',
+          'RECURRENCE-ID${future ? ';RANGE=THISANDFUTURE' : ''}:2030010${future ? '5' : '3'}T090000Z',
+          'DTSTART:2030010${future ? '5' : '3'}T110000Z',
+          'DTEND:2030010${future ? '5' : '3'}T120000Z',
+          'SUMMARY:${future ? 'Synthetic future timing' : 'Synthetic single timing'}',
+          'ORGANIZER:mailto:organizer@example.invalid',
+          'ATTENDEE:mailto:demo-$user@example.invalid',
+          'END:VEVENT',
+        ],
       'END:VCALENDAR',
       '',
     ].join('\r\n');

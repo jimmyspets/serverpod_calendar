@@ -1,6 +1,7 @@
 class: CalendarInvitationAdoptionReceipt
 immutable: true
 fields:
+  bundledRequest: bool, default=false
   id: UuidValue
   invitationId: UuidValue
   sourceId: UuidValue

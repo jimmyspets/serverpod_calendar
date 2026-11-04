@@ -193,7 +193,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0172](0172-durable-published-range-controls.md) | Durable published range cancellation and restoration | Accepted; grouped bounded v7/current-state, authority/API/native ownership and delivery batch; scoped implementation/local grouped validation complete; hosted readiness separate |
 
-| [0173](0173-initial-bundled-invitation-adoption.md) | Initial bundled REQUEST review and calendar adoption | Proposed; create-only complete message adoption, one private link-profile column and explicit continuation guards |
+| [0173](0173-initial-bundled-invitation-adoption.md) | Initial bundled REQUEST review and calendar adoption | Accepted by explicit maintainer agreement; initial complete message adoption, one private link-profile column and explicit continuation guards |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

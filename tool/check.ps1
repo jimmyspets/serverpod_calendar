@@ -86,6 +86,10 @@ try {
   try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/recurring_invitations_test.dart', 'test/integration/instance_invitations_test.dart', 'test/integration/instance_invitation_application_test.dart', 'test/integration/instance_invitation_responses_test.dart', 'test/integration/range_invitations_test.dart', 'test/integration/range_invitation_application_test.dart', 'test/integration/range_cancellation_application_test.dart', 'test/integration/range_cancellation_composition_test.dart', 'test/integration/range_cancellation_lifecycle_test.dart', 'test/integration/range_restoration_application_test.dart', 'test/integration/restoration_master_composition_test.dart', 'test/integration/restoration_master_lifecycle_test.dart', 'test/integration/restoration_single_application_test.dart', 'test/integration/restoration_range_application_test.dart') }
   finally { Pop-Location }
   Invoke-Checked python @('tool/metadata_upgrade_smoke.py')
+  Push-Location $ExampleServer
+  try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/invitation_bundles_test.dart') }
+  finally { Pop-Location }
+  Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--bundles')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--recurring')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--instances')

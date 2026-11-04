@@ -2,6 +2,7 @@ class: CalendarInvitationLinkRecord
 serverOnly: true
 table: serverpod_calendar_invitation_link
 fields:
+  bundledRequest: bool, default=false
   id: UuidValue?, defaultPersist=random
   scopeKey: String
   recipientKey: String

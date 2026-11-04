@@ -541,6 +541,30 @@ DROP TABLE serverpod41_upgrade_guard;
     print("PASS: Serverpod 4.1 upgrade preserves all populated prior tables and initializes empty upstream OTP request storage.")
 
 
+def verify_bundled_invitation_upgrade(database):
+    # Prior supported links could only originate from a single-component source.
+    # Keep every original column byte-for-byte while adding the explicit profile.
+    sql(database, """
+CREATE TABLE bundled_link_upgrade_guard AS
+ SELECT id, to_jsonb(t) AS payload FROM serverpod_calendar_invitation_link t;
+""")
+    sql(database, (SERVER / "migrations/20261104202627635-bundled-request-profile/migration.sql").read_text(encoding="utf-8"))
+    sql(database, """
+DO $verify_bundle$
+BEGIN
+ IF NOT EXISTS(SELECT 1 FROM bundled_link_upgrade_guard)
+ THEN RAISE EXCEPTION 'Bundle upgrade must exercise populated legacy links'; END IF;
+ IF EXISTS(SELECT 1 FROM bundled_link_upgrade_guard g
+ LEFT JOIN serverpod_calendar_invitation_link l USING(id)
+ WHERE l.id IS NULL OR l."bundledRequest" IS DISTINCT FROM false
+ OR to_jsonb(l)-'bundledRequest' IS DISTINCT FROM g.payload)
+ THEN RAISE EXCEPTION 'Bundle profile upgrade changed legacy link data'; END IF;
+END;$verify_bundle$;
+DROP TABLE bundled_link_upgrade_guard;
+""")
+    print("PASS: populated legacy links retain every prior field and gain only bundledRequest=false; no bundle history is invented.")
+
+
 def main():
     # Drop only a database this process successfully creates on the test service.
     database = f"calendar_metadata_upgrade_{os.getpid()}"
@@ -1237,6 +1261,7 @@ DROP TABLE reply_upgrade_guard;
         verify_instance_invitation_upgrade(database)
         verify_occurrence_application_upgrade(database)
         verify_serverpod_41_upgrade(database)
+        verify_bundled_invitation_upgrade(database)
         print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated replies/invitations/links/checkpoints through instance, adoption, cancellation and private attendee-response upgrades; no personal response history is invented and ordinary cursor rows survive the occurrence-state addition without invented query state; known old invitation modes remain false without invented recurrence history.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")
