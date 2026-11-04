@@ -237,3 +237,7 @@ See [CI checks](docs/continuous-integration.md) for pull-request documentation/r
 [Single-instance invitation review](docs/single-instance-invitation-review.md) adds known-series occurrence updates/cancellations as private unapplied notices. Receiving or dismissing them changes no calendar or participation state; instance application and replies remain separate work.
 
 A [pure restore-only source validator](docs/range-restoration-projection.md) can now match the saved cutoff and retained values without rewriting exceptions. [Explicit durable source restoration](docs/source-range-restoration.md) now adds verified acceptance with safe retries; [active master updates preserve restoration](docs/restoration-master-composition.md), while broader source transitions remain guarded.
+
+## Proposed durable outgoing range controls
+
+[Proposed ADR 0172](docs/adr/0172-durable-published-range-controls.md) groups explicit published suffix cancellation/restoration, repeated cycles, preserved individual cancellations and private drafts, independent authority, bounded outgoing v7 current-state checkpoints in existing columns, and generated-client/Flutter/synthetic-delivery validation. The maintainer confirmed faithfully restorable anchors initially; the remaining model/API/checkpoint mechanics await explicit agreement. No runtime action, SQL change or real mail is implemented by this proposal. Active-cutoff lifecycle restrictions and conservative native revision ownership are proposed, not previously accepted behavior.
