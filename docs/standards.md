@@ -214,3 +214,6 @@ Accepted [ADR 0145](adr/0145-host-mime-native-ingress.md) implements two example
 ## Explicit private attendee response sending
 
 Accepted [ADR 0146](adr/0146-explicit-private-attendee-responses.md) implements the bounded non-recurring response workflow: dedicated host-approved minimal REPLYs, three private state/delivery/attempt tables, exact retries, database-clock ordering, source pins/retention, fenced workers and synthetic MIME/Flutter controls. See [the scoped guide](private-attendee-responses.md) and validation record for actual checks. Response actions remain independent of calendar addition/application. Queue and transport acceptance do not prove organizer receipt. Provider authentication, real transport, recurring attendee sending and broader lifecycle remain separate required work.
+
+
+Accepted [ADR 0176](adr/0176-bundled-master-attendee-responses.md) extends the response contract with [dedicated bundle master responses](bundled-master-attendee-responses.md). Existing response tables/caps are reused, with independent authority and source-derived digest families. A master REPLY does not acknowledge independently versioned exceptions. Grouped implementation validation is recorded separately; occurrence/range bundle replies and real transport remain required separate work.

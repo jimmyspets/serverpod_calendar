@@ -52,7 +52,9 @@ Future<void> runInvitationAdoptionJourney(
       }
     }
     expect(find.byType(LinearProgressIndicator), findsNothing);
-    await tester.pump();
+    // A completed request schedules a post-frame jump back to its result.
+    // Settle the resulting list layout before looking for lazily built text.
+    await tester.pumpAndSettle();
     final refresh = find.byKey(const Key('bundle-update-refresh'));
     if (refresh.evaluate().isNotEmpty) {
       expect(

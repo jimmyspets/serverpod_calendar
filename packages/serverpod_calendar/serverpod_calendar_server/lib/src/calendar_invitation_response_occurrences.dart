@@ -64,7 +64,7 @@ extension CalendarInvitationResponseOccurrenceOperations on CalendarService {
     final canSend =
         context.currentState.canSend &&
         source?.method == IcalendarSchedulingMethod.request &&
-        source!.events.single.status != IcalendarEventStatus.cancelled &&
+        _invHead(source!).status != IcalendarEventStatus.cancelled &&
         (original == null || basis != null);
     return (
       context: context.withOccurrence(

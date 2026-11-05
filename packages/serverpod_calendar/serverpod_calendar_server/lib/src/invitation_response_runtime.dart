@@ -12,6 +12,9 @@ enum CalendarInvitationResponseOperation {
   dispatch,
   sendOccurrence,
   dispatchOccurrence,
+  readBundleMaster,
+  sendBundleMaster,
+  dispatchBundleMaster,
 }
 
 final class CalendarInvitationResponseAuthority {
@@ -81,8 +84,8 @@ final class CalendarInvitationResponsePolicyContext {
     sourceDigest: sourceDigest,
     sourceMessage: sourceMessage,
     proposedState: proposedState,
-    request: request,
-    receipt: receipt,
+    request: request?.copyWith(),
+    receipt: receipt?.copyWith(),
     outgoingMessage: outgoingMessage,
     payloadDigest: payloadDigest,
     authority: authority,

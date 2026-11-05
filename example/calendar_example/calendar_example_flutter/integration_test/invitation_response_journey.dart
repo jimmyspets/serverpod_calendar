@@ -10,11 +10,20 @@ Future<void> runInvitationResponseJourney(
   Client client, {
   bool recurring = false,
   bool instance = false,
+  bool bundleMaster = false,
 }) async {
-  final simulate = recurring || instance
+  final simulate = bundleMaster
+      ? client.invitationDemo.simulateBundle
+      : recurring || instance
       ? client.invitationDemo.simulateRecurring
       : client.invitationDemo.simulate;
   final api = client.modules.serverpod_calendar.calendarInvitation;
+  final response = bundleMaster ? api.bundleResponse : api.response;
+  final activity = bundleMaster
+      ? api.bundleResponseActivity
+      : api.responseActivity;
+  cal.UuidValue? calendarId;
+  cal.UuidValue? eventId;
   final id = const cal.Uuid().v4obj();
   var incoming = await simulate(
     id,
@@ -53,16 +62,22 @@ Future<void> runInvitationResponseJourney(
   try {
     navigator.push(
       MaterialPageRoute<void>(
-        builder: (_) =>
-            InvitationResponseScreen(client: client, id: incoming.entryId),
+        builder: (_) => InvitationResponseScreen(
+          client: client,
+          id: incoming.entryId,
+          bundleMaster: bundleMaster,
+        ),
       ),
     );
     await tester.pumpAndSettle();
     await loaded();
+    if (bundleMaster) {
+      expect(find.byKey(const Key('response-bundle-master')), findsOneWidget);
+    }
     if (instance) {
       expect(find.byKey(const Key('response-original')), findsOneWidget);
       expect(
-        (await api.response(incoming.entryId)).originalStart!.start.day,
+        (await response(incoming.entryId)).originalStart!.start.day,
         5,
       );
     } else if (recurring) {
@@ -88,15 +103,43 @@ Future<void> runInvitationResponseJourney(
     expect(find.byKey(const Key('response-error')), findsNothing);
     expect(find.byKey(const Key('response-receipt')), findsOneWidget);
     expect(find.text('Response revision: 1'), findsOneWidget);
-    final first = (await api.responseActivity(incoming.entryId)).single;
+    final first = (await activity(incoming.entryId)).single;
     expect(first.choice, cal.CalendarInvitationResponseChoice.declined);
     expect(await api.link(masterId), isNull);
     expect((await api.getInvitation(incoming.entryId)).dismissedAt, isNull);
     // Retried UI commands retain their original identity, including across a
     // newer source; refreshing does not implicitly create another response.
     await tap(find.byKey(const Key('response-send')));
-    expect((await api.responseActivity(incoming.entryId)).single.id, first.id);
-    if (instance) {
+    expect((await activity(incoming.entryId)).single.id, first.id);
+    if (bundleMaster) {
+      final calendar = (await client.modules.serverpod_calendar.calendar.create(
+        cal.CalendarCreateRequest(
+          displayName: 'Synthetic bundle response journey',
+          availabilityZoneId: 'UTC',
+          noRuleFallback: cal.CalendarNoRuleFallback.free,
+        ),
+      ))!;
+      calendarId = calendar.calendarId;
+      final current = await api.getInvitation(masterId);
+      final adopted = await api.adopt(
+        cal.CalendarInvitationAdoptionRequest(
+          invitationId: masterId,
+          expectedRevision: current.revision,
+          sourceId: current.sourceId!,
+          calendarId: calendarId,
+          expectedCalendarRevision: calendar.revision,
+        ),
+      );
+      eventId = adopted.eventId;
+      expect((await response(masterId)).appliesToCurrentSource, isTrue);
+      await client.invitationDemo.simulateBundleUpdate(
+        id,
+        const cal.Uuid().v4obj(),
+        1,
+        null,
+        'Respond without adoption',
+      );
+    } else if (instance) {
       await client.invitationDemo.simulateOccurrence(
         id,
         const cal.Uuid().v4obj(),
@@ -118,7 +161,7 @@ Future<void> runInvitationResponseJourney(
     );
     await tap(find.byKey(const Key('response-send')));
     expect(find.byKey(const Key('response-error')), findsNothing);
-    expect((await api.responseActivity(incoming.entryId)).single.id, first.id);
+    expect((await activity(incoming.entryId)).single.id, first.id);
     await tap(find.byKey(const Key('response-another')));
     expect(
       tester
@@ -129,6 +172,16 @@ Future<void> runInvitationResponseJourney(
     navigator.pop();
     await tester.pumpAndSettle();
   } finally {
+    if (eventId != null) {
+      final events = client.modules.serverpod_calendar.calendarEvent;
+      final current = await events.getEvent(eventId, []);
+      await events.deleteEvent(eventId, current.revision);
+    }
+    if (calendarId != null) {
+      final calendars = client.modules.serverpod_calendar.calendar;
+      final current = await calendars.getCalendar(calendarId, []);
+      await calendars.delete(calendarId, current.revision);
+    }
     for (final entry in {masterId, incoming.entryId}) {
       final current = await api.getInvitation(entry);
       if (current.dismissedAt == null) {

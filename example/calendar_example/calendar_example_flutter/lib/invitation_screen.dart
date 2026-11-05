@@ -300,7 +300,7 @@ class _InvitationScreenState extends State<InvitationScreen> {
                   ] else if (entry.kind ==
                       cal.CalendarInvitationSourceKind.requestBundle)
                     const Text(
-                      'Complete recurring invitation with exceptions. Add preserves the whole series; Apply update requires a complete source bundle. Participation responses are not supported yet.',
+                      'Complete recurring invitation with exceptions. Add preserves the whole series; Apply update requires a complete source bundle. Master responses are separate; occurrence responses remain outside this profile.',
                     )
                   else if (entry.recurring)
                     const Text('Recurring series'),
@@ -368,6 +368,29 @@ class _InvitationScreenState extends State<InvitationScreen> {
                                 ),
                           child: const Text(
                             'Preview / apply occurrence notice',
+                          ),
+                        ),
+                      if ({
+                        cal.CalendarInvitationSourceKind.requestBundle,
+                        cal.CalendarInvitationSourceKind.bundleCancellation,
+                      }.contains(entry.kind))
+                        TextButton(
+                          key: ValueKey(
+                            'invitation-bundle-response-${entry.id}',
+                          ),
+                          onPressed: _busy
+                              ? null
+                              : () => Navigator.of(context).push<void>(
+                                  MaterialPageRoute(
+                                    builder: (_) => InvitationResponseScreen(
+                                      client: widget.client,
+                                      id: entry.id,
+                                      bundleMaster: true,
+                                    ),
+                                  ),
+                                ),
+                          child: const Text(
+                            'Series master response / activity',
                           ),
                         ),
                       if (!entry.isThisAndFuture &&
