@@ -1,5 +1,7 @@
 # Initial bundled invitations
 
+Current extension: [ADR 0175](adr/0175-bundled-invitation-whole-lifecycle.md) adds the separately authorized [whole-series cancellation/reopening profile](bundled-invitation-lifecycle.md). Its approved lossless baseline mechanics and distinct cancellation version supersede the earlier whole-CANCEL continuation guard only for permanently linked bundles; component-wise lifecycle and participation remain guarded.
+
 [Accepted ADR 0173](adr/0173-initial-bundled-invitation-adoption.md) supports an initial authenticated REQUEST containing one recurring master and 1–64 supported occurrence components. Review retains the complete normalized source. Explicit Add to calendar creates one imported event series with its independent component versions, original identities, timing/content exceptions, PERIOD additions, annotations and inert source references. Receipt and dismissal change no calendar or participation state; Add sends no response.
 
 The original ADR 0173 increment was initial-adoption only. Accepted [ADR 0174](adr/0174-complete-bundled-invitation-updates.md) now adds [complete linked REQUEST updates](bundled-invitation-updates.md); unadopted updates, partial messages, mode conversions, cancellation and participation responses remain guarded before older scalar reconciliation or correlation fallback. Unrelated existing single-message workflows remain supported. Future bundle reconciliation needs a reviewed component-version contract.

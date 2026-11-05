@@ -1057,6 +1057,22 @@ class EndpointCalendarInvitation extends _isc.EndpointRef {
         {'request': request},
       );
 
+  _ida.Future<_iephig57.CalendarInvitationApplyReceipt> applyBundleCancellation(
+    _ilrmykvj.CalendarInvitationApplyRequest request,
+  ) => caller.callServerEndpoint<_iephig57.CalendarInvitationApplyReceipt>(
+    'serverpod_calendar.calendarInvitation',
+    'applyBundleCancellation',
+    {'request': request},
+  );
+
+  _ida.Future<_iephig57.CalendarInvitationApplyReceipt> applyBundleReopening(
+    _ilrmykvj.CalendarInvitationApplyRequest request,
+  ) => caller.callServerEndpoint<_iephig57.CalendarInvitationApplyReceipt>(
+    'serverpod_calendar.calendarInvitation',
+    'applyBundleReopening',
+    {'request': request},
+  );
+
   _ida.Future<_ikd0esaz.CalendarInvitationResponseView> response(
     _isc.UuidValue id,
   ) => caller.callServerEndpoint<_ikd0esaz.CalendarInvitationResponseView>(

@@ -1,5 +1,7 @@
 # Complete bundled invitation updates
 
+Current extension: [ADR 0175](adr/0175-bundled-invitation-whole-lifecycle.md) adds the separately authorized [whole-series cancellation/reopening profile](bundled-invitation-lifecycle.md). Its approved lossless baseline mechanics and distinct cancellation version supersede the earlier whole-CANCEL continuation guard only for permanently linked bundles; component-wise lifecycle and participation remain guarded.
+
 [Accepted ADR 0174](adr/0174-complete-bundled-invitation-updates.md) extends initial bundle adoption with component-aware review and explicit Apply for an existing active imported event whose stable link has `bundledRequest=true`. It does not enable updates before adoption, ordinary-link conversion, partial merging, component removal/reset, roster changes, CANCEL, participation responses or VALARM.
 
 ## Complete packets and independent versions

@@ -143,7 +143,11 @@ final class _Host implements CalendarInvitationHost {
       await Completer<void>().future;
     }
     if (pause == 'bundle-before' &&
-        c.operation == CalendarInvitationOperation.applyBundleUpdate &&
+        {
+          CalendarInvitationOperation.applyBundleUpdate,
+          CalendarInvitationOperation.applyBundleCancellation,
+          CalendarInvitationOperation.reopenBundle,
+        }.contains(c.operation) &&
         phase == CalendarAuthorizationPhase.finalWrite) {
       stdout.writeln(
         'INVITATION_PAUSED ${jsonEncode(c.applicationReceipt!.toJson())}',
@@ -522,12 +526,15 @@ Future<void> main(List<String> args) async {
               AuthenticationInfo('recipient', {}, authId: 'invitation-probe'),
             );
             try {
-              final receipt = await CalendarModule.service(session)
-                  .applyInvitationBundleUpdate(
-                    CalendarInvitationApplyRequest.fromJson(
-                      input['request'] as Map<String, dynamic>,
-                    ),
-                  );
+              final service = CalendarModule.service(session);
+              final request = CalendarInvitationApplyRequest.fromJson(
+                input['request'] as Map<String, dynamic>,
+              );
+              final receipt = await switch (input['mode']) {
+                'cancel' => service.applyInvitationBundleCancellation(request),
+                'reopen' => service.applyInvitationBundleReopening(request),
+                _ => service.applyInvitationBundleUpdate(request),
+              };
               if (host.pause == 'bundle-after') {
                 stdout.writeln(
                   'INVITATION_PAUSED ${jsonEncode(receipt.toJson())}',

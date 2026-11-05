@@ -119,7 +119,10 @@ class _InvitationScreenState extends State<InvitationScreen> {
     await widget.client.invitationDemo.simulateCancellation(
       cal.UuidValue.fromString(selected.uid.split(':').last),
       _cancellationCommand!,
-      (selected.sequence ?? 0) + 1,
+      selected.kind == cal.CalendarInvitationSourceKind.requestBundle &&
+              (selected.sequence ?? 0) < 13
+          ? 13
+          : (selected.sequence ?? 0) + 1,
     );
     _cancellationEntry = null;
     _cancellationCommand = null;
@@ -301,8 +304,10 @@ class _InvitationScreenState extends State<InvitationScreen> {
                     )
                   else if (entry.recurring)
                     const Text('Recurring series'),
-                  if (entry.kind ==
-                      cal.CalendarInvitationSourceKind.meetingCancellation)
+                  if ({
+                    cal.CalendarInvitationSourceKind.meetingCancellation,
+                    cal.CalendarInvitationSourceKind.bundleCancellation,
+                  }.contains(entry.kind))
                     const Text('Review only. The calendar event is unchanged.'),
                   if (entry.sourceId == null)
                     const Text('Source body unavailable.')
@@ -366,8 +371,10 @@ class _InvitationScreenState extends State<InvitationScreen> {
                           ),
                         ),
                       if (!entry.isThisAndFuture &&
-                          entry.kind !=
-                              cal.CalendarInvitationSourceKind.requestBundle)
+                          !{
+                            cal.CalendarInvitationSourceKind.requestBundle,
+                            cal.CalendarInvitationSourceKind.bundleCancellation,
+                          }.contains(entry.kind))
                         TextButton(
                           key: ValueKey('invitation-response-${entry.id}'),
                           onPressed: _busy
@@ -383,8 +390,10 @@ class _InvitationScreenState extends State<InvitationScreen> {
                           child: const Text('Participation response'),
                         ),
                       if (entry.originalStart == null &&
-                          entry.kind ==
-                              cal.CalendarInvitationSourceKind.request &&
+                          {
+                            cal.CalendarInvitationSourceKind.request,
+                            cal.CalendarInvitationSourceKind.requestBundle,
+                          }.contains(entry.kind) &&
                           _cancellationEntry == null)
                         TextButton(
                           key: ValueKey('invitation-cancel-${entry.id}'),

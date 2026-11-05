@@ -19,6 +19,7 @@ import 'calendar_event_content.dart' as _id4cvk34;
 import 'calendar_event_timing_overrides.dart' as _ijijze99;
 import 'calendar_invitation_apply_receipt.dart' as _ic2yh4ry;
 import 'calendar_invitation_bundle_component_version.dart' as _iu3tvjvj;
+import 'calendar_invitation_source_kind.dart' as _ilccsff7;
 
 @_isc.immutable
 abstract class CalendarInvitationBundleApplicationView
@@ -33,6 +34,11 @@ abstract class CalendarInvitationBundleApplicationView
     required this.applicationRevision,
     required this.acceptedInvitationId,
     required this.acceptedSourceId,
+    required this.acceptedKind,
+    this.acceptedCancellationVersion,
+    this.incomingKind,
+    bool? canApplyCancellation,
+    bool? canReopen,
     required this.acceptedAt,
     required this.acceptedComponents,
     required this.acceptedSourceUnavailable,
@@ -47,7 +53,8 @@ abstract class CalendarInvitationBundleApplicationView
     this.incomingComponents,
     required this.canApply,
     this.latestResult,
-  });
+  }) : canApplyCancellation = canApplyCancellation ?? false,
+       canReopen = canReopen ?? false;
 
   const factory CalendarInvitationBundleApplicationView({
     required _isc.UuidValue linkId,
@@ -59,6 +66,12 @@ abstract class CalendarInvitationBundleApplicationView
     required int applicationRevision,
     required _isc.UuidValue acceptedInvitationId,
     required _isc.UuidValue acceptedSourceId,
+    required _ilccsff7.CalendarInvitationSourceKind acceptedKind,
+    _iu3tvjvj.CalendarInvitationBundleComponentVersion?
+    acceptedCancellationVersion,
+    _ilccsff7.CalendarInvitationSourceKind? incomingKind,
+    bool? canApplyCancellation,
+    bool? canReopen,
     required DateTime acceptedAt,
     required List<_iu3tvjvj.CalendarInvitationBundleComponentVersion>
     acceptedComponents,
@@ -100,6 +113,28 @@ abstract class CalendarInvitationBundleApplicationView
       acceptedSourceId: _isc.UuidValueJsonExtension.fromJson(
         jsonSerialization['acceptedSourceId'],
       ),
+      acceptedKind: _ilccsff7.CalendarInvitationSourceKind.fromJson(
+        (jsonSerialization['acceptedKind'] as String),
+      ),
+      acceptedCancellationVersion:
+          jsonSerialization['acceptedCancellationVersion'] == null
+          ? null
+          : _ie4a1wrz.Protocol().deserialize<
+              _iu3tvjvj.CalendarInvitationBundleComponentVersion
+            >(jsonSerialization['acceptedCancellationVersion']),
+      incomingKind: jsonSerialization['incomingKind'] == null
+          ? null
+          : _ilccsff7.CalendarInvitationSourceKind.fromJson(
+              (jsonSerialization['incomingKind'] as String),
+            ),
+      canApplyCancellation: jsonSerialization['canApplyCancellation'] == null
+          ? null
+          : _isc.BoolJsonExtension.fromJson(
+              jsonSerialization['canApplyCancellation'],
+            ),
+      canReopen: jsonSerialization['canReopen'] == null
+          ? null
+          : _isc.BoolJsonExtension.fromJson(jsonSerialization['canReopen']),
       acceptedAt: _isc.DateTimeJsonExtension.fromJson(
         jsonSerialization['acceptedAt'],
       ),
@@ -174,6 +209,17 @@ abstract class CalendarInvitationBundleApplicationView
 
   final _isc.UuidValue acceptedSourceId;
 
+  final _ilccsff7.CalendarInvitationSourceKind acceptedKind;
+
+  final _iu3tvjvj.CalendarInvitationBundleComponentVersion?
+  acceptedCancellationVersion;
+
+  final _ilccsff7.CalendarInvitationSourceKind? incomingKind;
+
+  final bool canApplyCancellation;
+
+  final bool canReopen;
+
   final DateTime acceptedAt;
 
   final List<_iu3tvjvj.CalendarInvitationBundleComponentVersion>
@@ -217,6 +263,13 @@ abstract class CalendarInvitationBundleApplicationView
     int? applicationRevision,
     _isc.UuidValue? acceptedInvitationId,
     _isc.UuidValue? acceptedSourceId,
+    _ilccsff7.CalendarInvitationSourceKind? acceptedKind,
+    _iu3tvjvj.CalendarInvitationBundleComponentVersion?
+        acceptedCancellationVersion =
+        const _UndefinedCalendarInvitationBundleApplicationView$acceptedCancellationVersion(),
+    _ilccsff7.CalendarInvitationSourceKind? incomingKind,
+    bool? canApplyCancellation,
+    bool? canReopen,
     DateTime? acceptedAt,
     List<_iu3tvjvj.CalendarInvitationBundleComponentVersion>?
     acceptedComponents,
@@ -294,6 +347,32 @@ abstract class CalendarInvitationBundleApplicationView
                   acceptedSourceId,
                 ) ||
                 other.acceptedSourceId == acceptedSourceId) &&
+            (identical(
+                  other.acceptedKind,
+                  acceptedKind,
+                ) ||
+                other.acceptedKind == acceptedKind) &&
+            (identical(
+                  other.acceptedCancellationVersion,
+                  acceptedCancellationVersion,
+                ) ||
+                other.acceptedCancellationVersion ==
+                    acceptedCancellationVersion) &&
+            (identical(
+                  other.incomingKind,
+                  incomingKind,
+                ) ||
+                other.incomingKind == incomingKind) &&
+            (identical(
+                  other.canApplyCancellation,
+                  canApplyCancellation,
+                ) ||
+                other.canApplyCancellation == canApplyCancellation) &&
+            (identical(
+                  other.canReopen,
+                  canReopen,
+                ) ||
+                other.canReopen == canReopen) &&
             (identical(
                   other.acceptedAt,
                   acceptedAt,
@@ -377,6 +456,11 @@ abstract class CalendarInvitationBundleApplicationView
       applicationRevision,
       acceptedInvitationId,
       acceptedSourceId,
+      acceptedKind,
+      acceptedCancellationVersion,
+      incomingKind,
+      canApplyCancellation,
+      canReopen,
       acceptedAt,
       const _iss.DeepCollectionEquality().hash(acceptedComponents),
       acceptedSourceUnavailable,
@@ -408,6 +492,12 @@ abstract class CalendarInvitationBundleApplicationView
       'applicationRevision': applicationRevision,
       'acceptedInvitationId': acceptedInvitationId.toJson(),
       'acceptedSourceId': acceptedSourceId.toJson(),
+      'acceptedKind': acceptedKind.toJson(),
+      if (acceptedCancellationVersion != null)
+        'acceptedCancellationVersion': acceptedCancellationVersion?.toJson(),
+      if (incomingKind != null) 'incomingKind': incomingKind?.toJson(),
+      'canApplyCancellation': canApplyCancellation,
+      'canReopen': canReopen,
       'acceptedAt': acceptedAt.toJson(),
       'acceptedComponents': acceptedComponents.toJson(
         valueToJson: (v) => v.toJson(),
@@ -447,6 +537,13 @@ abstract class CalendarInvitationBundleApplicationView
       'applicationRevision': applicationRevision,
       'acceptedInvitationId': acceptedInvitationId.toJson(),
       'acceptedSourceId': acceptedSourceId.toJson(),
+      'acceptedKind': acceptedKind.toJson(),
+      if (acceptedCancellationVersion != null)
+        'acceptedCancellationVersion': acceptedCancellationVersion
+            ?.toJsonForProtocol(),
+      if (incomingKind != null) 'incomingKind': incomingKind?.toJson(),
+      'canApplyCancellation': canApplyCancellation,
+      'canReopen': canReopen,
       'acceptedAt': acceptedAt.toJson(),
       'acceptedComponents': acceptedComponents.toJson(
         valueToJson: (v) => v.toJsonForProtocol(),
@@ -482,6 +579,12 @@ abstract class CalendarInvitationBundleApplicationView
 
 class _Undefined {}
 
+class _UndefinedCalendarInvitationBundleApplicationView$acceptedCancellationVersion
+    extends _isc.UndefinedSentinel
+    implements _iu3tvjvj.CalendarInvitationBundleComponentVersion {
+  const _UndefinedCalendarInvitationBundleApplicationView$acceptedCancellationVersion();
+}
+
 class _UndefinedCalendarInvitationBundleApplicationView$currentOverrides
     extends _isc.UndefinedSentinel
     implements _ijijze99.CalendarEventTimingOverrides {
@@ -512,6 +615,12 @@ class _CalendarInvitationBundleApplicationViewImpl
     required int applicationRevision,
     required _isc.UuidValue acceptedInvitationId,
     required _isc.UuidValue acceptedSourceId,
+    required _ilccsff7.CalendarInvitationSourceKind acceptedKind,
+    _iu3tvjvj.CalendarInvitationBundleComponentVersion?
+    acceptedCancellationVersion,
+    _ilccsff7.CalendarInvitationSourceKind? incomingKind,
+    bool? canApplyCancellation,
+    bool? canReopen,
     required DateTime acceptedAt,
     required List<_iu3tvjvj.CalendarInvitationBundleComponentVersion>
     acceptedComponents,
@@ -538,6 +647,11 @@ class _CalendarInvitationBundleApplicationViewImpl
          applicationRevision: applicationRevision,
          acceptedInvitationId: acceptedInvitationId,
          acceptedSourceId: acceptedSourceId,
+         acceptedKind: acceptedKind,
+         acceptedCancellationVersion: acceptedCancellationVersion,
+         incomingKind: incomingKind,
+         canApplyCancellation: canApplyCancellation,
+         canReopen: canReopen,
          acceptedAt: acceptedAt,
          acceptedComponents: acceptedComponents,
          acceptedSourceUnavailable: acceptedSourceUnavailable,
@@ -568,6 +682,13 @@ class _CalendarInvitationBundleApplicationViewImpl
     int? applicationRevision,
     _isc.UuidValue? acceptedInvitationId,
     _isc.UuidValue? acceptedSourceId,
+    _ilccsff7.CalendarInvitationSourceKind? acceptedKind,
+    _iu3tvjvj.CalendarInvitationBundleComponentVersion?
+        acceptedCancellationVersion =
+        const _UndefinedCalendarInvitationBundleApplicationView$acceptedCancellationVersion(),
+    Object? incomingKind = _Undefined,
+    bool? canApplyCancellation,
+    bool? canReopen,
     DateTime? acceptedAt,
     List<_iu3tvjvj.CalendarInvitationBundleComponentVersion>?
     acceptedComponents,
@@ -602,6 +723,16 @@ class _CalendarInvitationBundleApplicationViewImpl
       applicationRevision: applicationRevision ?? this.applicationRevision,
       acceptedInvitationId: acceptedInvitationId ?? this.acceptedInvitationId,
       acceptedSourceId: acceptedSourceId ?? this.acceptedSourceId,
+      acceptedKind: acceptedKind ?? this.acceptedKind,
+      acceptedCancellationVersion:
+          acceptedCancellationVersion is _isc.UndefinedSentinel
+          ? this.acceptedCancellationVersion?.copyWith()
+          : acceptedCancellationVersion,
+      incomingKind: incomingKind is _ilccsff7.CalendarInvitationSourceKind?
+          ? incomingKind
+          : this.incomingKind,
+      canApplyCancellation: canApplyCancellation ?? this.canApplyCancellation,
+      canReopen: canReopen ?? this.canReopen,
       acceptedAt: acceptedAt ?? this.acceptedAt,
       acceptedComponents:
           acceptedComponents ??
