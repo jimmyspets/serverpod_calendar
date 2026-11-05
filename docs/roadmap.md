@@ -931,3 +931,10 @@ The scoped implementation is described in [published range controls](published-r
 - [x] Finish complete local grouped validation before one implementation commit, including pure/SDK/client/two-host loss and connected Flutter checks.
 - [ ] Pass the full exact-head hosted gate before readiness.
 - [ ] Review faithful cancelled-bundle publication, component-wise cancellation/composition, partial removal/merging and participation separately.
+
+## Proposed bundle master attendee responses
+
+[Proposed ADR 0176](adr/0176-bundled-master-attendee-responses.md) groups explicit master-only Accept/Tentative/Decline, protected state/activity, existing durable response tables, independent authority and synthetic MIME/Flutter/recovery checks for complete REQUEST bundles. It proposes dedicated APIs and digest-family binding with no new stored/model field, SQL or cap expansion. A master REPLY does not acknowledge independently versioned exceptions; source changes still withdraw unsent work. Calendar actions remain independent. Current bundle response guards stay in place until explicit maintainer agreement and implementation; occurrence/range replies and real transport remain separate required work.
+
+- [ ] Obtain explicit approval of the master-only response/API/digest/retention mechanics before implementation.
+- [ ] Resolve prerequisite hosted failures first, then implement/test the complete approved response group before one code commit.
