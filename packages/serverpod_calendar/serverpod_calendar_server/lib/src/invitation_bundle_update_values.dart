@@ -284,3 +284,101 @@ EventStorageProposal invitationRequestBundleUpdateProposal({
   );
   return next;
 }
+
+/// Pure minimal whole-CANCEL validation; supplied identity/history is untrusted.
+CalendarInvitationBundleComponentVersion validateInvitationBundleCancellation({
+  required CalendarInvitationBundleState accepted,
+  required IcalendarSchedulingMessage incoming,
+  required String recipientAddress,
+  CalendarInvitationBundleState? pending,
+  CalendarInvitationBundleComponentVersion? previousCancellation,
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
+  final work =
+      sharedWorkBudget ?? RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
+  if (work.maxWork > eventMaxCandidateWork) {
+    throw ArgumentError('Invalid work limit');
+  }
+  final message = validateIcalendarSchedulingMessage(
+    incoming.source,
+    sharedWorkBudget: work,
+  );
+  if (message.method != IcalendarSchedulingMethod.cancel ||
+      message.events.length != 1 ||
+      message.uid != accepted.uid) {
+    throw ArgumentError('Unsupported bundle cancellation');
+  }
+  final event = message.events.single;
+  final addresses = event.participants.attendees.map((a) => a.address).toList();
+  final roster = jsonDecode(accepted.roster) as List;
+  if (event.isOverride ||
+      event.status != IcalendarEventStatus.cancelled ||
+      event.sequence == null ||
+      event.participants.organizer?.address != roster.first ||
+      addresses.isEmpty ||
+      addresses.length > 64 ||
+      addresses.toSet().length != addresses.length ||
+      !addresses.contains(recipientAddress) ||
+      !addresses.every((a) => (roster.last as List).contains(a))) {
+    throw ArgumentError('Invalid cancellation claims');
+  }
+  for (final property
+      in event.source.entries.whereType<IcalendarSyntaxProperty>()) {
+    work.charge();
+    if (!{
+      'UID',
+      'ORGANIZER',
+      'ATTENDEE',
+      'STATUS',
+      'SEQUENCE',
+      'DTSTAMP',
+    }.contains(property.canonicalName)) {
+      throw ArgumentError('Unsupported cancellation property');
+    }
+  }
+  // Reuse the bounded participant checks, including delegation/SENT-BY rejection.
+  _bundleRoster({
+    'organizer': {
+      'address': event.participants.organizer!.address,
+      'parameters': event.participants.organizer!.parameters,
+    },
+    'attendees': [
+      for (final a in event.participants.attendees)
+        {'address': a.address, 'parameters': a.parameters},
+    ],
+  });
+  for (final version in [
+    ...accepted.versions,
+    ...?pending?.versions,
+    ?previousCancellation,
+  ]) {
+    work.charge();
+    if (event.sequence! <= (version.sequence ?? 0)) {
+      throw ArgumentError('Cancellation version conflict');
+    }
+  }
+  return CalendarInvitationBundleComponentVersion(
+    sequence: event.sequence,
+    stamp: event.stamp,
+  );
+}
+
+/// A complete REQUEST must explicitly cross a distinct whole-CANCEL floor.
+bool validateInvitationBundleReopening({
+  required CalendarInvitationBundleState accepted,
+  required CalendarInvitationBundleState incoming,
+  required CalendarInvitationBundleComponentVersion cancellation,
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
+  final master = incoming.versions.singleWhere((v) => v.originalStart == null);
+  if (cancellation.originalStart != null ||
+      cancellation.isThisAndFuture ||
+      (master.sequence ?? 0) <= (cancellation.sequence ?? 0)) {
+    throw ArgumentError('Reopening version conflict');
+  }
+  return validateInvitationBundleAdvance(
+    accepted,
+    incoming,
+    sharedWorkBudget: sharedWorkBudget,
+  );
+}

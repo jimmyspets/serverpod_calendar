@@ -13,24 +13,36 @@ final class _Probe {
   final StreamIterator<String> lines;
   final IOSink log;
   bool stopped = false, exited = false;
+  bool busy = false, unusable = false;
   Completer<Map<String, dynamic>>? paused;
   Future<Object?> command(Map<String, Object?> input) async {
-    process.stdin.writeln(jsonEncode(input));
-    await process.stdin.flush();
-    while (await lines.moveNext().timeout(const Duration(seconds: 60))) {
-      final line = lines.current;
-      log.writeln(line);
-      if (line.startsWith('INVITATION_PAUSED ')) {
-        paused?.complete(
-          jsonDecode(line.substring('INVITATION_PAUSED '.length))
-              as Map<String, dynamic>,
-        );
-      }
-      if (line.startsWith('INVITATION_RESULT ')) {
-        return jsonDecode(line.substring('INVITATION_RESULT '.length));
-      }
+    if (busy || unusable) {
+      throw StateError('Probe cannot accept another command');
     }
-    throw StateError('Owned invitation probe exited without result');
+    busy = true;
+    try {
+      process.stdin.writeln(jsonEncode(input));
+      await process.stdin.flush();
+      while (await lines.moveNext().timeout(const Duration(seconds: 60))) {
+        final line = lines.current;
+        log.writeln(line);
+        if (line.startsWith('INVITATION_PAUSED ')) {
+          paused?.complete(
+            jsonDecode(line.substring('INVITATION_PAUSED '.length))
+                as Map<String, dynamic>,
+          );
+        }
+        if (line.startsWith('INVITATION_RESULT ')) {
+          return jsonDecode(line.substring('INVITATION_RESULT '.length));
+        }
+      }
+      throw StateError('Owned invitation probe exited without result');
+    } catch (_) {
+      unusable = true;
+      rethrow;
+    } finally {
+      busy = false;
+    }
   }
 
   Future<void> stop() async {
@@ -380,8 +392,212 @@ Future<void> main(List<String> args) async {
           'Bundle update lost components or reactivated retry',
         );
       }
+      for (final mode in ['cancel', 'reopen']) {
+        for (final pause in [
+          '',
+          'before',
+          'after',
+          'bundle-before',
+          'bundle-after',
+        ]) {
+          final id = nextCase();
+          final packet = <String, Object?>{
+            'command': 'receive',
+            'bundle': true,
+            'caseId': id,
+            'key': 'initial',
+          };
+          final source = await b.command(packet) as Map;
+          final parent =
+              await b.command({'command': 'calendar', 'caseId': id}) as String;
+          await b.command({
+            'command': 'adopt',
+            'caseId': id,
+            'request': request(source, parent),
+          });
+          Map<String, Object?> bodyFor(Map view) => {
+            'invitationId': view['invitationId'],
+            'sourceId': view['incomingSourceId'],
+            'expectedInvitationRevision': view['invitationRevision'],
+            'linkId': view['linkId'],
+            'expectedEventRevision': view['eventRevision'],
+            'expectedCalendarRevision': view['calendarRevision'],
+            'expectedApplicationRevision': view['applicationRevision'],
+          };
+          if (mode == 'reopen') {
+            await b.command({
+              'command': 'receive',
+              'caseId': id,
+              'key': 'prior-cancel',
+              'cancel': true,
+              'sequence': 13,
+            });
+            final cancelledView = await b.command({
+              'command': 'bundle-view',
+              'caseId': id,
+              'entryId': source['entryId'],
+            }) as Map;
+            await b.command({
+              'command': 'bundle-apply',
+              'mode': 'cancel',
+              'caseId': id,
+              'request': bodyFor(cancelledView),
+            });
+          }
+          final initialRevision = mode == 'reopen' ? 2 : 1;
+          final initialSources = mode == 'reopen' ? 2 : 1;
+          final update = <String, Object?>{
+            'command': 'receive',
+            'caseId': id,
+            'key': 'lifecycle-$mode',
+            if (mode == 'cancel') ...{
+              'cancel': true,
+              'sequence': 13,
+            } else ...{
+              'bundle': true,
+              'sequence': 14,
+            },
+          };
+          if (pause == 'before' || pause == 'after') {
+            a.paused = Completer<Map<String, dynamic>>();
+            final lost = a
+                .command({...update, 'pause': pause})
+                .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+            final submitted = await a.paused!.future.timeout(
+              const Duration(seconds: 40),
+            );
+            final visible =
+                await b.command({'command': 'inspect', 'caseId': id}) as Map;
+            require(
+              visible['sources'] ==
+                      (pause == 'after'
+                          ? initialSources + 1
+                          : initialSources) &&
+                  visible['eventRevision'] == initialRevision,
+              'Component-aware intake partially changed native state',
+            );
+            await a.stop();
+            await lost;
+            final recovered = await b.command(update) as Map;
+            require(
+              (recovered['id'] == submitted['id']) == (pause == 'after'),
+              'Update ingress receipt identity changed',
+            );
+            a = await start('a-bundle-update-intake-$pause', 18780);
+          } else {
+            final raced = await Future.wait(
+              [a, b].map((p) => p.command(update)),
+            );
+            require(
+              (raced.first as Map)['id'] == (raced.last as Map)['id'],
+              'Update ingress race changed identity',
+            );
+          }
+          final view = await b.command({
+            'command': 'bundle-view',
+            'caseId': id,
+            'entryId': source['entryId'],
+          }) as Map;
+          require(
+            view[mode == 'cancel' ? 'canApplyCancellation' : 'canReopen'] ==
+                true,
+            'Complete pending update is not applicable',
+          );
+          final body = <String, Object?>{
+            'invitationId': view['invitationId'],
+            'sourceId': view['incomingSourceId'],
+            'expectedInvitationRevision': view['invitationRevision'],
+            'linkId': view['linkId'],
+            'expectedEventRevision': view['eventRevision'],
+            'expectedCalendarRevision': view['calendarRevision'],
+            'expectedApplicationRevision': view['applicationRevision'],
+          };
+          Map result;
+          if (pause.startsWith('bundle-')) {
+            a.paused = Completer<Map<String, dynamic>>();
+            final lost = a
+                .command({
+                  'command': 'bundle-apply',
+                  'mode': mode,
+                  'caseId': id,
+                  'request': body,
+                  'pause': pause,
+                })
+                .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+            final submitted = await a.paused!.future.timeout(
+              const Duration(seconds: 40),
+            );
+            final visible =
+                await b.command({'command': 'inspect', 'caseId': id}) as Map;
+            require(
+              visible['eventRevision'] ==
+                      (pause == 'bundle-after'
+                          ? initialRevision + 1
+                          : initialRevision) &&
+                  visible['applications'] ==
+                      (mode == 'reopen'
+                          ? 1
+                          : pause == 'bundle-after'
+                          ? 1
+                          : 0),
+              'Partial bundle application visible',
+            );
+            await a.stop();
+            await lost;
+            result = await b.command({
+              'command': 'bundle-apply',
+              'mode': mode,
+              'caseId': id,
+              'request': body,
+            }) as Map;
+            require(
+              (result['id'] == submitted['id']) == (pause == 'bundle-after'),
+              'Update recovery changed result identity',
+            );
+            a = await start('a-bundle-update-$pause', 18780);
+          } else {
+            final raced = await Future.wait(
+              [a, b].map(
+                (p) => p.command({
+                  'command': 'bundle-apply',
+                  'mode': mode,
+                  'caseId': id,
+                  'request': body,
+                }),
+              ),
+            );
+            result = raced.first as Map;
+            require(
+              result['id'] != null && result['id'] == (raced.last as Map)['id'],
+              'Bundle apply race changed latest receipt',
+            );
+          }
+          final retry = await b.command({
+            'command': 'bundle-apply',
+            'mode': mode,
+            'caseId': id,
+            'request': body,
+          }) as Map;
+          final state =
+              await b.command({'command': 'inspect', 'caseId': id}) as Map;
+          require(
+            retry['id'] == result['id'] &&
+                state['events'] == 1 &&
+                state['links'] == 1 &&
+                state['applications'] == 1 &&
+                state['eventRevision'] == initialRevision + 1 &&
+                state['acceptedKind'] ==
+                    (mode == 'cancel'
+                        ? 'bundleCancellation'
+                        : 'requestBundle') &&
+                (state['bundleVersions'] as List).contains(12) &&
+                (state['responses'] as List).isEmpty,
+            'Bundle update lost components or reactivated retry',
+          );
+        }
+      }
       stdout.writeln(
-        'PASS: complete bundles preserve components and independent versions across two-host intake/adoption/application races and actual process loss before/after every commit boundary.',
+        'PASS: complete bundle adoption, updates and whole cancellation/reopening preserve components across two-host races and actual process loss before/after every commit boundary.',
       );
       return;
     }
@@ -2795,14 +3011,23 @@ Future<void> main(List<String> args) async {
       'PASS: ${recurring ? 'recurring-master' : 'non-recurring'} independent invitation hosts, response command/CAS races, competing response leases, actual loss before/after response acceptance with stable key/bytes, cross-host source/access withdrawal, duplicate ingress/dismissal, adoption/update/cancellation races and commit-loss recovery.',
     );
   } finally {
-    final live = probes.where((p) => !p.stopped && !p.exited).toList();
-    if (live.isNotEmpty) {
-      for (final id in cases) {
-        await live.last.command({'command': 'cleanup', 'caseId': id});
+    try {
+      // Release deliberately paused transactions before cleanup takes locks.
+      for (final probe in probes.where((p) => p.busy || p.unusable)) {
+        await probe.stop();
       }
-    }
-    for (final p in probes) {
-      await p.stop();
+      final live = probes
+          .where((p) => !p.stopped && !p.exited && !p.busy && !p.unusable)
+          .toList();
+      if (live.isNotEmpty) {
+        for (final id in cases) {
+          await live.last.command({'command': 'cleanup', 'caseId': id});
+        }
+      }
+    } finally {
+      for (final p in probes) {
+        await p.stop();
+      }
     }
   }
 }

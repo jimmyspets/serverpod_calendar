@@ -2128,6 +2128,48 @@ class Endpoints extends _is.EndpointDispatch {
                         params['request'],
                       ),
         ),
+        'applyBundleCancellation': _is.MethodConnector(
+          name: 'applyBundleCancellation',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i3h34hei.CalendarInvitationApplyRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .applyBundleCancellation(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'applyBundleReopening': _is.MethodConnector(
+          name: 'applyBundleReopening',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i3h34hei.CalendarInvitationApplyRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .applyBundleReopening(
+                        session,
+                        params['request'],
+                      ),
+        ),
         'response': _is.MethodConnector(
           name: 'response',
           params: {

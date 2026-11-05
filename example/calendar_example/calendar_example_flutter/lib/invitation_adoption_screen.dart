@@ -163,7 +163,7 @@ class _InvitationAdoptionScreenState extends State<InvitationAdoptionScreen> {
           ),
         if (_link?.bundledRequest == true)
           const Text(
-            'This link preserves the complete invitation. Updates require a complete source bundle; participation responses are not supported yet.',
+            'This link preserves the complete invitation. Updates and reopening require a complete source bundle; whole cancellation is applied separately. Participation responses are not supported yet.',
           ),
         if (_link?.bundledRequest == true)
           TextButton(

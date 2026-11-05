@@ -73,8 +73,7 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
     }
     if (link != null &&
         entry != null &&
-        (entry.kind == CalendarInvitationSourceKind.requestBundle) !=
-            link.bundledRequest) {
+        _invBundleKind(entry.kind) != link.bundledRequest) {
       throw _failure(CalendarFailureCode.unavailable);
     }
     if (link != null &&
@@ -97,14 +96,21 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
   Future<_Event> _invLinkedEvent(
     CalendarInvitationLinkRecord link,
     CalendarHostContext actor,
-    Transaction tx,
-  ) => _invLinkedEventScope(link, actor.scopeKey, tx);
+    Transaction tx, {
+    RecurrenceWorkBudget? sharedWorkBudget,
+  }) => _invLinkedEventScope(
+    link,
+    actor.scopeKey,
+    tx,
+    sharedWorkBudget: sharedWorkBudget,
+  );
 
   Future<_Event> _invLinkedEventScope(
     CalendarInvitationLinkRecord link,
     String scopeKey,
-    Transaction tx,
-  ) async {
+    Transaction tx, {
+    RecurrenceWorkBudget? sharedWorkBudget,
+  }) async {
     if (link.scopeKey != scopeKey) {
       throw _failure(CalendarFailureCode.unavailable);
     }
@@ -131,7 +137,7 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
         event.data.importBaseline == null) {
       throw _failure(CalendarFailureCode.unavailable);
     }
-    await _invCheckpoint(link, event, tx);
+    await _invCheckpoint(link, event, tx, sharedWorkBudget: sharedWorkBudget);
     return event;
   }
 
