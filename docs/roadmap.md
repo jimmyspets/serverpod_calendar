@@ -921,3 +921,7 @@ The scoped implementation is described in [published range controls](published-r
 ## Complete bundled REQUEST updates
 
 [Accepted ADR 0174](adr/0174-complete-bundled-invitation-updates.md) implements [complete linked REQUEST-bundle updates](bundled-invitation-updates.md): component-aware intake/review, explicit clean-series Apply, independent authority, protected version views and existing acceptance-checkpoint reuse. Complete sets and non-regressing component tuples are required; child-only changes do not invent master advancement. Latest exact retries preserve drafts and creation identity; missing pending evidence fails unavailable. No SQL/cap expansion or real transport is added. Partial merges/removal, roster changes, cancellation/replies and VALARM remain separate. Actual batch validation is recorded separately.
+
+## Proposed bundled whole-series lifecycle
+
+[Proposed ADR 0175](adr/0175-bundled-invitation-whole-lifecycle.md) groups trusted whole-series CANCEL review, explicit clean-series cancellation and complete REQUEST reopening for permanently linked bundles. It proposes conservative component-wide cancellation floors, retained exceptions/private actions, independent authority, existing checkpoint reuse, one source-kind value and read-only view refinements, with no SQL or limit expansion. These mechanics require explicit maintainer agreement; current bundle cancellation/reopening and participation guards remain. ADR 0174 local validation passed; exact-head hosted runtime remains a separate pending gate.
