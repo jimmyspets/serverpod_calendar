@@ -2335,4 +2335,6 @@ The Serverpod MCP hot-reload tool is exposed and was called, but the interactive
 
 Final local confirmation: the browser-only bundle master-response journey passed again against the final rebuilt host after callback receipt-copy protection. All 422 integration cases include the final mutation and application-independence tests. Full repository/exact-head hosted checks remain required before readiness; unrelated domain/worker suites were not all repeated locally in this affected batch. No merge, deployment, package publication or external-client interoperability is claimed.
 
-Final static checks passed: **3,788** relative Markdown targets, consecutive ADRs 0001–0176, **40** candidate files, UTF-8/whitespace, absence of **17** local credential values, unchanged LICENSE and no SQL migration changes.
+Final static checks passed: **3,788** relative Markdown targets, consecutive ADRs 0001â€“0176, **40** candidate files, UTF-8/whitespace, absence of **17** local credential values, unchanged LICENSE and no SQL migration changes.
+
+Hosted inspection follow-up: run 42090223549 at 3009c00 failed before runtime because the final validation-record append introduced one Windows-1252 dash after the local UTF-8 check. The repair preserves existing UTF-8 bytes and encodes that character explicitly. All tracked Markdown files are now checked as UTF-8 before the repair commit; no runtime source or prior test result changes. Runtime was skipped in that failed run, and a replacement exact-head run is required.
