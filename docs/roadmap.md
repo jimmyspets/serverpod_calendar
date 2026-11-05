@@ -942,3 +942,14 @@ The scoped implementation is described in [published range controls](published-r
 - [ ] Observe successful full exact-head hosted checks before readiness.
 
 ADR 0176 implements the approved dedicated API, Flutter, MIME and durable response group. Its affected local checks passed, including 422 invitation/MIME integration tests; full exact-head hosted readiness remains pending. See [the scoped guide](bundled-master-attendee-responses.md).
+
+
+## Proposed bundle occurrence attendee responses
+
+[Proposed ADR 0177](adr/0177-bundled-occurrence-attendee-responses.md) records the confirmed any-validated-original/effective-component-version policy and proposes one grouped durable API/Flutter/recovery batch. The mechanics add a private target key and typed response original to each of the two existing response state/delivery tables, replace the state uniqueness index, and retain old target/hash identity and aggregate caps. No implementation or schema change follows before explicit model/ADR agreement. Master and occurrence responses remain independent; RANGE/real mail stay separate.
+
+
+
+- [x] Confirm any validated original selection and effective controlling-component version.
+- [ ] Review the grouped target/storage/API/quota/migration proposal in ADR 0177.
+- [ ] After agreement, implement and validate the complete batch before one code commit; retain full exact-head hosted readiness checks.

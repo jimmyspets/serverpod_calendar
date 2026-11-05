@@ -2338,3 +2338,14 @@ Final local confirmation: the browser-only bundle master-response journey passed
 Final static checks passed: **3,788** relative Markdown targets, consecutive ADRs 0001–0176, **40** candidate files, UTF-8/whitespace, absence of **17** local credential values, unchanged LICENSE and no SQL migration changes.
 
 Hosted inspection follow-up: run 42090223549 at 3009c00 failed before runtime because the final validation-record append introduced one Windows-1252 dash after the local UTF-8 check. The repair preserves existing UTF-8 bytes and encodes that character explicitly. All tracked Markdown files are now checked as UTF-8 before the repair commit; no runtime source or prior test result changes. Runtime was skipped in that failed run, and a replacement exact-head run is required.
+
+
+## ADR 0177 proposal inspection, 2026-11-05
+
+The maintainer confirmed any validated original for bundle occurrence responses, using the effective master/range/single source version and independent state. Inspected response state/delivery/attempt models, the one-entry uniqueness constraint, old command hashing, complete-bundle/core member/version helpers, callback snapshots, worker state/source checks, aggregate/pending quota assumptions, pruning, synthetic MIME, client and Flutter paths. Open PRs show prerequisite #184 and no overlapping proposed implementation; open issues returned none. Primary RFC 5546 REPLY/recurrence text was consulted; application limits and target storage are labeled proposals.
+
+Prerequisite application 3009c00 passed 422 affected integration cases and the recorded pure, recovery, JWT/client and browser group. Its first hosted inspection failed because a final note introduced a Windows-1252 dash; documentation-only faf354c repaired it. Replacement run 42090565471 passed inspection and full runtime is still in progress at this observation. This proposal claims no completed hosted runtime result.
+
+ADR 0177 proposes the whole per-original target resolution, existing-table/index migration, independent authority/API, source-derived criteria/version binding, unchanged aggregate limits and client/Flutter/two-host recovery group. Only the any-original policy is confirmed; concrete mechanics need explicit maintainer agreement under AGENTS.md. This branch changes Markdown only, with no source/model/generated/migration/dependency/app changes. Documentation-only checks and actual candidate/link counts are recorded after validation; no runtime rerun is claimed for this proposal.
+
+Proposal static checks passed: **3,798** relative Markdown targets, consecutive ADRs 0001-0177, **10 Markdown-only** candidate files, explicit UTF-8/whitespace, unchanged LICENSE and absence of **17** local credential values. No runtime, table/model source, generated client, migration or dependency file changed. The ADR index now also reflects ADR 0176's actual explicit approval rather than its stale proposed label.

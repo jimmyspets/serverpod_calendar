@@ -199,7 +199,9 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0175](0175-bundled-invitation-whole-lifecycle.md) | Bundled invitation whole-series cancellation and reopening | Accepted by explicit maintainer agreement, including lossless retained-REQUEST baseline refinement; existing checkpoint storage and independent component floors |
 
-| [0176](0176-bundled-master-attendee-responses.md) | Explicit master responses to bundled invitations | Proposed; master-only private responses with existing outbox storage, dedicated authority/APIs and source-bound digest family; requires explicit agreement |
+| [0176](0176-bundled-master-attendee-responses.md) | Explicit master responses to bundled invitations | Accepted by explicit maintainer agreement; scoped implementation and local validation recorded, full hosted readiness separate |
+
+| [0177](0177-bundled-occurrence-attendee-responses.md) | Independent occurrence responses to bundled invitations | Proposed mechanics; confirmed any-original policy, existing-table target columns/index and grouped durable API/Flutter/recovery review |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

@@ -910,3 +910,10 @@ The approved generated refinements append `bundleCancellation` to `CalendarInvit
 [Accepted ADR 0176](adr/0176-bundled-master-attendee-responses.md) groups explicit master-only Accept/Tentative/Decline, protected state/activity, existing durable response tables, independent authority and synthetic MIME/Flutter/recovery checks for complete REQUEST bundles. The approved contract uses dedicated APIs and digest-family binding with no new stored/model field, SQL or cap expansion. A master REPLY does not acknowledge independently versioned exceptions; source changes still withdraw unsent work. Calendar actions remain independent. Legacy response APIs retain bundle guards; occurrence/range replies and real transport remain separate required work.
 
 See [the scoped master-response guide](bundled-master-attendee-responses.md) and actual grouped validation; this does not establish complete scheduling interoperability.
+
+
+## Proposed bundle occurrence attendee responses
+
+[Proposed ADR 0177](adr/0177-bundled-occurrence-attendee-responses.md) records the confirmed any-validated-original/effective-component-version policy and proposes one grouped durable API/Flutter/recovery batch. The mechanics add a private target key and typed response original to each of the two existing response state/delivery tables, replace the state uniqueness index, and retain old target/hash identity and aggregate caps. No implementation or schema change follows before explicit model/ADR agreement. Master and occurrence responses remain independent; RANGE/real mail stay separate.
+
+ADR 0177 additionally proposes two public immutable wrappers: the nested existing command plus required original, and the authorized read result separating current packet/component proof from recorded personal state. No existing command JSON shape is changed. These are review proposals, not generated models.
