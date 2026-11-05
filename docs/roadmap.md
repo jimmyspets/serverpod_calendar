@@ -31,7 +31,7 @@ The timing-only single/future batch is implemented under [ADR 0055](adr/0055-nat
 The maintainer explicitly permits dependency-driven reordering of this roadmap. Use these lanes as the working priority, preserving the full selected release scope and the explicit ADR/model review gates:
 
 1. Establish the current baseline: resolve hosted checks for delivered batches and the 4.1.0 toolchain before treating them as release evidence. Fix failures ahead of new implementation.
-2. Finish shared recurring scheduling primitives, then their durable workflows. ADRs 0169–0170 now implement the scoped incoming repeated-cycle prerequisites/workflow, with full exact-head hosted success for PR #172. ADRs 0171–0172 implement the bounded outgoing range cancellation/restoration group. Close initial incoming REQUEST-bundle review/adoption under accepted ADR 0173 before broader bundle reconciliation and RANGE responses; preserve the explicit initial-only continuation boundary. Group code that shares original identity, version, source retention and retry machinery instead of repeatedly rebuilding the same boundary.
+2. Finish shared recurring scheduling primitives, then their durable workflows. ADRs 0169–0170 now implement the scoped incoming repeated-cycle prerequisites/workflow, with full exact-head hosted success for PR #172. ADRs 0171–0172 implement the bounded outgoing range cancellation/restoration group. Initial REQUEST-bundle review/adoption under accepted ADR 0173 passed full exact-head hosted checks in PR #178. Review proposed ADR 0174 for the grouped complete-update slice before implementing it; preserve current guards for partial/lifecycle/reply reconciliation. Group code that shares original identity, version, source retention and retry machinery instead of repeatedly rebuilding the same boundary.
 3. Complete the other selected authenticated VEVENT/VFREEBUSY methods and participant/lifecycle reconciliation, reusing the stable series and outbox machinery. Pure parser support alone does not complete these operation rows. Host/provider trust and real-mail trials require their own concrete configuration and authorization.
 4. Close remaining native task/event metadata, future-content/cancellation, disclosure-safe query and availability gaps in coherent service/client/Flutter batches. Time-indexed candidates, timezone-update invalidation and production authorization coordination must retain existing completeness and concurrency guarantees.
 5. Consolidate operational cleanup/retention and feed/mail host integration, then collect external-client interoperability evidence against the declared subsets. Provider-specific mobile delivery remains outside repository implementation scope.
@@ -906,7 +906,7 @@ The 4.1.0 maintenance batch completed local generation, analysis, existing/fresh
 
 The scoped implementation is described in [published range controls](published-range-controls.md); local grouped validation passed, with full exact-head hosted checks remaining a separate readiness gate.
 
-## Proposed initial bundled REQUEST adoption
+## Initial bundled REQUEST adoption
 
 [Accepted ADR 0173](adr/0173-initial-bundled-invitation-adoption.md) adds initial complete REQUEST-bundle review and atomic one-event calendar adoption, with an immutable private link-profile flag, read-only receipt/host evidence and independent bundle permissions. Every supported component and source version is retained; exact retries preserve local edits and cannot recreate deleted events. Known-series updates, conversions, bundle replies/cancellations and vector reconciliation remain explicitly guarded. Existing limits and synthetic transport remain; see [the scoped implementation and actual validation](initial-bundled-invitations.md). This is not full scheduling completion.
 
@@ -915,3 +915,7 @@ The scoped implementation is described in [published range controls](published-r
 - [ ] Obtain explicit ADR/model agreement before source/model changes.
 - [ ] Implement/test the entire approved group before one code commit and pass full exact-head hosted checks.
 - [ ] Keep per-component vector ordering, known-series bundle updates/cancellations/replies, range-history composition and full interoperability required.
+
+## Proposed complete bundled REQUEST updates
+
+[Proposed ADR 0174](adr/0174-complete-bundled-invitation-updates.md) groups component-aware known-bundle intake/review and explicit clean-series application, independent authority, existing acceptance-checkpoint reuse, protected version views and synthetic client/Flutter/recovery validation. The maintainer confirmed complete component sets and whole-message rejection of regressions. Concrete tuple/equality/new-component floors, model/API and retry/pruning mechanics remain proposed; no runtime guard is lifted by this documentation. No SQL expansion is proposed; partial merges/removal, roster/lifecycle/replies and VALARM remain separate work.
