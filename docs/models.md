@@ -891,6 +891,10 @@ The scoped implementation is described in [published range controls](published-r
 
 The approved source-model additions are `CalendarSchedulingFutureCancelRequest` and `CalendarSchedulingFutureRestoreRequest` (event UUID, expected revision, command UUID and exact original); `rangeCancel`/`rangeRestore` publication kinds; and protected `hasPublishedRangeCancellation`/`publishedRangeStart` view fields. They add no SQL columns/tables. Outgoing v7 remains private existing-column JSON: actual native snapshot, expected published-native comparison, flat ordinary/individual facts, current message/versions/masks and active/closed control with optional revision-owned installation binding. Legacy readers remain; v7/v6 predecessors are never recursively embedded. Each snapshot/projection/payload still has the existing 512 KiB ceiling, with one shared 64-original slot bound.
 
-## Proposed initial bundled REQUEST adoption
+## Initial bundled REQUEST adoption
 
 [Accepted ADR 0173](adr/0173-initial-bundled-invitation-adoption.md) adds initial complete REQUEST-bundle review and atomic one-event calendar adoption, with an immutable private link-profile flag, read-only receipt/host evidence and independent bundle permissions. Every supported component and source version is retained; exact retries preserve local edits and cannot recreate deleted events. Known-series updates, conversions, bundle replies/cancellations and vector reconciliation remain explicitly guarded. Existing limits and synthetic transport remain; see [the scoped implementation and actual validation](initial-bundled-invitations.md). This is not full scheduling completion.
+
+## Proposed complete bundled REQUEST updates
+
+[Proposed ADR 0174](adr/0174-complete-bundled-invitation-updates.md) groups component-aware known-bundle intake/review and explicit clean-series application, independent authority, existing acceptance-checkpoint reuse, protected version views and synthetic client/Flutter/recovery validation. The maintainer confirmed complete component sets and whole-message rejection of regressions. Concrete tuple/equality/new-component floors, model/API and retry/pruning mechanics remain proposed; no runtime guard is lifted by this documentation. No SQL expansion is proposed; partial merges/removal, roster/lifecycle/replies and VALARM remain separate work.
