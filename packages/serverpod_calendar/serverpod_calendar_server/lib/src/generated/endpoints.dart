@@ -1861,6 +1861,48 @@ class Endpoints extends _is.EndpointDispatch {
                         params['id'],
                       ),
         ),
+        'bundleApplication': _is.MethodConnector(
+          name: 'bundleApplication',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .bundleApplication(
+                        session,
+                        params['id'],
+                      ),
+        ),
+        'applyBundleUpdate': _is.MethodConnector(
+          name: 'applyBundleUpdate',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i3h34hei.CalendarInvitationApplyRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .applyBundleUpdate(
+                        session,
+                        params['request'],
+                      ),
+        ),
         'applyUpdate': _is.MethodConnector(
           name: 'applyUpdate',
           params: {

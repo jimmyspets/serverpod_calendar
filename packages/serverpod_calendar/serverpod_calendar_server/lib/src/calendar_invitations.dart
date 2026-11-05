@@ -203,12 +203,18 @@ extension CalendarInvitationOperations on CalendarService {
     return true;
   }
 
-  IcalendarSchedulingMessage _invParse(List<int> bytes, {bool stored = false}) {
+  IcalendarSchedulingMessage _invParse(
+    List<int> bytes, {
+    bool stored = false,
+    RecurrenceWorkBudget? sharedWorkBudget,
+  }) {
     try {
       if (bytes.length > (stored ? 262144 : _invOptions.maxSourceBytes)) {
         throw _failure(CalendarFailureCode.limitExceeded);
       }
-      final work = RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
+      final work =
+          sharedWorkBudget ??
+          RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
       final message = _schedulingValue(
         () => parseIcalendarSchedulingMessage(bytes, sharedWorkBudget: work),
       );
@@ -268,17 +274,25 @@ extension CalendarInvitationOperations on CalendarService {
 
   IcalendarSchedulingMessage _invStored(
     CalendarInvitationSourceRecord source,
-    CalendarInvitationRecord entry,
-  ) {
+    CalendarInvitationRecord entry, {
+    RecurrenceWorkBudget? sharedWorkBudget,
+  }) {
     _invTargetValid(entry);
     final bytes = utf8.encode(source.normalizedSource);
     if (source.entryId != entry.id ||
         bytes.length != source.byteCount ||
         sha256.convert(bytes).toString() != source.digest ||
-        source.outcome == CalendarInvitationOutcome.duplicate) {
+        source.outcome == CalendarInvitationOutcome.duplicate &&
+            (entry.kind != CalendarInvitationSourceKind.requestBundle ||
+                entry.currentSourceId == source.id)) {
       throw _failure(CalendarFailureCode.unavailable);
     }
-    final message = _invParse(bytes, stored: true), event = _invHead(message);
+    final message = _invParse(
+          bytes,
+          stored: true,
+          sharedWorkBudget: sharedWorkBudget,
+        ),
+        event = _invHead(message);
     if ((entry.currentSourceId == source.id &&
             _invKind(message) != entry.kind) ||
         event.isThisAndFuture != _invRange(entry) ||
@@ -510,7 +524,9 @@ extension CalendarInvitationOperations on CalendarService {
     _opaque(delivery.deliveryKey);
     _opaque(delivery.originReference);
     _invGuarantee();
-    final message = _invParse(delivery.bytes), event = _invHead(message);
+    final bundleWork = RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
+    final message = _invParse(delivery.bytes, sharedWorkBudget: bundleWork),
+        event = _invHead(message);
     final normalized = utf8.decode(
       _schedulingValue(() => serializeIcalendarSchedulingMessage(message)),
     );
@@ -547,6 +563,8 @@ extension CalendarInvitationOperations on CalendarService {
       CalendarInvitationApplicationState? accepted;
       bool? linkedUnavailable;
       CalendarInvitationOccurrenceBasis? occurrenceBasis;
+      CalendarInvitationBundleEvidence? bundleEvidence;
+      bool? bundleAdvance;
       CalendarInvitationPolicyContext context({
         CalendarInvitationView? current,
         CalendarInvitationOutcome? outcome,
@@ -566,8 +584,9 @@ extension CalendarInvitationOperations on CalendarService {
         current: current,
         proposedOutcome: outcome,
         proposedRevision: revision,
-        proposedDismissed:
-            outcome == CalendarInvitationOutcome.selected && !retry
+        proposedDismissed: bundleAdvance == false && current == null
+            ? true
+            : outcome == CalendarInvitationOutcome.selected && !retry
             ? false
             : current?.dismissedAt != null,
         entryId: entryId,
@@ -582,6 +601,7 @@ extension CalendarInvitationOperations on CalendarService {
         currentApplication: accepted,
         linkedEventUnavailable: linkedUnavailable,
         occurrenceBasis: occurrenceBasis,
+        bundleEvidence: bundleEvidence,
       );
       await _invAuthorize(
         context(),
@@ -683,8 +703,95 @@ extension CalendarInvitationOperations on CalendarService {
         final known =
             knownLink != null ||
             entries.any((e) => e.correlationDigest == correlation);
-        if (known && !sameBundle || !_invBundle(message)) {
+        if (!_invBundle(message) ||
+            known && !sameBundle && knownLink?.bundledRequest != true) {
           throw _failure(CalendarFailureCode.validation);
+        }
+        if (knownLink?.bundledRequest == true) {
+          linked = knownLink;
+          linkedEvent = await _invLinkedEventScope(
+            knownLink!,
+            recipient.scopeKey,
+            tx,
+          );
+          accepted = await _invApplicationState(
+            knownLink,
+            linkedEvent,
+            await _invCheckpoint(knownLink, linkedEvent, tx),
+            tx,
+          );
+          final old = _bundleState(linkedEvent, work: bundleWork);
+          final proposal = _schedulingValue(
+            () => invitationRequestBundleProposal(
+              message,
+              maxBytes: _invOptions.maxSourceBytes,
+              sharedWorkBudget: bundleWork,
+            ),
+          );
+          final incoming = _schedulingValue(
+            () => invitationBundleBaseline(
+              proposal.importBaseline,
+              protocolUid: message.uid,
+              sharedWorkBudget: bundleWork,
+            ),
+          );
+          bundleAdvance = _schedulingValue(
+            () => validateInvitationBundleAdvance(
+              old,
+              incoming,
+              sharedWorkBudget: bundleWork,
+            ),
+          );
+          if (entry != null) {
+            final currentSource = await CalendarInvitationSourceRecord.db
+                .findFirstRow(
+                  _session,
+                  where: (t) =>
+                      t.entryId.equals(entry!.id!) &
+                      t.digest.equals(entry.digest),
+                  transaction: tx,
+                );
+            if (currentSource == null) {
+              if (entry.digest != accepted.digest) {
+                throw _failure(CalendarFailureCode.unavailable);
+              }
+            } else {
+              final currentMessage = _invStored(
+                currentSource,
+                entry,
+                sharedWorkBudget: bundleWork,
+              );
+              final currentProposal = _schedulingValue(
+                () => invitationRequestBundleProposal(
+                  currentMessage,
+                  sharedWorkBudget: bundleWork,
+                ),
+              );
+              final review = _schedulingValue(
+                () => invitationBundleBaseline(
+                  currentProposal.importBaseline,
+                  protocolUid: message.uid,
+                  sharedWorkBudget: bundleWork,
+                ),
+              );
+              bundleAdvance = _schedulingValue(
+                () => validateInvitationBundleAdvance(
+                  review,
+                  incoming,
+                  sharedWorkBudget: bundleWork,
+                ),
+              );
+            }
+          }
+          bundleEvidence = CalendarInvitationBundleEvidence(
+            accepted: old.versions,
+            incoming: incoming.versions,
+          );
+          await _invAuthorize(
+            context(current: current, entryId: entry?.id),
+            tx,
+            CalendarAuthorizationPhase.preliminaryWrite,
+          );
         }
       }
       if (original != null) {
@@ -703,7 +810,9 @@ extension CalendarInvitationOperations on CalendarService {
           CalendarAuthorizationPhase.preliminaryWrite,
         );
       }
-      if (original == null && (cancellation || entry == null)) {
+      if (!_invBundle(message) &&
+          original == null &&
+          (cancellation || entry == null)) {
         final candidate = await CalendarInvitationLinkRecord.db.findFirstRow(
           _session,
           where: (t) =>
@@ -756,7 +865,8 @@ extension CalendarInvitationOperations on CalendarService {
       }
       final linkedRecurring = linkedEvent == null
           ? null
-          : _invAcceptedRecurring(linkedEvent);
+          : linked?.bundledRequest == true ||
+                _invAcceptedRecurring(linkedEvent);
       if (entry != null &&
           linkedRecurring != null &&
           entry.recurring != linkedRecurring) {
@@ -797,6 +907,11 @@ extension CalendarInvitationOperations on CalendarService {
                 event.stamp.isBefore(entry.stamp)
           ? CalendarInvitationOutcome.stale
           : CalendarInvitationOutcome.conflict;
+      if (bundleAdvance != null) {
+        outcome = bundleAdvance
+            ? CalendarInvitationOutcome.selected
+            : CalendarInvitationOutcome.duplicate;
+      }
       if (cancellation && outcome != CalendarInvitationOutcome.duplicate) {
         // Cancellation must advance every known REQUEST, even after queue expiry.
         final requestSequences = <int>[
@@ -826,7 +941,9 @@ extension CalendarInvitationOperations on CalendarService {
           outcome = CalendarInvitationOutcome.stale;
         }
       }
-      if (outcome == CalendarInvitationOutcome.duplicate && source == null) {
+      if (outcome == CalendarInvitationOutcome.duplicate &&
+          source == null &&
+          bundleAdvance == null) {
         // A digest-only marker cannot prove exact text equality after pruning.
         // Fail closed without reopening or manufacturing a duplicate receipt.
         throw _failure(CalendarFailureCode.unavailable);
@@ -837,7 +954,14 @@ extension CalendarInvitationOperations on CalendarService {
       if (revision > CalendarService._maxRevision) {
         throw _failure(CalendarFailureCode.limitExceeded);
       }
-      if (freshEntry || selected && entry.dismissedAt != null) {
+      if (freshEntry &&
+          bundleAdvance == false &&
+          entries.where((e) => e.dismissedAt != null).length >=
+              _invOptions.maxDismissed) {
+        throw _failure(CalendarFailureCode.limitExceeded);
+      }
+      if (freshEntry && bundleAdvance != false ||
+          selected && entry?.dismissedAt != null) {
         if (entries.where((e) => e.dismissedAt == null).length >=
             _invOptions.maxPending) {
           throw _failure(CalendarFailureCode.limitExceeded);
@@ -906,6 +1030,7 @@ extension CalendarInvitationOperations on CalendarService {
             digest: digest,
             createdAt: now,
             updatedAt: now,
+            dismissedAt: bundleAdvance == false ? now : null,
           ),
           transaction: tx,
         );
@@ -920,7 +1045,9 @@ extension CalendarInvitationOperations on CalendarService {
           digest: digest,
           sequence: event.sequence,
           stamp: event.stamp,
-          outcome: outcome == CalendarInvitationOutcome.duplicate
+          outcome:
+              outcome == CalendarInvitationOutcome.duplicate &&
+                  bundleAdvance == null
               ? CalendarInvitationOutcome.selected
               : outcome,
           receivedAt: now,

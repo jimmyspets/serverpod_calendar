@@ -297,7 +297,7 @@ class _InvitationScreenState extends State<InvitationScreen> {
                   ] else if (entry.kind ==
                       cal.CalendarInvitationSourceKind.requestBundle)
                     const Text(
-                      'Complete recurring invitation with exceptions. Add preserves the whole series. Later source updates and participation responses are not supported yet.',
+                      'Complete recurring invitation with exceptions. Add preserves the whole series; Apply update requires a complete source bundle. Participation responses are not supported yet.',
                     )
                   else if (entry.recurring)
                     const Text('Recurring series'),
