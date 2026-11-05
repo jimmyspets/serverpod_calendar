@@ -95,6 +95,8 @@ final class DemoInvitationHost implements CalendarInvitationHost {
         context.operation == CalendarInvitationOperation.adoptBundle ||
         {
           CalendarInvitationOperation.readLink,
+          CalendarInvitationOperation.readBundleApplication,
+          CalendarInvitationOperation.applyBundleUpdate,
           CalendarInvitationOperation.apply,
           CalendarInvitationOperation.applyCancellation,
           CalendarInvitationOperation.readApplication,

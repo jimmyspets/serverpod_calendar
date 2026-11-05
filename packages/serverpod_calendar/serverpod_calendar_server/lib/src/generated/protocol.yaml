@@ -75,6 +75,8 @@ calendarInvitation:
   - link:
   - adopt:
   - application:
+  - bundleApplication:
+  - applyBundleUpdate:
   - applyUpdate:
   - applyCancellation:
   - occurrenceApplication:

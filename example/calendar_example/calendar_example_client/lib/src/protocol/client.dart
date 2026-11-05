@@ -325,7 +325,7 @@ class EndpointInvitationDemo extends _isc.EndpointRef {
     },
   );
 
-  /// Initial whole-series example; later bundle reconciliation is not enabled.
+  /// Complete whole-series example; no real transport or sender proof input.
   _ida.Future<_imrxcdin.CalendarInvitationReceipt> simulateBundle(
     _isc.UuidValue invitationId,
     _isc.UuidValue commandId,
@@ -338,6 +338,24 @@ class EndpointInvitationDemo extends _isc.EndpointRef {
       'invitationId': invitationId,
       'commandId': commandId,
       'sequence': sequence,
+      'summary': summary,
+    },
+  );
+
+  _ida.Future<_imrxcdin.CalendarInvitationReceipt> simulateBundleUpdate(
+    _isc.UuidValue invitationId,
+    _isc.UuidValue commandId,
+    int childSequence,
+    int? masterSequence,
+    String summary,
+  ) => caller.callServerEndpoint<_imrxcdin.CalendarInvitationReceipt>(
+    'invitationDemo',
+    'simulateBundleUpdate',
+    {
+      'invitationId': invitationId,
+      'commandId': commandId,
+      'childSequence': childSequence,
+      'masterSequence': masterSequence,
       'summary': summary,
     },
   );

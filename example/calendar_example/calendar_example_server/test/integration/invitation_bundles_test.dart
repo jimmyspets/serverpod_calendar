@@ -360,9 +360,12 @@ void main() {
         ),
         failure(CalendarFailureCode.validation),
       );
-      await expectLater(
-        receive(key: 'new-bundle'),
-        failure(CalendarFailureCode.validation),
+      // ADR 0174 reconstructs only the complete accepted profile after pruning.
+      final duplicate = await receive(key: 'new-bundle');
+      expect(duplicate.outcome, CalendarInvitationOutcome.duplicate);
+      expect(
+        (await service.getInvitation(duplicate.entryId)).dismissedAt,
+        isNotNull,
       );
       expect(
         (await CalendarEventDataRecord.db.find(session)).single.content.summary,

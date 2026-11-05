@@ -33,6 +33,14 @@ class CalendarInvitationEndpoint extends Endpoint {
     Session session,
     UuidValue id,
   ) => CalendarModule.service(session).invitationApplication(id);
+  Future<CalendarInvitationBundleApplicationView> bundleApplication(
+    Session session,
+    UuidValue id,
+  ) => CalendarModule.service(session).invitationBundleApplication(id);
+  Future<CalendarInvitationApplyReceipt> applyBundleUpdate(
+    Session session,
+    CalendarInvitationApplyRequest request,
+  ) => CalendarModule.service(session).applyInvitationBundleUpdate(request);
   Future<CalendarInvitationApplyReceipt> applyUpdate(
     Session session,
     CalendarInvitationApplyRequest request,

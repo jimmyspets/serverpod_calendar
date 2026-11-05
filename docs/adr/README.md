@@ -195,7 +195,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0173](0173-initial-bundled-invitation-adoption.md) | Initial bundled REQUEST review and calendar adoption | Accepted by explicit maintainer agreement; initial complete message adoption, one private link-profile column and explicit continuation guards |
 
-| [0174](0174-complete-bundled-invitation-updates.md) | Complete bundled invitation updates | Proposed; complete sets/rejection policy confirmed, grouped vector/API/checkpoint mechanics await approval |
+| [0174](0174-complete-bundled-invitation-updates.md) | Complete bundled invitation updates | Accepted by explicit maintainer agreement; complete linked REQUEST updates with existing checkpoint storage and independent component versions |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

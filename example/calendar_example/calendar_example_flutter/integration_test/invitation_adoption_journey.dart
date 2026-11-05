@@ -42,15 +42,46 @@ Future<void> runInvitationAdoptionJourney(
         () => Future<void>.delayed(const Duration(milliseconds: 100)),
       );
       await tester.pump(const Duration(milliseconds: 100));
-      if (find.byType(LinearProgressIndicator).evaluate().isEmpty) {
+      final refresh = find.byKey(const Key('bundle-update-refresh'));
+      final bundleBusy =
+          refresh.evaluate().isNotEmpty &&
+          tester.widget<IconButton>(refresh).onPressed == null;
+      if (!bundleBusy &&
+          find.byType(LinearProgressIndicator).evaluate().isEmpty) {
         break;
       }
     }
     expect(find.byType(LinearProgressIndicator), findsNothing);
+    await tester.pump();
+    final refresh = find.byKey(const Key('bundle-update-refresh'));
+    if (refresh.evaluate().isNotEmpty) {
+      expect(
+        tester.widget<IconButton>(refresh).onPressed,
+        isNotNull,
+        reason: 'The complete-update request did not finish',
+      );
+    }
+  }
+
+  Future<void> visible(Finder target) async {
+    if (target.evaluate().isEmpty &&
+        find.byKey(const Key('bundle-update-scroll')).evaluate().isNotEmpty) {
+      await tester.scrollUntilVisible(
+        target,
+        300,
+        scrollable: find
+            .descendant(
+              of: find.byKey(const Key('bundle-update-scroll')),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+    }
+    await tester.ensureVisible(target);
   }
 
   Future<void> tap(Finder target) async {
-    await tester.ensureVisible(target);
+    await visible(target);
     await tester.tap(target);
     await tester.pumpAndSettle();
     await loaded();
@@ -139,8 +170,108 @@ Future<void> runInvitationAdoptionJourney(
         ),
       );
       expect(preview.occurrences.length, 3);
+      await client.invitationDemo.simulateBundleUpdate(
+        id,
+        const cal.Uuid().v4obj(),
+        1,
+        null,
+        'Synthetic calendar copy',
+      );
       await tap(find.byKey(const Key('invitation-adoption-refresh')));
       expect(find.byKey(const Key('invitation-linked-event')), findsOneWidget);
+      await tap(find.byKey(const Key('invitation-review-bundle-update')));
+      expect(find.byKey(const Key('bundle-update-source')), findsOneWidget);
+      final initialEvent = await module.calendarEvent.getEvent(
+        link.eventId,
+        cal.CalendarEventFieldGroup.values,
+      );
+      await module.calendarEvent.update(
+        cal.CalendarEventUpdateRequest(
+          eventId: link.eventId,
+          expectedRevision: 1,
+          content: cal.CalendarEventContent(
+            timing: initialEvent.timing!,
+            summary: initialEvent.summary,
+            description: initialEvent.description,
+            location: initialEvent.location,
+            status: initialEvent.status!,
+            transparency: initialEvent.transparency!,
+            recurrence: initialEvent.recurrence,
+            periods: initialEvent.periods,
+            textParameters: initialEvent.textParameters,
+          ),
+        ),
+      );
+      await tap(find.byKey(const Key('bundle-update-apply')));
+      expect(find.byKey(const Key('bundle-update-error')), findsOneWidget);
+      await visible(find.byKey(const Key('bundle-update-apply')));
+      expect(find.text('Retry the same complete update'), findsOneWidget);
+      await tap(find.byKey(const Key('bundle-update-refresh')));
+      final pending = await module.calendarInvitation.bundleApplication(
+        entry.id,
+      );
+      final input = cal.CalendarInvitationApplyRequest(
+        invitationId: entry.id,
+        sourceId: pending.incomingSourceId!,
+        expectedInvitationRevision: pending.invitationRevision!,
+        linkId: pending.linkId,
+        expectedEventRevision: pending.eventRevision,
+        expectedCalendarRevision: pending.calendarRevision,
+        expectedApplicationRevision: pending.applicationRevision,
+      );
+      await tap(find.byKey(const Key('bundle-update-apply')));
+      expect(find.byKey(const Key('bundle-update-result')), findsOneWidget);
+      final result = await module.calendarInvitation.applyBundleUpdate(input);
+      expect(result.eventRevision, 3);
+      final accepted = await module.calendarInvitation.bundleApplication(
+        entry.id,
+      );
+      expect(
+        accepted.acceptedComponents
+            .singleWhere((v) => v.originalStart == null)
+            .sequence,
+        isNull,
+      );
+      await client.invitationDemo.simulateBundleUpdate(
+        id,
+        const cal.Uuid().v4obj(),
+        2,
+        1,
+        'Incoming master and child',
+      );
+      await tap(find.byKey(const Key('bundle-update-refresh')));
+      await tap(find.byKey(const Key('bundle-update-apply')));
+      expect(find.byKey(const Key('bundle-update-result')), findsOneWidget);
+      final next = await module.calendarInvitation.bundleApplication(entry.id);
+      expect(next.applicationRevision, 2);
+      expect(next.eventRevision, 4);
+      await module.calendarEvent.update(
+        cal.CalendarEventUpdateRequest(
+          eventId: link.eventId,
+          expectedRevision: 4,
+          content: next.currentContent.copyWith(summary: 'Local Flutter draft'),
+        ),
+      );
+      await client.invitationDemo.simulateBundleUpdate(
+        id,
+        const cal.Uuid().v4obj(),
+        3,
+        1,
+        'Incoming master and child',
+      );
+      await tap(find.byKey(const Key('bundle-update-refresh')));
+      expect(find.byKey(const Key('bundle-update-conflict')), findsOneWidget);
+      await visible(find.byKey(const Key('bundle-update-apply')));
+      expect(
+        tester
+            .widget<ElevatedButton>(
+              find.byKey(const Key('bundle-update-apply')),
+            )
+            .onPressed,
+        isNull,
+      );
+      navigator.pop();
+      await tester.pumpAndSettle();
       navigator.pop();
       await tester.pumpAndSettle();
       return;

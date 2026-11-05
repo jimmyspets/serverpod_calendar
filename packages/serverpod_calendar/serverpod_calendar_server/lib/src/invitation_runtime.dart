@@ -46,6 +46,8 @@ enum CalendarInvitationOperation {
   receiveRange,
   receiveBundle,
   adoptBundle,
+  readBundleApplication,
+  applyBundleUpdate,
   list,
   readSummary,
   readSource,
@@ -145,6 +147,16 @@ final class CalendarInvitationOccurrenceBasis {
 }
 
 /// Immutable actual source/target context; absent current means not yet loaded.
+final class CalendarInvitationBundleEvidence {
+  CalendarInvitationBundleEvidence({
+    required Iterable<CalendarInvitationBundleComponentVersion> accepted,
+    required Iterable<CalendarInvitationBundleComponentVersion> incoming,
+  }) : accepted = List.unmodifiable(accepted),
+       incoming = List.unmodifiable(incoming);
+  final List<CalendarInvitationBundleComponentVersion> accepted, incoming;
+}
+
+/// Immutable actual source/target context; absent current means not yet loaded.
 final class CalendarInvitationPolicyContext {
   const CalendarInvitationPolicyContext({
     required this.operation,
@@ -182,8 +194,12 @@ final class CalendarInvitationPolicyContext {
     this.currentOccurrenceApplication,
     this.proposedOccurrenceApplication,
     this.occurrenceReceipt,
+    this.bundleApplication,
+    this.bundleEvidence,
   });
   final CalendarInvitationOperation operation;
+  final CalendarInvitationBundleApplicationView? bundleApplication;
+  final CalendarInvitationBundleEvidence? bundleEvidence;
   final CalendarInvitationRecipient recipient;
   final CalendarHostContext? actor;
   final CalendarInvitationDelivery? delivery;
@@ -221,6 +237,8 @@ final class CalendarInvitationPolicyContext {
   CalendarInvitationPolicyContext forOperation(
     CalendarInvitationOperation value,
   ) => CalendarInvitationPolicyContext(
+    bundleApplication: bundleApplication,
+    bundleEvidence: bundleEvidence,
     operation: value,
     recipient: recipient,
     actor: actor,

@@ -237,8 +237,151 @@ Future<void> main(List<String> args) async {
           'Bundle recovery lost components or created participation state',
         );
       }
+      for (final pause in [
+        '',
+        'before',
+        'after',
+        'bundle-before',
+        'bundle-after',
+      ]) {
+        final id = nextCase();
+        final packet = <String, Object?>{
+          'command': 'receive',
+          'bundle': true,
+          'caseId': id,
+          'key': 'initial',
+        };
+        final source = await b.command(packet) as Map;
+        final parent =
+            await b.command({'command': 'calendar', 'caseId': id}) as String;
+        await b.command({
+          'command': 'adopt',
+          'caseId': id,
+          'request': request(source, parent),
+        });
+        final update = <String, Object?>{
+          ...packet,
+          'key': 'child-update',
+          'bundleChild': 1,
+        };
+        if (pause == 'before' || pause == 'after') {
+          a.paused = Completer<Map<String, dynamic>>();
+          final lost = a
+              .command({...update, 'pause': pause})
+              .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+          final submitted = await a.paused!.future.timeout(
+            const Duration(seconds: 40),
+          );
+          final visible =
+              await b.command({'command': 'inspect', 'caseId': id}) as Map;
+          require(
+            visible['sources'] == (pause == 'after' ? 2 : 1) &&
+                visible['eventRevision'] == 1,
+            'Component-aware intake partially changed native state',
+          );
+          await a.stop();
+          await lost;
+          final recovered = await b.command(update) as Map;
+          require(
+            (recovered['id'] == submitted['id']) == (pause == 'after'),
+            'Update ingress receipt identity changed',
+          );
+          a = await start('a-bundle-update-intake-$pause', 18780);
+        } else {
+          final raced = await Future.wait([a, b].map((p) => p.command(update)));
+          require(
+            (raced.first as Map)['id'] == (raced.last as Map)['id'],
+            'Update ingress race changed identity',
+          );
+        }
+        final view = await b.command({
+          'command': 'bundle-view',
+          'caseId': id,
+          'entryId': source['entryId'],
+        }) as Map;
+        require(
+          view['canApply'] == true,
+          'Complete pending update is not applicable',
+        );
+        final body = <String, Object?>{
+          'invitationId': view['invitationId'],
+          'sourceId': view['incomingSourceId'],
+          'expectedInvitationRevision': view['invitationRevision'],
+          'linkId': view['linkId'],
+          'expectedEventRevision': view['eventRevision'],
+          'expectedCalendarRevision': view['calendarRevision'],
+          'expectedApplicationRevision': view['applicationRevision'],
+        };
+        Map result;
+        if (pause.startsWith('bundle-')) {
+          a.paused = Completer<Map<String, dynamic>>();
+          final lost = a
+              .command({
+                'command': 'bundle-apply',
+                'caseId': id,
+                'request': body,
+                'pause': pause,
+              })
+              .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+          final submitted = await a.paused!.future.timeout(
+            const Duration(seconds: 40),
+          );
+          final visible =
+              await b.command({'command': 'inspect', 'caseId': id}) as Map;
+          require(
+            visible['eventRevision'] == (pause == 'bundle-after' ? 2 : 1) &&
+                visible['applications'] == (pause == 'bundle-after' ? 1 : 0),
+            'Partial bundle application visible',
+          );
+          await a.stop();
+          await lost;
+          result = await b.command({
+            'command': 'bundle-apply',
+            'caseId': id,
+            'request': body,
+          }) as Map;
+          require(
+            (result['id'] == submitted['id']) == (pause == 'bundle-after'),
+            'Update recovery changed result identity',
+          );
+          a = await start('a-bundle-update-$pause', 18780);
+        } else {
+          final raced = await Future.wait(
+            [a, b].map(
+              (p) => p.command({
+                'command': 'bundle-apply',
+                'caseId': id,
+                'request': body,
+              }),
+            ),
+          );
+          result = raced.first as Map;
+          require(
+            result['id'] != null && result['id'] == (raced.last as Map)['id'],
+            'Bundle apply race changed latest receipt',
+          );
+        }
+        final retry = await b.command({
+          'command': 'bundle-apply',
+          'caseId': id,
+          'request': body,
+        }) as Map;
+        final state =
+            await b.command({'command': 'inspect', 'caseId': id}) as Map;
+        require(
+          retry['id'] == result['id'] &&
+              state['events'] == 1 &&
+              state['links'] == 1 &&
+              state['applications'] == 1 &&
+              state['eventRevision'] == 2 &&
+              state['acceptedKind'] == 'requestBundle' &&
+              (state['bundleVersions'] as List).contains(1) &&
+              (state['responses'] as List).isEmpty,
+          'Bundle update lost components or reactivated retry',
+        );
+      }
       stdout.writeln(
-        'PASS: initial bundles preserve all components under two-host adoption races and actual process loss before/after intake and adoption commits.',
+        'PASS: complete bundles preserve components and independent versions across two-host intake/adoption/application races and actual process loss before/after every commit boundary.',
       );
       return;
     }
