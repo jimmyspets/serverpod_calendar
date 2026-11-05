@@ -199,6 +199,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0175](0175-bundled-invitation-whole-lifecycle.md) | Bundled invitation whole-series cancellation and reopening | Accepted by explicit maintainer agreement, including lossless retained-REQUEST baseline refinement; existing checkpoint storage and independent component floors |
 
+| [0176](0176-bundled-master-attendee-responses.md) | Explicit master responses to bundled invitations | Proposed; master-only private responses with existing outbox storage, dedicated authority/APIs and source-bound digest family; requires explicit agreement |
+
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
 Use the next consecutive number for a new ADR covering a material decision. Include context, proposal/decision, alternatives, consequences, and acceptance conditions. Preserve committed/accepted decision history; supersede accepted decisions with a linked ADR. Superseded uncommitted drafts may be removed under the maintainer-authorized cleanup. Mark an ADR accepted only after explicit maintainer agreement recorded in the PR or issue.
