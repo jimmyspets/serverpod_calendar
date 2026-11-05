@@ -52,7 +52,9 @@ Future<void> runInvitationAdoptionJourney(
       }
     }
     expect(find.byType(LinearProgressIndicator), findsNothing);
-    await tester.pump();
+    // A completed request schedules a post-frame jump back to its result.
+    // Settle the resulting list layout before looking for lazily built text.
+    await tester.pumpAndSettle();
     final refresh = find.byKey(const Key('bundle-update-refresh'));
     if (refresh.evaluate().isNotEmpty) {
       expect(
@@ -63,12 +65,12 @@ Future<void> runInvitationAdoptionJourney(
     }
   }
 
-  Future<void> visible(Finder target) async {
+  Future<void> visible(Finder target, {double delta = 300}) async {
     if (target.evaluate().isEmpty &&
         find.byKey(const Key('bundle-update-scroll')).evaluate().isNotEmpty) {
       await tester.scrollUntilVisible(
         target,
-        300,
+        delta,
         scrollable: find
             .descendant(
               of: find.byKey(const Key('bundle-update-scroll')),
@@ -78,6 +80,9 @@ Future<void> runInvitationAdoptionJourney(
       );
     }
     await tester.ensureVisible(target);
+    // Scrolling changes geometry; ensureVisible does not lay out the new frame.
+    await tester.pumpAndSettle();
+    expect(target.hitTestable(), findsOneWidget);
   }
 
   Future<void> tap(Finder target) async {
@@ -202,8 +207,18 @@ Future<void> runInvitationAdoptionJourney(
           ),
         ),
       );
-      await tap(find.byKey(const Key('bundle-update-apply')));
-      expect(find.byKey(const Key('bundle-update-error')), findsOneWidget);
+      final apply = find.byKey(const Key('bundle-update-apply'));
+      await visible(apply);
+      expect(tester.widget<ElevatedButton>(apply).onPressed, isNotNull);
+      await tap(apply);
+      final error = find.byKey(const Key('bundle-update-error'));
+      await visible(error, delta: -300);
+      expect(error, findsOneWidget);
+      expect(
+        (await module.calendarEvent.getEvent(link.eventId, [])).revision,
+        2,
+        reason: 'The stale command must not apply a source replacement',
+      );
       await visible(find.byKey(const Key('bundle-update-apply')));
       expect(find.text('Retry the same complete update'), findsOneWidget);
       await tap(find.byKey(const Key('bundle-update-refresh')));

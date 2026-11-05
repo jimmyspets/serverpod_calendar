@@ -9,6 +9,7 @@ import 'package:calendar_example_server/src/generated/serverpod.dart'
     as generated;
 
 import 'package:calendar_example_server/src/imip_ingress.dart';
+import 'package:calendar_example_server/src/invitation_response_mime.dart';
 import 'package:calendar_example_server/src/synthetic_imip_input.dart';
 import 'package:crypto/crypto.dart';
 
@@ -49,9 +50,16 @@ final class _ResponseHost implements CalendarInvitationResponseHost {
     if ({
           CalendarInvitationResponseOperation.dispatch,
           CalendarInvitationResponseOperation.dispatchOccurrence,
+          CalendarInvitationResponseOperation.dispatchBundleMaster,
         }.contains(c.operation) &&
         c.actor != null) {
       throw StateError('Fabricated dispatch actor');
+    }
+    if (host.pause == 'bundle-response-before' &&
+        c.operation == CalendarInvitationResponseOperation.sendBundleMaster &&
+        phase == CalendarAuthorizationPhase.finalWrite) {
+      stdout.writeln('INVITATION_PAUSED ${jsonEncode(c.receipt!.toJson())}');
+      await Completer<void>().future;
     }
     return CalendarAuthorizationVerdict.allow;
   }
@@ -65,7 +73,12 @@ final class _ResponseTransport implements CalendarInvitationResponseTransport {
     Session s,
     CalendarInvitationResponseSubmission input,
   ) async {
+    final mime = composeSyntheticInvitationResponseMime(
+      input,
+      requireProtection: false,
+    );
     final evidence = {
+      'mimeDigest': sha256.convert(utf8.encode(mime)).toString(),
       'key': input.deliveryKey.toString(),
       'digest': sha256.convert(utf8.encode(input.payload)).toString(),
     };
@@ -368,16 +381,25 @@ Future<void> main(List<String> args) async {
               'cutoff': data.timingOverrides?.cancelledFrom?.start.day,
             };
           case 'response':
+          case 'bundle-response':
             session.updateAuthenticated(
               AuthenticationInfo('recipient', {}, authId: 'invitation-probe'),
             );
             try {
-              result =
-                  (await CalendarModule.service(session).sendInvitationResponse(
-                    CalendarInvitationResponseRequest.fromJson(
-                      input['request'] as Map<String, dynamic>,
-                    ),
-                  )).toJson();
+              final service = CalendarModule.service(session);
+              final request = CalendarInvitationResponseRequest.fromJson(
+                input['request'] as Map<String, dynamic>,
+              );
+              final receipt = input['command'] == 'bundle-response'
+                  ? await service.sendInvitationBundleResponse(request)
+                  : await service.sendInvitationResponse(request);
+              if (host.pause == 'bundle-response-after') {
+                stdout.writeln(
+                  'INVITATION_PAUSED ${jsonEncode(receipt.toJson())}',
+                );
+                await Completer<void>().future;
+              }
+              result = receipt.toJson();
             } finally {
               session.updateAuthenticated(null);
             }

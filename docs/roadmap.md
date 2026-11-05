@@ -932,9 +932,13 @@ The scoped implementation is described in [published range controls](published-r
 - [ ] Pass the full exact-head hosted gate before readiness.
 - [ ] Review faithful cancelled-bundle publication, component-wise cancellation/composition, partial removal/merging and participation separately.
 
-## Proposed bundle master attendee responses
+## Bundle master attendee responses
 
-[Proposed ADR 0176](adr/0176-bundled-master-attendee-responses.md) groups explicit master-only Accept/Tentative/Decline, protected state/activity, existing durable response tables, independent authority and synthetic MIME/Flutter/recovery checks for complete REQUEST bundles. It proposes dedicated APIs and digest-family binding with no new stored/model field, SQL or cap expansion. A master REPLY does not acknowledge independently versioned exceptions; source changes still withdraw unsent work. Calendar actions remain independent. Current bundle response guards stay in place until explicit maintainer agreement and implementation; occurrence/range replies and real transport remain separate required work.
+[Accepted ADR 0176](adr/0176-bundled-master-attendee-responses.md) groups explicit master-only Accept/Tentative/Decline, protected state/activity, existing durable response tables, independent authority and synthetic MIME/Flutter/recovery checks for complete REQUEST bundles. The approved contract uses dedicated APIs and digest-family binding with no new stored/model field, SQL or cap expansion. A master REPLY does not acknowledge independently versioned exceptions; source changes still withdraw unsent work. Calendar actions remain independent. Legacy response APIs keep bundle guards; occurrence/range replies and real transport remain separate required work.
 
-- [ ] Obtain explicit approval of the master-only response/API/digest/retention mechanics before implementation.
-- [ ] Resolve prerequisite hosted failures first, then implement/test the complete approved response group before one code commit.
+- [x] Obtain explicit approval of the master-only response/API/digest/retention mechanics before implementation.
+- [x] Correct the observed browser layout wait and pass its focused local rerun; preserve the earlier failed hosted conclusion.
+- [x] Implement and validate the complete affected local response group before one code commit.
+- [ ] Observe successful full exact-head hosted checks before readiness.
+
+ADR 0176 implements the approved dedicated API, Flutter, MIME and durable response group. Its affected local checks passed, including 422 invitation/MIME integration tests; full exact-head hosted readiness remains pending. See [the scoped guide](bundled-master-attendee-responses.md).

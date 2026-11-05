@@ -68,10 +68,14 @@ final class DemoInvitationResponseHost
         !{
           CalendarInvitationResponseOperation.dispatch,
           CalendarInvitationResponseOperation.dispatchOccurrence,
+          CalendarInvitationResponseOperation.dispatchBundleMaster,
         }.contains(c.operation)) {
       return false;
     }
-    if (c.operation != CalendarInvitationResponseOperation.read) {
+    if (!{
+      CalendarInvitationResponseOperation.read,
+      CalendarInvitationResponseOperation.readBundleMaster,
+    }.contains(c.operation)) {
       final source = c.sourceMessage,
           outgoing = c.outgoingMessage,
           authority = c.authority;
@@ -79,17 +83,36 @@ final class DemoInvitationResponseHost
           outgoing == null ||
           authority == null ||
           source.method != IcalendarSchedulingMethod.request ||
-          !source.events.single.participants.attendees.any(
-            (a) => a.address == c.recipient.calendarAddress,
-          ) ||
+          !source.events
+              .singleWhere(
+                (event) => !event.isOverride || source.events.length == 1,
+              )
+              .participants
+              .attendees
+              .any(
+                (a) => a.address == c.recipient.calendarAddress,
+              ) ||
           outgoing.method != IcalendarSchedulingMethod.reply ||
           outgoing.uid != c.invitation.uid ||
-          source.events.single.isOverride !=
+          source.events
+                  .singleWhere(
+                    (event) => !event.isOverride || source.events.length == 1,
+                  )
+                  .isOverride !=
               outgoing.events.single.isOverride ||
           outgoing.events.single.isThisAndFuture ||
-          _original(source.events.single) !=
+          _original(
+                source.events.singleWhere(
+                  (event) => !event.isOverride || source.events.length == 1,
+                ),
+              ) !=
               _original(outgoing.events.single) ||
-          source.events.single.sequence != outgoing.events.single.sequence ||
+          source.events
+                  .singleWhere(
+                    (event) => !event.isOverride || source.events.length == 1,
+                  )
+                  .sequence !=
+              outgoing.events.single.sequence ||
           outgoing.events.single.participants.attendees.single.address !=
               c.recipient.calendarAddress ||
           outgoing.events.single.participants.organizer?.address !=

@@ -52,6 +52,29 @@ Future<void> invitationBundleSmoke(List<Client> clients) async {
       source.text.contains('RANGE=THISANDFUTURE'),
       'Source review lost future component',
     );
+    final responseCommand = cal.CalendarInvitationResponseRequest(
+      invitationId: received.entryId,
+      sourceId: received.sourceId,
+      expectedInvitationRevision: received.entryRevision,
+      expectedResponseRevision: 0,
+      commandId: const cal.Uuid().v4obj(),
+      choice: cal.CalendarInvitationResponseChoice.declined,
+    );
+    final responses = await Future.wait(
+      clients.map(
+        (c) => c.modules.serverpod_calendar.calendarInvitation
+            .sendBundleResponse(responseCommand),
+      ),
+    );
+    require(
+      responses.first.id == responses.last.id &&
+          (await api.calendarInvitation.bundleResponseActivity(
+                received.entryId,
+              )).single.sourceSequence ==
+              null &&
+          await api.calendarInvitation.link(received.entryId) == null,
+      'Bundle master response changed source omission, retry identity or adoption',
+    );
     final request = cal.CalendarInvitationAdoptionRequest(
       invitationId: received.entryId,
       expectedRevision: 1,
@@ -65,6 +88,11 @@ Future<void> invitationBundleSmoke(List<Client> clients) async {
       ),
     );
     event = added.first.eventId;
+    require(
+      (await api.calendarInvitation.bundleResponse(received.entryId))
+          .appliesToCurrentSource,
+      'Calendar adoption withdrew the unchanged master response',
+    );
     require(
       added.first.id == added.last.id && added.first.bundledRequest,
       'Bundle adoption race lost identity/profile',
@@ -106,6 +134,18 @@ Future<void> invitationBundleSmoke(List<Client> clients) async {
       1,
       null,
       'Synthetic complete invitation',
+    );
+    require(
+      !(await api.calendarInvitation.bundleResponse(received.entryId))
+              .appliesToCurrentSource &&
+          (await api.calendarInvitation.sendBundleResponse(responseCommand))
+                  .id ==
+              responses.first.id &&
+          (await api.calendarInvitation.bundleResponseActivity(
+                received.entryId,
+              )).length ==
+              1,
+      'Child-only update reactivated or rebased a master response',
     );
     final firstView = await b.modules.serverpod_calendar.calendarInvitation
         .bundleApplication(received.entryId);
