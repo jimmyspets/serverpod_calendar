@@ -247,7 +247,9 @@ Future<void> main(List<String> args) async {
         '-d',
         'web-server',
         '--driver=test_driver/integration_test.dart',
-        args.contains('--bundle-occurrence-responses')
+        args.contains('--recurring-responses')
+            ? '--target=integration_test/recurring_occurrence_response_smoke_test.dart'
+            : args.contains('--bundle-occurrence-responses')
             ? '--target=integration_test/bundle_occurrence_response_smoke_test.dart'
             : args.contains('--bundle-responses')
             ? '--target=integration_test/bundle_response_smoke_test.dart'
@@ -300,6 +302,7 @@ Future<void> main(List<String> args) async {
       final output = result.stdout.transform(utf8.decoder).listen(stdout.write);
       final error = result.stderr.transform(utf8.decoder).listen(stderr.write);
       final focused =
+          args.contains('--recurring-responses') ||
           args.contains('--bundle-occurrence-responses') ||
           args.contains('--bundle-responses') ||
           args.contains('--bundles') ||
@@ -322,9 +325,10 @@ Future<void> main(List<String> args) async {
       // The full journey includes all delivered features, occurrence source
       // application and process shutdown. Its aggregate budget grows with the
       // sequence; focused suites and per-action waits remain short.
-      // Keep the focused feature targets short; per-action waits stay bounded.
+      // The 10-minute full budget expired during active invitation progress after
+      // adding combined source-history checks. Keep focused/per-action bounds.
       final browserCode = await result.exitCode.timeout(
-        Duration(minutes: focused ? 4 : 10),
+        Duration(minutes: focused ? 4 : 15),
         onTimeout: () {
           unawaited(stop(result));
           throw TimeoutException('Flutter browser smoke timed out.');

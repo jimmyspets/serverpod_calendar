@@ -417,6 +417,31 @@ class _InvitationScreenState extends State<InvitationScreen> {
                             'Original occurrence response / activity',
                           ),
                         ),
+                      if (entry.recurring &&
+                          !{
+                            cal.CalendarInvitationSourceKind.requestBundle,
+                            cal.CalendarInvitationSourceKind.bundleCancellation,
+                          }.contains(entry.kind))
+                        TextButton(
+                          key: ValueKey(
+                            'invitation-recurring-occurrence-response-${entry.id}',
+                          ),
+                          onPressed: _busy
+                              ? null
+                              : () => Navigator.of(context).push<void>(
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        InvitationBundleOccurrenceResponseScreen(
+                                          client: widget.client,
+                                          id: entry.id,
+                                          recurring: true,
+                                        ),
+                                  ),
+                                ),
+                          child: const Text(
+                            'Original occurrence response / activity',
+                          ),
+                        ),
                       if (!entry.isThisAndFuture &&
                           !{
                             cal.CalendarInvitationSourceKind.requestBundle,

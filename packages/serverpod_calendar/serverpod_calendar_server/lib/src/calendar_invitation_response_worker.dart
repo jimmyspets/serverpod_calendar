@@ -80,6 +80,7 @@ final class _InvitationResponseWorker {
         }
       });
     }
+    await s._rrMaintenance();
   }
 
   bool _owns(
@@ -186,11 +187,27 @@ final class _InvitationResponseWorker {
         );
         return false;
       }
-      final work = _invBundleKind(entry.kind)
+      final work = _invBundleKind(entry.kind) || row.selectionEvidenceId != null
           ? RecurrenceWorkBudget(maxWork: eventMaxCandidateWork)
           : null;
+      final recurring = row.selectionEvidenceId == null
+          ? null
+          : await s._rrLoad(recipient, row.selectionEvidenceId!, tx, work!);
+      if (recurring != null &&
+          (recurring.head.currentEvidenceId != row.selectionEvidenceId ||
+              recurring.head.state != 'active' ||
+              !s._rrVectorCurrent(recurring))) {
+        await s._irStop(
+          row,
+          tx,
+          now,
+          CalendarInvitationResponseDeliveryState.withdrawn,
+          'selectionChanged',
+        );
+        return false;
+      }
       final source = await s._irSource(row.sourceId, entry, tx, work: work);
-      s._irRecord(row, state, source, entry, work: work);
+      await s._irRecord(row, state, source, entry, tx, work: work);
       final basis = s._invStored(source, entry, sharedWorkBudget: work);
       if (basis.method != IcalendarSchedulingMethod.request ||
           _invHead(basis).status == IcalendarEventStatus.cancelled) {
@@ -219,6 +236,14 @@ final class _InvitationResponseWorker {
         ),
         source: source,
         responseOriginal: row.responseOriginalStart,
+        recurring: recurring?.proof,
+        recurringOpened: recurring == null
+            ? null
+            : await s._invView(
+                recurring.entries[row.receipt.invitationId]!,
+                tx,
+                sharedWorkBudget: work,
+              ),
         sourceRevision: row.sourceRevision,
         sourceMessage: basis,
         request: row.request,

@@ -9,6 +9,7 @@ fields:
   entryId: UuidValue, relation(parent=serverpod_calendar_invitation)
   targetKey: String, default="entry"
   responseOriginalStart: CalendarEventTiming?
+  selectionEvidenceId: UuidValue?, relation(parent=calendar_inv_response_selection_evidence)
   commandId: UuidValue
   criteriaDigest: String
   request: CalendarInvitationResponseRequest

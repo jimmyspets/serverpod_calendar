@@ -438,7 +438,7 @@ The maintainer selected the timing/composition-first slice and positive opening 
 
 ## Event storage prerequisite, 2026-10-23
 
-[ADR 0079](./adr/0079-source-preserving-event-storage.md) and [the storage guide](event-storage.md) extend native events with stored PERIOD additions, retained text annotations, source property presence, independent component versions and a private baseline representation. Native edits, previews and occupied-time calculations use the retained values. Source conversion is pure and grants no authority; create-only VEVENT import now follows under ADR 0080; event export, source updates, feeds and scheduling remain pending. ADR 0080 now implements the selected create-only import; current-state event export is the next recommended area.
+[ADR 0079](adr/0079-source-preserving-event-storage.md) and [the storage guide](event-storage.md) extend native events with stored PERIOD additions, retained text annotations, source property presence, independent component versions and a private baseline representation. Native edits, previews and occupied-time calculations use the retained values. Source conversion is pure and grants no authority; create-only VEVENT import now follows under ADR 0080; event export, source updates, feeds and scheduling remain pending. ADR 0080 now implements the selected create-only import; current-state event export is the next recommended area.
 
 
 Generated additions are `CalendarEventTextParameters`, `CalendarEventProtocolVersion` and `CalendarEventOccurrenceProtocolVersion` for authorized values, plus server-only `CalendarEventProtocolState`, `CalendarEventOverrideProtocolState` and `CalendarEventImportBaseline`. Existing content/view/update models carry retained values and explicit replacement flags. These are implemented sources rather than renamed broader proposed catalog families.
@@ -923,7 +923,7 @@ See [the scoped occurrence-response guide](bundled-occurrence-attendee-responses
 
 ## Ordinary recurring invitation response selection prerequisite
 
-The maintainer confirmed selecting the effective separately received instance/range notice and its version when responding to an original from an ordinary recurring invitation. [Accepted ADR 0178](adr/0178-pure-recurring-response-source-selection.md) profiles a bounded pure selector with complete packet/membership validation, single/range/master precedence and explicit cancellation blocking. The pure selector is implemented without changing stored response state, generated API, worker eligibility or Flutter flow. Durable multi-source proof/retention/authority and RANGE participation remain separate required work. Actual checks are recorded separately.
+The maintainer confirmed selecting the effective separately received instance/range notice and its version when responding to an original from an ordinary recurring invitation. [Accepted ADR 0178](adr/0178-pure-recurring-response-source-selection.md) profiles a bounded pure selector with complete packet/membership validation, single/range/master precedence and explicit cancellation blocking. ADR 0178 itself changed no stored response state, generated API, worker eligibility or Flutter flow. Accepted ADR 0179 now provides the opt-in durable multi-source integration described below; RANGE participation remains separate required work. Actual checks are recorded separately.
 
 ADR 0178 adds no model, table, generated carrier or migration change. A later durable selection record or combined public proof would require its own explicit model review.
 
@@ -932,6 +932,18 @@ See [pure selection behavior and limits](recurring-response-source-selection.md)
 
 ## Durable ordinary recurring occurrence responses
 
-The maintainer confirmed effective-notice selection, restore-only reply eligibility independently of calendar Apply, and one shared personal response state per original across master/instance entry paths. [Proposed ADR 0179](adr/0179-durable-shared-recurring-occurrence-responses.md) groups source-history capture, immutable evidence versions, protected APIs/authority, synthetic delivery and migration/client/Flutter/recovery checks. It proposes three server-only proof tables (head, evidence and indexed source pins) and one nullable delivery-evidence relation, bounded proof storage and safe fresh-history enrollment. These mechanics are not yet approved or implemented; current response/runtime guards remain in force. RANGE participation and broader reconciliation remain separate required work.
+Accepted [ADR 0179](adr/0179-durable-shared-recurring-occurrence-responses.md) implements the scoped durable ordinary-recurring occurrence response profile: fresh-history enrollment, bounded source-only cancellation/restoration proof, one shared state per original across master/instance paths, independent host authority and synthetic delivery. See [the implementation guide](durable-recurring-occurrence-responses.md). Validation is recorded separately; real mail, RANGE participation, legacy-history adoption and broader reconciliation remain required separate work.
 
 The proposed selection-head row owns current proof identity; immutable evidence rows retain flat source references/history for commands, with an indexed source-pin table for bounded cleanup and foreign-key protection. Existing response state uses the canonical master/original key, and a nullable selectionEvidenceId on retained deliveries pins the actual combined basis. Upgrades would create no enrollment, merged personal state or historical proof. Model sources/migrations wait for explicit ADR agreement.
+
+
+ADR 0179 storage additions are server-only:
+
+| Model | Stored purpose |
+| --- | --- |
+| `CalendarInvitationResponseSelectionHeadRecord` | Canonical correlation/master identity, current evidence pointer, revision and bounded inactivity/purge lifecycle; null pointer never grants eligibility. |
+| `CalendarInvitationResponseSelectionEvidenceRecord` | Immutable versioned normalized reference/history JSON, digest, byte count and retirement time; no copied source body or access verdict. |
+| `CalendarInvitationResponseSelectionSourcePinRecord` | Unique evidence/source relation, indexed for safe source cleanup; ownership is checked through actual parents. |
+| Existing `CalendarInvitationResponseRecord` | Nullable `selectionEvidenceId` relation; legacy deliveries remain null and retain their old hash/receipt interpretation. |
+
+`CalendarInvitationRecurringOccurrenceResponseView` and `CalendarInvitationRecurringOccurrenceResponseRequest` are immutable API carriers, not tables. Head/evidence/pin rows never appear in generated client schemas. See the accepted ADR for exact fields, limits and retention, and the [guide](durable-recurring-occurrence-responses.md) for canonical versus opened-entry command identities. Generated module/example migrations add the approved schema without inventing legacy history.

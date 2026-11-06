@@ -205,7 +205,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0178](0178-pure-recurring-response-source-selection.md) | Pure effective-notice selection for recurring invitation responses | Accepted by explicit maintainer agreement; bounded pure effective-notice selection/cancellation/validation group; durable integration remains separate |
 
-| [0179](0179-durable-shared-recurring-occurrence-responses.md) | Durable shared occurrence responses for ordinary recurring invitations | Proposed; effective-notice, independent restore-only eligibility and shared per-original state confirmed; storage/API/history mechanics require review |
+| [0179](0179-durable-shared-recurring-occurrence-responses.md) | Durable shared occurrence responses for ordinary recurring invitations | Accepted by explicit maintainer agreement; grouped durable shared occurrence responses, fresh-history proof storage and independent source-only restoration |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

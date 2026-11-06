@@ -32,6 +32,7 @@ abstract class CalendarInvitationResponseRecord
     required this.entryId,
     String? targetKey,
     this.responseOriginalStart,
+    this.selectionEvidenceId,
     required this.commandId,
     required this.criteriaDigest,
     required this.request,
@@ -76,6 +77,7 @@ abstract class CalendarInvitationResponseRecord
     required _is.UuidValue entryId,
     String? targetKey,
     _ieswiaty.CalendarEventTiming? responseOriginalStart,
+    _is.UuidValue? selectionEvidenceId,
     required _is.UuidValue commandId,
     required String criteriaDigest,
     required _iw3qnr12.CalendarInvitationResponseRequest request,
@@ -128,6 +130,11 @@ abstract class CalendarInvitationResponseRecord
           ? null
           : _ix00hwbf.Protocol().deserialize<_ieswiaty.CalendarEventTiming>(
               jsonSerialization['responseOriginalStart'],
+            ),
+      selectionEvidenceId: jsonSerialization['selectionEvidenceId'] == null
+          ? null
+          : _is.UuidValueJsonExtension.fromJson(
+              jsonSerialization['selectionEvidenceId'],
             ),
       commandId: _is.UuidValueJsonExtension.fromJson(
         jsonSerialization['commandId'],
@@ -217,6 +224,8 @@ abstract class CalendarInvitationResponseRecord
 
   _ieswiaty.CalendarEventTiming? responseOriginalStart;
 
+  _is.UuidValue? selectionEvidenceId;
+
   _is.UuidValue commandId;
 
   String criteriaDigest;
@@ -292,6 +301,7 @@ abstract class CalendarInvitationResponseRecord
     String? targetKey,
     _ieswiaty.CalendarEventTiming? responseOriginalStart =
         const _UndefinedCalendarInvitationResponseRecord$responseOriginalStart(),
+    _is.UuidValue? selectionEvidenceId = const _is.$UndefinedUuidValue(),
     _is.UuidValue? commandId,
     String? criteriaDigest,
     _iw3qnr12.CalendarInvitationResponseRequest? request,
@@ -335,6 +345,8 @@ abstract class CalendarInvitationResponseRecord
       'targetKey': targetKey,
       if (responseOriginalStart != null)
         'responseOriginalStart': responseOriginalStart?.toJson(),
+      if (selectionEvidenceId != null)
+        'selectionEvidenceId': selectionEvidenceId?.toJson(),
       'commandId': commandId.toJson(),
       'criteriaDigest': criteriaDigest,
       'request': request.toJson(),
@@ -419,6 +431,7 @@ class _CalendarInvitationResponseRecordImpl
     required _is.UuidValue entryId,
     String? targetKey,
     _ieswiaty.CalendarEventTiming? responseOriginalStart,
+    _is.UuidValue? selectionEvidenceId,
     required _is.UuidValue commandId,
     required String criteriaDigest,
     required _iw3qnr12.CalendarInvitationResponseRequest request,
@@ -457,6 +470,7 @@ class _CalendarInvitationResponseRecordImpl
          entryId: entryId,
          targetKey: targetKey,
          responseOriginalStart: responseOriginalStart,
+         selectionEvidenceId: selectionEvidenceId,
          commandId: commandId,
          criteriaDigest: criteriaDigest,
          request: request,
@@ -502,6 +516,7 @@ class _CalendarInvitationResponseRecordImpl
     String? targetKey,
     _ieswiaty.CalendarEventTiming? responseOriginalStart =
         const _UndefinedCalendarInvitationResponseRecord$responseOriginalStart(),
+    _is.UuidValue? selectionEvidenceId = const _is.$UndefinedUuidValue(),
     _is.UuidValue? commandId,
     String? criteriaDigest,
     _iw3qnr12.CalendarInvitationResponseRequest? request,
@@ -543,6 +558,9 @@ class _CalendarInvitationResponseRecordImpl
       responseOriginalStart: responseOriginalStart is _is.UndefinedSentinel
           ? this.responseOriginalStart?.copyWith()
           : responseOriginalStart,
+      selectionEvidenceId: selectionEvidenceId is _is.UndefinedSentinel
+          ? this.selectionEvidenceId
+          : selectionEvidenceId,
       commandId: commandId ?? this.commandId,
       criteriaDigest: criteriaDigest ?? this.criteriaDigest,
       request: request ?? this.request.copyWith(),
@@ -624,6 +642,13 @@ class CalendarInvitationResponseRecordUpdateTable
         table.responseOriginalStart,
         value,
       );
+
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> selectionEvidenceId(
+    _is.UuidValue? value,
+  ) => _is.ColumnValue(
+    table.selectionEvidenceId,
+    value,
+  );
 
   _is.ColumnValue<_is.UuidValue, _is.UuidValue> commandId(
     _is.UuidValue value,
@@ -840,6 +865,10 @@ class CalendarInvitationResponseRecordTable extends _is.Table<_is.UuidValue?> {
           'responseOriginalStart',
           this,
         );
+    selectionEvidenceId = _is.ColumnUuid(
+      'selectionEvidenceId',
+      this,
+    );
     commandId = _is.ColumnUuid(
       'commandId',
       this,
@@ -984,6 +1013,8 @@ class CalendarInvitationResponseRecordTable extends _is.Table<_is.UuidValue?> {
   late final _is.ColumnSerializable<_ieswiaty.CalendarEventTiming>
   responseOriginalStart;
 
+  late final _is.ColumnUuid selectionEvidenceId;
+
   late final _is.ColumnUuid commandId;
 
   late final _is.ColumnString criteriaDigest;
@@ -1056,6 +1087,7 @@ class CalendarInvitationResponseRecordTable extends _is.Table<_is.UuidValue?> {
     entryId,
     targetKey,
     responseOriginalStart,
+    selectionEvidenceId,
     commandId,
     criteriaDigest,
     request,

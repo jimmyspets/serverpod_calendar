@@ -627,6 +627,42 @@ DROP TABLE response_target_upgrade_guard;
     print("PASS: populated legacy response/source/command/receipt/hash/lease/attempt fields survive target migration with only entry/null defaults; distinct targets coexist and duplicate targets reject, with no inferred occurrence history.")
 
 
+def verify_recurring_response_proof_upgrade(database):
+    # Preserve every populated pre-feature row; no legacy provenance is inferred.
+    sql(database, """
+CREATE TABLE recurring_proof_upgrade_guard(table_name text, rows jsonb);
+DO $snapshot_recurring_proof$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+ AND (tablename LIKE 'serverpod_calendar_%' OR tablename LIKE 'serverpod_notifications_%') LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s',item.tablename) INTO contents;
+  INSERT INTO recurring_proof_upgrade_guard VALUES(item.tablename,contents);
+ END LOOP;
+END;$snapshot_recurring_proof$;
+""")
+    sql(database, (SERVER / "migrations/20261106101331242-recurring-response-proof/migration.sql").read_text(encoding="utf-8"))
+    sql(database, """
+DO $verify_recurring_proof$
+DECLARE item record; contents jsonb; projection text;
+BEGIN
+ FOR item IN SELECT * FROM recurring_proof_upgrade_guard LOOP
+  projection := CASE WHEN item.table_name='serverpod_calendar_invitation_response'
+    THEN $projection$to_jsonb(t)-'selectionEvidenceId'$projection$ ELSE 'to_jsonb(t)' END;
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT %s AS v FROM %I t) s',projection,item.table_name) INTO contents;
+  IF contents IS DISTINCT FROM item.rows THEN RAISE EXCEPTION 'Recurring proof migration changed legacy %',item.table_name; END IF;
+ END LOOP;
+ IF EXISTS(SELECT 1 FROM calendar_inv_response_selection_head)
+ OR EXISTS(SELECT 1 FROM calendar_inv_response_selection_evidence)
+ OR EXISTS(SELECT 1 FROM calendar_inv_response_selection_pin)
+ OR EXISTS(SELECT 1 FROM serverpod_calendar_invitation_response WHERE "selectionEvidenceId" IS NOT NULL)
+ THEN RAISE EXCEPTION 'Recurring proof upgrade invented enrollment, evidence, pins or merged responses'; END IF;
+END;$verify_recurring_proof$;
+DROP TABLE recurring_proof_upgrade_guard;
+""")
+    print("PASS: recurring proof upgrade preserves populated legacy rows/commands/receipts/leases and adds only empty head/evidence/pin tables and null delivery relations; no history or shared choice is invented.")
+
+
 def main():
     # Drop only a database this process successfully creates on the test service.
     database = f"calendar_metadata_upgrade_{os.getpid()}"
@@ -1325,6 +1361,7 @@ DROP TABLE reply_upgrade_guard;
         verify_serverpod_41_upgrade(database)
         verify_bundled_invitation_upgrade(database)
         verify_bundle_response_target_upgrade(database)
+        verify_recurring_response_proof_upgrade(database)
         print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated replies/invitations/links/checkpoints through instance, adoption, cancellation and private attendee-response upgrades; no personal response history is invented and ordinary cursor rows survive the occurrence-state addition without invented query state; known old invitation modes remain false without invented recurrence history.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

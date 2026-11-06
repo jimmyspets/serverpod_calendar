@@ -52,9 +52,12 @@ Future<void> instanceInvitationSmoke(List<Client> clients) async {
     );
     await rejects(() => api.link(instance!.entryId));
     await rejects(() => api.application(instance!.entryId));
-    final response = await api.response(instance.entryId);
+    final response = await api.recurringOccurrenceResponse(
+      instance.entryId,
+      v.originalStart!,
+    );
     require(
-      response.canSend && response.originalStart?.start.day == 5,
+      response.canSend && response.originalStart.start.day == 5,
       'Instance response lost its original or source eligibility',
     );
     final cancelled = await a.invitationDemo.simulateOccurrence(
@@ -201,8 +204,11 @@ Future<void> rangeInvitationSmoke(List<Client> clients) async {
     );
     require(
       (await api.getInvitation(single.entryId)).revision == 1 &&
-          (await api.response(single.entryId)).canSend,
-      'Review-only range altered single response eligibility',
+          !(await api.recurringOccurrenceResponse(
+            single.entryId,
+            (await api.getInvitation(single.entryId)).originalStart!,
+          )).canSend,
+      'Range cancellation did not block source-only occurrence eligibility',
     );
     await api.dismiss(notice.id, notice.revision);
     require(

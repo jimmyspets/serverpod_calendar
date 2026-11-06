@@ -52,6 +52,7 @@ final class _ResponseHost implements CalendarInvitationResponseHost {
           CalendarInvitationResponseOperation.dispatchOccurrence,
           CalendarInvitationResponseOperation.dispatchBundleMaster,
           CalendarInvitationResponseOperation.dispatchBundleOccurrence,
+          CalendarInvitationResponseOperation.dispatchRecurringOccurrence,
         }.contains(c.operation) &&
         c.actor != null) {
       throw StateError('Fabricated dispatch actor');
@@ -60,6 +61,7 @@ final class _ResponseHost implements CalendarInvitationResponseHost {
         {
           CalendarInvitationResponseOperation.sendBundleMaster,
           CalendarInvitationResponseOperation.sendBundleOccurrence,
+          CalendarInvitationResponseOperation.sendRecurringOccurrence,
         }.contains(c.operation) &&
         phase == CalendarAuthorizationPhase.finalWrite) {
       stdout.writeln('INVITATION_PAUSED ${jsonEncode(c.receipt!.toJson())}');
@@ -281,6 +283,14 @@ Future<void> main(List<String> args) async {
     invitations: CalendarInvitationRuntime(
       host: host,
       responses: CalendarInvitationResponseRuntime(
+        options: CalendarInvitationResponseOptions(
+          recurringOccurrences: CalendarRecurringResponseOptions(
+            enabled:
+                Platform
+                    .environment['CALENDAR_INVITATION_PROBE_RECURRING_RESPONSES'] ==
+                'true',
+          ),
+        ),
         host: _ResponseHost(host),
         transport: _ResponseTransport(host),
       ),
@@ -387,6 +397,8 @@ Future<void> main(List<String> args) async {
           case 'response':
           case 'bundle-response':
           case 'bundle-occurrence-response':
+          case 'recurring-response':
+          case 'recurring-response-freeze':
             session.updateAuthenticated(
               AuthenticationInfo('recipient', {}, authId: 'invitation-probe'),
             );
@@ -395,7 +407,45 @@ Future<void> main(List<String> args) async {
               final request = CalendarInvitationResponseRequest.fromJson(
                 input['request'] as Map<String, dynamic>,
               );
-              final receipt = input['command'] == 'bundle-occurrence-response'
+              if (input['command'] == 'recurring-response-freeze') {
+                final point = input['originalStart'] == null
+                    ? CalendarEventTiming(
+                        kind: CalendarEventTimeKind.utc,
+                        start: CalendarEventCivil(
+                          year: 2030,
+                          month: 1,
+                          day: 1,
+                          hour: 9,
+                        ),
+                      )
+                    : CalendarEventTiming.fromJson(
+                        input['originalStart'] as Map<String, dynamic>,
+                      );
+                final opened = input['openedId'] == null
+                    ? request.invitationId
+                    : UuidValue.fromString(input['openedId'] as String);
+                final view = await service.recurringOccurrenceResponse(
+                  opened,
+                  point,
+                );
+                result = CalendarInvitationRecurringOccurrenceResponseRequest(
+                  request: request,
+                  openedInvitationId: opened,
+                  originalStart: point,
+                  selectionHeadId: view.selectionHeadId,
+                  expectedSelectionRevision: view.selectionRevision,
+                  selectionEvidenceId: view.selectionEvidenceId!,
+                  selectionDigest: view.selectionDigest!,
+                ).toJson();
+                break;
+              }
+              final receipt = input['command'] == 'recurring-response'
+                  ? await service.sendRecurringOccurrenceResponse(
+                      CalendarInvitationRecurringOccurrenceResponseRequest.fromJson(
+                        input['selectionRequest'] as Map<String, dynamic>,
+                      ),
+                    )
+                  : input['command'] == 'bundle-occurrence-response'
                   ? await service.sendInvitationBundleOccurrenceResponse(
                       CalendarInvitationBundleOccurrenceResponseRequest(
                         request: request,
@@ -704,7 +754,32 @@ Future<void> main(List<String> args) async {
                   session,
                   where: (t) => t.scopeKey.equals(host.scope),
                 );
+            final selectionHeads =
+                await CalendarInvitationResponseSelectionHeadRecord.db.find(
+                  session,
+                  where: (t) => t.scopeKey.equals(host.scope),
+                );
+            final selectionEvidence = selectionHeads.isEmpty
+                ? <CalendarInvitationResponseSelectionEvidenceRecord>[]
+                : await CalendarInvitationResponseSelectionEvidenceRecord.db
+                      .find(
+                        session,
+                        where: (t) => t.headId.inSet(
+                          selectionHeads.map((h) => h.id!).toSet(),
+                        ),
+                      );
             result = {
+              'selectionHeads': selectionHeads.length,
+              'selectionEvidence': selectionEvidence.length,
+              'selectionPins': selectionEvidence.isEmpty
+                  ? 0
+                  : await CalendarInvitationResponseSelectionSourcePinRecord.db
+                        .count(
+                          session,
+                          where: (t) => t.evidenceId.inSet(
+                            selectionEvidence.map((e) => e.id!).toSet(),
+                          ),
+                        ),
               'responses': [
                 for (final r in await CalendarInvitationResponseRecord.db.find(
                   session,
@@ -826,6 +901,32 @@ Future<void> main(List<String> args) async {
               await CalendarInvitationResponseRecord.db.delete(
                 session,
                 responseRows,
+              );
+            }
+            final heads = await CalendarInvitationResponseSelectionHeadRecord.db
+                .find(session, where: (t) => t.scopeKey.equals(host.scope));
+            if (heads.isNotEmpty) {
+              final evidence =
+                  await CalendarInvitationResponseSelectionEvidenceRecord.db
+                      .find(
+                        session,
+                        where: (t) =>
+                            t.headId.inSet(heads.map((h) => h.id!).toSet()),
+                      );
+              if (evidence.isNotEmpty) {
+                await CalendarInvitationResponseSelectionSourcePinRecord.db
+                    .deleteWhere(
+                      session,
+                      where: (t) => t.evidenceId.inSet(
+                        evidence.map((e) => e.id!).toSet(),
+                      ),
+                    );
+                await CalendarInvitationResponseSelectionEvidenceRecord.db
+                    .delete(session, evidence);
+              }
+              await CalendarInvitationResponseSelectionHeadRecord.db.delete(
+                session,
+                heads,
               );
             }
             await CalendarInvitationResponseStateRecord.db.deleteWhere(
