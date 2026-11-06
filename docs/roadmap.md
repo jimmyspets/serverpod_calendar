@@ -958,3 +958,13 @@ ADR 0176 implements the approved dedicated API, Flutter, MIME and durable respon
 See [the scoped occurrence-response guide](bundled-occurrence-attendee-responses.md) for the selected-original API, current versus recorded versions, independent authority/state, generated migration and unchanged shared quotas.
 
 ADR 0177 passed 467 serial invitation/MIME SDK cases, the complete core/iCalendar/module VM and Chrome suites, populated migration, two-host recovery and connected Flutter checks; see [actual validation](scaffold-validation.md#adr-0177-grouped-occurrence-responses-2026-11-05). Ordinary recurring-master arbitrary-original selection, RANGE responses and broader reconciliation remain separate. Prerequisite ADR 0176 head 5e08bf2 passed full hosted inspect/runtime in run 42103864853; this does not establish a later head.
+
+
+## Ordinary recurring invitation response selection prerequisite
+
+The maintainer confirmed selecting the effective separately received instance/range notice and its version when responding to an original from an ordinary recurring invitation. [Proposed ADR 0178](adr/0178-pure-recurring-response-source-selection.md) profiles a bounded pure selector with complete packet/membership validation, single/range/master precedence and explicit cancellation blocking. It changes no stored response state, generated API, worker eligibility or Flutter flow. Durable multi-source proof/retention/authority and RANGE participation remain separate required work; this proposal is not implemented behavior.
+
+- [x] Confirm effective-notice rather than stale-master selection.
+- [ ] Obtain agreement on the concrete bounded pure selector contract.
+- [ ] Implement and validate the complete pure group before one code commit.
+- [ ] Review durable multi-source selection/evidence/retention and client integration separately.
