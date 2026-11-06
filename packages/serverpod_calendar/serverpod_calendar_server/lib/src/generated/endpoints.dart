@@ -81,6 +81,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_invitation_bund
     as _i21ov7xc;
 import 'package:serverpod_calendar_server/src/generated/calendar_invitation_occurrence_apply_request.dart'
     as _ituh8bkh;
+import 'package:serverpod_calendar_server/src/generated/calendar_invitation_recurring_occurrence_response_request.dart'
+    as _ia9u0mnt;
 import 'package:serverpod_calendar_server/src/generated/calendar_invitation_response_request.dart'
     as _iemmwj8c;
 import 'package:serverpod_calendar_server/src/generated/calendar_metadata_update_request.dart'
@@ -2372,6 +2374,84 @@ class Endpoints extends _is.EndpointDispatch {
                   (endpoints['calendarInvitation']
                           as _iolttv0d.CalendarInvitationEndpoint)
                       .sendBundleOccurrenceResponse(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'recurringOccurrenceResponse': _is.MethodConnector(
+          name: 'recurringOccurrenceResponse',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'originalStart': _is.ParameterDescription(
+              name: 'originalStart',
+              type: _is.getType<_i3rsvgvx.CalendarEventTiming>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .recurringOccurrenceResponse(
+                        session,
+                        params['id'],
+                        params['originalStart'],
+                      ),
+        ),
+        'recurringOccurrenceResponseActivity': _is.MethodConnector(
+          name: 'recurringOccurrenceResponseActivity',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'originalStart': _is.ParameterDescription(
+              name: 'originalStart',
+              type: _is.getType<_i3rsvgvx.CalendarEventTiming>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .recurringOccurrenceResponseActivity(
+                        session,
+                        params['id'],
+                        params['originalStart'],
+                      ),
+        ),
+        'sendRecurringOccurrenceResponse': _is.MethodConnector(
+          name: 'sendRecurringOccurrenceResponse',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is
+                  .getType<
+                    _ia9u0mnt.CalendarInvitationRecurringOccurrenceResponseRequest
+                  >(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .sendRecurringOccurrenceResponse(
                         session,
                         params['request'],
                       ),

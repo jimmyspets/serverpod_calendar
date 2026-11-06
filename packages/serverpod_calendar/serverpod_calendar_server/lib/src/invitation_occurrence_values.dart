@@ -45,6 +45,7 @@ CalendarInvitationOccurrenceProjection projectInvitationOccurrence({
   required IcalendarSchedulingMessage message,
   required String recipientAddress,
   int maxCandidateWork = eventMaxCandidateWork,
+  RecurrenceWorkBudget? sharedWorkBudget,
 }) {
   try {
     if (timingOverrides?.cancelledFrom != null) {
@@ -59,7 +60,11 @@ CalendarInvitationOccurrenceProjection projectInvitationOccurrence({
     if (message.timeZones.length > const IcalendarComponentLimits().maxZones) {
       throw const RecurrenceLimitException('invitationProjectionZones');
     }
-    final work = RecurrenceWorkBudget(maxWork: maxCandidateWork);
+    final work =
+        sharedWorkBudget ?? RecurrenceWorkBudget(maxWork: maxCandidateWork);
+    if (work.maxWork > maxCandidateWork) {
+      throw ArgumentError('Invalid shared work');
+    }
     validateEventUid(protocolUid);
     final accepted = validateEventContent(content, sharedWorkBudget: work);
     final edits = validateEventOverrides(
@@ -233,6 +238,7 @@ CalendarInvitationOccurrenceProjection projectInvitationRangeRequest({
   required IcalendarSchedulingMessage message,
   required String recipientAddress,
   int maxCandidateWork = eventMaxCandidateWork,
+  RecurrenceWorkBudget? sharedWorkBudget,
 }) {
   if (timingOverrides?.cancelledFrom != null) {
     throw ArgumentError(
@@ -245,7 +251,11 @@ CalendarInvitationOccurrenceProjection projectInvitationRangeRequest({
     if (message.timeZones.length > const IcalendarComponentLimits().maxZones) {
       throw const RecurrenceLimitException('invitationProjectionZones');
     }
-    final work = RecurrenceWorkBudget(maxWork: maxCandidateWork);
+    final work =
+        sharedWorkBudget ?? RecurrenceWorkBudget(maxWork: maxCandidateWork);
+    if (work.maxWork > maxCandidateWork) {
+      throw ArgumentError('Invalid shared work');
+    }
     validateEventUid(protocolUid);
     final accepted = validateEventContent(content, sharedWorkBudget: work);
     final edits = validateEventOverrides(

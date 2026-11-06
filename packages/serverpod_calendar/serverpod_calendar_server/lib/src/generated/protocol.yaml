@@ -98,6 +98,9 @@ calendarInvitation:
   - bundleOccurrenceResponse:
   - bundleOccurrenceResponseActivity:
   - sendBundleOccurrenceResponse:
+  - recurringOccurrenceResponse:
+  - recurringOccurrenceResponseActivity:
+  - sendRecurringOccurrenceResponse:
 calendarTask:
   - updateTextMetadata:
   - replaceFromImport:

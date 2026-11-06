@@ -1,0 +1,10 @@
+class: CalendarInvitationRecurringOccurrenceResponseRequest
+immutable: true
+fields:
+  request: CalendarInvitationResponseRequest
+  openedInvitationId: UuidValue
+  originalStart: CalendarEventTiming
+  selectionHeadId: UuidValue
+  expectedSelectionRevision: int
+  selectionEvidenceId: UuidValue
+  selectionDigest: String

@@ -12,11 +12,12 @@ class InvitationResponseScreen extends StatefulWidget {
     required this.id,
     this.bundleMaster = false,
     this.bundleOriginal,
+    this.recurringOriginal,
   });
   final Client client;
   final cal.UuidValue id;
   final bool bundleMaster;
-  final cal.CalendarEventTiming? bundleOriginal;
+  final cal.CalendarEventTiming? bundleOriginal, recurringOriginal;
   @override
   State<InvitationResponseScreen> createState() =>
       _InvitationResponseScreenState();
@@ -25,6 +26,9 @@ class InvitationResponseScreen extends StatefulWidget {
 class _InvitationResponseScreenState extends State<InvitationResponseScreen> {
   cal.CalendarInvitationView? _invitation;
   cal.CalendarInvitationBundleOccurrenceResponseView? _bundleView;
+  cal.CalendarInvitationRecurringOccurrenceResponseView? _recurringView;
+  cal.CalendarInvitationRecurringOccurrenceResponseRequest? _recurringPending;
+  cal.CalendarEventTiming? _recurringOriginal;
   cal.CalendarInvitationResponseView? _response;
   List<cal.CalendarInvitationResponseActivityView> _activity = [];
   cal.CalendarInvitationResponseChoice? _choice;
@@ -63,16 +67,29 @@ class _InvitationResponseScreenState extends State<InvitationResponseScreen> {
 
   Future<void> _read() async {
     final invitation = await _api.getInvitation(widget.id);
+    final recurringOriginal =
+        widget.recurringOriginal ??
+        (!widget.bundleMaster &&
+                widget.bundleOriginal == null &&
+                invitation.recurring
+            ? invitation.originalStart
+            : null);
+    final recurring = recurringOriginal == null
+        ? null
+        : await _api.recurringOccurrenceResponse(widget.id, recurringOriginal);
     final target = widget.bundleOriginal;
     final selected = target == null
         ? null
         : await _api.bundleOccurrenceResponse(widget.id, target);
     final response =
+        recurring?.response ??
         selected?.response ??
         await (widget.bundleMaster
             ? _api.bundleResponse(widget.id)
             : _api.response(widget.id));
-    final activity = await (target != null
+    final activity = await (recurringOriginal != null
+        ? _api.recurringOccurrenceResponseActivity(widget.id, recurringOriginal)
+        : target != null
         ? _api.bundleOccurrenceResponseActivity(widget.id, target)
         : widget.bundleMaster
         ? _api.bundleResponseActivity(widget.id)
@@ -81,6 +98,8 @@ class _InvitationResponseScreenState extends State<InvitationResponseScreen> {
       setState(() {
         _invitation = invitation;
         _bundleView = selected;
+        _recurringView = recurring;
+        _recurringOriginal = recurringOriginal;
         _response = response;
         _activity = activity;
       });
@@ -90,16 +109,36 @@ class _InvitationResponseScreenState extends State<InvitationResponseScreen> {
   Future<void> _refresh() => _run(_read);
   Future<void> _send() => _run(() async {
     _pending ??= cal.CalendarInvitationResponseRequest(
-      invitationId: widget.id,
+      invitationId: _recurringView?.masterInvitationId ?? widget.id,
       expectedInvitationRevision:
-          _bundleView?.invitationRevision ?? _invitation!.revision,
-      sourceId: _bundleView?.currentSourceId ?? _invitation!.sourceId!,
+          _recurringView?.masterInvitationRevision ??
+          _bundleView?.invitationRevision ??
+          _invitation!.revision,
+      sourceId:
+          _recurringView?.membershipSourceId ??
+          _bundleView?.currentSourceId ??
+          _invitation!.sourceId!,
       expectedResponseRevision: _response!.revision,
       commandId: const cal.Uuid().v4obj(),
       choice: _choice!,
     );
     final target = widget.bundleOriginal;
-    final receipt = await (target != null
+    if (_recurringOriginal != null) {
+      final view = _recurringView!;
+      _recurringPending ??=
+          cal.CalendarInvitationRecurringOccurrenceResponseRequest(
+            request: _pending!,
+            openedInvitationId: widget.id,
+            originalStart: _recurringOriginal!,
+            selectionHeadId: view.selectionHeadId,
+            expectedSelectionRevision: view.selectionRevision,
+            selectionEvidenceId: view.selectionEvidenceId!,
+            selectionDigest: view.selectionDigest!,
+          );
+    }
+    final receipt = await (_recurringPending != null
+        ? _api.sendRecurringOccurrenceResponse(_recurringPending!)
+        : target != null
         ? _api.sendBundleOccurrenceResponse(
             cal.CalendarInvitationBundleOccurrenceResponseRequest(
               request: _pending!,
@@ -119,6 +158,7 @@ class _InvitationResponseScreenState extends State<InvitationResponseScreen> {
     if (mounted) {
       setState(() {
         _pending = null;
+        _recurringPending = null;
         _receipt = null;
         _choice = null;
       });
@@ -179,7 +219,9 @@ class _InvitationResponseScreenState extends State<InvitationResponseScreen> {
             const Text(
               'Recurring series: this response applies to the whole series.',
             ),
-          if (_bundleView?.componentVersion case final version?)
+          if ((_recurringView?.componentVersion ??
+                  _bundleView?.componentVersion)
+              case final version?)
             Text(
               'Effective invitation version: SEQUENCE ${version.sequence?.toString() ?? 'omitted'}; ${version.stamp.toIso8601String()}; ${version.originalStart == null
                   ? 'master'
@@ -187,6 +229,11 @@ class _InvitationResponseScreenState extends State<InvitationResponseScreen> {
                   ? 'future timing component'
                   : 'single component'}.',
               key: const Key('response-effective-version'),
+            ),
+          if (_recurringView != null)
+            const Text(
+              'One response per original, shared with the series selector. Calendar Apply is separate.',
+              key: Key('response-shared-original'),
             ),
           if (_error != null) Text(_error!, key: const Key('response-error')),
           if (_response != null) ...[

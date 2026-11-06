@@ -1,0 +1,22 @@
+class: CalendarInvitationResponseSelectionHeadRecord
+serverOnly: true
+table: calendar_inv_response_selection_head
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  recipientKey: String
+  correlationDigest: String
+  masterEntryId: UuidValue, relation(parent=serverpod_calendar_invitation)
+  revision: int
+  currentEvidenceId: UuidValue?
+  state: String
+  createdAt: DateTime
+  updatedAt: DateTime
+  inactiveAt: DateTime?
+  purgedAt: DateTime?
+indexes:
+  inv_response_selection_head_unique:
+    fields: scopeKey, recipientKey, correlationDigest
+    unique: true
+  inv_response_selection_head_scope:
+    fields: scopeKey, recipientKey
