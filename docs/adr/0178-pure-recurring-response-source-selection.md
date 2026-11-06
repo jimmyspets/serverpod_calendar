@@ -1,0 +1,51 @@
+# ADR 0178: Pure effective-notice selection for recurring invitation responses
+
+Status: **Proposed, 2026-11-06.** The maintainer confirmed using the effective separately received instance/range notice and its version when selecting an original from an ordinary recurring invitation. The bounded pure mechanics below require explicit agreement before implementation. They do not authorize durable response changes.
+
+## Context and inspected evidence
+
+[ADR 0153](0153-explicit-single-instance-attendee-responses.md) sends a reply to one explicitly selected instance entry, with a separately validated membership basis. [ADR 0177](0177-bundled-occurrence-attendee-responses.md) selects any original within one complete bundle. Its application commit ab4f20f72160257f12aac442e2cac4e5bb7b119a in [PR #186](https://github.com/jimmyspets/serverpod_calendar/pull/186) passed the affected local group and full hosted inspect/runtime in [run 42169918438](https://github.com/jimmyspets/serverpod_calendar/actions/runs/42169918438). This does not establish another head or full standards compatibility.
+
+Ordinary recurring invitations can have independently received master, single and THISANDFUTURE notices. The current occurrence-response evidence resolver validates one selected source against a retained master or accepted baseline; the bundle selector requires all components in one packet. Neither supplies combined selection across separate packets. Silently using the master version would contradict the newly confirmed policy.
+
+Inspected response foreground/worker evidence, ordinary known-series membership, source/entry correlation and retention, bundle target/version selection, and pure occurrence/range projections. Existing source claims are not authority. Open PRs include the prerequisite; no overlapping selector work or open issue was returned at inspection.
+
+[RFC 5546 section 3.2.3](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.3) describes instance REPLY identity and request SEQUENCE; [section 3.7.1](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.7.1) discusses recurrence instances. Primary text checked 2026-11-06. The combined selection and bounded-input rules here are application policy, not an RFC database algorithm or a rule to select the largest timestamp/SEQUENCE across independent targets.
+
+## Proposed grouped prerequisite
+
+Implement and test one pure `resolveRecurringInvitationResponseTarget` helper in the server adaptation package, using pure core/codec semantics. It selects a response source from supplied membership/request/notice evidence and returns an immutable semantic result. It performs no session/database read, history lookup, persistence, authorization, command admission, payload delivery or calendar mutation. Keep canonical calendar composition separate from deciding which source a minimal reply would answer.
+
+The inputs are a single supported ordinary recurring master REQUEST, a start-only typed original, bounded separate notices, an explicit recipient calendar address claim and one shared work budget. Notices are complete supported one-component single REQUEST/CANCEL or THISANDFUTURE REQUEST/CANCEL packets. At most 64 notices plus the master are admitted, under existing aggregate component/zone ceilings, at most 262,144 serialized UTF-8 bytes across the supplied packets, and the existing `eventMaxCandidateWork` ceiling. Charge all supplied raw bytes/components/membership work before filtering; callers may lower limits, never widen them. No partial result on exhaustion.
+
+The supplied set must distinguish current REQUEST/single-CANCEL notices from still-active range-CANCEL evidence. A source-selection helper cannot infer that a later ordinary REQUEST restored an earlier cutoff. Keep each active cancellation explicitly present until a separately reviewed durable/history resolver proves it inactive. This helper neither discovers such history nor authorizes omission of evidence. No old marker is fabricated when retention has removed it.
+
+All packets are untrusted input. Revalidate the existing accepted scheduling syntax, property, participant and named-zone profiles, whole-second dates and size/work limits. Reject bundles, unsupported component data, VALARM, delegation/SENT-BY and unprofiled differences rather than stripping them. Require exact UID/organizer correlation and the supplied recipient in each relevant roster; these are semantic claims only. Do not broaden ordinary intake or standalone import profiles through this helper.
+
+## Original identity and selection
+
+Validate the complete recurring master and prove the selected original and every supplied notice anchor are exact members, including supported RRULE/RDATE/PERIOD additions and exclusions. Preserve DATE/UTC/exact named-zone identity and original civil ordering before moves. Reject fractions, exclusive-end identities, profile/zone mismatches and nonmembers; no nearest-match, alias conversion or device/server-zone inference.
+
+Require at most one supplied current notice per exact single/range target; duplicate/conflicting target input rejects instead of choosing by list order. An explicitly active cancellation is separate evidence, not permission to accept contradictory current notices. The caller must later prove which notices are current through trusted receipt/version/history rules. This pure helper does not order repeated receipts for the same target.
+
+First return blocked when the master itself is cancelled or an active range-CANCEL covers the requested original. The latter suppresses the entire suffix, including later moved/edited exceptions, following the confirmed cancellation policy. An independent single REQUEST or later different-anchor range REQUEST never implicitly restores it. An exact single CANCEL also blocks that original. Preserve input timing/content and cancellation evidence; this helper clears no cutoff or cancellation.
+
+Otherwise choose the exact original's single REQUEST, then the latest applicable THISANDFUTURE REQUEST by original civil anchor, then the master. A single source controls its own original even when timing also comes from a range. Same-anchor single/range requests can be selected without constructing a canonical bundle or changing either packet; retain all existing rejection rules for actual calendar projection/import. Range-derived selection answers just the requested original, not a suffix.
+
+Return the requested original, controlling source role/anchor and exact source packet, independently optional SEQUENCE and required DTSTAMP, or explicit blocking source/reason. Do not synthesize zero, take the largest independent SEQUENCE or use receipt time as a source version. Keep a blocked result distinct from missing/invalid/exhausted evidence. Preserve all source omissions and immutable inputs; minimal eventual REPLY generation remains a separate authorized path with RECURRENCE-ID and no RANGE.
+
+## Trust and durable boundary
+
+The result proves neither currentness nor permission to reply. It must never turn missing source history into eligibility. The later durable contract must define atomic discovery of the master/notices/active cancellations, protected combined proof views, source pins and pruning, immutable command binding, source-change withdrawal, independent current/retained-source authority and worker revalidation across hosts. It must preserve calendar-action independence and local drafts. Do not reuse a single source ID as if it proved this multi-packet basis.
+
+This batch adds no table/column, migration, generated carrier, endpoint, new host permission, command/hash family, response target/state, worker eligibility or Flutter control. Existing ordinary selected-entry and bundle APIs retain their behavior and guards. No response source is silently retargeted, no source becomes trusted by parsing, and all transport remains synthetic.
+
+## Complete acceptance and alternatives
+
+Test DATE/UTC/exact named zones and aliases, DST gaps/folds, unlisted originals, moved singles, earlier additions/PERIOD, exclusions, independent optional-zero/omitted and non-monotonic component versions, master/range/single precedence, same-anchor roles, input permutation and immutable source distinctions. Cover single and suffix cancellation blocking later exceptions, inactive-proof omission not being inferred, duplicate targets, mismatched correlation/recipient, unsupported properties, aggregate byte/component/zone/shared-work exhaustion and no partial success. Full current source packet validation must occur even for a notice that does not control the selected original.
+
+Run focused pure tests during development, then complete core/iCalendar/module VM and Chrome suites, affected ordinary/bundle response regressions, formatting/analysis and the full exact-head hosted gate before readiness. Confirm unchanged model/generated/migration files and unchanged existing API/worker guards. Commit implementation only after this pure feature group is complete. No Flutter rerun is claimed for an unchanged UI; its existing complete hosted checks remain intact.
+
+A master-only selector contradicts the confirmed effective-notice policy. A synthetic combined file could change legal source omissions/versions or fail at otherwise independently valid same-anchor roles. Largest-sequence or newest-receipt selection conflates independent targets. A storage-backed selector now would hide unresolved multi-source retention and authority mechanics. The pure prerequisite makes those decisions reviewable before a separately approved durable group.
+
+RANGE participation replies, source-restoration history inference, durable arbitrary-original selection, new scheduling methods, delegation, provider trust, real mail and external-client interoperability remain separate required work. Pure selector success is not a release-complete response workflow.
