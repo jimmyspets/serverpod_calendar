@@ -138,3 +138,6 @@ Accepted ADR 0175 and its explicitly approved lossless refinement add linked who
 
 
 Accepted ADR 0176 adds dedicated bundled master response read/activity/send APIs and independent readBundleMaster/sendBundleMaster/dispatchBundleMaster authority. Preserve complete-source validation, exact optional master SEQUENCE, separate digest families derived from retained evidence, immutable retries and source-change withdrawal. A master reply does not acknowledge independently versioned exceptions. Calendar actions remain independent; existing response tables/caps and synthetic-only transport remain. Validation is recorded separately.
+
+
+Accepted ADR 0177 adds any-validated-original bundle responses with a separate response target, exact effective master/range/single version and independent personal state. Preserve complete-source validation/shared work, canonical typed originals, legacy entry/null identity/hash defaults, target-specific authority/CAS/supersession/leases and aggregate entry/recipient/scope quotas. Current packet proof is separate from recorded response version; whole-source changes withdraw old unsent targets. Add/Apply/dismiss do not imply participation. The approved four columns/index replacement use generated migrations; all transport remains synthetic and actual validation is recorded separately.

@@ -68,6 +68,9 @@ void require(bool value, String message) {
 Future<void> main(List<String> args) async {
   final bundles = args.contains('--bundles');
   final bundleResponses = args.contains('--bundle-responses');
+  final bundleOccurrenceResponses = args.contains(
+    '--bundle-occurrence-responses',
+  );
   final nativeFuture = args.contains('--native-future');
   final rangeCycles = args.contains('--range-cycles');
   final restoredRanges = args.contains('--restored-ranges');
@@ -96,6 +99,7 @@ Future<void> main(List<String> args) async {
   final recurring =
       bundles ||
       bundleResponses ||
+      bundleOccurrenceResponses ||
       instanceResponses ||
       occurrenceApply ||
       instance ||
@@ -699,7 +703,10 @@ Future<void> main(List<String> args) async {
       );
       return;
     }
-    if (bundleResponses) {
+    if (bundleResponses || bundleOccurrenceResponses) {
+      final responseCommand = bundleOccurrenceResponses
+          ? 'bundle-occurrence-response'
+          : 'bundle-response';
       for (final pause in ['response-before', 'response-after']) {
         final id = nextCase();
         final incoming = await b.command({
@@ -720,7 +727,7 @@ Future<void> main(List<String> args) async {
         final raced = await Future.wait(
           [a, b].map(
             (p) => p.command({
-              'command': 'bundle-response',
+              'command': responseCommand,
               'caseId': id,
               'request': request.toJson(),
             }),
@@ -777,7 +784,7 @@ Future<void> main(List<String> args) async {
           );
         }
         final retried = await b.command({
-          'command': 'bundle-response',
+          'command': responseCommand,
           'caseId': id,
           'request': request.toJson(),
         }) as Map;
@@ -807,7 +814,7 @@ Future<void> main(List<String> args) async {
         a.paused = Completer<Map<String, dynamic>>();
         final lost = a
             .command({
-              'command': 'bundle-response',
+              'command': responseCommand,
               'caseId': id,
               'pause': pause,
               'request': request.toJson(),
@@ -826,7 +833,7 @@ Future<void> main(List<String> args) async {
           'Bundle response command loss violated atomicity',
         );
         final retried = await b.command({
-          'command': 'bundle-response',
+          'command': responseCommand,
           'caseId': id,
           'request': request.toJson(),
         }) as Map;
@@ -871,7 +878,7 @@ Future<void> main(List<String> args) async {
           choice: cal.CalendarInvitationResponseChoice.declined,
         );
         final receipt = await a.command({
-          'command': 'bundle-response',
+          'command': responseCommand,
           'caseId': id,
           'request': request.toJson(),
         }) as Map;
@@ -898,7 +905,7 @@ Future<void> main(List<String> args) async {
         );
         if (changedSource) {
           final retry = await b.command({
-            'command': 'bundle-response',
+            'command': responseCommand,
             'caseId': id,
             'request': request.toJson(),
           }) as Map;
@@ -926,12 +933,12 @@ Future<void> main(List<String> args) async {
       );
       final choices = await Future.wait([
         a.command({
-          'command': 'bundle-response',
+          'command': responseCommand,
           'caseId': raceId,
           'request': request.toJson(),
         }),
         b.command({
-          'command': 'bundle-response',
+          'command': responseCommand,
           'caseId': raceId,
           'request': request
               .copyWith(
@@ -949,8 +956,86 @@ Future<void> main(List<String> args) async {
                 1,
         'Bundle master response choices bypassed revision fence',
       );
+      if (bundleOccurrenceResponses) {
+        final id = nextCase();
+        final source = await b.command({
+          'command': 'receive',
+          'caseId': id,
+          'key': 'independent',
+          'bundle': true,
+          'sequence': 2,
+        }) as Map;
+        final base = cal.CalendarInvitationResponseRequest(
+          invitationId: cal.UuidValue.fromString(source['entryId'] as String),
+          sourceId: cal.UuidValue.fromString(source['sourceId'] as String),
+          expectedInvitationRevision: 1,
+          expectedResponseRevision: 0,
+          commandId: const cal.Uuid().v4obj(),
+          choice: cal.CalendarInvitationResponseChoice.accepted,
+        );
+        Map<String, dynamic> original(int day) => cal.CalendarEventTiming(
+          kind: cal.CalendarEventTimeKind.utc,
+          start: cal.CalendarEventCivil(
+            year: 2030,
+            month: 1,
+            day: day,
+            hour: 9,
+          ),
+        ).toJson();
+        final choices = await Future.wait([
+          a.command({
+            'command': responseCommand,
+            'caseId': id,
+            'request': base.toJson(),
+            'originalStart': original(1),
+          }),
+          b.command({
+            'command': responseCommand,
+            'caseId': id,
+            'request': base
+                .copyWith(
+                  commandId: const cal.Uuid().v4obj(),
+                  choice: cal.CalendarInvitationResponseChoice.declined,
+                )
+                .toJson(),
+            'originalStart': original(3),
+          }),
+        ]);
+        require(
+          choices.every((v) => (v as Map)['id'] != null) &&
+              (choices.first as Map)['id'] != (choices.last as Map)['id'],
+          'Different original commands incorrectly share a state/revision',
+        );
+        await b.command({
+          'command': 'bundle-response',
+          'caseId': id,
+          'request': base
+              .copyWith(commandId: const cal.Uuid().v4obj())
+              .toJson(),
+        });
+        final queued =
+            await b.command({'command': 'inspect', 'caseId': id}) as Map;
+        final rows = (queued['responses'] as List).cast<Map>();
+        require(
+          rows.length == 3 &&
+              rows.every((r) => r['state'] == 'queued') &&
+              rows.map((r) => r['targetKey']).toSet().length == 3,
+          'Master or sibling publication withdrew another target intent',
+        );
+        await b.command({'command': 'response-work', 'caseId': id});
+        final accepted =
+            await b.command({'command': 'inspect', 'caseId': id}) as Map;
+        require(
+          (accepted['responses'] as List).cast<Map>().every(
+                (r) => r['state'] == 'accepted',
+              ) &&
+              accepted['events'] == 0 &&
+              accepted['links'] == 0,
+          'Independent target workers changed adoption or failed to deliver',
+        );
+      }
       stdout.writeln(
-        'PASS: independent bundle-master response hosts, same-command and competing-choice races, command loss before/after commit, competing leases, actual loss before/after acceptance and stable retry key/bytes without adoption.',
+        'PASS: independent ${bundleOccurrenceResponses ? 'bundle occurrence' : 'bundle master'} response hosts, same-command and competing-choice races, command loss before/after commit, competing leases, actual loss before/after acceptance and stable retry key/bytes without adoption.',
       );
       return;
     }

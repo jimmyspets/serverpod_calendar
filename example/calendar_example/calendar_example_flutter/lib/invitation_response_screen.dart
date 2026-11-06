@@ -11,10 +11,12 @@ class InvitationResponseScreen extends StatefulWidget {
     required this.client,
     required this.id,
     this.bundleMaster = false,
+    this.bundleOriginal,
   });
   final Client client;
   final cal.UuidValue id;
   final bool bundleMaster;
+  final cal.CalendarEventTiming? bundleOriginal;
   @override
   State<InvitationResponseScreen> createState() =>
       _InvitationResponseScreenState();
@@ -22,6 +24,7 @@ class InvitationResponseScreen extends StatefulWidget {
 
 class _InvitationResponseScreenState extends State<InvitationResponseScreen> {
   cal.CalendarInvitationView? _invitation;
+  cal.CalendarInvitationBundleOccurrenceResponseView? _bundleView;
   cal.CalendarInvitationResponseView? _response;
   List<cal.CalendarInvitationResponseActivityView> _activity = [];
   cal.CalendarInvitationResponseChoice? _choice;
@@ -60,15 +63,24 @@ class _InvitationResponseScreenState extends State<InvitationResponseScreen> {
 
   Future<void> _read() async {
     final invitation = await _api.getInvitation(widget.id);
-    final response = await (widget.bundleMaster
-        ? _api.bundleResponse(widget.id)
-        : _api.response(widget.id));
-    final activity = await (widget.bundleMaster
+    final target = widget.bundleOriginal;
+    final selected = target == null
+        ? null
+        : await _api.bundleOccurrenceResponse(widget.id, target);
+    final response =
+        selected?.response ??
+        await (widget.bundleMaster
+            ? _api.bundleResponse(widget.id)
+            : _api.response(widget.id));
+    final activity = await (target != null
+        ? _api.bundleOccurrenceResponseActivity(widget.id, target)
+        : widget.bundleMaster
         ? _api.bundleResponseActivity(widget.id)
         : _api.responseActivity(widget.id));
     if (mounted) {
       setState(() {
         _invitation = invitation;
+        _bundleView = selected;
         _response = response;
         _activity = activity;
       });
@@ -79,13 +91,22 @@ class _InvitationResponseScreenState extends State<InvitationResponseScreen> {
   Future<void> _send() => _run(() async {
     _pending ??= cal.CalendarInvitationResponseRequest(
       invitationId: widget.id,
-      expectedInvitationRevision: _invitation!.revision,
-      sourceId: _invitation!.sourceId!,
+      expectedInvitationRevision:
+          _bundleView?.invitationRevision ?? _invitation!.revision,
+      sourceId: _bundleView?.currentSourceId ?? _invitation!.sourceId!,
       expectedResponseRevision: _response!.revision,
       commandId: const cal.Uuid().v4obj(),
       choice: _choice!,
     );
-    final receipt = await (widget.bundleMaster
+    final target = widget.bundleOriginal;
+    final receipt = await (target != null
+        ? _api.sendBundleOccurrenceResponse(
+            cal.CalendarInvitationBundleOccurrenceResponseRequest(
+              request: _pending!,
+              originalStart: target,
+            ),
+          )
+        : widget.bundleMaster
         ? _api.sendBundleResponse(_pending!)
         : _api.sendResponse(_pending!));
     if (mounted) setState(() => _receipt = receipt);
@@ -118,7 +139,9 @@ class _InvitationResponseScreenState extends State<InvitationResponseScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.bundleMaster
+          widget.bundleOriginal != null
+              ? 'Respond to original occurrence'
+              : widget.bundleMaster
               ? 'Respond to series master'
               : 'Invitation response',
         ),
@@ -155,6 +178,15 @@ class _InvitationResponseScreenState extends State<InvitationResponseScreen> {
           else if (_invitation?.recurring == true)
             const Text(
               'Recurring series: this response applies to the whole series.',
+            ),
+          if (_bundleView?.componentVersion case final version?)
+            Text(
+              'Effective invitation version: SEQUENCE ${version.sequence?.toString() ?? 'omitted'}; ${version.stamp.toIso8601String()}; ${version.originalStart == null
+                  ? 'master'
+                  : version.isThisAndFuture
+                  ? 'future timing component'
+                  : 'single component'}.',
+              key: const Key('response-effective-version'),
             ),
           if (_error != null) Text(_error!, key: const Key('response-error')),
           if (_response != null) ...[

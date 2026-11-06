@@ -1,5 +1,6 @@
 import 'invitation_adoption_screen.dart';
 import 'invitation_occurrence_application_screen.dart';
+import 'invitation_bundle_occurrence_response_screen.dart';
 import 'invitation_response_screen.dart';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
@@ -391,6 +392,29 @@ class _InvitationScreenState extends State<InvitationScreen> {
                                 ),
                           child: const Text(
                             'Series master response / activity',
+                          ),
+                        ),
+                      if ({
+                        cal.CalendarInvitationSourceKind.requestBundle,
+                        cal.CalendarInvitationSourceKind.bundleCancellation,
+                      }.contains(entry.kind))
+                        TextButton(
+                          key: ValueKey(
+                            'invitation-bundle-occurrence-response-${entry.id}',
+                          ),
+                          onPressed: _busy
+                              ? null
+                              : () => Navigator.of(context).push<void>(
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        InvitationBundleOccurrenceResponseScreen(
+                                          client: widget.client,
+                                          id: entry.id,
+                                        ),
+                                  ),
+                                ),
+                          child: const Text(
+                            'Original occurrence response / activity',
                           ),
                         ),
                       if (!entry.isThisAndFuture &&

@@ -944,12 +944,17 @@ The scoped implementation is described in [published range controls](published-r
 ADR 0176 implements the approved dedicated API, Flutter, MIME and durable response group. Its affected local checks passed, including 422 invitation/MIME integration tests; full exact-head hosted readiness remains pending. See [the scoped guide](bundled-master-attendee-responses.md).
 
 
-## Proposed bundle occurrence attendee responses
+## Bundle occurrence attendee responses
 
-[Proposed ADR 0177](adr/0177-bundled-occurrence-attendee-responses.md) records the confirmed any-validated-original/effective-component-version policy and proposes one grouped durable API/Flutter/recovery batch. The mechanics add a private target key and typed response original to each of the two existing response state/delivery tables, replace the state uniqueness index, and retain old target/hash identity and aggregate caps. No implementation or schema change follows before explicit model/ADR agreement. Master and occurrence responses remain independent; RANGE/real mail stay separate.
+[Accepted ADR 0177](adr/0177-bundled-occurrence-attendee-responses.md) implements the approved any-validated-original/effective-component-version policy in one grouped durable API/Flutter/recovery batch. The mechanics add a private target key and typed response original to each of the two existing response state/delivery tables, replace the state uniqueness index, and retain old target/hash identity and aggregate caps. The complete grouped mechanics have explicit maintainer agreement; actual implementation validation is recorded separately. Master and occurrence responses remain independent; RANGE/real mail stay separate.
 
 
 
 - [x] Confirm any validated original selection and effective controlling-component version.
-- [ ] Review the grouped target/storage/API/quota/migration proposal in ADR 0177.
-- [ ] After agreement, implement and validate the complete batch before one code commit; retain full exact-head hosted readiness checks.
+- [x] Obtain explicit agreement on the grouped target/storage/API/quota/migration mechanics in ADR 0177.
+- [x] Implement and validate the complete affected batch before one code commit.
+- [ ] Observe successful full exact-head hosted checks before readiness.
+
+See [the scoped occurrence-response guide](bundled-occurrence-attendee-responses.md) for the selected-original API, current versus recorded versions, independent authority/state, generated migration and unchanged shared quotas.
+
+ADR 0177 passed 467 serial invitation/MIME SDK cases, the complete core/iCalendar/module VM and Chrome suites, populated migration, two-host recovery and connected Flutter checks; see [actual validation](scaffold-validation.md#adr-0177-grouped-occurrence-responses-2026-11-05). Ordinary recurring-master arbitrary-original selection, RANGE responses and broader reconciliation remain separate. Prerequisite ADR 0176 head 5e08bf2 passed full hosted inspect/runtime in run 42103864853; this does not establish a later head.
