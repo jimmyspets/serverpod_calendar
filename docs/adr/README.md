@@ -207,6 +207,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0179](0179-durable-shared-recurring-occurrence-responses.md) | Durable shared occurrence responses for ordinary recurring invitations | Accepted by explicit maintainer agreement; grouped durable shared occurrence responses, fresh-history proof storage and independent source-only restoration |
 
+| [0180](0180-authenticated-bounded-freebusy-exchanges.md) | Authenticated bounded VFREEBUSY exchanges | Proposed; seven private tables and a nullable cursor extension; deletion policy and full model/API/retention approval pending; no runtime implementation |
+
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
 Use the next consecutive number for a new ADR covering a material decision. Include context, proposal/decision, alternatives, consequences, and acceptance conditions. Preserve committed/accepted decision history; supersede accepted decisions with a linked ADR. Superseded uncommitted drafts may be removed under the maintainer-authorized cleanup. Mark an ADR accepted only after explicit maintainer agreement recorded in the PR or issue.
