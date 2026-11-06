@@ -7,6 +7,8 @@ fields:
   recipientKey: String
   stateId: UuidValue, relation(parent=serverpod_calendar_invitation_response_state)
   entryId: UuidValue, relation(parent=serverpod_calendar_invitation)
+  targetKey: String, default="entry"
+  responseOriginalStart: CalendarEventTiming?
   commandId: UuidValue
   criteriaDigest: String
   request: CalendarInvitationResponseRequest

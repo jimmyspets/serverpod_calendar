@@ -13,3 +13,5 @@ The complete source bundle is validated and pinned under existing byte/component
 The existing three response tables, retention and admission caps are unchanged. Commands use the separate `bundle-master-response-v1` criteria family; retained source validation determines the family on retries and dispatch. No stored mode flag is invented. Source omissions and native drafts remain intact. Actual database-second timestamps must strictly advance; the service returns a retryable unavailable result rather than inventing a future timestamp.
 
 The example records deterministic synthetic attendee-sender MIME only. Transport acceptance does not prove organizer receipt, display or participation reconciliation. Instance/range bundle replies, broader reconciliation and real mail remain separate required work.
+
+Supersession: ADR 0177 adds independent replies to any validated original in a complete bundle; see [occurrence responses](bundled-occurrence-attendee-responses.md). Full hosted run 42103864853 at prerequisite repair head 5e08bf2 passed inspect/runtime; later implementation heads require their own checks.

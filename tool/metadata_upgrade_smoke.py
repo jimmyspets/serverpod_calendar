@@ -565,6 +565,68 @@ DROP TABLE bundled_link_upgrade_guard;
     print("PASS: populated legacy links retain every prior field and gain only bundledRequest=false; no bundle history is invented.")
 
 
+def verify_bundle_response_target_upgrade(database):
+    # Inert structural fixtures: preserved payloads are never submitted.
+    sql(database, """
+INSERT INTO serverpod_calendar_invitation_response_state
+(id,"scopeKey","recipientKey","entryId","recipientAddress",revision,"latestResponseId","lastStamp",choice,"sourceId","sourceRevision","sourceDigest","sourceSequence","sourceStamp",outcome,"createdAt","updatedAt")
+SELECT '17700000-0000-4000-8000-000000000003',e."scopeKey",e."recipientKey",e.id,'mailto:recipient@example.invalid',6,'17700000-0000-4000-8000-000000000005','2026-01-03','accepted',s.id,e.revision,s.digest,s.sequence,s.stamp,'claimed','2026-01-01','2026-01-03'
+FROM serverpod_calendar_invitation_source s JOIN serverpod_calendar_invitation e ON e.id=s."entryId" ORDER BY s.id LIMIT 1;
+INSERT INTO serverpod_calendar_invitation_response
+(id,"scopeKey","recipientKey","stateId","entryId","commandId","criteriaDigest",request,receipt,"sourceId","sourceRevision","sourceDigest","sourceSequence","sourceStamp","recipientAddress","organizerAddress","authorityRef","routeRef",generation,choice,stamp,payload,"payloadDigest","byteCount",state,"attemptCount","createdAt","expiresAt","nextAttemptAt","leaseOwner","leaseToken","leaseFence","leaseUntil")
+SELECT '17700000-0000-4000-8000-000000000005',s."scopeKey",s."recipientKey",s.id,s."entryId",'17700000-0000-4000-8000-000000000015',repeat('d',64),'{"fixture":"legacy-command"}','{"fixture":"legacy-receipt"}',s."sourceId",s."sourceRevision",s."sourceDigest",s."sourceSequence",s."sourceStamp",s."recipientAddress",'mailto:organizer@example.invalid','synthetic-authority','synthetic-route',6,'accepted','2026-01-03','Synthetic retained REPLY',repeat('e',64),24,'claimed',1,'2026-01-03','2030-01-10','2026-01-03','17700000-0000-4000-8000-000000000007','17700000-0000-4000-8000-000000000008',1,'2026-01-04'
+FROM serverpod_calendar_invitation_response_state s WHERE id='17700000-0000-4000-8000-000000000003';
+INSERT INTO serverpod_calendar_invitation_response_attempt
+(id,"responseId","attemptNumber","leaseToken","leaseFence","startedAt",outcome)
+VALUES ('17700000-0000-4000-8000-000000000006','17700000-0000-4000-8000-000000000005',1,'17700000-0000-4000-8000-000000000008',1,'2026-01-03','claimed');
+CREATE TABLE response_target_upgrade_guard(table_name text, rows jsonb);
+DO $snapshot_target$
+DECLARE item record; contents jsonb;
+BEGIN
+ IF (SELECT count(*) FROM serverpod_calendar_invitation_response_state)<>1
+ THEN RAISE EXCEPTION 'Expected a populated legacy response fixture'; END IF;
+ FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+ AND (tablename LIKE 'serverpod_calendar_%' OR tablename LIKE 'serverpod_notifications_%') LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s',item.tablename) INTO contents;
+  INSERT INTO response_target_upgrade_guard VALUES(item.tablename,contents);
+ END LOOP;
+END;$snapshot_target$;
+""")
+    sql(database, (SERVER / "migrations/20261105201822738-bundle-occurrence-responses/migration.sql").read_text(encoding="utf-8"))
+    sql(database, """
+DO $verify_target$
+DECLARE item record; contents jsonb; projection text;
+BEGIN
+ FOR item IN SELECT * FROM response_target_upgrade_guard LOOP
+  projection := CASE WHEN item.table_name IN ('serverpod_calendar_invitation_response_state','serverpod_calendar_invitation_response')
+    THEN $projection$to_jsonb(t)-'targetKey'-'responseOriginalStart'$projection$ ELSE 'to_jsonb(t)' END;
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT %s AS v FROM %I t) s',projection,item.table_name) INTO contents;
+  IF contents IS DISTINCT FROM item.rows THEN RAISE EXCEPTION 'Response target migration changed legacy %',item.table_name; END IF;
+ END LOOP;
+ IF EXISTS(SELECT 1 FROM serverpod_calendar_invitation_response_state WHERE "targetKey"<>'entry' OR "responseOriginalStart" IS NOT NULL)
+ OR EXISTS(SELECT 1 FROM serverpod_calendar_invitation_response WHERE "targetKey"<>'entry' OR "responseOriginalStart" IS NOT NULL)
+ THEN RAISE EXCEPTION 'Response target upgrade invented occurrence history'; END IF;
+END;$verify_target$;
+-- Index-only fixtures: runtime tests separately reject noncanonical target keys.
+INSERT INTO serverpod_calendar_invitation_response_state
+SELECT (jsonb_populate_record(NULL::serverpod_calendar_invitation_response_state,
+ to_jsonb(t)||jsonb_build_object('id','17700000-0000-4000-8000-000000000009','targetKey','synthetic-index-target'))).*
+FROM serverpod_calendar_invitation_response_state t WHERE id='17700000-0000-4000-8000-000000000003';
+DO $verify_unique_target$
+BEGIN
+ BEGIN
+  INSERT INTO serverpod_calendar_invitation_response_state
+  SELECT (jsonb_populate_record(NULL::serverpod_calendar_invitation_response_state,
+   to_jsonb(t)||jsonb_build_object('id','17700000-0000-4000-8000-000000000010'))).*
+  FROM serverpod_calendar_invitation_response_state t WHERE id='17700000-0000-4000-8000-000000000003';
+  RAISE EXCEPTION 'Duplicate response target admitted';
+ EXCEPTION WHEN unique_violation THEN NULL; END;
+END;$verify_unique_target$;
+DROP TABLE response_target_upgrade_guard;
+""")
+    print("PASS: populated legacy response/source/command/receipt/hash/lease/attempt fields survive target migration with only entry/null defaults; distinct targets coexist and duplicate targets reject, with no inferred occurrence history.")
+
+
 def main():
     # Drop only a database this process successfully creates on the test service.
     database = f"calendar_metadata_upgrade_{os.getpid()}"
@@ -1262,6 +1324,7 @@ DROP TABLE reply_upgrade_guard;
         verify_occurrence_application_upgrade(database)
         verify_serverpod_41_upgrade(database)
         verify_bundled_invitation_upgrade(database)
+        verify_bundle_response_target_upgrade(database)
         print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated replies/invitations/links/checkpoints through instance, adoption, cancellation and private attendee-response upgrades; no personal response history is invented and ordinary cursor rows survive the occurrence-state addition without invented query state; known old invitation modes remain false without invented recurrence history.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

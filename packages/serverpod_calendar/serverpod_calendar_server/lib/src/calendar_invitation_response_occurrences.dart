@@ -9,10 +9,31 @@ extension CalendarInvitationResponseOccurrenceOperations on CalendarService {
   >
   _irEvidence(
     CalendarInvitationResponsePolicyContext context,
-    Transaction tx,
-  ) async {
+    Transaction tx, {
+    RecurrenceWorkBudget? work,
+  }) async {
     CalendarInvitationOccurrenceBasis? basis;
     CalendarFailureCode? error;
+    CalendarInvitationBundleComponentVersion? componentVersion;
+    final responseOriginal = context.responseOriginalStart;
+    if (responseOriginal != null) {
+      try {
+        if (context.sourceMessage == null) {
+          throw _failure(CalendarFailureCode.unavailable);
+        }
+        final target = _irBundleTarget(
+          context.sourceMessage!,
+          responseOriginal,
+          work,
+        );
+        componentVersion = target.componentVersion;
+        if (target.cancelled) error = CalendarFailureCode.validation;
+      } on CalendarException catch (e) {
+        error = e.code == CalendarFailureCode.limitExceeded
+            ? CalendarFailureCode.unavailable
+            : e.code;
+      }
+    }
     final original = context.invitation.originalStart;
     if (original != null) {
       try {
@@ -65,11 +86,14 @@ extension CalendarInvitationResponseOccurrenceOperations on CalendarService {
         context.currentState.canSend &&
         source?.method == IcalendarSchedulingMethod.request &&
         _invHead(source!).status != IcalendarEventStatus.cancelled &&
-        (original == null || basis != null);
+        (original == null || basis != null) &&
+        (responseOriginal == null ||
+            error == null && context.sourceId == context.invitation.sourceId);
     return (
       context: context.withOccurrence(
         basis: basis,
         unavailable: error == CalendarFailureCode.unavailable,
+        responseComponentVersion: componentVersion,
         state: context.currentState.copyWith(canSend: canSend),
       ),
       error: error,

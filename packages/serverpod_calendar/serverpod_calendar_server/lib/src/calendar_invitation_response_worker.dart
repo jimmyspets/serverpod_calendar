@@ -128,7 +128,8 @@ final class _InvitationResponseWorker {
     if (state == null ||
         state.scopeKey != row.scopeKey ||
         state.recipientKey != row.recipientKey ||
-        state.entryId != row.entryId) {
+        state.entryId != row.entryId ||
+        state.targetKey != row.targetKey) {
       throw _failure(CalendarFailureCode.unavailable);
     }
     if (state.latestResponseId == row.id && state.revision == row.generation) {
@@ -165,7 +166,12 @@ final class _InvitationResponseWorker {
         calendarAddress: row.recipientAddress,
       );
       final entry = await s._invEntry(row.entryId, recipient, tx),
-          state = await s._irState(recipient, row.entryId, tx);
+          state = await s._irState(
+            recipient,
+            row.entryId,
+            tx,
+            targetKey: row.targetKey,
+          );
       if (state == null) throw _failure(CalendarFailureCode.unavailable);
       if (state.latestResponseId != row.id ||
           state.revision != row.generation ||
@@ -206,8 +212,13 @@ final class _InvitationResponseWorker {
         operation: CalendarInvitationResponseOperation.dispatch,
         recipient: recipient,
         invitation: await s._invView(entry, tx, sharedWorkBudget: work),
-        current: s._irView(entry, state),
+        current: s._irView(
+          entry,
+          state,
+          responseOriginal: row.responseOriginalStart,
+        ),
         source: source,
+        responseOriginal: row.responseOriginalStart,
         sourceRevision: row.sourceRevision,
         sourceMessage: basis,
         request: row.request,
@@ -216,7 +227,7 @@ final class _InvitationResponseWorker {
         digest: row.payloadDigest,
         authority: authority,
       );
-      await s._irAuthorize(context, tx, phase);
+      await s._irAuthorize(context, tx, phase, work: work);
       return true;
     } on CalendarException catch (e) {
       if (e.code != CalendarFailureCode.unavailable) {
@@ -425,7 +436,12 @@ final class _InvitationResponseWorker {
       row.entryId,
       transaction: tx,
     );
-    if (state == null || entry == null) {
+    if (state == null ||
+        entry == null ||
+        state.entryId != row.entryId ||
+        state.targetKey != row.targetKey ||
+        state.scopeKey != row.scopeKey ||
+        state.recipientKey != row.recipientKey) {
       throw _failure(CalendarFailureCode.unavailable);
     }
     if (state.latestResponseId != row.id ||

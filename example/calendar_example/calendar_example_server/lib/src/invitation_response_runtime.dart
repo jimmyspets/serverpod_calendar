@@ -36,6 +36,46 @@ final class DemoInvitationResponseHost
     );
   }
 
+  bool _matchesTarget(
+    CalendarInvitationResponsePolicyContext context,
+    IcalendarSchedulingMessage source,
+    IcalendarSchedulingMessage outgoing,
+  ) {
+    final event = outgoing.events.single,
+        original = context.responseOriginalStart;
+    if (event.isThisAndFuture) return false;
+    if (original != null) {
+      final component = context.responseComponentVersion;
+      if (component == null ||
+          !event.isOverride ||
+          component.sequence != event.sequence) {
+        return false;
+      }
+      final c = original.start;
+      final key = jsonEncode(
+        original.kind == CalendarEventTimeKind.date
+            ? ['date', c.year, c.month, c.day]
+            : [
+                'time',
+                original.zoneId,
+                c.year,
+                c.month,
+                c.day,
+                c.hour,
+                c.minute,
+                c.second,
+              ],
+      );
+      return _original(event) == key;
+    }
+    final basis = source.events.singleWhere(
+      (event) => !event.isOverride || source.events.length == 1,
+    );
+    return basis.isOverride == event.isOverride &&
+        _original(basis) == _original(event) &&
+        basis.sequence == event.sequence;
+  }
+
   Future<bool> _allowed(
     Session session,
     CalendarInvitationResponsePolicyContext c,
@@ -69,12 +109,14 @@ final class DemoInvitationResponseHost
           CalendarInvitationResponseOperation.dispatch,
           CalendarInvitationResponseOperation.dispatchOccurrence,
           CalendarInvitationResponseOperation.dispatchBundleMaster,
+          CalendarInvitationResponseOperation.dispatchBundleOccurrence,
         }.contains(c.operation)) {
       return false;
     }
     if (!{
       CalendarInvitationResponseOperation.read,
       CalendarInvitationResponseOperation.readBundleMaster,
+      CalendarInvitationResponseOperation.readBundleOccurrence,
     }.contains(c.operation)) {
       final source = c.sourceMessage,
           outgoing = c.outgoingMessage,
@@ -94,25 +136,7 @@ final class DemoInvitationResponseHost
               ) ||
           outgoing.method != IcalendarSchedulingMethod.reply ||
           outgoing.uid != c.invitation.uid ||
-          source.events
-                  .singleWhere(
-                    (event) => !event.isOverride || source.events.length == 1,
-                  )
-                  .isOverride !=
-              outgoing.events.single.isOverride ||
-          outgoing.events.single.isThisAndFuture ||
-          _original(
-                source.events.singleWhere(
-                  (event) => !event.isOverride || source.events.length == 1,
-                ),
-              ) !=
-              _original(outgoing.events.single) ||
-          source.events
-                  .singleWhere(
-                    (event) => !event.isOverride || source.events.length == 1,
-                  )
-                  .sequence !=
-              outgoing.events.single.sequence ||
+          !_matchesTarget(c, source, outgoing) ||
           outgoing.events.single.participants.attendees.single.address !=
               c.recipient.calendarAddress ||
           outgoing.events.single.participants.organizer?.address !=
