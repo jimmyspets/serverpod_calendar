@@ -18,3 +18,5 @@ export 'src/published_range_cancellation_values.dart';
 export 'src/invitation_bundle_values.dart';
 export 'src/invitation_bundle_response_values.dart';
 export 'src/invitation_bundle_update_values.dart';
+
+export 'src/recurring_invitation_response_values.dart';
