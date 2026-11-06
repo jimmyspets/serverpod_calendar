@@ -983,3 +983,14 @@ Accepted [ADR 0179](adr/0179-durable-shared-recurring-occurrence-responses.md) i
 - [x] Obtain explicit agreement on the complete storage/API/history/retention/authority contract (PR #189).
 - [x] Implement and validate the grouped durable feature locally: source proof, protected APIs, migrations, recovery, MIME/JWT and connected Flutter. Remaining unchanged local recovery is handed to full exact-head CI; no full local-script success is claimed.
 - [ ] Inspect exact-head full hosted results before readiness.
+
+
+## Proposed authenticated free/busy exchanges
+
+[Proposed ADR 0180](adr/0180-authenticated-bounded-freebusy-exchanges.md) groups trusted VFREEBUSY PUBLISH/REQUEST/REPLY intake, private review, explicit per-calendar publication/request/share/refusal, actor-free background source checks, immutable intent, synthetic MIME, migrations and client/Flutter/recovery validation. It proposes seven private tables plus one nullable typed state on the existing cursor table. Incoming reports remain informational and never establish native free coverage. The recommended source-deletion policy and complete schema/API/retention mechanics remain unapproved; no table source, migration, endpoint, worker or UI implementation follows from this proposal. Existing guarded runtime and the full selected release scope remain in force.
+
+- [ ] Resolve the source-calendar deletion policy for private free/busy reports.
+- [ ] Review ADR 0180's complete model/API/authorization/retention contract before sources or migrations.
+- [ ] Implement/validate the approved exchange group in one code batch; preserve full exact-head CI before readiness.
+
+This next method-family contract is dependency-driven work in the scheduling lane. It does not defer the remaining bundle/range lifecycle, other selected methods, operational cleanup or release evidence.

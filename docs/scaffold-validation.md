@@ -2436,3 +2436,12 @@ The Serverpod MCP bridge was exposed but its runner was stopped. The workspace D
 Final ADR 0179 source checks passed: **486** source files required no formatting changes, `dart analyze --fatal-infos` found no issues, and `flutter build web --no-pub` produced the release web bundle. Exact-head full hosted inspection/runtime is still the readiness gate; local prefix/targeted success is not substituted for that result.
 
 Static precommit review passed **3,862** relative links, consecutive ADRs 0001–0179, **78** candidate files, absence of **17** local credential values, the exact approved migration allowlist, UTF-8/whitespace and unchanged LICENSE.
+
+
+## ADR 0180 proposal inspection, 2026-11-06
+
+Application aaaf1f47d18a293f611ecb8b5fde27112081b4be in PR #190 has the ADR 0179 local evidence above. Exact-head hosted run 42248235619 was observed with inspection successful and runtime still in progress; no hosted runtime success is inferred.
+
+Inspected native calendar free/busy/export, actual source-policy requests, scoped availability loading, current cursor fields, scheduling worker limits, the pure VFREEBUSY profile, and RFC 5546 section 3.3/RFC 6047 security roles. Existing open PRs #31/#72 cover prerequisites, not this durable exchange; the freebusy issue search returned none. The new ADR is a documentation-only proposal with seven table boundaries and one nullable cursor field; the source-calendar deletion choice and complete implementation mechanics require agreement. No model/generated/migration/runtime/dependency change is included. Proposal checks and actual hosted conclusions are recorded separately.
+
+ADR 0180 proposal checks passed **3,871** relative links, consecutive ADRs 0001–0180, **11 Markdown-only** files, UTF-8/whitespace, unchanged LICENSE and absence of **17** local credential values. No runtime test is claimed for this documentation-only diff.
