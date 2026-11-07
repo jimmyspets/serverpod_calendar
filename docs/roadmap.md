@@ -1007,3 +1007,11 @@ Accepted [ADR 0181](adr/0181-subject-common-freebusy-export.md) implements state
 - [x] Obtain explicit agreement on ADR 0181 before model/API implementation.
 - [x] Implement and locally validate the grouped stateless export: pure VM/Chrome, independent/final-source SDK checks, two-host JWT and connected Flutter, stable generation and release web build; commit once.
 - [ ] Inspect exact-head full hosted outcomes before this export implementation is ready.
+
+
+## Proposed native event information publication
+
+[Proposed ADR 0182](adr/0182-native-event-information-publication.md) groups outgoing VEVENT PUBLISH/update and whole cancellation/reopening for native non-recurring events and supported recurring masters. It keeps fixed private routing recipients separate from attendees, preserves private drafts and exact retry bytes, and proposes one binding-purpose column plus purpose/action API/context refinements using the existing four outbox tables. Independent permissions, strict cross-purpose rejection, synthetic MIME, migrations, two-host/process-loss and Flutter validation form one batch. No model source or implementation is authorized by this proposal; incoming publication adoption, occurrence publication, other selected methods and real mail remain separate.
+
+- [ ] Review the complete ADR 0182 model/API/purpose/lifecycle contract before implementation.
+- [ ] After explicit agreement, implement and validate the grouped publication feature once, with full exact-head hosted readiness.
