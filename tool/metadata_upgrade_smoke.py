@@ -663,12 +663,60 @@ DROP TABLE recurring_proof_upgrade_guard;
     print("PASS: recurring proof upgrade preserves populated legacy rows/commands/receipts/leases and adds only empty head/evidence/pin tables and null delivery relations; no history or shared choice is invented.")
 
 
+
+def verify_freebusy_exchange_upgrade(database):
+    sql(database, """
+INSERT INTO serverpod_calendar_cursor
+(token,"scopeKey","principalId","policyRevision","dataRevision","afterId","pageSize","fieldGroups","expiresAt")
+VALUES (repeat('F',43),'freebusy-upgrade-test','synthetic','legacy',7,
+'12345678-1234-4234-8234-123456789abc',2,'[]','2030-01-01');
+CREATE TABLE freebusy_upgrade_guard(table_name text, rows jsonb);
+DO $snapshot_freebusy$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+ AND (tablename LIKE 'serverpod_calendar_%' OR tablename LIKE 'serverpod_notifications_%') LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s',item.tablename) INTO contents;
+  INSERT INTO freebusy_upgrade_guard VALUES(item.tablename,contents);
+ END LOOP;
+END;$snapshot_freebusy$;
+""")
+    sql(database, (SERVER / "migrations/20261106202123523-freebusy-exchanges/migration.sql").read_text(encoding="utf-8"))
+    sql(database, """
+DO $verify_freebusy$
+DECLARE item record; contents jsonb; projection text;
+BEGIN
+ FOR item IN SELECT * FROM freebusy_upgrade_guard LOOP
+  projection := CASE WHEN item.table_name='serverpod_calendar_cursor'
+    THEN $projection$to_jsonb(t)-'freeBusyExchangeState'$projection$ ELSE 'to_jsonb(t)' END;
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT %s AS v FROM %I t) s',projection,item.table_name) INTO contents;
+  IF contents IS DISTINCT FROM item.rows THEN RAISE EXCEPTION 'Busy exchange migration changed legacy %',item.table_name; END IF;
+ END LOOP;
+ IF EXISTS(SELECT 1 FROM serverpod_calendar_cursor WHERE "freeBusyExchangeState" IS NOT NULL)
+ OR EXISTS(SELECT 1 FROM serverpod_calendar_fb_request_head)
+ OR EXISTS(SELECT 1 FROM serverpod_calendar_fb_source)
+ OR EXISTS(SELECT 1 FROM serverpod_calendar_fb_ingress)
+ OR EXISTS(SELECT 1 FROM serverpod_calendar_fb_command)
+ OR EXISTS(SELECT 1 FROM serverpod_calendar_fb_source_ref)
+ OR EXISTS(SELECT 1 FROM serverpod_calendar_fb_delivery)
+ OR EXISTS(SELECT 1 FROM serverpod_calendar_fb_attempt)
+ THEN RAISE EXCEPTION 'Busy exchange migration invented private mail or cursor state'; END IF;
+END;$verify_freebusy$;
+DROP TABLE freebusy_upgrade_guard;
+""")
+    print("PASS: VFREEBUSY upgrade preserves populated legacy rows and cursors, adds a null private cursor field and seven empty private exchange tables without invented mail, grants or history.")
+
+
 def main():
     # Drop only a database this process successfully creates on the test service.
     database = f"calendar_metadata_upgrade_{os.getpid()}"
     assert re.fullmatch(r"calendar_metadata_upgrade_[0-9]+", database)
     sql("postgres", f"CREATE DATABASE {database};")
     try:
+        if "--freebusy-only" in __import__("sys").argv:
+            sql(database, (SERVER / "migrations/20261106101331242-recurring-response-proof/definition.sql").read_text(encoding="utf-8"))
+            verify_freebusy_exchange_upgrade(database)
+            return
         if "--occurrence-applications-only" in __import__("sys").argv:
             sql(database, (SERVER / "migrations/20261031085639016/definition.sql").read_text(encoding="utf-8"))
             verify_occurrence_application_upgrade(database)
@@ -1362,6 +1410,7 @@ DROP TABLE reply_upgrade_guard;
         verify_bundled_invitation_upgrade(database)
         verify_bundle_response_target_upgrade(database)
         verify_recurring_response_proof_upgrade(database)
+        verify_freebusy_exchange_upgrade(database)
         print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated replies/invitations/links/checkpoints through instance, adoption, cancellation and private attendee-response upgrades; no personal response history is invented and ordinary cursor rows survive the occurrence-state addition without invented query state; known old invitation modes remain false without invented recurrence history.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

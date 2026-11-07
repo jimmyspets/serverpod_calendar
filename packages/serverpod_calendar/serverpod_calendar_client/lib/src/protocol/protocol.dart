@@ -141,10 +141,20 @@ import 'calendar_event_view.dart' as _iqr733fy;
 import 'calendar_exception.dart' as _ioicq9ju;
 import 'calendar_failure_code.dart' as _i7h2f30k;
 import 'calendar_field_group.dart' as _i73hgz1s;
+import 'calendar_free_busy_command_receipt.dart' as _i9q3ycvj;
 import 'calendar_free_busy_coverage.dart' as _ia3n9q23;
+import 'calendar_free_busy_delivery_page.dart' as _iic8trbt;
+import 'calendar_free_busy_delivery_view.dart' as _i4xvuj0s;
+import 'calendar_free_busy_ingress_receipt.dart' as _iuvx5swm;
 import 'calendar_free_busy_kind.dart' as _izms466b;
+import 'calendar_free_busy_message_page.dart' as _ix45g82h;
+import 'calendar_free_busy_message_view.dart' as _iu6vjwqv;
+import 'calendar_free_busy_outgoing_page.dart' as _ixc6x69o;
+import 'calendar_free_busy_outgoing_view.dart' as _ilawc3ua;
 import 'calendar_free_busy_period.dart' as _i82zcrxb;
+import 'calendar_free_busy_publish_request.dart' as _i519q1rj;
 import 'calendar_free_busy_query.dart' as _idid5g6i;
+import 'calendar_free_busy_reply_request.dart' as _iudtc3li;
 import 'calendar_free_busy_view.dart' as _i3b615hg;
 import 'calendar_image_link.dart' as _igf45b52;
 import 'calendar_invitation_adoption_receipt.dart' as _ib1s0vrr;
@@ -362,10 +372,20 @@ export 'calendar_event_view.dart';
 export 'calendar_exception.dart';
 export 'calendar_failure_code.dart';
 export 'calendar_field_group.dart';
+export 'calendar_free_busy_command_receipt.dart';
 export 'calendar_free_busy_coverage.dart';
+export 'calendar_free_busy_delivery_page.dart';
+export 'calendar_free_busy_delivery_view.dart';
+export 'calendar_free_busy_ingress_receipt.dart';
 export 'calendar_free_busy_kind.dart';
+export 'calendar_free_busy_message_page.dart';
+export 'calendar_free_busy_message_view.dart';
+export 'calendar_free_busy_outgoing_page.dart';
+export 'calendar_free_busy_outgoing_view.dart';
 export 'calendar_free_busy_period.dart';
+export 'calendar_free_busy_publish_request.dart';
 export 'calendar_free_busy_query.dart';
+export 'calendar_free_busy_reply_request.dart';
 export 'calendar_free_busy_view.dart';
 export 'calendar_image_link.dart';
 export 'calendar_invitation_adoption_receipt.dart';
@@ -597,10 +617,20 @@ class Protocol extends _isc.SerializationManager
       _isc.getType<_ioicq9ju.CalendarException>,
       _isc.getType<_i7h2f30k.CalendarFailureCode>,
       _isc.getType<_i73hgz1s.CalendarFieldGroup>,
+      _isc.getType<_i9q3ycvj.CalendarFreeBusyCommandReceipt>,
       _isc.getType<_ia3n9q23.CalendarFreeBusyCoverage>,
+      _isc.getType<_iic8trbt.CalendarFreeBusyDeliveryPage>,
+      _isc.getType<_i4xvuj0s.CalendarFreeBusyDeliveryView>,
+      _isc.getType<_iuvx5swm.CalendarFreeBusyIngressReceipt>,
       _isc.getType<_izms466b.CalendarFreeBusyKind>,
+      _isc.getType<_ix45g82h.CalendarFreeBusyMessagePage>,
+      _isc.getType<_iu6vjwqv.CalendarFreeBusyMessageView>,
+      _isc.getType<_ixc6x69o.CalendarFreeBusyOutgoingPage>,
+      _isc.getType<_ilawc3ua.CalendarFreeBusyOutgoingView>,
       _isc.getType<_i82zcrxb.CalendarFreeBusyPeriod>,
+      _isc.getType<_i519q1rj.CalendarFreeBusyPublishRequest>,
       _isc.getType<_idid5g6i.CalendarFreeBusyQuery>,
+      _isc.getType<_iudtc3li.CalendarFreeBusyReplyRequest>,
       _isc.getType<_i3b615hg.CalendarFreeBusyView>,
       _isc.getType<_igf45b52.CalendarImageLink>,
       _isc.getType<_ib1s0vrr.CalendarInvitationAdoptionReceipt>,
@@ -817,10 +847,20 @@ class Protocol extends _isc.SerializationManager
       _isc.getType<_ioicq9ju.CalendarException?>,
       _isc.getType<_i7h2f30k.CalendarFailureCode?>,
       _isc.getType<_i73hgz1s.CalendarFieldGroup?>,
+      _isc.getType<_i9q3ycvj.CalendarFreeBusyCommandReceipt?>,
       _isc.getType<_ia3n9q23.CalendarFreeBusyCoverage?>,
+      _isc.getType<_iic8trbt.CalendarFreeBusyDeliveryPage?>,
+      _isc.getType<_i4xvuj0s.CalendarFreeBusyDeliveryView?>,
+      _isc.getType<_iuvx5swm.CalendarFreeBusyIngressReceipt?>,
       _isc.getType<_izms466b.CalendarFreeBusyKind?>,
+      _isc.getType<_ix45g82h.CalendarFreeBusyMessagePage?>,
+      _isc.getType<_iu6vjwqv.CalendarFreeBusyMessageView?>,
+      _isc.getType<_ixc6x69o.CalendarFreeBusyOutgoingPage?>,
+      _isc.getType<_ilawc3ua.CalendarFreeBusyOutgoingView?>,
       _isc.getType<_i82zcrxb.CalendarFreeBusyPeriod?>,
+      _isc.getType<_i519q1rj.CalendarFreeBusyPublishRequest?>,
       _isc.getType<_idid5g6i.CalendarFreeBusyQuery?>,
+      _isc.getType<_iudtc3li.CalendarFreeBusyReplyRequest?>,
       _isc.getType<_i3b615hg.CalendarFreeBusyView?>,
       _isc.getType<_igf45b52.CalendarImageLink?>,
       _isc.getType<_ib1s0vrr.CalendarInvitationAdoptionReceipt?>,
@@ -983,6 +1023,10 @@ class Protocol extends _isc.SerializationManager
       _isc.getType<List<_i3iolgr8.CalendarItemCategoryGroup>?>,
       _isc.getType<List<_itx19m90.CalendarItemComment>>,
       _isc.getType<List<_itx19m90.CalendarItemComment>?>,
+      _isc.getType<List<_isc.UuidValue>>,
+      _isc.getType<List<_i4xvuj0s.CalendarFreeBusyDeliveryView>>,
+      _isc.getType<List<_iu6vjwqv.CalendarFreeBusyMessageView>>,
+      _isc.getType<List<_ilawc3ua.CalendarFreeBusyOutgoingView>>,
       _isc.getType<List<_i82zcrxb.CalendarFreeBusyPeriod>>,
       _isc.getType<List<_iu3tvjvj.CalendarInvitationBundleComponentVersion>>,
       _isc.getType<List<_iu3tvjvj.CalendarInvitationBundleComponentVersion>?>,
@@ -1124,10 +1168,20 @@ class Protocol extends _isc.SerializationManager
       'CalendarException',
       'CalendarFailureCode',
       'CalendarFieldGroup',
+      'CalendarFreeBusyCommandReceipt',
       'CalendarFreeBusyCoverage',
+      'CalendarFreeBusyDeliveryPage',
+      'CalendarFreeBusyDeliveryView',
+      'CalendarFreeBusyIngressReceipt',
       'CalendarFreeBusyKind',
+      'CalendarFreeBusyMessagePage',
+      'CalendarFreeBusyMessageView',
+      'CalendarFreeBusyOutgoingPage',
+      'CalendarFreeBusyOutgoingView',
       'CalendarFreeBusyPeriod',
+      'CalendarFreeBusyPublishRequest',
       'CalendarFreeBusyQuery',
+      'CalendarFreeBusyReplyRequest',
       'CalendarFreeBusyView',
       'CalendarImageLink',
       'CalendarInvitationAdoptionReceipt',
@@ -1600,17 +1654,47 @@ class Protocol extends _isc.SerializationManager
     if (t == _i73hgz1s.CalendarFieldGroup) {
       return _i73hgz1s.CalendarFieldGroup.fromJson(data) as T;
     }
+    if (t == _i9q3ycvj.CalendarFreeBusyCommandReceipt) {
+      return _i9q3ycvj.CalendarFreeBusyCommandReceipt.fromJson(data) as T;
+    }
     if (t == _ia3n9q23.CalendarFreeBusyCoverage) {
       return _ia3n9q23.CalendarFreeBusyCoverage.fromJson(data) as T;
+    }
+    if (t == _iic8trbt.CalendarFreeBusyDeliveryPage) {
+      return _iic8trbt.CalendarFreeBusyDeliveryPage.fromJson(data) as T;
+    }
+    if (t == _i4xvuj0s.CalendarFreeBusyDeliveryView) {
+      return _i4xvuj0s.CalendarFreeBusyDeliveryView.fromJson(data) as T;
+    }
+    if (t == _iuvx5swm.CalendarFreeBusyIngressReceipt) {
+      return _iuvx5swm.CalendarFreeBusyIngressReceipt.fromJson(data) as T;
     }
     if (t == _izms466b.CalendarFreeBusyKind) {
       return _izms466b.CalendarFreeBusyKind.fromJson(data) as T;
     }
+    if (t == _ix45g82h.CalendarFreeBusyMessagePage) {
+      return _ix45g82h.CalendarFreeBusyMessagePage.fromJson(data) as T;
+    }
+    if (t == _iu6vjwqv.CalendarFreeBusyMessageView) {
+      return _iu6vjwqv.CalendarFreeBusyMessageView.fromJson(data) as T;
+    }
+    if (t == _ixc6x69o.CalendarFreeBusyOutgoingPage) {
+      return _ixc6x69o.CalendarFreeBusyOutgoingPage.fromJson(data) as T;
+    }
+    if (t == _ilawc3ua.CalendarFreeBusyOutgoingView) {
+      return _ilawc3ua.CalendarFreeBusyOutgoingView.fromJson(data) as T;
+    }
     if (t == _i82zcrxb.CalendarFreeBusyPeriod) {
       return _i82zcrxb.CalendarFreeBusyPeriod.fromJson(data) as T;
     }
+    if (t == _i519q1rj.CalendarFreeBusyPublishRequest) {
+      return _i519q1rj.CalendarFreeBusyPublishRequest.fromJson(data) as T;
+    }
     if (t == _idid5g6i.CalendarFreeBusyQuery) {
       return _idid5g6i.CalendarFreeBusyQuery.fromJson(data) as T;
+    }
+    if (t == _iudtc3li.CalendarFreeBusyReplyRequest) {
+      return _iudtc3li.CalendarFreeBusyReplyRequest.fromJson(data) as T;
     }
     if (t == _i3b615hg.CalendarFreeBusyView) {
       return _i3b615hg.CalendarFreeBusyView.fromJson(data) as T;
@@ -2588,9 +2672,33 @@ class Protocol extends _isc.SerializationManager
       return (data != null ? _i73hgz1s.CalendarFieldGroup.fromJson(data) : null)
           as T;
     }
+    if (t == _isc.getType<_i9q3ycvj.CalendarFreeBusyCommandReceipt?>()) {
+      return (data != null
+              ? _i9q3ycvj.CalendarFreeBusyCommandReceipt.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _isc.getType<_ia3n9q23.CalendarFreeBusyCoverage?>()) {
       return (data != null
               ? _ia3n9q23.CalendarFreeBusyCoverage.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_iic8trbt.CalendarFreeBusyDeliveryPage?>()) {
+      return (data != null
+              ? _iic8trbt.CalendarFreeBusyDeliveryPage.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_i4xvuj0s.CalendarFreeBusyDeliveryView?>()) {
+      return (data != null
+              ? _i4xvuj0s.CalendarFreeBusyDeliveryView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_iuvx5swm.CalendarFreeBusyIngressReceipt?>()) {
+      return (data != null
+              ? _iuvx5swm.CalendarFreeBusyIngressReceipt.fromJson(data)
               : null)
           as T;
     }
@@ -2600,15 +2708,51 @@ class Protocol extends _isc.SerializationManager
               : null)
           as T;
     }
+    if (t == _isc.getType<_ix45g82h.CalendarFreeBusyMessagePage?>()) {
+      return (data != null
+              ? _ix45g82h.CalendarFreeBusyMessagePage.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_iu6vjwqv.CalendarFreeBusyMessageView?>()) {
+      return (data != null
+              ? _iu6vjwqv.CalendarFreeBusyMessageView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ixc6x69o.CalendarFreeBusyOutgoingPage?>()) {
+      return (data != null
+              ? _ixc6x69o.CalendarFreeBusyOutgoingPage.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ilawc3ua.CalendarFreeBusyOutgoingView?>()) {
+      return (data != null
+              ? _ilawc3ua.CalendarFreeBusyOutgoingView.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _isc.getType<_i82zcrxb.CalendarFreeBusyPeriod?>()) {
       return (data != null
               ? _i82zcrxb.CalendarFreeBusyPeriod.fromJson(data)
               : null)
           as T;
     }
+    if (t == _isc.getType<_i519q1rj.CalendarFreeBusyPublishRequest?>()) {
+      return (data != null
+              ? _i519q1rj.CalendarFreeBusyPublishRequest.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _isc.getType<_idid5g6i.CalendarFreeBusyQuery?>()) {
       return (data != null
               ? _idid5g6i.CalendarFreeBusyQuery.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_iudtc3li.CalendarFreeBusyReplyRequest?>()) {
+      return (data != null
+              ? _iudtc3li.CalendarFreeBusyReplyRequest.fromJson(data)
               : null)
           as T;
     }
@@ -3698,6 +3842,32 @@ class Protocol extends _isc.SerializationManager
               : null)
           as T;
     }
+    if (t == List<_isc.UuidValue>) {
+      return (data as List).map((e) => deserialize<_isc.UuidValue>(e)).toList()
+          as T;
+    }
+    if (t == List<_i4xvuj0s.CalendarFreeBusyDeliveryView>) {
+      return (data as List)
+              .map(
+                (e) => deserialize<_i4xvuj0s.CalendarFreeBusyDeliveryView>(e),
+              )
+              .toList()
+          as T;
+    }
+    if (t == List<_iu6vjwqv.CalendarFreeBusyMessageView>) {
+      return (data as List)
+              .map((e) => deserialize<_iu6vjwqv.CalendarFreeBusyMessageView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ilawc3ua.CalendarFreeBusyOutgoingView>) {
+      return (data as List)
+              .map(
+                (e) => deserialize<_ilawc3ua.CalendarFreeBusyOutgoingView>(e),
+              )
+              .toList()
+          as T;
+    }
     if (t == List<_i82zcrxb.CalendarFreeBusyPeriod>) {
       return (data as List)
               .map((e) => deserialize<_i82zcrxb.CalendarFreeBusyPeriod>(e))
@@ -4094,10 +4264,23 @@ class Protocol extends _isc.SerializationManager
       _ioicq9ju.CalendarException => 'CalendarException',
       _i7h2f30k.CalendarFailureCode => 'CalendarFailureCode',
       _i73hgz1s.CalendarFieldGroup => 'CalendarFieldGroup',
+      _i9q3ycvj.CalendarFreeBusyCommandReceipt =>
+        'CalendarFreeBusyCommandReceipt',
       _ia3n9q23.CalendarFreeBusyCoverage => 'CalendarFreeBusyCoverage',
+      _iic8trbt.CalendarFreeBusyDeliveryPage => 'CalendarFreeBusyDeliveryPage',
+      _i4xvuj0s.CalendarFreeBusyDeliveryView => 'CalendarFreeBusyDeliveryView',
+      _iuvx5swm.CalendarFreeBusyIngressReceipt =>
+        'CalendarFreeBusyIngressReceipt',
       _izms466b.CalendarFreeBusyKind => 'CalendarFreeBusyKind',
+      _ix45g82h.CalendarFreeBusyMessagePage => 'CalendarFreeBusyMessagePage',
+      _iu6vjwqv.CalendarFreeBusyMessageView => 'CalendarFreeBusyMessageView',
+      _ixc6x69o.CalendarFreeBusyOutgoingPage => 'CalendarFreeBusyOutgoingPage',
+      _ilawc3ua.CalendarFreeBusyOutgoingView => 'CalendarFreeBusyOutgoingView',
       _i82zcrxb.CalendarFreeBusyPeriod => 'CalendarFreeBusyPeriod',
+      _i519q1rj.CalendarFreeBusyPublishRequest =>
+        'CalendarFreeBusyPublishRequest',
       _idid5g6i.CalendarFreeBusyQuery => 'CalendarFreeBusyQuery',
+      _iudtc3li.CalendarFreeBusyReplyRequest => 'CalendarFreeBusyReplyRequest',
       _i3b615hg.CalendarFreeBusyView => 'CalendarFreeBusyView',
       _igf45b52.CalendarImageLink => 'CalendarImageLink',
       _ib1s0vrr.CalendarInvitationAdoptionReceipt =>
@@ -4488,14 +4671,34 @@ class Protocol extends _isc.SerializationManager
         return 'CalendarFailureCode';
       case _i73hgz1s.CalendarFieldGroup():
         return 'CalendarFieldGroup';
+      case _i9q3ycvj.CalendarFreeBusyCommandReceipt():
+        return 'CalendarFreeBusyCommandReceipt';
       case _ia3n9q23.CalendarFreeBusyCoverage():
         return 'CalendarFreeBusyCoverage';
+      case _iic8trbt.CalendarFreeBusyDeliveryPage():
+        return 'CalendarFreeBusyDeliveryPage';
+      case _i4xvuj0s.CalendarFreeBusyDeliveryView():
+        return 'CalendarFreeBusyDeliveryView';
+      case _iuvx5swm.CalendarFreeBusyIngressReceipt():
+        return 'CalendarFreeBusyIngressReceipt';
       case _izms466b.CalendarFreeBusyKind():
         return 'CalendarFreeBusyKind';
+      case _ix45g82h.CalendarFreeBusyMessagePage():
+        return 'CalendarFreeBusyMessagePage';
+      case _iu6vjwqv.CalendarFreeBusyMessageView():
+        return 'CalendarFreeBusyMessageView';
+      case _ixc6x69o.CalendarFreeBusyOutgoingPage():
+        return 'CalendarFreeBusyOutgoingPage';
+      case _ilawc3ua.CalendarFreeBusyOutgoingView():
+        return 'CalendarFreeBusyOutgoingView';
       case _i82zcrxb.CalendarFreeBusyPeriod():
         return 'CalendarFreeBusyPeriod';
+      case _i519q1rj.CalendarFreeBusyPublishRequest():
+        return 'CalendarFreeBusyPublishRequest';
       case _idid5g6i.CalendarFreeBusyQuery():
         return 'CalendarFreeBusyQuery';
+      case _iudtc3li.CalendarFreeBusyReplyRequest():
+        return 'CalendarFreeBusyReplyRequest';
       case _i3b615hg.CalendarFreeBusyView():
         return 'CalendarFreeBusyView';
       case _igf45b52.CalendarImageLink():
@@ -5106,17 +5309,53 @@ class Protocol extends _isc.SerializationManager
     if (dataClassName == 'CalendarFieldGroup') {
       return deserialize<_i73hgz1s.CalendarFieldGroup>(data['data']);
     }
+    if (dataClassName == 'CalendarFreeBusyCommandReceipt') {
+      return deserialize<_i9q3ycvj.CalendarFreeBusyCommandReceipt>(
+        data['data'],
+      );
+    }
     if (dataClassName == 'CalendarFreeBusyCoverage') {
       return deserialize<_ia3n9q23.CalendarFreeBusyCoverage>(data['data']);
+    }
+    if (dataClassName == 'CalendarFreeBusyDeliveryPage') {
+      return deserialize<_iic8trbt.CalendarFreeBusyDeliveryPage>(data['data']);
+    }
+    if (dataClassName == 'CalendarFreeBusyDeliveryView') {
+      return deserialize<_i4xvuj0s.CalendarFreeBusyDeliveryView>(data['data']);
+    }
+    if (dataClassName == 'CalendarFreeBusyIngressReceipt') {
+      return deserialize<_iuvx5swm.CalendarFreeBusyIngressReceipt>(
+        data['data'],
+      );
     }
     if (dataClassName == 'CalendarFreeBusyKind') {
       return deserialize<_izms466b.CalendarFreeBusyKind>(data['data']);
     }
+    if (dataClassName == 'CalendarFreeBusyMessagePage') {
+      return deserialize<_ix45g82h.CalendarFreeBusyMessagePage>(data['data']);
+    }
+    if (dataClassName == 'CalendarFreeBusyMessageView') {
+      return deserialize<_iu6vjwqv.CalendarFreeBusyMessageView>(data['data']);
+    }
+    if (dataClassName == 'CalendarFreeBusyOutgoingPage') {
+      return deserialize<_ixc6x69o.CalendarFreeBusyOutgoingPage>(data['data']);
+    }
+    if (dataClassName == 'CalendarFreeBusyOutgoingView') {
+      return deserialize<_ilawc3ua.CalendarFreeBusyOutgoingView>(data['data']);
+    }
     if (dataClassName == 'CalendarFreeBusyPeriod') {
       return deserialize<_i82zcrxb.CalendarFreeBusyPeriod>(data['data']);
     }
+    if (dataClassName == 'CalendarFreeBusyPublishRequest') {
+      return deserialize<_i519q1rj.CalendarFreeBusyPublishRequest>(
+        data['data'],
+      );
+    }
     if (dataClassName == 'CalendarFreeBusyQuery') {
       return deserialize<_idid5g6i.CalendarFreeBusyQuery>(data['data']);
+    }
+    if (dataClassName == 'CalendarFreeBusyReplyRequest') {
+      return deserialize<_iudtc3li.CalendarFreeBusyReplyRequest>(data['data']);
     }
     if (dataClassName == 'CalendarFreeBusyView') {
       return deserialize<_i3b615hg.CalendarFreeBusyView>(data['data']);

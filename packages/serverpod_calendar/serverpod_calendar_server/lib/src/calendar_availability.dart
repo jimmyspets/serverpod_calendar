@@ -127,16 +127,34 @@ extension CalendarAvailabilityOperations on CalendarService {
     Transaction tx, {
     _Active? parent,
     CalendarAvailabilityRecord? identity,
+  }) => _availabilityInScope(
+    c.scopeKey,
+    id,
+    tx,
+    parent: parent,
+    identity: identity,
+  );
+
+  Future<_Availability> _availabilityInScope(
+    String scopeKey,
+    UuidValue id,
+    Transaction tx, {
+    _Active? parent,
+    CalendarAvailabilityRecord? identity,
   }) async {
     identity ??= await CalendarAvailabilityRecord.db.findById(
       _session,
       id,
       transaction: tx,
     );
-    if (identity == null || identity.deletedAt != null) {
+    if (identity == null || identity.id != id || identity.deletedAt != null) {
       throw _failure(CalendarFailureCode.accessDenied);
     }
-    parent ??= await _active(c, identity.calendarId, tx);
+    parent ??= await _activeInScope(scopeKey, identity.calendarId, tx);
+    if (parent.identity.scopeKey != scopeKey ||
+        parent.identity.id != identity.calendarId) {
+      throw _failure(CalendarFailureCode.accessDenied);
+    }
     final data = await CalendarAvailabilityDataRecord.db.findFirstRow(
       _session,
       where: (t) => t.availabilityId.equals(id),
@@ -757,6 +775,7 @@ extension CalendarAvailabilityOperations on CalendarService {
       );
       _availabilityRevision(rule, expectedRevision);
       final decisions = await _final(c, [request], tx);
+      await _scrubFreeBusyReports(c.scopeKey, tx, availabilityId: id);
       await CalendarAvailabilityDataRecord.db.deleteRow(
         _session,
         rule.data,

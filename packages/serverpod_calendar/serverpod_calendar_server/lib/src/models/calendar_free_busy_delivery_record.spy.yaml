@@ -1,0 +1,30 @@
+class: CalendarFreeBusyDeliveryRecord
+serverOnly: true
+table: serverpod_calendar_fb_delivery
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  ownerKey: String
+  commandId: UuidValue, relation(parent=serverpod_calendar_fb_command)
+  recipientAddress: String?
+  routeRef: String?
+  authorityRef: String?
+  generation: int
+  state: String
+  attemptCount: int, default=0
+  nextAttemptAt: DateTime
+  leaseOwner: UuidValue?
+  leaseToken: UuidValue?
+  leaseFence: int, default=0
+  leaseUntil: DateTime?
+  createdAt: DateTime
+  expiresAt: DateTime
+  terminalAt: DateTime?
+  providerReceipt: String?
+indexes:
+  calendar_fb_delivery_command:
+    fields: commandId
+  calendar_fb_delivery_due:
+    fields: terminalAt, nextAttemptAt, leaseUntil
+  calendar_fb_delivery_owner:
+    fields: scopeKey, ownerKey

@@ -1,0 +1,23 @@
+class: CalendarFreeBusySourceReferenceRecord
+serverOnly: true
+table: serverpod_calendar_fb_source_ref
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  ownerKey: String
+  commandId: UuidValue, relation(parent=serverpod_calendar_fb_command)
+  sourceKey: String
+  eventId: UuidValue?, relation(parent=serverpod_calendar_event)
+  availabilityId: UuidValue?, relation(parent=serverpod_calendar_availability)
+  revision: int
+  contentDigest: String
+indexes:
+  calendar_fb_ref_unique:
+    fields: commandId, sourceKey
+    unique: true
+  calendar_fb_ref_event:
+    fields: eventId
+  calendar_fb_ref_availability:
+    fields: availabilityId
+  calendar_fb_ref_owner:
+    fields: scopeKey, ownerKey

@@ -152,6 +152,35 @@ extension CalendarFreeBusyOperations on CalendarService {
     CalendarAvailabilitySearchQuery? search,
     CalendarAvailabilityTarget? target,
     List<CalendarAuthorizationRequest>? authorizedSources,
+  }) => _calendarBusyAuthorized(
+    parent,
+    query,
+    window,
+    tx,
+    budget,
+    authorize: (requests) async {
+      await _decide(c, requests, tx, CalendarAuthorizationPhase.read);
+    },
+    search: search,
+    target: target,
+    authorizedSources: authorizedSources,
+  );
+
+  // Data loading and calculation have no actor. Every actual source projection
+  // must pass the caller's authorization port before its occupied time is used.
+  // Foreground calls above retain the ordinary signed-in policy path; workers
+  // supply their separately verified background authorization port.
+  Future<CalendarFreeBusyView> _calendarBusyAuthorized(
+    _Active parent,
+    CalendarFreeBusyQuery query,
+    UtcWindow window,
+    Transaction tx,
+    _BusyBudget budget, {
+    required Future<void> Function(List<CalendarAuthorizationRequest>)
+    authorize,
+    CalendarAvailabilitySearchQuery? search,
+    CalendarAvailabilityTarget? target,
+    List<CalendarAuthorizationRequest>? authorizedSources,
   }) async {
     CalendarFreeBusyView response(
       CalendarFreeBusyCoverage coverage,
@@ -183,7 +212,13 @@ extension CalendarFreeBusyOperations on CalendarService {
       final events = <_Event>[];
       for (final row in rows) {
         events.add(
-          await _event(c, row.id!, tx, identity: row, parent: parent),
+          await _eventInScope(
+            parent.identity.scopeKey,
+            row.id!,
+            tx,
+            identity: row,
+            parent: parent,
+          ),
         );
       }
       // Never use the privacy-filtered detail candidate plan for coverage.
@@ -207,7 +242,7 @@ extension CalendarFreeBusyOperations on CalendarService {
               target: target,
             ),
         ];
-        await _decide(c, requests, tx, CalendarAuthorizationPhase.read);
+        await authorize(requests);
         authorizedSources?.addAll(requests);
       }
       final bookings = <AvailabilityInterval>[];
@@ -245,8 +280,8 @@ extension CalendarFreeBusyOperations on CalendarService {
       var sourceOpenings = 0;
       // Calculation never uses the permission-filtered management list.
       for (final row in ruleRows) {
-        final rule = await _availability(
-          c,
+        final rule = await _availabilityInScope(
+          parent.identity.scopeKey,
           row.id!,
           tx,
           parent: parent,
@@ -260,7 +295,7 @@ extension CalendarFreeBusyOperations on CalendarService {
           search: search,
           target: target,
         );
-        await _decide(c, [request], tx, CalendarAuthorizationPhase.read);
+        await authorize([request]);
         authorizedSources?.add(request);
         budget.openings(rule.data.content.openings.length);
         sourceOpenings += rule.data.content.openings.length;

@@ -21,6 +21,7 @@ import 'calendar_category_filter.dart' as _i9j129by;
 import 'calendar_event_field_group.dart' as _iftiwkuj;
 import 'calendar_event_occurrence_cursor_state.dart' as _ij33d3qn;
 import 'calendar_field_group.dart' as _i73hgz1s;
+import 'calendar_free_busy_exchange_cursor_state.dart' as _ig1fjwde;
 import 'calendar_task_field_group.dart' as _isemqyyv;
 
 abstract class CalendarCursorRecord
@@ -40,6 +41,7 @@ abstract class CalendarCursorRecord
     this.eventCalendarId,
     this.eventFieldGroups,
     this.eventOccurrenceState,
+    this.freeBusyExchangeState,
     this.categoryFilter,
     this.alarmActivityId,
     this.alarmActivityKind,
@@ -64,6 +66,7 @@ abstract class CalendarCursorRecord
     _is.UuidValue? eventCalendarId,
     List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups,
     _ij33d3qn.CalendarEventOccurrenceCursorState? eventOccurrenceState,
+    _ig1fjwde.CalendarFreeBusyExchangeCursorState? freeBusyExchangeState,
     _i9j129by.CalendarCategoryFilter? categoryFilter,
     _is.UuidValue? alarmActivityId,
     _ik5ajwd4.CalendarAlarmActivityKind? alarmActivityKind,
@@ -118,6 +121,12 @@ abstract class CalendarCursorRecord
           : _ix00hwbf.Protocol()
                 .deserialize<_ij33d3qn.CalendarEventOccurrenceCursorState>(
                   jsonSerialization['eventOccurrenceState'],
+                ),
+      freeBusyExchangeState: jsonSerialization['freeBusyExchangeState'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_ig1fjwde.CalendarFreeBusyExchangeCursorState>(
+                  jsonSerialization['freeBusyExchangeState'],
                 ),
       categoryFilter: jsonSerialization['categoryFilter'] == null
           ? null
@@ -182,6 +191,8 @@ abstract class CalendarCursorRecord
 
   _ij33d3qn.CalendarEventOccurrenceCursorState? eventOccurrenceState;
 
+  _ig1fjwde.CalendarFreeBusyExchangeCursorState? freeBusyExchangeState;
+
   _i9j129by.CalendarCategoryFilter? categoryFilter;
 
   _is.UuidValue? alarmActivityId;
@@ -220,6 +231,8 @@ abstract class CalendarCursorRecord
         const _is.$UndefinedList<_iftiwkuj.CalendarEventFieldGroup>(),
     _ij33d3qn.CalendarEventOccurrenceCursorState? eventOccurrenceState =
         const _UndefinedCalendarCursorRecord$eventOccurrenceState(),
+    _ig1fjwde.CalendarFreeBusyExchangeCursorState? freeBusyExchangeState =
+        const _UndefinedCalendarCursorRecord$freeBusyExchangeState(),
     _i9j129by.CalendarCategoryFilter? categoryFilter =
         const _UndefinedCalendarCursorRecord$categoryFilter(),
     _is.UuidValue? alarmActivityId = const _is.$UndefinedUuidValue(),
@@ -254,6 +267,8 @@ abstract class CalendarCursorRecord
         ),
       if (eventOccurrenceState != null)
         'eventOccurrenceState': eventOccurrenceState?.toJson(),
+      if (freeBusyExchangeState != null)
+        'freeBusyExchangeState': freeBusyExchangeState?.toJson(),
       if (categoryFilter != null) 'categoryFilter': categoryFilter?.toJson(),
       if (alarmActivityId != null) 'alarmActivityId': alarmActivityId?.toJson(),
       if (alarmActivityKind != null)
@@ -309,6 +324,12 @@ class _UndefinedCalendarCursorRecord$eventOccurrenceState
   const _UndefinedCalendarCursorRecord$eventOccurrenceState();
 }
 
+class _UndefinedCalendarCursorRecord$freeBusyExchangeState
+    extends _is.UndefinedSentinel
+    implements _ig1fjwde.CalendarFreeBusyExchangeCursorState {
+  const _UndefinedCalendarCursorRecord$freeBusyExchangeState();
+}
+
 class _UndefinedCalendarCursorRecord$categoryFilter
     extends _is.UndefinedSentinel
     implements _i9j129by.CalendarCategoryFilter {
@@ -331,6 +352,7 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
     _is.UuidValue? eventCalendarId,
     List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups,
     _ij33d3qn.CalendarEventOccurrenceCursorState? eventOccurrenceState,
+    _ig1fjwde.CalendarFreeBusyExchangeCursorState? freeBusyExchangeState,
     _i9j129by.CalendarCategoryFilter? categoryFilter,
     _is.UuidValue? alarmActivityId,
     _ik5ajwd4.CalendarAlarmActivityKind? alarmActivityKind,
@@ -353,6 +375,7 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
          eventCalendarId: eventCalendarId,
          eventFieldGroups: eventFieldGroups,
          eventOccurrenceState: eventOccurrenceState,
+         freeBusyExchangeState: freeBusyExchangeState,
          categoryFilter: categoryFilter,
          alarmActivityId: alarmActivityId,
          alarmActivityKind: alarmActivityKind,
@@ -384,6 +407,8 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
         const _is.$UndefinedList<_iftiwkuj.CalendarEventFieldGroup>(),
     _ij33d3qn.CalendarEventOccurrenceCursorState? eventOccurrenceState =
         const _UndefinedCalendarCursorRecord$eventOccurrenceState(),
+    _ig1fjwde.CalendarFreeBusyExchangeCursorState? freeBusyExchangeState =
+        const _UndefinedCalendarCursorRecord$freeBusyExchangeState(),
     _i9j129by.CalendarCategoryFilter? categoryFilter =
         const _UndefinedCalendarCursorRecord$categoryFilter(),
     _is.UuidValue? alarmActivityId = const _is.$UndefinedUuidValue(),
@@ -418,6 +443,9 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
       eventOccurrenceState: eventOccurrenceState is _is.UndefinedSentinel
           ? this.eventOccurrenceState?.copyWith()
           : eventOccurrenceState,
+      freeBusyExchangeState: freeBusyExchangeState is _is.UndefinedSentinel
+          ? this.freeBusyExchangeState?.copyWith()
+          : freeBusyExchangeState,
       categoryFilter: categoryFilter is _is.UndefinedSentinel
           ? this.categoryFilter?.copyWith()
           : categoryFilter,
@@ -537,6 +565,16 @@ class CalendarCursorRecordUpdateTable
       );
 
   _is.ColumnValue<
+    _ig1fjwde.CalendarFreeBusyExchangeCursorState,
+    _ig1fjwde.CalendarFreeBusyExchangeCursorState
+  >
+  freeBusyExchangeState(_ig1fjwde.CalendarFreeBusyExchangeCursorState? value) =>
+      _is.ColumnValue(
+        table.freeBusyExchangeState,
+        value,
+      );
+
+  _is.ColumnValue<
     _i9j129by.CalendarCategoryFilter,
     _i9j129by.CalendarCategoryFilter
   >
@@ -647,6 +685,11 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
           'eventOccurrenceState',
           this,
         );
+    freeBusyExchangeState =
+        _is.ColumnSerializable<_ig1fjwde.CalendarFreeBusyExchangeCursorState>(
+          'freeBusyExchangeState',
+          this,
+        );
     categoryFilter = _is.ColumnSerializable<_i9j129by.CalendarCategoryFilter>(
       'categoryFilter',
       this,
@@ -712,6 +755,11 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
   >
   eventOccurrenceState;
 
+  late final _is.ColumnSerializable<
+    _ig1fjwde.CalendarFreeBusyExchangeCursorState
+  >
+  freeBusyExchangeState;
+
   late final _is.ColumnSerializable<_i9j129by.CalendarCategoryFilter>
   categoryFilter;
 
@@ -744,6 +792,7 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
     eventCalendarId,
     eventFieldGroups,
     eventOccurrenceState,
+    freeBusyExchangeState,
     categoryFilter,
     alarmActivityId,
     alarmActivityKind,

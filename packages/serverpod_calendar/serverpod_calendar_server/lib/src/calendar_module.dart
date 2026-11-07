@@ -12,6 +12,8 @@ import 'calendar_authorization.dart';
 import 'alarm_values.dart';
 import 'alarm_runtime.dart';
 import 'scheduling_runtime.dart';
+import 'free_busy_exchange_runtime.dart';
+import 'free_busy_exchange_values.dart';
 import 'inbound_reply_runtime.dart';
 import 'invitation_runtime.dart';
 import 'invitation_bundle_values.dart';
@@ -87,6 +89,12 @@ part 'calendar_task_replace.dart';
 part 'calendar_event_export.dart';
 part 'calendar_event_replace.dart';
 part 'calendar_free_busy.dart';
+part 'calendar_free_busy_exchange_scrub.dart';
+part 'calendar_free_busy_exchange_intake.dart';
+part 'calendar_free_busy_exchange_commands.dart';
+part 'calendar_free_busy_exchange_worker.dart';
+part 'calendar_free_busy_exchange_queries.dart';
+part 'calendar_free_busy_exchange_retention.dart';
 part 'calendar_availability_search.dart';
 part 'calendar_availability.dart';
 part 'calendar_availability_import.dart';
@@ -113,6 +121,7 @@ abstract final class CalendarModule {
     CalendarAlarmRuntime? alarms,
     CalendarSchedulingRuntime? scheduling,
     CalendarInvitationRuntime? invitations,
+    CalendarFreeBusyExchangeRuntime? freeBusyExchanges,
     CalendarPublicationPolicy? publicationPolicy,
     List<CalendarDependencyProvider> dependencies = const [],
     List<CalendarAvailabilityExtensionRegistration> availabilityExtensions =
@@ -194,6 +203,13 @@ abstract final class CalendarModule {
             CalendarAuthorizationGuarantee.coordinated) {
       throw ArgumentError('Response host cannot supply required guarantee');
     }
+    if (freeBusyExchanges != null &&
+        options.requiredWriteGuarantee ==
+            CalendarAuthorizationGuarantee.coordinated &&
+        freeBusyExchanges.host.guarantee !=
+            CalendarAuthorizationGuarantee.coordinated) {
+      throw ArgumentError('Free/busy host cannot supply required guarantee');
+    }
     final registry = <String, CalendarAvailabilityExtensionRegistration>{};
     if (availabilityExtensions.length > 32) {
       throw ArgumentError('Too many extension registrations');
@@ -215,7 +231,31 @@ abstract final class CalendarModule {
       publicationPolicy,
       scheduling,
       invitations,
+      freeBusyExchanges,
     );
+  }
+
+  /// Trusted maintenance entry point. All dispatch contexts are actor-free;
+  /// stable delivery UUIDs and database leases survive process loss.
+  static Future<int> runFreeBusyExchangeMaintenance(Session session) {
+    final runtime = _installed[session.serverpod];
+    if (runtime?.freeBusyExchanges == null) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
+    return CalendarService._(session, runtime!)._fbMaintenance();
+  }
+
+  /// Host-only private VFREEBUSY intake. Source roles are independently checked
+  /// by the configured exchange host; receipt performs no native calculation.
+  static Future<CalendarFreeBusyIngressReceipt> receiveFreeBusy(
+    Session session,
+    CalendarFreeBusyIngress delivery,
+  ) {
+    final runtime = _installed[session.serverpod];
+    if (runtime?.freeBusyExchanges == null) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
+    return CalendarService._(session, runtime!)._receiveFreeBusy(delivery);
   }
 
   /// Server-only invitation ingress: installed host verifies origin and target.
@@ -371,11 +411,13 @@ final class _Runtime {
     this.publicationPolicy,
     this.scheduling,
     this.invitations,
+    this.freeBusyExchanges,
   );
   final Map<String, CalendarAvailabilityExtensionRegistration>
   availabilityExtensions;
   final CalendarSchedulingRuntime? scheduling;
   final CalendarInvitationRuntime? invitations;
+  final CalendarFreeBusyExchangeRuntime? freeBusyExchanges;
   final CalendarAlarmRuntime? alarms;
   final CalendarPublicationPolicy? publicationPolicy;
   final CalendarHostPolicy policy;
@@ -1115,6 +1157,7 @@ final class CalendarService {
         }
       }
       final decisions = await _final(c, [request], tx);
+      await _scrubFreeBusyReports(c.scopeKey, tx, calendarId: id);
       await CalendarDataRecord.db.deleteRow(_session, a.data, transaction: tx);
       a.identity.revision++;
       a.identity.deletedAt = DateTime.now().toUtc();
@@ -1193,6 +1236,7 @@ final class CalendarService {
           transaction: tx,
         );
         if (saved == null ||
+            saved.freeBusyExchangeState != null ||
             saved.eventOccurrenceState != null ||
             saved.alarmActivityId != null ||
             saved.alarmActivityKind != null ||

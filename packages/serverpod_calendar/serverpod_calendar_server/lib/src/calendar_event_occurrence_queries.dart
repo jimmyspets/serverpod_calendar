@@ -92,6 +92,7 @@ extension CalendarEventOccurrenceQueries on CalendarService {
               saved.fieldGroups.isNotEmpty ||
               saved.taskCalendarId != null ||
               saved.taskFieldGroups != null ||
+              saved.freeBusyExchangeState != null ||
               saved.categoryFilter != null ||
               saved.alarmActivityId != null ||
               saved.alarmActivityKind != null ||

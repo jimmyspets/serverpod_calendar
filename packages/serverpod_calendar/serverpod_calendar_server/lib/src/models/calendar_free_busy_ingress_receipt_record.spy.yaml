@@ -1,0 +1,22 @@
+class: CalendarFreeBusyIngressReceiptRecord
+serverOnly: true
+table: serverpod_calendar_fb_ingress
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  ownerKey: String
+  namespace: String
+  deliveryKey: String
+  inputDigest: String
+  sourceId: UuidValue, relation(parent=serverpod_calendar_fb_source)
+  result: String
+  createdAt: DateTime
+  expiresAt: DateTime
+indexes:
+  calendar_fb_ingress_identity:
+    fields: scopeKey, ownerKey, namespace, deliveryKey
+    unique: true
+  calendar_fb_ingress_source:
+    fields: sourceId
+  calendar_fb_ingress_expiry:
+    fields: expiresAt

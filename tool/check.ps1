@@ -87,12 +87,13 @@ try {
   finally { Pop-Location }
   Invoke-Checked python @('tool/metadata_upgrade_smoke.py')
   Push-Location $ExampleServer
-  try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/invitation_bundles_test.dart', 'test/integration/bundled_invitation_updates_test.dart', 'test/integration/bundled_invitation_lifecycle_test.dart', 'test/integration/bundled_invitation_responses_test.dart', 'test/integration/bundled_occurrence_responses_test.dart', 'test/integration/recurring_response_selection_test.dart') }
+  try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/invitation_bundles_test.dart', 'test/integration/bundled_invitation_updates_test.dart', 'test/integration/bundled_invitation_lifecycle_test.dart', 'test/integration/bundled_invitation_responses_test.dart', 'test/integration/bundled_occurrence_responses_test.dart', 'test/integration/recurring_response_selection_test.dart', 'test/integration/free_busy_exchanges_test.dart') }
   finally { Pop-Location }
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--bundles')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--bundle-responses')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--bundle-occurrence-responses')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--recurring-responses')
+  Invoke-Checked dart @('run', 'tool/freebusy_work_smoke.dart')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--recurring')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--instances')

@@ -1,0 +1,5 @@
+class: CalendarFreeBusyMessagePage
+immutable: true
+fields:
+  items: List<CalendarFreeBusyMessageView>
+  cursor: String?

@@ -107,8 +107,22 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_event_view.dart'
     as _ixldy3zv;
 import 'package:serverpod_calendar_client/src/protocol/calendar_field_group.dart'
     as _ioi1smgh;
+import 'package:serverpod_calendar_client/src/protocol/calendar_free_busy_command_receipt.dart'
+    as _i5urnrae;
+import 'package:serverpod_calendar_client/src/protocol/calendar_free_busy_delivery_page.dart'
+    as _i3831nbq;
+import 'package:serverpod_calendar_client/src/protocol/calendar_free_busy_message_page.dart'
+    as _i7tyc73i;
+import 'package:serverpod_calendar_client/src/protocol/calendar_free_busy_message_view.dart'
+    as _iwvzq2rw;
+import 'package:serverpod_calendar_client/src/protocol/calendar_free_busy_outgoing_page.dart'
+    as _ik1w91ry;
+import 'package:serverpod_calendar_client/src/protocol/calendar_free_busy_publish_request.dart'
+    as _ivwr2ua1;
 import 'package:serverpod_calendar_client/src/protocol/calendar_free_busy_query.dart'
     as _isyn5yvo;
+import 'package:serverpod_calendar_client/src/protocol/calendar_free_busy_reply_request.dart'
+    as _i2y9zp7r;
 import 'package:serverpod_calendar_client/src/protocol/calendar_free_busy_view.dart'
     as _i2cb1v6y;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_adoption_receipt.dart'
@@ -875,6 +889,116 @@ class EndpointCalendarEvent extends _isc.EndpointRef {
   );
 }
 
+/// Private, explicit scheduling exchange. Raw trusted ingress is host-only.
+/// {@category Endpoint}
+class EndpointCalendarFreeBusyExchange extends _isc.EndpointRef {
+  EndpointCalendarFreeBusyExchange(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'serverpod_calendar.calendarFreeBusyExchange';
+
+  _ida.Future<_i7tyc73i.CalendarFreeBusyMessagePage> listFreeBusyInbox({
+    required int pageSize,
+    String? cursor,
+  }) => caller.callServerEndpoint<_i7tyc73i.CalendarFreeBusyMessagePage>(
+    'serverpod_calendar.calendarFreeBusyExchange',
+    'listFreeBusyInbox',
+    {
+      'pageSize': pageSize,
+      'cursor': cursor,
+    },
+  );
+
+  _ida.Future<_iwvzq2rw.CalendarFreeBusyMessageView> getFreeBusyMessage(
+    _isc.UuidValue sourceId,
+  ) => caller.callServerEndpoint<_iwvzq2rw.CalendarFreeBusyMessageView>(
+    'serverpod_calendar.calendarFreeBusyExchange',
+    'getFreeBusyMessage',
+    {'sourceId': sourceId},
+  );
+
+  _ida.Future<_idt.ByteData> getFreeBusySource(_isc.UuidValue sourceId) =>
+      caller.callServerEndpoint<_idt.ByteData>(
+        'serverpod_calendar.calendarFreeBusyExchange',
+        'getFreeBusySource',
+        {'sourceId': sourceId},
+      );
+
+  _ida.Future<_iwvzq2rw.CalendarFreeBusyMessageView> dismissFreeBusyMessage(
+    _isc.UuidValue sourceId,
+  ) => caller.callServerEndpoint<_iwvzq2rw.CalendarFreeBusyMessageView>(
+    'serverpod_calendar.calendarFreeBusyExchange',
+    'dismissFreeBusyMessage',
+    {'sourceId': sourceId},
+  );
+
+  _ida.Future<_ik1w91ry.CalendarFreeBusyOutgoingPage> listFreeBusyOutgoing({
+    required int pageSize,
+    String? cursor,
+  }) => caller.callServerEndpoint<_ik1w91ry.CalendarFreeBusyOutgoingPage>(
+    'serverpod_calendar.calendarFreeBusyExchange',
+    'listFreeBusyOutgoing',
+    {
+      'pageSize': pageSize,
+      'cursor': cursor,
+    },
+  );
+
+  _ida.Future<_i3831nbq.CalendarFreeBusyDeliveryPage> freeBusyDeliveryActivity(
+    _isc.UuidValue commandId, {
+    required int pageSize,
+    String? cursor,
+  }) => caller.callServerEndpoint<_i3831nbq.CalendarFreeBusyDeliveryPage>(
+    'serverpod_calendar.calendarFreeBusyExchange',
+    'freeBusyDeliveryActivity',
+    {
+      'commandId': commandId,
+      'pageSize': pageSize,
+      'cursor': cursor,
+    },
+  );
+
+  _ida.Future<_i5urnrae.CalendarFreeBusyCommandReceipt> publishFreeBusy(
+    _ivwr2ua1.CalendarFreeBusyPublishRequest request,
+  ) => caller.callServerEndpoint<_i5urnrae.CalendarFreeBusyCommandReceipt>(
+    'serverpod_calendar.calendarFreeBusyExchange',
+    'publishFreeBusy',
+    {'request': request},
+  );
+
+  _ida.Future<_i5urnrae.CalendarFreeBusyCommandReceipt> requestFreeBusy(
+    _ivwr2ua1.CalendarFreeBusyPublishRequest request,
+  ) => caller.callServerEndpoint<_i5urnrae.CalendarFreeBusyCommandReceipt>(
+    'serverpod_calendar.calendarFreeBusyExchange',
+    'requestFreeBusy',
+    {'request': request},
+  );
+
+  _ida.Future<_i5urnrae.CalendarFreeBusyCommandReceipt> replyFreeBusy(
+    _i2y9zp7r.CalendarFreeBusyReplyRequest request,
+  ) => caller.callServerEndpoint<_i5urnrae.CalendarFreeBusyCommandReceipt>(
+    'serverpod_calendar.calendarFreeBusyExchange',
+    'replyFreeBusy',
+    {'request': request},
+  );
+
+  _ida.Future<_i5urnrae.CalendarFreeBusyCommandReceipt> refuseFreeBusy(
+    _i2y9zp7r.CalendarFreeBusyReplyRequest request,
+  ) => caller.callServerEndpoint<_i5urnrae.CalendarFreeBusyCommandReceipt>(
+    'serverpod_calendar.calendarFreeBusyExchange',
+    'refuseFreeBusy',
+    {'request': request},
+  );
+
+  _ida.Future<_i5urnrae.CalendarFreeBusyCommandReceipt> withdrawFreeBusyCommand(
+    _isc.UuidValue commandId,
+  ) => caller.callServerEndpoint<_i5urnrae.CalendarFreeBusyCommandReceipt>(
+    'serverpod_calendar.calendarFreeBusyExchange',
+    'withdrawFreeBusyCommand',
+    {'commandId': commandId},
+  );
+}
+
 /// {@category Endpoint}
 class EndpointCalendarInvitation extends _isc.EndpointRef {
   EndpointCalendarInvitation(_isc.EndpointCaller caller) : super(caller);
@@ -1378,6 +1502,7 @@ class Caller extends _isc.ModuleEndpointCaller {
     calendarDiagnostics = EndpointCalendarDiagnostics(this);
     calendar = EndpointCalendar(this);
     calendarEvent = EndpointCalendarEvent(this);
+    calendarFreeBusyExchange = EndpointCalendarFreeBusyExchange(this);
     calendarInvitation = EndpointCalendarInvitation(this);
     calendarTask = EndpointCalendarTask(this);
   }
@@ -1394,6 +1519,8 @@ class Caller extends _isc.ModuleEndpointCaller {
 
   late final EndpointCalendarEvent calendarEvent;
 
+  late final EndpointCalendarFreeBusyExchange calendarFreeBusyExchange;
+
   late final EndpointCalendarInvitation calendarInvitation;
 
   late final EndpointCalendarTask calendarTask;
@@ -1406,6 +1533,7 @@ class Caller extends _isc.ModuleEndpointCaller {
     'serverpod_calendar.calendarDiagnostics': calendarDiagnostics,
     'serverpod_calendar.calendar': calendar,
     'serverpod_calendar.calendarEvent': calendarEvent,
+    'serverpod_calendar.calendarFreeBusyExchange': calendarFreeBusyExchange,
     'serverpod_calendar.calendarInvitation': calendarInvitation,
     'serverpod_calendar.calendarTask': calendarTask,
   };
