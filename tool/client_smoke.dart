@@ -1,3 +1,4 @@
+import 'freebusy_smoke.dart';
 import 'occurrence_query_smoke.dart';
 import 'native_future_smoke.dart';
 import 'invitation_smoke.dart';
@@ -104,6 +105,27 @@ Future<void> main(List<String> args) async {
     if (auth.authStrategy != AuthStrategy.jwt.name ||
         auth.refreshToken == null) {
       throw StateError('Expected JWT access and refresh credentials.');
+    }
+    if (mode == 'test' &&
+        clients.length == 2 &&
+        (args.contains('--freebusy-only') ||
+            !args.any(
+              {
+                '--feeds',
+                '--invitations-only',
+                '--replies-only',
+                '--scheduling-only',
+                '--occurrences-only',
+                '--native-future-only',
+              }.contains,
+            ))) {
+      await freeBusyExchangeSmoke(clients, values['demoBobPassword'] as String);
+    }
+    if (args.contains('--freebusy-only')) {
+      stdout.writeln(
+        'PASS: focused private busy-message JWT clients; unrelated journeys skipped.',
+      );
+      return;
     }
     if (mode == 'test' &&
         clients.length == 2 &&

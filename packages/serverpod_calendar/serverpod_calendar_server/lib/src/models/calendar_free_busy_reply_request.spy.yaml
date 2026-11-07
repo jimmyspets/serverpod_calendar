@@ -1,0 +1,7 @@
+class: CalendarFreeBusyReplyRequest
+immutable: true
+fields:
+  commandId: UuidValue
+  sourceId: UuidValue
+  expectedSourceRevision: int
+  expectedReplyRevision: int

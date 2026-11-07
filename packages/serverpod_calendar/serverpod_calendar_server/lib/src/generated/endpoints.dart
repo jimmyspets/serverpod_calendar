@@ -71,8 +71,12 @@ import 'package:serverpod_calendar_server/src/generated/calendar_event_update_re
     as _iabs06xo;
 import 'package:serverpod_calendar_server/src/generated/calendar_field_group.dart'
     as _i3d02yxy;
+import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_publish_request.dart'
+    as _izrclvdh;
 import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_query.dart'
     as _imwtl5fr;
+import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_reply_request.dart'
+    as _i62tyvsw;
 import 'package:serverpod_calendar_server/src/generated/calendar_invitation_adoption_request.dart'
     as _ia1wppub;
 import 'package:serverpod_calendar_server/src/generated/calendar_invitation_apply_request.dart'
@@ -148,6 +152,7 @@ import '../endpoints/calendar_availability_search_endpoint.dart' as _icfitiep;
 import '../endpoints/calendar_diagnostics_endpoint.dart' as _icr8drn5;
 import '../endpoints/calendar_endpoint.dart' as _inx4l1vp;
 import '../endpoints/calendar_event_endpoint.dart' as _ibwv0suj;
+import '../endpoints/calendar_free_busy_exchange_endpoint.dart' as _ihk21zy9;
 import '../endpoints/calendar_invitation_endpoint.dart' as _iolttv0d;
 import '../endpoints/calendar_task_endpoint.dart' as _i4tukef9;
 
@@ -189,6 +194,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'calendarEvent',
+          'serverpod_calendar',
+        ),
+      'calendarFreeBusyExchange': _ihk21zy9.CalendarFreeBusyExchangeEndpoint()
+        ..initialize(
+          server,
+          'calendarFreeBusyExchange',
           'serverpod_calendar',
         ),
       'calendarInvitation': _iolttv0d.CalendarInvitationEndpoint()
@@ -1686,6 +1697,267 @@ class Endpoints extends _is.EndpointDispatch {
                         session,
                         params['eventId'],
                         params['expectedRevision'],
+                      ),
+        ),
+      },
+    );
+    connectors['calendarFreeBusyExchange'] = _is.EndpointConnector(
+      name: 'calendarFreeBusyExchange',
+      endpoint: endpoints['calendarFreeBusyExchange']!,
+      methodConnectors: {
+        'listFreeBusyInbox': _is.MethodConnector(
+          name: 'listFreeBusyInbox',
+          params: {
+            'pageSize': _is.ParameterDescription(
+              name: 'pageSize',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'cursor': _is.ParameterDescription(
+              name: 'cursor',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarFreeBusyExchange']
+                          as _ihk21zy9.CalendarFreeBusyExchangeEndpoint)
+                      .listFreeBusyInbox(
+                        session,
+                        pageSize: params['pageSize'],
+                        cursor: params['cursor'],
+                      ),
+        ),
+        'getFreeBusyMessage': _is.MethodConnector(
+          name: 'getFreeBusyMessage',
+          params: {
+            'sourceId': _is.ParameterDescription(
+              name: 'sourceId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarFreeBusyExchange']
+                          as _ihk21zy9.CalendarFreeBusyExchangeEndpoint)
+                      .getFreeBusyMessage(
+                        session,
+                        params['sourceId'],
+                      ),
+        ),
+        'getFreeBusySource': _is.MethodConnector(
+          name: 'getFreeBusySource',
+          params: {
+            'sourceId': _is.ParameterDescription(
+              name: 'sourceId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarFreeBusyExchange']
+                          as _ihk21zy9.CalendarFreeBusyExchangeEndpoint)
+                      .getFreeBusySource(
+                        session,
+                        params['sourceId'],
+                      ),
+        ),
+        'dismissFreeBusyMessage': _is.MethodConnector(
+          name: 'dismissFreeBusyMessage',
+          params: {
+            'sourceId': _is.ParameterDescription(
+              name: 'sourceId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarFreeBusyExchange']
+                          as _ihk21zy9.CalendarFreeBusyExchangeEndpoint)
+                      .dismissFreeBusyMessage(
+                        session,
+                        params['sourceId'],
+                      ),
+        ),
+        'listFreeBusyOutgoing': _is.MethodConnector(
+          name: 'listFreeBusyOutgoing',
+          params: {
+            'pageSize': _is.ParameterDescription(
+              name: 'pageSize',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'cursor': _is.ParameterDescription(
+              name: 'cursor',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarFreeBusyExchange']
+                          as _ihk21zy9.CalendarFreeBusyExchangeEndpoint)
+                      .listFreeBusyOutgoing(
+                        session,
+                        pageSize: params['pageSize'],
+                        cursor: params['cursor'],
+                      ),
+        ),
+        'freeBusyDeliveryActivity': _is.MethodConnector(
+          name: 'freeBusyDeliveryActivity',
+          params: {
+            'commandId': _is.ParameterDescription(
+              name: 'commandId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'pageSize': _is.ParameterDescription(
+              name: 'pageSize',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'cursor': _is.ParameterDescription(
+              name: 'cursor',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarFreeBusyExchange']
+                          as _ihk21zy9.CalendarFreeBusyExchangeEndpoint)
+                      .freeBusyDeliveryActivity(
+                        session,
+                        params['commandId'],
+                        pageSize: params['pageSize'],
+                        cursor: params['cursor'],
+                      ),
+        ),
+        'publishFreeBusy': _is.MethodConnector(
+          name: 'publishFreeBusy',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_izrclvdh.CalendarFreeBusyPublishRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarFreeBusyExchange']
+                          as _ihk21zy9.CalendarFreeBusyExchangeEndpoint)
+                      .publishFreeBusy(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'requestFreeBusy': _is.MethodConnector(
+          name: 'requestFreeBusy',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_izrclvdh.CalendarFreeBusyPublishRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarFreeBusyExchange']
+                          as _ihk21zy9.CalendarFreeBusyExchangeEndpoint)
+                      .requestFreeBusy(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'replyFreeBusy': _is.MethodConnector(
+          name: 'replyFreeBusy',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i62tyvsw.CalendarFreeBusyReplyRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarFreeBusyExchange']
+                          as _ihk21zy9.CalendarFreeBusyExchangeEndpoint)
+                      .replyFreeBusy(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'refuseFreeBusy': _is.MethodConnector(
+          name: 'refuseFreeBusy',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i62tyvsw.CalendarFreeBusyReplyRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarFreeBusyExchange']
+                          as _ihk21zy9.CalendarFreeBusyExchangeEndpoint)
+                      .refuseFreeBusy(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'withdrawFreeBusyCommand': _is.MethodConnector(
+          name: 'withdrawFreeBusyCommand',
+          params: {
+            'commandId': _is.ParameterDescription(
+              name: 'commandId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarFreeBusyExchange']
+                          as _ihk21zy9.CalendarFreeBusyExchangeEndpoint)
+                      .withdrawFreeBusyCommand(
+                        session,
+                        params['commandId'],
                       ),
         ),
       },

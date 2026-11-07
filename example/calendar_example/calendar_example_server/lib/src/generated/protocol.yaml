@@ -9,6 +9,9 @@ emailIdp:
   - hasAccount:
 refreshJwtTokens:
   - refreshAccessToken:
+freeBusyDemo:
+  - simulate:
+  - simulateReply:
 invitationDemo:
   - simulateOccurrence:
   - simulateRange:

@@ -297,3 +297,6 @@ ADR 0161 adds independent `composeAcceptedRangeCancellation` when an active mast
 
 
 ADR 0162 reuses the masked composition authority for explicit whole-master CANCEL/reopening. Read eligibility checks `applyCancellation` plus native lifecycle rights for whole cancellation, or `apply` plus status-change rights when reopening. Preliminary/final checks retain the actual original range source and distinct current/proposed native/private state. Source participants/versions grant no authority. See [the lifecycle profile](range-cancellation-master-lifecycle.md); no new host operation or view field is added.
+
+
+ADR 0180 adds optional `CalendarFreeBusyExchangeHost` ports for trusted owner/mailbox/role resolution, independent incoming/header/raw/action/outgoing/activity/dispatch authority and actor-free `authorizeSources`. Reports retain ordinary free/busy/export and every actual source-projection gate; data-free refusal requires no booking read. Include exchange-read policy changes in `CalendarHostContext.policyRevision` so private cursors invalidate correctly. Recheck recorded binding, complete immutable message and routes at final write and dispatch under the declared consistency guarantee. See [the exchange guide](authenticated-freebusy-exchanges.md).

@@ -1,0 +1,38 @@
+class: CalendarFreeBusyCommandRecord
+serverOnly: true
+table: serverpod_calendar_fb_command
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  ownerKey: String
+  commandId: UuidValue
+  criteriaDigest: String
+  method: String
+  action: String
+  sourceId: UuidValue?, relation(parent=serverpod_calendar_fb_source)
+  calendarId: UuidValue?, relation(parent=serverpod_calendar_identity)
+  stamp: DateTime
+  timezoneIdentity: String?
+  calculationProfile: int?
+  parentSettingsDigest: String?
+  arguments: String?
+  payload: String?
+  payloadDigest: String
+  byteCount: int
+  generation: int
+  receipt: String
+  createdAt: DateTime
+  expiresAt: DateTime
+  correlatableUntil: DateTime?
+  terminalAt: DateTime?
+  scrubbedAt: DateTime?
+indexes:
+  calendar_fb_command_identity:
+    fields: scopeKey, ownerKey, commandId
+    unique: true
+  calendar_fb_command_calendar:
+    fields: calendarId
+  calendar_fb_command_source:
+    fields: sourceId
+  calendar_fb_command_expiry:
+    fields: expiresAt

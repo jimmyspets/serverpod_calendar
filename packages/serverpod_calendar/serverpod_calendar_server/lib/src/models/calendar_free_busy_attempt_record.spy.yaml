@@ -1,0 +1,23 @@
+class: CalendarFreeBusyAttemptRecord
+serverOnly: true
+table: serverpod_calendar_fb_attempt
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  ownerKey: String
+  deliveryId: UuidValue, relation(parent=serverpod_calendar_fb_delivery)
+  generation: int
+  ordinal: int
+  leaseOwner: UuidValue
+  startedAt: DateTime
+  finishedAt: DateTime?
+  outcome: String?
+  reasonCode: String?
+  payloadDigest: String
+  mimeDigest: String?
+indexes:
+  calendar_fb_attempt_ordinal:
+    fields: deliveryId, generation, ordinal
+    unique: true
+  calendar_fb_attempt_owner:
+    fields: scopeKey, ownerKey

@@ -165,10 +165,28 @@ import 'calendar_event_view.dart' as _iqr733fy;
 import 'calendar_exception.dart' as _ioicq9ju;
 import 'calendar_failure_code.dart' as _i7h2f30k;
 import 'calendar_field_group.dart' as _i73hgz1s;
+import 'calendar_free_busy_attempt_record.dart' as _i9qlg9xh;
+import 'calendar_free_busy_command_receipt.dart' as _i9q3ycvj;
+import 'calendar_free_busy_command_record.dart' as _iz5yr1s4;
 import 'calendar_free_busy_coverage.dart' as _ia3n9q23;
+import 'calendar_free_busy_delivery_page.dart' as _iic8trbt;
+import 'calendar_free_busy_delivery_record.dart' as _ioj1bdx8;
+import 'calendar_free_busy_delivery_view.dart' as _i4xvuj0s;
+import 'calendar_free_busy_exchange_cursor_state.dart' as _ig1fjwde;
+import 'calendar_free_busy_ingress_receipt.dart' as _iuvx5swm;
+import 'calendar_free_busy_ingress_receipt_record.dart' as _i8hb71ml;
 import 'calendar_free_busy_kind.dart' as _izms466b;
+import 'calendar_free_busy_message_page.dart' as _ix45g82h;
+import 'calendar_free_busy_message_view.dart' as _iu6vjwqv;
+import 'calendar_free_busy_outgoing_page.dart' as _ixc6x69o;
+import 'calendar_free_busy_outgoing_view.dart' as _ilawc3ua;
 import 'calendar_free_busy_period.dart' as _i82zcrxb;
+import 'calendar_free_busy_publish_request.dart' as _i519q1rj;
 import 'calendar_free_busy_query.dart' as _idid5g6i;
+import 'calendar_free_busy_reply_request.dart' as _iudtc3li;
+import 'calendar_free_busy_request_head_record.dart' as _iimxpfz2;
+import 'calendar_free_busy_source_record.dart' as _iorszrc2;
+import 'calendar_free_busy_source_reference_record.dart' as _i08sch8y;
 import 'calendar_free_busy_view.dart' as _i3b615hg;
 import 'calendar_identity_record.dart' as _ibccnfmr;
 import 'calendar_image_link.dart' as _igf45b52;
@@ -448,10 +466,28 @@ export 'calendar_event_view.dart';
 export 'calendar_exception.dart';
 export 'calendar_failure_code.dart';
 export 'calendar_field_group.dart';
+export 'calendar_free_busy_attempt_record.dart';
+export 'calendar_free_busy_command_receipt.dart';
+export 'calendar_free_busy_command_record.dart';
 export 'calendar_free_busy_coverage.dart';
+export 'calendar_free_busy_delivery_page.dart';
+export 'calendar_free_busy_delivery_record.dart';
+export 'calendar_free_busy_delivery_view.dart';
+export 'calendar_free_busy_exchange_cursor_state.dart';
+export 'calendar_free_busy_ingress_receipt.dart';
+export 'calendar_free_busy_ingress_receipt_record.dart';
 export 'calendar_free_busy_kind.dart';
+export 'calendar_free_busy_message_page.dart';
+export 'calendar_free_busy_message_view.dart';
+export 'calendar_free_busy_outgoing_page.dart';
+export 'calendar_free_busy_outgoing_view.dart';
 export 'calendar_free_busy_period.dart';
+export 'calendar_free_busy_publish_request.dart';
 export 'calendar_free_busy_query.dart';
+export 'calendar_free_busy_reply_request.dart';
+export 'calendar_free_busy_request_head_record.dart';
+export 'calendar_free_busy_source_record.dart';
+export 'calendar_free_busy_source_reference_record.dart';
 export 'calendar_free_busy_view.dart';
 export 'calendar_identity_record.dart';
 export 'calendar_image_link.dart';
@@ -742,10 +778,28 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.getType<_ioicq9ju.CalendarException>,
       _is.getType<_i7h2f30k.CalendarFailureCode>,
       _is.getType<_i73hgz1s.CalendarFieldGroup>,
+      _is.getType<_i9qlg9xh.CalendarFreeBusyAttemptRecord>,
+      _is.getType<_i9q3ycvj.CalendarFreeBusyCommandReceipt>,
+      _is.getType<_iz5yr1s4.CalendarFreeBusyCommandRecord>,
       _is.getType<_ia3n9q23.CalendarFreeBusyCoverage>,
+      _is.getType<_iic8trbt.CalendarFreeBusyDeliveryPage>,
+      _is.getType<_ioj1bdx8.CalendarFreeBusyDeliveryRecord>,
+      _is.getType<_i4xvuj0s.CalendarFreeBusyDeliveryView>,
+      _is.getType<_ig1fjwde.CalendarFreeBusyExchangeCursorState>,
+      _is.getType<_iuvx5swm.CalendarFreeBusyIngressReceipt>,
+      _is.getType<_i8hb71ml.CalendarFreeBusyIngressReceiptRecord>,
       _is.getType<_izms466b.CalendarFreeBusyKind>,
+      _is.getType<_ix45g82h.CalendarFreeBusyMessagePage>,
+      _is.getType<_iu6vjwqv.CalendarFreeBusyMessageView>,
+      _is.getType<_ixc6x69o.CalendarFreeBusyOutgoingPage>,
+      _is.getType<_ilawc3ua.CalendarFreeBusyOutgoingView>,
       _is.getType<_i82zcrxb.CalendarFreeBusyPeriod>,
+      _is.getType<_i519q1rj.CalendarFreeBusyPublishRequest>,
       _is.getType<_idid5g6i.CalendarFreeBusyQuery>,
+      _is.getType<_iudtc3li.CalendarFreeBusyReplyRequest>,
+      _is.getType<_iimxpfz2.CalendarFreeBusyRequestHeadRecord>,
+      _is.getType<_iorszrc2.CalendarFreeBusySourceRecord>,
+      _is.getType<_i08sch8y.CalendarFreeBusySourceReferenceRecord>,
       _is.getType<_i3b615hg.CalendarFreeBusyView>,
       _is.getType<_ibccnfmr.CalendarIdentityRecord>,
       _is.getType<_igf45b52.CalendarImageLink>,
@@ -1022,10 +1076,28 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.getType<_ioicq9ju.CalendarException?>,
       _is.getType<_i7h2f30k.CalendarFailureCode?>,
       _is.getType<_i73hgz1s.CalendarFieldGroup?>,
+      _is.getType<_i9qlg9xh.CalendarFreeBusyAttemptRecord?>,
+      _is.getType<_i9q3ycvj.CalendarFreeBusyCommandReceipt?>,
+      _is.getType<_iz5yr1s4.CalendarFreeBusyCommandRecord?>,
       _is.getType<_ia3n9q23.CalendarFreeBusyCoverage?>,
+      _is.getType<_iic8trbt.CalendarFreeBusyDeliveryPage?>,
+      _is.getType<_ioj1bdx8.CalendarFreeBusyDeliveryRecord?>,
+      _is.getType<_i4xvuj0s.CalendarFreeBusyDeliveryView?>,
+      _is.getType<_ig1fjwde.CalendarFreeBusyExchangeCursorState?>,
+      _is.getType<_iuvx5swm.CalendarFreeBusyIngressReceipt?>,
+      _is.getType<_i8hb71ml.CalendarFreeBusyIngressReceiptRecord?>,
       _is.getType<_izms466b.CalendarFreeBusyKind?>,
+      _is.getType<_ix45g82h.CalendarFreeBusyMessagePage?>,
+      _is.getType<_iu6vjwqv.CalendarFreeBusyMessageView?>,
+      _is.getType<_ixc6x69o.CalendarFreeBusyOutgoingPage?>,
+      _is.getType<_ilawc3ua.CalendarFreeBusyOutgoingView?>,
       _is.getType<_i82zcrxb.CalendarFreeBusyPeriod?>,
+      _is.getType<_i519q1rj.CalendarFreeBusyPublishRequest?>,
       _is.getType<_idid5g6i.CalendarFreeBusyQuery?>,
+      _is.getType<_iudtc3li.CalendarFreeBusyReplyRequest?>,
+      _is.getType<_iimxpfz2.CalendarFreeBusyRequestHeadRecord?>,
+      _is.getType<_iorszrc2.CalendarFreeBusySourceRecord?>,
+      _is.getType<_i08sch8y.CalendarFreeBusySourceReferenceRecord?>,
       _is.getType<_i3b615hg.CalendarFreeBusyView?>,
       _is.getType<_ibccnfmr.CalendarIdentityRecord?>,
       _is.getType<_igf45b52.CalendarImageLink?>,
@@ -1238,6 +1310,10 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.getType<List<_i3iolgr8.CalendarItemCategoryGroup>?>,
       _is.getType<List<_itx19m90.CalendarItemComment>>,
       _is.getType<List<_itx19m90.CalendarItemComment>?>,
+      _is.getType<List<_is.UuidValue>>,
+      _is.getType<List<_i4xvuj0s.CalendarFreeBusyDeliveryView>>,
+      _is.getType<List<_iu6vjwqv.CalendarFreeBusyMessageView>>,
+      _is.getType<List<_ilawc3ua.CalendarFreeBusyOutgoingView>>,
       _is.getType<List<_i82zcrxb.CalendarFreeBusyPeriod>>,
       _is.getType<List<_iu3tvjvj.CalendarInvitationBundleComponentVersion>>,
       _is.getType<List<_iu3tvjvj.CalendarInvitationBundleComponentVersion>?>,
@@ -1409,10 +1485,28 @@ class Protocol extends _is.DatabaseSerializationManager
       'CalendarException',
       'CalendarFailureCode',
       'CalendarFieldGroup',
+      'CalendarFreeBusyAttemptRecord',
+      'CalendarFreeBusyCommandReceipt',
+      'CalendarFreeBusyCommandRecord',
       'CalendarFreeBusyCoverage',
+      'CalendarFreeBusyDeliveryPage',
+      'CalendarFreeBusyDeliveryRecord',
+      'CalendarFreeBusyDeliveryView',
+      'CalendarFreeBusyExchangeCursorState',
+      'CalendarFreeBusyIngressReceipt',
+      'CalendarFreeBusyIngressReceiptRecord',
       'CalendarFreeBusyKind',
+      'CalendarFreeBusyMessagePage',
+      'CalendarFreeBusyMessageView',
+      'CalendarFreeBusyOutgoingPage',
+      'CalendarFreeBusyOutgoingView',
       'CalendarFreeBusyPeriod',
+      'CalendarFreeBusyPublishRequest',
       'CalendarFreeBusyQuery',
+      'CalendarFreeBusyReplyRequest',
+      'CalendarFreeBusyRequestHeadRecord',
+      'CalendarFreeBusySourceRecord',
+      'CalendarFreeBusySourceReferenceRecord',
       'CalendarFreeBusyView',
       'CalendarIdentityRecord',
       'CalendarImageLink',
@@ -2771,6 +2865,12 @@ class Protocol extends _is.DatabaseSerializationManager
           dartType: 'protocol:CalendarEventOccurrenceCursorState?',
         ),
         _isp.ColumnDefinition(
+          name: 'freeBusyExchangeState',
+          columnType: _isp.ColumnType.json,
+          isNullable: true,
+          dartType: 'protocol:CalendarFreeBusyExchangeCursorState?',
+        ),
+        _isp.ColumnDefinition(
           name: 'categoryFilter',
           columnType: _isp.ColumnType.json,
           isNullable: true,
@@ -3150,6 +3250,1262 @@ class Protocol extends _is.DatabaseSerializationManager
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
               definition: 'uidDigest',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'serverpod_calendar_fb_attempt',
+      dartName: 'CalendarFreeBusyAttemptRecord',
+      schema: 'public',
+      module: 'serverpod_calendar',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'scopeKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'ownerKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'deliveryId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'generation',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'ordinal',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseOwner',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'startedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'finishedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'outcome',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'reasonCode',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'payloadDigest',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'mimeDigest',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_fb_attempt_fk_0',
+          columns: ['deliveryId'],
+          referenceTable: 'serverpod_calendar_fb_delivery',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_attempt_ordinal',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'deliveryId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'generation',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'ordinal',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_attempt_owner',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'scopeKey',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'ownerKey',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'serverpod_calendar_fb_command',
+      dartName: 'CalendarFreeBusyCommandRecord',
+      schema: 'public',
+      module: 'serverpod_calendar',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'scopeKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'ownerKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'commandId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'criteriaDigest',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'method',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'action',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'sourceId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'calendarId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'stamp',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'timezoneIdentity',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'calculationProfile',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'parentSettingsDigest',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'arguments',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'payload',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'payloadDigest',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'byteCount',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'generation',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'receipt',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'expiresAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'correlatableUntil',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'terminalAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'scrubbedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_fb_command_fk_0',
+          columns: ['sourceId'],
+          referenceTable: 'serverpod_calendar_fb_source',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_fb_command_fk_1',
+          columns: ['calendarId'],
+          referenceTable: 'serverpod_calendar_identity',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_command_identity',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'scopeKey',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'ownerKey',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'commandId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_command_calendar',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'calendarId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_command_source',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'sourceId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_command_expiry',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'expiresAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'serverpod_calendar_fb_delivery',
+      dartName: 'CalendarFreeBusyDeliveryRecord',
+      schema: 'public',
+      module: 'serverpod_calendar',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'scopeKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'ownerKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'commandId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'recipientAddress',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'routeRef',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'authorityRef',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'generation',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'state',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'attemptCount',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'nextAttemptAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseOwner',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseToken',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseFence',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseUntil',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'expiresAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'terminalAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'providerReceipt',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_fb_delivery_fk_0',
+          columns: ['commandId'],
+          referenceTable: 'serverpod_calendar_fb_command',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_delivery_command',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'commandId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_delivery_due',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'terminalAt',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'nextAttemptAt',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'leaseUntil',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_delivery_owner',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'scopeKey',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'ownerKey',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'serverpod_calendar_fb_ingress',
+      dartName: 'CalendarFreeBusyIngressReceiptRecord',
+      schema: 'public',
+      module: 'serverpod_calendar',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'scopeKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'ownerKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'namespace',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'deliveryKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'inputDigest',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'sourceId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'result',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'expiresAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_fb_ingress_fk_0',
+          columns: ['sourceId'],
+          referenceTable: 'serverpod_calendar_fb_source',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_ingress_identity',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'scopeKey',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'ownerKey',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'namespace',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'deliveryKey',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_ingress_source',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'sourceId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_ingress_expiry',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'expiresAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'serverpod_calendar_fb_request_head',
+      dartName: 'CalendarFreeBusyRequestHeadRecord',
+      schema: 'public',
+      module: 'serverpod_calendar',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'scopeKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'ownerKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'correlationDigest',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'calendarId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'mailboxAddress',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'bindingRef',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'requesterAddress',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'fromUtc',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'untilUtc',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'currentSourceId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'sourceRevision',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'replyRevision',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'lastReplyStamp',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'latestCommandId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'conflicted',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'purgedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'expiresAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_fb_request_head_fk_0',
+          columns: ['calendarId'],
+          referenceTable: 'serverpod_calendar_identity',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_head_correlation',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'scopeKey',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'ownerKey',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'correlationDigest',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_head_owner',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'scopeKey',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'ownerKey',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_head_calendar',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'calendarId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'serverpod_calendar_fb_source',
+      dartName: 'CalendarFreeBusySourceRecord',
+      schema: 'public',
+      module: 'serverpod_calendar',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'scopeKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'ownerKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'method',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'headId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'requestCommandId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'payloadDigest',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'byteCount',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'payload',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'header',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'originRef',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'bindingRef',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'mailboxAddress',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'sourceStamp',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'receivedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'expiresAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'dismissedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'purgedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_fb_source_fk_0',
+          columns: ['headId'],
+          referenceTable: 'serverpod_calendar_fb_request_head',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_fb_source_fk_1',
+          columns: ['requestCommandId'],
+          referenceTable: 'serverpod_calendar_fb_command',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_source_owner',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'scopeKey',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'ownerKey',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_source_head',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'headId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_source_request',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'requestCommandId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_source_expiry',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'expiresAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'serverpod_calendar_fb_source_ref',
+      dartName: 'CalendarFreeBusySourceReferenceRecord',
+      schema: 'public',
+      module: 'serverpod_calendar',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'scopeKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'ownerKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'commandId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'sourceKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'eventId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'availabilityId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'revision',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'contentDigest',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_fb_source_ref_fk_0',
+          columns: ['commandId'],
+          referenceTable: 'serverpod_calendar_fb_command',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_fb_source_ref_fk_1',
+          columns: ['eventId'],
+          referenceTable: 'serverpod_calendar_event',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_fb_source_ref_fk_2',
+          columns: ['availabilityId'],
+          referenceTable: 'serverpod_calendar_availability',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_ref_unique',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'commandId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'sourceKey',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_ref_event',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'eventId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_ref_availability',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'availabilityId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_fb_ref_owner',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'scopeKey',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'ownerKey',
             ),
           ],
           type: 'btree',
@@ -6733,17 +8089,72 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _i73hgz1s.CalendarFieldGroup) {
       return _i73hgz1s.CalendarFieldGroup.fromJson(data) as T;
     }
+    if (t == _i9qlg9xh.CalendarFreeBusyAttemptRecord) {
+      return _i9qlg9xh.CalendarFreeBusyAttemptRecord.fromJson(data) as T;
+    }
+    if (t == _i9q3ycvj.CalendarFreeBusyCommandReceipt) {
+      return _i9q3ycvj.CalendarFreeBusyCommandReceipt.fromJson(data) as T;
+    }
+    if (t == _iz5yr1s4.CalendarFreeBusyCommandRecord) {
+      return _iz5yr1s4.CalendarFreeBusyCommandRecord.fromJson(data) as T;
+    }
     if (t == _ia3n9q23.CalendarFreeBusyCoverage) {
       return _ia3n9q23.CalendarFreeBusyCoverage.fromJson(data) as T;
+    }
+    if (t == _iic8trbt.CalendarFreeBusyDeliveryPage) {
+      return _iic8trbt.CalendarFreeBusyDeliveryPage.fromJson(data) as T;
+    }
+    if (t == _ioj1bdx8.CalendarFreeBusyDeliveryRecord) {
+      return _ioj1bdx8.CalendarFreeBusyDeliveryRecord.fromJson(data) as T;
+    }
+    if (t == _i4xvuj0s.CalendarFreeBusyDeliveryView) {
+      return _i4xvuj0s.CalendarFreeBusyDeliveryView.fromJson(data) as T;
+    }
+    if (t == _ig1fjwde.CalendarFreeBusyExchangeCursorState) {
+      return _ig1fjwde.CalendarFreeBusyExchangeCursorState.fromJson(data) as T;
+    }
+    if (t == _iuvx5swm.CalendarFreeBusyIngressReceipt) {
+      return _iuvx5swm.CalendarFreeBusyIngressReceipt.fromJson(data) as T;
+    }
+    if (t == _i8hb71ml.CalendarFreeBusyIngressReceiptRecord) {
+      return _i8hb71ml.CalendarFreeBusyIngressReceiptRecord.fromJson(data) as T;
     }
     if (t == _izms466b.CalendarFreeBusyKind) {
       return _izms466b.CalendarFreeBusyKind.fromJson(data) as T;
     }
+    if (t == _ix45g82h.CalendarFreeBusyMessagePage) {
+      return _ix45g82h.CalendarFreeBusyMessagePage.fromJson(data) as T;
+    }
+    if (t == _iu6vjwqv.CalendarFreeBusyMessageView) {
+      return _iu6vjwqv.CalendarFreeBusyMessageView.fromJson(data) as T;
+    }
+    if (t == _ixc6x69o.CalendarFreeBusyOutgoingPage) {
+      return _ixc6x69o.CalendarFreeBusyOutgoingPage.fromJson(data) as T;
+    }
+    if (t == _ilawc3ua.CalendarFreeBusyOutgoingView) {
+      return _ilawc3ua.CalendarFreeBusyOutgoingView.fromJson(data) as T;
+    }
     if (t == _i82zcrxb.CalendarFreeBusyPeriod) {
       return _i82zcrxb.CalendarFreeBusyPeriod.fromJson(data) as T;
     }
+    if (t == _i519q1rj.CalendarFreeBusyPublishRequest) {
+      return _i519q1rj.CalendarFreeBusyPublishRequest.fromJson(data) as T;
+    }
     if (t == _idid5g6i.CalendarFreeBusyQuery) {
       return _idid5g6i.CalendarFreeBusyQuery.fromJson(data) as T;
+    }
+    if (t == _iudtc3li.CalendarFreeBusyReplyRequest) {
+      return _iudtc3li.CalendarFreeBusyReplyRequest.fromJson(data) as T;
+    }
+    if (t == _iimxpfz2.CalendarFreeBusyRequestHeadRecord) {
+      return _iimxpfz2.CalendarFreeBusyRequestHeadRecord.fromJson(data) as T;
+    }
+    if (t == _iorszrc2.CalendarFreeBusySourceRecord) {
+      return _iorszrc2.CalendarFreeBusySourceRecord.fromJson(data) as T;
+    }
+    if (t == _i08sch8y.CalendarFreeBusySourceReferenceRecord) {
+      return _i08sch8y.CalendarFreeBusySourceReferenceRecord.fromJson(data)
+          as T;
     }
     if (t == _i3b615hg.CalendarFreeBusyView) {
       return _i3b615hg.CalendarFreeBusyView.fromJson(data) as T;
@@ -7978,9 +9389,63 @@ class Protocol extends _is.DatabaseSerializationManager
       return (data != null ? _i73hgz1s.CalendarFieldGroup.fromJson(data) : null)
           as T;
     }
+    if (t == _is.getType<_i9qlg9xh.CalendarFreeBusyAttemptRecord?>()) {
+      return (data != null
+              ? _i9qlg9xh.CalendarFreeBusyAttemptRecord.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i9q3ycvj.CalendarFreeBusyCommandReceipt?>()) {
+      return (data != null
+              ? _i9q3ycvj.CalendarFreeBusyCommandReceipt.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iz5yr1s4.CalendarFreeBusyCommandRecord?>()) {
+      return (data != null
+              ? _iz5yr1s4.CalendarFreeBusyCommandRecord.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _is.getType<_ia3n9q23.CalendarFreeBusyCoverage?>()) {
       return (data != null
               ? _ia3n9q23.CalendarFreeBusyCoverage.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iic8trbt.CalendarFreeBusyDeliveryPage?>()) {
+      return (data != null
+              ? _iic8trbt.CalendarFreeBusyDeliveryPage.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ioj1bdx8.CalendarFreeBusyDeliveryRecord?>()) {
+      return (data != null
+              ? _ioj1bdx8.CalendarFreeBusyDeliveryRecord.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i4xvuj0s.CalendarFreeBusyDeliveryView?>()) {
+      return (data != null
+              ? _i4xvuj0s.CalendarFreeBusyDeliveryView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ig1fjwde.CalendarFreeBusyExchangeCursorState?>()) {
+      return (data != null
+              ? _ig1fjwde.CalendarFreeBusyExchangeCursorState.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iuvx5swm.CalendarFreeBusyIngressReceipt?>()) {
+      return (data != null
+              ? _iuvx5swm.CalendarFreeBusyIngressReceipt.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i8hb71ml.CalendarFreeBusyIngressReceiptRecord?>()) {
+      return (data != null
+              ? _i8hb71ml.CalendarFreeBusyIngressReceiptRecord.fromJson(data)
               : null)
           as T;
     }
@@ -7990,15 +9455,69 @@ class Protocol extends _is.DatabaseSerializationManager
               : null)
           as T;
     }
+    if (t == _is.getType<_ix45g82h.CalendarFreeBusyMessagePage?>()) {
+      return (data != null
+              ? _ix45g82h.CalendarFreeBusyMessagePage.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iu6vjwqv.CalendarFreeBusyMessageView?>()) {
+      return (data != null
+              ? _iu6vjwqv.CalendarFreeBusyMessageView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ixc6x69o.CalendarFreeBusyOutgoingPage?>()) {
+      return (data != null
+              ? _ixc6x69o.CalendarFreeBusyOutgoingPage.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ilawc3ua.CalendarFreeBusyOutgoingView?>()) {
+      return (data != null
+              ? _ilawc3ua.CalendarFreeBusyOutgoingView.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _is.getType<_i82zcrxb.CalendarFreeBusyPeriod?>()) {
       return (data != null
               ? _i82zcrxb.CalendarFreeBusyPeriod.fromJson(data)
               : null)
           as T;
     }
+    if (t == _is.getType<_i519q1rj.CalendarFreeBusyPublishRequest?>()) {
+      return (data != null
+              ? _i519q1rj.CalendarFreeBusyPublishRequest.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _is.getType<_idid5g6i.CalendarFreeBusyQuery?>()) {
       return (data != null
               ? _idid5g6i.CalendarFreeBusyQuery.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iudtc3li.CalendarFreeBusyReplyRequest?>()) {
+      return (data != null
+              ? _iudtc3li.CalendarFreeBusyReplyRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iimxpfz2.CalendarFreeBusyRequestHeadRecord?>()) {
+      return (data != null
+              ? _iimxpfz2.CalendarFreeBusyRequestHeadRecord.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iorszrc2.CalendarFreeBusySourceRecord?>()) {
+      return (data != null
+              ? _iorszrc2.CalendarFreeBusySourceRecord.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i08sch8y.CalendarFreeBusySourceReferenceRecord?>()) {
+      return (data != null
+              ? _i08sch8y.CalendarFreeBusySourceReferenceRecord.fromJson(data)
               : null)
           as T;
     }
@@ -9467,6 +10986,32 @@ class Protocol extends _is.DatabaseSerializationManager
               : null)
           as T;
     }
+    if (t == List<_is.UuidValue>) {
+      return (data as List).map((e) => deserialize<_is.UuidValue>(e)).toList()
+          as T;
+    }
+    if (t == List<_i4xvuj0s.CalendarFreeBusyDeliveryView>) {
+      return (data as List)
+              .map(
+                (e) => deserialize<_i4xvuj0s.CalendarFreeBusyDeliveryView>(e),
+              )
+              .toList()
+          as T;
+    }
+    if (t == List<_iu6vjwqv.CalendarFreeBusyMessageView>) {
+      return (data as List)
+              .map((e) => deserialize<_iu6vjwqv.CalendarFreeBusyMessageView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ilawc3ua.CalendarFreeBusyOutgoingView>) {
+      return (data as List)
+              .map(
+                (e) => deserialize<_ilawc3ua.CalendarFreeBusyOutgoingView>(e),
+              )
+              .toList()
+          as T;
+    }
     if (t == List<_i82zcrxb.CalendarFreeBusyPeriod>) {
       return (data as List)
               .map((e) => deserialize<_i82zcrxb.CalendarFreeBusyPeriod>(e))
@@ -9923,10 +11468,38 @@ class Protocol extends _is.DatabaseSerializationManager
       _ioicq9ju.CalendarException => 'CalendarException',
       _i7h2f30k.CalendarFailureCode => 'CalendarFailureCode',
       _i73hgz1s.CalendarFieldGroup => 'CalendarFieldGroup',
+      _i9qlg9xh.CalendarFreeBusyAttemptRecord =>
+        'CalendarFreeBusyAttemptRecord',
+      _i9q3ycvj.CalendarFreeBusyCommandReceipt =>
+        'CalendarFreeBusyCommandReceipt',
+      _iz5yr1s4.CalendarFreeBusyCommandRecord =>
+        'CalendarFreeBusyCommandRecord',
       _ia3n9q23.CalendarFreeBusyCoverage => 'CalendarFreeBusyCoverage',
+      _iic8trbt.CalendarFreeBusyDeliveryPage => 'CalendarFreeBusyDeliveryPage',
+      _ioj1bdx8.CalendarFreeBusyDeliveryRecord =>
+        'CalendarFreeBusyDeliveryRecord',
+      _i4xvuj0s.CalendarFreeBusyDeliveryView => 'CalendarFreeBusyDeliveryView',
+      _ig1fjwde.CalendarFreeBusyExchangeCursorState =>
+        'CalendarFreeBusyExchangeCursorState',
+      _iuvx5swm.CalendarFreeBusyIngressReceipt =>
+        'CalendarFreeBusyIngressReceipt',
+      _i8hb71ml.CalendarFreeBusyIngressReceiptRecord =>
+        'CalendarFreeBusyIngressReceiptRecord',
       _izms466b.CalendarFreeBusyKind => 'CalendarFreeBusyKind',
+      _ix45g82h.CalendarFreeBusyMessagePage => 'CalendarFreeBusyMessagePage',
+      _iu6vjwqv.CalendarFreeBusyMessageView => 'CalendarFreeBusyMessageView',
+      _ixc6x69o.CalendarFreeBusyOutgoingPage => 'CalendarFreeBusyOutgoingPage',
+      _ilawc3ua.CalendarFreeBusyOutgoingView => 'CalendarFreeBusyOutgoingView',
       _i82zcrxb.CalendarFreeBusyPeriod => 'CalendarFreeBusyPeriod',
+      _i519q1rj.CalendarFreeBusyPublishRequest =>
+        'CalendarFreeBusyPublishRequest',
       _idid5g6i.CalendarFreeBusyQuery => 'CalendarFreeBusyQuery',
+      _iudtc3li.CalendarFreeBusyReplyRequest => 'CalendarFreeBusyReplyRequest',
+      _iimxpfz2.CalendarFreeBusyRequestHeadRecord =>
+        'CalendarFreeBusyRequestHeadRecord',
+      _iorszrc2.CalendarFreeBusySourceRecord => 'CalendarFreeBusySourceRecord',
+      _i08sch8y.CalendarFreeBusySourceReferenceRecord =>
+        'CalendarFreeBusySourceReferenceRecord',
       _i3b615hg.CalendarFreeBusyView => 'CalendarFreeBusyView',
       _ibccnfmr.CalendarIdentityRecord => 'CalendarIdentityRecord',
       _igf45b52.CalendarImageLink => 'CalendarImageLink',
@@ -10420,14 +11993,50 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'CalendarFailureCode';
       case _i73hgz1s.CalendarFieldGroup():
         return 'CalendarFieldGroup';
+      case _i9qlg9xh.CalendarFreeBusyAttemptRecord():
+        return 'CalendarFreeBusyAttemptRecord';
+      case _i9q3ycvj.CalendarFreeBusyCommandReceipt():
+        return 'CalendarFreeBusyCommandReceipt';
+      case _iz5yr1s4.CalendarFreeBusyCommandRecord():
+        return 'CalendarFreeBusyCommandRecord';
       case _ia3n9q23.CalendarFreeBusyCoverage():
         return 'CalendarFreeBusyCoverage';
+      case _iic8trbt.CalendarFreeBusyDeliveryPage():
+        return 'CalendarFreeBusyDeliveryPage';
+      case _ioj1bdx8.CalendarFreeBusyDeliveryRecord():
+        return 'CalendarFreeBusyDeliveryRecord';
+      case _i4xvuj0s.CalendarFreeBusyDeliveryView():
+        return 'CalendarFreeBusyDeliveryView';
+      case _ig1fjwde.CalendarFreeBusyExchangeCursorState():
+        return 'CalendarFreeBusyExchangeCursorState';
+      case _iuvx5swm.CalendarFreeBusyIngressReceipt():
+        return 'CalendarFreeBusyIngressReceipt';
+      case _i8hb71ml.CalendarFreeBusyIngressReceiptRecord():
+        return 'CalendarFreeBusyIngressReceiptRecord';
       case _izms466b.CalendarFreeBusyKind():
         return 'CalendarFreeBusyKind';
+      case _ix45g82h.CalendarFreeBusyMessagePage():
+        return 'CalendarFreeBusyMessagePage';
+      case _iu6vjwqv.CalendarFreeBusyMessageView():
+        return 'CalendarFreeBusyMessageView';
+      case _ixc6x69o.CalendarFreeBusyOutgoingPage():
+        return 'CalendarFreeBusyOutgoingPage';
+      case _ilawc3ua.CalendarFreeBusyOutgoingView():
+        return 'CalendarFreeBusyOutgoingView';
       case _i82zcrxb.CalendarFreeBusyPeriod():
         return 'CalendarFreeBusyPeriod';
+      case _i519q1rj.CalendarFreeBusyPublishRequest():
+        return 'CalendarFreeBusyPublishRequest';
       case _idid5g6i.CalendarFreeBusyQuery():
         return 'CalendarFreeBusyQuery';
+      case _iudtc3li.CalendarFreeBusyReplyRequest():
+        return 'CalendarFreeBusyReplyRequest';
+      case _iimxpfz2.CalendarFreeBusyRequestHeadRecord():
+        return 'CalendarFreeBusyRequestHeadRecord';
+      case _iorszrc2.CalendarFreeBusySourceRecord():
+        return 'CalendarFreeBusySourceRecord';
+      case _i08sch8y.CalendarFreeBusySourceReferenceRecord():
+        return 'CalendarFreeBusySourceReferenceRecord';
       case _i3b615hg.CalendarFreeBusyView():
         return 'CalendarFreeBusyView';
       case _ibccnfmr.CalendarIdentityRecord():
@@ -11199,17 +12808,87 @@ class Protocol extends _is.DatabaseSerializationManager
     if (dataClassName == 'CalendarFieldGroup') {
       return deserialize<_i73hgz1s.CalendarFieldGroup>(data['data']);
     }
+    if (dataClassName == 'CalendarFreeBusyAttemptRecord') {
+      return deserialize<_i9qlg9xh.CalendarFreeBusyAttemptRecord>(data['data']);
+    }
+    if (dataClassName == 'CalendarFreeBusyCommandReceipt') {
+      return deserialize<_i9q3ycvj.CalendarFreeBusyCommandReceipt>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarFreeBusyCommandRecord') {
+      return deserialize<_iz5yr1s4.CalendarFreeBusyCommandRecord>(data['data']);
+    }
     if (dataClassName == 'CalendarFreeBusyCoverage') {
       return deserialize<_ia3n9q23.CalendarFreeBusyCoverage>(data['data']);
+    }
+    if (dataClassName == 'CalendarFreeBusyDeliveryPage') {
+      return deserialize<_iic8trbt.CalendarFreeBusyDeliveryPage>(data['data']);
+    }
+    if (dataClassName == 'CalendarFreeBusyDeliveryRecord') {
+      return deserialize<_ioj1bdx8.CalendarFreeBusyDeliveryRecord>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarFreeBusyDeliveryView') {
+      return deserialize<_i4xvuj0s.CalendarFreeBusyDeliveryView>(data['data']);
+    }
+    if (dataClassName == 'CalendarFreeBusyExchangeCursorState') {
+      return deserialize<_ig1fjwde.CalendarFreeBusyExchangeCursorState>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarFreeBusyIngressReceipt') {
+      return deserialize<_iuvx5swm.CalendarFreeBusyIngressReceipt>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarFreeBusyIngressReceiptRecord') {
+      return deserialize<_i8hb71ml.CalendarFreeBusyIngressReceiptRecord>(
+        data['data'],
+      );
     }
     if (dataClassName == 'CalendarFreeBusyKind') {
       return deserialize<_izms466b.CalendarFreeBusyKind>(data['data']);
     }
+    if (dataClassName == 'CalendarFreeBusyMessagePage') {
+      return deserialize<_ix45g82h.CalendarFreeBusyMessagePage>(data['data']);
+    }
+    if (dataClassName == 'CalendarFreeBusyMessageView') {
+      return deserialize<_iu6vjwqv.CalendarFreeBusyMessageView>(data['data']);
+    }
+    if (dataClassName == 'CalendarFreeBusyOutgoingPage') {
+      return deserialize<_ixc6x69o.CalendarFreeBusyOutgoingPage>(data['data']);
+    }
+    if (dataClassName == 'CalendarFreeBusyOutgoingView') {
+      return deserialize<_ilawc3ua.CalendarFreeBusyOutgoingView>(data['data']);
+    }
     if (dataClassName == 'CalendarFreeBusyPeriod') {
       return deserialize<_i82zcrxb.CalendarFreeBusyPeriod>(data['data']);
     }
+    if (dataClassName == 'CalendarFreeBusyPublishRequest') {
+      return deserialize<_i519q1rj.CalendarFreeBusyPublishRequest>(
+        data['data'],
+      );
+    }
     if (dataClassName == 'CalendarFreeBusyQuery') {
       return deserialize<_idid5g6i.CalendarFreeBusyQuery>(data['data']);
+    }
+    if (dataClassName == 'CalendarFreeBusyReplyRequest') {
+      return deserialize<_iudtc3li.CalendarFreeBusyReplyRequest>(data['data']);
+    }
+    if (dataClassName == 'CalendarFreeBusyRequestHeadRecord') {
+      return deserialize<_iimxpfz2.CalendarFreeBusyRequestHeadRecord>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarFreeBusySourceRecord') {
+      return deserialize<_iorszrc2.CalendarFreeBusySourceRecord>(data['data']);
+    }
+    if (dataClassName == 'CalendarFreeBusySourceReferenceRecord') {
+      return deserialize<_i08sch8y.CalendarFreeBusySourceReferenceRecord>(
+        data['data'],
+      );
     }
     if (dataClassName == 'CalendarFreeBusyView') {
       return deserialize<_i3b615hg.CalendarFreeBusyView>(data['data']);
@@ -11886,6 +13565,20 @@ class Protocol extends _is.DatabaseSerializationManager
         return _i23wc83s.CalendarEventDataRecord.t;
       case _ilvoe14z.CalendarEventRecord:
         return _ilvoe14z.CalendarEventRecord.t;
+      case _i9qlg9xh.CalendarFreeBusyAttemptRecord:
+        return _i9qlg9xh.CalendarFreeBusyAttemptRecord.t;
+      case _iz5yr1s4.CalendarFreeBusyCommandRecord:
+        return _iz5yr1s4.CalendarFreeBusyCommandRecord.t;
+      case _ioj1bdx8.CalendarFreeBusyDeliveryRecord:
+        return _ioj1bdx8.CalendarFreeBusyDeliveryRecord.t;
+      case _i8hb71ml.CalendarFreeBusyIngressReceiptRecord:
+        return _i8hb71ml.CalendarFreeBusyIngressReceiptRecord.t;
+      case _iimxpfz2.CalendarFreeBusyRequestHeadRecord:
+        return _iimxpfz2.CalendarFreeBusyRequestHeadRecord.t;
+      case _iorszrc2.CalendarFreeBusySourceRecord:
+        return _iorszrc2.CalendarFreeBusySourceRecord.t;
+      case _i08sch8y.CalendarFreeBusySourceReferenceRecord:
+        return _i08sch8y.CalendarFreeBusySourceReferenceRecord.t;
       case _ibccnfmr.CalendarIdentityRecord:
         return _ibccnfmr.CalendarIdentityRecord.t;
       case _i29jhvb3.CalendarInvitationApplicationRecord:

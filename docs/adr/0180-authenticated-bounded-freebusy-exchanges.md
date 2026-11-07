@@ -1,10 +1,10 @@
 # ADR 0180: Authenticated bounded VFREEBUSY exchanges
 
-Status: **Proposed, 2026-11-06.** No model, endpoint, worker or mail implementation is authorized by this proposal. The recommended source-deletion policy and the complete schema/API/retention contract below require explicit agreement. The earlier standalone deletion question can be resolved as part of that combined review.
+Status: **Accepted by explicit maintainer agreement, 2026-11-06.** The maintainer approved the grouped contract, seven private tables, nullable cursor extension and withdrawal/scrubbing of queued and retained reports on source deletion. Implementation and actual validation are recorded separately; acceptance does not establish runtime success.
 
 ## Evidence and scope
 
-The ADR 0179 implementation is application aaaf1f47d18a293f611ecb8b5fde27112081b4be in PR #190. Its local pure/SDK/upgrade/recovery/JWT/connected Flutter checks passed; full exact-head hosted run 42248235619 remains the readiness gate. This proposal is independent design work while that external check runs, not a claim of hosted success.
+The ADR 0179 implementation is application aaaf1f47d18a293f611ecb8b5fde27112081b4be in PR #190. Its local pure/SDK/upgrade/recovery/JWT/connected Flutter checks passed; exact-head hosted run 42248235619 subsequently passed inspect and runtime. That evidence applies to ADR 0179, not the later exchange implementation.
 
 RFC 5546 section 3.3 defines PUBLISH, REQUEST and REPLY for VFREEBUSY. A reply preserves the request UID and identifies the requester as ORGANIZER and respondent as ATTENDEE; publication has no ATTENDEE. These roles do not authenticate a sender. RFC 6047 sections 2.1–2.3 distinguish the email binding and security requirements; the existing restricted synthetic MIME profile does not claim full iMIP authentication/conformance.
 
@@ -26,7 +26,7 @@ Publish/request receive separate server-generated protocol UIDs, independent of 
 
 The host verifies sender address, actual mailbox/calendar binding, recipients/routes and complete immutable message at preliminary/final queue writes and dispatch. For REPLY the transport sender is the responding ATTENDEE, not its ORGANIZER. Source/MIME addresses, status codes, DNS or possession of a UID confer no authority. Keep raw ingress server-only; the example admits synthetic verified-origin fixtures and records enough_mail MIME under ignored local storage, never real mail.
 
-The following is a proposed logical flow, not implemented runtime behavior:
+The accepted logical flow is implemented as follows; actual check outcomes are recorded separately:
 
 ```mermaid
 flowchart LR
@@ -47,9 +47,9 @@ Use a private request head keyed by scope, owner, verified requester/local bindi
 
 Head source revision and private reply revision are separate. New share/refusal commands require both expected revisions and exact selected source. Another source withdraws unsent replies pinned to the former source, not unrelated commands. Dismissal sends/withdraws nothing. Historical ingress/command retries run before new capacity admission, reauthorize their actual source/owner and return retained results without activation.
 
-## Proposed seven-table layout and private cursor extension
+## Approved seven-table layout and private cursor extension
 
-All seven records are server-only with server-generated UUIDs. Proposed table names are `serverpod_calendar_fb_request_head`, `_fb_source`, `_fb_ingress`, `_fb_command`, `_fb_source_ref`, `_fb_delivery` and `_fb_attempt` (the latter six share the `serverpod_calendar` prefix). No user/group/membership/provider/device tables are added.
+All seven records are server-only with server-generated UUIDs. Accepted table names are `serverpod_calendar_fb_request_head`, `_fb_source`, `_fb_ingress`, `_fb_command`, `_fb_source_ref`, `_fb_delivery` and `_fb_attempt` (the latter six share the `serverpod_calendar` prefix). No user/group/membership/provider/device tables are added.
 
 | Record | Stored fields and invariants |
 | --- | --- |
@@ -67,7 +67,7 @@ Source relations have no implicit cascade that could invalidate an active comman
 
 ## Budgets and lifecycle
 
-Proposed ceilings/defaults: 128 heads and 512 source rows per owner, 4,096 heads/8,192 source rows per scope; 64 source versions per request head; 1,024 ingress receipts per owner/32,768 per scope; 128 retained commands per owner/4,096 per scope; 16,384 source-reference rows per owner/262,144 per scope; 256 pending deliveries per owner/10,000 per scope; 64 recipients per command. Incoming storage counts both decoded payload and bounded header; incoming and outgoing payload families each cap at 8 MiB per owner/64 MiB per scope, with 262,144 bytes per message. Existing pure/calculation ceilings still apply; callers may lower caps. Exhaustion rejects the complete transaction, never evicts current proof or returns partial publication.
+Accepted configurable ceilings/defaults: 128 heads and 512 source rows per owner, 4,096 heads/8,192 source rows per scope; 64 source versions per request head; 1,024 ingress receipts per owner/32,768 per scope; 128 retained commands per owner/4,096 per scope; 16,384 source-reference rows per owner/262,144 per scope; 256 pending deliveries per owner/10,000 per scope; 64 recipients per command. Incoming storage counts both decoded payload and bounded header; incoming and outgoing payload families each cap at 8 MiB per owner/64 MiB per scope, with 262,144 bytes per message. Existing pure/calculation ceilings still apply; callers may lower caps. Exhaustion rejects the complete transaction, never evicts current proof or returns partial publication.
 
 Use 30-day source/ingress and terminal-reference retention by default. Accepted outgoing REQUESTs remain correlatable for 30 days after creation; a new late reply cannot extend new admission forever. References can retain a request/source longer until existing dependent records expire. Body-free terminal/head markers have a further 30-day bound once their references permit retirement. Ordinary lists omit retired markers; known exact retries never reconstruct them. Keep only IDs, scope/owner, digests, revisions/outcome/times in scrubbed markers, not intervals, query text, addresses or source content.
 
@@ -81,17 +81,17 @@ Bind each successful snapshot to the actual calendar settings/timezone-data iden
 
 Retain coordinated versus external fresh-check guarantees with no downgrade. An external after-check revocation race and external provider acceptance cannot be eliminated by a database lease. Same command UUID/criteria returns the same authorized receipt, never a new body, route or message. Different criteria reject. Source/lease/generation checks precede every retry.
 
-## Proposed source-deletion policy requiring agreement
+## Accepted source-deletion policy
 
-Propose withdrawal/scrubbing rather than letting private reports block shared deletion. Delete the calendar or contributing event/rule and, in the same scope transaction, fence affected pending commands, remove their indexed source references, and scrub their retained busy-interval payloads/source vectors (including terminal report bodies). Accepted delivery remains accepted with content-free audit, never recalled. Do not recompute a replacement report under an old command or transport ID. Unrelated commands remain independently fenced. Source-targeted request delivery becomes ineligible when its actual mailbox/calendar binding is deleted; incoming foreign reports are not native booking data and retain their own private inbox lifecycle.
+Withdraw and scrub private reports during shared source deletion. Delete the calendar or contributing event/rule and, in the same scope transaction, fence affected pending commands, remove their indexed source references, and scrub their retained busy-interval payloads/source vectors (including terminal report bodies). Accepted delivery remains accepted with content-free audit, never recalled. Do not recompute a replacement report under an old command or transport ID. Unrelated commands remain independently fenced. Source-targeted request delivery becomes ineligible when its actual mailbox/calendar binding is deleted; incoming foreign reports are not native booking data and retain their own private inbox lifecycle.
 
 After scrubbing, no body API may expose intervals/query text/addresses from the removed report. Minimal command/delivery receipts retain only opaque IDs, scope/owner, criteria/payload digests, revisions, outcomes and times. Exact historical command retries reauthorize a matching content-free marker and return only its stable result; they do not reconstruct a body, resend or reactivate source data. Raw-body retrieval fails unavailable. Keep ordinary marker discovery suppressed and prune markers once references/retention allow. Validate this boundary separately from receipt retries whose source body remains retained.
 
-This proposed policy also covers terminal report bodies and contributing-source deletion; it is not implied by the earlier standalone calendar question. If the maintainer prefers dependency-blocking calendar deletion, revise this contract before implementation. Neither behavior is accepted merely because this document is merged. Already accepted external delivery cannot be recalled.
+The maintainer explicitly approved this policy for queued and terminal report bodies and contributing-source deletion in the combined contract review. Already accepted external delivery cannot be recalled.
 
-## Proposed API families
+## Accepted API families
 
-Propose `listFreeBusyInbox`, `getFreeBusyMessage`, `getFreeBusySource`, `dismissFreeBusyMessage`, `listFreeBusyOutgoing`, `freeBusyDeliveryActivity`, `publishFreeBusy`, `requestFreeBusy`, `replyFreeBusy`, `refuseFreeBusy` and `withdrawFreeBusyCommand`. Typed immutable request DTOs contain only actual object references, bounded query/recipient input, expected source/reply revisions and command UUIDs; never a claimed owner, grant, sender identity or source vector. Receipts contain opaque command/result identity, not source periods. Native calculation scope and wire recipient context remain explicit.
+Expose `listFreeBusyInbox`, `getFreeBusyMessage`, `getFreeBusySource`, `dismissFreeBusyMessage`, `listFreeBusyOutgoing`, `freeBusyDeliveryActivity`, `publishFreeBusy`, `requestFreeBusy`, `replyFreeBusy`, `refuseFreeBusy` and `withdrawFreeBusyCommand`. Typed immutable request DTOs contain only actual object references, bounded query/recipient input, expected source/reply revisions and command UUIDs; never a claimed owner, grant, sender identity or source vector. Receipts contain opaque command/result identity, not source periods. Native calculation scope and wire recipient context remain explicit.
 
 The replaceable host ports resolve the trusted current private owner, verify ingress-origin and each relevant source role, bind the actual local mailbox/calendar, approve the exact immutable message/routes, and independently authorize foreground/background source projections. Expose separate receivePublish/receiveRequest/receiveReply, header/raw read, share/publish/request/refuse/withdraw, outgoing/activity and dispatch operations. A successful report requires ordinary free/busy/export and all actual source projections as well as its mail-specific gates. Refusal authorizes only a data-free response. No operation grants another implicitly; background contexts have no fabricated actor. All complete-message/route checks are repeated for the actual delivery.
 
@@ -102,3 +102,7 @@ Use immutable bounded source/command/receipt DTOs; no provider references, sourc
 Test source roles and exact UID/window correlation, one/many request targets and grouped publications, stale/conflict/no-reply behavior, empty success versus refusal/unknown, private-source denial, recurrence/DST/all-day/rule/fallback/tentative calculation, copied IDs/hidden counts exclusion, nested callback mutation, final rollback, independent commands, quota/source-reference mismatch, expiry/retention and eventual ordered pruning. Test the chosen deletion policy before implementation is complete.
 
 Run real two-host ingress/queue/lease races, actual process loss around commit and synthetic acceptance, stable UUID/calendar/MIME bytes, host revocation/route changes, generated JWT clients and connected Flutter. Generate source migrations with 4.1.0 and prove fresh/populated upgrade behavior. Focus during development, broaden once the entire group is complete, commit feature code once, and require full exact-head hosted success before readiness. No real sender/provider authorization, deployment, package publication or blanket external interoperability follows.
+
+## Implementation and evidence
+
+The optional runtime, seven table sources, generated migrations/clients, protected endpoint families, example MIME/Flutter integration and recovery harness implement this accepted slice. See [the implementation guide](../authenticated-freebusy-exchanges.md) for operational boundaries and [validation](../scaffold-validation.md) for checks actually run. Implementation does not establish full roadmap completion or real email interoperability.

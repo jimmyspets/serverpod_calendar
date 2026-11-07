@@ -1,3 +1,4 @@
+import 'free_busy_exchange_screen.dart';
 import 'task_screen.dart';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
@@ -521,6 +522,21 @@ class _CalendarEditorState extends State<CalendarEditor> {
                             ),
                           ),
                     child: const Text('Calendar occurrences'),
+                  ),
+                if (existing)
+                  OutlinedButton(
+                    key: const Key('calendar-freebusy-exchanges'),
+                    onPressed: locked
+                        ? null
+                        : () => Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (_) => FreeBusyExchangeScreen(
+                                client: widget.client,
+                                calendarId: _calendar!.id,
+                              ),
+                            ),
+                          ),
+                    child: const Text('Busy-time messages'),
                   ),
                 if (existing)
                   OutlinedButton(

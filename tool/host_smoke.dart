@@ -92,6 +92,7 @@ Future<void> main(List<String> args) async {
       final client = await Process.start(Platform.resolvedExecutable, [
         'run',
         'tool/client_smoke.dart',
+        if (args.contains('--freebusy-only')) '--freebusy-only',
         if (args.contains('--feeds')) '--feeds',
         if (args.contains('--replies-only')) '--replies-only',
         if (args.contains('--invitations-only')) '--invitations-only',
@@ -110,7 +111,8 @@ Future<void> main(List<String> args) async {
       final code = await client.exitCode.timeout(
         Duration(
           seconds:
-              args.contains('--occurrences-only') ||
+              args.contains('--freebusy-only') ||
+                  args.contains('--occurrences-only') ||
                   args.contains('--native-future-only') ||
                   args.contains('--replies-only') ||
                   args.contains('--invitations-only') ||
@@ -127,7 +129,8 @@ Future<void> main(List<String> args) async {
       await err.cancel();
       if (code != 0) throw StateError('Real-client smoke failed ($code).');
       if (args.contains('--feeds') && !args.contains('--flutter')) return;
-      if (!args.contains('--occurrences-only') &&
+      if (!args.contains('--freebusy-only') &&
+          !args.contains('--occurrences-only') &&
           !args.contains('--native-future-only') &&
           !args.contains('--feeds') &&
           !args.contains('--replies-only') &&
@@ -247,7 +250,9 @@ Future<void> main(List<String> args) async {
         '-d',
         'web-server',
         '--driver=test_driver/integration_test.dart',
-        args.contains('--recurring-responses')
+        args.contains('--freebusy')
+            ? '--target=integration_test/free_busy_exchange_smoke_test.dart'
+            : args.contains('--recurring-responses')
             ? '--target=integration_test/recurring_occurrence_response_smoke_test.dart'
             : args.contains('--bundle-occurrence-responses')
             ? '--target=integration_test/bundle_occurrence_response_smoke_test.dart'
@@ -302,6 +307,7 @@ Future<void> main(List<String> args) async {
       final output = result.stdout.transform(utf8.decoder).listen(stdout.write);
       final error = result.stderr.transform(utf8.decoder).listen(stderr.write);
       final focused =
+          args.contains('--freebusy') ||
           args.contains('--recurring-responses') ||
           args.contains('--bundle-occurrence-responses') ||
           args.contains('--bundle-responses') ||

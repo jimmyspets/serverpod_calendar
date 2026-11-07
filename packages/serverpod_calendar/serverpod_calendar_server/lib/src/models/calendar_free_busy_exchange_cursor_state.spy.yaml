@@ -1,0 +1,11 @@
+class: CalendarFreeBusyExchangeCursorState
+serverOnly: true
+immutable: true
+fields:
+  version: int
+  family: String
+  ownerKey: String
+  criteriaDigest: String
+  metadataVectorDigest: String
+  timezoneIdentity: String
+  activityCommandId: UuidValue?

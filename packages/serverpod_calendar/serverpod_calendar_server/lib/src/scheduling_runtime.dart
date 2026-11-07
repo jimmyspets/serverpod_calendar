@@ -101,9 +101,16 @@ enum CalendarSchedulingTransportOutcome {
 }
 
 final class CalendarSchedulingTransportResult {
-  const CalendarSchedulingTransportResult(this.outcome, {this.receipt});
+  const CalendarSchedulingTransportResult(
+    this.outcome, {
+    this.receipt,
+    this.mimeDigest,
+  });
   final CalendarSchedulingTransportOutcome outcome;
   final String? receipt;
+
+  /// Optional SHA-256 of the actual host-composed MIME, never inferred by a worker.
+  final String? mimeDigest;
 }
 
 final class CalendarSchedulingSubmission {

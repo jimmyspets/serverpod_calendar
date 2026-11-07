@@ -26,6 +26,7 @@ import 'package:serverpod_notifications_server/serverpod_notifications_server.da
 
 import '../auth/email_idp_endpoint.dart' as _iuc1hd5t;
 import '../auth/refresh_jwt_tokens_endpoint.dart' as _ih79u0oj;
+import '../endpoints/free_busy_demo_endpoint.dart' as _iak2lljh;
 import '../endpoints/invitation_demo_endpoint.dart' as _i9j0zg07;
 import '../endpoints/notification_stream_endpoint.dart' as _ixiz6tz4;
 import '../endpoints/scheduling_demo_endpoint.dart' as _ik68ors2;
@@ -46,6 +47,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'refreshJwtTokens',
+          null,
+        ),
+      'freeBusyDemo': _iak2lljh.FreeBusyDemoEndpoint()
+        ..initialize(
+          server,
+          'freeBusyDemo',
           null,
         ),
       'invitationDemo': _i9j0zg07.InvitationDemoEndpoint()
@@ -276,6 +283,82 @@ class Endpoints extends _is.EndpointDispatch {
                       .refreshAccessToken(
                         session,
                         refreshToken: params['refreshToken'],
+                      ),
+        ),
+      },
+    );
+    connectors['freeBusyDemo'] = _is.EndpointConnector(
+      name: 'freeBusyDemo',
+      endpoint: endpoints['freeBusyDemo']!,
+      methodConnectors: {
+        'simulate': _is.MethodConnector(
+          name: 'simulate',
+          params: {
+            'calendarId': _is.ParameterDescription(
+              name: 'calendarId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'commandId': _is.ParameterDescription(
+              name: 'commandId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'fromUtc': _is.ParameterDescription(
+              name: 'fromUtc',
+              type: _is.getType<DateTime>(),
+              nullable: false,
+            ),
+            'untilUtc': _is.ParameterDescription(
+              name: 'untilUtc',
+              type: _is.getType<DateTime>(),
+              nullable: false,
+            ),
+            'publish': _is.ParameterDescription(
+              name: 'publish',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['freeBusyDemo'] as _iak2lljh.FreeBusyDemoEndpoint)
+                      .simulate(
+                        session,
+                        params['calendarId'],
+                        params['commandId'],
+                        params['fromUtc'],
+                        params['untilUtc'],
+                        publish: params['publish'],
+                      ),
+        ),
+        'simulateReply': _is.MethodConnector(
+          name: 'simulateReply',
+          params: {
+            'outgoingId': _is.ParameterDescription(
+              name: 'outgoingId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'commandId': _is.ParameterDescription(
+              name: 'commandId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['freeBusyDemo'] as _iak2lljh.FreeBusyDemoEndpoint)
+                      .simulateReply(
+                        session,
+                        params['outgoingId'],
+                        params['commandId'],
                       ),
         ),
       },

@@ -1,0 +1,8 @@
+class: CalendarFreeBusyPublishRequest
+immutable: true
+fields:
+  commandId: UuidValue
+  calendarId: UuidValue
+  fromUtc: DateTime
+  untilUtc: DateTime
+  recipients: List<String>

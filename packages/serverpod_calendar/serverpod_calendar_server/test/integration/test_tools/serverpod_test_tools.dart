@@ -110,8 +110,22 @@ import 'package:serverpod_calendar_server/src/generated/calendar_event_view.dart
     as _i6zsydj7;
 import 'package:serverpod_calendar_server/src/generated/calendar_field_group.dart'
     as _i3d02yxy;
+import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_command_receipt.dart'
+    as _ike0m53m;
+import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_delivery_page.dart'
+    as _i11y1qo0;
+import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_message_page.dart'
+    as _id23kppo;
+import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_message_view.dart'
+    as _i1mp8x1h;
+import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_outgoing_page.dart'
+    as _iqgc1pi8;
+import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_publish_request.dart'
+    as _izrclvdh;
 import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_query.dart'
     as _imwtl5fr;
+import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_reply_request.dart'
+    as _i62tyvsw;
 import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_view.dart'
     as _i3y4q8eh;
 import 'package:serverpod_calendar_server/src/generated/calendar_invitation_adoption_receipt.dart'
@@ -388,6 +402,8 @@ class TestEndpoints {
 
   late final _CalendarEventEndpoint calendarEvent;
 
+  late final _CalendarFreeBusyExchangeEndpoint calendarFreeBusyExchange;
+
   late final _CalendarInvitationEndpoint calendarInvitation;
 
   late final _CalendarTaskEndpoint calendarTask;
@@ -421,6 +437,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     calendarEvent = _CalendarEventEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    calendarFreeBusyExchange = _CalendarFreeBusyExchangeEndpoint(
       endpoints,
       serializationManager,
     );
@@ -2376,6 +2396,350 @@ class _CalendarEventEndpoint {
           _localUniqueSession,
           _localCallContext.arguments,
         ) as _ida.Future<_irjxy316.CalendarEventReceipt?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _CalendarFreeBusyExchangeEndpoint {
+  _CalendarFreeBusyExchangeEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_id23kppo.CalendarFreeBusyMessagePage> listFreeBusyInbox(
+    _ist.TestSessionBuilder sessionBuilder, {
+    required int pageSize,
+    String? cursor,
+  }) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarFreeBusyExchange',
+            method: 'listFreeBusyInbox',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarFreeBusyExchange',
+          methodName: 'listFreeBusyInbox',
+          parameters: _ist.testObjectToJson({
+            'pageSize': pageSize,
+            'cursor': cursor,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_id23kppo.CalendarFreeBusyMessagePage>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i1mp8x1h.CalendarFreeBusyMessageView> getFreeBusyMessage(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue sourceId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarFreeBusyExchange',
+            method: 'getFreeBusyMessage',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarFreeBusyExchange',
+          methodName: 'getFreeBusyMessage',
+          parameters: _ist.testObjectToJson({'sourceId': sourceId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i1mp8x1h.CalendarFreeBusyMessageView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_idt.ByteData> getFreeBusySource(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue sourceId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarFreeBusyExchange',
+            method: 'getFreeBusySource',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarFreeBusyExchange',
+          methodName: 'getFreeBusySource',
+          parameters: _ist.testObjectToJson({'sourceId': sourceId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_idt.ByteData>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i1mp8x1h.CalendarFreeBusyMessageView> dismissFreeBusyMessage(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue sourceId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarFreeBusyExchange',
+            method: 'dismissFreeBusyMessage',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarFreeBusyExchange',
+          methodName: 'dismissFreeBusyMessage',
+          parameters: _ist.testObjectToJson({'sourceId': sourceId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i1mp8x1h.CalendarFreeBusyMessageView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_iqgc1pi8.CalendarFreeBusyOutgoingPage> listFreeBusyOutgoing(
+    _ist.TestSessionBuilder sessionBuilder, {
+    required int pageSize,
+    String? cursor,
+  }) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarFreeBusyExchange',
+            method: 'listFreeBusyOutgoing',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarFreeBusyExchange',
+          methodName: 'listFreeBusyOutgoing',
+          parameters: _ist.testObjectToJson({
+            'pageSize': pageSize,
+            'cursor': cursor,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_iqgc1pi8.CalendarFreeBusyOutgoingPage>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i11y1qo0.CalendarFreeBusyDeliveryPage> freeBusyDeliveryActivity(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue commandId, {
+    required int pageSize,
+    String? cursor,
+  }) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarFreeBusyExchange',
+            method: 'freeBusyDeliveryActivity',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarFreeBusyExchange',
+          methodName: 'freeBusyDeliveryActivity',
+          parameters: _ist.testObjectToJson({
+            'commandId': commandId,
+            'pageSize': pageSize,
+            'cursor': cursor,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i11y1qo0.CalendarFreeBusyDeliveryPage>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ike0m53m.CalendarFreeBusyCommandReceipt> publishFreeBusy(
+    _ist.TestSessionBuilder sessionBuilder,
+    _izrclvdh.CalendarFreeBusyPublishRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarFreeBusyExchange',
+            method: 'publishFreeBusy',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarFreeBusyExchange',
+          methodName: 'publishFreeBusy',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ike0m53m.CalendarFreeBusyCommandReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ike0m53m.CalendarFreeBusyCommandReceipt> requestFreeBusy(
+    _ist.TestSessionBuilder sessionBuilder,
+    _izrclvdh.CalendarFreeBusyPublishRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarFreeBusyExchange',
+            method: 'requestFreeBusy',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarFreeBusyExchange',
+          methodName: 'requestFreeBusy',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ike0m53m.CalendarFreeBusyCommandReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ike0m53m.CalendarFreeBusyCommandReceipt> replyFreeBusy(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i62tyvsw.CalendarFreeBusyReplyRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarFreeBusyExchange',
+            method: 'replyFreeBusy',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarFreeBusyExchange',
+          methodName: 'replyFreeBusy',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ike0m53m.CalendarFreeBusyCommandReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ike0m53m.CalendarFreeBusyCommandReceipt> refuseFreeBusy(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i62tyvsw.CalendarFreeBusyReplyRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarFreeBusyExchange',
+            method: 'refuseFreeBusy',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarFreeBusyExchange',
+          methodName: 'refuseFreeBusy',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ike0m53m.CalendarFreeBusyCommandReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ike0m53m.CalendarFreeBusyCommandReceipt> withdrawFreeBusyCommand(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue commandId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarFreeBusyExchange',
+            method: 'withdrawFreeBusyCommand',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarFreeBusyExchange',
+          methodName: 'withdrawFreeBusyCommand',
+          parameters: _ist.testObjectToJson({'commandId': commandId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ike0m53m.CalendarFreeBusyCommandReceipt>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
