@@ -350,3 +350,10 @@ ADR 0178 adds `test/unit/recurring_invitation_response_values_test.dart` in the 
 ## Authenticated free/busy exchange checks
 
 ADR 0180 is covered by the calendar module `test/unit/free_busy_exchange_values_test.dart`, example `test/unit/free_busy_mime_test.dart` and `test/integration/free_busy_exchanges_test.dart` (SDK concurrency 1). From the root, `python tool/metadata_upgrade_smoke.py --freebusy-only` verifies populated legacy cursor preservation; the full upgrade chain retains it. `dart run tool/freebusy_work_smoke.dart` exercises two independent processes, queue/lease races, actual process loss and source/owner/route withdrawal. Build the stopped owned host using `./tool/build-host.ps1`, then run `dart run tool/host_smoke.dart --freebusy-only --freebusy --flutter` for generated JWT clients and the focused connected Flutter journey. Keep database/host/probe harnesses serial. The full check also includes this journey and all prior coverage. No real email or deployment is configured. See [the scoped guide](authenticated-freebusy-exchanges.md).
+
+
+## Subject/common-free export checks
+
+ADR 0181 focused module tests are `test/unit/subject_free_busy_export_values_test.dart` (VM and Chrome). From the example server, run `dart test --concurrency=1 test/integration/subject_free_busy_export_test.dart`; directly affected regressions use `dart test --concurrency=1 test/integration/calendar_test.dart --name "subject search|free busy export"`. No schema migration is generated for this immutable transport DTO.
+
+Build the stopped owned example host, then run `dart run tool/host_smoke.dart --subject-freebusy-only --subject-freebusy --flutter` for real two-host JWT state/authority and the connected export journey. `--browser-only --subject-freebusy --flutter` repeats only that UI target. Full checks retain the new SDK file, generated-client helper and connected journey alongside all existing tests. Use focused checks during implementation, complete VM/Chrome/affected integrations at batch end, and full exact-head hosted checks before readiness. See [the profile](subject-freebusy-export.md).

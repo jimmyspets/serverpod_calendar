@@ -1,6 +1,6 @@
 # ADR 0181: Complete subject and common-free VFREEBUSY exports
 
-Status: **Proposed; explicit maintainer agreement required before implementation.** This closes an existing roadmap export gap without adding another durable scheduling workflow. ADR 0180 validation remains independent; no pending hosted result is treated as successful.
+Status: **Accepted by explicit maintainer agreement, 2026-11-07.** The maintainer approved the complete stateless export batch in PR #193. Implementation and validation are recorded separately. This closes an existing roadmap export gap without adding another durable scheduling workflow. ADR 0180 validation remains independent; no pending hosted result is treated as successful.
 
 ## Evidence and bounded group
 
@@ -10,7 +10,7 @@ Group a stateless subject/common-free export endpoint, one immutable request DTO
 
 ## Input and output
 
-Propose `exportSubjectFreeBusy(CalendarSubjectFreeBusyExportRequest) -> ByteData` with explicit UTC from/until, selected opaque host targets and `perTarget` or `commonFree` mode. Use existing subject validation/deduplication: at most 32 raw target inputs, eight distinct targets, eight calendars per target and 16 total calendar evaluations in one host scope and transaction. First occurrence order survives deduplication. The window is positive, whole-second UTC, at most 31 days within [1970,2100), with only the existing exclusive-midnight endpoint exception.
+Expose `exportSubjectFreeBusy(CalendarSubjectFreeBusyExportRequest) -> ByteData` with explicit UTC from/until, selected opaque host targets and `perTarget` or `commonFree` mode. Use existing subject validation/deduplication: at most 32 raw target inputs, eight distinct targets, eight calendars per target and 16 total calendar evaluations in one host scope and transaction. First occurrence order survives deduplication. The window is positive, whole-second UTC, at most 31 days within [1970,2100), with only the existing exclusive-midnight endpoint exception.
 
 The request has no minimum-duration filter. Calculate with a one-second minimum only for compatibility with the existing query shape, and serialize the complete partition independently of derived slots. `perTarget` creates one VFREEBUSY component per normalized selected target, in that order. `commonFree` creates one component from the complete aggregate partition, where free requires every selected target to be free. Preserve busy/tentative/unavailable classifications through the existing complete-partition combiner. Do not expose contributor identities, event IDs, labels, titles, counts or host resolution revisions.
 
@@ -20,7 +20,7 @@ All requested targets must be complete and authorized before any bytes are retur
 
 ## Authorization and calculation
 
-Add independent `CalendarPermission.exportSubjectFreeBusy` for each actual selected subject, alongside `readSubjectAvailability`, existing per-calendar `projectCalendarAvailability` and every actual event/rule source projection. Reuse the immutable complete query/target context and actual parent/object snapshots. Subject-summary rights remain independent of direct calendar-detail or direct per-calendar export rights; an export-specific subject gate controls downloading this summary.
+Use independent `CalendarPermission.exportSubjectFreeBusy` for each actual selected subject, alongside `readSubjectAvailability`, existing per-calendar `projectCalendarAvailability` and every actual event/rule source projection. Reuse the immutable complete query/target context and actual parent/object snapshots. Subject-summary rights remain independent of direct calendar-detail or direct per-calendar export rights; an export-specific subject gate controls downloading this summary.
 
 Normalize/freeze all client collections before async work. Resolve every target through the trusted host adapter, retaining its complete contributor set/revision privately. Keep data loading, candidate planning, calculation and serialization inside the active scope transaction. Collect every actual authorization request, not detail-list filters. Before returning output, recheck all target/export/source permissions and every trusted resolution revision/set plus the actor/policy revision. Changed or incomplete resolution fails the whole export. Preserve declared coordinated versus external fresh-check guarantees; an after-check external revocation race remains.
 
@@ -41,3 +41,7 @@ The chosen profile keeps export authority independent and makes incomplete cover
 ## Remaining scope
 
 This is an authenticated download, not subject/common-free scheduling mail. Durable publication would require a separately reviewed owner/mailbox/source basis and deletion/dispatch contract. Larger/cross-scope searches, provider trust, real mail, remaining selected scheduling methods, operational cleanup and external-client/release evidence remain required separate work. No contract acceptance or synthetic round trip establishes blanket client interoperability.
+
+## Implementation and evidence
+
+The scoped service, pure anonymous packaging, immutable DTO/generated endpoint, example controls and two-host/Flutter validation now implement this accepted contract. See [the guide](../subject-freebusy-export.md) and [actual validation](../scaffold-validation.md). No table or migration is added; full exact-head hosted readiness remains separate.

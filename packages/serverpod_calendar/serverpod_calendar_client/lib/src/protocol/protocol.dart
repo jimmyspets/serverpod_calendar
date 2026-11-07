@@ -223,6 +223,7 @@ import 'calendar_settings_update_request.dart' as _i66us6t1;
 import 'calendar_subject_action.dart' as _i41idnki;
 import 'calendar_subject_availability.dart' as _imo3vsmf;
 import 'calendar_subject_change_request.dart' as _iuzjb8ji;
+import 'calendar_subject_free_busy_export_request.dart' as _i3eqorm2;
 import 'calendar_subject_view.dart' as _ir7mv910;
 import 'calendar_supplemental_metadata.dart' as _ixppc388;
 import 'calendar_supplemental_metadata_update_request.dart' as _iqx8dg15;
@@ -451,6 +452,7 @@ export 'calendar_settings_update_request.dart';
 export 'calendar_subject_action.dart';
 export 'calendar_subject_availability.dart';
 export 'calendar_subject_change_request.dart';
+export 'calendar_subject_free_busy_export_request.dart';
 export 'calendar_subject_view.dart';
 export 'calendar_supplemental_metadata.dart';
 export 'calendar_supplemental_metadata_update_request.dart';
@@ -698,6 +700,7 @@ class Protocol extends _isc.SerializationManager
       _isc.getType<_i41idnki.CalendarSubjectAction>,
       _isc.getType<_imo3vsmf.CalendarSubjectAvailability>,
       _isc.getType<_iuzjb8ji.CalendarSubjectChangeRequest>,
+      _isc.getType<_i3eqorm2.CalendarSubjectFreeBusyExportRequest>,
       _isc.getType<_ir7mv910.CalendarSubjectView>,
       _isc.getType<_ixppc388.CalendarSupplementalMetadata>,
       _isc.getType<_iqx8dg15.CalendarSupplementalMetadataUpdateRequest>,
@@ -932,6 +935,7 @@ class Protocol extends _isc.SerializationManager
       _isc.getType<_i41idnki.CalendarSubjectAction?>,
       _isc.getType<_imo3vsmf.CalendarSubjectAvailability?>,
       _isc.getType<_iuzjb8ji.CalendarSubjectChangeRequest?>,
+      _isc.getType<_i3eqorm2.CalendarSubjectFreeBusyExportRequest?>,
       _isc.getType<_ir7mv910.CalendarSubjectView?>,
       _isc.getType<_ixppc388.CalendarSupplementalMetadata?>,
       _isc.getType<_iqx8dg15.CalendarSupplementalMetadataUpdateRequest?>,
@@ -1247,6 +1251,7 @@ class Protocol extends _isc.SerializationManager
       'CalendarSubjectAction',
       'CalendarSubjectAvailability',
       'CalendarSubjectChangeRequest',
+      'CalendarSubjectFreeBusyExportRequest',
       'CalendarSubjectView',
       'CalendarSupplementalMetadata',
       'CalendarSupplementalMetadataUpdateRequest',
@@ -1915,6 +1920,9 @@ class Protocol extends _isc.SerializationManager
     }
     if (t == _iuzjb8ji.CalendarSubjectChangeRequest) {
       return _iuzjb8ji.CalendarSubjectChangeRequest.fromJson(data) as T;
+    }
+    if (t == _i3eqorm2.CalendarSubjectFreeBusyExportRequest) {
+      return _i3eqorm2.CalendarSubjectFreeBusyExportRequest.fromJson(data) as T;
     }
     if (t == _ir7mv910.CalendarSubjectView) {
       return _ir7mv910.CalendarSubjectView.fromJson(data) as T;
@@ -3196,6 +3204,12 @@ class Protocol extends _isc.SerializationManager
               : null)
           as T;
     }
+    if (t == _isc.getType<_i3eqorm2.CalendarSubjectFreeBusyExportRequest?>()) {
+      return (data != null
+              ? _i3eqorm2.CalendarSubjectFreeBusyExportRequest.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _isc.getType<_ir7mv910.CalendarSubjectView?>()) {
       return (data != null
               ? _ir7mv910.CalendarSubjectView.fromJson(data)
@@ -4390,6 +4404,8 @@ class Protocol extends _isc.SerializationManager
       _i41idnki.CalendarSubjectAction => 'CalendarSubjectAction',
       _imo3vsmf.CalendarSubjectAvailability => 'CalendarSubjectAvailability',
       _iuzjb8ji.CalendarSubjectChangeRequest => 'CalendarSubjectChangeRequest',
+      _i3eqorm2.CalendarSubjectFreeBusyExportRequest =>
+        'CalendarSubjectFreeBusyExportRequest',
       _ir7mv910.CalendarSubjectView => 'CalendarSubjectView',
       _ixppc388.CalendarSupplementalMetadata => 'CalendarSupplementalMetadata',
       _iqx8dg15.CalendarSupplementalMetadataUpdateRequest =>
@@ -4829,6 +4845,8 @@ class Protocol extends _isc.SerializationManager
         return 'CalendarSubjectAvailability';
       case _iuzjb8ji.CalendarSubjectChangeRequest():
         return 'CalendarSubjectChangeRequest';
+      case _i3eqorm2.CalendarSubjectFreeBusyExportRequest():
+        return 'CalendarSubjectFreeBusyExportRequest';
       case _ir7mv910.CalendarSubjectView():
         return 'CalendarSubjectView';
       case _ixppc388.CalendarSupplementalMetadata():
@@ -5630,6 +5648,11 @@ class Protocol extends _isc.SerializationManager
     }
     if (dataClassName == 'CalendarSubjectChangeRequest') {
       return deserialize<_iuzjb8ji.CalendarSubjectChangeRequest>(data['data']);
+    }
+    if (dataClassName == 'CalendarSubjectFreeBusyExportRequest') {
+      return deserialize<_i3eqorm2.CalendarSubjectFreeBusyExportRequest>(
+        data['data'],
+      );
     }
     if (dataClassName == 'CalendarSubjectView') {
       return deserialize<_ir7mv910.CalendarSubjectView>(data['data']);

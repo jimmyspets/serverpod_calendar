@@ -21,6 +21,7 @@ calendarAvailability:
   - preview:
   - deleteRule:
 calendarAvailabilitySearch:
+  - exportSubjectFreeBusy:
   - search:
 calendarDiagnostics:
   - check:

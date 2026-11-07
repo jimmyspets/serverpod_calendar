@@ -205,6 +205,8 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_settings_update_
     as _ixxutfio;
 import 'package:serverpod_calendar_client/src/protocol/calendar_subject_change_request.dart'
     as _i4hdn2j8;
+import 'package:serverpod_calendar_client/src/protocol/calendar_subject_free_busy_export_request.dart'
+    as _iiay4obb;
 import 'package:serverpod_calendar_client/src/protocol/calendar_subject_view.dart'
     as _iad1u4rm;
 import 'package:serverpod_calendar_client/src/protocol/calendar_supplemental_metadata_update_request.dart'
@@ -483,6 +485,14 @@ class EndpointCalendarAvailabilitySearch extends _isc.EndpointRef {
 
   @override
   String get name => 'serverpod_calendar.calendarAvailabilitySearch';
+
+  _ida.Future<_idt.ByteData> exportSubjectFreeBusy(
+    _iiay4obb.CalendarSubjectFreeBusyExportRequest request,
+  ) => caller.callServerEndpoint<_idt.ByteData>(
+    'serverpod_calendar.calendarAvailabilitySearch',
+    'exportSubjectFreeBusy',
+    {'request': request},
+  );
 
   _ida.Future<_ieqmn71v.CalendarAvailabilitySearchView> search(
     _inwpo91l.CalendarAvailabilitySearchQuery query,

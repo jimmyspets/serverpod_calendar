@@ -208,6 +208,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_settings_update
     as _i3f5mgyk;
 import 'package:serverpod_calendar_server/src/generated/calendar_subject_change_request.dart'
     as _ib1wmljm;
+import 'package:serverpod_calendar_server/src/generated/calendar_subject_free_busy_export_request.dart'
+    as _iluepsko;
 import 'package:serverpod_calendar_server/src/generated/calendar_subject_view.dart'
     as _iwx7nyid;
 import 'package:serverpod_calendar_server/src/generated/calendar_supplemental_metadata_update_request.dart'
@@ -1110,6 +1112,35 @@ class _CalendarAvailabilitySearchEndpoint {
   final _is.EndpointDispatch _endpointDispatch;
 
   final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_idt.ByteData> exportSubjectFreeBusy(
+    _ist.TestSessionBuilder sessionBuilder,
+    _iluepsko.CalendarSubjectFreeBusyExportRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarAvailabilitySearch',
+            method: 'exportSubjectFreeBusy',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarAvailabilitySearch',
+          methodName: 'exportSubjectFreeBusy',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_idt.ByteData>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 
   _ida.Future<_i5d3khya.CalendarAvailabilitySearchView> search(
     _ist.TestSessionBuilder sessionBuilder,
