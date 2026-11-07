@@ -237,7 +237,8 @@ The optional module now has a scoped event-subscription implementation under [AD
 - [x] Implement bounded list-based per-target/common-free search with elapsed-second minimum, exact target deduplication, response snapshot metadata and complete/unknown coverage. Common-free requires every target complete; shared source/evaluation limits never manufacture free time.
 - [ ] Design cross-scope/group-member expansion and production indexed contributor resolution as needed, preserving complete source coverage and declared policy coordination.
 - [x] Export [authorized per-calendar VFREEBUSY UTC snapshots](freebusy-export.md) under ADR 0077, independently of subscriptions and detail/raw-rule reads, with complete-or-failure coverage, final source checks, private-data exclusion, committed cross-host changes and generated-client/Flutter evidence. Reads are not reservations.
-- [ ] Design subject/common-free VFREEBUSY export and scheduling messages separately; raw rules remain authenticated-only and out of bearer event feeds.
+- [x] Implement authenticated subject/common-free VFREEBUSY snapshot download under ADR 0181; raw rules remain authenticated-only.
+- [ ] Design subject/common-free scheduling mail separately; snapshots grant no mailbox or delivery authority.
 
 ## Scheduling
 
@@ -999,9 +1000,10 @@ Accepted [ADR 0180](adr/0180-authenticated-bounded-freebusy-exchanges.md) adds t
 This next method-family contract is dependency-driven work in the scheduling lane. It does not defer the remaining bundle/range lifecycle, other selected methods, operational cleanup or release evidence.
 
 
-## Proposed subject/common-free snapshot downloads
+## Subject/common-free snapshot downloads
 
-[Proposed ADR 0181](adr/0181-subject-common-freebusy-export.md) closes the existing authenticated export gap: per-target ordered VFREEBUSY components or one common-free aggregate, with complete all-or-nothing coverage and independent subject export authority plus existing summary/source rights. It proposes one immutable generated request DTO and a stateless endpoint, shared budgets/final resolution and source rechecks, anonymous wire identities, and grouped client/Flutter/two-host validation. No SQL, durable scheduling, mailbox, worker, HTTP-feed change or implementation is approved by this proposal. Subject/common-free mail, larger/cross-scope queries and remaining release requirements stay separate.
+Accepted [ADR 0181](adr/0181-subject-common-freebusy-export.md) implements stateless authenticated subject/common-free VFREEBUSY download: ordered per-target components or one complete aggregate, independent subject export authority, exact final source/resolution checks, shared budgets and anonymous snapshot identities. Unknown or denied contributors reject the whole file. One immutable request DTO and a generated endpoint extend the Flutter example without SQL, durable mail, workers or feed changes. See [the implemented profile](subject-freebusy-export.md) and the separate validation record. Subject/common-free mail and remaining release requirements stay separate.
 
-- [ ] Review the complete ADR 0181 query/API/disclosure/budget contract before implementation.
-- [ ] After agreement, implement and validate this stateless export group once; retain full exact-head hosted readiness.
+- [x] Obtain explicit agreement on ADR 0181 before model/API implementation.
+- [x] Implement and locally validate the grouped stateless export: pure VM/Chrome, independent/final-source SDK checks, two-host JWT and connected Flutter, stable generation and release web build; commit once.
+- [ ] Inspect exact-head full hosted outcomes before this export implementation is ready.

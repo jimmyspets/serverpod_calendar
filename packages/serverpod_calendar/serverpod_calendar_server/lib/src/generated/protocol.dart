@@ -278,6 +278,7 @@ import 'calendar_settings_update_request.dart' as _i66us6t1;
 import 'calendar_subject_action.dart' as _i41idnki;
 import 'calendar_subject_availability.dart' as _imo3vsmf;
 import 'calendar_subject_change_request.dart' as _iuzjb8ji;
+import 'calendar_subject_free_busy_export_request.dart' as _i3eqorm2;
 import 'calendar_subject_record.dart' as _i76vfrve;
 import 'calendar_subject_view.dart' as _ir7mv910;
 import 'calendar_supplemental_metadata.dart' as _ixppc388;
@@ -574,6 +575,7 @@ export 'calendar_settings_update_request.dart';
 export 'calendar_subject_action.dart';
 export 'calendar_subject_availability.dart';
 export 'calendar_subject_change_request.dart';
+export 'calendar_subject_free_busy_export_request.dart';
 export 'calendar_subject_record.dart';
 export 'calendar_subject_view.dart';
 export 'calendar_supplemental_metadata.dart';
@@ -888,6 +890,7 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.getType<_i41idnki.CalendarSubjectAction>,
       _is.getType<_imo3vsmf.CalendarSubjectAvailability>,
       _is.getType<_iuzjb8ji.CalendarSubjectChangeRequest>,
+      _is.getType<_i3eqorm2.CalendarSubjectFreeBusyExportRequest>,
       _is.getType<_i76vfrve.CalendarSubjectRecord>,
       _is.getType<_ir7mv910.CalendarSubjectView>,
       _is.getType<_ixppc388.CalendarSupplementalMetadata>,
@@ -1188,6 +1191,7 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.getType<_i41idnki.CalendarSubjectAction?>,
       _is.getType<_imo3vsmf.CalendarSubjectAvailability?>,
       _is.getType<_iuzjb8ji.CalendarSubjectChangeRequest?>,
+      _is.getType<_i3eqorm2.CalendarSubjectFreeBusyExportRequest?>,
       _is.getType<_i76vfrve.CalendarSubjectRecord?>,
       _is.getType<_ir7mv910.CalendarSubjectView?>,
       _is.getType<_ixppc388.CalendarSupplementalMetadata?>,
@@ -1593,6 +1597,7 @@ class Protocol extends _is.DatabaseSerializationManager
       'CalendarSubjectAction',
       'CalendarSubjectAvailability',
       'CalendarSubjectChangeRequest',
+      'CalendarSubjectFreeBusyExportRequest',
       'CalendarSubjectRecord',
       'CalendarSubjectView',
       'CalendarSupplementalMetadata',
@@ -8450,6 +8455,9 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _iuzjb8ji.CalendarSubjectChangeRequest) {
       return _iuzjb8ji.CalendarSubjectChangeRequest.fromJson(data) as T;
     }
+    if (t == _i3eqorm2.CalendarSubjectFreeBusyExportRequest) {
+      return _i3eqorm2.CalendarSubjectFreeBusyExportRequest.fromJson(data) as T;
+    }
     if (t == _i76vfrve.CalendarSubjectRecord) {
       return _i76vfrve.CalendarSubjectRecord.fromJson(data) as T;
     }
@@ -10113,6 +10121,12 @@ class Protocol extends _is.DatabaseSerializationManager
               : null)
           as T;
     }
+    if (t == _is.getType<_i3eqorm2.CalendarSubjectFreeBusyExportRequest?>()) {
+      return (data != null
+              ? _i3eqorm2.CalendarSubjectFreeBusyExportRequest.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _is.getType<_i76vfrve.CalendarSubjectRecord?>()) {
       return (data != null
               ? _i76vfrve.CalendarSubjectRecord.fromJson(data)
@@ -11647,6 +11661,8 @@ class Protocol extends _is.DatabaseSerializationManager
       _i41idnki.CalendarSubjectAction => 'CalendarSubjectAction',
       _imo3vsmf.CalendarSubjectAvailability => 'CalendarSubjectAvailability',
       _iuzjb8ji.CalendarSubjectChangeRequest => 'CalendarSubjectChangeRequest',
+      _i3eqorm2.CalendarSubjectFreeBusyExportRequest =>
+        'CalendarSubjectFreeBusyExportRequest',
       _i76vfrve.CalendarSubjectRecord => 'CalendarSubjectRecord',
       _ir7mv910.CalendarSubjectView => 'CalendarSubjectView',
       _ixppc388.CalendarSupplementalMetadata => 'CalendarSupplementalMetadata',
@@ -12209,6 +12225,8 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'CalendarSubjectAvailability';
       case _iuzjb8ji.CalendarSubjectChangeRequest():
         return 'CalendarSubjectChangeRequest';
+      case _i3eqorm2.CalendarSubjectFreeBusyExportRequest():
+        return 'CalendarSubjectFreeBusyExportRequest';
       case _i76vfrve.CalendarSubjectRecord():
         return 'CalendarSubjectRecord';
       case _ir7mv910.CalendarSubjectView():
@@ -13260,6 +13278,11 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (dataClassName == 'CalendarSubjectChangeRequest') {
       return deserialize<_iuzjb8ji.CalendarSubjectChangeRequest>(data['data']);
+    }
+    if (dataClassName == 'CalendarSubjectFreeBusyExportRequest') {
+      return deserialize<_i3eqorm2.CalendarSubjectFreeBusyExportRequest>(
+        data['data'],
+      );
     }
     if (dataClassName == 'CalendarSubjectRecord') {
       return deserialize<_i76vfrve.CalendarSubjectRecord>(data['data']);

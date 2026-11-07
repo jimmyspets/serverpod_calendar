@@ -113,6 +113,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_settings_update
     as _i3f5mgyk;
 import 'package:serverpod_calendar_server/src/generated/calendar_subject_change_request.dart'
     as _ib1wmljm;
+import 'package:serverpod_calendar_server/src/generated/calendar_subject_free_busy_export_request.dart'
+    as _iluepsko;
 import 'package:serverpod_calendar_server/src/generated/calendar_supplemental_metadata_update_request.dart'
     as _ito4h8gf;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_assignments_request.dart'
@@ -743,6 +745,28 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'calendarAvailabilitySearch',
       endpoint: endpoints['calendarAvailabilitySearch']!,
       methodConnectors: {
+        'exportSubjectFreeBusy': _is.MethodConnector(
+          name: 'exportSubjectFreeBusy',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is
+                  .getType<_iluepsko.CalendarSubjectFreeBusyExportRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAvailabilitySearch']
+                          as _icfitiep.CalendarAvailabilitySearchEndpoint)
+                      .exportSubjectFreeBusy(
+                        session,
+                        params['request'],
+                      ),
+        ),
         'search': _is.MethodConnector(
           name: 'search',
           params: {

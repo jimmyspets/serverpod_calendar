@@ -49,6 +49,7 @@ enum CalendarPermission {
   exportEvents,
   importEvents,
   exportFreeBusy,
+  exportSubjectFreeBusy,
   replaceAvailabilityFromImport,
   exportAvailability,
   importAvailability,

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
@@ -29,6 +31,7 @@ class _AvailabilitySearchScreenState extends State<AvailabilitySearchScreen> {
   final _targets = <_TargetFields>[];
   bool _busy = true;
   String? _error;
+  String? _exportText;
   cal.CalendarAvailabilitySearchView? _result;
   cal.CalendarAvailabilitySearchMode _mode =
       cal.CalendarAvailabilitySearchMode.commonFree;
@@ -70,7 +73,62 @@ class _AvailabilitySearchScreenState extends State<AvailabilitySearchScreen> {
   }
 
   void _invalidate() {
-    if (_result != null) setState(() => _result = null);
+    if (_result != null || _exportText != null) {
+      setState(() {
+        _result = null;
+        _exportText = null;
+      });
+    }
+  }
+
+  List<cal.CalendarAvailabilityTarget> _selectedTargets() => [
+    for (final t in _targets)
+      cal.CalendarAvailabilityTarget(
+        namespace: t.namespace.text,
+        kind: t.kind.text,
+        externalId: t.reference.text,
+      ),
+  ];
+
+  Future<void> _export() async {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _busy = true;
+      _error = null;
+      _result = null;
+      _exportText = null;
+    });
+    try {
+      final bytes = await widget
+          .client
+          .modules
+          .serverpod_calendar
+          .calendarAvailabilitySearch
+          .exportSubjectFreeBusy(
+            cal.CalendarSubjectFreeBusyExportRequest(
+              targets: _selectedTargets(),
+              fromUtc: _utc(_from.text),
+              untilUtc: _utc(_until.text),
+              mode: _mode,
+            ),
+          );
+      final value = utf8.decode(
+        bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+      );
+      if (mounted) setState(() => _exportText = value);
+    } catch (e) {
+      if (mounted) {
+        setState(
+          () => _error = e is cal.CalendarException
+              ? e.message
+              : e is FormatException
+              ? e.message
+              : 'Availability export failed. No complete file was returned.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   DateTime _utc(String input) {
@@ -90,6 +148,7 @@ class _AvailabilitySearchScreenState extends State<AvailabilitySearchScreen> {
       _busy = true;
       _error = null;
       _result = null;
+      _exportText = null;
     });
     try {
       if (!RegExp(r'^\d+$').hasMatch(_minimum.text)) {
@@ -198,6 +257,7 @@ class _AvailabilitySearchScreenState extends State<AvailabilitySearchScreen> {
                   : (mode) => setState(() {
                       _mode = mode!;
                       _result = null;
+                      _exportText = null;
                     }),
             ),
             for (var i = 0; i < _targets.length; i++)
@@ -224,6 +284,7 @@ class _AvailabilitySearchScreenState extends State<AvailabilitySearchScreen> {
                             : () => setState(() {
                                 _targets.removeAt(i).dispose();
                                 _result = null;
+                                _exportText = null;
                               }),
                         child: const Text('Remove target'),
                       ),
@@ -238,6 +299,7 @@ class _AvailabilitySearchScreenState extends State<AvailabilitySearchScreen> {
                   : () => setState(() {
                       _targets.add(_TargetFields());
                       _result = null;
+                      _exportText = null;
                     }),
               child: const Text('Add target'),
             ),
@@ -246,6 +308,19 @@ class _AvailabilitySearchScreenState extends State<AvailabilitySearchScreen> {
               onPressed: _busy ? null : _search,
               child: const Text('Find availability'),
             ),
+            const Text(
+              'Export includes the complete partition; the minimum duration only filters search results. Per-target file components follow selection order after exact duplicates are removed. The file contains no target names or IDs. Unknown coverage rejects the whole file. No mail is sent.',
+            ),
+            OutlinedButton(
+              key: const Key('search-export'),
+              onPressed: _busy || _targets.isEmpty ? null : _export,
+              child: const Text('Export complete VFREEBUSY snapshots'),
+            ),
+            if (_exportText != null)
+              SelectableText(
+                _exportText!,
+                key: const Key('search-export-result'),
+              ),
             if (result != null) ...[
               Text(
                 'Calculated ${result.calculatedAtUtc.toIso8601String()}; ${result.fromUtc.toIso8601String()} — ${result.untilUtc.toIso8601String()}',
