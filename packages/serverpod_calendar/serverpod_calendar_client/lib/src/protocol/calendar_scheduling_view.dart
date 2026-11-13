@@ -17,6 +17,7 @@ import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
 
 import 'calendar_event_origin.dart' as _ipbrznp8;
 import 'calendar_event_timing.dart' as _ieswiaty;
+import 'calendar_scheduling_binding_purpose.dart' as _igxtgzw0;
 import 'calendar_scheduling_delivery_view.dart' as _i63ky642;
 import 'calendar_scheduling_publication_kind.dart' as _il38fbb4;
 
@@ -24,6 +25,7 @@ import 'calendar_scheduling_publication_kind.dart' as _il38fbb4;
 abstract class CalendarSchedulingView
     implements _isc.SerializableModel, _isc.ProtocolSerialization {
   const CalendarSchedulingView._({
+    this.purpose,
     required this.eventId,
     required this.eventRevision,
     required this.origin,
@@ -44,6 +46,7 @@ abstract class CalendarSchedulingView
        hasPublishedRangeCancellation = hasPublishedRangeCancellation ?? false;
 
   const factory CalendarSchedulingView({
+    _igxtgzw0.CalendarSchedulingBindingPurpose? purpose,
     required _isc.UuidValue eventId,
     required int eventRevision,
     required _ipbrznp8.CalendarEventOrigin origin,
@@ -65,6 +68,11 @@ abstract class CalendarSchedulingView
     Map<String, dynamic> jsonSerialization,
   ) {
     return CalendarSchedulingView(
+      purpose: jsonSerialization['purpose'] == null
+          ? null
+          : _igxtgzw0.CalendarSchedulingBindingPurpose.fromJson(
+              (jsonSerialization['purpose'] as String),
+            ),
       eventId: _isc.UuidValueJsonExtension.fromJson(
         jsonSerialization['eventId'],
       ),
@@ -127,6 +135,8 @@ abstract class CalendarSchedulingView
     );
   }
 
+  final _igxtgzw0.CalendarSchedulingBindingPurpose? purpose;
+
   final _isc.UuidValue eventId;
 
   final int eventRevision;
@@ -161,6 +171,7 @@ abstract class CalendarSchedulingView
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
   CalendarSchedulingView copyWith({
+    _igxtgzw0.CalendarSchedulingBindingPurpose? purpose,
     _isc.UuidValue? eventId,
     int? eventRevision,
     _ipbrznp8.CalendarEventOrigin? origin,
@@ -187,6 +198,11 @@ abstract class CalendarSchedulingView
         ) ||
         other.runtimeType == runtimeType &&
             other is CalendarSchedulingView &&
+            (identical(
+                  other.purpose,
+                  purpose,
+                ) ||
+                other.purpose == purpose) &&
             (identical(
                   other.eventId,
                   eventId,
@@ -269,6 +285,7 @@ abstract class CalendarSchedulingView
   int get hashCode {
     return Object.hash(
       runtimeType,
+      purpose,
       eventId,
       eventRevision,
       origin,
@@ -291,6 +308,7 @@ abstract class CalendarSchedulingView
   Map<String, dynamic> toJson() {
     return {
       '__className__': 'serverpod_calendar.CalendarSchedulingView',
+      if (purpose != null) 'purpose': purpose?.toJson(),
       'eventId': eventId.toJson(),
       'eventRevision': eventRevision,
       'origin': origin.toJson(),
@@ -314,6 +332,7 @@ abstract class CalendarSchedulingView
   Map<String, dynamic> toJsonForProtocol() {
     return {
       '__className__': 'serverpod_calendar.CalendarSchedulingView',
+      if (purpose != null) 'purpose': purpose?.toJson(),
       'eventId': eventId.toJson(),
       'eventRevision': eventRevision,
       'origin': origin.toJson(),
@@ -352,6 +371,7 @@ class _UndefinedCalendarSchedulingView$originalStart
 
 class _CalendarSchedulingViewImpl extends CalendarSchedulingView {
   const _CalendarSchedulingViewImpl({
+    _igxtgzw0.CalendarSchedulingBindingPurpose? purpose,
     required _isc.UuidValue eventId,
     required int eventRevision,
     required _ipbrznp8.CalendarEventOrigin origin,
@@ -368,6 +388,7 @@ class _CalendarSchedulingViewImpl extends CalendarSchedulingView {
     required bool hasLocalChanges,
     required List<_i63ky642.CalendarSchedulingDeliveryView> deliveries,
   }) : super._(
+         purpose: purpose,
          eventId: eventId,
          eventRevision: eventRevision,
          origin: origin,
@@ -390,6 +411,7 @@ class _CalendarSchedulingViewImpl extends CalendarSchedulingView {
   @_isc.useResult
   @override
   CalendarSchedulingView copyWith({
+    Object? purpose = _Undefined,
     _isc.UuidValue? eventId,
     int? eventRevision,
     _ipbrznp8.CalendarEventOrigin? origin,
@@ -409,6 +431,9 @@ class _CalendarSchedulingViewImpl extends CalendarSchedulingView {
     List<_i63ky642.CalendarSchedulingDeliveryView>? deliveries,
   }) {
     return CalendarSchedulingView(
+      purpose: purpose is _igxtgzw0.CalendarSchedulingBindingPurpose?
+          ? purpose
+          : this.purpose,
       eventId: eventId ?? this.eventId,
       eventRevision: eventRevision ?? this.eventRevision,
       origin: origin ?? this.origin,

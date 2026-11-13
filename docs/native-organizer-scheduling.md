@@ -201,3 +201,8 @@ Accepted ADR 0135 adds selected-field native event/task URL, classification, cat
 ## Durable outgoing range controls
 
 [ADR 0172](adr/0172-durable-published-range-controls.md) and [the scoped range guide](published-range-controls.md) supersede earlier blanket outgoing-range rejection only for the approved faithful-anchor cancel/restore/cycle profile. Existing active-cutoff guards, arbitrary-anchor restrictions and remaining recipient/client boundaries still apply. Full validation is recorded separately.
+
+
+## Separate information-publication purpose
+
+[ADR 0182](adr/0182-native-event-information-publication.md) adds [native information PUBLISH and whole lifecycle](native-event-information-publication.md) through separate APIs, permissions, trusted purpose and flat checkpoints. It does not convert this invitation workflow or turn routing recipients into attendees. Existing invitation/participant-reply/occurrence paths reject information bindings before legacy parsing or fallback. The example MIME composer also supports the approved PUBLISH profile; source participants and alarms are never stripped to manufacture it. Actual batch validation is recorded separately.

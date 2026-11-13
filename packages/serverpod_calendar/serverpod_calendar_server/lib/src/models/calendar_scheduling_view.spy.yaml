@@ -1,6 +1,7 @@
 class: CalendarSchedulingView
 immutable: true
 fields:
+  purpose: CalendarSchedulingBindingPurpose?
   eventId: UuidValue
   eventRevision: int
   origin: CalendarEventOrigin

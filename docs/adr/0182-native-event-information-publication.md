@@ -1,6 +1,6 @@
 # ADR 0182: Explicit native event information publication
 
-Status: **Proposed; explicit maintainer agreement required before implementation.** Group native VEVENT PUBLISH and whole-publication lifecycle using the existing durable scheduling outbox. This is information delivery, separate from invitations and HTTP subscriptions. ADR 0181 is implemented in draft PR #194; its pending hosted checks are not treated as successful.
+Status: **Accepted by explicit maintainer agreement, 2026-11-07.** The maintainer approved the complete grouped publication contract in PR #195. Implementation and actual validation are separate. Group native VEVENT PUBLISH and whole-publication lifecycle using the existing durable scheduling outbox. This is information delivery, separate from invitations and HTTP subscriptions. ADR 0181 is implemented in draft PR #194; exact-head run 42349570142 passed inspect and runtime. This does not establish results for the present feature.
 
 ## Evidence and scope
 

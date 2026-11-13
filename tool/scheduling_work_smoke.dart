@@ -73,6 +73,47 @@ Future<void> main(List<String> args) async {
   try {
     var a = await start('a', 18580);
     final b = await start('b', 18680);
+    if (args.contains('--information') ||
+        args.contains('--information-commands')) {
+      for (final restore in [false, true]) {
+        for (final pause in ['before', 'after']) {
+          final fixture = (await b.command({
+            'command': 'seed',
+            'method': restore ? 'INFORMATION_CANCEL' : 'INFORMATION',
+          })) as Map<String, dynamic>;
+          fixtures.add(fixture);
+          final command = {
+            'command': 'information-command',
+            'eventId': fixture['eventId'],
+            'revision': restore ? 3 : 2,
+            'restore': restore,
+            'key': Uuid().v4obj().toString(),
+          };
+          a.submitted = Completer<void>();
+          final lost = a
+              .command({...command, 'pause': pause})
+              .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+          await a.submitted!.future.timeout(const Duration(seconds: 30));
+          await a.stop();
+          await lost;
+          final recovered = (await b.command(command)) as Map<String, dynamic>;
+          final retry = (await b.command(command)) as Map<String, dynamic>;
+          if (recovered['unchanged'] != (pause == 'after') ||
+              retry['unchanged'] != true ||
+              recovered['publicationId'] != retry['publicationId'] ||
+              recovered['publications'] != (restore ? 3 : 2)) {
+            throw StateError(
+              'Information lifecycle commit loss changed atomic receipt/intent identity',
+            );
+          }
+          a = await start('a-information-command-$restore-$pause', 18580);
+        }
+      }
+      stdout.writeln(
+        'PASS: information cancel/reopen actual loss before/after commit, atomic one-intent recovery and stable cross-process command receipts.',
+      );
+      if (args.contains('--information-commands')) return;
+    }
     if (args.contains('--replies')) {
       final fixture = (await b.command({
         'command': 'seed',
@@ -196,8 +237,9 @@ Future<void> main(List<String> args) async {
       );
       if (args.contains('--range-commands')) return;
     }
-    final methods =
-        args.contains('--range-only') || args.contains('--range-group')
+    final methods = args.contains('--information')
+        ? ['INFORMATION', 'INFORMATION_CANCEL', 'INFORMATION_REOPEN']
+        : args.contains('--range-only') || args.contains('--range-group')
         ? ['RANGE_CANCEL', 'RANGE_RESTORE']
         : args.contains('--mime-only')
         ? ['REQUEST', 'CANCEL']

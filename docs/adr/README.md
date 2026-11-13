@@ -211,7 +211,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0181](0181-subject-common-freebusy-export.md) | Complete subject and common-free VFREEBUSY exports | Accepted by explicit maintainer agreement; stateless subject/common download with independent export authority and complete final checks; no SQL/mail |
 
-| [0182](0182-native-event-information-publication.md) | Explicit native event information publication | Proposed; grouped VEVENT PUBLISH/update/whole lifecycle, binding-purpose discriminator, existing outbox/MIME/client/worker validation; no implementation before agreement |
+| [0182](0182-native-event-information-publication.md) | Explicit native event information publication | Accepted; scoped native information publication/lifecycle implemented with purpose isolation and local batch validation; full hosted readiness tracked separately |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

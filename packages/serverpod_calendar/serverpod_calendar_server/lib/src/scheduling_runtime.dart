@@ -3,6 +3,7 @@ import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 
 import 'calendar_authorization.dart';
 import 'generated/calendar_event_timing.dart';
+import 'generated/calendar_scheduling_binding_purpose.dart';
 import 'inbound_reply_runtime.dart';
 
 /// Trusted routing result. Neither the stored reference nor address grants access.
@@ -24,6 +25,7 @@ final class CalendarSchedulingAuthority {
 /// Dedicated execution context; background work never fabricates a login.
 final class CalendarSchedulingPolicyContext {
   CalendarSchedulingPolicyContext({
+    this.purpose = CalendarSchedulingBindingPurpose.invitation,
     required this.scopeKey,
     required this.calendar,
     required this.currentEvent,
@@ -39,6 +41,7 @@ final class CalendarSchedulingPolicyContext {
     this.exactNativeMatch,
     Iterable<CalendarEventTiming> publicationExclusions = const [],
   }) : publicationExclusions = List.unmodifiable(publicationExclusions);
+  final CalendarSchedulingBindingPurpose purpose;
   final String scopeKey;
   final CalendarHostContext? actor;
   final CalendarPolicySnapshot calendar;

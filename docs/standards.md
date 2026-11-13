@@ -241,3 +241,8 @@ Accepted [ADR 0179](adr/0179-durable-shared-recurring-occurrence-responses.md) i
 ## Authenticated free/busy exchanges
 
 Accepted [ADR 0180](adr/0180-authenticated-bounded-freebusy-exchanges.md) adds the scoped authenticated VFREEBUSY PUBLISH/REQUEST/REPLY runtime: private intake/review, explicit per-calendar publish/request/share/refuse, immutable intent, actor-free source authorization and fenced synthetic MIME delivery. Seven private tables and one nullable cursor state preserve bounded proof, receipts and ordered retention. Deleting a calendar or contributing event/rule atomically withdraws pending reports and scrubs queued and retained report payloads; accepted external delivery cannot be recalled. Incoming reports remain informational and never establish native free coverage. See [the implementation guide](authenticated-freebusy-exchanges.md) and the separate validation record. Subject/common-free reports, real mail and remaining scheduling/release requirements stay separate.
+
+
+## Native information publication
+
+Accepted [ADR 0182](adr/0182-native-event-information-publication.md) adds scoped outgoing native VEVENT PUBLISH/update and whole cancellation/reopening with fixed private routing recipients, no attendees, purpose isolation and exact synthetic MIME retries. See [the profile](native-event-information-publication.md) and its separate validation record. Incoming PUBLISH adoption, occurrence publication, provider trust, real mail and remaining scheduling methods are separate requirements.

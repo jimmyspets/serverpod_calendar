@@ -23,6 +23,41 @@ def sql(database, statement):
         raise RuntimeError(result.stderr)
 
 
+def verify_information_publication_upgrade(database):
+    sql(database, """
+CREATE TABLE information_upgrade_guard (table_name text PRIMARY KEY, rows jsonb NOT NULL);
+DO $snapshot_information$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+   AND tablename NOT IN ('serverpod_migrations', 'information_upgrade_guard') LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s', item.tablename) INTO contents;
+  INSERT INTO information_upgrade_guard VALUES (item.tablename, contents);
+ END LOOP;
+END;
+$snapshot_information$;
+""")
+    sql(database, (SERVER / "migrations/20261107095402700-information-publication/migration.sql").read_text(encoding="utf-8"))
+    sql(database, """
+DO $verify_information$
+DECLARE item record; contents jsonb; expression text;
+BEGIN
+ FOR item IN SELECT * FROM information_upgrade_guard LOOP
+  expression := CASE WHEN item.table_name='serverpod_calendar_scheduling_meeting'
+    THEN 'to_jsonb(t)-''purpose''' ELSE 'to_jsonb(t)' END;
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT %s AS v FROM %I t) s', expression, item.table_name) INTO contents;
+  IF contents IS DISTINCT FROM item.rows THEN RAISE EXCEPTION 'Information migration changed %', item.table_name; END IF;
+ END LOOP;
+ IF NOT EXISTS (SELECT 1 FROM serverpod_calendar_scheduling_meeting)
+ OR EXISTS (SELECT 1 FROM serverpod_calendar_scheduling_meeting WHERE purpose <> 'invitation')
+ THEN RAISE EXCEPTION 'Information migration did not preserve populated invitation purpose'; END IF;
+END;
+$verify_information$;
+DROP TABLE information_upgrade_guard;
+""")
+    print("PASS: information-purpose upgrade preserves every populated legacy row and initializes existing bindings as invitation without modifying receipts, leases or history.")
+
+
 def verify_instance_reply_upgrade(database):
     # Only synthetic rows in this process-owned upgrade database.
     sql(database, """
@@ -1411,6 +1446,7 @@ DROP TABLE reply_upgrade_guard;
         verify_bundle_response_target_upgrade(database)
         verify_recurring_response_proof_upgrade(database)
         verify_freebusy_exchange_upgrade(database)
+        verify_information_publication_upgrade(database)
         print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated replies/invitations/links/checkpoints through instance, adoption, cancellation and private attendee-response upgrades; no personal response history is invented and ordinary cursor rows survive the occurrence-state addition without invented query state; known old invitation modes remain false without invented recurrence history.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

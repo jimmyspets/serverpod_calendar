@@ -3,6 +3,7 @@ serverOnly: true
 table: serverpod_calendar_scheduling_meeting
 fields:
   id: UuidValue?, defaultPersist=random
+  purpose: CalendarSchedulingBindingPurpose, default=invitation
   scopeKey: String
   calendarId: UuidValue
   eventId: UuidValue, relation(parent=serverpod_calendar_event)
