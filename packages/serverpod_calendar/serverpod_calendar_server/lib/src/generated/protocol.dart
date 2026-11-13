@@ -249,6 +249,7 @@ import 'calendar_refresh_hint.dart' as _ifsfk5xq;
 import 'calendar_scheduling_attempt_record.dart' as _i64utb1e;
 import 'calendar_scheduling_attendee_response_record.dart' as _i577nx0c;
 import 'calendar_scheduling_attendee_response_view.dart' as _itopoldj;
+import 'calendar_scheduling_binding_purpose.dart' as _igxtgzw0;
 import 'calendar_scheduling_cancel_request.dart' as _i4uu6f5m;
 import 'calendar_scheduling_delivery_record.dart' as _iuidcanh;
 import 'calendar_scheduling_delivery_state.dart' as _it5jr5tm;
@@ -546,6 +547,7 @@ export 'calendar_refresh_hint.dart';
 export 'calendar_scheduling_attempt_record.dart';
 export 'calendar_scheduling_attendee_response_record.dart';
 export 'calendar_scheduling_attendee_response_view.dart';
+export 'calendar_scheduling_binding_purpose.dart';
 export 'calendar_scheduling_cancel_request.dart';
 export 'calendar_scheduling_delivery_record.dart';
 export 'calendar_scheduling_delivery_state.dart';
@@ -861,6 +863,7 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.getType<_i64utb1e.CalendarSchedulingAttemptRecord>,
       _is.getType<_i577nx0c.CalendarSchedulingAttendeeResponseRecord>,
       _is.getType<_itopoldj.CalendarSchedulingAttendeeResponseView>,
+      _is.getType<_igxtgzw0.CalendarSchedulingBindingPurpose>,
       _is.getType<_i4uu6f5m.CalendarSchedulingCancelRequest>,
       _is.getType<_iuidcanh.CalendarSchedulingDeliveryRecord>,
       _is.getType<_it5jr5tm.CalendarSchedulingDeliveryState>,
@@ -1162,6 +1165,7 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.getType<_i64utb1e.CalendarSchedulingAttemptRecord?>,
       _is.getType<_i577nx0c.CalendarSchedulingAttendeeResponseRecord?>,
       _is.getType<_itopoldj.CalendarSchedulingAttendeeResponseView?>,
+      _is.getType<_igxtgzw0.CalendarSchedulingBindingPurpose?>,
       _is.getType<_i4uu6f5m.CalendarSchedulingCancelRequest?>,
       _is.getType<_iuidcanh.CalendarSchedulingDeliveryRecord?>,
       _is.getType<_it5jr5tm.CalendarSchedulingDeliveryState?>,
@@ -1568,6 +1572,7 @@ class Protocol extends _is.DatabaseSerializationManager
       'CalendarSchedulingAttemptRecord',
       'CalendarSchedulingAttendeeResponseRecord',
       'CalendarSchedulingAttendeeResponseView',
+      'CalendarSchedulingBindingPurpose',
       'CalendarSchedulingCancelRequest',
       'CalendarSchedulingDeliveryRecord',
       'CalendarSchedulingDeliveryState',
@@ -6515,6 +6520,13 @@ class Protocol extends _is.DatabaseSerializationManager
           columnDefault: 'random',
         ),
         _isp.ColumnDefinition(
+          name: 'purpose',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:CalendarSchedulingBindingPurpose',
+          columnDefault: '\'invitation\'',
+        ),
+        _isp.ColumnDefinition(
           name: 'scopeKey',
           columnType: _isp.ColumnType.text,
           isNullable: false,
@@ -8363,6 +8375,9 @@ class Protocol extends _is.DatabaseSerializationManager
       return _itopoldj.CalendarSchedulingAttendeeResponseView.fromJson(data)
           as T;
     }
+    if (t == _igxtgzw0.CalendarSchedulingBindingPurpose) {
+      return _igxtgzw0.CalendarSchedulingBindingPurpose.fromJson(data) as T;
+    }
     if (t == _i4uu6f5m.CalendarSchedulingCancelRequest) {
       return _i4uu6f5m.CalendarSchedulingCancelRequest.fromJson(data) as T;
     }
@@ -9937,6 +9952,12 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _is.getType<_itopoldj.CalendarSchedulingAttendeeResponseView?>()) {
       return (data != null
               ? _itopoldj.CalendarSchedulingAttendeeResponseView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_igxtgzw0.CalendarSchedulingBindingPurpose?>()) {
+      return (data != null
+              ? _igxtgzw0.CalendarSchedulingBindingPurpose.fromJson(data)
               : null)
           as T;
     }
@@ -11609,6 +11630,8 @@ class Protocol extends _is.DatabaseSerializationManager
         'CalendarSchedulingAttendeeResponseRecord',
       _itopoldj.CalendarSchedulingAttendeeResponseView =>
         'CalendarSchedulingAttendeeResponseView',
+      _igxtgzw0.CalendarSchedulingBindingPurpose =>
+        'CalendarSchedulingBindingPurpose',
       _i4uu6f5m.CalendarSchedulingCancelRequest =>
         'CalendarSchedulingCancelRequest',
       _iuidcanh.CalendarSchedulingDeliveryRecord =>
@@ -12167,6 +12190,8 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'CalendarSchedulingAttendeeResponseRecord';
       case _itopoldj.CalendarSchedulingAttendeeResponseView():
         return 'CalendarSchedulingAttendeeResponseView';
+      case _igxtgzw0.CalendarSchedulingBindingPurpose():
+        return 'CalendarSchedulingBindingPurpose';
       case _i4uu6f5m.CalendarSchedulingCancelRequest():
         return 'CalendarSchedulingCancelRequest';
       case _iuidcanh.CalendarSchedulingDeliveryRecord():
@@ -13147,6 +13172,11 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (dataClassName == 'CalendarSchedulingAttendeeResponseView') {
       return deserialize<_itopoldj.CalendarSchedulingAttendeeResponseView>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarSchedulingBindingPurpose') {
+      return deserialize<_igxtgzw0.CalendarSchedulingBindingPurpose>(
         data['data'],
       );
     }

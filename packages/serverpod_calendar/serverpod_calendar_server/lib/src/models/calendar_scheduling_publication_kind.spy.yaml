@@ -8,3 +8,6 @@ values:
   - occurrenceRestoreWithMaster
   - rangeCancel
   - rangeRestore
+  - informationPublish
+  - informationCancel
+  - informationReopen

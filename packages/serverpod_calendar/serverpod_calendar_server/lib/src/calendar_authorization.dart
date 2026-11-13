@@ -10,6 +10,10 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  publishEventInformation,
+  cancelEventInformation,
+  reopenEventInformation,
+  readEventInformationPublication,
   publishScheduling,
   cancelScheduling,
   cancelOccurrenceScheduling,
@@ -791,6 +795,7 @@ final class CalendarTaskPolicySnapshot {
 /// Exact outgoing snapshot and recipients, never an authorization grant.
 final class CalendarSchedulingIntent {
   CalendarSchedulingIntent({
+    this.purpose = CalendarSchedulingBindingPurpose.invitation,
     required this.organizerAddress,
     required Iterable<String> recipients,
     required this.payload,
@@ -805,6 +810,7 @@ final class CalendarSchedulingIntent {
            (method == 'CANCEL'
                ? CalendarSchedulingPublicationKind.seriesCancel
                : CalendarSchedulingPublicationKind.request);
+  final CalendarSchedulingBindingPurpose purpose;
   final CalendarSchedulingPublicationKind publicationKind;
   final CalendarEventTiming? originalStart;
   final String method;
