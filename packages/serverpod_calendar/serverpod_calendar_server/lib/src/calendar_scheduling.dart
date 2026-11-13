@@ -104,18 +104,32 @@ String _schedulingPayload(
   int maxBytes, {
   String method = 'REQUEST',
   List<EventSchedulingOriginal> projectionOriginals = const [],
+  RecurrenceWorkBudget? sharedWorkBudget,
 }) {
   final bytes = eventExportBytes([
-    method == 'REQUEST'
-        ? _schedulingProjectionSource(value, projectionOriginals)
+    method == 'REQUEST' || method == 'PUBLISH'
+        ? _schedulingProjectionSource(
+            value,
+            projectionOriginals,
+            sharedWorkBudget: sharedWorkBudget,
+          )
         : value,
-  ]);
-  if (method == 'REQUEST') {
+  ], sharedWorkBudget: sharedWorkBudget);
+  if (method == 'REQUEST' || method == 'PUBLISH') {
     return utf8.decode(
       serializeIcalendarSchedulingMessage(
-        projectIcalendarRequestFields(
-          parseIcalendarEventCalendar(bytes),
+        (method == 'REQUEST'
+            ? projectIcalendarRequestFields
+            : projectIcalendarPublishFields)(
+          validateIcalendarEventCalendar(
+            parseIcalendarSyntax(
+              bytes,
+              limits: IcalendarSyntaxLimits(maxBytes: maxBytes),
+            ),
+            sharedWorkBudget: sharedWorkBudget,
+          ),
           syntaxLimits: IcalendarSyntaxLimits(maxBytes: maxBytes),
+          sharedWorkBudget: sharedWorkBudget,
         ),
         syntaxLimits: IcalendarSyntaxLimits(maxBytes: maxBytes),
       ),

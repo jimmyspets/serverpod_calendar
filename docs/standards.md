@@ -245,7 +245,7 @@ Accepted [ADR 0180](adr/0180-authenticated-bounded-freebusy-exchanges.md) adds t
 
 ## Native information publication
 
-Accepted [ADR 0182](adr/0182-native-event-information-publication.md) adds scoped outgoing native VEVENT PUBLISH/update and whole cancellation/reopening with fixed private routing recipients, no attendees, purpose isolation and exact synthetic MIME retries. See [the profile](native-event-information-publication.md) and its separate validation record. Incoming PUBLISH adoption, occurrence publication, provider trust, real mail and remaining scheduling methods are separate requirements.
+Accepted [ADR 0182](adr/0182-native-event-information-publication.md) adds scoped outgoing native VEVENT PUBLISH/update and whole cancellation/reopening with fixed private routing recipients, no attendees, purpose isolation and exact synthetic MIME retries. See [the profile](native-event-information-publication.md) and its separate validation record. ADRs 0183–0184 separately add incoming master adoption and supported outgoing components; incoming bundles, provider trust, real mail and remaining scheduling methods are separate requirements.
 
 
 ## Approved incoming event publication workflow
@@ -253,6 +253,6 @@ Accepted [ADR 0182](adr/0182-native-event-information-publication.md) adds scope
 [Accepted ADR 0183](adr/0183-incoming-event-publication-workflow.md) groups one-master PUBLISH/private review, explicit Add/update, whole cancellation/reopening and synthetic MIME/Flutter/two-host validation. The maintainer confirmed review first, explicit Add/Apply and clean-baseline conflict protection; receipt sends no reply or automatic calendar mutation. The maintainer approved the four private tables, nullable cursor state, complete workflow/limits and separate cancellation source basis on 2026-11-13. The [scoped runtime](incoming-event-publications.md) and grouped local validation are complete; [actual results](validation-incoming-event-publications.md) remain distinct from full exact-head hosted readiness. Existing invitation and outgoing-publication purpose guards remain.
 
 
-## Proposed information-publication occurrence group
+## Information-publication occurrence group
 
-[Proposed ADR 0184](adr/0184-event-information-occurrence-publication.md) groups supported outgoing PUBLISH occurrence components, independent versions, retained reset projections and whole cancellation/reopening using existing outbox storage and unchanged limits. It preserves native inheritance and complete-message authority. This is review material, not implemented support: incoming component publications, unrepresentable new content-only exceptions, individual/range information cancellation and real mail remain guarded. Explicit agreement on the v2 checkpoint/projection mechanics is required before implementation.
+[Accepted ADR 0184](adr/0184-event-information-occurrence-publication.md) groups supported outgoing PUBLISH occurrence components, independent versions, retained reset projections and whole cancellation/reopening using existing outbox storage and unchanged limits. It preserves native inheritance and complete-message authority. The scoped implementation uses flat version-2 JSON in existing columns, preserves version-1 reads and native inheritance, and requires complete-message authorization. Incoming component publications, new content-only exceptions without representable timing, individual/range information cancellation and real mail remain guarded. See the outgoing profile and separate validation evidence.

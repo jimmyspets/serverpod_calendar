@@ -16,6 +16,39 @@ IcalendarSchedulingMessage projectIcalendarRequestFields(
   IcalendarComponentLimits limits = const IcalendarComponentLimits(),
   RecurrenceWorkBudget? sharedWorkBudget,
 }) {
+  return _projectIcalendarSchedulingFields(
+    value,
+    IcalendarSchedulingMethod.request,
+    syntaxLimits: syntaxLimits,
+    limits: limits,
+    sharedWorkBudget: sharedWorkBudget,
+  );
+}
+
+/// Project required PUBLISH summary/organizer fields without copying attendees.
+/// Source/native inheritance and versions remain unchanged. No authority or
+/// delivery is established; unsupported participants/alarms reject explicitly.
+IcalendarSchedulingMessage projectIcalendarPublishFields(
+  IcalendarEventCalendar value, {
+  IcalendarSyntaxLimits syntaxLimits = const IcalendarSyntaxLimits(),
+  IcalendarComponentLimits limits = const IcalendarComponentLimits(),
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) => _projectIcalendarSchedulingFields(
+  value,
+  IcalendarSchedulingMethod.publish,
+  syntaxLimits: syntaxLimits,
+  limits: limits,
+  sharedWorkBudget: sharedWorkBudget,
+);
+
+IcalendarSchedulingMessage _projectIcalendarSchedulingFields(
+  IcalendarEventCalendar value,
+  IcalendarSchedulingMethod method, {
+  required IcalendarSyntaxLimits syntaxLimits,
+  required IcalendarComponentLimits limits,
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
+  final request = method == IcalendarSchedulingMethod.request;
   limits.validate();
   // The typed input is immutable and already semantically validated. Bound its
   // syntax again for these limits; final validation charges all projected data.
@@ -40,8 +73,11 @@ IcalendarSchedulingMessage projectIcalendarRequestFields(
       .toList();
   final organizers = properties('ORGANIZER'),
       attendees = properties('ATTENDEE');
-  if (organizers.isEmpty || attendees.isEmpty) {
+  if (organizers.isEmpty || request && attendees.isEmpty) {
     componentFail(IcalendarComponentError.missing);
+  }
+  if (!request && attendees.isNotEmpty) {
+    componentFail(IcalendarComponentError.unsupportedProperty);
   }
   final summaries = properties('SUMMARY');
   final summary = summaries.isEmpty
@@ -77,7 +113,12 @@ IcalendarSchedulingMessage projectIcalendarRequestFields(
     }
   }
 
-  charge(minimumBytes([IcalendarSyntaxProperty('METHOD', 'REQUEST')]), 1);
+  charge(
+    minimumBytes([
+      IcalendarSyntaxProperty('METHOD', method.name.toUpperCase()),
+    ]),
+    1,
+  );
   IcalendarSyntaxComponent project(IcalendarSyntaxComponent component) {
     final names = component.entries
         .whereType<IcalendarSyntaxProperty>()
@@ -85,12 +126,14 @@ IcalendarSchedulingMessage projectIcalendarRequestFields(
         .toSet();
     if (!names.contains('SUMMARY')) charge(summaryBytes, 1);
     if (!names.contains('ORGANIZER')) charge(organizerBytes, organizers.length);
-    if (!names.contains('ATTENDEE')) charge(attendeeBytes, attendees.length);
+    if (request && !names.contains('ATTENDEE')) {
+      charge(attendeeBytes, attendees.length);
+    }
     return IcalendarSyntaxComponent(component.name, [
       ...component.entries,
       if (!names.contains('SUMMARY')) summary,
       if (!names.contains('ORGANIZER')) ...organizers,
-      if (!names.contains('ATTENDEE')) ...attendees,
+      if (request && !names.contains('ATTENDEE')) ...attendees,
     ]);
   }
 
@@ -99,7 +142,7 @@ IcalendarSchedulingMessage projectIcalendarRequestFields(
     IcalendarSyntaxDocument([
       IcalendarSyntaxComponent(source.name, [
         ...source.entries.whereType<IcalendarSyntaxProperty>(),
-        IcalendarSyntaxProperty('METHOD', 'REQUEST'),
+        IcalendarSyntaxProperty('METHOD', method.name.toUpperCase()),
         for (final child
             in source.entries.whereType<IcalendarSyntaxComponent>())
           if (child.canonicalName == 'VEVENT') project(child) else child,

@@ -44,10 +44,34 @@ final class _Probe {
 Future<void> main(List<String> args) async {
   final root = Directory.current.absolute.path, probes = <_Probe>[];
   final fixtures = <Map<String, dynamic>>[];
+  final informationOccurrences = args.contains('--information-occurrences');
+  final compiledProbe =
+      '$root/.local/scheduling-work-probe${Platform.isWindows ? '.exe' : ''}';
+  if (informationOccurrences) {
+    final build = await Process.run(
+      Platform.resolvedExecutable,
+      [
+        'compile',
+        'exe',
+        'test/support/scheduling_work_probe.dart',
+        '-o',
+        compiledProbe,
+      ],
+      workingDirectory:
+          '$root/example/calendar_example/calendar_example_server',
+    );
+    if (build.exitCode != 0) {
+      throw StateError(
+        'Owned scheduling probe compilation failed: ${build.stderr}',
+      );
+    }
+  }
   Future<_Probe> start(String name, int port) async {
     final p = await Process.start(
-      Platform.resolvedExecutable,
-      ['run', 'test/support/scheduling_work_probe.dart', name],
+      informationOccurrences ? compiledProbe : Platform.resolvedExecutable,
+      informationOccurrences
+          ? [name]
+          : ['run', 'test/support/scheduling_work_probe.dart', name],
       workingDirectory:
           '$root/example/calendar_example/calendar_example_server',
       environment: {
@@ -74,18 +98,20 @@ Future<void> main(List<String> args) async {
     var a = await start('a', 18580);
     final b = await start('b', 18680);
     if (args.contains('--information') ||
+        informationOccurrences ||
         args.contains('--information-commands')) {
       for (final restore in [false, true]) {
         for (final pause in ['before', 'after']) {
           final fixture = (await b.command({
             'command': 'seed',
             'method': restore ? 'INFORMATION_CANCEL' : 'INFORMATION',
+            'occurrences': informationOccurrences,
           })) as Map<String, dynamic>;
           fixtures.add(fixture);
           final command = {
             'command': 'information-command',
             'eventId': fixture['eventId'],
-            'revision': restore ? 3 : 2,
+            'revision': int.parse(fixture['revision'] as String),
             'restore': restore,
             'key': Uuid().v4obj().toString(),
           };
@@ -101,7 +127,8 @@ Future<void> main(List<String> args) async {
           if (recovered['unchanged'] != (pause == 'after') ||
               retry['unchanged'] != true ||
               recovered['publicationId'] != retry['publicationId'] ||
-              recovered['publications'] != (restore ? 3 : 2)) {
+              recovered['publications'] !=
+                  (restore ? 3 : 2) + (informationOccurrences ? 1 : 0)) {
             throw StateError(
               'Information lifecycle commit loss changed atomic receipt/intent identity',
             );
@@ -210,7 +237,7 @@ Future<void> main(List<String> args) async {
             'command': 'range-command',
             ...fixture,
             'restore': restore,
-            'revision': restore ? 3 : 2,
+            'revision': int.parse(fixture['revision'] as String),
             'key': Uuid().v4(),
           };
           a.submitted = Completer<void>();
@@ -221,7 +248,8 @@ Future<void> main(List<String> args) async {
           await a.stop();
           await lost;
           final recovered = (await b.command(command)) as Map<String, dynamic>;
-          if (recovered['publications'] != (restore ? 3 : 2) ||
+          if (recovered['publications'] !=
+                  (restore ? 3 : 2) + (informationOccurrences ? 1 : 0) ||
               recovered['unchanged'] != (pause == 'after') ||
               recovered['revision'] != (restore ? 4 : 3)) {
             throw StateError(
@@ -237,7 +265,7 @@ Future<void> main(List<String> args) async {
       );
       if (args.contains('--range-commands')) return;
     }
-    final methods = args.contains('--information')
+    final methods = args.contains('--information') || informationOccurrences
         ? ['INFORMATION', 'INFORMATION_CANCEL', 'INFORMATION_REOPEN']
         : args.contains('--range-only') || args.contains('--range-group')
         ? ['RANGE_CANCEL', 'RANGE_RESTORE']
@@ -261,6 +289,7 @@ Future<void> main(List<String> args) async {
       final first = (await a.command({
         'command': 'seed',
         'method': method,
+        'occurrences': informationOccurrences,
       })) as Map<String, dynamic>;
       fixtures.add(first);
       await Future.wait([
@@ -279,6 +308,7 @@ Future<void> main(List<String> args) async {
         final fixture = (await b.command({
           'command': 'seed',
           'method': method,
+          'occurrences': informationOccurrences,
         })) as Map<String, dynamic>;
         fixtures.add(fixture);
         a.submitted = Completer<void>();
