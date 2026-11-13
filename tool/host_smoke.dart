@@ -92,6 +92,7 @@ Future<void> main(List<String> args) async {
       final client = await Process.start(Platform.resolvedExecutable, [
         'run',
         'tool/client_smoke.dart',
+        if (args.contains('--notifications-only')) '--notifications-only',
         if (args.contains('--information-only')) '--information-only',
         if (args.contains('--incoming-publications-only'))
           '--incoming-publications-only',
@@ -115,7 +116,8 @@ Future<void> main(List<String> args) async {
       final code = await client.exitCode.timeout(
         Duration(
           seconds:
-              args.contains('--incoming-publications-only') ||
+              args.contains('--notifications-only') ||
+                  args.contains('--incoming-publications-only') ||
                   args.contains('--information-only') ||
                   args.contains('--subject-freebusy-only') ||
                   args.contains('--freebusy-only') ||

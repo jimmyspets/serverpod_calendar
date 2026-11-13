@@ -45,9 +45,10 @@ Future<void> main(List<String> args) async {
   final root = Directory.current.absolute.path, probes = <_Probe>[];
   final fixtures = <Map<String, dynamic>>[];
   final informationOccurrences = args.contains('--information-occurrences');
+  final compiled = informationOccurrences || args.contains('--compiled');
   final compiledProbe =
       '$root/.local/scheduling-work-probe${Platform.isWindows ? '.exe' : ''}';
-  if (informationOccurrences) {
+  if (compiled) {
     final build = await Process.run(
       Platform.resolvedExecutable,
       [
@@ -68,8 +69,8 @@ Future<void> main(List<String> args) async {
   }
   Future<_Probe> start(String name, int port) async {
     final p = await Process.start(
-      informationOccurrences ? compiledProbe : Platform.resolvedExecutable,
-      informationOccurrences
+      compiled ? compiledProbe : Platform.resolvedExecutable,
+      compiled
           ? [name]
           : ['run', 'test/support/scheduling_work_probe.dart', name],
       workingDirectory:
@@ -92,6 +93,28 @@ Future<void> main(List<String> args) async {
       if (lines.current == 'SCHEDULING_READY') return probe;
     }
     throw StateError('Owned scheduling probe failed to start');
+  }
+
+  Future<void> drainPublication(
+    _Probe probe,
+    Map<String, dynamic> fixture,
+  ) async {
+    final deadline = DateTime.now().add(const Duration(seconds: 60));
+    while (DateTime.now().isBefore(deadline)) {
+      await probe.command({'command': 'work'});
+      final state =
+          (await probe.command({'command': 'inspect', ...fixture})) as Map;
+      if (state['state'] == 'accepted') return;
+      if (!{'pending', 'claimed'}.contains(state['state'])) {
+        throw StateError(
+          'Range prerequisite publication did not accept: ${state['state']}',
+        );
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+    throw StateError(
+      'Range prerequisite publication did not drain within its bounded deadline',
+    );
   }
 
   try {
@@ -223,21 +246,24 @@ Future<void> main(List<String> args) async {
             'method': 'REQUEST',
           })) as Map<String, dynamic>;
           fixtures.add(fixture);
-          await b.command({'command': 'work'});
+          await drainPublication(b, fixture);
           if (restore) {
-            await b.command({
+            final cancellation = (await b.command({
               'command': 'range-command',
               ...fixture,
               'key': Uuid().v4(),
               'revision': 2,
+            })) as Map<String, dynamic>;
+            await drainPublication(b, {
+              ...fixture,
+              'publicationId': cancellation['publicationId'],
             });
-            await b.command({'command': 'work'});
           }
           final command = {
             'command': 'range-command',
             ...fixture,
             'restore': restore,
-            'revision': int.parse(fixture['revision'] as String),
+            'revision': restore ? 3 : 2,
             'key': Uuid().v4(),
           };
           a.submitted = Completer<void>();
@@ -248,15 +274,17 @@ Future<void> main(List<String> args) async {
           await a.stop();
           await lost;
           final recovered = (await b.command(command)) as Map<String, dynamic>;
-          if (recovered['publications'] !=
-                  (restore ? 3 : 2) + (informationOccurrences ? 1 : 0) ||
+          if (recovered['publications'] != (restore ? 3 : 2) ||
               recovered['unchanged'] != (pause == 'after') ||
               recovered['revision'] != (restore ? 4 : 3)) {
             throw StateError(
               'Range command loss failed atomic receipt recovery',
             );
           }
-          await b.command({'command': 'work'});
+          await drainPublication(b, {
+            ...fixture,
+            'publicationId': recovered['publicationId'],
+          });
           a = await start('a-range-command-$restore-$pause', 18580);
         }
       }

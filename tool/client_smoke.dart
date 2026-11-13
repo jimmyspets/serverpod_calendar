@@ -109,6 +109,10 @@ Future<void> main(List<String> args) async {
         auth.refreshToken == null) {
       throw StateError('Expected JWT access and refresh credentials.');
     }
+    if (args.contains('--notifications-only')) {
+      await notificationSmoke(clients);
+      return;
+    }
     if (mode == 'test' &&
         clients.length == 2 &&
         (args.contains('--incoming-publications-only') ||
