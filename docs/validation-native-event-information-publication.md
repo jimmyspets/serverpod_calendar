@@ -28,3 +28,7 @@ The entire `tool/check.ps1` pipeline was **not** rerun end-to-end locally for th
 
 
 All addresses/data/transport are synthetic. No real email, deployment or package publication was attempted. External Apple/Google/Outlook scheduling compatibility remains unverified by these tests.
+
+## Hosted follow-up, 2026-11-13
+
+Exact-head [run 43386362933](https://github.com/jimmyspets/serverpod_calendar/actions/runs/43386362933) completed with inspection success and runtime failure. The complete connected Flutter free/busy exchange journey observed `queued` after Withdraw unsent, where it required `withdrawn` or `accepted`. This is a failed release/readiness check, independently of the earlier successful local publication validation. The PR remains draft; the failure has not been waived.

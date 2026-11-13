@@ -485,6 +485,7 @@ extension CalendarAlarmActions on CalendarService {
           transaction: tx,
         );
         if (saved == null ||
+            saved.incomingPublicationState != null ||
             saved.freeBusyExchangeState != null ||
             saved.eventOccurrenceState != null ||
             saved.alarmActivityId != alarmId ||

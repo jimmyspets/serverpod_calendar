@@ -1,0 +1,44 @@
+class: CalendarIncomingPublicationLinkRecord
+serverOnly: true
+table: serverpod_calendar_incoming_publication_link
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  recipientKey: String
+  entryId: UuidValue
+  correlationDigest: String
+  calendarId: UuidValue, relation(parent=serverpod_calendar_identity)
+  eventId: UuidValue, relation(parent=serverpod_calendar_event)
+  creationSourceId: UuidValue?
+  creationActorId: String
+  creationCommandId: UuidValue
+  creationDigest: String
+  creationReceipt: String
+  acceptedSourceId: UuidValue?
+  basisSourceId: UuidValue?
+  baselineDigest: String?
+  acceptedAt: DateTime?
+  lastActorId: String?
+  lastCommandId: UuidValue?
+  lastCommandDigest: String?
+  lastReceipt: String?
+  deletedAt: DateTime?
+indexes:
+  cal_incoming_publication_link_entry_unique:
+    fields: scopeKey, recipientKey, entryId
+    unique: true
+  cal_incoming_publication_link_event_unique:
+    fields: eventId
+    unique: true
+  cal_incoming_publication_link_creation_unique:
+    fields: scopeKey, recipientKey, creationCommandId
+    unique: true
+  cal_incoming_publication_link_latest_unique:
+    fields: scopeKey, recipientKey, lastCommandId
+    unique: true
+  cal_incoming_publication_link_creation_source_idx:
+    fields: creationSourceId
+  cal_incoming_publication_link_accepted_source_idx:
+    fields: acceptedSourceId
+  cal_incoming_publication_link_basis_source_idx:
+    fields: basisSourceId

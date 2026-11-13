@@ -1,0 +1,27 @@
+class: CalendarIncomingPublicationReceiptRecord
+serverOnly: true
+table: serverpod_calendar_incoming_publication_receipt
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  recipientKey: String
+  ingressDigest: String
+  originDigest: String
+  sourceId: UuidValue, relation(parent=serverpod_calendar_incoming_publication_source)
+  entryId: UuidValue
+  outcome: CalendarIncomingPublicationOutcome
+  entryRevision: int
+  receivedAt: DateTime
+  expiresAt: DateTime
+indexes:
+  cal_incoming_publication_receipt_unique:
+    fields: scopeKey, recipientKey, ingressDigest
+    unique: true
+  cal_incoming_publication_receipt_source_idx:
+    fields: sourceId
+  cal_incoming_publication_receipt_expiry_idx:
+    fields: scopeKey, recipientKey, expiresAt
+  cal_incoming_publication_receipt_entry_idx:
+    fields: entryId
+  cal_incoming_publication_receipt_due_idx:
+    fields: expiresAt

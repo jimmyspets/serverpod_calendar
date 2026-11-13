@@ -818,6 +818,7 @@ extension CalendarEventOperations on CalendarService {
         tx,
       );
       await _deleteOccurrenceAcceptance(id, tx);
+      await _incomingEventDeleted(e, tx);
       await _scrubFreeBusyReports(c.scopeKey, tx, eventId: id);
       await CalendarEventDataRecord.db.deleteRow(
         _session,
@@ -969,6 +970,7 @@ extension CalendarEventOperations on CalendarService {
           transaction: tx,
         );
         if (saved == null ||
+            saved.incomingPublicationState != null ||
             saved.freeBusyExchangeState != null ||
             saved.eventOccurrenceState != null ||
             saved.alarmActivityId != null ||

@@ -1,0 +1,7 @@
+enum: CalendarIncomingPublicationOutcome
+serialized: byName
+values:
+  - selected
+  - stale
+  - conflict
+  - duplicate

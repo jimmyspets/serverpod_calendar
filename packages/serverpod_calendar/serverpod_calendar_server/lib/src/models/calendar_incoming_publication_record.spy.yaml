@@ -1,0 +1,26 @@
+class: CalendarIncomingPublicationRecord
+serverOnly: true
+table: serverpod_calendar_incoming_publication
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  recipientKey: String
+  correlationDigest: String
+  uid: String
+  organizer: String
+  recurring: bool
+  revision: int
+  currentSourceId: UuidValue
+  kind: CalendarIncomingPublicationKind
+  sequence: int?
+  stamp: DateTime
+  digest: String
+  createdAt: DateTime
+  updatedAt: DateTime
+  dismissedAt: DateTime?
+indexes:
+  cal_incoming_publication_correlation_unique:
+    fields: scopeKey, recipientKey, correlationDigest
+    unique: true
+  cal_incoming_publication_recipient_idx:
+    fields: scopeKey, recipientKey

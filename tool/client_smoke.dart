@@ -1,3 +1,4 @@
+import 'incoming_publication_smoke.dart';
 import 'information_publication_smoke.dart';
 import 'subject_freebusy_smoke.dart';
 import 'freebusy_smoke.dart';
@@ -108,6 +109,16 @@ Future<void> main(List<String> args) async {
         auth.refreshToken == null) {
       throw StateError('Expected JWT access and refresh credentials.');
     }
+    if (mode == 'test' &&
+        clients.length == 2 &&
+        (args.contains('--incoming-publications-only') ||
+            !args.any((v) => v.endsWith('-only') || v == '--feeds'))) {
+      await incomingPublicationSmoke(
+        clients,
+        values['demoBobPassword'] as String,
+      );
+    }
+    if (args.contains('--incoming-publications-only')) return;
     if (mode == 'test' &&
         clients.length == 2 &&
         (args.contains('--information-only') ||

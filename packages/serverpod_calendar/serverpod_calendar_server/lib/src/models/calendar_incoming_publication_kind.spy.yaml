@@ -1,0 +1,5 @@
+enum: CalendarIncomingPublicationKind
+serialized: byName
+values:
+  - publication
+  - cancellation

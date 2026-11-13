@@ -1018,10 +1018,11 @@ Accepted [ADR 0182](adr/0182-native-event-information-publication.md) authorizes
 - [ ] Inspect full exact-head hosted inspection/runtime before ADR 0182 readiness; retain incoming/component PUBLISH and real-mail guards.
 
 
-## Proposed incoming event publication workflow
+## Approved incoming event publication workflow
 
-[Proposed ADR 0183](adr/0183-incoming-event-publication-workflow.md) groups one-master PUBLISH/private review, explicit Add/update, whole cancellation/reopening and synthetic MIME/Flutter/two-host validation. The maintainer confirmed review first, explicit Add/Apply and clean-baseline conflict protection; receipt sends no reply or automatic calendar mutation. The proposed four private tables, one nullable cursor state, source/link/version/retry/retention limits and dedicated host/API mechanics await explicit agreement. No schema, endpoint or incoming PUBLISH runtime is implemented by this proposal. Existing invitation and outgoing-publication purpose guards remain.
+[Accepted ADR 0183](adr/0183-incoming-event-publication-workflow.md) groups one-master PUBLISH/private review, explicit Add/update, whole cancellation/reopening and synthetic MIME/Flutter/two-host validation. The maintainer confirmed review first, explicit Add/Apply and clean-baseline conflict protection; receipt sends no reply or automatic calendar mutation. The maintainer approved the four private tables, nullable cursor state, complete workflow/limits and the separate cancellation source-basis refinement on 2026-11-13. The [scoped runtime](incoming-event-publications.md) and grouped local validation are complete; [actual results](validation-incoming-event-publications.md) remain distinct from full exact-head hosted readiness. Existing invitation and outgoing-publication purpose guards remain.
 
 - [x] Confirm private review, explicit Add/Apply and clean-series conflict protection for incoming PUBLISH.
-- [ ] Review ADR 0183’s complete grouped storage/API/purpose/version/retention mechanics before implementation.
-- [ ] After explicit agreement, implement the entire master-publication consumption/lifecycle group and validate once; retain remaining occurrence/method/real-transport release gates.
+- [x] Review ADR 0183’s complete grouped storage/API/purpose/version/retention mechanics and separate cancellation source basis.
+- [x] Implement and locally validate the approved master-publication consumption/lifecycle group, source-basis refinement, fresh/upgraded schema, generated clients, two-host/process-loss and connected Flutter coverage in one feature batch.
+- [ ] Inspect the full exact-head hosted result before readiness; retain occurrence/method/real-transport release gates.

@@ -1,0 +1,6 @@
+class: CalendarIncomingPublicationQuery
+immutable: true
+fields:
+  pageSize: int, default=20
+  includeDismissed: bool, default=false
+  cursor: String?

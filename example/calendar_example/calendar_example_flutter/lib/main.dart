@@ -1,3 +1,4 @@
+import 'incoming_publications_screen.dart';
 import 'invitation_screen.dart';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
@@ -190,6 +191,19 @@ class _ConnectionScreenState extends State<_ConnectionScreen> {
                             ),
                           ),
                     child: const Text('My calendars'),
+                  ),
+                  FilledButton(
+                    key: const Key('open-publications'),
+                    onPressed: _busy
+                        ? null
+                        : () => Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (_) => IncomingPublicationsScreen(
+                                client: widget.client,
+                              ),
+                            ),
+                          ),
+                    child: const Text('Published events'),
                   ),
                   FilledButton(
                     key: const Key('open-invitations'),

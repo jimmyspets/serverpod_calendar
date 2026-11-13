@@ -128,6 +128,22 @@ import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_reply
     as _i62tyvsw;
 import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_view.dart'
     as _i3y4q8eh;
+import 'package:serverpod_calendar_server/src/generated/calendar_incoming_publication_add_request.dart'
+    as _ixdjc3o1;
+import 'package:serverpod_calendar_server/src/generated/calendar_incoming_publication_apply_request.dart'
+    as _inbibr77;
+import 'package:serverpod_calendar_server/src/generated/calendar_incoming_publication_command_receipt.dart'
+    as _ifo8g0lk;
+import 'package:serverpod_calendar_server/src/generated/calendar_incoming_publication_link_view.dart'
+    as _i9vymzn5;
+import 'package:serverpod_calendar_server/src/generated/calendar_incoming_publication_page.dart'
+    as _i7gex12j;
+import 'package:serverpod_calendar_server/src/generated/calendar_incoming_publication_query.dart'
+    as _ixepoeah;
+import 'package:serverpod_calendar_server/src/generated/calendar_incoming_publication_source_view.dart'
+    as _i0xpi5q7;
+import 'package:serverpod_calendar_server/src/generated/calendar_incoming_publication_view.dart'
+    as _izhvn025;
 import 'package:serverpod_calendar_server/src/generated/calendar_invitation_adoption_receipt.dart'
     as _iunzc6nn;
 import 'package:serverpod_calendar_server/src/generated/calendar_invitation_adoption_request.dart'
@@ -406,6 +422,8 @@ class TestEndpoints {
 
   late final _CalendarFreeBusyExchangeEndpoint calendarFreeBusyExchange;
 
+  late final _CalendarIncomingPublicationEndpoint calendarIncomingPublication;
+
   late final _CalendarInvitationEndpoint calendarInvitation;
 
   late final _CalendarTaskEndpoint calendarTask;
@@ -443,6 +461,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     calendarFreeBusyExchange = _CalendarFreeBusyExchangeEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    calendarIncomingPublication = _CalendarIncomingPublicationEndpoint(
       endpoints,
       serializationManager,
     );
@@ -2887,6 +2909,229 @@ class _CalendarFreeBusyExchangeEndpoint {
           _localUniqueSession,
           _localCallContext.arguments,
         ) as _ida.Future<_ike0m53m.CalendarFreeBusyCommandReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _CalendarIncomingPublicationEndpoint {
+  _CalendarIncomingPublicationEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_i7gex12j.CalendarIncomingPublicationPage> list(
+    _ist.TestSessionBuilder sessionBuilder,
+    _ixepoeah.CalendarIncomingPublicationQuery query,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarIncomingPublication',
+            method: 'list',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarIncomingPublication',
+          methodName: 'list',
+          parameters: _ist.testObjectToJson({'query': query}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i7gex12j.CalendarIncomingPublicationPage>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_izhvn025.CalendarIncomingPublicationView> getEntry(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue id,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarIncomingPublication',
+            method: 'getEntry',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarIncomingPublication',
+          methodName: 'getEntry',
+          parameters: _ist.testObjectToJson({'id': id}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_izhvn025.CalendarIncomingPublicationView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i0xpi5q7.CalendarIncomingPublicationSourceView> getSource(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue id,
+    _is.UuidValue sourceId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarIncomingPublication',
+            method: 'getSource',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarIncomingPublication',
+          methodName: 'getSource',
+          parameters: _ist.testObjectToJson({
+            'id': id,
+            'sourceId': sourceId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i0xpi5q7.CalendarIncomingPublicationSourceView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<void> dismiss(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue id,
+    int expectedRevision,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarIncomingPublication',
+            method: 'dismiss',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarIncomingPublication',
+          methodName: 'dismiss',
+          parameters: _ist.testObjectToJson({
+            'id': id,
+            'expectedRevision': expectedRevision,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i9vymzn5.CalendarIncomingPublicationLinkView?> getLink(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue id,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarIncomingPublication',
+            method: 'getLink',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarIncomingPublication',
+          methodName: 'getLink',
+          parameters: _ist.testObjectToJson({'id': id}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i9vymzn5.CalendarIncomingPublicationLinkView?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ifo8g0lk.CalendarIncomingPublicationCommandReceipt>
+  addToCalendar(
+    _ist.TestSessionBuilder sessionBuilder,
+    _ixdjc3o1.CalendarIncomingPublicationAddRequest input,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarIncomingPublication',
+            method: 'addToCalendar',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarIncomingPublication',
+          methodName: 'addToCalendar',
+          parameters: _ist.testObjectToJson({'input': input}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ifo8g0lk.CalendarIncomingPublicationCommandReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ifo8g0lk.CalendarIncomingPublicationCommandReceipt> applySource(
+    _ist.TestSessionBuilder sessionBuilder,
+    _inbibr77.CalendarIncomingPublicationApplyRequest input,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarIncomingPublication',
+            method: 'applySource',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarIncomingPublication',
+          methodName: 'applySource',
+          parameters: _ist.testObjectToJson({'input': input}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ifo8g0lk.CalendarIncomingPublicationCommandReceipt>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

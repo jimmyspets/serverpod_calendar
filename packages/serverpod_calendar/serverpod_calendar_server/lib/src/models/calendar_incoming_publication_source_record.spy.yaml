@@ -1,0 +1,26 @@
+class: CalendarIncomingPublicationSourceRecord
+serverOnly: true
+table: serverpod_calendar_incoming_publication_source
+fields:
+  id: UuidValue?, defaultPersist=random
+  entryId: UuidValue, relation(parent=serverpod_calendar_incoming_publication)
+  normalizedSource: String?
+  byteCount: int
+  digest: String
+  basisSourceId: UuidValue?
+  kind: CalendarIncomingPublicationKind
+  sequence: int?
+  stamp: DateTime
+  outcome: CalendarIncomingPublicationOutcome
+  receivedAt: DateTime
+  inactiveAt: DateTime?
+indexes:
+  cal_incoming_publication_source_digest_unique:
+    fields: entryId, digest
+    unique: true
+  cal_incoming_publication_source_time_idx:
+    fields: entryId, inactiveAt
+  cal_incoming_publication_source_basis_idx:
+    fields: basisSourceId
+  cal_incoming_publication_source_expiry_idx:
+    fields: inactiveAt
