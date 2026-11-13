@@ -26,13 +26,16 @@ Future<void> notificationSmoke(
   cal.CalendarEventReceipt? event;
   StreamSubscription<notify.NotificationHint>? subscription;
   final hintIds = <cal.UuidValue>{};
+  var streamCompleted = false;
   Future<void> subscribe() async {
     final ready = Completer<void>();
+    streamCompleted = false;
     subscription = b.notificationStream.watch().listen(
       (hint) {
         if (!ready.isCompleted) ready.complete();
         if (hint.notificationId != null) hintIds.add(hint.notificationId!);
       },
+      onDone: () => streamCompleted = true,
       onError: (Object error, StackTrace stack) {
         if (!ready.isCompleted) ready.completeError(error, stack);
       },
@@ -41,17 +44,32 @@ Future<void> notificationSmoke(
   }
 
   Future<notify.NotificationView?> current(cal.UuidValue alarm) async {
-    final page = await b.modules.serverpod_notifications.notification.recover(
-      100,
-      null,
+    String? cursor;
+    final seen = <String>{};
+    // Recovery is paginated; a synthetic fixture is not necessarily on page 1
+    // after the complete repository journey has created other live reminders.
+    for (var pageIndex = 0; pageIndex < 100; pageIndex++) {
+      final page = await b.modules.serverpod_notifications.notification.recover(
+        100,
+        cursor,
+      );
+      final match = page.notifications
+          .where(
+            (v) =>
+                v.sourceNamespace == 'calendar.alarm' &&
+                (jsonDecode(v.actionReference!) as Map)['alarmId'] == '$alarm',
+          )
+          .firstOrNull;
+      if (match != null) return match;
+      cursor = page.nextCursor;
+      if (cursor == null) return null;
+      if (!seen.add(cursor)) {
+        throw StateError('Notification recovery cursor repeated');
+      }
+    }
+    throw StateError(
+      'Notification recovery exceeded the retained-recipient page budget',
     );
-    return page.notifications
-        .where(
-          (v) =>
-              v.sourceNamespace == 'calendar.alarm' &&
-              (jsonDecode(v.actionReference!) as Map)['alarmId'] == '$alarm',
-        )
-        .firstOrNull;
   }
 
   try {
@@ -100,7 +118,9 @@ Future<void> notificationSmoke(
         !hintIds.contains(view.id) ||
         view.title != content.summary) {
       throw StateError(
-        'Cross-host durable reminder and Redis hint were not both observed',
+        'Cross-host durable reminder and Redis hint were not both observed '
+        '(durable=${view != null}, matchingHint=${view != null && hintIds.contains(view.id)}, '
+        'hintCount=${hintIds.length}, streamCompleted=$streamCompleted)',
       );
     }
     final id = view.id;
