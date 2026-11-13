@@ -54,3 +54,9 @@ dart run tool/host_smoke.dart --freebusy-only --freebusy --flutter
 The parent outgoing-publication commit's full hosted runtime failed in the complete free/busy browser withdrawal check; see [its validation follow-up](validation-native-event-information-publication.md#hosted-follow-up-2026-11-13). That failure is not waived. The free/busy browser helper now checks idle/enabled controls before clicking while retaining the original withdrawn/accepted assertion; its focused local rerun passed. The failed parent hosted result remains recorded, and full exact-head hosted success is still required before readiness.
 
 All identities, events, MIME, policy markers and delivery adapters are synthetic. No real email, provider authentication, deployment, package publication or external Apple/Google/Outlook interoperability is established by these tests.
+
+## Unix crash-probe follow-up, 2026-11-13
+
+Exact-head [run 43449216068](https://github.com/jimmyspets/serverpod_calendar/actions/runs/43449216068) completed with inspection success and runtime failure in the incoming-publication recovery probe. The Unix stop path sent SIGTERM; Serverpod waited for the deliberately suspended transaction, and the probe's 20-second exit bound expired.
+
+The harness now uses SIGKILL for abrupt Unix process-loss simulation, matching the existing invitation probe. Windows retains its owned process-tree force kill. Formatting, targeted fatal analysis and all ten local Windows recovery cases passed after this change. This is not a claim of Linux execution: a new exact-head hosted run must verify that path and the complete pipeline before readiness. No timeout or failure was waived.
