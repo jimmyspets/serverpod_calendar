@@ -1,0 +1,17 @@
+class: CalendarIncomingPublicationView
+immutable: true
+fields:
+  id: UuidValue
+  revision: int
+  uid: String
+  organizer: String
+  recurring: bool
+  kind: CalendarIncomingPublicationKind
+  sourceId: UuidValue
+  sequence: int?
+  stamp: DateTime
+  summary: String?
+  timing: CalendarEventTiming?
+  status: CalendarEventStatus?
+  receivedAt: DateTime
+  dismissedAt: DateTime?

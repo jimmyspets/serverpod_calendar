@@ -1,0 +1,13 @@
+class: CalendarIncomingPublicationCommandReceipt
+immutable: true
+fields:
+  linkId: UuidValue
+  entryId: UuidValue
+  sourceId: UuidValue
+  calendarId: UuidValue
+  eventId: UuidValue
+  eventRevision: int
+  entryRevision: int
+  kind: CalendarIncomingPublicationKind
+  recordedAt: DateTime
+  unchanged: bool, default=false

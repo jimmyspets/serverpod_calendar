@@ -125,6 +125,22 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_free_busy_reply_
     as _i2y9zp7r;
 import 'package:serverpod_calendar_client/src/protocol/calendar_free_busy_view.dart'
     as _i2cb1v6y;
+import 'package:serverpod_calendar_client/src/protocol/calendar_incoming_publication_add_request.dart'
+    as _i6090d5l;
+import 'package:serverpod_calendar_client/src/protocol/calendar_incoming_publication_apply_request.dart'
+    as _iwdp86to;
+import 'package:serverpod_calendar_client/src/protocol/calendar_incoming_publication_command_receipt.dart'
+    as _iao2j8b3;
+import 'package:serverpod_calendar_client/src/protocol/calendar_incoming_publication_link_view.dart'
+    as _iyp9y5af;
+import 'package:serverpod_calendar_client/src/protocol/calendar_incoming_publication_page.dart'
+    as _ig0tohdy;
+import 'package:serverpod_calendar_client/src/protocol/calendar_incoming_publication_query.dart'
+    as _ie8xbo5m;
+import 'package:serverpod_calendar_client/src/protocol/calendar_incoming_publication_source_view.dart'
+    as _iu5fywjl;
+import 'package:serverpod_calendar_client/src/protocol/calendar_incoming_publication_view.dart'
+    as _ie8ofih3;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_adoption_receipt.dart'
     as _il1wwrqd;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_adoption_request.dart'
@@ -1042,6 +1058,82 @@ class EndpointCalendarFreeBusyExchange extends _isc.EndpointRef {
 }
 
 /// {@category Endpoint}
+class EndpointCalendarIncomingPublication extends _isc.EndpointRef {
+  EndpointCalendarIncomingPublication(_isc.EndpointCaller caller)
+    : super(caller);
+
+  @override
+  String get name => 'serverpod_calendar.calendarIncomingPublication';
+
+  _ida.Future<_ig0tohdy.CalendarIncomingPublicationPage> list(
+    _ie8xbo5m.CalendarIncomingPublicationQuery query,
+  ) => caller.callServerEndpoint<_ig0tohdy.CalendarIncomingPublicationPage>(
+    'serverpod_calendar.calendarIncomingPublication',
+    'list',
+    {'query': query},
+  );
+
+  _ida.Future<_ie8ofih3.CalendarIncomingPublicationView> getEntry(
+    _isc.UuidValue id,
+  ) => caller.callServerEndpoint<_ie8ofih3.CalendarIncomingPublicationView>(
+    'serverpod_calendar.calendarIncomingPublication',
+    'getEntry',
+    {'id': id},
+  );
+
+  _ida.Future<_iu5fywjl.CalendarIncomingPublicationSourceView> getSource(
+    _isc.UuidValue id,
+    _isc.UuidValue sourceId,
+  ) => caller
+      .callServerEndpoint<_iu5fywjl.CalendarIncomingPublicationSourceView>(
+        'serverpod_calendar.calendarIncomingPublication',
+        'getSource',
+        {
+          'id': id,
+          'sourceId': sourceId,
+        },
+      );
+
+  _ida.Future<void> dismiss(
+    _isc.UuidValue id,
+    int expectedRevision,
+  ) => caller.callServerEndpoint<void>(
+    'serverpod_calendar.calendarIncomingPublication',
+    'dismiss',
+    {
+      'id': id,
+      'expectedRevision': expectedRevision,
+    },
+  );
+
+  _ida.Future<_iyp9y5af.CalendarIncomingPublicationLinkView?> getLink(
+    _isc.UuidValue id,
+  ) =>
+      caller.callServerEndpoint<_iyp9y5af.CalendarIncomingPublicationLinkView?>(
+        'serverpod_calendar.calendarIncomingPublication',
+        'getLink',
+        {'id': id},
+      );
+
+  _ida.Future<_iao2j8b3.CalendarIncomingPublicationCommandReceipt>
+  addToCalendar(_i6090d5l.CalendarIncomingPublicationAddRequest input) => caller
+      .callServerEndpoint<_iao2j8b3.CalendarIncomingPublicationCommandReceipt>(
+        'serverpod_calendar.calendarIncomingPublication',
+        'addToCalendar',
+        {'input': input},
+      );
+
+  _ida.Future<_iao2j8b3.CalendarIncomingPublicationCommandReceipt> applySource(
+    _iwdp86to.CalendarIncomingPublicationApplyRequest input,
+  ) => caller
+      .callServerEndpoint<_iao2j8b3.CalendarIncomingPublicationCommandReceipt>(
+        'serverpod_calendar.calendarIncomingPublication',
+        'applySource',
+        {'input': input},
+      );
+}
+
+/// {@category Endpoint}
 class EndpointCalendarInvitation extends _isc.EndpointRef {
   EndpointCalendarInvitation(_isc.EndpointCaller caller) : super(caller);
 
@@ -1545,6 +1637,7 @@ class Caller extends _isc.ModuleEndpointCaller {
     calendar = EndpointCalendar(this);
     calendarEvent = EndpointCalendarEvent(this);
     calendarFreeBusyExchange = EndpointCalendarFreeBusyExchange(this);
+    calendarIncomingPublication = EndpointCalendarIncomingPublication(this);
     calendarInvitation = EndpointCalendarInvitation(this);
     calendarTask = EndpointCalendarTask(this);
   }
@@ -1563,6 +1656,8 @@ class Caller extends _isc.ModuleEndpointCaller {
 
   late final EndpointCalendarFreeBusyExchange calendarFreeBusyExchange;
 
+  late final EndpointCalendarIncomingPublication calendarIncomingPublication;
+
   late final EndpointCalendarInvitation calendarInvitation;
 
   late final EndpointCalendarTask calendarTask;
@@ -1576,6 +1671,8 @@ class Caller extends _isc.ModuleEndpointCaller {
     'serverpod_calendar.calendar': calendar,
     'serverpod_calendar.calendarEvent': calendarEvent,
     'serverpod_calendar.calendarFreeBusyExchange': calendarFreeBusyExchange,
+    'serverpod_calendar.calendarIncomingPublication':
+        calendarIncomingPublication,
     'serverpod_calendar.calendarInvitation': calendarInvitation,
     'serverpod_calendar.calendarTask': calendarTask,
   };

@@ -1,0 +1,17 @@
+class: CalendarIncomingPublicationLinkView
+immutable: true
+fields:
+  id: UuidValue
+  entryId: UuidValue
+  calendarId: UuidValue
+  eventId: UuidValue
+  eventRevision: int
+  entryRevision: int
+  deleted: bool
+  hasLocalChanges: bool
+  acceptedSourceId: UuidValue?
+  acceptedKind: CalendarIncomingPublicationKind?
+  acceptedSequence: int?
+  acceptedStamp: DateTime?
+  creationReceipt: CalendarIncomingPublicationCommandReceipt
+  latestApplyReceipt: CalendarIncomingPublicationCommandReceipt?

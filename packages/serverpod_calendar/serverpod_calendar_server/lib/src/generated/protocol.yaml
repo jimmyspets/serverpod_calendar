@@ -83,6 +83,14 @@ calendarFreeBusyExchange:
   - replyFreeBusy:
   - refuseFreeBusy:
   - withdrawFreeBusyCommand:
+calendarIncomingPublication:
+  - list:
+  - getEntry:
+  - getSource:
+  - dismiss:
+  - getLink:
+  - addToCalendar:
+  - applySource:
 calendarInvitation:
   - list:
   - getInvitation:

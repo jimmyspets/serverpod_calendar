@@ -1,0 +1,7 @@
+class: CalendarIncomingPublicationCursorState
+serverOnly: true
+immutable: true
+fields:
+  recipientKey: String
+  criteriaDigest: String
+  basisDigest: String

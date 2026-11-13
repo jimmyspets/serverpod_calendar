@@ -16,6 +16,7 @@ fields:
   eventFieldGroups: List<CalendarEventFieldGroup>?
   eventOccurrenceState: CalendarEventOccurrenceCursorState?
   freeBusyExchangeState: CalendarFreeBusyExchangeCursorState?
+  incomingPublicationState: CalendarIncomingPublicationCursorState?
   categoryFilter: CalendarCategoryFilter?
   alarmActivityId: UuidValue?
   alarmActivityKind: CalendarAlarmActivityKind?

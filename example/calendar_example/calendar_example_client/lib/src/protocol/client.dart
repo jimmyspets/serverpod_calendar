@@ -434,6 +434,36 @@ class EndpointNotificationStream extends _isc.EndpointRef {
       );
 }
 
+/// Only fixed synthetic source data; callers cannot submit a trusted origin.
+/// {@category Endpoint}
+class EndpointPublicationDemo extends _isc.EndpointRef {
+  EndpointPublicationDemo(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'publicationDemo';
+
+  _ida.Future<_imrxcdin.CalendarIncomingPublicationIngressReceipt> simulate(
+    _isc.UuidValue publicationId,
+    _isc.UuidValue commandId,
+    int sequence,
+    bool cancel,
+    bool recurring,
+    String summary,
+  ) => caller
+      .callServerEndpoint<_imrxcdin.CalendarIncomingPublicationIngressReceipt>(
+        'publicationDemo',
+        'simulate',
+        {
+          'publicationId': publicationId,
+          'commandId': commandId,
+          'sequence': sequence,
+          'cancel': cancel,
+          'recurring': recurring,
+          'summary': summary,
+        },
+      );
+}
+
 /// Synthetic private-owner test ingress, deliberately unavailable in production.
 /// {@category Endpoint}
 class EndpointSchedulingDemo extends _isc.EndpointRef {
@@ -534,6 +564,7 @@ class Client extends _isc.ServerpodClientShared {
     freeBusyDemo = EndpointFreeBusyDemo(this);
     invitationDemo = EndpointInvitationDemo(this);
     notificationStream = EndpointNotificationStream(this);
+    publicationDemo = EndpointPublicationDemo(this);
     schedulingDemo = EndpointSchedulingDemo(this);
     smoke = EndpointSmoke(this);
     modules = Modules(this);
@@ -549,6 +580,8 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointNotificationStream notificationStream;
 
+  late final EndpointPublicationDemo publicationDemo;
+
   late final EndpointSchedulingDemo schedulingDemo;
 
   late final EndpointSmoke smoke;
@@ -562,6 +595,7 @@ class Client extends _isc.ServerpodClientShared {
     'freeBusyDemo': freeBusyDemo,
     'invitationDemo': invitationDemo,
     'notificationStream': notificationStream,
+    'publicationDemo': publicationDemo,
     'schedulingDemo': schedulingDemo,
     'smoke': smoke,
   };

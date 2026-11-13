@@ -17,6 +17,7 @@ import 'free_busy_exchange_values.dart';
 import 'subject_free_busy_export_values.dart';
 import 'inbound_reply_runtime.dart';
 import 'invitation_runtime.dart';
+import 'incoming_publication_runtime.dart';
 import 'invitation_bundle_values.dart';
 import 'recurring_invitation_response_values.dart';
 import 'recurring_response_history.dart';
@@ -70,6 +71,9 @@ part 'calendar_event_occurrence_queries.dart';
 part 'calendar_item_text_metadata.dart';
 part 'calendar_scheduling.dart';
 part 'calendar_information_publication.dart';
+part 'calendar_incoming_publications.dart';
+part 'calendar_incoming_publication_queries.dart';
+part 'calendar_incoming_publication_commands.dart';
 part 'calendar_scheduling_replies.dart';
 part 'calendar_scheduling_reply_targets.dart';
 part 'calendar_scheduling_bundle.dart';
@@ -125,6 +129,7 @@ abstract final class CalendarModule {
     CalendarSchedulingRuntime? scheduling,
     CalendarInvitationRuntime? invitations,
     CalendarFreeBusyExchangeRuntime? freeBusyExchanges,
+    CalendarIncomingPublicationRuntime? incomingPublications,
     CalendarPublicationPolicy? publicationPolicy,
     List<CalendarDependencyProvider> dependencies = const [],
     List<CalendarAvailabilityExtensionRegistration> availabilityExtensions =
@@ -192,6 +197,15 @@ abstract final class CalendarModule {
             CalendarAuthorizationGuarantee.coordinated) {
       throw ArgumentError('Reply host cannot supply required guarantee');
     }
+    if (incomingPublications != null &&
+        options.requiredWriteGuarantee ==
+            CalendarAuthorizationGuarantee.coordinated &&
+        incomingPublications.host.guarantee !=
+            CalendarAuthorizationGuarantee.coordinated) {
+      throw ArgumentError(
+        'Incoming publication host cannot supply required guarantee',
+      );
+    }
     if (invitations != null &&
         options.requiredWriteGuarantee ==
             CalendarAuthorizationGuarantee.coordinated &&
@@ -235,8 +249,17 @@ abstract final class CalendarModule {
       scheduling,
       invitations,
       freeBusyExchanges,
+      incomingPublications,
     );
   }
+
+  static Future<CalendarIncomingPublicationIngressReceipt>
+  receiveIncomingPublication(
+    Session session,
+    CalendarIncomingPublicationDelivery delivery,
+  ) => service(session)._incomingReceive(delivery);
+  static Future<int> runIncomingPublicationMaintenance(Session session) =>
+      service(session)._incomingMaintenance();
 
   /// Trusted maintenance entry point. All dispatch contexts are actor-free;
   /// stable delivery UUIDs and database leases survive process loss.
@@ -415,12 +438,14 @@ final class _Runtime {
     this.scheduling,
     this.invitations,
     this.freeBusyExchanges,
+    this.incomingPublications,
   );
   final Map<String, CalendarAvailabilityExtensionRegistration>
   availabilityExtensions;
   final CalendarSchedulingRuntime? scheduling;
   final CalendarInvitationRuntime? invitations;
   final CalendarFreeBusyExchangeRuntime? freeBusyExchanges;
+  final CalendarIncomingPublicationRuntime? incomingPublications;
   final CalendarAlarmRuntime? alarms;
   final CalendarPublicationPolicy? publicationPolicy;
   final CalendarHostPolicy policy;
@@ -1239,6 +1264,7 @@ final class CalendarService {
           transaction: tx,
         );
         if (saved == null ||
+            saved.incomingPublicationState != null ||
             saved.freeBusyExchangeState != null ||
             saved.eventOccurrenceState != null ||
             saved.alarmActivityId != null ||

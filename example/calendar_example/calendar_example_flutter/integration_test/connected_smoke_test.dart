@@ -1,3 +1,4 @@
+import 'incoming_publications_journey.dart';
 import 'information_publication_journey.dart';
 import 'subject_free_busy_export_journey.dart';
 import 'free_busy_exchange_journey.dart';
@@ -1307,6 +1308,7 @@ void main() {
     await runFreeBusyExchangeJourney(tester, client);
     await runSubjectFreeBusyExportJourney(tester, client);
     await runInformationPublicationJourney(tester, client);
+    await runIncomingPublicationJourney(tester, client);
     await runOccurrenceQueryJourney(tester, client);
     await runNativeFutureJourney(tester, client);
     await _liveReminderJourney(tester, client);

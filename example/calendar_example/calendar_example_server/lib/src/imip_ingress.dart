@@ -77,3 +77,28 @@ Future<CalendarSchedulingReplyReceipt> receiveHostImipReply(
     ),
   );
 }
+
+/// Explicit publication-purpose bridge. Neither MIME headers nor lack of
+/// ATTENDEE chooses this handler; the host must verify its actual route/purpose.
+Future<CalendarIncomingPublicationIngressReceipt> receiveHostImipPublication(
+  Session session, {
+  required List<int> raw,
+  required ImipProtection outerProtection,
+  required String namespace,
+  required String deliveryKey,
+  required String originReference,
+}) async {
+  final bytes = _calendar(raw, outerProtection, const {
+    IcalendarSchedulingMethod.publish,
+    IcalendarSchedulingMethod.cancel,
+  }, 524288);
+  return CalendarModule.receiveIncomingPublication(
+    session,
+    CalendarIncomingPublicationDelivery(
+      namespace: namespace,
+      deliveryKey: deliveryKey,
+      originReference: originReference,
+      bytes: Uint8List.fromList(bytes),
+    ),
+  );
+}

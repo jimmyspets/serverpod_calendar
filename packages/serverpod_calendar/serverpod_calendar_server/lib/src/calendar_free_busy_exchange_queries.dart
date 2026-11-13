@@ -462,6 +462,7 @@ extension CalendarFreeBusyExchangeQueries on CalendarService {
             saved.eventFieldGroups != null ||
             saved.taskCalendarId != null ||
             saved.taskFieldGroups != null ||
+            saved.incomingPublicationState != null ||
             saved.eventOccurrenceState != null ||
             saved.categoryFilter != null ||
             saved.alarmActivityId != null ||

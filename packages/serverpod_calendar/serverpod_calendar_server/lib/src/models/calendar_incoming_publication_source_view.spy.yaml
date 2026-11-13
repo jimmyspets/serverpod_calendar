@@ -1,0 +1,14 @@
+class: CalendarIncomingPublicationSourceView
+immutable: true
+fields:
+  id: UuidValue
+  entryId: UuidValue
+  basisSourceId: UuidValue?
+  kind: CalendarIncomingPublicationKind
+  sequence: int?
+  stamp: DateTime
+  digest: String
+  normalizedSource: String
+  outcome: CalendarIncomingPublicationOutcome
+  isCurrent: bool
+  receivedAt: DateTime

@@ -1,0 +1,5 @@
+class: CalendarIncomingPublicationPage
+immutable: true
+fields:
+  entries: List<CalendarIncomingPublicationView>
+  continuation: String?
