@@ -656,3 +656,8 @@ Accepted [ADR 0182](adr/0182-native-event-information-publication.md) authorizes
 ## Approved incoming event publication workflow
 
 [Accepted ADR 0183](adr/0183-incoming-event-publication-workflow.md) groups one-master PUBLISH/private review, explicit Add/update, whole cancellation/reopening and synthetic MIME/Flutter/two-host validation. The maintainer confirmed review first, explicit Add/Apply and clean-baseline conflict protection; receipt sends no reply or automatic calendar mutation. The maintainer approved the four private tables, nullable cursor state, complete workflow/limits and the separate cancellation source-basis refinement on 2026-11-13. The [scoped runtime](incoming-event-publications.md) and grouped local validation are complete; [actual results](validation-incoming-event-publications.md) remain distinct from full exact-head hosted readiness. Existing invitation and outgoing-publication purpose guards remain.
+
+
+## Proposed information-publication occurrence group
+
+[Proposed ADR 0184](adr/0184-event-information-occurrence-publication.md) groups supported outgoing PUBLISH occurrence components, independent versions, retained reset projections and whole cancellation/reopening using existing outbox storage and unchanged limits. It preserves native inheritance and complete-message authority. This is review material, not implemented support: incoming component publications, unrepresentable new content-only exceptions, individual/range information cancellation and real mail remain guarded. Explicit agreement on the v2 checkpoint/projection mechanics is required before implementation.
