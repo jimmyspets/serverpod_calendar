@@ -214,6 +214,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0182](0182-native-event-information-publication.md) | Explicit native event information publication | Accepted; scoped native information publication/lifecycle implemented with purpose isolation and local batch validation; full hosted readiness tracked separately |
 
 | [0183](0183-incoming-event-publication-workflow.md) | Incoming event publication review and calendar workflow | Accepted by explicit maintainer agreement; grouped incoming master publication review/calendar workflow and four-table/cursor storage |
+| [0184](0184-event-information-occurrence-publication.md) | Information-publication occurrence bundles | Proposed; complete outgoing supported-component/reset/whole-lifecycle batch using existing outbox and bounded v2 checkpoints; explicit agreement required |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

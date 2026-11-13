@@ -1026,3 +1026,10 @@ Accepted [ADR 0182](adr/0182-native-event-information-publication.md) authorizes
 - [x] Review ADR 0183’s complete grouped storage/API/purpose/version/retention mechanics and separate cancellation source basis.
 - [x] Implement and locally validate the approved master-publication consumption/lifecycle group, source-basis refinement, fresh/upgraded schema, generated clients, two-host/process-loss and connected Flutter coverage in one feature batch.
 - [ ] Inspect the full exact-head hosted result before readiness; retain occurrence/method/real-transport release gates.
+
+## Proposed information-publication occurrence group
+
+[Proposed ADR 0184](adr/0184-event-information-occurrence-publication.md) groups supported outgoing PUBLISH timing/content components, independent outgoing versions, retained reset projections and complete whole cancellation/reopening. It reuses the approved outbox, fixed recipients and current limits with flat v2 checkpoint JSON; no SQL expansion is expected. This extends only faithfully representable exceptions under the existing REQUEST reset policy. Native inheritance remains unchanged; first unrepresentable content-only exceptions, individual/range cancellation, alarms and incoming component publication remain guarded. No implementation or new model mechanic is approved by this proposal. Resolve baseline hosted failures before dependent runtime implementation.
+
+- [ ] Obtain explicit agreement on the complete ADR 0184 checkpoint/projection/version/lifecycle contract.
+- [ ] After agreement, implement and validate the complete outgoing occurrence-publication group in one feature batch; keep incoming-bundle and remaining scheduling gates explicit.
