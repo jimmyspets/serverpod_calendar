@@ -1034,3 +1034,11 @@ Accepted [ADR 0182](adr/0182-native-event-information-publication.md) authorizes
 - [x] Obtain explicit agreement on the complete ADR 0184 checkpoint/projection/version/lifecycle contract.
 - [x] Implement and locally validate the complete outgoing occurrence-publication group in one feature batch; keep incoming-bundle and remaining scheduling gates explicit.
 - [ ] Inspect full exact-feature-head hosted inspection/runtime before readiness.
+
+
+## Proposed incoming complete information-publication bundles
+
+[Proposed ADR 0185](adr/0185-incoming-information-publication-bundles.md) groups initial PUBLISH bundle review/Add, complete component-aware updates and whole cancellation/reopening. It proposes two permanent profile columns, protected component-vector wrappers, dedicated authority/APIs and unchanged caps, preserving separate sender cancellation and accepted native bases. Complete-set/regression rejection is recommended, not a confirmed answer. Receipt remains review-only, Apply requires a clean entire series, and the implementation stays master-only until explicit agreement. No runtime/schema source is changed by this proposal.
+
+- [ ] Review the complete ADR 0185 product/model/API/version/lifecycle contract.
+- [ ] After approval, implement and validate the group together; retain remaining partial-message, cancellation and real-transport gates.
