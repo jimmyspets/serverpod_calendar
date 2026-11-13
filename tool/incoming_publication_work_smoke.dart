@@ -39,7 +39,9 @@ final class _Probe {
     if (Platform.isWindows) {
       await Process.run('taskkill', ['/PID', '${process.pid}', '/T', '/F']);
     } else {
-      process.kill();
+      // This is abrupt process-loss simulation. SIGTERM lets Serverpod wait
+      // for the deliberately suspended transaction instead of losing it.
+      process.kill(ProcessSignal.sigkill);
     }
     await process.exitCode.timeout(const Duration(seconds: 20));
     await lines.cancel();
