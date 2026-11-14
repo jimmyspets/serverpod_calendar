@@ -256,3 +256,6 @@ Accepted [ADR 0182](adr/0182-native-event-information-publication.md) adds scope
 ## Information-publication occurrence group
 
 [Accepted ADR 0184](adr/0184-event-information-occurrence-publication.md) groups supported outgoing PUBLISH occurrence components, independent versions, retained reset projections and whole cancellation/reopening using existing outbox storage and unchanged limits. It preserves native inheritance and complete-message authority. The scoped implementation uses flat version-2 JSON in existing columns, preserves version-1 reads and native inheritance, and requires complete-message authorization. Incoming component publications, new content-only exceptions without representable timing, individual/range information cancellation and real mail remain guarded. See the outgoing profile and separate validation evidence.
+
+
+[Proposed ADR 0185](adr/0185-incoming-information-publication-bundles.md) groups incoming complete PUBLISH review/Add, component-aware updates and whole lifecycle. Two permanent profile columns, protected vector DTOs/APIs, complete-set ordering and independent authority are review material, not implemented support or an approved model. Existing incoming master-only guards and synthetic transport remain until explicit agreement.
