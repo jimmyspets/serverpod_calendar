@@ -21,6 +21,22 @@ Future<void> runInformationPublicationJourney(
   ))!.calendarId;
   final content = cal.CalendarEventContent(
     summary: 'Flutter information',
+    recurrence: cal.CalendarEventRecurrence(
+      rule: cal.CalendarEventRule(
+        frequency: cal.CalendarEventFrequency.daily,
+        count: 5,
+        byDay: [],
+        byMonthDay: [],
+        byYearDay: [],
+        byWeekNo: [],
+        byMonth: [],
+        byHour: [],
+        byMinute: [],
+        bySetPosition: [],
+      ),
+      inclusions: [],
+      exclusions: [],
+    ),
     timing: cal.CalendarEventTiming(
       kind: cal.CalendarEventTimeKind.utc,
       start: cal.CalendarEventCivil(year: 2027, month: 4, day: 2, hour: 9),
@@ -29,6 +45,23 @@ Future<void> runInformationPublicationJourney(
   final id = (await api.calendarEvent.create(
     cal.CalendarEventCreateRequest(calendarId: parent, content: content),
   ))!.eventId;
+  cal.CalendarEventTiming point(int day) => cal.CalendarEventTiming(
+    kind: cal.CalendarEventTimeKind.utc,
+    start: cal.CalendarEventCivil(year: 2027, month: 4, day: day, hour: 9),
+  );
+  for (final future in [false, true]) {
+    await api.calendarEvent.changeOccurrence(
+      cal.CalendarEventOccurrenceChange(
+        eventId: id,
+        expectedRevision: (await api.calendarEvent.getEvent(id, [])).revision,
+        originalStart: point(future ? 4 : 3),
+        action: future
+            ? cal.CalendarEventOccurrenceAction.replaceFutureTiming
+            : cal.CalendarEventOccurrenceAction.replaceSingleTiming,
+        replacement: point(5),
+      ),
+    );
+  }
   final event = await api.calendarEvent.getEvent(
     id,
     cal.CalendarEventFieldGroup.values,
@@ -81,11 +114,11 @@ Future<void> runInformationPublicationJourney(
     findsOneWidget,
   );
   final published = await api.calendarEvent.getEvent(id, []);
-  expect(published.revision, 2);
+  expect(published.revision, 4);
   await api.calendarEvent.update(
     cal.CalendarEventUpdateRequest(
       eventId: id,
-      expectedRevision: 2,
+      expectedRevision: published.revision,
       content: content.copyWith(summary: 'New unpublished draft'),
     ),
   );
@@ -102,6 +135,31 @@ Future<void> runInformationPublicationJourney(
   expect(after.summary, 'New unpublished draft');
   expect(after.status, cal.CalendarEventStatus.confirmed);
   await tap('information-publish');
+  expect(find.textContaining('local changes: false'), findsOneWidget);
+  for (final future in [false, true]) {
+    await api.calendarEvent.changeOccurrence(
+      cal.CalendarEventOccurrenceChange(
+        eventId: id,
+        expectedRevision: (await api.calendarEvent.getEvent(id, [])).revision,
+        originalStart: point(future ? 4 : 3),
+        action: future
+            ? cal.CalendarEventOccurrenceAction.clearFutureTiming
+            : cal.CalendarEventOccurrenceAction.clearSingleTiming,
+      ),
+    );
+  }
+  await tap('information-refresh');
+  expect(find.textContaining('local changes: true'), findsOneWidget);
+  await tap('information-publish');
+  expect(find.textContaining('local changes: false'), findsOneWidget);
+  final reset = await api.calendarEvent.getEvent(
+    id,
+    cal.CalendarEventFieldGroup.values,
+  );
+  expect(reset.timingOverrides?.singles ?? [], isEmpty);
+  expect(reset.timingOverrides?.future ?? [], isEmpty);
+  await tap('information-cancel');
+  await tap('information-reopen');
   expect(find.textContaining('local changes: false'), findsOneWidget);
   await tester.pageBack();
   await tester.pumpAndSettle();

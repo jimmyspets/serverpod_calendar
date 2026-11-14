@@ -10,8 +10,12 @@ final class _InformationCheckpoint {
     this.activeCanonical,
     this.active,
     this.kind,
-    this.message,
-  );
+    this.message, {
+    this.version = 1,
+    this.projectionOriginals = const [],
+  });
+  final int version;
+  final List<EventSchedulingOriginal> projectionOriginals;
   final CalendarEventPolicySnapshot canonical,
       outgoing,
       activeCanonical,
@@ -85,8 +89,9 @@ CalendarEventPolicySnapshot _informationOutgoing(
 }
 
 _InformationCheckpoint _readInformationCheckpoint(
-  CalendarSchedulingPublicationRecord p,
-) {
+  CalendarSchedulingPublicationRecord p, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
   try {
     _schedulingBound(p.snapshot);
     _schedulingBound(p.projection);
@@ -96,6 +101,14 @@ _InformationCheckpoint _readInformationCheckpoint(
       throw StateError('Invalid recipient proof');
     }
     final data = jsonDecode(p.snapshot) as Map<String, dynamic>;
+    if (data['informationVersion'] == 2) {
+      return _readInformationBundle(
+        p,
+        data,
+        sharedWorkBudget ??
+            RecurrenceWorkBudget(maxWork: eventMaxCandidateWork),
+      );
+    }
     if (data.keys.toSet().difference({
           'informationVersion',
           'purpose',
@@ -112,10 +125,22 @@ _InformationCheckpoint _readInformationCheckpoint(
         _schedulingDigest(p.payload) != p.payloadDigest) {
       throw StateError('Invalid information proof');
     }
-    final canonical = _schedulingReadSnapshot(data['canonical']);
-    final outgoing = _schedulingReadSnapshot(data['outgoing']);
-    final activeCanonical = _schedulingReadSnapshot(data['activeCanonical']);
-    final active = _schedulingReadSnapshot(data['active']);
+    final canonical = _schedulingReadSnapshot(
+      data['canonical'],
+      sharedWorkBudget: sharedWorkBudget,
+    );
+    final outgoing = _schedulingReadSnapshot(
+      data['outgoing'],
+      sharedWorkBudget: sharedWorkBudget,
+    );
+    final activeCanonical = _schedulingReadSnapshot(
+      data['activeCanonical'],
+      sharedWorkBudget: sharedWorkBudget,
+    );
+    final active = _schedulingReadSnapshot(
+      data['active'],
+      sharedWorkBudget: sharedWorkBudget,
+    );
     final kind = CalendarSchedulingPublicationKind.values.byName(
       data['kind'] as String,
     );
@@ -195,7 +220,10 @@ _InformationCheckpoint _readInformationCheckpoint(
                 jsonEncode(_schedulingSnapshotMap(outgoing))) {
       throw StateError('Invalid outgoing correspondence');
     }
-    final message = parseIcalendarSchedulingMessage(utf8.encode(p.payload));
+    final message = parseIcalendarSchedulingMessage(
+      utf8.encode(p.payload),
+      sharedWorkBudget: sharedWorkBudget,
+    );
     final component = message.events.single;
     final priorSequence = data['priorSequence'] as int;
     final priorStamp = data['priorStamp'] == null
@@ -214,7 +242,13 @@ _InformationCheckpoint _readInformationCheckpoint(
         priorStamp != null && p.stamp.isBefore(priorStamp) ||
         component.participants.attendees.isNotEmpty ||
         component.participants.organizer?.address != organizer ||
-        _schedulingPayload(outgoing, 524288, method: p.method) != p.payload) {
+        _schedulingPayload(
+              outgoing,
+              524288,
+              method: p.method,
+              sharedWorkBudget: sharedWorkBudget,
+            ) !=
+            p.payload) {
       throw StateError('Invalid version/body');
     }
     return _InformationCheckpoint(
@@ -323,6 +357,36 @@ extension CalendarInformationPublicationOperations on CalendarService {
     );
     final actor = await _context();
     return _transaction(actor, (tx, scope) async {
+      final work = RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
+      // Reuse validation only for the exact immutable proof in this transaction.
+      // Access/route decisions and mutable worker state are never cached.
+      final proofs = <String, _InformationCheckpoint>{};
+      _InformationCheckpoint readPublication(
+        CalendarSchedulingPublicationRecord row,
+      ) {
+        final key = _schedulingDigest(
+          jsonEncode([
+            row.id?.toString(),
+            row.meetingId.toString(),
+            row.scopeKey,
+            row.snapshot,
+            row.projection,
+            row.payload,
+            row.payloadDigest,
+            row.method,
+            row.protocolUid,
+            row.eventRevision,
+            row.sequence,
+            row.stamp.toIso8601String(),
+            row.recipients,
+          ]),
+        );
+        return proofs.putIfAbsent(
+          key,
+          () => _readInformationCheckpoint(row, sharedWorkBudget: work),
+        );
+      }
+
       final e = await _event(actor, eventId, tx);
       final meeting = await _meeting(eventId, tx, allowInformation: true);
       if (meeting != null && meeting.purpose != _informationPurpose) {
@@ -339,7 +403,7 @@ extension CalendarInformationPublicationOperations on CalendarService {
         throw _failure(CalendarFailureCode.validation);
       }
       final last = await _latest(meeting, tx);
-      final previous = last == null ? null : _readInformationCheckpoint(last);
+      final previous = last == null ? null : readPublication(last);
       if (previous != null) _informationBinding(previous, meeting!, e);
       final cancel =
           kind == CalendarSchedulingPublicationKind.informationCancel;
@@ -355,14 +419,14 @@ extension CalendarInformationPublicationOperations on CalendarService {
           (retry.meetingId != meeting?.id ||
               retry.actorId != actor.principalId ||
               retry.requestDigest != digest ||
-              _readInformationCheckpoint(retry).kind != kind)) {
+              readPublication(retry).kind != kind)) {
         throw _failure(CalendarFailureCode.validation);
       }
       if (previous == null && (cancel || reopen)) {
         throw _failure(CalendarFailureCode.validation);
       }
       if (retry != null) {
-        _informationBinding(_readInformationCheckpoint(retry), meeting!, e);
+        _informationBinding(readPublication(retry), meeting!, e);
       }
       final proposals =
           addresses ??
@@ -408,7 +472,6 @@ extension CalendarInformationPublicationOperations on CalendarService {
       if (retry == null &&
           input != null &&
           (content.status == CalendarEventStatus.cancelled ||
-              _informationOverrides(e.data.timingOverrides) ||
               _schedulingRecurring(content) !=
                   _schedulingRecurring(e.data.content) ||
               previous != null &&
@@ -474,96 +537,41 @@ extension CalendarInformationPublicationOperations on CalendarService {
         timingOverrides: e.data.timingOverrides,
       );
       final receipt = retry ?? (unchanged ? last : null);
-      late final CalendarEventPolicySnapshot outgoing, activeCanonical, active;
+      late final CalendarEventPolicySnapshot activeCanonical;
       late final String payload, snapshot;
       if (receipt != null) {
-        final saved = _readInformationCheckpoint(receipt);
-        outgoing = saved.outgoing;
+        final saved = readPublication(receipt);
         activeCanonical = saved.activeCanonical;
-        active = saved.active;
         payload = receipt.payload;
         snapshot = receipt.snapshot;
       } else {
-        final nativeMaximum = state.overrides.fold(
-          state.version.sequence ?? 0,
-          (int value, row) => max(value, row.version.sequence ?? 0),
-        );
-        final sequence = cancel || reopen
-            ? max(nativeMaximum, last!.sequence) + 1
-            : max(nativeMaximum, (last?.sequence ?? -1) + 1);
-        if (sequence > eventMaxSequence) {
-          throw _failure(CalendarFailureCode.limitExceeded);
-        }
-        var stamp = eventProtocolInstant(now);
-        for (final floor in [
-          state.version.stamp,
-          previous?.outgoing.protocolState?.version.stamp,
-          previous?.active.protocolState?.version.stamp,
-        ]) {
-          if (floor != null && floor.isAfter(stamp)) stamp = floor;
-        }
-        activeCanonical = cancel || reopen
-            ? previous!.activeCanonical
-            : proposed;
-        final basis = cancel || reopen ? activeCanonical : proposed;
-        outgoing = _schedulingValue(
-          () => _informationOutgoing(
-            CalendarEventPolicySnapshot(
-              eventId,
-              e.identity.calendarId,
-              proposed.revision,
-              cancel
-                  ? basis.content.copyWith(
-                      status: CalendarEventStatus.cancelled,
-                    )
-                  : basis.content,
-              e.data.protocolUid,
-              now,
-              origin: e.data.origin,
-              protocolState: basis.protocolState!.copyWith(
-                statusPresent: cancel
-                    ? true
-                    : basis.protocolState!.statusPresent,
-              ),
-            ),
+        final plan = _schedulingValue(
+          () => _informationPlan(
+            proposed,
             authority.organizerAddress,
-            basis.protocolState!.version.copyWith(
-              sequence: sequence,
-              stamp: stamp,
-            ),
-          ),
-        );
-        active = cancel ? previous!.active : outgoing;
-        payload = _schedulingValue(
-          () => _schedulingPayload(
-            outgoing,
+            kind,
+            previous,
+            last,
+            now,
             _scheduling.options.maxPayloadBytes,
-            method: cancel ? 'CANCEL' : 'PUBLISH',
+            work,
           ),
         );
-        snapshot = _schedulingBound(
-          jsonEncode({
-            'informationVersion': 1,
-            'purpose': _informationPurpose.name,
-            'kind': kind.name,
-            'canonical': _schedulingSnapshotMap(proposed),
-            'outgoing': _schedulingSnapshotMap(outgoing),
-            'activeCanonical': _schedulingSnapshotMap(activeCanonical),
-            'active': _schedulingSnapshotMap(active),
-            'priorSequence': last?.sequence ?? -1,
-            'priorStamp': last?.stamp.toIso8601String(),
-          }),
-        );
+        activeCanonical = plan.activeCanonical;
+        payload = plan.payload;
+        snapshot = plan.snapshot;
       }
+
       final parsed = _schedulingValue(
-        () => parseIcalendarSchedulingMessage(utf8.encode(payload)),
+        () => parseIcalendarSchedulingMessage(
+          utf8.encode(payload),
+          sharedWorkBudget: work,
+        ),
       );
       final intent = CalendarSchedulingIntent(
         purpose: _informationPurpose,
         method: parsed.method.name.toUpperCase(),
-        publicationKind: receipt == null
-            ? kind
-            : _readInformationCheckpoint(receipt).kind,
+        publicationKind: receipt == null ? kind : readPublication(receipt).kind,
         organizerAddress: authority.organizerAddress,
         recipients: proposals,
         payload: payload,
@@ -689,8 +697,10 @@ extension CalendarInformationPublicationOperations on CalendarService {
               generation: saved.generation + 1,
               method: intent.method,
               protocolUid: e.data.protocolUid,
-              sequence: parsed.events.single.sequence!,
-              stamp: parsed.events.single.stamp,
+              sequence: parsed.events
+                  .singleWhere((e) => !e.isOverride)
+                  .sequence!,
+              stamp: parsed.events.singleWhere((e) => !e.isOverride).stamp,
               snapshot: snapshot,
               projection: _schedulingCanonicalKey(proposed),
               payload: payload,
@@ -707,7 +717,7 @@ extension CalendarInformationPublicationOperations on CalendarService {
             ),
             transaction: tx,
           );
-      _readInformationCheckpoint(publication);
+      readPublication(publication);
       await CalendarSchedulingDeliveryRecord.db.insert(_session, [
         for (final route in authority.routes)
           CalendarSchedulingDeliveryRecord(
@@ -810,6 +820,7 @@ extension CalendarInformationPublicationOperations on CalendarService {
               e.data.protocolUid,
               e.data.updatedAt,
               protocolState: checkpoint.activeCanonical.protocolState,
+              timingOverrides: checkpoint.activeCanonical.timingOverrides,
             );
       return CalendarSchedulingView(
         purpose: meeting?.purpose,
@@ -880,8 +891,12 @@ extension CalendarInformationPublicationOperations on CalendarService {
       ),
       p.recipients,
     );
-    if (saved.message.events.single.participants.organizer?.address !=
-            authority.organizerAddress ||
+    if (saved.message.events.any(
+          (component) =>
+              component.participants.organizer?.address !=
+                  authority.organizerAddress ||
+              component.participants.attendees.isNotEmpty,
+        ) ||
         !rows.any(
           (d) =>
               d.id == delivery.id &&

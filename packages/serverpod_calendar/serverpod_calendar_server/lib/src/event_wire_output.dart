@@ -10,7 +10,10 @@ import 'event_wire_storage.dart';
 import 'generated/protocol.dart';
 
 /// Current-state conversion only. The service must authorize every full source.
-Uint8List eventExportBytes(List<CalendarEventPolicySnapshot> selection) {
+Uint8List eventExportBytes(
+  List<CalendarEventPolicySnapshot> selection, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
   if (selection.isEmpty ||
       selection.length > const IcalendarComponentLimits().maxEvents) {
     throw ArgumentError('Invalid selection');
@@ -33,8 +36,15 @@ Uint8List eventExportBytes(List<CalendarEventPolicySnapshot> selection) {
   final writer = EventComponentWriter();
   final components = <IcalendarSyntaxComponent>[];
   for (final source in selection) {
-    final content = validateEventContent(source.content);
-    final edits = validateEventOverrides(content, source.timingOverrides);
+    final content = validateEventContent(
+      source.content,
+      sharedWorkBudget: sharedWorkBudget,
+    );
+    final edits = validateEventOverrides(
+      content,
+      source.timingOverrides,
+      sharedWorkBudget: sharedWorkBudget,
+    );
     if (source.protocolState == null) {
       throw ArgumentError('Missing protocol state');
     }
@@ -60,10 +70,14 @@ Uint8List eventExportBytes(List<CalendarEventPolicySnapshot> selection) {
       ...components,
     ]),
   ]);
-  final validated = validateIcalendarEventCalendar(document);
+  final validated = validateIcalendarEventCalendar(
+    document,
+    sharedWorkBudget: sharedWorkBudget,
+  );
   for (final source in selection) {
     final decoded = eventStorageProposal(
       validated.series.singleWhere((s) => s.master.uid == source.protocolUid),
+      sharedWorkBudget: sharedWorkBudget,
     );
     // A PERIOD-only wire RDATE necessarily creates an empty recurrence wrapper
     // when decoded; the periods themselves live in a separate native field.
@@ -80,6 +94,7 @@ Uint8List eventExportBytes(List<CalendarEventPolicySnapshot> selection) {
       expectedContent,
       source.timingOverrides,
       source.protocolState!,
+      sharedWorkBudget: sharedWorkBudget,
     );
     if (expected.canonicalValue != decoded.importBaseline.canonicalValue) {
       throw ArgumentError(

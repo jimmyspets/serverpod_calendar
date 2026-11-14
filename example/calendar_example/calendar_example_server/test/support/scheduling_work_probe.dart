@@ -360,7 +360,12 @@ Future<void> main(List<String> args) async {
           };
         case 'seed':
           result = (input['method'] as String? ?? '').startsWith('INFORMATION')
-              ? await _informationSeed(s, host, input['method'] as String)
+              ? await _informationSeed(
+                  s,
+                  host,
+                  input['method'] as String,
+                  occurrences: input['occurrences'] == true,
+                )
               : await _seed(s, input['method'] as String? ?? 'REQUEST');
         case 'work':
           transport.pause = input['pause'] as String? ?? '';
@@ -1145,8 +1150,9 @@ Future<Map<String, String>> _seed(
 Future<Map<String, String>> _informationSeed(
   Session s,
   _Host host,
-  String method,
-) async {
+  String method, {
+  bool occurrences = false,
+}) async {
   host.scope = 'scheduling-work-probe:${Uuid().v4obj()}';
   s.updateAuthenticated(
     AuthenticationInfo('synthetic', {}, authId: 'information-probe'),
@@ -1162,6 +1168,24 @@ Future<Map<String, String>> _informationSeed(
     ))!;
     final content = CalendarEventContent(
       summary: 'Information worker fixture',
+      recurrence: occurrences
+          ? CalendarEventRecurrence(
+              rule: CalendarEventRule(
+                frequency: CalendarEventFrequency.daily,
+                count: 5,
+                byDay: [],
+                byMonthDay: [],
+                byYearDay: [],
+                byWeekNo: [],
+                byMonth: [],
+                byHour: [],
+                byMinute: [],
+                bySetPosition: [],
+              ),
+              inclusions: [],
+              exclusions: [],
+            )
+          : null,
       timing: CalendarEventTiming(
         kind: CalendarEventTimeKind.utc,
         start: CalendarEventCivil(year: 2027, month: 1, day: 2, hour: 9),
@@ -1173,20 +1197,74 @@ Future<Map<String, String>> _informationSeed(
         content: content,
       ),
     ))!;
+    var revision = 1;
+    CalendarEventTiming point(int day) => CalendarEventTiming(
+      kind: CalendarEventTimeKind.utc,
+      start: CalendarEventCivil(year: 2027, month: 1, day: day, hour: 9),
+    );
+    if (occurrences) {
+      for (final future in [false, true]) {
+        await service.changeOccurrence(
+          CalendarEventOccurrenceChange(
+            eventId: event.eventId,
+            expectedRevision: revision++,
+            originalStart: point(future ? 4 : 3),
+            action: future
+                ? CalendarEventOccurrenceAction.replaceFutureTiming
+                : CalendarEventOccurrenceAction.replaceSingleTiming,
+            replacement: point(future ? 5 : 4),
+          ),
+        );
+      }
+    }
     var receipt = await service.saveAndPublishInformation(
       CalendarSchedulingSaveRequest(
         eventId: event.eventId,
-        expectedRevision: 1,
+        expectedRevision: revision++,
         commandId: Uuid().v4obj(),
         content: content,
         recipients: ['mailto:guest@example.invalid'],
       ),
     );
+    if (occurrences) {
+      for (final future in [false, true]) {
+        await service.changeOccurrence(
+          CalendarEventOccurrenceChange(
+            eventId: event.eventId,
+            expectedRevision: revision++,
+            originalStart: point(future ? 4 : 3),
+            action: future
+                ? CalendarEventOccurrenceAction.clearFutureTiming
+                : CalendarEventOccurrenceAction.clearSingleTiming,
+          ),
+        );
+      }
+      receipt = await service.saveAndPublishInformation(
+        CalendarSchedulingSaveRequest(
+          eventId: event.eventId,
+          expectedRevision: revision++,
+          commandId: Uuid().v4obj(),
+          content: content,
+          recipients: ['mailto:guest@example.invalid'],
+        ),
+      );
+      final saved = (await CalendarSchedulingPublicationRecord.db.findById(
+        s,
+        receipt.publicationId,
+      ))!;
+      final message = parseIcalendarSchedulingMessage(
+        utf8.encode(saved.payload),
+      );
+      if (message.events.length != 3 ||
+          message.events.where((e) => e.isOverride).length != 2) {
+        throw StateError('Retained information reset packet was incomplete');
+      }
+    }
     if (method != 'INFORMATION') {
       receipt = await service.cancelPublishedInformation(
         CalendarSchedulingCancelRequest(
           eventId: event.eventId,
-          expectedRevision: 2,
+          expectedRevision: revision++,
           commandId: Uuid().v4obj(),
         ),
       );
@@ -1195,7 +1273,7 @@ Future<Map<String, String>> _informationSeed(
       receipt = await service.reopenPublishedInformation(
         CalendarSchedulingReopenRequest(
           eventId: event.eventId,
-          expectedRevision: 3,
+          expectedRevision: revision++,
           commandId: Uuid().v4obj(),
         ),
       );
@@ -1203,6 +1281,7 @@ Future<Map<String, String>> _informationSeed(
     return {
       'eventId': event.eventId.toString(),
       'publicationId': receipt.publicationId.toString(),
+      'revision': revision.toString(),
     };
   } finally {
     s.updateAuthenticated(null);
