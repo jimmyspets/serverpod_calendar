@@ -91,6 +91,10 @@ calendarIncomingPublication:
   - getLink:
   - addToCalendar:
   - applySource:
+  - getBundleSource:
+  - getBundleLink:
+  - addBundleToCalendar:
+  - applyBundleSource:
 calendarInvitation:
   - list:
   - getInvitation:

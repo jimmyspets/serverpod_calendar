@@ -22,6 +22,7 @@ abstract class CalendarIncomingPublicationLinkView
     implements _is.SerializableModel, _is.ProtocolSerialization {
   const CalendarIncomingPublicationLinkView._({
     required this.id,
+    bool? bundledPublication,
     required this.entryId,
     required this.calendarId,
     required this.eventId,
@@ -35,10 +36,11 @@ abstract class CalendarIncomingPublicationLinkView
     this.acceptedStamp,
     required this.creationReceipt,
     this.latestApplyReceipt,
-  });
+  }) : bundledPublication = bundledPublication ?? false;
 
   const factory CalendarIncomingPublicationLinkView({
     required _is.UuidValue id,
+    bool? bundledPublication,
     required _is.UuidValue entryId,
     required _is.UuidValue calendarId,
     required _is.UuidValue eventId,
@@ -60,6 +62,11 @@ abstract class CalendarIncomingPublicationLinkView
   ) {
     return CalendarIncomingPublicationLinkView(
       id: _is.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
+      bundledPublication: jsonSerialization['bundledPublication'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(
+              jsonSerialization['bundledPublication'],
+            ),
       entryId: _is.UuidValueJsonExtension.fromJson(
         jsonSerialization['entryId'],
       ),
@@ -103,6 +110,8 @@ abstract class CalendarIncomingPublicationLinkView
     );
   }
 
+  final bool bundledPublication;
+
   final _is.UuidValue id;
 
   final _is.UuidValue entryId;
@@ -136,6 +145,7 @@ abstract class CalendarIncomingPublicationLinkView
   @_is.useResult
   CalendarIncomingPublicationLinkView copyWith({
     _is.UuidValue? id,
+    bool? bundledPublication,
     _is.UuidValue? entryId,
     _is.UuidValue? calendarId,
     _is.UuidValue? eventId,
@@ -164,6 +174,11 @@ abstract class CalendarIncomingPublicationLinkView
                   id,
                 ) ||
                 other.id == id) &&
+            (identical(
+                  other.bundledPublication,
+                  bundledPublication,
+                ) ||
+                other.bundledPublication == bundledPublication) &&
             (identical(
                   other.entryId,
                   entryId,
@@ -236,6 +251,7 @@ abstract class CalendarIncomingPublicationLinkView
     return Object.hash(
       runtimeType,
       id,
+      bundledPublication,
       entryId,
       calendarId,
       eventId,
@@ -257,6 +273,7 @@ abstract class CalendarIncomingPublicationLinkView
     return {
       '__className__': 'serverpod_calendar.CalendarIncomingPublicationLinkView',
       'id': id.toJson(),
+      'bundledPublication': bundledPublication,
       'entryId': entryId.toJson(),
       'calendarId': calendarId.toJson(),
       'eventId': eventId.toJson(),
@@ -280,6 +297,7 @@ abstract class CalendarIncomingPublicationLinkView
     return {
       '__className__': 'serverpod_calendar.CalendarIncomingPublicationLinkView',
       'id': id.toJson(),
+      'bundledPublication': bundledPublication,
       'entryId': entryId.toJson(),
       'calendarId': calendarId.toJson(),
       'eventId': eventId.toJson(),
@@ -316,6 +334,7 @@ class _CalendarIncomingPublicationLinkViewImpl
     extends CalendarIncomingPublicationLinkView {
   const _CalendarIncomingPublicationLinkViewImpl({
     required _is.UuidValue id,
+    bool? bundledPublication,
     required _is.UuidValue entryId,
     required _is.UuidValue calendarId,
     required _is.UuidValue eventId,
@@ -332,6 +351,7 @@ class _CalendarIncomingPublicationLinkViewImpl
     _i81webjm.CalendarIncomingPublicationCommandReceipt? latestApplyReceipt,
   }) : super._(
          id: id,
+         bundledPublication: bundledPublication,
          entryId: entryId,
          calendarId: calendarId,
          eventId: eventId,
@@ -353,6 +373,7 @@ class _CalendarIncomingPublicationLinkViewImpl
   @override
   CalendarIncomingPublicationLinkView copyWith({
     _is.UuidValue? id,
+    bool? bundledPublication,
     _is.UuidValue? entryId,
     _is.UuidValue? calendarId,
     _is.UuidValue? eventId,
@@ -370,6 +391,7 @@ class _CalendarIncomingPublicationLinkViewImpl
   }) {
     return CalendarIncomingPublicationLinkView(
       id: id ?? this.id,
+      bundledPublication: bundledPublication ?? this.bundledPublication,
       entryId: entryId ?? this.entryId,
       calendarId: calendarId ?? this.calendarId,
       eventId: eventId ?? this.eventId,

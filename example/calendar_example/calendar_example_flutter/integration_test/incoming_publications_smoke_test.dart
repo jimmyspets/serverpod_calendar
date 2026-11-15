@@ -45,6 +45,12 @@ void main() {
       tester.testTextInput.register();
       addTearDown(tester.testTextInput.unregister);
       await runIncomingPublicationJourney(tester, client, fromHome: true);
+      await runIncomingPublicationJourney(
+        tester,
+        client,
+        fromHome: true,
+        bundled: true,
+      );
     },
   );
 }

@@ -18,12 +18,17 @@ class PublicationDemoEndpoint extends Endpoint {
     int sequence,
     bool cancel,
     bool recurring,
-    String summary,
-  ) async {
+    String summary, {
+    bool bundled = false,
+    int? occurrenceSequence,
+  }) async {
     if (!{'development', 'test'}.contains(session.serverpod.runMode) ||
         sequence < 0 ||
         sequence > 2147483647 ||
-        summary.runes.length > 256) {
+        summary.runes.length > 256 ||
+        bundled && !recurring ||
+        occurrenceSequence != null &&
+            (occurrenceSequence < 0 || occurrenceSequence > 2147483647)) {
       throw CalendarException(
         code: CalendarFailureCode.validation,
         message: 'Invalid simulation',
@@ -50,6 +55,18 @@ class PublicationDemoEndpoint extends Endpoint {
       if (recurring) 'RRULE:FREQ=DAILY;COUNT=3',
       if (cancel) 'STATUS:CANCELLED',
       'END:VEVENT',
+      if (bundled && !cancel) ...[
+        'BEGIN:VEVENT',
+        'UID:synthetic-publication:$user:$publicationId',
+        'ORGANIZER:mailto:publisher@example.invalid',
+        'DTSTAMP:20261113T070000Z',
+        'SEQUENCE:${occurrenceSequence ?? sequence}',
+        'RECURRENCE-ID:20330104T090000Z',
+        'DTSTART:20330104T${(11 + (occurrenceSequence ?? sequence) % 4).toString().padLeft(2, '0')}0000Z',
+        'DURATION:PT1H',
+        'SUMMARY:Published occurrence',
+        'END:VEVENT',
+      ],
       'END:VCALENDAR',
       '',
     ].join('\r\n');

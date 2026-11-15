@@ -158,3 +158,6 @@ Accepted ADR 0183 adds a separate Published events review screen and explicit pu
 
 
 Accepted ADR 0184 adds supported outgoing information PUBLISH occurrence bundles, independent outgoing versions and retained single/future reset projections in flat v2 JSON using existing outbox columns. Preserve strict v1 reads/retries/dispatch, complete-message approval, native inheritance/source versions, fixed recipients, shared-work/64-original limits and draft-preserving whole lifecycle. New unrepresentable content-only exceptions, individual cancellations/cutoffs, alarms/attendees and incoming component publications stay guarded. No SQL or real mail follows; see [the profile](../../docs/native-event-information-publication.md) and separate actual validation.
+
+
+Accepted ADR 0185 approves complete incoming information PUBLISH bundles, clean-series updates and whole lifecycle using dedicated profile-bound APIs/authority. Preserve complete independent vectors, both cancellation bases, source-bound retries and unchanged quotas; scalar routes reject bundles. The grouped implementation is undergoing validation; see [the profile](../../docs/incoming-information-publication-bundles.md) and its separate evidence. No real mail or partial-message reconciliation follows.

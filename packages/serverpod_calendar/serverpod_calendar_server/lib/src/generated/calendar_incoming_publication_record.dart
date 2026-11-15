@@ -20,6 +20,7 @@ abstract class CalendarIncomingPublicationRecord
     implements _is.TableRow<_is.UuidValue?>, _is.ProtocolSerialization {
   CalendarIncomingPublicationRecord._({
     this.id,
+    bool? bundledPublication,
     required this.scopeKey,
     required this.recipientKey,
     required this.correlationDigest,
@@ -35,10 +36,11 @@ abstract class CalendarIncomingPublicationRecord
     required this.createdAt,
     required this.updatedAt,
     this.dismissedAt,
-  });
+  }) : bundledPublication = bundledPublication ?? false;
 
   factory CalendarIncomingPublicationRecord({
     _is.UuidValue? id,
+    bool? bundledPublication,
     required String scopeKey,
     required String recipientKey,
     required String correlationDigest,
@@ -63,6 +65,11 @@ abstract class CalendarIncomingPublicationRecord
       id: jsonSerialization['id'] == null
           ? null
           : _is.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
+      bundledPublication: jsonSerialization['bundledPublication'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(
+              jsonSerialization['bundledPublication'],
+            ),
       scopeKey: jsonSerialization['scopeKey'] as String,
       recipientKey: jsonSerialization['recipientKey'] as String,
       correlationDigest: jsonSerialization['correlationDigest'] as String,
@@ -99,6 +106,8 @@ abstract class CalendarIncomingPublicationRecord
 
   @override
   _is.UuidValue? id;
+
+  bool bundledPublication;
 
   String scopeKey;
 
@@ -138,6 +147,7 @@ abstract class CalendarIncomingPublicationRecord
   @_is.useResult
   CalendarIncomingPublicationRecord copyWith({
     _is.UuidValue? id = const _is.$UndefinedUuidValue(),
+    bool? bundledPublication,
     String? scopeKey,
     String? recipientKey,
     String? correlationDigest,
@@ -159,6 +169,7 @@ abstract class CalendarIncomingPublicationRecord
     return {
       '__className__': 'serverpod_calendar.CalendarIncomingPublicationRecord',
       if (id != null) 'id': id?.toJson(),
+      'bundledPublication': bundledPublication,
       'scopeKey': scopeKey,
       'recipientKey': recipientKey,
       'correlationDigest': correlationDigest,
@@ -216,6 +227,7 @@ class _CalendarIncomingPublicationRecordImpl
     extends CalendarIncomingPublicationRecord {
   _CalendarIncomingPublicationRecordImpl({
     _is.UuidValue? id,
+    bool? bundledPublication,
     required String scopeKey,
     required String recipientKey,
     required String correlationDigest,
@@ -233,6 +245,7 @@ class _CalendarIncomingPublicationRecordImpl
     DateTime? dismissedAt,
   }) : super._(
          id: id,
+         bundledPublication: bundledPublication,
          scopeKey: scopeKey,
          recipientKey: recipientKey,
          correlationDigest: correlationDigest,
@@ -256,6 +269,7 @@ class _CalendarIncomingPublicationRecordImpl
   @override
   CalendarIncomingPublicationRecord copyWith({
     _is.UuidValue? id = const _is.$UndefinedUuidValue(),
+    bool? bundledPublication,
     String? scopeKey,
     String? recipientKey,
     String? correlationDigest,
@@ -274,6 +288,7 @@ class _CalendarIncomingPublicationRecordImpl
   }) {
     return CalendarIncomingPublicationRecord(
       id: id is _is.UndefinedSentinel ? this.id : id,
+      bundledPublication: bundledPublication ?? this.bundledPublication,
       scopeKey: scopeKey ?? this.scopeKey,
       recipientKey: recipientKey ?? this.recipientKey,
       correlationDigest: correlationDigest ?? this.correlationDigest,
@@ -298,6 +313,11 @@ class _CalendarIncomingPublicationRecordImpl
 class CalendarIncomingPublicationRecordUpdateTable
     extends _is.UpdateTable<CalendarIncomingPublicationRecordTable> {
   CalendarIncomingPublicationRecordUpdateTable(super.table);
+
+  _is.ColumnValue<bool, bool> bundledPublication(bool value) => _is.ColumnValue(
+    table.bundledPublication,
+    value,
+  );
 
   _is.ColumnValue<String, String> scopeKey(String value) => _is.ColumnValue(
     table.scopeKey,
@@ -389,6 +409,11 @@ class CalendarIncomingPublicationRecordTable extends _is.Table<_is.UuidValue?> {
   CalendarIncomingPublicationRecordTable({super.tableRelation})
     : super(tableName: 'serverpod_calendar_incoming_publication') {
     updateTable = CalendarIncomingPublicationRecordUpdateTable(this);
+    bundledPublication = _is.ColumnBool(
+      'bundledPublication',
+      this,
+      hasDefault: true,
+    );
     scopeKey = _is.ColumnString(
       'scopeKey',
       this,
@@ -454,6 +479,8 @@ class CalendarIncomingPublicationRecordTable extends _is.Table<_is.UuidValue?> {
 
   late final CalendarIncomingPublicationRecordUpdateTable updateTable;
 
+  late final _is.ColumnBool bundledPublication;
+
   late final _is.ColumnString scopeKey;
 
   late final _is.ColumnString recipientKey;
@@ -487,6 +514,7 @@ class CalendarIncomingPublicationRecordTable extends _is.Table<_is.UuidValue?> {
   @override
   List<_is.Column> get columns => [
     id,
+    bundledPublication,
     scopeKey,
     recipientKey,
     correlationDigest,

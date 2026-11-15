@@ -2248,6 +2248,98 @@ class Endpoints extends _is.EndpointDispatch {
                         params['input'],
                       ),
         ),
+        'getBundleSource': _is.MethodConnector(
+          name: 'getBundleSource',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'sourceId': _is.ParameterDescription(
+              name: 'sourceId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarIncomingPublication']
+                          as _i5ugt0hi.CalendarIncomingPublicationEndpoint)
+                      .getBundleSource(
+                        session,
+                        params['id'],
+                        params['sourceId'],
+                      ),
+        ),
+        'getBundleLink': _is.MethodConnector(
+          name: 'getBundleLink',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarIncomingPublication']
+                          as _i5ugt0hi.CalendarIncomingPublicationEndpoint)
+                      .getBundleLink(
+                        session,
+                        params['id'],
+                      ),
+        ),
+        'addBundleToCalendar': _is.MethodConnector(
+          name: 'addBundleToCalendar',
+          params: {
+            'input': _is.ParameterDescription(
+              name: 'input',
+              type: _is
+                  .getType<_ixdjc3o1.CalendarIncomingPublicationAddRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarIncomingPublication']
+                          as _i5ugt0hi.CalendarIncomingPublicationEndpoint)
+                      .addBundleToCalendar(
+                        session,
+                        params['input'],
+                      ),
+        ),
+        'applyBundleSource': _is.MethodConnector(
+          name: 'applyBundleSource',
+          params: {
+            'input': _is.ParameterDescription(
+              name: 'input',
+              type: _is
+                  .getType<_inbibr77.CalendarIncomingPublicationApplyRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarIncomingPublication']
+                          as _i5ugt0hi.CalendarIncomingPublicationEndpoint)
+                      .applyBundleSource(
+                        session,
+                        params['input'],
+                      ),
+        ),
       },
     );
     connectors['calendarInvitation'] = _is.EndpointConnector(

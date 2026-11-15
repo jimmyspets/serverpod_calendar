@@ -129,6 +129,10 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_incoming_publica
     as _i6090d5l;
 import 'package:serverpod_calendar_client/src/protocol/calendar_incoming_publication_apply_request.dart'
     as _iwdp86to;
+import 'package:serverpod_calendar_client/src/protocol/calendar_incoming_publication_bundle_link_view.dart'
+    as _ipz50luq;
+import 'package:serverpod_calendar_client/src/protocol/calendar_incoming_publication_bundle_source_view.dart'
+    as _ig5frq8q;
 import 'package:serverpod_calendar_client/src/protocol/calendar_incoming_publication_command_receipt.dart'
     as _iao2j8b3;
 import 'package:serverpod_calendar_client/src/protocol/calendar_incoming_publication_link_view.dart'
@@ -1129,6 +1133,50 @@ class EndpointCalendarIncomingPublication extends _isc.EndpointRef {
       .callServerEndpoint<_iao2j8b3.CalendarIncomingPublicationCommandReceipt>(
         'serverpod_calendar.calendarIncomingPublication',
         'applySource',
+        {'input': input},
+      );
+
+  _ida.Future<_ig5frq8q.CalendarIncomingPublicationBundleSourceView>
+  getBundleSource(
+    _isc.UuidValue id,
+    _isc.UuidValue sourceId,
+  ) =>
+      caller.callServerEndpoint<
+        _ig5frq8q.CalendarIncomingPublicationBundleSourceView
+      >(
+        'serverpod_calendar.calendarIncomingPublication',
+        'getBundleSource',
+        {
+          'id': id,
+          'sourceId': sourceId,
+        },
+      );
+
+  _ida.Future<_ipz50luq.CalendarIncomingPublicationBundleLinkView?>
+  getBundleLink(_isc.UuidValue id) => caller
+      .callServerEndpoint<_ipz50luq.CalendarIncomingPublicationBundleLinkView?>(
+        'serverpod_calendar.calendarIncomingPublication',
+        'getBundleLink',
+        {'id': id},
+      );
+
+  _ida.Future<_iao2j8b3.CalendarIncomingPublicationCommandReceipt>
+  addBundleToCalendar(
+    _i6090d5l.CalendarIncomingPublicationAddRequest input,
+  ) => caller
+      .callServerEndpoint<_iao2j8b3.CalendarIncomingPublicationCommandReceipt>(
+        'serverpod_calendar.calendarIncomingPublication',
+        'addBundleToCalendar',
+        {'input': input},
+      );
+
+  _ida.Future<_iao2j8b3.CalendarIncomingPublicationCommandReceipt>
+  applyBundleSource(
+    _iwdp86to.CalendarIncomingPublicationApplyRequest input,
+  ) => caller
+      .callServerEndpoint<_iao2j8b3.CalendarIncomingPublicationCommandReceipt>(
+        'serverpod_calendar.calendarIncomingPublication',
+        'applyBundleSource',
         {'input': input},
       );
 }

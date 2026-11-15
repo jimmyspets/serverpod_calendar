@@ -1,0 +1,5 @@
+class: CalendarIncomingPublicationBundleSourceView
+immutable: true
+fields:
+  source: CalendarIncomingPublicationSourceView
+  componentVersions: List<CalendarIncomingPublicationComponentVersion>

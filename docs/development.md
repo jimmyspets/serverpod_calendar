@@ -363,3 +363,10 @@ ADR 0184 focused checks use `icalendar_publish_projection_test.dart` with the ex
 
 
 For focused CI-repair checks, `dart run tool/host_smoke.dart --notifications-only` retains two real hosts, Redis delivery/recovery, revocation and actual producer loss while skipping unrelated domain clients. `dart run tool/scheduling_work_smoke.dart --range-group --compiled` reuses one owned binary for the legacy range command/worker loss cases. Default full checks retain all existing coverage. The example wakes every independent maintenance module even after another phase fails and rethrows the first error/stack after the other wake-ups; this does not bypass module leases or authorization.
+
+
+## Complete incoming information-publication bundle checks
+
+ADR 0185 adds `test/integration/incoming_publication_bundles_test.dart` to the serial SDK selection and extends the producer regression to require dedicated bundle intake while scalar routes reject it. The generated two-column migration is checked with `python tool/metadata_upgrade_smoke.py --publication-bundles-only`, the latest `--incoming-fresh-only` definition and the complete populated historical chain. No old profile is inferred from source contents.
+
+`dart run tool/incoming_publication_work_smoke.dart --bundles` retains all ten before/after-commit loss cases, checks independent child versions and adds simultaneous two-host intake/Add/child-only Apply. The original command still covers scalar histories. Run database/probe/host harnesses serially. Build the stopped owned host, then use `dart run tool/host_smoke.dart --incoming-publications-only --incoming-publications --flutter` for both master and bundle JWT/MIME and connected review/Add/update/cancel/reopen journeys. The complete client/browser sequence retains both profiles. These configured checks are not evidence of a later commit; see [actual validation](validation-incoming-information-publication-bundles.md). All mail remains synthetic.

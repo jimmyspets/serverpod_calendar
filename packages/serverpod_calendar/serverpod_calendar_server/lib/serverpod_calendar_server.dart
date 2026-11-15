@@ -26,3 +26,4 @@ export 'src/free_busy_exchange_runtime.dart';
 export 'src/free_busy_exchange_values.dart';
 
 export 'src/incoming_publication_runtime.dart';
+export 'src/incoming_publication_bundle_values.dart';

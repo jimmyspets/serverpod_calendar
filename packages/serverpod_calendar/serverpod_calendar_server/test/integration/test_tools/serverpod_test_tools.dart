@@ -132,6 +132,10 @@ import 'package:serverpod_calendar_server/src/generated/calendar_incoming_public
     as _ixdjc3o1;
 import 'package:serverpod_calendar_server/src/generated/calendar_incoming_publication_apply_request.dart'
     as _inbibr77;
+import 'package:serverpod_calendar_server/src/generated/calendar_incoming_publication_bundle_link_view.dart'
+    as _ivnaptop;
+import 'package:serverpod_calendar_server/src/generated/calendar_incoming_publication_bundle_source_view.dart'
+    as _ilsi57yd;
 import 'package:serverpod_calendar_server/src/generated/calendar_incoming_publication_command_receipt.dart'
     as _ifo8g0lk;
 import 'package:serverpod_calendar_server/src/generated/calendar_incoming_publication_link_view.dart'
@@ -3125,6 +3129,133 @@ class _CalendarIncomingPublicationEndpoint {
           createSessionCallback: (_) => _localUniqueSession,
           endpointPath: 'calendarIncomingPublication',
           methodName: 'applySource',
+          parameters: _ist.testObjectToJson({'input': input}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ifo8g0lk.CalendarIncomingPublicationCommandReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ilsi57yd.CalendarIncomingPublicationBundleSourceView>
+  getBundleSource(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue id,
+    _is.UuidValue sourceId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarIncomingPublication',
+            method: 'getBundleSource',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarIncomingPublication',
+          methodName: 'getBundleSource',
+          parameters: _ist.testObjectToJson({
+            'id': id,
+            'sourceId': sourceId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+              _localUniqueSession,
+              _localCallContext.arguments,
+            ) as _ida.Future<
+              _ilsi57yd.CalendarIncomingPublicationBundleSourceView
+            >);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ivnaptop.CalendarIncomingPublicationBundleLinkView?>
+  getBundleLink(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue id,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarIncomingPublication',
+            method: 'getBundleLink',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarIncomingPublication',
+          methodName: 'getBundleLink',
+          parameters: _ist.testObjectToJson({'id': id}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ivnaptop.CalendarIncomingPublicationBundleLinkView?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ifo8g0lk.CalendarIncomingPublicationCommandReceipt>
+  addBundleToCalendar(
+    _ist.TestSessionBuilder sessionBuilder,
+    _ixdjc3o1.CalendarIncomingPublicationAddRequest input,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarIncomingPublication',
+            method: 'addBundleToCalendar',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarIncomingPublication',
+          methodName: 'addBundleToCalendar',
+          parameters: _ist.testObjectToJson({'input': input}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ifo8g0lk.CalendarIncomingPublicationCommandReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ifo8g0lk.CalendarIncomingPublicationCommandReceipt>
+  applyBundleSource(
+    _ist.TestSessionBuilder sessionBuilder,
+    _inbibr77.CalendarIncomingPublicationApplyRequest input,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarIncomingPublication',
+            method: 'applyBundleSource',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarIncomingPublication',
+          methodName: 'applyBundleSource',
           parameters: _ist.testObjectToJson({'input': input}),
           serializationManager: _serializationManager,
         );

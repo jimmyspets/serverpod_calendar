@@ -1,6 +1,7 @@
 class: CalendarIncomingPublicationView
 immutable: true
 fields:
+  bundledPublication: bool, default=false
   id: UuidValue
   revision: int
   uid: String

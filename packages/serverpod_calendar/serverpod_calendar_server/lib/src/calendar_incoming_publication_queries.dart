@@ -55,37 +55,76 @@ extension CalendarIncomingPublicationQueries on CalendarService {
   Future<CalendarIncomingPublicationSourceView> _incomingGetSource(
     UuidValue id,
     UuidValue sourceId,
+  ) => _incomingSourceQuery(id, sourceId, false, (source, _) => source);
+
+  Future<CalendarIncomingPublicationBundleSourceView> _incomingGetBundleSource(
+    UuidValue id,
+    UuidValue sourceId,
+  ) => _incomingSourceQuery(
+    id,
+    sourceId,
+    true,
+    (source, message) => CalendarIncomingPublicationBundleSourceView(
+      source: source,
+      componentVersions: _incomingBundleVersions(message),
+    ),
+  );
+
+  Future<T> _incomingSourceQuery<T>(
+    UuidValue id,
+    UuidValue sourceId,
+    bool bundled,
+    T Function(
+      CalendarIncomingPublicationSourceView,
+      IcalendarSchedulingMessage,
+    )
+    project,
   ) => _incomingScoped((actor, r, tx, _) async {
     final entry = await _incomingEntry(id, r, tx);
+    _incomingProfile(entry, bundled);
     final source = await _incomingSourceRow(entry, sourceId, tx);
     final message = _incomingStored(entry, source);
     final sourceBasis = await _incomingSourceBasis(entry, source, tx);
-    await _incomingAuthorize(
-      CalendarIncomingPublicationPolicyContext(
-        operation: CalendarIncomingPublicationOperation.readSource,
-        recipient: r,
+    if (bundled) {
+      await _incomingReadBundleProof(
+        entry,
+        source,
+        r,
+        tx,
+        CalendarAuthorizationPhase.read,
         actor: actor,
-        entry: _incomingView(entry),
-        source: message,
-        sourceBasis: sourceBasis,
-        sourceId: source.id,
-        sourceDigest: source.digest,
+      );
+    } else {
+      await _incomingAuthorize(
+        CalendarIncomingPublicationPolicyContext(
+          operation: CalendarIncomingPublicationOperation.readSource,
+          recipient: r,
+          actor: actor,
+          entry: _incomingView(entry),
+          source: message,
+          sourceBasis: sourceBasis,
+          sourceId: source.id,
+          sourceDigest: source.digest,
+        ),
+        tx,
+        CalendarAuthorizationPhase.read,
+      );
+    }
+    return project(
+      CalendarIncomingPublicationSourceView(
+        id: source.id!,
+        entryId: entry.id!,
+        kind: source.kind,
+        basisSourceId: source.basisSourceId,
+        sequence: source.sequence,
+        stamp: source.stamp,
+        digest: source.digest,
+        normalizedSource: source.normalizedSource!,
+        outcome: source.outcome,
+        isCurrent: source.id == entry.currentSourceId,
+        receivedAt: source.receivedAt,
       ),
-      tx,
-      CalendarAuthorizationPhase.read,
-    );
-    return CalendarIncomingPublicationSourceView(
-      id: source.id!,
-      entryId: entry.id!,
-      kind: source.kind,
-      basisSourceId: source.basisSourceId,
-      sequence: source.sequence,
-      stamp: source.stamp,
-      digest: source.digest,
-      normalizedSource: source.normalizedSource!,
-      outcome: source.outcome,
-      isCurrent: source.id == entry.currentSourceId,
-      receivedAt: source.receivedAt,
+      message,
     );
   });
   void _incomingRevision(CalendarIncomingPublicationRecord e, int expected) {
@@ -214,7 +253,7 @@ extension CalendarIncomingPublicationQueries on CalendarService {
       }
       after = saved.afterId;
     }
-    final work = RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
+    final work = _incomingValidation!.work;
     final entries = <CalendarIncomingPublicationView>[];
     var remaining = false, passed = after == null;
     UuidValue? last;

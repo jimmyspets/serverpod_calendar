@@ -35,7 +35,7 @@ extension CalendarIncomingPublicationOperations on CalendarService {
       CalendarScopeRecord,
     )
     body,
-  ) async {
+  ) => _incomingWithValidation(() async {
     _incomingGuarantee();
     final actor = await _context();
     final recipient = _incomingRecipient(
@@ -56,7 +56,7 @@ extension CalendarIncomingPublicationOperations on CalendarService {
       _incomingGuarantee();
       return value;
     });
-  }
+  });
 
   Future<bool> _incomingAuthorize(
     CalendarIncomingPublicationPolicyContext context,
@@ -64,23 +64,32 @@ extension CalendarIncomingPublicationOperations on CalendarService {
     CalendarAuthorizationPhase phase, {
     bool filter = false,
   }) async {
-    _incomingGuarantee();
-    final answer = await _bounded(
-      () => _incoming.host.authorize(_session, context, tx, phase),
-    );
-    _incomingGuarantee();
-    if (answer == CalendarAuthorizationVerdict.unavailable) {
-      throw _failure(CalendarFailureCode.unavailable);
+    final bundle = _incomingBundleOperation(context);
+    var allowed = true;
+    for (final request in [
+      context,
+      if (bundle != null) _incomingOperationContext(context, bundle),
+    ]) {
+      _incomingGuarantee();
+      final answer = await _bounded(
+        () => _incoming.host.authorize(_session, request, tx, phase),
+      );
+      _incomingGuarantee();
+      if (answer == CalendarAuthorizationVerdict.unavailable) {
+        throw _failure(CalendarFailureCode.unavailable);
+      }
+      if (answer == CalendarAuthorizationVerdict.deny) {
+        if (!filter) throw _failure(CalendarFailureCode.accessDenied);
+        allowed = false;
+      }
     }
-    if (answer == CalendarAuthorizationVerdict.deny && !filter) {
-      throw _failure(CalendarFailureCode.accessDenied);
-    }
-    return answer == CalendarAuthorizationVerdict.allow;
+    return allowed;
   }
 
   IcalendarSchedulingMessage _incomingParse(
     List<int> bytes, {
     bool stored = false,
+    bool allowBundle = false,
     RecurrenceWorkBudget? work,
   }) {
     try {
@@ -92,28 +101,50 @@ extension CalendarIncomingPublicationOperations on CalendarService {
         () => parseIcalendarSchedulingMessage(
           bytes,
           syntaxLimits: IcalendarSyntaxLimits(maxBytes: limit),
-          sharedWorkBudget: work,
+          sharedWorkBudget: _incomingWork ?? work,
         ),
       );
       if (!{
             IcalendarSchedulingMethod.publish,
             IcalendarSchedulingMethod.cancel,
           }.contains(message.method) ||
-          message.events.length != 1) {
+          message.events.isEmpty ||
+          message.events.where((e) => !e.isOverride).length != 1 ||
+          (!allowBundle && message.events.length != 1)) {
         throw _failure(CalendarFailureCode.validation);
       }
-      final e = message.events.single;
+      final e = _incomingMaster(message);
       if (e.isOverride ||
           e.isThisAndFuture ||
           e.participants.organizer == null ||
-          e.participants.attendees.isNotEmpty ||
+          message.events.any(
+            (part) =>
+                part.participants.organizer == null ||
+                part.participants.attendees.isNotEmpty,
+          ) ||
+          message.method == IcalendarSchedulingMethod.cancel &&
+              message.events.length != 1 ||
           message.method == IcalendarSchedulingMethod.cancel &&
               e.status != IcalendarEventStatus.cancelled) {
         throw _failure(CalendarFailureCode.validation);
       }
       validateEventUid(e.uid);
       if (message.method == IcalendarSchedulingMethod.publish) {
-        _schedulingMasterProposal(message, sharedWorkBudget: work);
+        if (message.events.length > 1) {
+          if (_incomingValidation != null) _incomingValidation!.bundled = true;
+          final proposal = informationPublicationBundleProposal(
+            message,
+            maxBytes: limit,
+            sharedWorkBudget: _incomingWork ?? work,
+          );
+          _incomingValidation?.proposals[message] = proposal;
+        } else {
+          final proposal = _schedulingMasterProposal(
+            message,
+            sharedWorkBudget: _incomingWork ?? work,
+          );
+          _incomingValidation?.proposals[message] = proposal;
+        }
       }
       return message;
     } catch (_) {
@@ -168,6 +199,9 @@ extension CalendarIncomingPublicationOperations on CalendarService {
         row.revision > CalendarService._maxRevision) {
       throw _failure(CalendarFailureCode.unavailable);
     }
+    if (row.bundledPublication && _incomingValidation != null) {
+      _incomingValidation!.bundled = true;
+    }
     return row;
   }
 
@@ -200,6 +234,9 @@ extension CalendarIncomingPublicationOperations on CalendarService {
     RecurrenceWorkBudget? work,
   }) {
     try {
+      if (entry.bundledPublication && _incomingValidation != null) {
+        _incomingValidation!.bundled = true;
+      }
       final text = source.normalizedSource;
       if (text == null ||
           utf8.encode(text).length != source.byteCount ||
@@ -210,12 +247,33 @@ extension CalendarIncomingPublicationOperations on CalendarService {
           (source.basisSourceId == null)) {
         throw StateError('Invalid source basis shape');
       }
+      final key = jsonEncode([
+        entry.id.toString(),
+        entry.scopeKey,
+        entry.recipientKey,
+        entry.uid,
+        entry.organizer,
+        entry.recurring,
+        entry.bundledPublication,
+        source.id.toString(),
+        source.entryId.toString(),
+        source.kind.name,
+        source.basisSourceId?.toString(),
+        source.sequence,
+        source.stamp.toIso8601String(),
+        source.digest,
+        source.byteCount,
+        text,
+      ]);
+      final cached = _incomingValidation?.sources[key];
+      if (cached != null) return cached;
       final message = _incomingParse(
         utf8.encode(text),
         stored: true,
-        work: work,
+        allowBundle: entry.bundledPublication,
+        work: _incomingWork ?? work,
       );
-      final e = message.events.single;
+      final e = _incomingMaster(message);
       if (source.entryId != entry.id ||
           _incomingKind(message) != source.kind ||
           e.uid != entry.uid ||
@@ -224,9 +282,11 @@ extension CalendarIncomingPublicationOperations on CalendarService {
           e.stamp != source.stamp ||
           utf8.decode(serializeIcalendarSchedulingMessage(message)) != text ||
           message.method == IcalendarSchedulingMethod.publish &&
-              (message.events.single.recurrence != null) != entry.recurring) {
+              ((message.events.length > 1) != entry.bundledPublication ||
+                  (e.recurrence != null) != entry.recurring)) {
         throw StateError('Invalid source correspondence');
       }
+      _incomingValidation?.sources[key] = message;
       return message;
     } catch (_) {
       throw _failure(CalendarFailureCode.unavailable);
@@ -238,8 +298,9 @@ extension CalendarIncomingPublicationOperations on CalendarService {
     IcalendarSchedulingMessage? message,
     DateTime? receivedAt,
   }) {
-    final event = message?.events.single;
+    final event = message == null ? null : _incomingMaster(message);
     return CalendarIncomingPublicationView(
+      bundledPublication: e.bundledPublication,
       id: e.id!,
       revision: e.revision,
       uid: e.uid,
@@ -271,7 +332,9 @@ extension CalendarIncomingPublicationOperations on CalendarService {
           t.correlationDigest.equals(e.correlationDigest),
       transaction: tx,
     );
-    if (row != null && row.entryId != e.id) {
+    if (row != null &&
+        (row.entryId != e.id ||
+            row.bundledPublication != e.bundledPublication)) {
       throw _failure(CalendarFailureCode.unavailable);
     }
     return row;
@@ -394,6 +457,10 @@ extension CalendarIncomingPublicationOperations on CalendarService {
 
   Future<CalendarIncomingPublicationIngressReceipt> _incomingReceive(
     CalendarIncomingPublicationDelivery delivery,
+  ) => _incomingWithValidation(() => _incomingReceiveValidated(delivery));
+
+  Future<CalendarIncomingPublicationIngressReceipt> _incomingReceiveValidated(
+    CalendarIncomingPublicationDelivery delivery,
   ) async {
     for (final s in [
       delivery.namespace,
@@ -405,7 +472,8 @@ extension CalendarIncomingPublicationOperations on CalendarService {
     _incomingGuarantee();
     final message = _incomingParse(
       delivery.bytes,
-      work: RecurrenceWorkBudget(maxWork: eventMaxCandidateWork),
+      allowBundle: true,
+      work: _incomingValidation!.work,
     );
     final text = _schedulingValue(
       () => utf8.decode(serializeIcalendarSchedulingMessage(message)),
@@ -413,7 +481,7 @@ extension CalendarIncomingPublicationOperations on CalendarService {
     if (utf8.encode(text).length > _incomingOptions.maxSourceBytes) {
       throw _failure(CalendarFailureCode.limitExceeded);
     }
-    final event = message.events.single, digest = _schedulingDigest(text);
+    final event = _incomingMaster(message), digest = _schedulingDigest(text);
     final recipient = _incomingRecipient(
       await _bounded(
         () => _incoming.host.resolveDelivery(_session, delivery, message),
@@ -492,12 +560,33 @@ extension CalendarIncomingPublicationOperations on CalendarService {
         tx,
         CalendarAuthorizationPhase.preliminaryWrite,
       );
+      if (entry?.bundledPublication == true) {
+        if (reused != null) {
+          await _incomingReadBundleProof(
+            entry!,
+            reused,
+            recipient,
+            tx,
+            CalendarAuthorizationPhase.preliminaryWrite,
+          );
+        }
+        if (link?.basisSourceId != null && link!.deletedAt == null) {
+          await _incomingReadBundleProof(
+            entry!,
+            await _incomingSourceRow(entry, link.basisSourceId!, tx),
+            recipient,
+            tx,
+            CalendarAuthorizationPhase.preliminaryWrite,
+          );
+        }
+      }
       if (previous == null) {
         if (entry == null &&
             kind == CalendarIncomingPublicationKind.cancellation) {
           throw _failure(CalendarFailureCode.validation);
         }
         if (entry != null) {
+          await _incomingPruneEntry(entry, tx, now);
           final current = await _incomingSourceRow(
             entry,
             entry.currentSourceId,
@@ -505,10 +594,9 @@ extension CalendarIncomingPublicationOperations on CalendarService {
           );
           _incomingStored(entry, current);
           if (kind == CalendarIncomingPublicationKind.publication &&
-              _schedulingRecurring(
-                    _schedulingMasterProposal(message).content,
-                  ) !=
-                  entry.recurring) {
+              (_schedulingRecurring(_incomingProposal(message).content) !=
+                      entry.recurring ||
+                  (message.events.length > 1) != entry.bundledPublication)) {
             throw _failure(CalendarFailureCode.validation);
           }
           if (kind == CalendarIncomingPublicationKind.cancellation) {
@@ -531,11 +619,11 @@ extension CalendarIncomingPublicationOperations on CalendarService {
                 entry,
                 message,
                 tx,
+                recipient: recipient,
               );
               sourceBasis = _incomingStored(entry, cancellationBasis);
             }
           }
-          await _incomingPruneEntry(entry, tx, now);
         }
       }
       final checked = _incomingRecipient(
@@ -547,6 +635,9 @@ extension CalendarIncomingPublicationOperations on CalendarService {
         throw _failure(CalendarFailureCode.unavailable);
       }
       if (previous != null) {
+        if (entry!.bundledPublication) {
+          await _incomingRecheckBundleProofs(recipient, tx);
+        }
         await _incomingAuthorize(
           context(),
           tx,
@@ -562,7 +653,19 @@ extension CalendarIncomingPublicationOperations on CalendarService {
         );
       }
       var outcome = CalendarIncomingPublicationOutcome.selected;
-      if (entry != null) {
+      if (entry?.bundledPublication == true) {
+        outcome =
+            await _incomingBundleAdmission(
+              entry!,
+              link,
+              message,
+              digest,
+              recipient,
+              tx,
+            )
+            ? CalendarIncomingPublicationOutcome.selected
+            : CalendarIncomingPublicationOutcome.duplicate;
+      } else if (entry != null) {
         final order = _incomingVersion(
           event.sequence,
           event.stamp,
@@ -598,13 +701,14 @@ extension CalendarIncomingPublicationOperations on CalendarService {
       entry ??= await CalendarIncomingPublicationRecord.db.insertRow(
         _session,
         CalendarIncomingPublicationRecord(
+          bundledPublication: message.events.length > 1,
           scopeKey: recipient.scopeKey,
           recipientKey: recipient.key,
           correlationDigest: correlation,
           uid: event.uid,
           organizer: event.participants.organizer!.address,
           recurring: _schedulingRecurring(
-            _schedulingMasterProposal(message).content,
+            _incomingProposal(message).content,
           ),
           revision: 1,
           currentSourceId: sourceId,
@@ -702,6 +806,9 @@ extension CalendarIncomingPublicationOperations on CalendarService {
             transaction: tx,
           );
       await _incomingCapacity(recipient, tx, entry: entry);
+      if (entry.bundledPublication) {
+        await _incomingRecheckBundleProofs(recipient, tx);
+      }
       await _incomingAuthorize(
         context(),
         tx,
@@ -745,8 +852,23 @@ extension CalendarIncomingPublicationOperations on CalendarService {
       throw _failure(CalendarFailureCode.unavailable);
     }
     final basis = _incomingStored(entry, row);
+    final cancellation = _incomingStored(entry, source);
+    final pair = (cancellation, basis);
+    if (_incomingValidation?.cancellationChecks.contains(pair) == true) {
+      return basis;
+    }
     try {
-      _incomingCheckCancellation(_incomingStored(entry, source), basis);
+      _incomingCheckCancellation(cancellation, basis);
+      if (entry.bundledPublication) {
+        _schedulingValue(
+          () => validateInformationPublicationBundleCancellation(
+            accepted: _incomingBundleState(basis),
+            incoming: cancellation,
+            sharedWorkBudget: _incomingWork,
+          ),
+        );
+      }
+      _incomingValidation?.cancellationChecks.add(pair);
     } catch (_) {
       throw _failure(CalendarFailureCode.unavailable);
     }
@@ -757,8 +879,9 @@ extension CalendarIncomingPublicationOperations on CalendarService {
   _incomingChooseCancellationBasis(
     CalendarIncomingPublicationRecord entry,
     IcalendarSchedulingMessage message,
-    Transaction tx,
-  ) async {
+    Transaction tx, {
+    CalendarIncomingPublicationRecipient? recipient,
+  }) async {
     final rows = await CalendarIncomingPublicationSourceRecord.db.find(
       _session,
       where: (t) =>
@@ -770,26 +893,60 @@ extension CalendarIncomingPublicationOperations on CalendarService {
     if (rows.length > _incomingOptions.maxSourcesPerEntry) {
       throw _failure(CalendarFailureCode.limitExceeded);
     }
-    rows.sort(
-      (a, b) => _incomingVersion(b.sequence, b.stamp, a.sequence, a.stamp),
-    );
-    final work = RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
+    UuidValue? preferred = entry.currentSourceId;
+    if (entry.bundledPublication &&
+        entry.kind == CalendarIncomingPublicationKind.cancellation) {
+      preferred = (await _incomingSourceRow(
+        entry,
+        entry.currentSourceId,
+        tx,
+      )).basisSourceId;
+    }
+    rows.sort((a, b) {
+      if (!entry.bundledPublication) {
+        return _incomingVersion(b.sequence, b.stamp, a.sequence, a.stamp);
+      }
+      if ((a.id == preferred) != (b.id == preferred)) {
+        return a.id == preferred ? -1 : 1;
+      }
+      final order = b.receivedAt.compareTo(a.receivedAt);
+      return order == 0 ? b.id.toString().compareTo(a.id.toString()) : order;
+    });
+    final work =
+        _incomingWork ?? RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
     for (final row in rows) {
       work.charge();
       if (row.normalizedSource == null ||
           row.outcome != CalendarIncomingPublicationOutcome.selected ||
           _incomingVersion(
-                message.events.single.sequence,
-                message.events.single.stamp,
+                _incomingMaster(message).sequence,
+                _incomingMaster(message).stamp,
                 row.sequence,
                 row.stamp,
               ) <=
               0) {
         continue;
       }
-      final basis = _incomingStored(entry, row, work: work);
+      final basis = entry.bundledPublication && recipient != null
+          ? await _incomingReadBundleProof(
+              entry,
+              row,
+              recipient,
+              tx,
+              CalendarAuthorizationPhase.preliminaryWrite,
+            )
+          : _incomingStored(entry, row, work: work);
       try {
         _incomingCheckCancellation(message, basis, work: work);
+        if (entry.bundledPublication) {
+          _schedulingValue(
+            () => validateInformationPublicationBundleCancellation(
+              accepted: _incomingBundleState(basis),
+              incoming: message,
+              sharedWorkBudget: work,
+            ),
+          );
+        }
         return row;
       } on CalendarException catch (e) {
         if (e.code != CalendarFailureCode.validation) rethrow;
@@ -839,7 +996,8 @@ extension CalendarIncomingPublicationOperations on CalendarService {
     RecurrenceWorkBudget? work,
   }) {
     _schedulingValue(() {
-      final source = cancellation.events.single, original = basis.events.single;
+      final source = _incomingMaster(cancellation),
+          original = _incomingMaster(basis);
       if (cancellation.method != IcalendarSchedulingMethod.cancel ||
           basis.method != IcalendarSchedulingMethod.publish ||
           source.uid != original.uid ||
@@ -871,7 +1029,11 @@ extension CalendarIncomingPublicationOperations on CalendarService {
       final document = IcalendarSyntaxDocument([
         IcalendarSyntaxComponent(envelope.name, [
           for (final e in envelope.entries)
-            if (e is IcalendarSyntaxComponent && e.canonicalName == 'VEVENT')
+            if (e is IcalendarSyntaxComponent &&
+                e.canonicalName == 'VEVENT' &&
+                !e.entries.whereType<IcalendarSyntaxProperty>().any(
+                  (p) => p.canonicalName == 'RECURRENCE-ID',
+                ))
               merged
             else if (e is! IcalendarSyntaxProperty ||
                 e.canonicalName != 'METHOD')
@@ -880,10 +1042,13 @@ extension CalendarIncomingPublicationOperations on CalendarService {
       ]);
       final parsed = validateIcalendarEventCalendar(
         document,
-        sharedWorkBudget: work,
+        sharedWorkBudget: _incomingWork ?? work,
       );
-      final candidate = eventStorageProposal(parsed.series.single);
-      final expected = _schedulingMasterProposal(basis);
+      final candidate = eventStorageProposal(
+        parsed.series.single,
+        sharedWorkBudget: _incomingWork ?? work,
+      );
+      final expected = _incomingProposal(basis);
       if (jsonEncode(candidate.importBaseline.toJson()) !=
           jsonEncode(expected.importBaseline.toJson())) {
         throw _failure(CalendarFailureCode.validation);
@@ -953,4 +1118,21 @@ extension CalendarIncomingPublicationOperations on CalendarService {
   Future<CalendarIncomingPublicationCommandReceipt> incomingPublicationApply(
     CalendarIncomingPublicationApplyRequest input,
   ) => _incomingApply(input);
+  Future<CalendarIncomingPublicationBundleSourceView>
+  incomingPublicationBundleSource(
+    UuidValue id,
+    UuidValue sourceId,
+  ) => _incomingGetBundleSource(id, sourceId);
+  Future<CalendarIncomingPublicationBundleLinkView?>
+  incomingPublicationBundleLink(
+    UuidValue id,
+  ) => _incomingGetBundleLink(id);
+  Future<CalendarIncomingPublicationCommandReceipt>
+  incomingPublicationAddBundle(
+    CalendarIncomingPublicationAddRequest input,
+  ) => _incomingAdd(input, bundled: true);
+  Future<CalendarIncomingPublicationCommandReceipt>
+  incomingPublicationApplyBundle(
+    CalendarIncomingPublicationApplyRequest input,
+  ) => _incomingApply(input, bundled: true);
 }

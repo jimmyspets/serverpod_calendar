@@ -1,6 +1,7 @@
 class: CalendarIncomingPublicationLinkView
 immutable: true
 fields:
+  bundledPublication: bool, default=false
   id: UuidValue
   entryId: UuidValue
   calendarId: UuidValue

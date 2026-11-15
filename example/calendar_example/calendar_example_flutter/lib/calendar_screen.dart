@@ -139,6 +139,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
       icon: const Icon(Icons.add),
       label: const Text('New calendar'),
     ),
+    bottomNavigationBar: _busy
+        ? const LinearProgressIndicator(key: Key('calendar-list-progress'))
+        : null,
     body: ListView(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 96),
       children: [
@@ -168,7 +171,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
           onPressed: _busy ? null : _search,
           child: const Text('Apply category filter'),
         ),
-        if (_busy) const LinearProgressIndicator(),
         if (_error != null) Text(_error!, key: const Key('calendar-error')),
         if (!_busy && _items.isEmpty && _error == null)
           Text(

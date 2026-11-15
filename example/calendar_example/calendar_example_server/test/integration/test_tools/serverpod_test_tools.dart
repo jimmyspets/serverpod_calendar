@@ -935,8 +935,10 @@ class _PublicationDemoEndpoint {
     int sequence,
     bool cancel,
     bool recurring,
-    String summary,
-  ) async {
+    String summary, {
+    required bool bundled,
+    int? occurrenceSequence,
+  }) async {
     return _ist.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
@@ -955,6 +957,8 @@ class _PublicationDemoEndpoint {
             'cancel': cancel,
             'recurring': recurring,
             'summary': summary,
+            'bundled': bundled,
+            'occurrenceSequence': occurrenceSequence,
           }),
           serializationManager: _serializationManager,
         );

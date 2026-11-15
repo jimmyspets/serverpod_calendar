@@ -28,20 +28,40 @@ Future<void> _idle(WidgetTester tester) async {
 }
 
 Future<void> _tap(WidgetTester tester, String key) async {
+  await _idle(tester);
+  // Route completion can start its parent's reload. Yield real I/O before
+  // locating the next control; settling an active spinner can starve that I/O.
+  await tester.runAsync(
+    () => Future<void>.delayed(const Duration(milliseconds: 100)),
+  );
+  await tester.pump(const Duration(milliseconds: 300));
+  await _idle(tester);
   final target = find.byKey(Key(key));
   if (target.evaluate().isEmpty) {
-    final list = find.byType(ListView).last;
     final scrollable = find
-        .descendant(of: list, matching: find.byType(Scrollable))
+        .descendant(
+          of: find.byType(Scaffold).first,
+          matching: find.byType(Scrollable),
+        )
         .first;
-    await tester.scrollUntilVisible(
-      target,
-      300,
-      scrollable: scrollable,
-      maxScrolls: 30,
-    );
+    tester.state<ScrollableState>(scrollable).position.jumpTo(0);
+    await tester.pump();
+    try {
+      await tester.scrollUntilVisible(
+        target,
+        300,
+        scrollable: scrollable,
+        maxScrolls: 100,
+      );
+    } on StateError {
+      final bar = tester.widget<AppBar>(find.byType(AppBar).first);
+      final title = bar.title is Text ? (bar.title! as Text).data : 'feed page';
+      fail('Feed journey could not display control $key on $title');
+    }
   }
   await tester.ensureVisible(target);
+  final widget = tester.widget(target);
+  if (widget is ButtonStyleButton) expect(widget.onPressed, isNotNull);
   await tester.tap(target);
   await _idle(tester);
 }
@@ -66,12 +86,25 @@ Future<void> runFeedJourney(WidgetTester tester, Client client) async {
       noRuleFallback: cal.CalendarNoRuleFallback.free,
     ),
   ))!;
-  const label = 'Synthetic Flutter subscription';
+  final label =
+      'Synthetic Flutter subscription ${source.calendarId.toString().substring(0, 8)}';
   feed.CalendarFeedView? created;
+  var completed = false;
   try {
     await _tap(tester, 'open-feeds');
     await _tap(tester, 'feed-create');
     await tester.enterText(find.byKey(const Key('feed-name')), label);
+    for (
+      var page = 0;
+      page < 40 &&
+          find
+              .byKey(Key('feed-calendar-${source.calendarId}'))
+              .evaluate()
+              .isEmpty;
+      page++
+    ) {
+      await _tap(tester, 'feed-more-calendars');
+    }
     await _tap(tester, 'feed-calendar-${source.calendarId}');
     final tile = find.text('Publication text and color');
     await tester.ensureVisible(tile);
@@ -152,7 +185,9 @@ Future<void> runFeedJourney(WidgetTester tester, Client client) async {
       'Renamed Flutter subscription',
     );
     await _tap(tester, 'feed-save');
+    expect(find.byKey(const Key('feed-error')), findsNothing);
     final renamed = await manager.read(created.id);
+    expect(renamed.displayName, 'Renamed Flutter subscription');
     expect(renamed.protocolUid, created.protocolUid);
     expect(renamed.protocolMetadata!.names.single.value, label);
     await _tap(tester, 'feed-edit-${created.id}');
@@ -167,13 +202,22 @@ Future<void> runFeedJourney(WidgetTester tester, Client client) async {
     expect((await manager.list()).where((v) => v.id == created!.id), isEmpty);
     await tester.pageBack();
     await _idle(tester);
+    completed = true;
   } finally {
     FlutterError.onError = priorError;
-    for (final value in await manager.list()) {
-      if (value.id == created?.id) {
-        await manager.delete(value.id, value.revision);
+    try {
+      for (final value in await manager.list()) {
+        if (value.id == created?.id ||
+            value.calendarIds.contains(source.calendarId)) {
+          await manager.delete(value.id, value.revision);
+        }
       }
+      await calendars.delete(source.calendarId, source.revision);
+    } catch (_) {
+      if (completed) rethrow;
+      debugPrint(
+        'Feed fixture cleanup failed; preserving the original test failure.',
+      );
     }
-    await calendars.delete(source.calendarId, source.revision);
   }
 }

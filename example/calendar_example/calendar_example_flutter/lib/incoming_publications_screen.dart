@@ -18,7 +18,7 @@ class _IncomingPublicationsState extends State<IncomingPublicationsScreen> {
   bool _busy = false, _dismissed = false;
   final _fixture = cal.Uuid().v4obj();
   int _sequence = 0;
-  bool _cancel = false;
+  bool _cancel = false, _bundled = false;
   cal.UuidValue? _simulationCommand;
   cal.EndpointCalendarIncomingPublication get _api =>
       widget.client.modules.serverpod_calendar.calendarIncomingPublication;
@@ -77,6 +77,7 @@ class _IncomingPublicationsState extends State<IncomingPublicationsScreen> {
       _cancel,
       true,
       'Synthetic published event',
+      bundled: _bundled,
     );
     _simulationCommand = null;
     _sequence++;
@@ -96,6 +97,9 @@ class _IncomingPublicationsState extends State<IncomingPublicationsScreen> {
         ),
       ],
     ),
+    bottomNavigationBar: _busy
+        ? const LinearProgressIndicator(key: Key('publications-progress'))
+        : null,
     body: ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -103,7 +107,6 @@ class _IncomingPublicationsState extends State<IncomingPublicationsScreen> {
           'Receiving a publication changes no calendar and sends no reply. Review it, then explicitly add or apply it.',
         ),
         if (_error != null) Text(_error!, key: const Key('publications-error')),
-        if (_busy) const LinearProgressIndicator(),
         SwitchListTile(
           title: const Text('Include dismissed'),
           value: _dismissed,
@@ -146,6 +149,14 @@ class _IncomingPublicationsState extends State<IncomingPublicationsScreen> {
           'Synthetic example fixture. This simulates a trusted host mailbox; it does not send mail.',
         ),
         SwitchListTile(
+          key: const Key('publication-simulate-bundle'),
+          title: const Text('Include occurrence changes'),
+          value: _bundled,
+          onChanged: _busy || _sequence != 0 || _simulationCommand != null
+              ? null
+              : (value) => setState(() => _bundled = value),
+        ),
+        SwitchListTile(
           title: const Text('Simulate cancellation'),
           value: _cancel,
           onChanged: _busy || _simulationCommand != null
@@ -174,10 +185,41 @@ class _PublicationReview extends StatefulWidget {
   State<_PublicationReview> createState() => _PublicationReviewState();
 }
 
+class _PublicationVersions extends StatelessWidget {
+  const _PublicationVersions({required this.label, required this.versions});
+  final String label;
+  final List<cal.CalendarIncomingPublicationComponentVersion> versions;
+  String _target(cal.CalendarIncomingPublicationComponentVersion version) {
+    final timing = version.originalStart;
+    if (timing == null) return 'Series';
+    final start = timing.start;
+    String two(int value) => value.toString().padLeft(2, '0');
+    final date = '${start.year}-${two(start.month)}-${two(start.day)}';
+    final time = timing.kind == cal.CalendarEventTimeKind.date
+        ? ''
+        : ' ${two(start.hour)}:${two(start.minute)}:${two(start.second)} ${timing.zoneId ?? "UTC"}';
+    return '$date$time${version.isThisAndFuture ? " and future" : ""}';
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(label),
+      for (final version in versions)
+        Text(
+          '${_target(version)} · sequence ${version.sequence ?? "omitted"} · ${version.stamp.toIso8601String()}',
+        ),
+    ],
+  );
+}
+
 class _PublicationReviewState extends State<_PublicationReview> {
   cal.CalendarIncomingPublicationView? _entry;
   cal.CalendarIncomingPublicationLinkView? _link;
   cal.CalendarIncomingPublicationSourceView? _source;
+  cal.CalendarIncomingPublicationBundleLinkView? _bundleLink;
+  List<cal.CalendarIncomingPublicationComponentVersion>? _sourceVersions;
   final _calendars = <cal.CalendarView>[];
   cal.UuidValue? _selected;
   String? _calendarCursor, _error;
@@ -229,11 +271,17 @@ class _PublicationReviewState extends State<_PublicationReview> {
 
   Future<void> _reload() async {
     final entry = await _api.getEntry(widget.id);
-    final link = await _api.getLink(widget.id);
+    final bundle = entry.bundledPublication
+        ? await _api.getBundleLink(widget.id)
+        : null;
+    final link = entry.bundledPublication
+        ? bundle?.link
+        : await _api.getLink(widget.id);
     if (mounted) {
       setState(() {
         _entry = entry;
         _link = link;
+        _bundleLink = bundle;
         _checked = true;
       });
     }
@@ -242,6 +290,8 @@ class _PublicationReviewState extends State<_PublicationReview> {
   Future<void> _load() => _run(() async {
     _checked = false;
     _source = null;
+    _sourceVersions = null;
+    _bundleLink = null;
     _selected = null;
     _calendars.clear();
     _calendarCursor = null;
@@ -267,7 +317,11 @@ class _PublicationReviewState extends State<_PublicationReview> {
         commandId: cal.Uuid().v4obj(),
       );
     }
-    await _api.addToCalendar(_addRequest!);
+    if (_entry!.bundledPublication) {
+      await _api.addBundleToCalendar(_addRequest!);
+    } else {
+      await _api.addToCalendar(_addRequest!);
+    }
     _addRequest = null;
     await _reload();
   });
@@ -279,7 +333,11 @@ class _PublicationReviewState extends State<_PublicationReview> {
       expectedEventRevision: _link!.eventRevision,
       commandId: cal.Uuid().v4obj(),
     );
-    await _api.applySource(_applyRequest!);
+    if (_entry!.bundledPublication) {
+      await _api.applyBundleSource(_applyRequest!);
+    } else {
+      await _api.applySource(_applyRequest!);
+    }
     _applyRequest = null;
     await _reload();
   });
@@ -297,10 +355,14 @@ class _PublicationReviewState extends State<_PublicationReview> {
           ),
         ],
       ),
+      bottomNavigationBar: _busy
+          ? const LinearProgressIndicator(
+              key: Key('publication-review-progress'),
+            )
+          : null,
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          if (_busy) const LinearProgressIndicator(),
           if (_error != null)
             Text(_error!, key: const Key('publication-review-error')),
           if (entry != null) ...[
@@ -310,6 +372,11 @@ class _PublicationReviewState extends State<_PublicationReview> {
             ),
             Text('Source: ${entry.organizer}'),
             Text('UID: ${entry.uid}'),
+            if (entry.bundledPublication)
+              const Text(
+                'Complete series publication',
+                key: Key('publication-bundle'),
+              ),
             Text(
               '${entry.kind.name} · sequence ${entry.sequence ?? "omitted"} · ${entry.stamp.toIso8601String()}',
             ),
@@ -321,11 +388,21 @@ class _PublicationReviewState extends State<_PublicationReview> {
               onPressed: _busy
                   ? null
                   : () => _run(() async {
-                      final source = await _api.getSource(
-                        widget.id,
-                        entry.sourceId,
-                      );
-                      if (mounted) setState(() => _source = source);
+                      final bundle = entry.bundledPublication
+                          ? await _api.getBundleSource(
+                              widget.id,
+                              entry.sourceId,
+                            )
+                          : null;
+                      final source =
+                          bundle?.source ??
+                          await _api.getSource(widget.id, entry.sourceId);
+                      if (mounted) {
+                        setState(() {
+                          _source = source;
+                          _sourceVersions = bundle?.componentVersions;
+                        });
+                      }
                     }),
               child: const Text('Read authorized source'),
             ),
@@ -333,6 +410,20 @@ class _PublicationReviewState extends State<_PublicationReview> {
               SelectableText(
                 _source!.normalizedSource,
                 key: const Key('publication-source-text'),
+              ),
+            if (_sourceVersions != null)
+              _PublicationVersions(
+                label: 'Reviewed source versions',
+                versions: _sourceVersions!,
+              ),
+            if (_bundleLink?.acceptedComponentVersions != null)
+              _PublicationVersions(
+                label: 'Saved component versions',
+                versions: _bundleLink!.acceptedComponentVersions!,
+              ),
+            if (_bundleLink?.acceptedCancellationVersion != null)
+              Text(
+                'Cancellation version: sequence ${_bundleLink!.acceptedCancellationVersion!.sequence ?? "omitted"}',
               ),
             if (_checked &&
                 link == null &&
