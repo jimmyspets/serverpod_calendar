@@ -1,6 +1,6 @@
 # ADR 0186: Pure restoration projection for exceptional range anchors
 
-Status: **Proposed; maintainer agreement required before implementation.** This is a pure projection contract, not a durable cancellation or transport change.
+Status: **Accepted by explicit maintainer agreement; the bounded pure implementation and focused/batch unit validation are complete.** Full exact-commit hosted validation remains separate. This is not a durable cancellation or transport change.
 
 ## Problem and evidence
 

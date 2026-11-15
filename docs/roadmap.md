@@ -1038,8 +1038,18 @@ Accepted [ADR 0182](adr/0182-native-event-information-publication.md) authorizes
 
 ## Approved incoming complete information-publication bundles
 
-[Accepted ADR 0185](adr/0185-incoming-information-publication-bundles.md) groups initial complete PUBLISH review/Add, component-aware updates and whole cancellation/reopening. The maintainer approved the entire storage/API/version/authority contract and complete-set/regression policy. The [grouped implementation](incoming-information-publication-bundles.md) preserves sender/native cancellation bases and native drafts under unchanged caps. [Actual validation](validation-incoming-information-publication-bundles.md) is in progress; remaining partial-message and real-transport gates stay explicit.
+[Accepted ADR 0185](adr/0185-incoming-information-publication-bundles.md) groups initial complete PUBLISH review/Add, component-aware updates and whole cancellation/reopening. The maintainer approved the entire storage/API/version/authority contract and complete-set/regression policy. The [grouped implementation](incoming-information-publication-bundles.md) preserves sender/native cancellation bases and native drafts under unchanged caps. [Actual validation](validation-incoming-information-publication-bundles.md) includes successful hosted repository checks at draft PR #202's exact head; remaining partial-message and real-transport gates stay explicit.
 
 - [x] Review and explicitly approve the complete ADR 0185 contract and complete-set policy.
-- [ ] Finish the grouped implementation and batch-end VM/Chrome/SDK/migration/recovery/JWT/Flutter checks before one feature commit.
-- [ ] Inspect full exact-head hosted inspection/runtime before readiness.
+- [x] Finish the grouped implementation and batch-end VM/Chrome/SDK/migration/recovery/JWT/Flutter checks before one feature commit.
+- [x] Inspect full exact-head hosted inspection/runtime before readiness.
+
+
+## Exceptional range restoration projection
+
+[Accepted ADR 0186](adr/0186-exceptional-range-restoration-projection.md) authorizes a bounded pure candidate builder for exceptional published anchors. The maintainer approved the contract; the [scoped implementation](exceptional-range-restoration-projection.md) and its focused and batch unit checks are complete, with [full exact-commit validation](validation-exceptional-range-restoration.md) separate. The existing runtime rejection remains in force until separately reviewed durable integration. See [the investigation](range-anchor-restoration-investigation.md).
+
+- [x] Obtain explicit agreement on the pure projection contract.
+- [x] Implement and validate the pure projection's bounded supported profile and explicit rejection cases as one batch.
+- [ ] Inspect the full exact-commit hosted result before marking the feature PR ready.
+- [ ] Review durable publication, authority and interoperability separately.
