@@ -707,6 +707,16 @@ class Endpoints extends _is.EndpointDispatch {
               type: _is.getType<String>(),
               nullable: false,
             ),
+            'bundled': _is.ParameterDescription(
+              name: 'bundled',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+            'occurrenceSequence': _is.ParameterDescription(
+              name: 'occurrenceSequence',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -723,6 +733,8 @@ class Endpoints extends _is.EndpointDispatch {
                         params['cancel'],
                         params['recurring'],
                         params['summary'],
+                        bundled: params['bundled'],
+                        occurrenceSequence: params['occurrenceSequence'],
                       ),
         ),
       },

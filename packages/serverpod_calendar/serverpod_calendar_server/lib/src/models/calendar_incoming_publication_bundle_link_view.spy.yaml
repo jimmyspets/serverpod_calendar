@@ -1,0 +1,9 @@
+class: CalendarIncomingPublicationBundleLinkView
+immutable: true
+fields:
+  link: CalendarIncomingPublicationLinkView
+  acceptedComponentVersions: List<CalendarIncomingPublicationComponentVersion>?
+  acceptedCancellationVersion: CalendarIncomingPublicationComponentVersion?
+  currentComponentVersions: List<CalendarIncomingPublicationComponentVersion>?
+  acceptedSourceUnavailable: bool, default=false
+  currentSourceUnavailable: bool, default=false

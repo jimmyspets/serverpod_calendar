@@ -35,6 +35,8 @@ The host's `CalendarHostContext.policyRevision` must cover publication policy ch
 
 ## Source profile and retries
 
+Accepted ADR 0185 adds a separate [complete-bundle profile](incoming-information-publication-bundles.md), currently undergoing grouped validation. The master-only restrictions below still describe the scalar API family; they are not permission to route a bundle through scalar operations.
+
 The first profile accepts one complete VEVENT PUBLISH master or a known whole-master CANCEL. DATE, UTC, named zones, supported recurrence and PERIOD additions retain their meaning. Times use whole seconds and the ordinary [1970, 2100) profile; supplied VTIMEZONE rules must match the pinned full horizon. Optional source versions remain independently optional. Ordering compares effective SEQUENCE followed by DTSTAMP; an equal tuple with different content is a conflict.
 
 Attendees, VALARM, detached/range components, multiple event series, mode conversions and unprofiled data reject explicitly. Cancellation COMMENT remains source data and does not replace accepted event comments. This bounded profile is stricter than accepting every legal RFC message.

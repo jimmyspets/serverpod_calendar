@@ -2,6 +2,7 @@ class: CalendarIncomingPublicationLinkRecord
 serverOnly: true
 table: serverpod_calendar_incoming_publication_link
 fields:
+  bundledPublication: bool, default=false
   id: UuidValue?, defaultPersist=random
   scopeKey: String
   recipientKey: String

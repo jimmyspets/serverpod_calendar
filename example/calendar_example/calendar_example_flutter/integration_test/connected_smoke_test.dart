@@ -73,8 +73,10 @@ void main() {
     );
     await tester.enterText(find.byKey(const Key('calendar-color')), '#a0b1c2');
     await _tap(tester, 'calendar-submit-create');
-    await _waitFor(tester, find.text(label));
-    await tester.tap(find.text(label));
+    await _waitFor(tester, find.byKey(const Key('calendar-refresh')));
+    await _idle(tester);
+    final createdCalendar = await _findCalendar(client, label);
+    await _openCalendarRow(tester, createdCalendar.id, label);
     await _idle(tester);
     final initialProtocolLabel = tester
         .widget<SelectableText>(
@@ -104,13 +106,8 @@ void main() {
     await _tap(tester, 'protocol-copy-description');
     await tester.enterText(find.byKey(const Key('protocol-color')), 'red');
     await _tap(tester, 'protocol-save');
-    final saved = await client.modules.serverpod_calendar.calendar.list(
-      pageSize: 25,
-      fieldGroups: cal.CalendarFieldGroup.values,
-    );
-    final calendar = saved.calendars.singleWhere(
-      (v) => v.displayName == renamedLabel,
-    );
+    final calendar = await _findCalendar(client, renamedLabel);
+    expect(calendar.id, createdCalendar.id);
     expect(
       'Protocol UID: ${calendar.protocolIdentity!.uid}',
       initialProtocolLabel,
@@ -217,6 +214,17 @@ void main() {
     );
     await tester.pageBack();
     await _idle(tester);
+    // A row opened from a later page leaves the collection scrolled down.
+    // Return to its real filters before editing them.
+    await tester.pumpAndSettle();
+    final calendarListScroll = find
+        .descendant(
+          of: find.byType(ListView).first,
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    tester.state<ScrollableState>(calendarListScroll).position.jumpTo(0);
+    await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('calendar-category-search')),
       'Work',
@@ -1309,6 +1317,7 @@ void main() {
     await runSubjectFreeBusyExportJourney(tester, client);
     await runInformationPublicationJourney(tester, client);
     await runIncomingPublicationJourney(tester, client);
+    await runIncomingPublicationJourney(tester, client, bundled: true);
     await runOccurrenceQueryJourney(tester, client);
     await runNativeFutureJourney(tester, client);
     await _liveReminderJourney(tester, client);
@@ -1317,6 +1326,67 @@ void main() {
     expect(find.byKey(const Key('result')), findsNothing);
     expect(find.byKey(const Key('live-notifications')), findsNothing);
   });
+}
+
+Future<cal.CalendarView> _findCalendar(Client client, String label) async {
+  String? cursor;
+  for (var page = 0; page < 40; page++) {
+    final result = await client.modules.serverpod_calendar.calendar.list(
+      pageSize: 25,
+      fieldGroups: cal.CalendarFieldGroup.values,
+      cursor: cursor,
+    );
+    final matching = result.calendars.where((v) => v.displayName == label);
+    if (matching.isNotEmpty) return matching.single;
+    cursor = result.nextCursor;
+    if (cursor == null) break;
+  }
+  fail('Created calendar was absent from bounded authorized pages');
+}
+
+Future<void> _openCalendarRow(
+  WidgetTester tester,
+  cal.UuidValue id,
+  String label,
+) async {
+  final row = find.byKey(ValueKey('calendar-$id'));
+  final more = find.byKey(const Key('calendar-more'));
+  for (var page = 0; page < 40; page++) {
+    await _idle(tester);
+    await tester.pumpAndSettle();
+    final scrollable = find
+        .descendant(
+          of: find.byType(ListView).first,
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    tester.state<ScrollableState>(scrollable).position.jumpTo(0);
+    await tester.pump();
+    for (var step = 0; step < 100; step++) {
+      if (row.evaluate().isNotEmpty) {
+        await tester.ensureVisible(row);
+        expect(
+          find.descendant(of: row, matching: find.text(label)),
+          findsOneWidget,
+        );
+        expect(tester.widget<ListTile>(row).onTap, isNotNull);
+        await tester.tap(row);
+        await tester.pump();
+        return;
+      }
+      if (more.evaluate().isNotEmpty) {
+        await tester.ensureVisible(more);
+        expect(tester.widget<TextButton>(more).onPressed, isNotNull);
+        await tester.tap(more);
+        await tester.pump();
+        break;
+      }
+      await tester.drag(scrollable, const Offset(0, -300));
+      await tester.pump(const Duration(milliseconds: 100));
+      if (step == 99) fail('Calendar list exhausted before its created row');
+    }
+  }
+  fail('Created calendar was not reachable through bounded UI pagination');
 }
 
 Future<void> _waitFor(WidgetTester tester, Finder finder) async {

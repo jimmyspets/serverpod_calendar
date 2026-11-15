@@ -23,6 +23,7 @@ abstract class CalendarIncomingPublicationView
     implements _isc.SerializableModel, _isc.ProtocolSerialization {
   const CalendarIncomingPublicationView._({
     required this.id,
+    bool? bundledPublication,
     required this.revision,
     required this.uid,
     required this.organizer,
@@ -36,10 +37,11 @@ abstract class CalendarIncomingPublicationView
     this.status,
     required this.receivedAt,
     this.dismissedAt,
-  });
+  }) : bundledPublication = bundledPublication ?? false;
 
   const factory CalendarIncomingPublicationView({
     required _isc.UuidValue id,
+    bool? bundledPublication,
     required int revision,
     required String uid,
     required String organizer,
@@ -60,6 +62,11 @@ abstract class CalendarIncomingPublicationView
   ) {
     return CalendarIncomingPublicationView(
       id: _isc.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
+      bundledPublication: jsonSerialization['bundledPublication'] == null
+          ? null
+          : _isc.BoolJsonExtension.fromJson(
+              jsonSerialization['bundledPublication'],
+            ),
       revision: jsonSerialization['revision'] as int,
       uid: jsonSerialization['uid'] as String,
       organizer: jsonSerialization['organizer'] as String,
@@ -96,6 +103,8 @@ abstract class CalendarIncomingPublicationView
     );
   }
 
+  final bool bundledPublication;
+
   final _isc.UuidValue id;
 
   final int revision;
@@ -129,6 +138,7 @@ abstract class CalendarIncomingPublicationView
   @_isc.useResult
   CalendarIncomingPublicationView copyWith({
     _isc.UuidValue? id,
+    bool? bundledPublication,
     int? revision,
     String? uid,
     String? organizer,
@@ -157,6 +167,11 @@ abstract class CalendarIncomingPublicationView
                   id,
                 ) ||
                 other.id == id) &&
+            (identical(
+                  other.bundledPublication,
+                  bundledPublication,
+                ) ||
+                other.bundledPublication == bundledPublication) &&
             (identical(
                   other.revision,
                   revision,
@@ -229,6 +244,7 @@ abstract class CalendarIncomingPublicationView
     return Object.hash(
       runtimeType,
       id,
+      bundledPublication,
       revision,
       uid,
       organizer,
@@ -250,6 +266,7 @@ abstract class CalendarIncomingPublicationView
     return {
       '__className__': 'serverpod_calendar.CalendarIncomingPublicationView',
       'id': id.toJson(),
+      'bundledPublication': bundledPublication,
       'revision': revision,
       'uid': uid,
       'organizer': organizer,
@@ -271,6 +288,7 @@ abstract class CalendarIncomingPublicationView
     return {
       '__className__': 'serverpod_calendar.CalendarIncomingPublicationView',
       'id': id.toJson(),
+      'bundledPublication': bundledPublication,
       'revision': revision,
       'uid': uid,
       'organizer': organizer,
@@ -305,6 +323,7 @@ class _CalendarIncomingPublicationViewImpl
     extends CalendarIncomingPublicationView {
   const _CalendarIncomingPublicationViewImpl({
     required _isc.UuidValue id,
+    bool? bundledPublication,
     required int revision,
     required String uid,
     required String organizer,
@@ -320,6 +339,7 @@ class _CalendarIncomingPublicationViewImpl
     DateTime? dismissedAt,
   }) : super._(
          id: id,
+         bundledPublication: bundledPublication,
          revision: revision,
          uid: uid,
          organizer: organizer,
@@ -341,6 +361,7 @@ class _CalendarIncomingPublicationViewImpl
   @override
   CalendarIncomingPublicationView copyWith({
     _isc.UuidValue? id,
+    bool? bundledPublication,
     int? revision,
     String? uid,
     String? organizer,
@@ -358,6 +379,7 @@ class _CalendarIncomingPublicationViewImpl
   }) {
     return CalendarIncomingPublicationView(
       id: id ?? this.id,
+      bundledPublication: bundledPublication ?? this.bundledPublication,
       revision: revision ?? this.revision,
       uid: uid ?? this.uid,
       organizer: organizer ?? this.organizer,

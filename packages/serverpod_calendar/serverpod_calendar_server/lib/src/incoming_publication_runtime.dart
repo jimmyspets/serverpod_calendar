@@ -51,6 +51,14 @@ enum CalendarIncomingPublicationOperation {
   applyUpdate,
   applyCancellation,
   reopen,
+  receiveBundle,
+  receiveBundleCancellation,
+  readBundleSource,
+  readBundleLink,
+  adoptBundle,
+  applyBundleUpdate,
+  applyBundleCancellation,
+  reopenBundle,
 }
 
 /// Immutable source and actual target context, independently checked by the host.

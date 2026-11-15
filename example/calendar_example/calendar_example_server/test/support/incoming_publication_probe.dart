@@ -154,17 +154,23 @@ Future<void> main(List<String> args) async {
               ),
             ))!.toJson();
           case 'add':
-            result = (await service.incomingPublicationAdd(
-              CalendarIncomingPublicationAddRequest.fromJson(
-                input['request'] as Map<String, dynamic>,
-              ),
-            )).toJson();
+            final request = CalendarIncomingPublicationAddRequest.fromJson(
+              input['request'] as Map<String, dynamic>,
+            );
+            result =
+                (input['bundled'] == true
+                        ? await service.incomingPublicationAddBundle(request)
+                        : await service.incomingPublicationAdd(request))
+                    .toJson();
           case 'apply':
-            result = (await service.incomingPublicationApply(
-              CalendarIncomingPublicationApplyRequest.fromJson(
-                input['request'] as Map<String, dynamic>,
-              ),
-            )).toJson();
+            final request = CalendarIncomingPublicationApplyRequest.fromJson(
+              input['request'] as Map<String, dynamic>,
+            );
+            result =
+                (input['bundled'] == true
+                        ? await service.incomingPublicationApplyBundle(request)
+                        : await service.incomingPublicationApply(request))
+                    .toJson();
           case 'inspect':
             final entries = await CalendarIncomingPublicationRecord.db.find(
               session,
@@ -187,6 +193,16 @@ Future<void> main(List<String> args) async {
               'entries': entries.length,
               'events': events.length,
               'revisions': [for (final e in events) e.revision],
+              'bundled': [for (final e in entries) e.bundledPublication],
+              'childSequences': [
+                for (final event in events)
+                  for (final data in await CalendarEventDataRecord.db.find(
+                    session,
+                    where: (t) => t.eventId.equals(event.id!),
+                  ))
+                    for (final child in data.protocolState!.overrides)
+                      child.version.sequence,
+              ],
             };
           default:
             throw ArgumentError('Unknown command');
