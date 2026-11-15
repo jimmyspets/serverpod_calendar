@@ -1053,3 +1053,10 @@ Accepted [ADR 0182](adr/0182-native-event-information-publication.md) authorizes
 - [x] Implement and validate the pure projection's bounded supported profile and explicit rejection cases as one batch.
 - [ ] Inspect the full exact-commit hosted result before marking the feature PR ready.
 - [ ] Review durable publication, authority and interoperability separately.
+
+## Proposed durable exceptional range controls
+
+[ADR 0187](adr/0187-durable-exceptional-range-controls.md) proposes grouped exceptional-anchor cancellation, restoration and repeated cycles with provenance, collision-safe outgoing versions and bounded v8 checkpoint proof. It is a review proposal only: the existing runtime guard remains until explicit agreement and implementation. No new SQL or real mail is proposed.
+
+- [ ] Review the concrete checkpoint, source-exclusion versus individual-cancellation provenance, version and transaction contract.
+- [ ] After approval, implement and validate the entire durable feature group before one code commit.
