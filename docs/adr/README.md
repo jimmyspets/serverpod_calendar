@@ -217,7 +217,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0184](0184-event-information-occurrence-publication.md) | Information-publication occurrence bundles | Accepted by explicit maintainer agreement; grouped outgoing supported-component/reset/whole-lifecycle batch using existing outbox and bounded v2 checkpoints |
 | [0185](0185-incoming-information-publication-bundles.md) | Incoming complete information-publication bundles | Accepted by explicit maintainer agreement; grouped complete PUBLISH review/Add/update/whole lifecycle, two profile columns and protected vector APIs |
 
-| [0186](0186-exceptional-range-restoration-projection.md) | Pure restoration projection for exceptional range anchors | Proposed; pure feasibility and correctness contract, no runtime or storage changes |
+| [0186](0186-exceptional-range-restoration-projection.md) | Pure restoration projection for exceptional range anchors | Accepted; bounded pure implementation and unit validation complete, exact-commit hosted validation pending |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
