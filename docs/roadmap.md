@@ -22,12 +22,13 @@ database and two-host checks but failed a feed 304 representation-length
 assertion. A local raw Dart HTTP probe reproduced the zero-length 304 header;
 that [compatibility issue](feed-304-compatibility.md) and the stale
 imported-schema snapshot remain open.
-ADR 0187's approved exceptional-anchor durable implementation is also in
-progress; focused checks, two-host process-loss recovery and command races, and the connected
-exceptional-anchor Flutter journey now pass, with
-remaining checks in
+ADR 0187's approved exceptional-anchor durable implementation is available for
+draft review in [PR #205](https://github.com/jimmyspets/serverpod_calendar/pull/205).
+Focused checks, two-host process-loss recovery and command races, and the
+connected exceptional-anchor Flutter journey passed; the full exact-head check
+and hosted conclusion remain outstanding, as recorded in
 [its validation record](validation-durable-exceptional-range.md). The earlier
-pure projection's hosted free/busy Flutter failure remains open; a focused
+pure projection's hosted free/busy Flutter failure remains open; focused
 retries passed twice after the journey's tap visibility was strengthened.
 
 Tasks have a [confirmed create-only import contract](task-import.md) under ADR 0097 and [implemented source storage](task-source-storage.md) under ADR 0098. Create-only authenticated import follows under ADR 0099; explicitly authorized [current-state task export](task-export.md) follows under ADR 0100, with separate rich-source disclosure. Imported non-recurring tasks retain unknown prior progress, so neutral source values do not enable recurrence conversion. Selected event occurrence content is implemented under ADR 0106. Native metadata editors and exact master-category search now extend events/tasks under ADRs 0134–0136. Trusted non-recurring invitation review, stable calendar addition and explicit conflict-protected REQUEST/CANCEL application/reopening extend scheduling under ADRs 0137–0141; receipt alone changes no calendar data. Broader source adoption/overwrite and future content/cancellation remain open; scoped alarm runtime, live delivery and timing-only source adoption have implementation evidence under ADRs 0112–0115.
