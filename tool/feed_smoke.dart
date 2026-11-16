@@ -196,7 +196,8 @@ Future<void> feedSmoke(
     _require(
       unchanged.headers['content-length'] == null ||
           unchanged.headers['content-length'] == '${get.bytes.length}',
-      '304 reported an incorrect representation length',
+      '304 reported an incorrect representation length: '
+      '${unchanged.headers['content-length']} for ${get.bytes.length} bytes',
     );
     final precondition = await _fetch(
       url,

@@ -37,6 +37,21 @@ export 'future_calls.dart' show ServerpodFutureCallsGetter;
 class Endpoints extends _is.EndpointDispatch {
   @override
   void initializeEndpoints(_is.Server server) {
+    initializeOwnEndpoints(server);
+    modules['serverpod_auth_idp'] = _iais.Endpoints()
+      ..initializeOwnEndpoints(server);
+    modules['serverpod_calendar'] = _ipn35bcd.Endpoints()
+      ..initializeOwnEndpoints(server);
+    modules['serverpod_calendar_feed'] = _i3lfs3vf.Endpoints()
+      ..initializeOwnEndpoints(server);
+    modules['serverpod_notifications'] = _ik9lwgjh.Endpoints()
+      ..initializeOwnEndpoints(server);
+    modules['serverpod_auth_core'] = _iacs.Endpoints()
+      ..initializeOwnEndpoints(server);
+  }
+
+  @override
+  void initializeOwnEndpoints(_is.Server server) {
     var endpoints = <String, _is.Endpoint>{
       'emailIdp': _iuc1hd5t.EmailIdpEndpoint()
         ..initialize(
@@ -825,16 +840,6 @@ class Endpoints extends _is.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_auth_idp'] = _iais.Endpoints()
-      ..initializeEndpoints(server);
-    modules['serverpod_calendar'] = _ipn35bcd.Endpoints()
-      ..initializeEndpoints(server);
-    modules['serverpod_calendar_feed'] = _i3lfs3vf.Endpoints()
-      ..initializeEndpoints(server);
-    modules['serverpod_notifications'] = _ik9lwgjh.Endpoints()
-      ..initializeEndpoints(server);
-    modules['serverpod_auth_core'] = _iacs.Endpoints()
-      ..initializeEndpoints(server);
   }
 
   @override

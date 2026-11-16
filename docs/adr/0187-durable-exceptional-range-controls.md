@@ -1,6 +1,6 @@
 # ADR 0187: Durable exceptional-anchor range controls
 
-Status: **Proposed; explicit maintainer agreement is required before implementation.** This document proposes no change to the current runtime guard.
+Status: **Accepted by explicit maintainer agreement; scoped implementation is in draft.** Focused, two-host and Flutter evidence is recorded separately; complete and hosted checks remain blocked by the unrelated 4.1.2 feed regression.
 
 ## Context
 
@@ -35,4 +35,4 @@ Restoration sends complete published values derived from the proved basis, not n
 - Test v7 legacy reads/retries, v8 malformed/tampered bindings, pruning/reconstruction, repeated cycles, unrelated retained and historical retries, competing commands, independent host-policy denial, changed routes/revocation and worker lease/process-loss recovery.
 - Cover generated client and Flutter control journeys, synthetic MIME and two active host processes. Run focused tests during work, then complete core/iCalendar/module VM and Chrome checks and affected SDK/database/process/Flutter checks. Full exact-head hosted checks are required before readiness; real-client and real-mail evidence remain separate.
 
-The maintainer must explicitly approve this concrete checkpoint, provenance, version and transaction contract before implementation under the repository's ADR review rule.
+The maintainer explicitly approved this concrete checkpoint, provenance, version and transaction contract before implementation.

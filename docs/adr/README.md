@@ -219,7 +219,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0186](0186-exceptional-range-restoration-projection.md) | Pure restoration projection for exceptional range anchors | Accepted; bounded pure implementation and unit validation complete, exact-commit hosted validation pending |
 
-| [0187](0187-durable-exceptional-range-controls.md) | Durable exceptional-anchor range controls | Proposed; maintainer review required before implementation |
+| [0187](0187-durable-exceptional-range-controls.md) | Durable exceptional-anchor range controls | Accepted by explicit maintainer agreement; scoped implementation in draft review, with full readiness checks outstanding |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

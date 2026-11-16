@@ -151,6 +151,12 @@ CalendarSchedulingPublicationRecord _schedulingRangeCurrent(
   CalendarSchedulingPublicationRecord value,
 ) {
   final map = jsonDecode(value.snapshot) as Map<String, dynamic>;
+  if (map['version'] == 8) {
+    return _schedulingV7Current(
+      value,
+      ExceptionalRangeEnvelope.read(value.snapshot).v7,
+    );
+  }
   return map['version'] == 7 ? _schedulingV7Current(value, map) : value;
 }
 
@@ -162,7 +168,16 @@ void _schedulingCarryRange(
   if (control == null) return;
   if (control.active) throw _failure(CalendarFailureCode.dependencyConflict);
   final kind = _schedulingReadCheckpoint(value).kind;
-  value.snapshot = _schedulingWriteV7(value, control, kind);
+  final snapshot = _schedulingWriteV7(value, control, kind);
+  final proof = previous?.exceptionalRangeProof;
+  value.snapshot = proof == null
+      ? snapshot
+      : ExceptionalRangeEnvelope.write(
+          jsonDecode(snapshot) as Map<String, dynamic>,
+          proof,
+          frozen:
+              previous?.exceptionalFrozen ?? (throw const FormatException()),
+        );
   _schedulingReadCheckpoint(value);
 }
 
@@ -177,22 +192,66 @@ CalendarSchedulingPublicationRecord _schedulingRangeRestored(
   DateTime stamp,
   int maxBytes, {
   RecurrenceWorkBudget? sharedWorkBudget,
+  ExceptionalRangeProof? exceptionalProof,
 }) {
   final source = previous.individuals.isEmpty
       ? previous.outgoing
       : _schedulingUnmaskedOutgoing(previous, previous.ledger);
-  final projected = eventSchedulingRangeRestoration(
-    source.content,
-    source.timingOverrides,
-    previous.projectionOriginals,
-    anchor,
-    sharedWorkBudget: sharedWorkBudget,
-  );
-  final markers = projected.$2;
+  final List<EventSchedulingOriginal> markers;
+  if (exceptionalProof == null) {
+    markers = eventSchedulingRangeRestoration(
+      source.content,
+      source.timingOverrides,
+      previous.projectionOriginals,
+      anchor,
+      sharedWorkBudget: sharedWorkBudget,
+    ).$2;
+  } else {
+    final basis = _schedulingPayload(
+      source,
+      maxBytes,
+      projectionOriginals: previous.projectionOriginals,
+      sharedWorkBudget: sharedWorkBudget,
+    );
+    exceptionalProof.requireBindings(
+      basis: basis,
+      anchor: anchor,
+      masks: [for (final row in previous.cancelled) row.point],
+    );
+    final candidate = parseIcalendarSchedulingMessage(
+      utf8.encode(exceptionalProof.candidate),
+      sharedWorkBudget: sharedWorkBudget,
+    );
+    final existing = {
+      for (final row
+          in source.timingOverrides?.singles ?? <CalendarEventSingleOverride>[])
+        eventComponentKey(row.originalStart, false),
+      for (final row
+          in source.timingOverrides?.future ?? <CalendarEventFutureOverride>[])
+        eventComponentKey(row.originalStart, true),
+    };
+    final all = <String, EventSchedulingOriginal>{
+      for (final row in previous.projectionOriginals)
+        _schedulingOriginalKey(row): row,
+    };
+    for (final row in _schedulingMessageOriginals(candidate)) {
+      final key = _schedulingOriginalKey(row);
+      if (!existing.contains(key)) all[key] = row;
+    }
+    if (all.length > 64) {
+      throw const RecurrenceLimitException('schedulingOriginals');
+    }
+    markers = List.unmodifiable(all.values);
+  }
   final outgoing = _schedulingProjectionSource(source, markers);
   final raw = parseIcalendarSchedulingMessage(
     utf8.encode(
-      _schedulingPayload(outgoing, maxBytes, projectionOriginals: markers),
+      _schedulingPayload(
+        outgoing,
+        maxBytes,
+        projectionOriginals: markers,
+        sharedWorkBudget: sharedWorkBudget,
+      ),
     ),
     sharedWorkBudget: sharedWorkBudget,
   );
@@ -394,8 +453,10 @@ CalendarSchedulingPublicationRecord _schedulingV7Current(
 
 _SchedulingCheckpoint _schedulingReadV7(
   CalendarSchedulingPublicationRecord p,
-  Map<String, dynamic> v,
-) {
+  Map<String, dynamic> v, {
+  ExceptionalRangeProof? exceptionalProof,
+  Map<String, dynamic>? exceptionalFrozen,
+}) {
   final control = _SchedulingRangeControl.read(v['range']);
   final kind = CalendarSchedulingPublicationKind.values.byName(
     v['kind'] as String,
@@ -498,11 +559,12 @@ _SchedulingCheckpoint _schedulingReadV7(
             .singleWhere((e) => e.key == 'master')
             .stamp
             .isBefore(control.stamp) ||
-        !current.originals.any(
-          (o) =>
-              o.isThisAndFuture &&
-              _replySamePoint(o.originalStart, control.anchor),
-        )) {
+        exceptionalProof == null &&
+            !current.originals.any(
+              (o) =>
+                  o.isThisAndFuture &&
+                  _replySamePoint(o.originalStart, control.anchor),
+            )) {
       throw const FormatException();
     }
   }
@@ -536,5 +598,92 @@ _SchedulingCheckpoint _schedulingReadV7(
     instanceVersionProfile: current.instanceVersionProfile,
     rangeControl: control,
     rangeComparison: comparison,
+    exceptionalRangeProof: exceptionalProof,
+    exceptionalFrozen: exceptionalFrozen,
   );
+}
+
+/// Version 8 binds the exceptional candidate to the retained unmasked source,
+/// individual ledger and, after restoration, a self-contained frozen result.
+_SchedulingCheckpoint _schedulingReadV8(CalendarSchedulingPublicationRecord p) {
+  final envelope = ExceptionalRangeEnvelope.read(p.snapshot);
+  final current = _schedulingReadV7(
+    p,
+    envelope.v7,
+    exceptionalProof: envelope.proof,
+    exceptionalFrozen: envelope.frozen,
+  );
+  final range = current.rangeControl;
+  if (range == null) throw const FormatException();
+  var frozen = current;
+  var frozenPayload = p.payload;
+  if (range.active) {
+    if (envelope.frozen != null) throw const FormatException();
+  } else {
+    final value = envelope.frozen ?? (throw const FormatException());
+    final snapshot = value['snapshot'] as String;
+    final header = jsonDecode(snapshot) as Map<String, dynamic>;
+    if (!{3, 6}.contains(header['version'])) throw const FormatException();
+    frozenPayload = value['payload'] as String;
+    final record = p.copyWith(
+      snapshot: snapshot,
+      projection: value['projection'] as String,
+      payload: frozenPayload,
+      payloadDigest: _schedulingDigest(frozenPayload),
+      method: value['method'] as String,
+      sequence: value['sequence'] as int,
+      stamp: DateTime.parse(value['stamp'] as String),
+    );
+    frozen = _schedulingReadCheckpoint(record);
+    final master = frozen.ledger.singleWhere((value) => value.key == 'master');
+    if (frozen.canonical.eventId != current.canonical.eventId ||
+        frozen.canonical.calendarId != current.canonical.calendarId ||
+        frozen.canonical.protocolUid != current.canonical.protocolUid ||
+        frozen.message.method != IcalendarSchedulingMethod.request ||
+        master.sequence != range.sequence ||
+        master.stamp != range.stamp ||
+        (current.kind == CalendarSchedulingPublicationKind.rangeRestore &&
+            p.payload != frozenPayload)) {
+      throw const FormatException();
+    }
+  }
+  final source = utf8.decode(
+    serializeIcalendarSyntax(_schedulingRangeSource(frozen)),
+  );
+  envelope.proof.requireBindings(
+    basis: range.active ? source : envelope.proof.basis,
+    anchor: range.anchor,
+    masks: [for (final row in frozen.cancelled) row.point],
+  );
+  if (!range.active) {
+    envelope.proof.requireUnmaskedLineage(source);
+    final message = parseIcalendarSchedulingMessage(utf8.encode(frozenPayload));
+    final versions = <String, (int, DateTime)>{};
+    for (final event in message.events) {
+      final component = _schedulingComponent(event);
+      final stored = frozen.ledger.singleWhere(
+        (v) => v.key == component.key && v.future == component.future,
+      );
+      final name = !event.isOverride
+          ? 'master'
+          : eventComponentKey(
+              CalendarEventTiming(
+                kind: event.originalDate != null
+                    ? CalendarEventTimeKind.date
+                    : event.originalTime!.zoneId == null
+                    ? CalendarEventTimeKind.utc
+                    : CalendarEventTimeKind.zoned,
+                start: event.originalDate != null
+                    ? eventDate(event.originalDate!)
+                    : eventCivil(event.originalTime!.civil),
+                zoneId: event.originalTime?.zoneId,
+              ),
+              event.isThisAndFuture,
+            );
+      if (versions.containsKey(name)) throw const FormatException();
+      versions[name] = (stored.sequence, stored.stamp);
+    }
+    envelope.proof.requireCommittedRequest(frozenPayload, versions);
+  }
+  return current;
 }
