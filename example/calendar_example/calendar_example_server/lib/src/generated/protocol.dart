@@ -49,13 +49,16 @@ class Protocol extends _is.DatabaseSerializationManager
       );
 
   static List<_isp.TableDefinition> get targetTableDefinitions => [
-    ..._iais.Protocol.targetTableDefinitions,
-    ..._ipn35bcd.Protocol.targetTableDefinitions,
-    ..._i3lfs3vf.Protocol.targetTableDefinitions,
-    ..._ik9lwgjh.Protocol.targetTableDefinitions,
-    ..._iacs.Protocol.targetTableDefinitions,
+    ..._ownTableDefinitions,
+    ..._iais.Protocol().getOwnTableDefinitions(),
+    ..._ipn35bcd.Protocol().getOwnTableDefinitions(),
+    ..._i3lfs3vf.Protocol().getOwnTableDefinitions(),
+    ..._ik9lwgjh.Protocol().getOwnTableDefinitions(),
+    ..._iacs.Protocol().getOwnTableDefinitions(),
     ..._isp.Protocol.targetTableDefinitions,
   ];
+
+  static List<_isp.TableDefinition> get _ownTableDefinitions => [];
 
   static String? getClassNameFromObjectJson(dynamic data) =>
       _is.ProtocolDeserialization.readClassName(data);
@@ -246,6 +249,9 @@ class Protocol extends _is.DatabaseSerializationManager
   @override
   List<_isp.TableDefinition> getTargetTableDefinitions() =>
       targetTableDefinitions;
+
+  @override
+  List<_isp.TableDefinition> getOwnTableDefinitions() => _ownTableDefinitions;
 
   @override
   String getModuleName() => 'calendar_example';

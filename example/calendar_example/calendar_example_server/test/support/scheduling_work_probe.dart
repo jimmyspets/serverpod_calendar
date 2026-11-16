@@ -288,6 +288,9 @@ Future<void> main(List<String> args) async {
               'publications': await CalendarSchedulingPublicationRecord.db
                   .count(s, where: (t) => t.meetingId.equals(meeting.id!)),
             };
+          } on CalendarException catch (error) {
+            if (input['allowConflict'] != true) rethrow;
+            result = {'error': error.code.name};
           } finally {
             host.pause = '';
             s.updateAuthenticated(null);
@@ -366,7 +369,11 @@ Future<void> main(List<String> args) async {
                   input['method'] as String,
                   occurrences: input['occurrences'] == true,
                 )
-              : await _seed(s, input['method'] as String? ?? 'REQUEST');
+              : await _seed(
+                  s,
+                  input['method'] as String? ?? 'REQUEST',
+                  exceptionalRange: input['exceptionalRange'] == true,
+                );
         case 'work':
           transport.pause = input['pause'] as String? ?? '';
           await CalendarModule.runSchedulingMaintenance(s);
@@ -462,8 +469,9 @@ Future<void> main(List<String> args) async {
 
 Future<Map<String, String>> _seed(
   Session s,
-  String method,
-) => s.db.transaction((tx) async {
+  String method, {
+  bool exceptionalRange = false,
+}) => s.db.transaction((tx) async {
   final instanceReply = method == 'INSTANCE_REPLY';
   final recurringReply = method == 'RECURRING_REPLY' || instanceReply;
   final replyMode = method == 'REPLY' || recurringReply;
@@ -544,7 +552,12 @@ Future<Map<String, String>> _seed(
       ? [
           EventSchedulingOriginal(
             content.timing.copyWith(
-              start: CalendarEventCivil(year: 2026, month: 11, day: 3, hour: 9),
+              start: CalendarEventCivil(
+                year: 2026,
+                month: 11,
+                day: exceptionalRange ? 4 : 3,
+                hour: 9,
+              ),
             ),
             false,
           ),

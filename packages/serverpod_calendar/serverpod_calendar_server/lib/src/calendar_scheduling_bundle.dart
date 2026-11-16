@@ -339,7 +339,11 @@ final class _SchedulingCheckpoint {
     this.instanceVersionProfile = false,
     this.rangeControl,
     this.rangeComparison,
+    this.exceptionalRangeProof,
+    this.exceptionalFrozen,
   });
+  final ExceptionalRangeProof? exceptionalRangeProof;
+  final Map<String, dynamic>? exceptionalFrozen;
   final _SchedulingRangeControl? rangeControl;
   final CalendarEventPolicySnapshot? rangeComparison;
   final bool instanceVersionProfile;
@@ -374,6 +378,7 @@ _SchedulingCheckpoint _schedulingReadCheckpoint(
     if (header['version'] == 5) return _schedulingReadV5(p, header);
     if (header['version'] == 6) return _schedulingReadV6(p, header);
     if (header['version'] == 7) return _schedulingReadV7(p, header);
+    if (header['version'] == 8) return _schedulingReadV8(p);
     if (p.payload.length > _schedulingCheckpointBytes ||
         _schedulingDigest(p.payload) != p.payloadDigest) {
       throw const FormatException();

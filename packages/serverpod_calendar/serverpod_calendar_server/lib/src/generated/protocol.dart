@@ -1765,6 +1765,11 @@ class Protocol extends _is.DatabaseSerializationManager
   );
 
   static List<_isp.TableDefinition> get targetTableDefinitions => [
+    ..._ownTableDefinitions,
+    ..._ik9lwgjh.Protocol().getOwnTableDefinitions(),
+  ];
+
+  static List<_isp.TableDefinition> get _ownTableDefinitions => [
     _isp.TableDefinition(
       name: 'calendar_inv_response_selection_evidence',
       dartName: 'CalendarInvitationResponseSelectionEvidenceRecord',
@@ -8542,7 +8547,6 @@ class Protocol extends _is.DatabaseSerializationManager
       ],
       managed: true,
     ),
-    ..._ik9lwgjh.Protocol.targetTableDefinitions,
   ];
 
   void registerHostProtocol(
@@ -14980,6 +14984,9 @@ class Protocol extends _is.DatabaseSerializationManager
   @override
   List<_isp.TableDefinition> getTargetTableDefinitions() =>
       targetTableDefinitions;
+
+  @override
+  List<_isp.TableDefinition> getOwnTableDefinitions() => _ownTableDefinitions;
 
   @override
   String getModuleName() => 'serverpod_calendar';

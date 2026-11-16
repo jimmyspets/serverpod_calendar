@@ -23,6 +23,15 @@ import '../endpoints/calendar_feed_endpoint.dart' as _ibvlwx2y;
 class Endpoints extends _is.EndpointDispatch {
   @override
   void initializeEndpoints(_is.Server server) {
+    initializeOwnEndpoints(server);
+    modules['serverpod_calendar'] = _ipn35bcd.Endpoints()
+      ..initializeOwnEndpoints(server);
+    modules['serverpod_notifications'] = _ik9lwgjh.Endpoints()
+      ..initializeOwnEndpoints(server);
+  }
+
+  @override
+  void initializeOwnEndpoints(_is.Server server) {
     var endpoints = <String, _is.Endpoint>{
       'calendarFeed': _ibvlwx2y.CalendarFeedEndpoint()
         ..initialize(
@@ -236,9 +245,5 @@ class Endpoints extends _is.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_calendar'] = _ipn35bcd.Endpoints()
-      ..initializeEndpoints(server);
-    modules['serverpod_notifications'] = _ik9lwgjh.Endpoints()
-      ..initializeEndpoints(server);
   }
 }
