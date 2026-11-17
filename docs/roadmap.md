@@ -42,6 +42,10 @@ and RDATE/PERIOD additions, detached results and bounded rejection. The complete
 module unit suites passed locally (815 VM and 31 browser-compatible Chrome
 tests before the last three focused cases were added); workspace analysis passed.
 Review and full exact-head checks remain separate.
+The [hosted run for PR #206](https://github.com/jimmyspets/serverpod_calendar/actions/runs/44041990550)
+passed inspection but failed its runtime job at the same 304 length assertion:
+zero reported for a 692-byte representation. It does not establish a passing
+full repository check.
 
 The next lifecycle investigation is [draft ADR 0189](adr/0189-whole-series-lifecycle-with-published-cutoff.md), in [draft PR #207](https://github.com/jimmyspets/serverpod_calendar/pull/207). Existing checkpoint readers require an active range to remain bound to its exact range-CANCEL payload, so whole-series transitions need a separately reviewed, self-contained proof rather than simply removing an API guard. No durable change is approved or implemented.
 

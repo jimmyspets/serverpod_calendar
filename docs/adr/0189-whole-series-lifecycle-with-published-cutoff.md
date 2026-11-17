@@ -64,6 +64,98 @@ compare the exact payload, masks, versions, identity and original basis. A
 prototype must demonstrate that all currently supported v7/v8 states fit or
 reject explicitly; no capacity increase or historical-proof deletion follows.
 
+### Proposed first transition profile
+
+| Previous published state | Explicit command | New published state | Message |
+| --- | --- | --- | --- |
+| Active v7/v8 range cancellation | Whole-series Cancel and notify | Whole series cancelled; cutoff retained | One whole-series CANCEL |
+| Whole series cancelled with retained cutoff | Reopen published and notify | Series reopened; cutoff retained | One complete finite-mask REQUEST |
+| Reopened with retained cutoff | Restore future and notify | Cutoff cleared; individual cancellations retained | One complete restoration REQUEST |
+| Either of the first two v9 states | Repeat the applicable whole cancel/reopen | Same two states, with a newer publication | One message for that transition |
+
+This table proposes no implicit transition on receipt, ordinary local edit or
+delivery. Exact retained command retries are evaluated before fresh-state
+admission and never replay a native state transition. A new reopening after a
+whole CANCEL remains explicit even when the local master is already active.
+Existing range and occurrence commands remain guarded while the whole series is
+cancelled; after reopening, only the separate range restoration is newly
+admitted. Other source changes, new partial publications, overlapping cutoff
+operations and broader composition stay rejected until separately designed.
+
+The candidate v9 reader must validate the frozen active-range predecessor with
+the existing v7/v8 reader, including its exact payload, anchor, individual
+ledger and any exceptional proof. The current envelope binds the same scope,
+calendar, event, UID, organizer and fixed recipients; it records the actual
+current kind, canonical/native comparison, complete current message and digest,
+component ledger, and a typed distinction among source, individual and generated
+suffix exclusions. On each new transition, reuse the same original v7/v8
+predecessor and write a new flat current state: never embed a v9 predecessor.
+Bound the full encoded envelope, output and work using existing limits, and
+recompute and compare the complete projection rather than trusting stored mask
+claims. Retained receipts pin their own evidence under the existing policy;
+the current checkpoint remains sufficient after eligible receipts are pruned.
+
+Before whole cancellation commits, construct and validate both the prospective
+whole CANCEL and its prospective finite-mask reopening, including individual
+masks and any v8 exceptional anchor. Refuse the operation if either cannot be
+proven or encoded. On actual reopening, calculate fresh versions and repeat
+validation and current host authorization; the earlier proof is not authority
+or a guarantee that capacity and permissions still exist. Prior terminal
+delivery gating applies to each new transition, including range restoration.
+Cancellation and reopening reuse the existing whole-series permission families,
+and restoration reuses its independently authorized range action; all require
+current full-detail/source and lifecycle disclosure, exact message approval at
+the existing final checks and fresh actor-free worker authorization. The
+transaction atomically commits the native status projection, private checkpoint,
+publication and recipient delivery intents under existing scope/revision fences.
+No new SQL table or capacity increase is proposed.
+
+For this new profile, propose explicit `readScheduling`, `readEvent` with every
+event field group, `readEventSource` and `changeEventStatus` checks for each
+transition, plus `cancelScheduling`, `reopenScheduling` or
+`restoreFutureScheduling` respectively. The whole-cancel write path currently
+uses `cancelScheduling`, event/source read and lifecycle checks but does not
+include `readScheduling` in that write request list; adding it here would be a
+deliberate additional requirement for this profile, not a claim about the
+existing path. Preliminary checks precede private checkpoint decoding. Final
+checks and the scheduling host receive the exact original, retained unmasked
+published basis, generated exclusion reasons, native/current/proposed snapshots
+and immutable outgoing message/digest. Host decision guarantees and external
+revocation races retain their existing declared semantics.
+
+For the final range restoration, propose rebuilding the existing closed v7/v8
+restoration form from the validated frozen active-range predecessor, with a
+version floor including the current v9 publication and all its retained
+components. Reapply each independently cancelled original and validate the
+complete current REQUEST and its exceptional proof before replacing the v9
+state. This bridge must preserve the exact original-cutoff and source-exclusion
+provenance and be accepted by the existing closed-state reader; if it cannot be
+proved or fit, restoration rejects atomically. A successful bridge returns to
+the already approved post-restoration lifecycle rather than inventing new
+history. Prove the bridge for both ordinary v7 and exceptional v8 predecessors
+before this contract is considered implementation-ready.
+
+The existing `_schedulingRangeRestored` helper already derives its candidate
+from the prior unmasked published source, applies individual masks separately,
+and allocates fresh versions above a supplied floor. That makes it a candidate
+for the bridge, but does not by itself prove that a v9 record's current row
+identity, native comparison and frozen v8 lineage satisfy the closed reader.
+Any bridge must construct and validate the actual final record, including
+generation, expected/event revisions, canonical state, full source, exceptional
+bindings and payload digest; successful pure payload construction alone is not
+sufficient. In particular, no reconstructed row may take native comparison
+or exclusion provenance from a newer private draft.
+
+At masked reopening, use only a previously validated unmasked source. Preserve
+all original source exclusions, identify individual masks from the authenticated
+ledger, and apply generated suffix masks only to distinct included originals.
+Where source and individual provenance cannot be distinguished, reject rather
+than guessing which operation may remove a value. A proven individual
+cancellation may also lie inside the suppressed suffix: encode one wire
+exclusion but retain both authenticated reasons separately. A future cutoff
+restoration removes only the suffix reason, leaving that individual cancellation
+in force.
+
 For an initial serialized workflow, require prior deliveries to be terminal
 before a new whole-series cancellation, reopening or later range restoration.
 This proposed restriction is stronger than the existing ordinary whole-series
