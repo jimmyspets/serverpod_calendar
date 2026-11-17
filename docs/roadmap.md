@@ -43,6 +43,8 @@ module unit suites passed locally (815 VM and 31 browser-compatible Chrome
 tests before the last three focused cases were added); workspace analysis passed.
 Review and full exact-head checks remain separate.
 
+The next lifecycle investigation is [draft ADR 0189](adr/0189-whole-series-lifecycle-with-published-cutoff.md). Existing checkpoint readers require an active range to remain bound to its exact range-CANCEL payload, so whole-series transitions need a separately reviewed, self-contained proof rather than simply removing an API guard. No durable change is approved or implemented.
+
 Tasks have a [confirmed create-only import contract](task-import.md) under ADR 0097 and [implemented source storage](task-source-storage.md) under ADR 0098. Create-only authenticated import follows under ADR 0099; explicitly authorized [current-state task export](task-export.md) follows under ADR 0100, with separate rich-source disclosure. Imported non-recurring tasks retain unknown prior progress, so neutral source values do not enable recurrence conversion. Selected event occurrence content is implemented under ADR 0106. Native metadata editors and exact master-category search now extend events/tasks under ADRs 0134–0136. Trusted non-recurring invitation review, stable calendar addition and explicit conflict-protected REQUEST/CANCEL application/reopening extend scheduling under ADRs 0137–0141; receipt alone changes no calendar data. Broader source adoption/overwrite and future content/cancellation remain open; scoped alarm runtime, live delivery and timing-only source adoption have implementation evidence under ADRs 0112–0115.
 
 | Area | Implemented and locally validated | Remaining for the first release |
