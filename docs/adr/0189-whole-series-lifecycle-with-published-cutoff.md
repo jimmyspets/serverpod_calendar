@@ -102,6 +102,15 @@ recompute and compare the complete projection rather than trusting stored mask
 claims. Retained receipts pin their own evidence under the existing policy;
 the current checkpoint remains sufficient after eligible receipts are pruned.
 
+The frozen predecessor is evidence rather than a second live publication.
+Include every immutable row field required to validate its historical identity,
+method, payload/digest, recipient set, sequence/stamp and expected/event
+revision bindings; bind its scope and meeting to the actual current binding.
+Do not manufacture a new receipt, attempt, route approval or delivery from the
+frozen fields. Current recipient routes and permissions are always rechecked.
+Its private actor/command identifiers, if needed for validation, stay in the
+bounded server-only checkpoint and are scrubbed with the existing active data.
+
 Before whole cancellation commits, construct and validate both the prospective
 whole CANCEL and its prospective finite-mask reopening, including individual
 masks and any v8 exceptional anchor. Refuse the operation if either cannot be

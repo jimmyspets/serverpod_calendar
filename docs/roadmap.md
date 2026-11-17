@@ -42,7 +42,7 @@ and RDATE/PERIOD additions, detached results and bounded rejection. The complete
 module unit suites passed locally (815 VM and 31 browser-compatible Chrome
 tests before the last three focused cases were added); workspace analysis passed.
 Review and full exact-head checks remain separate.
-The [hosted run for PR #206](https://github.com/jimmyspets/serverpod_calendar/actions/runs/44041990550)
+The [hosted run for PR #206 at commit 213f112](https://github.com/jimmyspets/serverpod_calendar/actions/runs/44041990550)
 passed inspection but failed its runtime job at the same 304 length assertion:
 zero reported for a 692-byte representation. It does not establish a passing
 full repository check.
