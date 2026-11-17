@@ -35,7 +35,7 @@ failed at the same 4.1.2 feed 304 length assertion after its earlier database
 and two-host checks passed; the inspection job passed. This is not a full
 runtime success or a successful check for a later commit.
 
-The next independent scheduling increment is [ADR 0188](adr/0188-published-whole-series-lifecycle-with-active-range.md): the maintainer approved its finite-suffix pure projection, which is implemented for draft review. Durable delivery ordering and checkpoint mechanics remain undecided. Existing whole-series lifecycle guards remain in force.
+The next independent scheduling increment is [ADR 0188](adr/0188-published-whole-series-lifecycle-with-active-range.md): the maintainer approved its finite-suffix pure projection, which is implemented for review in [draft PR #206](https://github.com/jimmyspets/serverpod_calendar/pull/206). Durable delivery ordering and checkpoint mechanics remain undecided. Existing whole-series lifecycle guards remain in force.
 The [pure implementation](published-finite-suffix-projection.md) has twenty-one
 focused VM tests covering finite DATE/UTC/zoned series, DST, source exclusions
 and RDATE/PERIOD additions, detached results and bounded rejection. The complete
