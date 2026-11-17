@@ -63,6 +63,13 @@ embedding successive envelopes, but only if each reader can reconstruct and
 compare the exact payload, masks, versions, identity and original basis. A
 prototype must demonstrate that all currently supported v7/v8 states fit or
 reject explicitly; no capacity increase or historical-proof deletion follows.
+Current `_schedulingReadCheckpoint` has no shared-work argument, so nesting a
+validated predecessor inside v9 must not reset the recurrence budget at each
+read or retry. Thread one bounded work budget through predecessor validation,
+finite enumeration, mask composition, version reconstruction and output
+validation, including dispatch/recovery reads. Existing non-v9 readers must
+retain their established acceptance and limits. Budget exhaustion is an explicit
+failure, never evidence of an absent original or permission to omit one.
 
 ### Proposed first transition profile
 
@@ -122,6 +129,13 @@ checks and the scheduling host receive the exact original, retained unmasked
 published basis, generated exclusion reasons, native/current/proposed snapshots
 and immutable outgoing message/digest. Host decision guarantees and external
 revocation races retain their existing declared semantics.
+The existing host context's `publicationExclusions` identifies individual
+publication masks and cannot safely stand for all three reasons. Propose a
+separate immutable, bounded suffix-mask context containing the original cutoff
+and generated suffix identities, while preserving the existing individual-mask
+field and supplying the retained source separately. The same reconstructed
+context must be available for actor-free dispatch checks. This is a host-adapter
+contract refinement, not a client-supplied policy claim.
 
 For the final range restoration, propose rebuilding the existing closed v7/v8
 restoration form from the validated frozen active-range predecessor, with a
