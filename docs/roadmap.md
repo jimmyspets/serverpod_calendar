@@ -30,6 +30,18 @@ and hosted conclusion remain outstanding, as recorded in
 [its validation record](validation-durable-exceptional-range.md). The earlier
 pure projection's hosted free/busy Flutter failure remains open; focused
 retries passed twice after the journey's tap visibility was strengthened.
+The [hosted check for commit 4d4b735](https://github.com/jimmyspets/serverpod_calendar/actions/runs/43927075625)
+failed at the same 4.1.2 feed 304 length assertion after its earlier database
+and two-host checks passed; the inspection job passed. This is not a full
+runtime success or a successful check for a later commit.
+
+The next independent scheduling increment is [ADR 0188](adr/0188-published-whole-series-lifecycle-with-active-range.md): the maintainer approved its finite-suffix pure projection, which is implemented for draft review. Durable delivery ordering and checkpoint mechanics remain undecided. Existing whole-series lifecycle guards remain in force.
+The [pure implementation](published-finite-suffix-projection.md) has twenty-one
+focused VM tests covering finite DATE/UTC/zoned series, DST, source exclusions
+and RDATE/PERIOD additions, detached results and bounded rejection. The complete
+module unit suites passed locally (815 VM and 31 browser-compatible Chrome
+tests before the last three focused cases were added); workspace analysis passed.
+Review and full exact-head checks remain separate.
 
 Tasks have a [confirmed create-only import contract](task-import.md) under ADR 0097 and [implemented source storage](task-source-storage.md) under ADR 0098. Create-only authenticated import follows under ADR 0099; explicitly authorized [current-state task export](task-export.md) follows under ADR 0100, with separate rich-source disclosure. Imported non-recurring tasks retain unknown prior progress, so neutral source values do not enable recurrence conversion. Selected event occurrence content is implemented under ADR 0106. Native metadata editors and exact master-category search now extend events/tasks under ADRs 0134–0136. Trusted non-recurring invitation review, stable calendar addition and explicit conflict-protected REQUEST/CANCEL application/reopening extend scheduling under ADRs 0137–0141; receipt alone changes no calendar data. Broader source adoption/overwrite and future content/cancellation remain open; scoped alarm runtime, live delivery and timing-only source adoption have implementation evidence under ADRs 0112–0115.
 
