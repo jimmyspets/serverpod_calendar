@@ -30,8 +30,13 @@ but the resolved Relic adapter consumes rather than writes that stream and
 suppresses application-supplied framing on 304.
 This HTTP compatibility failure remains open. The feed smoke test continues
 to reject the incorrect header rather than accepting it as valid.
-Existing-database upgrades, feed snapshot reconciliation and hosted checks
-remain outstanding.
+The hosted check for commit `4d4b735` also failed at this same feed smoke
+assertion: its 304 carried `Content-Length: 0` for a 692-byte representation.
+The inspection job passed, and the runtime job reached the feed check after
+its earlier database and two-host checks passed. See
+[hosted run 43927075625](https://github.com/jimmyspets/serverpod_calendar/actions/runs/43927075625).
+Existing-database upgrades, feed snapshot reconciliation and a successful
+full hosted check remain outstanding.
 
 The maintainer chose to keep the 4.1.2 upgrade in draft while waiting for a
 framework fix, and to continue independent roadmap work. The invalid 304
