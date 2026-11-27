@@ -1,6 +1,6 @@
 # Delivery roadmap
 
-Status reconciled **2026-10-21**, through the native occurrence timing increment under ADR 0055. The bounded temporal core and scoped native calendar/event services have local validation evidence; the full first release remains incomplete. The [RFC tables](rfc/README.md) are the latest feature-scope source. [Requirements](requirements.md) define stable FR/NFR acceptance targets; [ADRs](adr/README.md) distinguish confirmed scope from proposed implementation details.
+Status reconciled **2026-10-21**, through the first per-calendar free/busy increment under ADR 0056. The bounded temporal core and scoped native calendar/event services have local validation evidence; the full first release remains incomplete. The [RFC tables](rfc/README.md) are the latest feature-scope source. [Requirements](requirements.md) define stable FR/NFR acceptance targets; [ADRs](adr/README.md) distinguish confirmed scope from proposed implementation details.
 
 This roadmap tracks the implementation represented by the current branch, including stacked draft PRs; an implemented checkbox does not mean the change is merged into main, released, or that every ADR mechanic is accepted. Check existing GitHub work before filing issues, and link each implementation issue to the relevant requirements and roadmap section.
 
@@ -15,12 +15,12 @@ Checked items describe only the stated implemented slice or explicitly selected 
 | Calendars and authorization | CRUD/associations, native/protocol metadata separation, UID/time, host policy, disclosure, revisions and cursors | Retention/cleanup, production coordinated-policy evidence and enforcement for remaining services |
 | Events | DATE/UTC/zoned CRUD, separate lifecycle rights, recurrence storage, bounded previews and single/future timing edits/cancellation | Per-occurrence content, future cancellation, richer metadata and calendar-wide occurrence queries |
 | Tasks | Pure-core timing/recurrence projections | Durable CRUD, assignments, occurrence completion/history and Flutter journeys |
-| Availability | Stored named zone/fallback and subject-association foundation | RFC 7953 rule service, free/busy and per-target/common-free search |
+| Availability | Stored zone/fallback/associations and per-calendar complete/unknown booking partition | RFC 7953 rule service, free/busy and per-target/common-free search |
 | iCalendar and HTTP feeds | Scoped decoded metadata adapters; optional feed-module boundary selected | ICS parsing/serialization, imports/exports, feed module and external-client evidence |
 | Scheduling and alarms | Selected scope; notification package scaffold | Scheduling/mail state and outbox; alarm workers/actions and connected Flutter delivery |
 | Validation and release | Local unit/browser/database/upgrade checks, two real hosts and Flutter journeys for implemented features | CI, remaining protocol/worker/recovery journeys, interoperability and publication readiness |
 
-The timing-only single/future batch is implemented under [ADR 0055](adr/0055-native-occurrence-timing-edits.md). Availability is the next maintainer-authorized area in the recommended order; its detailed rule/query policies still need review before dependent implementation. Review and merge the draft PR stack separately; passing local checks does not approve unresolved design mechanics.
+The timing-only single/future batch is implemented under [ADR 0055](adr/0055-native-occurrence-timing-edits.md). The first per-calendar booking/fallback free/busy increment is implemented under [ADR 0056](adr/0056-first-calendar-free-busy.md), including the accepted tentative-blocking classification. RFC 7953 working-hours rules and host-resolved person/resource/common-slot search follow separately; their detailed policies still need review. Review and merge the draft PR stack separately; passing local checks does not approve unresolved design mechanics.
 
 ## Work packages and dependencies
 
@@ -142,7 +142,9 @@ The separate optional module boundary is selected under [ADR 0042](adr/0042-opti
 
 ## Availability
 
+- [x] Implement the first per-calendar booking/fallback query under [ADR 0056](adr/0056-first-calendar-free-busy.md), with separate source busy authority, no detail-list filtering, tentative blocking/classification and complete/unknown merged UTC periods. This is not full rule/subject availability or VFREEBUSY serialization.
 - [x] Store each calendar's explicit named availability zone and free/unavailable no-rule fallback, with distinct settings authority and opaque subject associations. These are inputs for future calculation, not implemented free/busy or exclusive reservations.
+- [ ] Add proven time-indexed event candidates for larger calendars; the first free/busy increment scans all active source records and returns unknown above its bounded source cap.
 - [ ] Resolve all host-selected contributing calendars for each person/group/resource independently from detail permissions. Apply recurrence, exceptions, status/transparency and each calendar's all-day zone; test long overlaps, adjacent intervals, point events and tentative/unavailable policy.
 - [ ] Implement authorized rule CRUD/import/export and RFC 7953 priority/range composition under [ADR 0012](adr/0012-calendar-availability-policy.md). Test default/equal priorities, recurring openings, temporary/holiday overrides, DST and bookings; an opening never erases a booking.
 - [ ] Apply per-calendar no-rule fallback (default free, unavailable alternative) only where no rule applies. Return separate calendar results and optional host-selected subject summaries by intersecting each contributor after its rules, fallback and bookings; do not let calendar priorities override one another.
@@ -188,7 +190,7 @@ The local harness already satisfies scoped parts of NFR-14/NFR-15 for implemente
 
 Local runtime evidence exists for the implemented native slices under [scaffold validation](scaffold-validation.md) and [temporal validation](temporal-core.md). The full release gates below remain open; no full ICS/external-client compatibility or production worker-recovery claim is made.
 
-- [x] Record local SDK pins, executable setup/check instructions and passing scoped unit/database/two-host/Flutter evidence through ADR 0055. This is the current baseline, not complete FR/NFR acceptance.
+- [x] Record local SDK pins, executable setup/check instructions and passing scoped unit/database/two-host/Flutter evidence through ADR 0056. This is the current baseline, not complete FR/NFR acceptance.
 - [ ] A clean checkout starts the pinned Serverpod/Flutter host with fresh migrations, synthetic host identities/resources and verified setup. Demonstrate calendars, recurring tasks/events, scheduling, rules/search, secret feeds and connected Flutter notifications through generated clients.
 - [ ] Gather evidence for FR-01 through FR-31 and NFR-01 through NFR-15, including authorization, stale revisions, restart/rollback, protocol/negative fixtures, cache isolation and alarm/mail crash recovery. Automated real-host/Flutter journeys and multiple-active-instance failure/recovery checks are required; feed-subset compatibility and connected notification example evidence remain independent release checks.
 - [ ] Record versions, directions, fixtures, known gaps, operational limits and best-effort delivery/refresh/downloaded-copy limitations. Verify licenses, package metadata, changelog, version policy and publication dry run; publication is a separate decision. Reuse existing local native evidence and supply the missing protocol, worker/recovery, CI and external-client evidence.
@@ -224,3 +226,7 @@ The maintainer selected recurrence storage/bounded API and example previews firs
 ## Native occurrence timing increment, 2026-10-21
 
 [ADR 0055](adr/0055-native-occurrence-timing-edits.md) and [the guide](native-occurrence-timing.md) cover the accepted timing-only batch: dedicated single/future timing actions, single cancellation/restoration preserving prior timing, orphan-rejecting master edits and deferred future cancellation. The service uses separate nullable override storage, actual immutable host context, transactional event revisions and effective previews. Per-occurrence content and future cancellation remain pending; availability follows next. The validation record distinguishes focused tests from the broader completed-batch checks.
+
+## First per-calendar free/busy increment, 2026-10-21
+
+[ADR 0056](adr/0056-first-calendar-free-busy.md) and [the guide](calendar-free-busy.md) record the accepted partial availability order and tentative policy. The native service evaluates effective event/occurrence timing, calendar-zone DATE occupancy and saved fallback under independent busy authority, returning only complete partitions or unknown/failure without partial free time. Working-hours rules, host-selected contributors/common-free search, protocol output and exclusive reservation remain open; storing those future rule definitions must not bypass their integration here.

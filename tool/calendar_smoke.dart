@@ -632,6 +632,77 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
             edited.timingOverrides!.singles.length == 2,
         'Occurrence editing rewrote master content/identity',
       );
+      final privateBooking = (await ea.create(
+        cal.CalendarEventCreateRequest(
+          calendarId: second.calendarId,
+          content: cal.CalendarEventContent(
+            summary: 'Synthetic private title',
+            status: cal.CalendarEventStatus.tentative,
+            timing: cal.CalendarEventTiming(
+              kind: cal.CalendarEventTimeKind.utc,
+              start: cal.CalendarEventCivil(
+                year: 2026,
+                month: 4,
+                day: 4,
+                hour: 9,
+              ),
+              duration: cal.CalendarEventDuration(hours: 1),
+            ),
+          ),
+        ),
+      ))!;
+      eventIds.add(privateBooking.eventId);
+      final busyQuery = cal.CalendarFreeBusyQuery(
+        calendarId: second.calendarId,
+        fromUtc: DateTime.utc(2026, 4, 4),
+        untilUtc: DateTime.utc(2026, 4, 5),
+      );
+      final localBusy = await a.freeBusy(busyQuery);
+      final remoteBusy = await b.freeBusy(busyQuery);
+      check(
+        jsonEncode(localBusy.toJson()) == jsonEncode(remoteBusy.toJson()) &&
+            remoteBusy.coverage == cal.CalendarFreeBusyCoverage.complete &&
+            remoteBusy.periods[1].kind == cal.CalendarFreeBusyKind.tentative,
+        'Cross-host free/busy differs or lost tentative classification',
+      );
+      check(
+        !jsonEncode(remoteBusy.toJson())
+                .contains(privateBooking.eventId.toString()) &&
+            !jsonEncode(remoteBusy.toJson())
+                .contains('Synthetic private title'),
+        'Free/busy exposed private event identity/content',
+      );
+      await ea.changeStatus(
+        cal.CalendarEventStatusRequest(
+          eventId: privateBooking.eventId,
+          expectedRevision: 1,
+          status: cal.CalendarEventStatus.confirmed,
+        ),
+      );
+      check(
+        (await b.freeBusy(busyQuery)).periods[1].kind ==
+            cal.CalendarFreeBusyKind.busy,
+        'Remote free/busy did not see committed lifecycle change',
+      );
+      final storedPrivate = await eb.getEvent(
+        privateBooking.eventId,
+        cal.CalendarEventFieldGroup.values,
+      );
+      await ea.update(
+        cal.CalendarEventUpdateRequest(
+          eventId: privateBooking.eventId,
+          expectedRevision: 2,
+          content: cal.CalendarEventContent(
+            timing: storedPrivate.timing!,
+            transparency: cal.CalendarEventTransparency.transparent,
+          ),
+        ),
+      );
+      check(
+        (await b.freeBusy(busyQuery)).periods.single.kind ==
+            cal.CalendarFreeBusyKind.free,
+        'Transparent event continued blocking remote free/busy',
+      );
       final firstPage = await ea.list(
         second.calendarId,
         pageSize: 1,
@@ -752,7 +823,7 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
       await b.delete(raceParent.calendarId, 1);
     }
     print(
-      'PASS: native events/recurrence/occurrence timing, temporal forms, lifecycle/cursors and cross-host stale-write race, stable calendar protocol UID/time, links/categories/image/refresh metadata, cross-host filtered cursors, native/protocol metadata isolation, multilingual round trips and generated calendar CRUD, scope isolation, cursors, stale writes and cross-host delete/attach race.',
+      'PASS: per-calendar free/busy and native events/recurrence/occurrence timing, temporal forms, lifecycle/cursors and cross-host stale-write race, stable calendar protocol UID/time, links/categories/image/refresh metadata, cross-host filtered cursors, native/protocol metadata isolation, multilingual round trips and generated calendar CRUD, scope isolation, cursors, stale writes and cross-host delete/attach race.',
     );
   } finally {
     for (final id in ids) {

@@ -40,6 +40,10 @@ import 'package:serverpod_calendar_server/src/generated/calendar_event_view.dart
     as _i6zsydj7;
 import 'package:serverpod_calendar_server/src/generated/calendar_field_group.dart'
     as _i3d02yxy;
+import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_query.dart'
+    as _imwtl5fr;
+import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_view.dart'
+    as _i3y4q8eh;
 import 'package:serverpod_calendar_server/src/generated/calendar_metadata_update_request.dart'
     as _io29vhgw;
 import 'package:serverpod_calendar_server/src/generated/calendar_mutation_receipt.dart'
@@ -271,6 +275,37 @@ class _CalendarEndpoint {
   final _is.EndpointDispatch _endpointDispatch;
 
   final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_i3y4q8eh.CalendarFreeBusyView> freeBusy(
+    _ist.TestSessionBuilder sessionBuilder,
+    _imwtl5fr.CalendarFreeBusyQuery query,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendar',
+            method: 'freeBusy',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendar',
+          methodName: 'freeBusy',
+          parameters: _ist.testObjectToJson({'query': query}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i3y4q8eh.CalendarFreeBusyView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 
   _ida.Future<_ied1lssg.CalendarMutationReceipt?> create(
     _ist.TestSessionBuilder sessionBuilder,

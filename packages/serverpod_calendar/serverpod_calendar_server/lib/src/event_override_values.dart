@@ -260,3 +260,54 @@ CalendarEventTimingOverrides? changeEventOverrides(
     CalendarEventTimingOverrides(singles: singles, future: future),
   );
 }
+
+/// Internal authenticated busy projection; no event details escape this adapter.
+List<UtcWindow> eventOccupiedWindows(
+  CalendarEventContent c,
+  CalendarEventTimingOverrides? overrides,
+  UtcWindow window, {
+  required String dateZone,
+}) {
+  if (c.status == CalendarEventStatus.cancelled ||
+      c.transparency == CalendarEventTransparency.transparent) {
+    return const [];
+  }
+  final result = <UtcWindow>[];
+  if (c.timing.kind == CalendarEventTimeKind.date) {
+    final resolver = NamedZoneResolver();
+    // Prove all queried offsets, not only two endpoints across unknown data.
+    resolver.snapshot(zoneId: dateZone, horizon: window, maxTransitions: 256);
+    final from = resolver.localAt(window.start, zoneId: dateZone).date;
+    final until = resolver
+        .localAt(
+          window.end.subtract(const Duration(seconds: 1)),
+          zoneId: dateZone,
+        )
+        .date
+        .addDays(1);
+    for (final occurrence in _dateOverrides(c, overrides).expandOverlapping(
+      from: from,
+      until: until,
+      maxCandidateDays: eventMaxCandidateWork,
+      maxRuleOccurrences: eventMaxRuleOccurrences,
+      maxBaseOccurrences: eventMaxRuleOccurrences,
+      maxResults: eventMaxPreviewResults,
+    )) {
+      final occupied = occurrence.span.occupiedWindowIn(zoneId: dateZone);
+      final clipped = occupied?.intersection(window);
+      if (clipped != null) result.add(clipped);
+    }
+  } else {
+    for (final occurrence in _timedOverrides(c, overrides).expandOverlapping(
+      window: window,
+      maxCandidateWork: eventMaxCandidateWork,
+      maxRuleOccurrences: eventMaxRuleOccurrences,
+      maxBaseOccurrences: eventMaxRuleOccurrences,
+      maxResults: eventMaxPreviewResults,
+    )) {
+      final clipped = occurrence.span.occupiedWindow?.intersection(window);
+      if (clipped != null) result.add(clipped);
+    }
+  }
+  return List.unmodifiable(result);
+}

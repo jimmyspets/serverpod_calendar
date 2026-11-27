@@ -1,0 +1,5 @@
+class: CalendarFreeBusyPeriod
+fields:
+  startUtc: DateTime
+  endUtc: DateTime
+  kind: CalendarFreeBusyKind

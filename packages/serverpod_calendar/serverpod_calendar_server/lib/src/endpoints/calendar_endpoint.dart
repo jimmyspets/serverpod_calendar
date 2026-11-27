@@ -7,6 +7,10 @@ import '../generated/protocol.dart';
 class CalendarEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
+  Future<CalendarFreeBusyView> freeBusy(
+    Session session,
+    CalendarFreeBusyQuery query,
+  ) => CalendarModule.service(session).freeBusy(query);
   Future<CalendarMutationReceipt?> create(
     Session session,
     CalendarCreateRequest request,

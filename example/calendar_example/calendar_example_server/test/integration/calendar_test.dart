@@ -109,6 +109,255 @@ void main() {
       ))!.eventId;
     }
 
+    CalendarFreeBusyQuery busyQuery(UuidValue calendar) =>
+        CalendarFreeBusyQuery(
+          calendarId: calendar,
+          fromUtc: DateTime.utc(2026, 3, 29),
+          untilUtc: DateTime.utc(2026, 3, 30),
+        );
+    Future<CalendarEventReceipt> booking(
+      UuidValue calendar,
+      int hour,
+      int end, {
+      CalendarEventStatus status = CalendarEventStatus.confirmed,
+      CalendarEventTransparency transparency = CalendarEventTransparency.opaque,
+    }) async => (await service.createEvent(
+      CalendarEventCreateRequest(
+        calendarId: calendar,
+        content: CalendarEventContent(
+          summary: 'Private booking',
+          description: 'Private notes',
+          location: 'Private room',
+          status: status,
+          transparency: transparency,
+          timing: CalendarEventTiming(
+            kind: CalendarEventTimeKind.utc,
+            start: CalendarEventCivil(
+              year: 2026,
+              month: 3,
+              day: 29,
+              hour: hour,
+            ),
+            end: CalendarEventCivil(year: 2026, month: 3, day: 29, hour: end),
+          ),
+        ),
+      ),
+    ))!;
+    test('free busy merges private overlapping bookings and retains tentative classification', () async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      final first = await booking(calendar, 9, 11);
+      await booking(calendar, 10, 12, status: CalendarEventStatus.tentative);
+      await booking(calendar, 13, 14);
+      await booking(calendar, 14, 15);
+      await booking(
+        calendar,
+        16,
+        17,
+        transparency: CalendarEventTransparency.transparent,
+      );
+      await booking(calendar, 18, 19, status: CalendarEventStatus.cancelled);
+      final before = await service.getEvent(first.eventId, eventGroups);
+      final result = await service.freeBusy(busyQuery(calendar));
+      expect(result.coverage, CalendarFreeBusyCoverage.complete);
+      expect(result.periods.map((p) => p.kind), [
+        CalendarFreeBusyKind.free,
+        CalendarFreeBusyKind.busy,
+        CalendarFreeBusyKind.tentative,
+        CalendarFreeBusyKind.free,
+        CalendarFreeBusyKind.busy,
+        CalendarFreeBusyKind.free,
+      ]);
+      expect(result.periods[1].startUtc, DateTime.utc(2026, 3, 29, 9));
+      expect(result.periods[1].endUtc, DateTime.utc(2026, 3, 29, 11));
+      expect(result.periods[4].endUtc, DateTime.utc(2026, 3, 29, 15));
+      final wire = result.toJson().toString();
+      expect(wire, isNot(contains('Private')));
+      expect(wire, isNot(contains(first.eventId.toString())));
+      final after = await service.getEvent(first.eventId, eventGroups);
+      expect(after.revision, before.revision);
+      expect(after.lastModified, before.lastModified);
+    });
+    test('free busy is independent of detail plans; denied required projections return unknown without partial periods', () async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      await booking(calendar, 9, 11);
+      final second = await booking(calendar, 13, 14);
+      policy.denied.addAll([
+        CalendarPermission.read,
+        CalendarPermission.readEvent,
+        CalendarPermission.listEvents,
+      ]);
+      policy.eventCandidates = {};
+      policy.eventGrants = {};
+      policy.grants = {};
+      expect(
+        (await service.freeBusy(busyQuery(calendar))).periods
+            .where((p) => p.kind == CalendarFreeBusyKind.busy)
+            .length,
+        2,
+      );
+      expect(policy.lastEventRequest!.freeBusyQuery!.calendarId, calendar);
+      expect(policy.lastEventRequest!.currentEvent!.calendarId, calendar);
+      policy.busyDenied.add(second.eventId);
+      final unknown = await service.freeBusy(busyQuery(calendar));
+      expect(unknown.coverage, CalendarFreeBusyCoverage.unknown);
+      expect(unknown.periods, isEmpty);
+      policy.denied.add(CalendarPermission.readFreeBusy);
+      await expectLater(
+        service.freeBusy(busyQuery(calendar)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+    test('free busy DATE recurrence uses calendar zone, moved original identity and single cancellation', () async {
+      final id = await recurringEvent();
+      final view = await service.getEvent(id, eventGroups);
+      final q = CalendarFreeBusyQuery(
+        calendarId: view.calendarId,
+        fromUtc: DateTime.utc(2026, 3, 28),
+        untilUtc: DateTime.utc(2026, 4, 1),
+      );
+      await service.changeOccurrence(
+        occurrenceChange(
+          id,
+          CalendarEventOccurrenceAction.replaceSingleTiming,
+          replacement: day(28),
+        ),
+      );
+      await service.changeOccurrence(
+        occurrenceChange(
+          id,
+          CalendarEventOccurrenceAction.cancelSingle,
+          revision: 2,
+          dayNumber: 31,
+        ),
+      );
+      final result = await service.freeBusy(q);
+      final occupied = result.periods
+          .where((p) => p.kind == CalendarFreeBusyKind.busy)
+          .single;
+      expect(occupied.startUtc, q.fromUtc);
+      expect(occupied.endUtc, DateTime.utc(2026, 3, 29, 22));
+      await service.changeOccurrence(
+        occurrenceChange(
+          id,
+          CalendarEventOccurrenceAction.cancelSingle,
+          revision: 3,
+        ),
+      );
+      final after = await service.freeBusy(q);
+      expect(
+        after.periods
+            .singleWhere((p) => p.kind == CalendarFreeBusyKind.busy)
+            .endUtc
+            .difference(
+              after.periods
+                  .singleWhere((p) => p.kind == CalendarFreeBusyKind.busy)
+                  .startUtc,
+            ),
+        const Duration(hours: 23),
+      );
+    });
+    test('free busy uses configured no-rule fallback without pretending working-hours support', () async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      expect(
+        (await service.freeBusy(busyQuery(calendar))).periods.single.kind,
+        CalendarFreeBusyKind.free,
+      );
+      await service.updateSettings(
+        CalendarSettingsUpdateRequest(
+          calendarId: calendar,
+          expectedRevision: 1,
+          availabilityZoneId: 'Europe/Stockholm',
+          noRuleFallback: CalendarNoRuleFallback.unavailable,
+        ),
+      );
+      await booking(calendar, 9, 10);
+      final result = await service.freeBusy(busyQuery(calendar));
+      expect(result.coverage, CalendarFreeBusyCoverage.complete);
+      expect(result.periods.single.kind, CalendarFreeBusyKind.unavailable);
+    });
+    test(
+      'free busy source or recurrence caps cannot yield falsely free results',
+      () async {
+        final calendar = (await service.create(createInput()))!.calendarId;
+        await booking(calendar, 9, 10);
+        await booking(calendar, 11, 12);
+        CalendarModule.install(
+          session.serverpod,
+          policy: policy,
+          options: const CalendarModuleOptions(
+            requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+            maxScannedEvents: 1,
+          ),
+        );
+        service = CalendarModule.service(session);
+        final limited = await service.freeBusy(busyQuery(calendar));
+        expect(limited.coverage, CalendarFreeBusyCoverage.unknown);
+        expect(limited.periods, isEmpty);
+        CalendarModule.install(
+          session.serverpod,
+          policy: policy,
+          options: const CalendarModuleOptions(
+            requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+          ),
+        );
+        // A new service observes installation options, not the previously captured runtime.
+        service = CalendarModule.service(session);
+        final dense = (await service.createEvent(
+          CalendarEventCreateRequest(
+            calendarId: calendar,
+            content: CalendarEventContent(
+              timing: CalendarEventTiming(
+                kind: CalendarEventTimeKind.utc,
+                start: CalendarEventCivil(year: 2026, month: 3, day: 29),
+                duration: CalendarEventDuration(minutes: 1),
+              ),
+              recurrence: CalendarEventRecurrence(
+                rule: daily().copyWith(
+                  frequency: CalendarEventFrequency.minutely,
+                  count: null,
+                ),
+                inclusions: [],
+                exclusions: [],
+              ),
+            ),
+          ),
+        ))!;
+        final unknown = await service.freeBusy(busyQuery(calendar));
+        expect(unknown.coverage, CalendarFreeBusyCoverage.unknown);
+        expect(unknown.periods, isEmpty);
+        expect(
+          (await service.getEvent(dense.eventId, eventGroups)).revision,
+          1,
+        );
+      },
+    );
+    test('free busy validates UTC precision and bounded increasing windows and protects actual scope', () async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      final q = busyQuery(calendar);
+      for (final bad in [
+        q.copyWith(fromUtc: DateTime(2026, 3, 29)),
+        q.copyWith(fromUtc: DateTime.utc(2026, 3, 29, 0, 0, 0, 1)),
+        q.copyWith(untilUtc: q.fromUtc),
+        q.copyWith(untilUtc: DateTime.utc(2026, 5, 1)),
+      ]) {
+        await expectLater(
+          service.freeBusy(bad),
+          failure(CalendarFailureCode.validation),
+        );
+      }
+      final bobSession = builder
+          .copyWith(
+            authentication: AuthenticationOverride.authenticationInfo(
+              'bob',
+              {},
+            ),
+          )
+          .build();
+      await expectLater(
+        CalendarModule.service(bobSession).freeBusy(q),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
     test('occurrence timing persists separately; cancellation restores prior timing without master changes', () async {
       final id = await recurringEvent();
       final before = await service.getEvent(id, eventGroups);
@@ -2018,6 +2267,7 @@ final class TestPolicy implements CalendarHostPolicy {
   Set<CalendarEventFieldGroup> eventGrants = eventGroups.toSet();
   Set<UuidValue>? eventCandidates;
   CalendarAuthorizationRequest? lastEventRequest;
+  final busyDenied = <UuidValue>{};
   bool denyFinal = false,
       malformed = false,
       unavailable = false,
@@ -2096,6 +2346,8 @@ final class TestPolicy implements CalendarHostPolicy {
       key: r.key,
       verdict:
           denied.contains(r.operation) ||
+              (r.operation == CalendarPermission.projectEventBusy &&
+                  busyDenied.contains(r.eventId)) ||
               hidden.contains(r.calendarId) ||
               (denyFinal && phase == CalendarAuthorizationPhase.finalWrite)
           ? CalendarAuthorizationVerdict.deny

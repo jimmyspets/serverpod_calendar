@@ -353,3 +353,7 @@ Future validation must use synthetic fixtures and real migrations/generated APIs
 ## Native occurrence timing models, 2026-10-21
 
 [ADR 0055](adr/0055-native-occurrence-timing-edits.md) adds `CalendarEventSingleOverride`, `CalendarEventFutureOverride`, `CalendarEventTimingOverrides`, `CalendarEventOccurrenceAction` and `CalendarEventOccurrenceChange`. A nullable typed JSON column on active event data holds overrides separately from replaceable master content. The timing disclosure group controls its view, and host snapshots/proposals include it. [The guide](native-occurrence-timing.md) defines original identity, independent single timing/cancellation, future timing and explicit removal. Full per-occurrence content and future cancellation remain pending; earlier logical catalog proposals are not blanket physical schemas.
+
+## First calendar free/busy models, 2026-10-21
+
+[ADR 0056](adr/0056-first-calendar-free-busy.md) adds `CalendarFreeBusyQuery`, `CalendarFreeBusyCoverage`, `CalendarFreeBusyKind`, `CalendarFreeBusyPeriod` and `CalendarFreeBusyView`, with no new table. [The guide](calendar-free-busy.md) defines per-calendar booking/fallback coverage and merged UTC classifications without private source identities/counts. Unknown has no periods and establishes no free time. Rule/subject/common-free models remain pending; the existing logical catalog still describes the larger release.

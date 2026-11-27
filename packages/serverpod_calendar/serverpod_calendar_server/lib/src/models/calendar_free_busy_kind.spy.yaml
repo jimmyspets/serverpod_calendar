@@ -1,0 +1,7 @@
+enum: CalendarFreeBusyKind
+serialized: byName
+values:
+  - free
+  - tentative
+  - busy
+  - unavailable

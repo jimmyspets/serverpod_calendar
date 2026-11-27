@@ -222,3 +222,19 @@ Relative links, consecutive ADR numbering through 0054, unchanged Apache 2.0 LIC
 Documentation links, consecutive ADR numbering through 0055, unchanged Apache 2.0 LICENSE, candidate-file credential exclusions and `git diff --check` were checked. Local synthetic data/logs/build artifacts remain ignored. These results establish the scoped native timing service, not content overrides, future cancellation, free/busy or full first-release support.
 
 Final occurrence-batch `flutter build web --no-pub`: **passed**, including Wasm dry-run compilation without claiming a separately tested Wasm runtime.
+
+## First per-calendar free/busy, 2026-10-21
+
+[ADR 0056](adr/0056-first-calendar-free-busy.md) and [the guide](calendar-free-busy.md) scope the maintainer-selected per-calendar-first/tentative-blocking increment. Working-hours rules and subject/common-slot search remain pending; this is not full availability acceptance.
+
+- Focused core `dart test test/free_busy_test.dart`: **5 passed**. Clipping/adjacency, native precedence, complete disjoint finite-tick coverage, input-order invariance and raw/output-limit failure are exercised independently of Serverpod.
+- Focused module `dart test test/unit/free_busy_values_test.dart`: **4 passed**. Tests cover explicit calendar-zone DATE occupancy across Stockholm DST, timed geometry/clipping, points/transparent/cancelled masters and individual cancellation retaining/restoring timing.
+- `./tool/reset-test.ps1`, then example-server `dart test test/integration/calendar_test.dart --name 'free busy'`: **6 passed**. Overlapping private bookings/tentative classification, detail-plan independence, denied-source unknown without partial periods, actual policy query/parent/event context, DATE recurrence/moved cancellation, fallback, source/recurrence caps, scopes/UTC precision/window validation and unchanged read revision/time are covered.
+- End-of-batch `./tool/check.ps1` passed stable generation, formatting/fatal-info analysis, **448 core VM + 448 core Chrome**, **39 module unit VM + 17 module unit Chrome**, **3 Flutter widget**, **53 database/policy tests**, populated upgrades, compiled host and two-host/generated-client/JWT checks. The expanded Flutter WebDriver journey passed as well.
+- Two-host free/busy results are compared byte-for-byte, retain tentative classification and contain no synthetic event UUID/title. A committed lifecycle change is reflected as busy on the other host, then transparency yields a complete free partition. Existing occurrence/recurrence/calendar/JWT races and journeys remain included.
+- The Flutter journey calculates UTC-window coverage and observes tentative periods while asserting that the synthetic private title is absent, then continues the existing lifecycle/deletion flow.
+- MCP migration creation reports **no changes**; this increment adds query DTOs, computation and policy context without a new table/column. No generated files or migration metadata were hand-edited.
+
+Relative documentation links, consecutive ADRs through 0056, unchanged Apache 2.0 LICENSE, credential exclusions and `git diff --check` passed. The current source cap counts all active event records across a calendar; proven time-indexed candidates remain a roadmap item for larger calendars. No complete rule/subject availability, VFREEBUSY serialization, scheduling, alarms, reservation, CI or external-client evidence is inferred.
+
+The free/busy `./tool/check.ps1` run completed successfully through the final Flutter web release build. Its Wasm dry run compiled successfully; a separate Wasm runtime was not exercised.

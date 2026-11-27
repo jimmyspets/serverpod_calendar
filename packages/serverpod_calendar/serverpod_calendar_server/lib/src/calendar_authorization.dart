@@ -9,6 +9,8 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  readFreeBusy,
+  projectEventBusy,
   previewEventOccurrences,
   listEvents,
   readEvent,
@@ -132,6 +134,7 @@ final class CalendarAuthorizationRequest {
     this.currentEvent,
     this.proposedEvent,
     this.occurrenceQuery,
+    this.freeBusyQuery,
     this.occurrenceChange,
     this.proposedTimingOverrides,
     Iterable<CalendarEventFieldGroup> eventGroups = const [],
@@ -144,6 +147,7 @@ final class CalendarAuthorizationRequest {
   final CalendarEventPolicySnapshot? currentEvent;
   final CalendarEventContent? proposedEvent;
   final CalendarEventOccurrenceQuery? occurrenceQuery;
+  final CalendarFreeBusyQuery? freeBusyQuery;
   final CalendarEventOccurrenceChange? occurrenceChange;
   final CalendarEventTimingOverrides? proposedTimingOverrides;
   final Set<CalendarEventFieldGroup> eventGroups;

@@ -12,6 +12,7 @@ import 'native_calendar_name.dart';
 import 'event_values.dart';
 
 part 'calendar_events.dart';
+part 'calendar_free_busy.dart';
 
 /// Configuration is per Serverpod instance, never an allow-decision cache.
 abstract final class CalendarModule {

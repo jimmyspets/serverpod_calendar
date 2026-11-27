@@ -1,0 +1,5 @@
+enum: CalendarFreeBusyCoverage
+serialized: byName
+values:
+  - complete
+  - unknown
