@@ -1,0 +1,5 @@
+class: CalendarAvailabilityOpeningEdits
+immutable: true
+fields:
+  openingUid: UuidValue
+  overrides: CalendarEventTimingOverrides

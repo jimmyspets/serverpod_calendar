@@ -50,12 +50,59 @@ CalendarAvailabilityContent validateAvailabilityContent(
   if (start != null && end != null && !start.isBefore(end)) {
     throw ArgumentError('Validity end must follow start');
   }
+  var metadataWork = 0;
+  List<String> categories(List<String>? values) {
+    if ((values?.length ?? 0) > 64) {
+      throw ArgumentError('At most 64 categories');
+    }
+    final result = <String>[];
+    for (final value in values ?? <String>[]) {
+      if (value.runes.length > 256) throw ArgumentError('Category too long');
+      IcalendarCategory(value);
+      metadataWork += value.runes.length;
+      if (!result.contains(value)) result.add(value);
+    }
+    return List.unmodifiable(result);
+  }
+
+  List<String> comments(List<String>? values) {
+    if ((values?.length ?? 0) > 32) throw ArgumentError('At most 32 comments');
+    for (final value in values ?? <String>[]) {
+      validateCalendarPlainText(value, maxCodePoints: 4096);
+      metadataWork += value.runes.length;
+    }
+    return List.unmodifiable(values ?? <String>[]);
+  }
+
+  void text(String? summary, String? description, String? location) {
+    for (final pair in [
+      (summary, 4096),
+      (description, 16384),
+      (location, 4096),
+    ]) {
+      if (pair.$1 != null) {
+        validateCalendarPlainText(pair.$1!, maxCodePoints: pair.$2);
+        metadataWork += pair.$1!.runes.length;
+      }
+    }
+  }
+
+  text(input.summary, input.description, input.location);
+  if (input.url != null) {
+    validateCalendarHttpUri(input.url!);
+    metadataWork += input.url!.runes.length;
+  }
+  final envelopeCategories = categories(input.categories);
+  final envelopeComments = comments(input.comments);
   final uids = <Object>{};
   final openings = <CalendarAvailabilityOpening>[];
   for (final opening in input.openings) {
     if (opening.uid != null && !uids.add(opening.uid!)) {
       throw ArgumentError('Duplicate opening identity');
     }
+    text(opening.summary, opening.description, opening.location);
+    final tags = categories(opening.categories);
+    final notes = comments(opening.comments);
     final t = opening.timing;
     if (t.kind != CalendarEventTimeKind.utc &&
         t.kind != CalendarEventTimeKind.zoned) {
@@ -67,19 +114,29 @@ CalendarAvailabilityContent validateAvailabilityContent(
     }
     openings.add(
       opening.copyWith(
+        categories: tags,
+        comments: notes,
         recurrence: validateEventRecurrence(t, opening.recurrence),
       ),
     );
   }
-  return input.copyWith(openings: List.unmodifiable(openings));
+  if (metadataWork > 65536) {
+    throw ArgumentError('Metadata exceeds 65536 code points');
+  }
+  return input.copyWith(
+    openings: List.unmodifiable(openings),
+    categories: envelopeCategories,
+    comments: envelopeComments,
+  );
 }
 
 /// Bounded native adapter. Event transport types are shared timing structures;
 /// status, transparency, attendees and event authorization never enter rules.
 AvailabilityDefinition evaluateAvailability(
   CalendarAvailabilityContent input,
-  UtcWindow window,
-) {
+  UtcWindow window, {
+  List<CalendarAvailabilityOpeningEdits>? edits,
+}) {
   final start = availabilityBound(input.validFrom);
   final end = availabilityBound(input.validUntil, end: true);
   final from = start != null && start.isAfter(window.start)
@@ -96,7 +153,7 @@ AvailabilityDefinition evaluateAvailability(
             timing: opening.timing,
             recurrence: opening.recurrence,
           ),
-          null,
+          openingEdits(edits, opening.uid),
           clipped,
           dateZone: 'UTC',
         ),
@@ -114,3 +171,122 @@ AvailabilityDefinition evaluateAvailability(
     openings: openings,
   );
 }
+
+CalendarEventContent openingEvent(CalendarAvailabilityOpening opening) =>
+    CalendarEventContent(
+      timing: opening.timing,
+      recurrence: opening.recurrence,
+    );
+
+CalendarEventTimingOverrides? openingEdits(
+  List<CalendarAvailabilityOpeningEdits>? edits,
+  Object? uid,
+) {
+  for (final entry in edits ?? <CalendarAvailabilityOpeningEdits>[]) {
+    if (entry.openingUid == uid) return entry.overrides;
+  }
+  return null;
+}
+
+List<CalendarAvailabilityOpeningEdits>? validateAvailabilityEdits(
+  CalendarAvailabilityContent content,
+  List<CalendarAvailabilityOpeningEdits>? edits,
+) {
+  if (edits == null || edits.isEmpty) return null;
+  if (edits.length > 16) {
+    throw const AvailabilityLimitException('editedOpenings');
+  }
+  final seen = <Object>{};
+  var total = 0;
+  final result = <CalendarAvailabilityOpeningEdits>[];
+  for (final entry in edits) {
+    if (!seen.add(entry.openingUid)) {
+      throw ArgumentError('Duplicate edited opening');
+    }
+    final matches = content.openings
+        .where((o) => o.uid == entry.openingUid)
+        .toList();
+    if (matches.length != 1) throw ArgumentError('Unknown opening');
+    total += entry.overrides.singles.length + entry.overrides.future.length;
+    if (total > 128) {
+      throw const AvailabilityLimitException('aggregateOpeningOverrides');
+    }
+    for (final replacement in [
+      for (final item in entry.overrides.singles)
+        if (item.replacement != null) item.replacement!,
+      for (final item in entry.overrides.future) item.replacement,
+    ]) {
+      if (validateEventTiming(replacement).$2?.isPoint != false) {
+        throw ArgumentError('Opening replacements must have positive duration');
+      }
+    }
+    final validated = validateEventOverrides(
+      openingEvent(matches.single),
+      entry.overrides,
+    );
+    if (validated != null) result.add(entry.copyWith(overrides: validated));
+  }
+  result.sort(
+    (a, b) => a.openingUid.toString().compareTo(b.openingUid.toString()),
+  );
+  return result.isEmpty ? null : List.unmodifiable(result);
+}
+
+List<CalendarAvailabilityOpeningEdits>? changeAvailabilityEdits(
+  CalendarAvailabilityContent content,
+  List<CalendarAvailabilityOpeningEdits>? current,
+  CalendarAvailabilityOccurrenceChange request,
+) {
+  final opening = content.openings.singleWhere(
+    (o) => o.uid == request.openingUid,
+    orElse: () => throw ArgumentError('Unknown opening'),
+  );
+  final changed = changeEventOverrides(
+    openingEvent(opening),
+    openingEdits(current, request.openingUid),
+    CalendarEventOccurrenceChange(
+      eventId: request.availabilityId,
+      expectedRevision: request.expectedRevision,
+      originalStart: request.originalStart,
+      action: request.action,
+      replacement: request.replacement,
+    ),
+  );
+  return validateAvailabilityEdits(content, [
+    for (final entry in current ?? <CalendarAvailabilityOpeningEdits>[])
+      if (entry.openingUid != request.openingUid) entry,
+    if (changed != null)
+      CalendarAvailabilityOpeningEdits(
+        openingUid: request.openingUid,
+        overrides: changed,
+      ),
+  ]);
+}
+
+/// Metadata signatures distinguish the additional gate for mixed updates.
+Object availabilityMetadata(CalendarAvailabilityContent value) => [
+  value.summary,
+  value.description,
+  value.location,
+  value.categories,
+  value.comments,
+  value.url,
+  value.classification?.name,
+  for (final o in value.openings)
+    [
+      o.uid?.toString(),
+      o.summary,
+      o.description,
+      o.location,
+      o.categories,
+      o.comments,
+    ],
+];
+Object availabilityStructure(CalendarAvailabilityContent value) => [
+  value.validFrom?.toJson(),
+  value.validUntil?.toJson(),
+  value.priority,
+  value.closedKind.name,
+  for (final o in value.openings)
+    [o.uid?.toString(), o.timing.toJson(), o.recurrence?.toJson()],
+];

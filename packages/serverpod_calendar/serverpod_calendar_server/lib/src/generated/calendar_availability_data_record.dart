@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'calendar_availability_content.dart' as _ifxxil5c;
+import 'calendar_availability_opening_edits.dart' as _id5ke9r5;
 
 abstract class CalendarAvailabilityDataRecord
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
@@ -21,6 +22,7 @@ abstract class CalendarAvailabilityDataRecord
     this.id,
     required this.availabilityId,
     _is.UuidValue? protocolUid,
+    this.timingOverrides,
     required this.content,
     required this.createdAt,
     required this.updatedAt,
@@ -30,6 +32,7 @@ abstract class CalendarAvailabilityDataRecord
     int? id,
     required _is.UuidValue availabilityId,
     _is.UuidValue? protocolUid,
+    List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
     required _ifxxil5c.CalendarAvailabilityContent content,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -48,6 +51,12 @@ abstract class CalendarAvailabilityDataRecord
           : _is.UuidValueJsonExtension.fromJson(
               jsonSerialization['protocolUid'],
             ),
+      timingOverrides: jsonSerialization['timingOverrides'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<List<_id5ke9r5.CalendarAvailabilityOpeningEdits>>(
+                  jsonSerialization['timingOverrides'],
+                ),
       content: _ix00hwbf.Protocol()
           .deserialize<_ifxxil5c.CalendarAvailabilityContent>(
             jsonSerialization['content'],
@@ -72,6 +81,8 @@ abstract class CalendarAvailabilityDataRecord
 
   _is.UuidValue protocolUid;
 
+  List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides;
+
   _ifxxil5c.CalendarAvailabilityContent content;
 
   DateTime createdAt;
@@ -88,6 +99,7 @@ abstract class CalendarAvailabilityDataRecord
     int? id,
     _is.UuidValue? availabilityId,
     _is.UuidValue? protocolUid,
+    List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
     _ifxxil5c.CalendarAvailabilityContent? content,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -99,6 +111,10 @@ abstract class CalendarAvailabilityDataRecord
       if (id != null) 'id': id,
       'availabilityId': availabilityId.toJson(),
       'protocolUid': protocolUid.toJson(),
+      if (timingOverrides != null)
+        'timingOverrides': timingOverrides?.toJson(
+          valueToJson: (v) => v.toJson(),
+        ),
       'content': content.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -146,6 +162,7 @@ class _CalendarAvailabilityDataRecordImpl
     int? id,
     required _is.UuidValue availabilityId,
     _is.UuidValue? protocolUid,
+    List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
     required _ifxxil5c.CalendarAvailabilityContent content,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -153,6 +170,7 @@ class _CalendarAvailabilityDataRecordImpl
          id: id,
          availabilityId: availabilityId,
          protocolUid: protocolUid,
+         timingOverrides: timingOverrides,
          content: content,
          createdAt: createdAt,
          updatedAt: updatedAt,
@@ -166,6 +184,7 @@ class _CalendarAvailabilityDataRecordImpl
     Object? id = _Undefined,
     _is.UuidValue? availabilityId,
     _is.UuidValue? protocolUid,
+    Object? timingOverrides = _Undefined,
     _ifxxil5c.CalendarAvailabilityContent? content,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -174,6 +193,10 @@ class _CalendarAvailabilityDataRecordImpl
       id: id is int? ? id : this.id,
       availabilityId: availabilityId ?? this.availabilityId,
       protocolUid: protocolUid ?? this.protocolUid,
+      timingOverrides:
+          timingOverrides is List<_id5ke9r5.CalendarAvailabilityOpeningEdits>?
+          ? timingOverrides
+          : this.timingOverrides?.map((e0) => e0.copyWith()).toList(),
       content: content ?? this.content.copyWith(),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -198,6 +221,16 @@ class CalendarAvailabilityDataRecordUpdateTable
     table.protocolUid,
     value,
   );
+
+  _is.ColumnValue<
+    List<_id5ke9r5.CalendarAvailabilityOpeningEdits>,
+    List<_id5ke9r5.CalendarAvailabilityOpeningEdits>
+  >
+  timingOverrides(List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? value) =>
+      _is.ColumnValue(
+        table.timingOverrides,
+        value,
+      );
 
   _is.ColumnValue<
     _ifxxil5c.CalendarAvailabilityContent,
@@ -234,6 +267,13 @@ class CalendarAvailabilityDataRecordTable extends _is.Table<int?> {
       this,
       hasDefault: true,
     );
+    timingOverrides =
+        _is.ColumnSerializable<
+          List<_id5ke9r5.CalendarAvailabilityOpeningEdits>
+        >(
+          'timingOverrides',
+          this,
+        );
     content = _is.ColumnSerializable<_ifxxil5c.CalendarAvailabilityContent>(
       'content',
       this,
@@ -254,6 +294,11 @@ class CalendarAvailabilityDataRecordTable extends _is.Table<int?> {
 
   late final _is.ColumnUuid protocolUid;
 
+  late final _is.ColumnSerializable<
+    List<_id5ke9r5.CalendarAvailabilityOpeningEdits>
+  >
+  timingOverrides;
+
   late final _is.ColumnSerializable<_ifxxil5c.CalendarAvailabilityContent>
   content;
 
@@ -266,6 +311,7 @@ class CalendarAvailabilityDataRecordTable extends _is.Table<int?> {
     id,
     availabilityId,
     protocolUid,
+    timingOverrides,
     content,
     createdAt,
     updatedAt,

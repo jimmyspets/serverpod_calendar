@@ -477,7 +477,7 @@ void main() {
     await _tap(tester, 'availability-save');
     await _waitFor(tester, find.text('Example working hours'));
     final rulesApi = client.modules.serverpod_calendar.calendarAvailability;
-    final rules = await rulesApi.list(calendar.id);
+    var rules = await rulesApi.list(calendar.id);
     expect(rules, hasLength(1));
     final hoursQuery = await client.modules.serverpod_calendar.calendar
         .freeBusy(
@@ -490,6 +490,56 @@ void main() {
     expect(hoursQuery.coverage, cal.CalendarFreeBusyCoverage.complete);
     expect(hoursQuery.periods[1].kind, cal.CalendarFreeBusyKind.free);
     expect(hoursQuery.periods[1].startUtc, DateTime.utc(2026, 3, 30, 7));
+    await _tap(tester, 'availability-metadata-${rules.single.id}');
+    await tester.enterText(
+      find.byKey(const Key('availability-meta-description')),
+      'Opening notes',
+    );
+    await tester.enterText(
+      find.byKey(const Key('availability-meta-categories')),
+      'Work',
+    );
+    await _tap(tester, 'availability-comment-add');
+    await tester.enterText(
+      find.byKey(const Key('availability-comment-0')),
+      'Synthetic comment',
+    );
+    await _tap(tester, 'availability-metadata-save');
+    await _waitFor(tester, find.text('Example working hours'));
+    final openingUid = rules.single.content.openings.single.uid!;
+    await _tap(tester, 'opening-preview-$openingUid');
+    await _enabledField(tester, find.byKey(const Key('opening-from')));
+    await tester.enterText(
+      find.byKey(const Key('opening-from')),
+      '2026-03-30T00:00:00Z',
+    );
+    await tester.enterText(
+      find.byKey(const Key('opening-until')),
+      '2026-03-31T00:00:00Z',
+    );
+    await _tap(tester, 'opening-load');
+    await _waitFor(tester, find.byKey(const Key('opening-preview-complete')));
+    await _tap(tester, 'opening-single-2026-03-30T09:00:00');
+    await tester.enterText(
+      find.byKey(const Key('occurrence-start')),
+      '2026-03-30T10:00:00',
+    );
+    await tester.enterText(
+      find.byKey(const Key('occurrence-end')),
+      '2026-03-30T18:00:00',
+    );
+    await _tap(tester, 'occurrence-save');
+    await _tap(tester, 'opening-load');
+    await _waitFor(tester, find.byKey(const Key('opening-preview-complete')));
+    await _tap(tester, 'opening-skip-2026-03-30T09:00:00');
+    await _tap(tester, 'opening-restore-2026-03-30T09:00:00');
+    await _tap(tester, 'opening-clear-single-2026-03-30T09:00:00');
+    await tester.pageBack();
+    await _idle(tester);
+    rules = await rulesApi.list(calendar.id);
+    expect(rules.single.content.description, 'Opening notes');
+    expect(rules.single.content.categories, ['Work']);
+    expect(rules.single.timingOverrides, isNull);
     await _tap(tester, 'availability-edit-${rules.single.id}');
     await tester.enterText(
       find.byKey(const Key('availability-summary')),

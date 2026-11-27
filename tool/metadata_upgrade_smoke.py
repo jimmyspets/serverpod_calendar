@@ -200,6 +200,28 @@ BEGIN
 END;
 $availability$;
 """)
+        sql(database, """
+INSERT INTO serverpod_calendar_availability (id,"calendarId",revision)
+VALUES ('77777777-7777-4777-8777-777777777777','11111111-1111-4111-8111-111111111111',4);
+INSERT INTO serverpod_calendar_availability_data ("availabilityId","protocolUid",content,"createdAt","updatedAt")
+VALUES ('77777777-7777-4777-8777-777777777777','88888888-8888-4888-8888-888888888888',
+'{"summary":"Before opening edits","priority":0,"closedKind":"unavailable","openings":[]}',
+'2026-01-01','2026-01-02 03:04:05.987654');
+""")
+        sql(database,(SERVER / "migrations/20261021144851473-availability-opening-edits/migration.sql").read_text(encoding="utf-8"))
+        sql(database,"""
+DO $opening$
+BEGIN
+  IF (SELECT count(*) FROM serverpod_calendar_availability_data WHERE "timingOverrides" IS NULL
+      AND content->>'summary'='Before opening edits' AND "protocolUid"='88888888-8888-4888-8888-888888888888'
+      AND "updatedAt"='2026-01-02 03:04:05.987654')<>1
+     OR (SELECT revision FROM serverpod_calendar_availability WHERE id='77777777-7777-4777-8777-777777777777')<>4
+     OR (SELECT revision FROM serverpod_calendar_scope WHERE "scopeKey"='metadata-upgrade-test')<>11 THEN
+    RAISE EXCEPTION 'Opening edit upgrade changed identity, contents, time or revisions';
+  END IF;
+END;
+$opening$;
+""")
         print("PASS: populated schema upgrades preserve identity, revisions, content, associations, unique protocol UIDs and old cursor bindings.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

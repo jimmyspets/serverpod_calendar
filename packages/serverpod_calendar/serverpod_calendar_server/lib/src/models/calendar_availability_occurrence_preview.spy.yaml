@@ -1,0 +1,9 @@
+class: CalendarAvailabilityOccurrencePreview
+immutable: true
+fields:
+  availabilityId: UuidValue
+  openingUid: UuidValue
+  revision: int
+  kind: CalendarEventTimeKind
+  zoneId: String?
+  occurrences: List<CalendarEventOccurrence>

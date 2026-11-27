@@ -13,6 +13,12 @@
 import 'dart:async' as _ida;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_create_request.dart'
     as _i2zcamh9;
+import 'package:serverpod_calendar_client/src/protocol/calendar_availability_occurrence_change.dart'
+    as _izaew8o2;
+import 'package:serverpod_calendar_client/src/protocol/calendar_availability_occurrence_preview.dart'
+    as _iv2k157u;
+import 'package:serverpod_calendar_client/src/protocol/calendar_availability_occurrence_query.dart'
+    as _iafnzhwk;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_receipt.dart'
     as _izuu9p5h;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_search_query.dart'
@@ -99,11 +105,15 @@ class EndpointCalendarAvailability extends _isc.EndpointRef {
   );
 
   _ida.Future<List<_imwdhk62.CalendarAvailabilityView>> list(
-    _isc.UuidValue calendarId,
-  ) => caller.callServerEndpoint<List<_imwdhk62.CalendarAvailabilityView>>(
+    _isc.UuidValue calendarId, {
+    String? category,
+  }) => caller.callServerEndpoint<List<_imwdhk62.CalendarAvailabilityView>>(
     'serverpod_calendar.calendarAvailability',
     'list',
-    {'calendarId': calendarId},
+    {
+      'calendarId': calendarId,
+      'category': category,
+    },
   );
 
   _ida.Future<_izuu9p5h.CalendarAvailabilityReceipt?> update(
@@ -113,6 +123,31 @@ class EndpointCalendarAvailability extends _isc.EndpointRef {
     'update',
     {'request': request},
   );
+
+  _ida.Future<_izuu9p5h.CalendarAvailabilityReceipt?> updateMetadata(
+    _ifcp60op.CalendarAvailabilityUpdateRequest request,
+  ) => caller.callServerEndpoint<_izuu9p5h.CalendarAvailabilityReceipt?>(
+    'serverpod_calendar.calendarAvailability',
+    'updateMetadata',
+    {'request': request},
+  );
+
+  _ida.Future<_izuu9p5h.CalendarAvailabilityReceipt?> changeOccurrence(
+    _izaew8o2.CalendarAvailabilityOccurrenceChange request,
+  ) => caller.callServerEndpoint<_izuu9p5h.CalendarAvailabilityReceipt?>(
+    'serverpod_calendar.calendarAvailability',
+    'changeOccurrence',
+    {'request': request},
+  );
+
+  _ida.Future<_iv2k157u.CalendarAvailabilityOccurrencePreview> preview(
+    _iafnzhwk.CalendarAvailabilityOccurrenceQuery query,
+  ) => caller
+      .callServerEndpoint<_iv2k157u.CalendarAvailabilityOccurrencePreview>(
+        'serverpod_calendar.calendarAvailability',
+        'preview',
+        {'query': query},
+      );
 
   _ida.Future<_izuu9p5h.CalendarAvailabilityReceipt?> deleteRule(
     _isc.UuidValue availabilityId,

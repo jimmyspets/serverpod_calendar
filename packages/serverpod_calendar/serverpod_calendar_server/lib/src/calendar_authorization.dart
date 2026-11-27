@@ -9,6 +9,9 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  previewAvailabilityOccurrences,
+  changeAvailabilityOccurrence,
+  updateAvailabilityMetadata,
   listAvailability,
   readAvailability,
   createAvailability,
@@ -148,6 +151,10 @@ final class CalendarAuthorizationRequest {
     this.availabilityId,
     this.currentAvailability,
     this.proposedAvailability,
+    this.availabilityOccurrenceChange,
+    this.availabilityOccurrenceQuery,
+    this.proposedAvailabilityEdits,
+    this.availabilityCategoryFilter,
     this.occurrenceChange,
     this.proposedTimingOverrides,
     Iterable<CalendarEventFieldGroup> eventGroups = const [],
@@ -166,6 +173,10 @@ final class CalendarAuthorizationRequest {
   final UuidValue? availabilityId;
   final CalendarAvailabilityPolicySnapshot? currentAvailability;
   final CalendarAvailabilityContent? proposedAvailability;
+  final CalendarAvailabilityOccurrenceChange? availabilityOccurrenceChange;
+  final CalendarAvailabilityOccurrenceQuery? availabilityOccurrenceQuery;
+  final List<CalendarAvailabilityOpeningEdits>? proposedAvailabilityEdits;
+  final String? availabilityCategoryFilter;
   final CalendarEventOccurrenceChange? occurrenceChange;
   final CalendarEventTimingOverrides? proposedTimingOverrides;
   final Set<CalendarEventFieldGroup> eventGroups;
@@ -313,8 +324,10 @@ final class CalendarAvailabilityPolicySnapshot {
     this.revision,
     this.content,
     this.protocolUid,
-    this.updatedAt,
-  );
+    this.updatedAt, {
+    this.timingOverrides,
+  });
+  final List<CalendarAvailabilityOpeningEdits>? timingOverrides;
   final UuidValue availabilityId, calendarId, protocolUid;
   final int revision;
   final CalendarAvailabilityContent content;

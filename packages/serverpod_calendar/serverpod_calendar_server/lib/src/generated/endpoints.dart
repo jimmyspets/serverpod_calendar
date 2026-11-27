@@ -13,6 +13,10 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_create_request.dart'
     as _iys46g3v;
+import 'package:serverpod_calendar_server/src/generated/calendar_availability_occurrence_change.dart'
+    as _ihzf1dkn;
+import 'package:serverpod_calendar_server/src/generated/calendar_availability_occurrence_query.dart'
+    as _idgpm5rc;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_search_query.dart'
     as _iirwhdxv;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_update_request.dart'
@@ -146,6 +150,11 @@ class Endpoints extends _is.EndpointDispatch {
               type: _is.getType<_is.UuidValue>(),
               nullable: false,
             ),
+            'category': _is.ParameterDescription(
+              name: 'category',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -157,6 +166,7 @@ class Endpoints extends _is.EndpointDispatch {
                       .list(
                         session,
                         params['calendarId'],
+                        category: params['category'],
                       ),
         ),
         'update': _is.MethodConnector(
@@ -178,6 +188,71 @@ class Endpoints extends _is.EndpointDispatch {
                       .update(
                         session,
                         params['request'],
+                      ),
+        ),
+        'updateMetadata': _is.MethodConnector(
+          name: 'updateMetadata',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i2zdh4d8.CalendarAvailabilityUpdateRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAvailability']
+                          as _imcvujmp.CalendarAvailabilityEndpoint)
+                      .updateMetadata(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'changeOccurrence': _is.MethodConnector(
+          name: 'changeOccurrence',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is
+                  .getType<_ihzf1dkn.CalendarAvailabilityOccurrenceChange>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAvailability']
+                          as _imcvujmp.CalendarAvailabilityEndpoint)
+                      .changeOccurrence(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'preview': _is.MethodConnector(
+          name: 'preview',
+          params: {
+            'query': _is.ParameterDescription(
+              name: 'query',
+              type: _is
+                  .getType<_idgpm5rc.CalendarAvailabilityOccurrenceQuery>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAvailability']
+                          as _imcvujmp.CalendarAvailabilityEndpoint)
+                      .preview(
+                        session,
+                        params['query'],
                       ),
         ),
         'deleteRule': _is.MethodConnector(

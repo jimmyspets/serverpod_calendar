@@ -733,6 +733,100 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
             !withHours.toJson().toString().contains('Private rule'),
         'Remote query ignored working hours or disclosed their label',
       );
+      final detailParent = await create();
+      final detailReceipt = (await aa.create(
+        cal.CalendarAvailabilityCreateRequest(
+          calendarId: detailParent.calendarId,
+          content: cal.CalendarAvailabilityContent(
+            openings: [cal.CalendarAvailabilityOpening(timing: opening)],
+          ),
+        ),
+      ))!;
+      var detail = await ab.getRule(detailReceipt.availabilityId);
+      await aa.updateMetadata(
+        cal.CalendarAvailabilityUpdateRequest(
+          availabilityId: detail.id,
+          expectedRevision: 1,
+          content: detail.content.copyWith(
+            description: 'Synthetic notes',
+            categories: ['Work'],
+            comments: ['Note'],
+            classification: cal.CalendarAvailabilityClass.private,
+          ),
+        ),
+      );
+      detail = await ab.getRule(detail.id);
+      check(
+        detail.content.description == 'Synthetic notes' &&
+            (await ab.list(detailParent.calendarId, category: 'Work')).length ==
+                1,
+        'Remote availability metadata/category round trip failed',
+      );
+      cal.CalendarAvailabilityOccurrenceChange skip() =>
+          cal.CalendarAvailabilityOccurrenceChange(
+            availabilityId: detail.id,
+            openingUid: detail.content.openings.single.uid!,
+            expectedRevision: 2,
+            originalStart: opening.copyWith(end: null),
+            action: cal.CalendarEventOccurrenceAction.cancelSingle,
+          );
+      final skips = await Future.wait([
+        for (final endpoint in [aa, ab])
+          () async {
+            try {
+              await endpoint.changeOccurrence(skip());
+              return true;
+            } on cal.CalendarException catch (e) {
+              if (e.code == cal.CalendarFailureCode.staleRevision) return false;
+              rethrow;
+            }
+          }(),
+      ]);
+      check(
+        skips.where((v) => v).length == 1,
+        'Competing opening changes had multiple winners',
+      );
+      final detailQuery = cal.CalendarFreeBusyQuery(
+        calendarId: detailParent.calendarId,
+        fromUtc: busyQuery.fromUtc,
+        untilUtc: busyQuery.untilUtc,
+      );
+      check(
+        (await b.freeBusy(detailQuery)).periods.single.kind ==
+            cal.CalendarFreeBusyKind.unavailable,
+        'Remote query ignored skipped opening',
+      );
+      await ab.changeOccurrence(
+        skip().copyWith(
+          expectedRevision: 3,
+          action: cal.CalendarEventOccurrenceAction.restoreSingle,
+        ),
+      );
+      await aa.changeOccurrence(
+        skip().copyWith(
+          expectedRevision: 4,
+          action: cal.CalendarEventOccurrenceAction.replaceFutureTiming,
+          replacement: opening.copyWith(
+            start: opening.start.copyWith(hour: 9),
+            end: opening.end!.copyWith(hour: 19),
+          ),
+        ),
+      );
+      final detailPreview = await ab.preview(
+        cal.CalendarAvailabilityOccurrenceQuery(
+          availabilityId: detail.id,
+          openingUid: detail.content.openings.single.uid!,
+          expectedRevision: 5,
+          fromUtc: busyQuery.fromUtc,
+          untilUtc: busyQuery.untilUtc,
+        ),
+      );
+      check(
+        detailPreview.occurrences.single.start.hour == 9 &&
+            (await b.freeBusy(detailQuery)).periods[1].startUtc.hour == 9,
+        'Remote future opening timing was not projected',
+      );
+      await ab.deleteRule(detail.id, 5);
       final edits = await Future.wait([
         for (final endpoint in [aa, ab])
           () async {

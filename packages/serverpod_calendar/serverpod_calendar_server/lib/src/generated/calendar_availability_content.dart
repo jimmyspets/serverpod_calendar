@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+import 'calendar_availability_class.dart' as _iucw7bzg;
 import 'calendar_availability_opening.dart' as _i8tf9h36;
 import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_free_busy_kind.dart' as _izms466b;
@@ -28,6 +29,12 @@ abstract class CalendarAvailabilityContent
     int? priority,
     _izms466b.CalendarFreeBusyKind? closedKind,
     required this.openings,
+    this.description,
+    this.location,
+    this.categories,
+    this.comments,
+    this.url,
+    this.classification,
   }) : priority = priority ?? 0,
        closedKind = closedKind ?? _izms466b.CalendarFreeBusyKind.unavailable;
 
@@ -38,6 +45,12 @@ abstract class CalendarAvailabilityContent
     int? priority,
     _izms466b.CalendarFreeBusyKind? closedKind,
     required List<_i8tf9h36.CalendarAvailabilityOpening> openings,
+    String? description,
+    String? location,
+    List<String>? categories,
+    List<String>? comments,
+    String? url,
+    _iucw7bzg.CalendarAvailabilityClass? classification,
   }) = _CalendarAvailabilityContentImpl;
 
   factory CalendarAvailabilityContent.fromJson(
@@ -65,6 +78,24 @@ abstract class CalendarAvailabilityContent
           .deserialize<List<_i8tf9h36.CalendarAvailabilityOpening>>(
             jsonSerialization['openings'],
           ),
+      description: jsonSerialization['description'] as String?,
+      location: jsonSerialization['location'] as String?,
+      categories: jsonSerialization['categories'] == null
+          ? null
+          : _ix00hwbf.Protocol().deserialize<List<String>>(
+              jsonSerialization['categories'],
+            ),
+      comments: jsonSerialization['comments'] == null
+          ? null
+          : _ix00hwbf.Protocol().deserialize<List<String>>(
+              jsonSerialization['comments'],
+            ),
+      url: jsonSerialization['url'] as String?,
+      classification: jsonSerialization['classification'] == null
+          ? null
+          : _iucw7bzg.CalendarAvailabilityClass.fromJson(
+              (jsonSerialization['classification'] as String),
+            ),
     );
   }
 
@@ -80,6 +111,18 @@ abstract class CalendarAvailabilityContent
 
   final List<_i8tf9h36.CalendarAvailabilityOpening> openings;
 
+  final String? description;
+
+  final String? location;
+
+  final List<String>? categories;
+
+  final List<String>? comments;
+
+  final String? url;
+
+  final _iucw7bzg.CalendarAvailabilityClass? classification;
+
   /// Returns a shallow copy of this [CalendarAvailabilityContent]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -90,6 +133,12 @@ abstract class CalendarAvailabilityContent
     int? priority,
     _izms466b.CalendarFreeBusyKind? closedKind,
     List<_i8tf9h36.CalendarAvailabilityOpening>? openings,
+    String? description,
+    String? location,
+    List<String>? categories,
+    List<String>? comments,
+    String? url,
+    _iucw7bzg.CalendarAvailabilityClass? classification,
   });
   @override
   bool operator ==(Object other) {
@@ -127,7 +176,35 @@ abstract class CalendarAvailabilityContent
             const _iss.DeepCollectionEquality().equals(
               other.openings,
               openings,
-            );
+            ) &&
+            (identical(
+                  other.description,
+                  description,
+                ) ||
+                other.description == description) &&
+            (identical(
+                  other.location,
+                  location,
+                ) ||
+                other.location == location) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.categories,
+              categories,
+            ) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.comments,
+              comments,
+            ) &&
+            (identical(
+                  other.url,
+                  url,
+                ) ||
+                other.url == url) &&
+            (identical(
+                  other.classification,
+                  classification,
+                ) ||
+                other.classification == classification);
   }
 
   @override
@@ -140,6 +217,12 @@ abstract class CalendarAvailabilityContent
       priority,
       closedKind,
       const _iss.DeepCollectionEquality().hash(openings),
+      description,
+      location,
+      const _iss.DeepCollectionEquality().hash(categories),
+      const _iss.DeepCollectionEquality().hash(comments),
+      url,
+      classification,
     );
   }
 
@@ -153,6 +236,12 @@ abstract class CalendarAvailabilityContent
       'priority': priority,
       'closedKind': closedKind.toJson(),
       'openings': openings.toJson(valueToJson: (v) => v.toJson()),
+      if (description != null) 'description': description,
+      if (location != null) 'location': location,
+      if (categories != null) 'categories': categories?.toJson(),
+      if (comments != null) 'comments': comments?.toJson(),
+      if (url != null) 'url': url,
+      if (classification != null) 'classification': classification?.toJson(),
     };
   }
 
@@ -166,6 +255,12 @@ abstract class CalendarAvailabilityContent
       'priority': priority,
       'closedKind': closedKind.toJson(),
       'openings': openings.toJson(valueToJson: (v) => v.toJsonForProtocol()),
+      if (description != null) 'description': description,
+      if (location != null) 'location': location,
+      if (categories != null) 'categories': categories?.toJson(),
+      if (comments != null) 'comments': comments?.toJson(),
+      if (url != null) 'url': url,
+      if (classification != null) 'classification': classification?.toJson(),
     };
   }
 
@@ -185,6 +280,12 @@ class _CalendarAvailabilityContentImpl extends CalendarAvailabilityContent {
     int? priority,
     _izms466b.CalendarFreeBusyKind? closedKind,
     required List<_i8tf9h36.CalendarAvailabilityOpening> openings,
+    String? description,
+    String? location,
+    List<String>? categories,
+    List<String>? comments,
+    String? url,
+    _iucw7bzg.CalendarAvailabilityClass? classification,
   }) : super._(
          summary: summary,
          validFrom: validFrom,
@@ -192,6 +293,12 @@ class _CalendarAvailabilityContentImpl extends CalendarAvailabilityContent {
          priority: priority,
          closedKind: closedKind,
          openings: openings,
+         description: description,
+         location: location,
+         categories: categories,
+         comments: comments,
+         url: url,
+         classification: classification,
        );
 
   /// Returns a shallow copy of this [CalendarAvailabilityContent]
@@ -205,6 +312,12 @@ class _CalendarAvailabilityContentImpl extends CalendarAvailabilityContent {
     int? priority,
     _izms466b.CalendarFreeBusyKind? closedKind,
     List<_i8tf9h36.CalendarAvailabilityOpening>? openings,
+    Object? description = _Undefined,
+    Object? location = _Undefined,
+    Object? categories = _Undefined,
+    Object? comments = _Undefined,
+    Object? url = _Undefined,
+    Object? classification = _Undefined,
   }) {
     return CalendarAvailabilityContent(
       summary: summary is String? ? summary : this.summary,
@@ -217,6 +330,18 @@ class _CalendarAvailabilityContentImpl extends CalendarAvailabilityContent {
       priority: priority ?? this.priority,
       closedKind: closedKind ?? this.closedKind,
       openings: openings ?? this.openings.map((e0) => e0.copyWith()).toList(),
+      description: description is String? ? description : this.description,
+      location: location is String? ? location : this.location,
+      categories: categories is List<String>?
+          ? categories
+          : this.categories?.map((e0) => e0).toList(),
+      comments: comments is List<String>?
+          ? comments
+          : this.comments?.map((e0) => e0).toList(),
+      url: url is String? ? url : this.url,
+      classification: classification is _iucw7bzg.CalendarAvailabilityClass?
+          ? classification
+          : this.classification,
     );
   }
 }
