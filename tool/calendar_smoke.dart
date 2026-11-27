@@ -49,6 +49,27 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
       (await b.getCalendar(first.calendarId, groups)).displayName == 'Demo',
       'Cross-host create visibility',
     );
+    final firstIdentity = (await a.getCalendar(
+      first.calendarId,
+      groups,
+    )).protocolIdentity!;
+    final secondIdentity = (await b.getCalendar(
+      second.calendarId,
+      groups,
+    )).protocolIdentity!;
+    final remoteIdentity = (await b.getCalendar(first.calendarId, [
+      cal.CalendarFieldGroup.protocolIdentity,
+    ])).protocolIdentity!;
+    check(
+      firstIdentity.uid == remoteIdentity.uid &&
+          firstIdentity.lastModified == remoteIdentity.lastModified &&
+          firstIdentity.uid != secondIdentity.uid &&
+          firstIdentity.uid != first.calendarId.toString() &&
+          firstIdentity.lastModified.isUtc &&
+          firstIdentity.lastModified.millisecond == 0 &&
+          firstIdentity.lastModified.microsecond == 0,
+      'Distinct stable protocol identities and whole-second UTC time across hosts',
+    );
     await a.updatePresentation(
       cal.CalendarPresentationUpdateRequest(
         calendarId: second.calendarId,
@@ -91,6 +112,7 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
     ]);
     check(
       nativeView.protocolMetadata == null &&
+          nativeView.protocolIdentity == null &&
           nativeView.description == '  Native\nnotes  ' &&
           nativeView.color == '#A0B1C2',
       'Native disclosure leaked protocol metadata',
@@ -103,6 +125,13 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
       ),
     );
     final retained = await b.getCalendar(second.calendarId, groups);
+    check(
+      retained.protocolIdentity!.uid == secondIdentity.uid &&
+          !retained.protocolIdentity!.lastModified.isBefore(
+            secondIdentity.lastModified,
+          ),
+      'Calendar edits changed protocol UID or moved revision time backwards',
+    );
     check(
       retained.description == '  Native\nnotes  ' &&
           retained.protocolMetadata!.names.length == 2,
@@ -349,7 +378,7 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
       bob.close();
     }
     print(
-      'PASS: links/categories/image/refresh metadata, cross-host filtered cursors, native/protocol metadata isolation, multilingual round trips and generated calendar CRUD, scope isolation, cursors, stale writes and cross-host delete/attach race.',
+      'PASS: stable calendar protocol UID/time, links/categories/image/refresh metadata, cross-host filtered cursors, native/protocol metadata isolation, multilingual round trips and generated calendar CRUD, scope isolation, cursors, stale writes and cross-host delete/attach race.',
     );
   } finally {
     for (final id in ids) {

@@ -87,3 +87,7 @@ The maintainer selected duplicate native display names, private scopes per signe
 ## Links, categories, images and refresh increment
 
 The maintainer selected HTTP/HTTPS links without user information, exact case-sensitive category text matching with optional language tags, and positive unit-preserving refresh hints with a one-year editing cap. [ADR 0051](adr/0051-calendar-links-categories-images-refresh.md) defines the cap as 365-day equivalent and keeps schema/limit/query mechanics under review. [The guide](calendar-links-and-categories.md) records this limited native FR-02/08/24 increment, including group-authorized category filtering, no link/image fetching or polling and pending parser/export/feed work.
+
+## Native calendar protocol identity/time increment
+
+The maintainer confirmed separate generated native calendar protocol UIDs and automatic whole-second UTC modification time for calendar metadata/settings/association changes. [ADR 0052](adr/0052-calendar-protocol-identity-and-revision-time.md) and [the guide](calendar-protocol-identity.md) describe read-only independent disclosure, shared database time, stable UID/backfilled upgrades and unchanged minimal deletion markers. This limited FR-02/08/24 increment does not implement imported-source identity, full VCALENDAR change tracking or feed validators; event/task and publication changes require separate handling.

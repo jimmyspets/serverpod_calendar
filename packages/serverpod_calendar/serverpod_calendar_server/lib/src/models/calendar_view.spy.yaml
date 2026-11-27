@@ -8,6 +8,7 @@ fields:
   color: String?
   availabilityZoneId: String?
   noRuleFallback: CalendarNoRuleFallback?
+  protocolIdentity: CalendarProtocolIdentity?
   protocolMetadata: CalendarProtocolMetadata?
   supplementalMetadata: CalendarSupplementalMetadata?
   createdAt: DateTime?

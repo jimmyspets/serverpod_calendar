@@ -3,6 +3,8 @@ serverOnly: true
 table: serverpod_calendar_data
 fields:
   calendarId: UuidValue, relation(parent=serverpod_calendar_identity)
+  ### Native calendar protocol UID, separate from API and imported/feed identities.
+  protocolUid: UuidValue, default=random
   displayName: String
   description: String?
   color: String?
@@ -13,6 +15,9 @@ fields:
   createdAt: DateTime
   updatedAt: DateTime
 indexes:
+  calendar_data_protocol_uid_unique:
+    fields: protocolUid
+    unique: true
   calendar_data_identity_unique:
     fields: calendarId
     unique: true

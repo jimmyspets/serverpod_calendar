@@ -15,6 +15,7 @@ import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'calendar_field_group.dart' as _i73hgz1s;
 import 'calendar_no_rule_fallback.dart' as _itts4qyp;
+import 'calendar_protocol_identity.dart' as _iyrimg3m;
 import 'calendar_protocol_metadata.dart' as _itchuj1l;
 import 'calendar_supplemental_metadata.dart' as _ixppc388;
 
@@ -29,6 +30,7 @@ abstract class CalendarView
     this.color,
     this.availabilityZoneId,
     this.noRuleFallback,
+    this.protocolIdentity,
     this.protocolMetadata,
     this.supplementalMetadata,
     this.createdAt,
@@ -44,6 +46,7 @@ abstract class CalendarView
     String? color,
     String? availabilityZoneId,
     _itts4qyp.CalendarNoRuleFallback? noRuleFallback,
+    _iyrimg3m.CalendarProtocolIdentity? protocolIdentity,
     _itchuj1l.CalendarProtocolMetadata? protocolMetadata,
     _ixppc388.CalendarSupplementalMetadata? supplementalMetadata,
     DateTime? createdAt,
@@ -67,6 +70,12 @@ abstract class CalendarView
           : _itts4qyp.CalendarNoRuleFallback.fromJson(
               (jsonSerialization['noRuleFallback'] as String),
             ),
+      protocolIdentity: jsonSerialization['protocolIdentity'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_iyrimg3m.CalendarProtocolIdentity>(
+                  jsonSerialization['protocolIdentity'],
+                ),
       protocolMetadata: jsonSerialization['protocolMetadata'] == null
           ? null
           : _ix00hwbf.Protocol()
@@ -104,6 +113,8 @@ abstract class CalendarView
 
   _itts4qyp.CalendarNoRuleFallback? noRuleFallback;
 
+  _iyrimg3m.CalendarProtocolIdentity? protocolIdentity;
+
   _itchuj1l.CalendarProtocolMetadata? protocolMetadata;
 
   _ixppc388.CalendarSupplementalMetadata? supplementalMetadata;
@@ -124,6 +135,7 @@ abstract class CalendarView
     String? color,
     String? availabilityZoneId,
     _itts4qyp.CalendarNoRuleFallback? noRuleFallback,
+    _iyrimg3m.CalendarProtocolIdentity? protocolIdentity,
     _itchuj1l.CalendarProtocolMetadata? protocolMetadata,
     _ixppc388.CalendarSupplementalMetadata? supplementalMetadata,
     DateTime? createdAt,
@@ -141,6 +153,8 @@ abstract class CalendarView
       if (color != null) 'color': color,
       if (availabilityZoneId != null) 'availabilityZoneId': availabilityZoneId,
       if (noRuleFallback != null) 'noRuleFallback': noRuleFallback?.toJson(),
+      if (protocolIdentity != null)
+        'protocolIdentity': protocolIdentity?.toJson(),
       if (protocolMetadata != null)
         'protocolMetadata': protocolMetadata?.toJson(),
       if (supplementalMetadata != null)
@@ -162,6 +176,8 @@ abstract class CalendarView
       if (color != null) 'color': color,
       if (availabilityZoneId != null) 'availabilityZoneId': availabilityZoneId,
       if (noRuleFallback != null) 'noRuleFallback': noRuleFallback?.toJson(),
+      if (protocolIdentity != null)
+        'protocolIdentity': protocolIdentity?.toJsonForProtocol(),
       if (protocolMetadata != null)
         'protocolMetadata': protocolMetadata?.toJsonForProtocol(),
       if (supplementalMetadata != null)
@@ -189,6 +205,7 @@ class _CalendarViewImpl extends CalendarView {
     String? color,
     String? availabilityZoneId,
     _itts4qyp.CalendarNoRuleFallback? noRuleFallback,
+    _iyrimg3m.CalendarProtocolIdentity? protocolIdentity,
     _itchuj1l.CalendarProtocolMetadata? protocolMetadata,
     _ixppc388.CalendarSupplementalMetadata? supplementalMetadata,
     DateTime? createdAt,
@@ -202,6 +219,7 @@ class _CalendarViewImpl extends CalendarView {
          color: color,
          availabilityZoneId: availabilityZoneId,
          noRuleFallback: noRuleFallback,
+         protocolIdentity: protocolIdentity,
          protocolMetadata: protocolMetadata,
          supplementalMetadata: supplementalMetadata,
          createdAt: createdAt,
@@ -221,6 +239,7 @@ class _CalendarViewImpl extends CalendarView {
     Object? color = _Undefined,
     Object? availabilityZoneId = _Undefined,
     Object? noRuleFallback = _Undefined,
+    Object? protocolIdentity = _Undefined,
     Object? protocolMetadata = _Undefined,
     Object? supplementalMetadata = _Undefined,
     Object? createdAt = _Undefined,
@@ -240,6 +259,9 @@ class _CalendarViewImpl extends CalendarView {
       noRuleFallback: noRuleFallback is _itts4qyp.CalendarNoRuleFallback?
           ? noRuleFallback
           : this.noRuleFallback,
+      protocolIdentity: protocolIdentity is _iyrimg3m.CalendarProtocolIdentity?
+          ? protocolIdentity
+          : this.protocolIdentity?.copyWith(),
       protocolMetadata: protocolMetadata is _itchuj1l.CalendarProtocolMetadata?
           ? protocolMetadata
           : this.protocolMetadata?.copyWith(),

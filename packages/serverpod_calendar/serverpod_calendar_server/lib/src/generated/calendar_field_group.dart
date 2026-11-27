@@ -16,7 +16,8 @@ enum CalendarFieldGroup implements _is.SerializableModel {
   metadata,
   availabilitySettings,
   protocolMetadata,
-  supplementalMetadata;
+  supplementalMetadata,
+  protocolIdentity;
 
   static CalendarFieldGroup fromJson(String name) {
     switch (name) {
@@ -28,6 +29,8 @@ enum CalendarFieldGroup implements _is.SerializableModel {
         return CalendarFieldGroup.protocolMetadata;
       case 'supplementalMetadata':
         return CalendarFieldGroup.supplementalMetadata;
+      case 'protocolIdentity':
+        return CalendarFieldGroup.protocolIdentity;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "CalendarFieldGroup"',

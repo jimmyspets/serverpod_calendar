@@ -66,6 +66,7 @@ final class CalendarPolicySnapshot {
     required this.displayName,
     required this.description,
     required this.color,
+    required this.protocolIdentity,
     required this.protocolMetadata,
     required this.supplementalMetadata,
     required this.availabilityZoneId,
@@ -76,6 +77,7 @@ final class CalendarPolicySnapshot {
   final int revision;
   final String displayName, availabilityZoneId;
   final String? description, color;
+  final CalendarProtocolIdentity protocolIdentity;
   final IcalendarCalendarTextMetadata protocolMetadata;
   final IcalendarSupplementalMetadata supplementalMetadata;
   final CalendarNoRuleFallback noRuleFallback;

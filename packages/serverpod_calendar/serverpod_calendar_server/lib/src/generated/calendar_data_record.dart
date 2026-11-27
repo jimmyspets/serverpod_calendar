@@ -22,6 +22,7 @@ abstract class CalendarDataRecord
   CalendarDataRecord._({
     this.id,
     required this.calendarId,
+    _is.UuidValue? protocolUid,
     required this.displayName,
     this.description,
     this.color,
@@ -31,11 +32,12 @@ abstract class CalendarDataRecord
     this.supplementalMetadata,
     required this.createdAt,
     required this.updatedAt,
-  });
+  }) : protocolUid = protocolUid ?? const _is.Uuid().v4obj();
 
   factory CalendarDataRecord({
     int? id,
     required _is.UuidValue calendarId,
+    _is.UuidValue? protocolUid,
     required String displayName,
     String? description,
     String? color,
@@ -53,6 +55,11 @@ abstract class CalendarDataRecord
       calendarId: _is.UuidValueJsonExtension.fromJson(
         jsonSerialization['calendarId'],
       ),
+      protocolUid: jsonSerialization['protocolUid'] == null
+          ? null
+          : _is.UuidValueJsonExtension.fromJson(
+              jsonSerialization['protocolUid'],
+            ),
       displayName: jsonSerialization['displayName'] as String,
       description: jsonSerialization['description'] as String?,
       color: jsonSerialization['color'] as String?,
@@ -90,6 +97,9 @@ abstract class CalendarDataRecord
 
   _is.UuidValue calendarId;
 
+  /// Native calendar protocol UID, separate from API and imported/feed identities.
+  _is.UuidValue protocolUid;
+
   String displayName;
 
   String? description;
@@ -117,6 +127,7 @@ abstract class CalendarDataRecord
   CalendarDataRecord copyWith({
     int? id,
     _is.UuidValue? calendarId,
+    _is.UuidValue? protocolUid,
     String? displayName,
     String? description,
     String? color,
@@ -133,6 +144,7 @@ abstract class CalendarDataRecord
       '__className__': 'serverpod_calendar.CalendarDataRecord',
       if (id != null) 'id': id,
       'calendarId': calendarId.toJson(),
+      'protocolUid': protocolUid.toJson(),
       'displayName': displayName,
       if (description != null) 'description': description,
       if (color != null) 'color': color,
@@ -186,6 +198,7 @@ class _CalendarDataRecordImpl extends CalendarDataRecord {
   _CalendarDataRecordImpl({
     int? id,
     required _is.UuidValue calendarId,
+    _is.UuidValue? protocolUid,
     required String displayName,
     String? description,
     String? color,
@@ -198,6 +211,7 @@ class _CalendarDataRecordImpl extends CalendarDataRecord {
   }) : super._(
          id: id,
          calendarId: calendarId,
+         protocolUid: protocolUid,
          displayName: displayName,
          description: description,
          color: color,
@@ -216,6 +230,7 @@ class _CalendarDataRecordImpl extends CalendarDataRecord {
   CalendarDataRecord copyWith({
     Object? id = _Undefined,
     _is.UuidValue? calendarId,
+    _is.UuidValue? protocolUid,
     String? displayName,
     Object? description = _Undefined,
     Object? color = _Undefined,
@@ -229,6 +244,7 @@ class _CalendarDataRecordImpl extends CalendarDataRecord {
     return CalendarDataRecord(
       id: id is int? ? id : this.id,
       calendarId: calendarId ?? this.calendarId,
+      protocolUid: protocolUid ?? this.protocolUid,
       displayName: displayName ?? this.displayName,
       description: description is String? ? description : this.description,
       color: color is String? ? color : this.color,
@@ -255,6 +271,13 @@ class CalendarDataRecordUpdateTable
     _is.UuidValue value,
   ) => _is.ColumnValue(
     table.calendarId,
+    value,
+  );
+
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> protocolUid(
+    _is.UuidValue value,
+  ) => _is.ColumnValue(
+    table.protocolUid,
     value,
   );
 
@@ -329,6 +352,11 @@ class CalendarDataRecordTable extends _is.Table<int?> {
       'calendarId',
       this,
     );
+    protocolUid = _is.ColumnUuid(
+      'protocolUid',
+      this,
+      hasDefault: true,
+    );
     displayName = _is.ColumnString(
       'displayName',
       this,
@@ -374,6 +402,9 @@ class CalendarDataRecordTable extends _is.Table<int?> {
 
   late final _is.ColumnUuid calendarId;
 
+  /// Native calendar protocol UID, separate from API and imported/feed identities.
+  late final _is.ColumnUuid protocolUid;
+
   late final _is.ColumnString displayName;
 
   late final _is.ColumnString description;
@@ -398,6 +429,7 @@ class CalendarDataRecordTable extends _is.Table<int?> {
   List<_is.Column> get columns => [
     id,
     calendarId,
+    protocolUid,
     displayName,
     description,
     color,

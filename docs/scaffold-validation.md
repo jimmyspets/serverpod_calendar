@@ -145,3 +145,24 @@ Commands/checks actually run:
 - Relative documentation links, consecutive ADRs 0001–0051, unchanged Apache 2.0 LICENSE, candidate-file credential exclusion and `git diff --check`: passed. Local logs, fixture credentials and build output remain ignored.
 
 Parsing/serialization, arbitrary property parameters, SOURCE handling, feed bytes/ETags, external-client rendering, remote content verification and polling remain pending. No stronger production authorization or complete calendar interoperability guarantee follows from these tests.
+
+
+## Calendar protocol identity and revision-time batch, 2026-10-21
+
+[ADR 0052](adr/0052-calendar-protocol-identity-and-revision-time.md) records the maintainer-confirmed separate generated UID and automatic whole-second UTC calendar timestamp. [The guide](calendar-protocol-identity.md) distinguishes native calendar revision time from imported/source values and full publication change tracking. API/schema mechanics remain under review.
+
+Agent source review checked server ownership, stable UID retention through every mutation family, independent read/list disclosure, immutable actual host snapshots, shared database-clock ordering, same-second revisions, denied/stale writes and unchanged content-free deletion. No independent human approval or hosted CI is claimed.
+
+Commands/checks actually run:
+
+- Pinned module/host `serverpod --no-analytics create-migration --tag calendar-protocol-identity --force`: generated the new non-null random UUID column and unique index. Generation first reported the standard unique-index warning; the new column's random backfill was reviewed and tested before applying to development. The MCP create-migration call reported no changes; the generated CLI revisions and actual schema tests establish migration evidence. Generated files were not hand-edited.
+- Focused `dart test test/integration/calendar_test.dart --name 'protocol identity|automatic revision time|clock correction' --reporter expanded`, from the example server: **4 passed**. Tests cover distinct UID/API identities, host snapshots, independent disclosure, automatic time on all eight mutation forms, UTC whole seconds, precise native timestamp retention, synthetic clock correction, unchanged same-second time with increasing revisions, denied/stale/invalid commands and deletion scrubbing.
+- `python tool/metadata_upgrade_smoke.py`: **passed** with populated synthetic pre-upgrade data. The upgrade gives two active rows distinct non-API UIDs, enforces the unique index, preserves exact fractional timestamps/content/revisions/cursors/associations and does not recreate deleted payloads. The helper drops only the temporary test database it creates.
+
+- Final `./tool/check.ps1`: **passed completely**. Locked dependencies, stable regeneration of all three server/client pairs, formatting of 93 authored Dart files, fatal-info analysis, **443 core tests on VM and 443 on Chrome**, **17 module profile tests on VM and 17 on Chrome**, **3 Flutter widget tests**, **30 database/policy tests**, populated upgrades, native host build, two independent shared-storage hosts, generated-client/JWT checks, Flutter WebDriver and Web release build all passed. The Wasm dry-run compile passed without a separate runtime claim.
+- Two-host evidence includes stable UID/time reads across instances, distinct protocol/native identities, UID retention after edits and nondecreasing revision time. Existing metadata isolation, category/cursor binding, stale-write/delete-attach races and JWT login/refresh/rotation/local logout/refresh revocation checks passed.
+- The expanded Flutter browser journey passed read-only UID/time display, UID retention through edits and UTC whole-second generated-client values alongside existing metadata, category, stale/reload, association/deletion and sign-out assertions.
+- Restored the hidden interactive development runner; Serverpod MCP logs verified application of `20261021061921307-calendar-protocol-identity` and MCP `hot_reload` succeeded. Dart MCP DTD discovery connected specifically to this repository's existing Flutter app; Flutter `hot_reload` succeeded. Unrelated apps were not reloaded.
+- Relative Markdown links, consecutive ADRs 0001–0052, unchanged Apache 2.0 LICENSE, candidate-file local-credential exclusion and `git diff --check`: passed. Local credentials/logs/build output remain ignored.
+
+These results establish the scoped native identity/time behavior. They do not establish ICS parsing/export, imported identity reconciliation, complete VCALENDAR freshness, feed validators, external calendar-client interoperability or a production coordinated host policy.

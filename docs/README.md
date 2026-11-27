@@ -1,6 +1,6 @@
 # Documentation
 
-The maintainer has specified first-release capabilities in [requirements](requirements.md). The initial workspace/authentication scaffold is documented in the development guide; calendar domain designs remain proposals, with no calendar implementation or client compatibility verified.
+The maintainer has specified first-release capabilities in [requirements](requirements.md). The workspace/authentication scaffold and scoped native calendar CRUD/metadata increments have local implementation evidence. Broader domain designs remain proposals; no wire or external-client compatibility is claimed.
 
 | Document | Purpose |
 | --- | --- |
@@ -43,3 +43,5 @@ Use Mermaid for documentation diagrams, including architecture, relationships, a
 - [Calendar native presentation and scoped protocol text metadata](calendar-metadata.md)
 
 - [Calendar links, categories, images and refresh hints](calendar-links-and-categories.md)
+
+See [native protocol UID and modification time](calendar-protocol-identity.md) for the read-only identity/time increment under ADR 0052.

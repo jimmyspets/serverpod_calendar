@@ -453,6 +453,17 @@ class _CalendarEditorState extends State<CalendarEditor> {
                     onPressed: _busy ? null : () => _run(_reload),
                     child: const Text('Reload saved values'),
                   ),
+                if (existing && _calendar!.protocolIdentity != null) ...[
+                  SelectableText(
+                    'Protocol UID: ${_calendar!.protocolIdentity!.uid}',
+                    key: const Key('calendar-protocol-uid'),
+                  ),
+                  SelectableText(
+                    'Last modified (UTC): ${_calendar!.protocolIdentity!.lastModified.toUtc().toIso8601String()}',
+                    key: const Key('calendar-protocol-modified'),
+                  ),
+                  const Text('Read-only; revisions control concurrent edits.'),
+                ],
                 if (presentation) ...[
                   TextField(
                     key: const Key('calendar-name'),

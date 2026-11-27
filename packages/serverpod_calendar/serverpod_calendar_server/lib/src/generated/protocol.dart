@@ -34,6 +34,7 @@ import 'calendar_mutation_receipt.dart' as _iq0eskk0;
 import 'calendar_no_rule_fallback.dart' as _itts4qyp;
 import 'calendar_page.dart' as _i0jfcg0j;
 import 'calendar_presentation_update_request.dart' as _i9m9yk5s;
+import 'calendar_protocol_identity.dart' as _iyrimg3m;
 import 'calendar_protocol_metadata.dart' as _itchuj1l;
 import 'calendar_protocol_metadata_update_request.dart' as _iyawor89;
 import 'calendar_refresh_hint.dart' as _ifsfk5xq;
@@ -62,6 +63,7 @@ export 'calendar_mutation_receipt.dart';
 export 'calendar_no_rule_fallback.dart';
 export 'calendar_page.dart';
 export 'calendar_presentation_update_request.dart';
+export 'calendar_protocol_identity.dart';
 export 'calendar_protocol_metadata.dart';
 export 'calendar_protocol_metadata_update_request.dart';
 export 'calendar_refresh_hint.dart';
@@ -211,6 +213,13 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
+          name: 'protocolUid',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
           name: 'displayName',
           columnType: _isp.ColumnType.text,
           isNullable: false,
@@ -278,6 +287,19 @@ class Protocol extends _is.DatabaseSerializationManager {
         ),
       ],
       indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_data_protocol_uid_unique',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'protocolUid',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
         _isp.IndexDefinition(
           indexName: 'calendar_data_identity_unique',
           tableSpace: null,
@@ -561,6 +583,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _i9m9yk5s.CalendarPresentationUpdateRequest) {
       return _i9m9yk5s.CalendarPresentationUpdateRequest.fromJson(data) as T;
     }
+    if (t == _iyrimg3m.CalendarProtocolIdentity) {
+      return _iyrimg3m.CalendarProtocolIdentity.fromJson(data) as T;
+    }
     if (t == _itchuj1l.CalendarProtocolMetadata) {
       return _itchuj1l.CalendarProtocolMetadata.fromJson(data) as T;
     }
@@ -676,6 +701,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_i9m9yk5s.CalendarPresentationUpdateRequest?>()) {
       return (data != null
               ? _i9m9yk5s.CalendarPresentationUpdateRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iyrimg3m.CalendarProtocolIdentity?>()) {
+      return (data != null
+              ? _iyrimg3m.CalendarProtocolIdentity.fromJson(data)
               : null)
           as T;
     }
@@ -836,6 +867,7 @@ class Protocol extends _is.DatabaseSerializationManager {
       _i0jfcg0j.CalendarPage => 'CalendarPage',
       _i9m9yk5s.CalendarPresentationUpdateRequest =>
         'CalendarPresentationUpdateRequest',
+      _iyrimg3m.CalendarProtocolIdentity => 'CalendarProtocolIdentity',
       _itchuj1l.CalendarProtocolMetadata => 'CalendarProtocolMetadata',
       _iyawor89.CalendarProtocolMetadataUpdateRequest =>
         'CalendarProtocolMetadataUpdateRequest',
@@ -899,6 +931,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarPage';
       case _i9m9yk5s.CalendarPresentationUpdateRequest():
         return 'CalendarPresentationUpdateRequest';
+      case _iyrimg3m.CalendarProtocolIdentity():
+        return 'CalendarProtocolIdentity';
       case _itchuj1l.CalendarProtocolMetadata():
         return 'CalendarProtocolMetadata';
       case _iyawor89.CalendarProtocolMetadataUpdateRequest():
@@ -985,6 +1019,9 @@ class Protocol extends _is.DatabaseSerializationManager {
       return deserialize<_i9m9yk5s.CalendarPresentationUpdateRequest>(
         data['data'],
       );
+    }
+    if (dataClassName == 'CalendarProtocolIdentity') {
+      return deserialize<_iyrimg3m.CalendarProtocolIdentity>(data['data']);
     }
     if (dataClassName == 'CalendarProtocolMetadata') {
       return deserialize<_itchuj1l.CalendarProtocolMetadata>(data['data']);
