@@ -400,6 +400,9 @@ class _AvailabilityEditorState extends State<AvailabilityEditor> {
         location: widget.rule?.content.location,
         categories: widget.rule?.content.categories,
         comments: widget.rule?.content.comments,
+        textParameters: widget.rule?.content.textParameters,
+        extensions: widget.rule?.content.extensions,
+        organizer: widget.rule?.content.organizer,
         url: widget.rule?.content.url,
         classification: widget.rule?.content.classification,
         priority: int.parse(_priority.text),
@@ -418,6 +421,10 @@ class _AvailabilityEditorState extends State<AvailabilityEditor> {
                   categories:
                       widget.rule?.content.openings.firstOrNull?.categories,
                   comments: widget.rule?.content.openings.firstOrNull?.comments,
+                  textParameters:
+                      widget.rule?.content.openings.firstOrNull?.textParameters,
+                  extensions:
+                      widget.rule?.content.openings.firstOrNull?.extensions,
                   timing: date(_start.text).copyWith(end: _civil(_end.text)),
                   recurrence: cal.CalendarEventRecurrence(
                     inclusions: dates(_inclusions.text),

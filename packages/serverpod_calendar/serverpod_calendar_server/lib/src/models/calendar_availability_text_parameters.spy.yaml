@@ -1,0 +1,8 @@
+class: CalendarAvailabilityTextParameters
+immutable: true
+fields:
+  summary: CalendarTextParameters?
+  description: CalendarTextParameters?
+  location: CalendarTextParameters?
+  categoryLanguage: String?
+  comments: List<CalendarTextParameters?>?

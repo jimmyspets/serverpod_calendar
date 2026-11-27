@@ -173,6 +173,53 @@ extension CalendarAvailabilityOperations on CalendarService {
     );
   }
 
+  Future<void> _approveAvailabilityMetadata(
+    CalendarHostContext c,
+    CalendarAuthorizationRequest request,
+    Transaction tx,
+    CalendarAuthorizationPhase phase,
+  ) async {
+    final proposed = request.proposedAvailability!;
+    for (final source in [
+      (CalendarAvailabilityExtensionContext.definition, proposed.extensions),
+      for (final o in proposed.openings)
+        (CalendarAvailabilityExtensionContext.opening, o.extensions),
+    ]) {
+      for (final value in source.$2 ?? <CalendarAvailabilityExtension>[]) {
+        final registration =
+            _runtime.availabilityExtensions[value.name.toUpperCase()];
+        if (registration == null ||
+            !registration.contexts.contains(source.$1)) {
+          throw _failure(CalendarFailureCode.validation);
+        }
+        final valid = await _bounded(
+          () async => registration.validate(value.value),
+        );
+        if (!valid) throw _failure(CalendarFailureCode.validation);
+      }
+    }
+    if (proposed.organizer != null ||
+        request.currentAvailability?.content.organizer != null) {
+      final verdict = await _bounded(
+        () => _runtime.policy.approveAvailabilityOrganizer(
+          _session,
+          c,
+          request,
+          tx,
+          phase,
+        ),
+      );
+      if (verdict != CalendarAuthorizationVerdict.allow) {
+        throw _failure(
+          verdict == CalendarAuthorizationVerdict.deny
+              ? CalendarFailureCode.accessDenied
+              : CalendarFailureCode.unavailable,
+        );
+      }
+    }
+    if (phase == CalendarAuthorizationPhase.finalWrite) await _verifyContext(c);
+  }
+
   Future<CalendarAvailabilityReceipt?> createAvailability(
     CalendarAvailabilityCreateRequest input,
   ) async {
@@ -202,7 +249,19 @@ extension CalendarAvailabilityOperations on CalendarService {
           availabilityMaxDefinitions) {
         throw _failure(CalendarFailureCode.limitExceeded);
       }
+      await _approveAvailabilityMetadata(
+        c,
+        request,
+        tx,
+        CalendarAuthorizationPhase.preliminaryWrite,
+      );
       final decisions = await _final(c, [request], tx);
+      await _approveAvailabilityMetadata(
+        c,
+        request,
+        tx,
+        CalendarAuthorizationPhase.finalWrite,
+      );
       final now = await _revisionTime(tx);
       final identity = await CalendarAvailabilityRecord.db.insertRow(
         _session,
@@ -374,7 +433,19 @@ extension CalendarAvailabilityOperations on CalendarService {
             edits: edits,
           ),
       ];
+      await _approveAvailabilityMetadata(
+        c,
+        finalRequests.first,
+        tx,
+        CalendarAuthorizationPhase.preliminaryWrite,
+      );
       final decisions = await _final(c, finalRequests, tx);
+      await _approveAvailabilityMetadata(
+        c,
+        finalRequests.first,
+        tx,
+        CalendarAuthorizationPhase.finalWrite,
+      );
       rule.data.timingOverrides = edits;
       rule.data.content = proposed;
       rule.data.updatedAt = await _revisionTime(

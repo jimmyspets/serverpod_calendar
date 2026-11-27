@@ -1,0 +1,5 @@
+class: CalendarTextParameters
+immutable: true
+fields:
+  language: String?
+  alternativeUri: String?

@@ -1,0 +1,5 @@
+class: CalendarAvailabilityExtension
+immutable: true
+fields:
+  name: String
+  value: String

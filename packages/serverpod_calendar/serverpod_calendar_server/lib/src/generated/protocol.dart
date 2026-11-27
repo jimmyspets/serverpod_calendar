@@ -27,11 +27,13 @@ import 'calendar_availability_class.dart' as _iucw7bzg;
 import 'calendar_availability_content.dart' as _ifxxil5c;
 import 'calendar_availability_create_request.dart' as _iwwk2w9d;
 import 'calendar_availability_data_record.dart' as _ie9je6js;
+import 'calendar_availability_extension.dart' as _ip5gybl4;
 import 'calendar_availability_occurrence_change.dart' as _i7tpo82q;
 import 'calendar_availability_occurrence_preview.dart' as _inpm99jj;
 import 'calendar_availability_occurrence_query.dart' as _iv6wf0pl;
 import 'calendar_availability_opening.dart' as _i8tf9h36;
 import 'calendar_availability_opening_edits.dart' as _id5ke9r5;
+import 'calendar_availability_organizer.dart' as _i5oc0nlo;
 import 'calendar_availability_receipt.dart' as _is1luycx;
 import 'calendar_availability_record.dart' as _inwzhb5r;
 import 'calendar_availability_search_mode.dart' as _iam4llos;
@@ -39,6 +41,7 @@ import 'calendar_availability_search_query.dart' as _idixoqjq;
 import 'calendar_availability_search_view.dart' as _i99fx1rw;
 import 'calendar_availability_slot.dart' as _i45h4t8f;
 import 'calendar_availability_target.dart' as _iwbqbnec;
+import 'calendar_availability_text_parameters.dart' as _ipbm7ji7;
 import 'calendar_availability_update_request.dart' as _igv5u6jv;
 import 'calendar_availability_view.dart' as _izmf6fpk;
 import 'calendar_category.dart' as _icnza73c;
@@ -102,17 +105,20 @@ import 'calendar_subject_record.dart' as _i76vfrve;
 import 'calendar_subject_view.dart' as _ir7mv910;
 import 'calendar_supplemental_metadata.dart' as _ixppc388;
 import 'calendar_supplemental_metadata_update_request.dart' as _iqx8dg15;
+import 'calendar_text_parameters.dart' as _iffxqqc7;
 import 'calendar_text_variant.dart' as _itcy22f3;
 import 'calendar_view.dart' as _ivspd2q7;
 export 'calendar_availability_class.dart';
 export 'calendar_availability_content.dart';
 export 'calendar_availability_create_request.dart';
 export 'calendar_availability_data_record.dart';
+export 'calendar_availability_extension.dart';
 export 'calendar_availability_occurrence_change.dart';
 export 'calendar_availability_occurrence_preview.dart';
 export 'calendar_availability_occurrence_query.dart';
 export 'calendar_availability_opening.dart';
 export 'calendar_availability_opening_edits.dart';
+export 'calendar_availability_organizer.dart';
 export 'calendar_availability_receipt.dart';
 export 'calendar_availability_record.dart';
 export 'calendar_availability_search_mode.dart';
@@ -120,6 +126,7 @@ export 'calendar_availability_search_query.dart';
 export 'calendar_availability_search_view.dart';
 export 'calendar_availability_slot.dart';
 export 'calendar_availability_target.dart';
+export 'calendar_availability_text_parameters.dart';
 export 'calendar_availability_update_request.dart';
 export 'calendar_availability_view.dart';
 export 'calendar_category.dart';
@@ -183,6 +190,7 @@ export 'calendar_subject_record.dart';
 export 'calendar_subject_view.dart';
 export 'calendar_supplemental_metadata.dart';
 export 'calendar_supplemental_metadata_update_request.dart';
+export 'calendar_text_parameters.dart';
 export 'calendar_text_variant.dart';
 export 'calendar_view.dart';
 
@@ -986,6 +994,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _ie9je6js.CalendarAvailabilityDataRecord) {
       return _ie9je6js.CalendarAvailabilityDataRecord.fromJson(data) as T;
     }
+    if (t == _ip5gybl4.CalendarAvailabilityExtension) {
+      return _ip5gybl4.CalendarAvailabilityExtension.fromJson(data) as T;
+    }
     if (t == _i7tpo82q.CalendarAvailabilityOccurrenceChange) {
       return _i7tpo82q.CalendarAvailabilityOccurrenceChange.fromJson(data) as T;
     }
@@ -1001,6 +1012,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _id5ke9r5.CalendarAvailabilityOpeningEdits) {
       return _id5ke9r5.CalendarAvailabilityOpeningEdits.fromJson(data) as T;
+    }
+    if (t == _i5oc0nlo.CalendarAvailabilityOrganizer) {
+      return _i5oc0nlo.CalendarAvailabilityOrganizer.fromJson(data) as T;
     }
     if (t == _is1luycx.CalendarAvailabilityReceipt) {
       return _is1luycx.CalendarAvailabilityReceipt.fromJson(data) as T;
@@ -1022,6 +1036,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _iwbqbnec.CalendarAvailabilityTarget) {
       return _iwbqbnec.CalendarAvailabilityTarget.fromJson(data) as T;
+    }
+    if (t == _ipbm7ji7.CalendarAvailabilityTextParameters) {
+      return _ipbm7ji7.CalendarAvailabilityTextParameters.fromJson(data) as T;
     }
     if (t == _igv5u6jv.CalendarAvailabilityUpdateRequest) {
       return _igv5u6jv.CalendarAvailabilityUpdateRequest.fromJson(data) as T;
@@ -1214,6 +1231,9 @@ class Protocol extends _is.DatabaseSerializationManager {
       return _iqx8dg15.CalendarSupplementalMetadataUpdateRequest.fromJson(data)
           as T;
     }
+    if (t == _iffxqqc7.CalendarTextParameters) {
+      return _iffxqqc7.CalendarTextParameters.fromJson(data) as T;
+    }
     if (t == _itcy22f3.CalendarTextVariant) {
       return _itcy22f3.CalendarTextVariant.fromJson(data) as T;
     }
@@ -1244,6 +1264,12 @@ class Protocol extends _is.DatabaseSerializationManager {
               : null)
           as T;
     }
+    if (t == _is.getType<_ip5gybl4.CalendarAvailabilityExtension?>()) {
+      return (data != null
+              ? _ip5gybl4.CalendarAvailabilityExtension.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _is.getType<_i7tpo82q.CalendarAvailabilityOccurrenceChange?>()) {
       return (data != null
               ? _i7tpo82q.CalendarAvailabilityOccurrenceChange.fromJson(data)
@@ -1271,6 +1297,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_id5ke9r5.CalendarAvailabilityOpeningEdits?>()) {
       return (data != null
               ? _id5ke9r5.CalendarAvailabilityOpeningEdits.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i5oc0nlo.CalendarAvailabilityOrganizer?>()) {
+      return (data != null
+              ? _i5oc0nlo.CalendarAvailabilityOrganizer.fromJson(data)
               : null)
           as T;
     }
@@ -1313,6 +1345,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_iwbqbnec.CalendarAvailabilityTarget?>()) {
       return (data != null
               ? _iwbqbnec.CalendarAvailabilityTarget.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ipbm7ji7.CalendarAvailabilityTextParameters?>()) {
+      return (data != null
+              ? _ipbm7ji7.CalendarAvailabilityTextParameters.fromJson(data)
               : null)
           as T;
     }
@@ -1674,6 +1712,12 @@ class Protocol extends _is.DatabaseSerializationManager {
               : null)
           as T;
     }
+    if (t == _is.getType<_iffxqqc7.CalendarTextParameters?>()) {
+      return (data != null
+              ? _iffxqqc7.CalendarTextParameters.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _is.getType<_itcy22f3.CalendarTextVariant?>()) {
       return (data != null
               ? _itcy22f3.CalendarTextVariant.fromJson(data)
@@ -1695,6 +1739,27 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<List<String>?>()) {
       return (data != null
               ? (data as List).map((e) => deserialize<String>(e)).toList()
+              : null)
+          as T;
+    }
+    if (t == List<_ip5gybl4.CalendarAvailabilityExtension>) {
+      return (data as List)
+              .map(
+                (e) => deserialize<_ip5gybl4.CalendarAvailabilityExtension>(e),
+              )
+              .toList()
+          as T;
+    }
+    if (t == _is.getType<List<_ip5gybl4.CalendarAvailabilityExtension>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map(
+                      (e) =>
+                          deserialize<_ip5gybl4.CalendarAvailabilityExtension>(
+                            e,
+                          ),
+                    )
+                    .toList()
               : null)
           as T;
     }
@@ -1742,6 +1807,22 @@ class Protocol extends _is.DatabaseSerializationManager {
       return (data as List)
               .map((e) => deserialize<_i45h4t8f.CalendarAvailabilitySlot>(e))
               .toList()
+          as T;
+    }
+    if (t == List<_iffxqqc7.CalendarTextParameters?>) {
+      return (data as List)
+              .map((e) => deserialize<_iffxqqc7.CalendarTextParameters?>(e))
+              .toList()
+          as T;
+    }
+    if (t == _is.getType<List<_iffxqqc7.CalendarTextParameters?>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map(
+                      (e) => deserialize<_iffxqqc7.CalendarTextParameters?>(e),
+                    )
+                    .toList()
+              : null)
           as T;
     }
     if (t == List<_i73hgz1s.CalendarFieldGroup>) {
@@ -1870,6 +1951,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         'CalendarAvailabilityCreateRequest',
       _ie9je6js.CalendarAvailabilityDataRecord =>
         'CalendarAvailabilityDataRecord',
+      _ip5gybl4.CalendarAvailabilityExtension =>
+        'CalendarAvailabilityExtension',
       _i7tpo82q.CalendarAvailabilityOccurrenceChange =>
         'CalendarAvailabilityOccurrenceChange',
       _inpm99jj.CalendarAvailabilityOccurrencePreview =>
@@ -1879,6 +1962,8 @@ class Protocol extends _is.DatabaseSerializationManager {
       _i8tf9h36.CalendarAvailabilityOpening => 'CalendarAvailabilityOpening',
       _id5ke9r5.CalendarAvailabilityOpeningEdits =>
         'CalendarAvailabilityOpeningEdits',
+      _i5oc0nlo.CalendarAvailabilityOrganizer =>
+        'CalendarAvailabilityOrganizer',
       _is1luycx.CalendarAvailabilityReceipt => 'CalendarAvailabilityReceipt',
       _inwzhb5r.CalendarAvailabilityRecord => 'CalendarAvailabilityRecord',
       _iam4llos.CalendarAvailabilitySearchMode =>
@@ -1889,6 +1974,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         'CalendarAvailabilitySearchView',
       _i45h4t8f.CalendarAvailabilitySlot => 'CalendarAvailabilitySlot',
       _iwbqbnec.CalendarAvailabilityTarget => 'CalendarAvailabilityTarget',
+      _ipbm7ji7.CalendarAvailabilityTextParameters =>
+        'CalendarAvailabilityTextParameters',
       _igv5u6jv.CalendarAvailabilityUpdateRequest =>
         'CalendarAvailabilityUpdateRequest',
       _izmf6fpk.CalendarAvailabilityView => 'CalendarAvailabilityView',
@@ -1961,6 +2048,7 @@ class Protocol extends _is.DatabaseSerializationManager {
       _ixppc388.CalendarSupplementalMetadata => 'CalendarSupplementalMetadata',
       _iqx8dg15.CalendarSupplementalMetadataUpdateRequest =>
         'CalendarSupplementalMetadataUpdateRequest',
+      _iffxqqc7.CalendarTextParameters => 'CalendarTextParameters',
       _itcy22f3.CalendarTextVariant => 'CalendarTextVariant',
       _ivspd2q7.CalendarView => 'CalendarView',
       _ => null,
@@ -1988,6 +2076,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarAvailabilityCreateRequest';
       case _ie9je6js.CalendarAvailabilityDataRecord():
         return 'CalendarAvailabilityDataRecord';
+      case _ip5gybl4.CalendarAvailabilityExtension():
+        return 'CalendarAvailabilityExtension';
       case _i7tpo82q.CalendarAvailabilityOccurrenceChange():
         return 'CalendarAvailabilityOccurrenceChange';
       case _inpm99jj.CalendarAvailabilityOccurrencePreview():
@@ -1998,6 +2088,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarAvailabilityOpening';
       case _id5ke9r5.CalendarAvailabilityOpeningEdits():
         return 'CalendarAvailabilityOpeningEdits';
+      case _i5oc0nlo.CalendarAvailabilityOrganizer():
+        return 'CalendarAvailabilityOrganizer';
       case _is1luycx.CalendarAvailabilityReceipt():
         return 'CalendarAvailabilityReceipt';
       case _inwzhb5r.CalendarAvailabilityRecord():
@@ -2012,6 +2104,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarAvailabilitySlot';
       case _iwbqbnec.CalendarAvailabilityTarget():
         return 'CalendarAvailabilityTarget';
+      case _ipbm7ji7.CalendarAvailabilityTextParameters():
+        return 'CalendarAvailabilityTextParameters';
       case _igv5u6jv.CalendarAvailabilityUpdateRequest():
         return 'CalendarAvailabilityUpdateRequest';
       case _izmf6fpk.CalendarAvailabilityView():
@@ -2138,6 +2232,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarSupplementalMetadata';
       case _iqx8dg15.CalendarSupplementalMetadataUpdateRequest():
         return 'CalendarSupplementalMetadataUpdateRequest';
+      case _iffxqqc7.CalendarTextParameters():
+        return 'CalendarTextParameters';
       case _itcy22f3.CalendarTextVariant():
         return 'CalendarTextVariant';
       case _ivspd2q7.CalendarView():
@@ -2172,6 +2268,9 @@ class Protocol extends _is.DatabaseSerializationManager {
         data['data'],
       );
     }
+    if (dataClassName == 'CalendarAvailabilityExtension') {
+      return deserialize<_ip5gybl4.CalendarAvailabilityExtension>(data['data']);
+    }
     if (dataClassName == 'CalendarAvailabilityOccurrenceChange') {
       return deserialize<_i7tpo82q.CalendarAvailabilityOccurrenceChange>(
         data['data'],
@@ -2194,6 +2293,9 @@ class Protocol extends _is.DatabaseSerializationManager {
       return deserialize<_id5ke9r5.CalendarAvailabilityOpeningEdits>(
         data['data'],
       );
+    }
+    if (dataClassName == 'CalendarAvailabilityOrganizer') {
+      return deserialize<_i5oc0nlo.CalendarAvailabilityOrganizer>(data['data']);
     }
     if (dataClassName == 'CalendarAvailabilityReceipt') {
       return deserialize<_is1luycx.CalendarAvailabilityReceipt>(data['data']);
@@ -2221,6 +2323,11 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'CalendarAvailabilityTarget') {
       return deserialize<_iwbqbnec.CalendarAvailabilityTarget>(data['data']);
+    }
+    if (dataClassName == 'CalendarAvailabilityTextParameters') {
+      return deserialize<_ipbm7ji7.CalendarAvailabilityTextParameters>(
+        data['data'],
+      );
     }
     if (dataClassName == 'CalendarAvailabilityUpdateRequest') {
       return deserialize<_igv5u6jv.CalendarAvailabilityUpdateRequest>(
@@ -2420,6 +2527,9 @@ class Protocol extends _is.DatabaseSerializationManager {
       return deserialize<_iqx8dg15.CalendarSupplementalMetadataUpdateRequest>(
         data['data'],
       );
+    }
+    if (dataClassName == 'CalendarTextParameters') {
+      return deserialize<_iffxqqc7.CalendarTextParameters>(data['data']);
     }
     if (dataClassName == 'CalendarTextVariant') {
       return deserialize<_itcy22f3.CalendarTextVariant>(data['data']);

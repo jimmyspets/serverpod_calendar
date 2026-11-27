@@ -248,6 +248,17 @@ abstract interface class CalendarHostPolicy {
     Transaction transaction,
   );
 
+  /// Independent approval of the final organizer proposal (including removal).
+  /// Called for preliminary/final writes; never grants ordinary metadata rights.
+  /// Apply the same declared coordination guarantee as authorizeBatch.
+  Future<CalendarAuthorizationVerdict> approveAvailabilityOrganizer(
+    Session session,
+    CalendarHostContext context,
+    CalendarAuthorizationRequest request,
+    Transaction transaction,
+    CalendarAuthorizationPhase phase,
+  );
+
   /// For coordinated guarantees, finalWrite must coordinate every relevant
   /// policy revocation through this transaction until its actual commit.
   /// A version label alone is not coordination. Every retry is a new call.
@@ -344,4 +355,20 @@ final class CalendarSubjectResolution {
   final bool complete;
   final String revision;
   final List<UuidValue> calendarIds;
+}
+
+/// Private metadata only: no core behavior or authorization may depend on it.
+enum CalendarAvailabilityExtensionContext { definition, opening }
+
+final class CalendarAvailabilityExtensionRegistration {
+  CalendarAvailabilityExtensionRegistration({
+    required this.name,
+    required Iterable<CalendarAvailabilityExtensionContext> contexts,
+    required this.validate,
+  }) : contexts = Set.unmodifiable(contexts);
+  final String name;
+  final Set<CalendarAvailabilityExtensionContext> contexts;
+
+  /// Side-effect-free bounded validation of decoded TEXT, not content lines.
+  final bool Function(String value) validate;
 }

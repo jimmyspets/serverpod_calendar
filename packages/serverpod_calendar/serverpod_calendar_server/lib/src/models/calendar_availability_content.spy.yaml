@@ -13,3 +13,6 @@ fields:
   comments: List<String>?
   url: String?
   classification: CalendarAvailabilityClass?
+  textParameters: CalendarAvailabilityTextParameters?
+  extensions: List<CalendarAvailabilityExtension>?
+  organizer: CalendarAvailabilityOrganizer?

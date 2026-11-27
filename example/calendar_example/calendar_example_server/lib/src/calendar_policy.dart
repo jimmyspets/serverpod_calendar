@@ -13,7 +13,7 @@ final class DemoCalendarPolicy implements CalendarHostPolicy {
     return CalendarHostContext(
       principalId: principal,
       scopeKey: 'demo:user:$principal',
-      policyRevision: 'private-scope-v11',
+      policyRevision: 'private-scope-v12',
     );
   }
 
@@ -79,6 +79,23 @@ final class DemoCalendarPolicy implements CalendarHostPolicy {
     Set<CalendarFieldGroup> requestedGroups, {
     CalendarCategoryQuery? categoryFilter,
   }) async => CalendarCandidatePlan();
+
+  @override
+  Future<CalendarAuthorizationVerdict> approveAvailabilityOrganizer(
+    Session session,
+    CalendarHostContext context,
+    CalendarAuthorizationRequest request,
+    Transaction transaction,
+    CalendarAuthorizationPhase phase,
+  ) async {
+    // Synthetic publication label only. No mail is sent and no directory exists.
+    final organizer = request.proposedAvailability!.organizer;
+    return organizer == null ||
+            organizer.address ==
+                'urn:calendar-example:user:${context.principalId}'
+        ? CalendarAuthorizationVerdict.allow
+        : CalendarAuthorizationVerdict.deny;
+  }
 
   @override
   Future<List<CalendarAuthorizationDecision>> authorizeBatch(

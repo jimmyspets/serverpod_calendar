@@ -2,6 +2,8 @@
 
 Status: **Accepted timing/metadata scope; storage/API mechanics under review**. Date: 2026-10-21.
 
+Subsequent native scope: [ADR 0060](0060-availability-publication-metadata.md) adds organizer approval, legal text parameters and bounded private X-properties. Pending references below describe the earlier batch boundary; CONTACT and wire interoperability remain pending.
+
 ## Maintainer choices and sources
 
 The maintainer selected the existing event timing policy for availability openings: single/this-and-future move or resize, single skip/restore, and preservation with orphaning-pattern rejection. Future cancellation and occurrence-specific text remain separate. They selected description, location, categories and comments on definitions/openings, with URL and confidentiality labels on definitions only; organizer, language/ALTREP, extensions and interchange follow separately.

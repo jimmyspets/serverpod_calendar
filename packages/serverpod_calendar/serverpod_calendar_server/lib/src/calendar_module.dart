@@ -25,6 +25,8 @@ abstract final class CalendarModule {
     required CalendarHostPolicy policy,
     required CalendarModuleOptions options,
     List<CalendarDependencyProvider> dependencies = const [],
+    List<CalendarAvailabilityExtensionRegistration> availabilityExtensions =
+        const [],
   }) {
     for (final n in [
       options.maxPageSize,
@@ -48,10 +50,23 @@ abstract final class CalendarModule {
         policy.guarantee != CalendarAuthorizationGuarantee.coordinated) {
       throw ArgumentError('Host cannot supply required coordinated guarantee');
     }
+    final registry = <String, CalendarAvailabilityExtensionRegistration>{};
+    if (availabilityExtensions.length > 32) {
+      throw ArgumentError('Too many extension registrations');
+    }
+    for (final registration in availabilityExtensions) {
+      validateAvailabilityExtensionName(registration.name);
+      if (registration.contexts.isEmpty ||
+          registry.containsKey(registration.name.toUpperCase())) {
+        throw ArgumentError('Invalid or duplicate extension registration');
+      }
+      registry[registration.name.toUpperCase()] = registration;
+    }
     _installed[pod] = _Runtime(
       policy,
       options,
       List.unmodifiable(dependencies),
+      Map.unmodifiable(registry),
     );
   }
 
@@ -81,7 +96,14 @@ CalendarException _failure(CalendarFailureCode code) => CalendarException(
 );
 
 final class _Runtime {
-  _Runtime(this.policy, this.options, this.dependencies);
+  _Runtime(
+    this.policy,
+    this.options,
+    this.dependencies,
+    this.availabilityExtensions,
+  );
+  final Map<String, CalendarAvailabilityExtensionRegistration>
+  availabilityExtensions;
   final CalendarHostPolicy policy;
   final CalendarModuleOptions options;
   final List<CalendarDependencyProvider> dependencies;

@@ -48,6 +48,16 @@ Future<void> run(List<String> args) async {
   CalendarModule.install(
     pod,
     policy: DemoCalendarPolicy(),
+    availabilityExtensions: [
+      CalendarAvailabilityExtensionRegistration(
+        name: 'X-CALENDAR-EXAMPLE-LABEL',
+        contexts: CalendarAvailabilityExtensionContext.values,
+        validate: (value) =>
+            value.runes.length <= 256 &&
+            !value.contains('\n') &&
+            !value.contains('\r'),
+      ),
+    ],
     options: const CalendarModuleOptions(
       requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
     ),
