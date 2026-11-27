@@ -24,6 +24,10 @@ import 'package:serverpod_calendar_server/src/generated/calendar_mutation_receip
     as _ied1lssg;
 import 'package:serverpod_calendar_server/src/generated/calendar_page.dart'
     as _ibhixnze;
+import 'package:serverpod_calendar_server/src/generated/calendar_presentation_update_request.dart'
+    as _i1sjay6c;
+import 'package:serverpod_calendar_server/src/generated/calendar_protocol_metadata_update_request.dart'
+    as _i53ouodu;
 import 'package:serverpod_calendar_server/src/generated/calendar_settings_update_request.dart'
     as _i3f5mgyk;
 import 'package:serverpod_calendar_server/src/generated/calendar_subject_change_request.dart'
@@ -356,6 +360,68 @@ class _CalendarEndpoint {
           createSessionCallback: (_) => _localUniqueSession,
           endpointPath: 'calendar',
           methodName: 'updateMetadata',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ied1lssg.CalendarMutationReceipt?> updatePresentation(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i1sjay6c.CalendarPresentationUpdateRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendar',
+            method: 'updatePresentation',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendar',
+          methodName: 'updatePresentation',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ied1lssg.CalendarMutationReceipt?> updateProtocolMetadata(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i53ouodu.CalendarProtocolMetadataUpdateRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendar',
+            method: 'updateProtocolMetadata',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendar',
+          methodName: 'updateProtocolMetadata',
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );

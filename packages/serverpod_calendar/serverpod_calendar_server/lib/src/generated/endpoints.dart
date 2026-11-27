@@ -17,6 +17,10 @@ import 'package:serverpod_calendar_server/src/generated/calendar_field_group.dar
     as _i3d02yxy;
 import 'package:serverpod_calendar_server/src/generated/calendar_metadata_update_request.dart'
     as _io29vhgw;
+import 'package:serverpod_calendar_server/src/generated/calendar_presentation_update_request.dart'
+    as _i1sjay6c;
+import 'package:serverpod_calendar_server/src/generated/calendar_protocol_metadata_update_request.dart'
+    as _i53ouodu;
 import 'package:serverpod_calendar_server/src/generated/calendar_settings_update_request.dart'
     as _i3f5mgyk;
 import 'package:serverpod_calendar_server/src/generated/calendar_subject_change_request.dart'
@@ -155,6 +159,45 @@ class Endpoints extends _is.EndpointDispatch {
                 Map<String, dynamic> params,
               ) async => (endpoints['calendar'] as _inx4l1vp.CalendarEndpoint)
                   .updateMetadata(
+                    session,
+                    params['request'],
+                  ),
+        ),
+        'updatePresentation': _is.MethodConnector(
+          name: 'updatePresentation',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i1sjay6c.CalendarPresentationUpdateRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['calendar'] as _inx4l1vp.CalendarEndpoint)
+                  .updatePresentation(
+                    session,
+                    params['request'],
+                  ),
+        ),
+        'updateProtocolMetadata': _is.MethodConnector(
+          name: 'updateProtocolMetadata',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is
+                  .getType<_i53ouodu.CalendarProtocolMetadataUpdateRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['calendar'] as _inx4l1vp.CalendarEndpoint)
+                  .updateProtocolMetadata(
                     session,
                     params['request'],
                   ),

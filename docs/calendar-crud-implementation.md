@@ -1,6 +1,6 @@
 # Native calendar CRUD: first implemented slice
 
-This slice implements calendar names, availability settings and subject associations. Events, tasks, availability calculation/rules, descriptions/colors, iCalendar metadata/import/export, feeds, scheduling and alarms remain following work. See [ADR 0049](adr/0049-first-calendar-crud-implementation.md) and [validation evidence](scaffold-validation.md).
+This slice implements calendar names, availability settings and subject associations. Native descriptions/RGB and protocol text editing now extend this slice under [ADR 0050](adr/0050-calendar-presentation-and-protocol-text.md); see [the metadata guide](calendar-metadata.md). Events, tasks, availability calculation/rules, iCalendar import/export, feeds, scheduling and alarms remain following work. See [ADR 0049](adr/0049-first-calendar-crud-implementation.md) and [validation evidence](scaffold-validation.md).
 
 ## Host integration and authorization
 
@@ -12,7 +12,7 @@ A host can independently allow metadata edits, availability-setting changes, ass
 
 `freshCheck` repeats trusted-context resolution and authorization immediately before each mutation. Permission changes after that check remain possible. `coordinated` additionally requires the host's final callback to establish effective guards in the supplied transaction and every relevant policy revoker to participate until actual commit. Installing a fresh-check adapter when coordinated mode is required rejects; live capability downgrade also rejects. A shared database or version label alone does not establish coordination. Policy methods must have no business side effects; a timed-out asynchronous callback can finish later but cannot authorize the aborted service operation.
 
-The example uses authenticated JWT identity, scope `demo:user:<principal>` and a static policy-version label because its ownership rule is static. It accepts only the signed-in user's exact `demo/user/<principal>` association. Production adapters can validate users, rooms or other namespaced subjects against trusted host data. Hosts with mutable membership/object rules must supply an authoritative changing query-policy epoch and the declared revocation mechanism. JWT logout behavior remains unchanged: refresh credentials are revoked, copied access JWTs remain valid until expiry.
+The example uses authenticated JWT identity, scope `demo:user:<principal>` and a static policy-version label because its ownership rule is static; the current expanded metadata contract uses `private-scope-v2`. It accepts only the signed-in user's exact `demo/user/<principal>` association. Production adapters can validate users, rooms or other namespaced subjects against trusted host data. Hosts with mutable membership/object rules must supply an authoritative changing query-policy epoch and the declared revocation mechanism. JWT logout behavior remains unchanged: refresh credentials are revoked, copied access JWTs remain valid until expiry.
 
 ## Generated API
 
@@ -80,4 +80,6 @@ Order is ascending opaque UUID, not name/date/locale. A continuation is a 32-ran
 
 The service applies scope/candidate restrictions and keyed object authorization in bounded batches. It returns a cursor only after finding another authorized result. If the scan cannot establish a complete page/true exhaustion within its budget, the whole query fails explicitly. No hidden objects, counts or busy placeholders appear. Returned lists are not evidence of free time. Scope-local expired cursor cleanup runs when creating a new continuation; there is no global cleanup worker yet, and abandoned scopes may retain expired handles until a later cleanup policy is implemented.
 
-The Flutter example supports list/create/rename/settings/self-association/contribution/removal/delete. Stale edits require explicit reload; no silent overwrite or retry. Descriptions/colors/protocol editing and richer production host administration follow separately.
+The Flutter example supports list/create/rename/settings/self-association/contribution/removal/delete. Stale edits require explicit reload; no silent overwrite or retry. Native descriptions/RGB and scoped protocol text editing are now documented in [the metadata guide](calendar-metadata.md); richer production host administration and remaining metadata follow separately.
+
+The metadata increment adds nullable native presentation fields, a typed protocol text object, four request/value models and independent protocol permission/group under [ADR 0050](adr/0050-calendar-presentation-and-protocol-text.md). Its full-replacement and clearing semantics are specified in [the metadata guide](calendar-metadata.md).

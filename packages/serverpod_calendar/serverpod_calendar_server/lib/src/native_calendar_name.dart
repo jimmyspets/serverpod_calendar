@@ -1,3 +1,5 @@
+import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
+
 import 'dart:convert';
 
 /// Native label validation, deliberately independent of protocol text rules.
@@ -45,4 +47,18 @@ void validateCalendarOpaqueText(String input, {required int maxUtf8Bytes}) {
   } on FormatException {
     throw ArgumentError('Malformed Unicode');
   }
+}
+
+String? normalizeCalendarDescription(String? input) {
+  if (input == null || input.isEmpty) return null;
+  validateCalendarPlainText(input, maxCodePoints: 16384);
+  return input;
+}
+
+String? normalizeCalendarNativeColor(String? input) {
+  if (input == null || input.isEmpty) return null;
+  if (input.length != 7 || !RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(input)) {
+    throw ArgumentError('Native color requires #RRGGBB');
+  }
+  return input.toUpperCase();
 }

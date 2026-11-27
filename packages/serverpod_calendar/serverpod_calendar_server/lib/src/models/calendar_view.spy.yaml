@@ -4,7 +4,10 @@ fields:
   revision: int
   disclosedGroups: List<CalendarFieldGroup>
   displayName: String?
+  description: String?
+  color: String?
   availabilityZoneId: String?
   noRuleFallback: CalendarNoRuleFallback?
+  protocolMetadata: CalendarProtocolMetadata?
   createdAt: DateTime?
   updatedAt: DateTime?

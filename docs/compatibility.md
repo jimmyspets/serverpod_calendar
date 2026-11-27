@@ -1,9 +1,12 @@
 # Module interfaces and interoperability profiles
 
+The basic CRUD slice now also has [native presentation and scoped protocol text metadata](calendar-metadata.md) under [ADR 0050](adr/0050-calendar-presentation-and-protocol-text.md). This adds no wire/feed-client interoperability.
+
+
 **Current implementation:** the first native calendar CRUD/association slice is described in [the implementation guide](calendar-crud-implementation.md) and [ADR 0049](adr/0049-first-calendar-crud-implementation.md). Broader model/interface proposals below remain future design unless explicitly covered there; this adds no iCalendar/feed-client compatibility.
 
 
-Status: **calendar/interoperability requirements remain unimplemented and untested**. Initial host authentication and module diagnostic wiring have separate [scaffold evidence](scaffold-validation.md). The main product is a Serverpod module with generated Dart APIs used by host Flutter GUIs. External calendar feeds need only a documented subset. Their client limitations do not restrict canonical calendar/task/scheduling/availability capabilities.
+Status: **basic native calendar CRUD/presentation and decoded protocol text have scoped local evidence; wire interoperability remains unimplemented/unverified**. Initial host authentication and module diagnostic wiring have separate [scaffold evidence](scaffold-validation.md). The main product is a Serverpod module with generated Dart APIs used by host Flutter GUIs. External calendar feeds need only a documented subset. Their client limitations do not restrict canonical calendar/task/scheduling/availability capabilities.
 
 The baseline features formerly marked Proposed in the RFC matrices are now Yes — planned by maintainer instruction; see [RFC scope](rfc/README.md). This includes scoped UID/acknowledgement/snooze and DISPLAY alarm behavior, event/free-busy method baselines, calendar UID/update/color and the documented HTTP validation/caching policy. Detailed combinations and evidence remain pending; deferred rows retain their scope; the subsequent walkthrough resolved all listed Undecided rows.
 
@@ -13,7 +16,7 @@ Native calendar week labels and first-day presentation use ISO 8601/Monday under
 
 Current native date/precision profile: **[1970-01-01, 2100-01-01)** and **whole seconds**, with explicit exclusive endpoints and necessary UTC spillover only. [ADR 0041](adr/0041-whole-second-1970-2100-profile.md) supersedes the historical microsecond, broad-date and 2037 evidence below. Generated timezone data calculates the supported future horizon; see [limits and updates](timezone-data.md). This is native calculation evidence, not ICS or external-client verification.
 
-Host authorization boundary is selected under [ADR 0043](adr/0043-host-authorization-context.md): host-defined policy receives trusted collection/object context; modules enforce it. Domain policy, object-specific disclosure and query/mutation integration remain unimplemented. Authenticated diagnostic smoke tests do not verify this contract. See [the authorization guide](host-authorization.md).
+Host authorization boundary is selected under [ADR 0043](adr/0043-host-authorization-context.md): host-defined policy receives trusted collection/object context; modules enforce it. The basic calendar slice implements scoped policy/disclosure/query/mutation integration under ADRs 0049/0050; other domain families remain pending. Diagnostic smoke tests alone do not establish the domain contract. See [the authorization guide](host-authorization.md).
 
 Native query response choices are selected in [ADR 0044](adr/0044-authorized-query-projections-and-pagination.md): separate detail/free-busy, predefined field groups and no-total initial pages. Basic calendar policy/projection/cursor behavior is implemented under ADR 0049; event/task/free-busy queries remain pending; this does not change wire/feed-client support.
 

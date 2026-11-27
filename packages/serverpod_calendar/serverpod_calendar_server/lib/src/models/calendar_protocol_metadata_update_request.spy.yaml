@@ -1,0 +1,5 @@
+class: CalendarProtocolMetadataUpdateRequest
+fields:
+  calendarId: UuidValue
+  expectedRevision: int
+  metadata: CalendarProtocolMetadata

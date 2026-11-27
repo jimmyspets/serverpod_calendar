@@ -26,10 +26,14 @@ import 'calendar_metadata_update_request.dart' as _i759fw3a;
 import 'calendar_mutation_receipt.dart' as _iq0eskk0;
 import 'calendar_no_rule_fallback.dart' as _itts4qyp;
 import 'calendar_page.dart' as _i0jfcg0j;
+import 'calendar_presentation_update_request.dart' as _i9m9yk5s;
+import 'calendar_protocol_metadata.dart' as _itchuj1l;
+import 'calendar_protocol_metadata_update_request.dart' as _iyawor89;
 import 'calendar_settings_update_request.dart' as _i66us6t1;
 import 'calendar_subject_action.dart' as _i41idnki;
 import 'calendar_subject_change_request.dart' as _iuzjb8ji;
 import 'calendar_subject_view.dart' as _ir7mv910;
+import 'calendar_text_variant.dart' as _itcy22f3;
 import 'calendar_view.dart' as _ivspd2q7;
 export 'calendar_create_request.dart';
 export 'calendar_exception.dart';
@@ -39,10 +43,14 @@ export 'calendar_metadata_update_request.dart';
 export 'calendar_mutation_receipt.dart';
 export 'calendar_no_rule_fallback.dart';
 export 'calendar_page.dart';
+export 'calendar_presentation_update_request.dart';
+export 'calendar_protocol_metadata.dart';
+export 'calendar_protocol_metadata_update_request.dart';
 export 'calendar_settings_update_request.dart';
 export 'calendar_subject_action.dart';
 export 'calendar_subject_change_request.dart';
 export 'calendar_subject_view.dart';
+export 'calendar_text_variant.dart';
 export 'calendar_view.dart';
 export 'client.dart';
 
@@ -115,6 +123,16 @@ class Protocol extends _isc.SerializationManager {
     if (t == _i0jfcg0j.CalendarPage) {
       return _i0jfcg0j.CalendarPage.fromJson(data) as T;
     }
+    if (t == _i9m9yk5s.CalendarPresentationUpdateRequest) {
+      return _i9m9yk5s.CalendarPresentationUpdateRequest.fromJson(data) as T;
+    }
+    if (t == _itchuj1l.CalendarProtocolMetadata) {
+      return _itchuj1l.CalendarProtocolMetadata.fromJson(data) as T;
+    }
+    if (t == _iyawor89.CalendarProtocolMetadataUpdateRequest) {
+      return _iyawor89.CalendarProtocolMetadataUpdateRequest.fromJson(data)
+          as T;
+    }
     if (t == _i66us6t1.CalendarSettingsUpdateRequest) {
       return _i66us6t1.CalendarSettingsUpdateRequest.fromJson(data) as T;
     }
@@ -126,6 +144,9 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _ir7mv910.CalendarSubjectView) {
       return _ir7mv910.CalendarSubjectView.fromJson(data) as T;
+    }
+    if (t == _itcy22f3.CalendarTextVariant) {
+      return _itcy22f3.CalendarTextVariant.fromJson(data) as T;
     }
     if (t == _ivspd2q7.CalendarView) {
       return _ivspd2q7.CalendarView.fromJson(data) as T;
@@ -171,6 +192,24 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_i0jfcg0j.CalendarPage?>()) {
       return (data != null ? _i0jfcg0j.CalendarPage.fromJson(data) : null) as T;
     }
+    if (t == _isc.getType<_i9m9yk5s.CalendarPresentationUpdateRequest?>()) {
+      return (data != null
+              ? _i9m9yk5s.CalendarPresentationUpdateRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_itchuj1l.CalendarProtocolMetadata?>()) {
+      return (data != null
+              ? _itchuj1l.CalendarProtocolMetadata.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_iyawor89.CalendarProtocolMetadataUpdateRequest?>()) {
+      return (data != null
+              ? _iyawor89.CalendarProtocolMetadataUpdateRequest.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _isc.getType<_i66us6t1.CalendarSettingsUpdateRequest?>()) {
       return (data != null
               ? _i66us6t1.CalendarSettingsUpdateRequest.fromJson(data)
@@ -195,12 +234,24 @@ class Protocol extends _isc.SerializationManager {
               : null)
           as T;
     }
+    if (t == _isc.getType<_itcy22f3.CalendarTextVariant?>()) {
+      return (data != null
+              ? _itcy22f3.CalendarTextVariant.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _isc.getType<_ivspd2q7.CalendarView?>()) {
       return (data != null ? _ivspd2q7.CalendarView.fromJson(data) : null) as T;
     }
     if (t == List<_ivspd2q7.CalendarView>) {
       return (data as List)
               .map((e) => deserialize<_ivspd2q7.CalendarView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_itcy22f3.CalendarTextVariant>) {
+      return (data as List)
+              .map((e) => deserialize<_itcy22f3.CalendarTextVariant>(e))
               .toList()
           as T;
     }
@@ -239,11 +290,17 @@ class Protocol extends _isc.SerializationManager {
       _iq0eskk0.CalendarMutationReceipt => 'CalendarMutationReceipt',
       _itts4qyp.CalendarNoRuleFallback => 'CalendarNoRuleFallback',
       _i0jfcg0j.CalendarPage => 'CalendarPage',
+      _i9m9yk5s.CalendarPresentationUpdateRequest =>
+        'CalendarPresentationUpdateRequest',
+      _itchuj1l.CalendarProtocolMetadata => 'CalendarProtocolMetadata',
+      _iyawor89.CalendarProtocolMetadataUpdateRequest =>
+        'CalendarProtocolMetadataUpdateRequest',
       _i66us6t1.CalendarSettingsUpdateRequest =>
         'CalendarSettingsUpdateRequest',
       _i41idnki.CalendarSubjectAction => 'CalendarSubjectAction',
       _iuzjb8ji.CalendarSubjectChangeRequest => 'CalendarSubjectChangeRequest',
       _ir7mv910.CalendarSubjectView => 'CalendarSubjectView',
+      _itcy22f3.CalendarTextVariant => 'CalendarTextVariant',
       _ivspd2q7.CalendarView => 'CalendarView',
       _ => null,
     };
@@ -278,6 +335,12 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarNoRuleFallback';
       case _i0jfcg0j.CalendarPage():
         return 'CalendarPage';
+      case _i9m9yk5s.CalendarPresentationUpdateRequest():
+        return 'CalendarPresentationUpdateRequest';
+      case _itchuj1l.CalendarProtocolMetadata():
+        return 'CalendarProtocolMetadata';
+      case _iyawor89.CalendarProtocolMetadataUpdateRequest():
+        return 'CalendarProtocolMetadataUpdateRequest';
       case _i66us6t1.CalendarSettingsUpdateRequest():
         return 'CalendarSettingsUpdateRequest';
       case _i41idnki.CalendarSubjectAction():
@@ -286,6 +349,8 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarSubjectChangeRequest';
       case _ir7mv910.CalendarSubjectView():
         return 'CalendarSubjectView';
+      case _itcy22f3.CalendarTextVariant():
+        return 'CalendarTextVariant';
       case _ivspd2q7.CalendarView():
         return 'CalendarView';
     }
@@ -322,6 +387,19 @@ class Protocol extends _isc.SerializationManager {
     if (dataClassName == 'CalendarPage') {
       return deserialize<_i0jfcg0j.CalendarPage>(data['data']);
     }
+    if (dataClassName == 'CalendarPresentationUpdateRequest') {
+      return deserialize<_i9m9yk5s.CalendarPresentationUpdateRequest>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarProtocolMetadata') {
+      return deserialize<_itchuj1l.CalendarProtocolMetadata>(data['data']);
+    }
+    if (dataClassName == 'CalendarProtocolMetadataUpdateRequest') {
+      return deserialize<_iyawor89.CalendarProtocolMetadataUpdateRequest>(
+        data['data'],
+      );
+    }
     if (dataClassName == 'CalendarSettingsUpdateRequest') {
       return deserialize<_i66us6t1.CalendarSettingsUpdateRequest>(data['data']);
     }
@@ -333,6 +411,9 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'CalendarSubjectView') {
       return deserialize<_ir7mv910.CalendarSubjectView>(data['data']);
+    }
+    if (dataClassName == 'CalendarTextVariant') {
+      return deserialize<_itcy22f3.CalendarTextVariant>(data['data']);
     }
     if (dataClassName == 'CalendarView') {
       return deserialize<_ivspd2q7.CalendarView>(data['data']);

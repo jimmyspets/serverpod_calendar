@@ -4,8 +4,11 @@ table: serverpod_calendar_data
 fields:
   calendarId: UuidValue, relation(parent=serverpod_calendar_identity)
   displayName: String
+  description: String?
+  color: String?
   availabilityZoneId: String
   noRuleFallback: CalendarNoRuleFallback
+  protocolMetadata: CalendarProtocolMetadata?
   createdAt: DateTime
   updatedAt: DateTime
 indexes:

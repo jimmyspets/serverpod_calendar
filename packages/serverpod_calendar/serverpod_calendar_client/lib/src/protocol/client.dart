@@ -21,6 +21,10 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_mutation_receipt
     as _ibyc2v98;
 import 'package:serverpod_calendar_client/src/protocol/calendar_page.dart'
     as _iq8vfd61;
+import 'package:serverpod_calendar_client/src/protocol/calendar_presentation_update_request.dart'
+    as _iju8myao;
+import 'package:serverpod_calendar_client/src/protocol/calendar_protocol_metadata_update_request.dart'
+    as _i3063onq;
 import 'package:serverpod_calendar_client/src/protocol/calendar_settings_update_request.dart'
     as _ixxutfio;
 import 'package:serverpod_calendar_client/src/protocol/calendar_subject_change_request.dart'
@@ -93,6 +97,22 @@ class EndpointCalendar extends _isc.EndpointRef {
   ) => caller.callServerEndpoint<_ibyc2v98.CalendarMutationReceipt?>(
     'serverpod_calendar.calendar',
     'updateMetadata',
+    {'request': request},
+  );
+
+  _ida.Future<_ibyc2v98.CalendarMutationReceipt?> updatePresentation(
+    _iju8myao.CalendarPresentationUpdateRequest request,
+  ) => caller.callServerEndpoint<_ibyc2v98.CalendarMutationReceipt?>(
+    'serverpod_calendar.calendar',
+    'updatePresentation',
+    {'request': request},
+  );
+
+  _ida.Future<_ibyc2v98.CalendarMutationReceipt?> updateProtocolMetadata(
+    _i3063onq.CalendarProtocolMetadataUpdateRequest request,
+  ) => caller.callServerEndpoint<_ibyc2v98.CalendarMutationReceipt?>(
+    'serverpod_calendar.calendar',
+    'updateProtocolMetadata',
     {'request': request},
   );
 

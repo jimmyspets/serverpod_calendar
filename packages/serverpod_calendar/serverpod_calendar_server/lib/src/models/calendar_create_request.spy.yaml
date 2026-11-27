@@ -1,5 +1,7 @@
 class: CalendarCreateRequest
 fields:
   displayName: String
+  description: String?
+  color: String?
   availabilityZoneId: String
   noRuleFallback: CalendarNoRuleFallback

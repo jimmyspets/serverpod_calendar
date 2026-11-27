@@ -55,12 +55,13 @@ try {
   }
   finally { Pop-Location }
   Push-Location $ExampleFlutter
-  try { Invoke-Checked flutter @('test', '--no-pub', 'test/sign_in_test.dart') }
+  try { Invoke-Checked flutter @('test', '--no-pub', 'test') }
   finally { Pop-Location }
   & "$PSScriptRoot/reset-test.ps1"
   Push-Location $ExampleServer
   try { Invoke-Checked dart @('test', 'test/integration/calendar_test.dart') }
   finally { Pop-Location }
+  Invoke-Checked python @('tool/metadata_upgrade_smoke.py')
   & "$PSScriptRoot/build-host.ps1"
   $smokeArgs = @('run', 'tool/host_smoke.dart')
   if (-not $SkipBrowser) { $smokeArgs += '--flutter' }

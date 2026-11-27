@@ -1,4 +1,4 @@
-/// iCalendar parsing and serialization will be introduced here after profile review.
-///
-/// This scaffold does not implement calendar behavior or protocol compatibility.
+/// Bounded decoded iCalendar metadata profile. Parsing/serialization is pending.
 library;
+
+export 'src/calendar_text_metadata.dart';

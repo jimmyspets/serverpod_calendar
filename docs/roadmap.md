@@ -174,3 +174,7 @@ VTODO iTIP/inbound-outbound scheduling mail, CalDAV/CalDAV scheduling, general u
 ## First calendar CRUD increment
 
 The first name/settings/association slice is implemented under [ADR 0049](adr/0049-first-calendar-crud-implementation.md), with generated module/host migrations and replaceable host policy. Duplicate labels, private demo scopes and the basic-batch boundary are maintainer-confirmed. [The implementation guide](calendar-crud-implementation.md) records concrete API/storage/limits and remaining work. Broader persistence/authorization checks above remain open for event/task/rule/feed/worker families, production coordinated policy and retention/cleanup. Descriptions/colors and protocol metadata editing follow separately; no availability calculation or interoperability is claimed by storing a fallback/subject link.
+
+## Native presentation and protocol text increment
+
+[ADR 0050](adr/0050-calendar-presentation-and-protocol-text.md) records maintainer-confirmed separation of native/protocol values, RGB versus CSS3 colors, preserved multiline native descriptions with a 16,384-code-point cap, and a first NAME/DESCRIPTION/COLOR editing batch. [The implementation guide](calendar-metadata.md) distinguishes scoped native editing/storage from pending parsing/export/feed publication. URLs, categories, images, refresh hints and source/property-parameter preservation remain subsequent work.

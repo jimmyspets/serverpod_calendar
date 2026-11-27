@@ -79,3 +79,7 @@ The maintainer selected a 256-Unicode-code-point native display-name cap, outer 
 ## First native CRUD scope
 
 The maintainer selected duplicate native display names, private scopes per signed-in demo user only in the example, and basic calendar CRUD/subject associations before description/color/iCalendar metadata editing. [ADR 0049](adr/0049-first-calendar-crud-implementation.md) distinguishes those confirmed choices from the concrete implementation mechanics under review. [The implementation guide](calendar-crud-implementation.md) supersedes earlier blanket scaffold-only statements for this limited slice.
+
+## Native presentation and protocol text increment
+
+[ADR 0050](adr/0050-calendar-presentation-and-protocol-text.md) records maintainer-confirmed separation of native/protocol values, RGB versus CSS3 colors, preserved multiline native descriptions with a 16,384-code-point cap, and a first NAME/DESCRIPTION/COLOR editing batch. [The implementation guide](calendar-metadata.md) distinguishes scoped native editing/storage from pending parsing/export/feed publication. URLs, categories, images, refresh hints and source/property-parameter preservation remain subsequent work.

@@ -97,3 +97,29 @@ Commands/checks actually run:
 - Final `dart analyze --fatal-infos`, formatting of all 85 authored Dart files, relative documentation links, consecutive ADRs and whitespace checks: passed. No local credential values were found in candidate repository files; LICENSE remains unchanged. Logs/config/generated credentials/build output stay ignored.
 
 Only the example's declared `freshCheck` policy ships. Strong-mode configuration/downgrade rejection is tested; no production transaction-coordinated authorization provider or revocation/recovery guarantee for future module families is claimed. Description/color/protocol metadata editing, real event/feed/worker dependencies, marker retention and global cursor cleanup remain following work. The optional feed module is not required or installed for these tests. No RFC/native calendar timing or external-client compatibility is inferred from CRUD tests.
+
+## Calendar presentation and decoded protocol text batch, 2026-10-21
+
+[ADR 0050](adr/0050-calendar-presentation-and-protocol-text.md) and [the metadata guide](calendar-metadata.md) distinguish the implemented native editing/storage slice from still-pending parsing/export/feed support. The maintainer selected separate native/protocol values, opaque native RGB, RFC CSS3 names, preserved multiline native descriptions capped at 16,384 code points and a first NAME/DESCRIPTION/COLOR batch. Exact generated schema, limits and host methods remain implementation review choices.
+
+Source review checked field/permission separation, nested snapshot immutability, request freezing before callbacks, plain text/color/language validation, atomic aggregate/scope revisions, disclosure and deletion scrubbing. It also found that refreshing after one section save could otherwise rebase an old draft over a concurrent change: the example now accounts only for its own known revision increment and requires explicit reload after an unexpected revision or stale response. This is agent review, not independent human review or hosted CI.
+
+Commands/checks actually run during the batch:
+
+- Pinned module and example `serverpod --no-analytics create-migration --tag calendar-metadata`: generated successfully; reviewed SQL adds only nullable description/color/typed-JSON columns, retaining existing identity, names/settings/revisions and active timestamps. The MCP create-migration call reported no changes; the CLI-generated host revision and actual migration tests establish schema evidence.
+- Focused native/profile unit tests: **7 new cases passed**. Focused database metadata subset: **5 new cases passed**. Flutter explicit-copy widget test: **passed** without network access, verifying no automatic synchronization, preservation of translated variants and explicit save/reset behavior.
+- Batch check regeneration stability, formatting, analysis, **443 core tests on VM and 443 on Chrome**, **10 module text/profile tests on VM and 10 on Chrome**, **2 Flutter widget tests**, and **22 real database/policy tests**: passed. A first attempt stopped at formatting of automatic brace fixes; formatting was applied before restarting the checks.
+
+Database evidence includes separate native/protocol values and gates, group-redacted pages, empty/clear semantics, invalid/stale/final-denied rollback, nested request/policy immutability, cursor invalidation and rich active-payload removal with minimal markers. BCP47 fixtures establish well-formed syntax only, not registry validity, matching or translation. CSS3 tests do not imply arbitrary CSS support. No accepted raw ICS/property-parameter preservation, wire round trip, ETag behavior or external-client rendering is claimed.
+
+Final batch results:
+
+- `./tool/check.ps1`: **passed** after the formatting correction. Both independent compiled hosts passed native/protocol metadata isolation, multilingual generated-client round trips, independent group projection, name-only retention, invalid-color rejection, native clearing, existing stale/cursor/delete-attach races and JWT lifecycle checks.
+- The expanded Flutter WebDriver journey **passed** native descriptions/RGB, translated protocol NAME plus explicit default-name/description copy, independent CSS3 color, retention across native edits, an external concurrent protocol change, stale draft rejection with unchanged server data, explicit reload and the existing association/dependency/delete/sign-out journey.
+- Flutter Web release build **passed**, including its Wasm dry-run compile; no Wasm runtime interoperability claim follows.
+- `python tool/metadata_upgrade_smoke.py`: **passed** against a separate temporary database on the dedicated test service. It loads the generated pre-metadata schema, populates synthetic identity/revision/content/timestamps/subject/scope fixtures, applies the generated host upgrade and verifies preservation plus null new fields. The temporary database is dropped only after this process successfully creates it. This helper is now included in the root check sequence; it was also executed separately in this run.
+- Final formatting covered all **89 authored Dart files**; analysis, PowerShell/Python syntax, relative links, ADR numbering, whitespace, unchanged LICENSE and local-credential exclusion were checked separately before commit. Build/config/log artifacts remain ignored.
+
+No ICS parser/serializer, ALTREP/extension-parameter acceptance, source metadata round trip, calendar/feed UID/LAST-MODIFIED implementation, ETag behavior or external-client UI support was verified by these metadata tests. The host example still declares fresh-check authorization; a coordinated production policy and other domain families remain separate work.
+
+The restored hidden development runner applied host migration `20261020150003755-calendar-metadata` to existing development storage. Agent-native Serverpod MCP log access confirmed that exact migration, and a subsequent MCP hot reload completed successfully.

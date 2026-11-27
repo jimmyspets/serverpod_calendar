@@ -39,3 +39,5 @@ Use the RFC tables as the latest feature-scope source when older narratives conf
 Use Mermaid for documentation diagrams, including architecture, relationships, and request flows. Store diagram source directly in Markdown fenced code blocks labeled `mermaid` so it can be reviewed alongside the text. Keep diagrams consistent with the accompanying documentation and clearly label proposed designs.
 
 - [First native calendar CRUD implementation and host integration](calendar-crud-implementation.md)
+
+- [Calendar native presentation and scoped protocol text metadata](calendar-metadata.md)

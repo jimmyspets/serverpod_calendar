@@ -137,3 +137,7 @@ The maintainer selected an ETag-only initial HTTP feed contract, deferring Last-
 ## Initial scaffold evidence
 
 [ADR 0021](adr/0021-initial-workspace-scaffold.md) and the [validation record](scaffold-validation.md) describe the initial package/authentication milestone. It supplies local generated-client/Flutter smoke evidence for part of FR-01/FR-27 and the multi-instance foundation; it does not complete those requirements, any calendar feature, CI acceptance or external compatibility. Domain, notification delivery and release checks remain pending.
+
+## Native presentation/text increment
+
+The maintainer selected separate native and protocol description/color, native opaque RGB hex versus RFC CSS3 color names, optional preserved multiline native descriptions capped at 16,384 code points, and NAME/DESCRIPTION language variants plus COLOR before other metadata. [ADR 0050](adr/0050-calendar-presentation-and-protocol-text.md) and [the metadata guide](calendar-metadata.md) record the limited FR-02/08/24 implementation and remaining wire/feed requirements. Field editing/storage alone does not fulfill FR-06/14 interoperability.

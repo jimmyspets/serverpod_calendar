@@ -1,4 +1,5 @@
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 
 import 'generated/protocol.dart';
 
@@ -12,6 +13,7 @@ enum CalendarPermission {
   read,
   create,
   updateMetadata,
+  updateProtocolMetadata,
   updateAvailabilitySettings,
   delete,
   readAssociations,
@@ -61,6 +63,9 @@ final class CalendarPolicySnapshot {
     required this.calendarId,
     required this.revision,
     required this.displayName,
+    required this.description,
+    required this.color,
+    required this.protocolMetadata,
     required this.availabilityZoneId,
     required this.noRuleFallback,
     required Iterable<CalendarPolicySubject> subjects,
@@ -68,8 +73,21 @@ final class CalendarPolicySnapshot {
   final UuidValue calendarId;
   final int revision;
   final String displayName, availabilityZoneId;
+  final String? description, color;
+  final IcalendarCalendarTextMetadata protocolMetadata;
   final CalendarNoRuleFallback noRuleFallback;
   final List<CalendarPolicySubject> subjects;
+}
+
+/// Full replacement distinguishes clearing nulls from a name-only edit.
+final class CalendarPresentationIntent {
+  const CalendarPresentationIntent(
+    this.displayName,
+    this.description,
+    this.color,
+  );
+  final String displayName;
+  final String? description, color;
 }
 
 final class CalendarProposedChange {
@@ -78,10 +96,14 @@ final class CalendarProposedChange {
     this.availabilityZoneId,
     this.noRuleFallback,
     this.subject,
+    this.presentation,
+    this.protocolMetadata,
   });
   final String? displayName, availabilityZoneId;
   final CalendarNoRuleFallback? noRuleFallback;
   final CalendarSubjectIntent? subject;
+  final CalendarPresentationIntent? presentation;
+  final IcalendarCalendarTextMetadata? protocolMetadata;
 }
 
 final class CalendarAuthorizationRequest {
