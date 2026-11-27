@@ -75,3 +75,7 @@ See [PERIOD-valued event additions](icalendar-recurring-masters.md#period-valued
 See [occurrence timing and cancellation components](icalendar-occurrence-components.md) for ADR 0068 grouped master/override source-to-core adaptation and its proposed snapshot/inheritance profile.
 
 See [standalone availability wire adaptation](icalendar-availability-adapter.md) for ADR 0069 source/profile validation, positive openings and bounded core composition inputs.
+
+## Availability wire metadata increment, 2026-10-22
+
+[Availability wire publication metadata](icalendar-availability-metadata.md) under [ADR 0070](adr/0070-availability-wire-metadata.md) now validates and preserves organizer, legal URL/class, repeated category/comment/contact groups and bounded trusted private extensions. This supersedes earlier pending/rejection wording only for this pure adapter slice. CONTACT remains source-only; authenticated database import/export, current host approval and feeds remain pending. The next selected import increment is create-only, rejecting existing protocol UIDs; updates/reconciliation remain separate.

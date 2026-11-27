@@ -60,3 +60,7 @@ The [recurring VEVENT master adapter](docs/icalendar-recurring-masters.md) exten
 ## Availability wire timing profile
 
 [ADR 0069](docs/adr/0069-first-availability-wire-adapter.md) adds the pure [VAVAILABILITY/AVAILABLE timing and composition profile](docs/icalendar-availability-adapter.md), including bounded recurrence/overrides, exact zones and positive openings. Rich metadata, authenticated import/export and HTTP publication remain pending; no host authorization or external-client compatibility follows from parsing.
+
+## Availability wire metadata increment, 2026-10-22
+
+[Availability wire publication metadata](docs/icalendar-availability-metadata.md) under [ADR 0070](docs/adr/0070-availability-wire-metadata.md) now validates and preserves organizer, legal URL/class, repeated category/comment/contact groups and bounded trusted private extensions. This supersedes earlier pending/rejection wording only for this pure adapter slice. CONTACT remains source-only; authenticated database import/export, current host approval and feeds remain pending. The next selected import increment is create-only, rejecting existing protocol UIDs; updates/reconciliation remain separate.

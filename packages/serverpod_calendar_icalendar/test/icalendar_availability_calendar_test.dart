@@ -5,70 +5,11 @@ import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 import 'package:test/test.dart';
 
 import 'support/icalendar_fixtures.dart';
+import 'support/availability_fixtures.dart';
 
 Matcher rejects(IcalendarComponentError kind) => throwsA(
   isA<IcalendarComponentException>().having((e) => e.kind, 'kind', kind),
 );
-String opening({
-  String uid = 'opening',
-  String timing = 'DTSTART:20261022T090000Z',
-  List<String> extra = const [],
-}) => [
-  'BEGIN:AVAILABLE',
-  'UID:$uid',
-  'DTSTAMP:20261022T000000Z',
-  timing,
-  ...extra,
-  'END:AVAILABLE',
-].join('\r\n');
-String definition({
-  String uid = 'definition',
-  List<String> extra = const [],
-  List<String> openings = const [],
-}) => [
-  'BEGIN:VAVAILABILITY',
-  'UID:$uid',
-  'DTSTAMP:20261022T000000Z',
-  ...extra,
-  ...openings,
-  'END:VAVAILABILITY',
-].join('\r\n');
-IcalendarAvailabilityCalendar read(
-  List<String> definitions, {
-  List<String> zones = const [],
-  IcalendarComponentLimits limits = const IcalendarComponentLimits(),
-}) => parseIcalendarAvailabilityCalendar(
-  utf8.encode(file(events: definitions, zones: zones)),
-  limits: limits,
-);
-UtcWindow get window => UtcWindow(
-  start: DateTime.utc(2026, 10, 22),
-  end: DateTime.utc(2026, 10, 23),
-);
-List<AvailabilityDefinition> expand(
-  IcalendarAvailabilityCalendar c, {
-  UtcWindow? period,
-  int work = 200000,
-  int count = 1000,
-}) => c.expand(
-  window: period ?? window,
-  maxCandidateWork: work,
-  maxRuleOccurrences: 10000,
-  maxBaseOccurrences: 10000,
-  maxOccurrences: count,
-);
-List<AvailabilityInterval> compose(
-  IcalendarAvailabilityCalendar c, {
-  bool fallback = false,
-}) => composeAvailability(
-  window: window,
-  definitions: expand(c),
-  fallbackUnavailable: fallback,
-  maxDefinitions: 64,
-  maxOpenings: 1000,
-  maxOutputIntervals: 1000,
-);
-
 void main() {
   test('unbounded closure defaults, immutable source and protocol metadata round trip', () {
     final c = read([
@@ -487,12 +428,6 @@ void main() {
     'strict component/property contexts keep unsupported metadata explicit',
     () {
       for (final property in [
-        'ORGANIZER:mailto:synthetic@example.invalid',
-        'CLASS:PRIVATE',
-        'URL:https://example.invalid/info',
-        'CATEGORIES:Work',
-        'COMMENT:Note',
-        'CONTACT:Desk',
         'X-PRIVATE:Value',
         'RRULE:FREQ=DAILY',
         'STATUS:CANCELLED',
@@ -777,7 +712,7 @@ void main() {
         definition(),
         definition(
           uid: 'private@example.invalid',
-          extra: ['ORGANIZER:mailto:private@example.invalid'],
+          extra: ['X-PRIVATE:private@example.invalid'],
         ),
       ]);
       fail('Expected rejection');
