@@ -375,3 +375,7 @@ The maintainer selected dedicated host organizer approval, annotations on existi
 ## Native availability protocol lifecycle increment, 2026-10-21
 
 The maintainer selected actual-change SEQUENCE, stable protocol state on identical saves and independent opening timestamps with an explicit legacy baseline under [ADR 0061](adr/0061-availability-protocol-lifecycle-and-envelope-duration.md). [The native guide](availability-protocol-lifecycle.md) records server-managed values, readonly host/API context, nullable storage, no-write legacy reads, overflow/revision guarantees and positive unit-preserving envelope duration. This supersedes earlier pending wording for those native increments only. Full wire exception-component/source metadata, parser/export, CONTACT, scheduling and feed/client interoperability remain pending.
+
+## Bounded syntax foundation increment, 2026-10-21
+
+The maintainer selected strict UTF-8/CRLF input under [ADR 0062](adr/0062-bounded-icalendar-syntax-foundations.md). [The syntax guide](icalendar-syntax.md) records immutable ordered syntax, retained unknown/repeated data, separate TEXT/RFC 6868 parameter codecs, bounded atomic failure and deterministic folded output. These pure Dart syntax models add no Serverpod tables/endpoints or domain mapping. Semantic profile validation, supported-source preservation, database import, authorized export, scheduling and HTTP feed/client interoperability remain pending; syntax acceptance alone grants none of them.

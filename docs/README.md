@@ -63,3 +63,5 @@ See [opening-occurrence edits and scoped availability metadata](availability-occ
 See [native availability organizer, text parameters and private extensions](availability-publication-metadata.md) for scoped native editing and independent host approval under ADR 0060; interchange remains pending.
 
 See [native availability versions, timestamps and envelope duration](availability-protocol-lifecycle.md) for ADR 0061, legacy baselines and unchanged-save behavior.
+
+See [bounded iCalendar syntax foundations](icalendar-syntax.md) for strict input, immutable syntax, separate escaping and serialization limits under ADR 0062.

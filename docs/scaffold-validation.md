@@ -325,3 +325,13 @@ The two-host checks verify sequence-zero creation, stable opening stamps on enve
 Relative Markdown links, consecutive ADR numbering through 0061, candidate credential scanning, changed-file scope and unchanged LICENSE were checked. Protocol values are native state, not wire exception-component/source histories, scheduling versions, parser/export or feed/client interoperability.
 
 The owned hidden development runner was restored. Serverpod MCP log inspection/hot reload succeeded; the configured Flutter example was launched through MCP, its DTD connection verified and Dart MCP hot reload succeeded.
+
+## Bounded iCalendar syntax foundations, 2026-10-21
+
+[ADR 0062](adr/0062-bounded-icalendar-syntax-foundations.md) records the confirmed strict UTF-8/CRLF input profile and separate syntax/semantic boundary. Root focused command `dart test packages/serverpod_calendar_icalendar/test/icalendar_syntax_test.dart --reporter expanded` passed **50 VM tests**. This includes 200 generated Unicode TEXT/parameter/tree round trips, arbitrary byte-position folding strides 1–13, malformed/over-limit/late-failing input, private-value-free diagnostics, immutable ordered/repeated/unknown syntax, TEXT versus parameter escapes and deterministic 75-octet rune-safe output. The focused log is ignored `.local/syntax-focused.log`.
+
+The root check script now includes the dedicated iCalendar package on VM and Chrome. Its new test dev dependency uses the existing workspace constraint/resolution; pubspec.lock remains unchanged. No Serverpod endpoints, tables or generated protocols changed, and no migration was required. One uninterrupted `./tool/check.ps1` passed stable generation, formatting, fatal-info analysis, **459 core VM + 459 core Chrome**, **50 syntax VM + 50 syntax Chrome**, **62 module VM + 17 module Chrome**, **3 Flutter widget** and **81 database/policy** tests, populated schema upgrades, host compilation, two independent host/generated-client/JWT checks, the existing Flutter WebDriver journey and web release build. Wasm compilation dry run passed; no Wasm runtime claim follows. The command exited successfully with `All requested local checks passed.`; ignored `.local/syntax-batch-check.log` retains details.
+
+Relative Markdown links, RFC/ADR/roadmap scope, consecutive ADR numbering through 0062, changed-file review, candidate credential scanning and unchanged Apache 2.0 LICENSE were checked. Syntax acceptance is not supported-profile approval, domain import/export, feed publication or external-client evidence.
+
+The owned interactive development runner was restored. Serverpod MCP logs/hot reload passed; its configured Flutter example was launched, its DTD/app URI verified, and Dart MCP hot reload succeeded.

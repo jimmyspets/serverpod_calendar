@@ -1,6 +1,6 @@
 # RFC implementation plan
 
-Reviewed against the documented scope on **2026-10-19**. There is no executable module yet: **nothing in these files is currently implemented or runtime-verified**. These are property/feature planning matrices, not claims of full RFC conformance.
+Reviewed against the documented scope on **2026-10-19**. Scoped native module and syntax increments now have implementation evidence in the linked guides; table plans remain distinct from implemented wire semantics. These are property/feature planning matrices, not claims of full RFC conformance.
 
 Each RFC has its own file with property/component/method/header, purpose, first-release plan and notes. Calendar RFCs enumerate their named properties/extensions; protocol RFCs use the relevant methods, headers and behavior. HTTP/CalDAV inventories are application-scoped, not exhaustive platform specifications. Supporting email/MIME/TLS dependencies are host/library responsibilities, not additional fully implemented RFC claims.
 
@@ -26,6 +26,7 @@ Do not read an undecided field as rejected forever or a planned row as support f
 | RFC | Purpose | Overall first-release status |
 | --- | --- | --- |
 | [5545](rfc-5545.md) | Calendar/event/task format | Scoped property/recurrence profile selected; detailed constraints and implementation pending |
+| [6868](rfc-6868.md) | Parameter value encoding update | Scoped syntax codecs implemented; property/component semantics remain separate |
 | [5546](rfc-5546.md) | iTIP scheduling | Planned event/free-busy profile; task methods deferred |
 | [6047](rfc-6047.md) | iMIP email binding | Restricted profile with host mail adapters; component hints planned, S/MIME deferred; no full RFC conformance |
 | [7953](rfc-7953.md) | Availability rules | Planned calculation/interchange profile |
@@ -53,3 +54,5 @@ The selected RFC profiles must hold with multiple active Serverpod instances. [A
 ## Sources of project decisions
 
 Use [requirements](../requirements.md), [standards scope](../standards.md), and proposed [ADRs](../adr/README.md). The tables make existing scope and unresolved choices reviewable; they do not accept ADRs or invent verified behavior. Link implementation/test evidence to individual rows when code exists, then change the current implementation statement based on that evidence.
+
+[Bounded syntax foundations](../icalendar-syntax.md) under [ADR 0062](../adr/0062-bounded-icalendar-syntax-foundations.md) preserve unknown syntax without approving it for import/export. Semantic profile validation and domain mapping remain pending.
