@@ -15,12 +15,14 @@ import 'availability_values.dart';
 import 'availability_protocol_values.dart';
 import 'availability_storage_values.dart';
 import 'availability_wire_storage.dart';
+import 'availability_wire_output.dart';
 
 part 'calendar_events.dart';
 part 'calendar_free_busy.dart';
 part 'calendar_availability_search.dart';
 part 'calendar_availability.dart';
 part 'calendar_availability_import.dart';
+part 'calendar_availability_export.dart';
 
 /// Configuration is per Serverpod instance, never an allow-decision cache.
 abstract final class CalendarModule {

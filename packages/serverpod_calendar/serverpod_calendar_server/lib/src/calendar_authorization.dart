@@ -9,6 +9,7 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  exportAvailability,
   importAvailability,
   previewAvailabilityOccurrences,
   changeAvailabilityOccurrence,
@@ -158,6 +159,7 @@ final class CalendarAuthorizationRequest {
     this.proposedAvailabilityProtocolState,
     this.availabilityCategoryFilter,
     this.availabilityImport,
+    this.availabilityExport,
     this.occurrenceChange,
     this.proposedTimingOverrides,
     Iterable<CalendarEventFieldGroup> eventGroups = const [],
@@ -184,6 +186,7 @@ final class CalendarAuthorizationRequest {
 
   /// Full immutable batch, absent on the cheap pre-parse authority check.
   final CalendarAvailabilityImportIntent? availabilityImport;
+  final CalendarAvailabilityExportIntent? availabilityExport;
   final CalendarEventOccurrenceChange? occurrenceChange;
   final CalendarEventTimingOverrides? proposedTimingOverrides;
   final Set<CalendarEventFieldGroup> eventGroups;
@@ -217,6 +220,14 @@ final class CalendarAvailabilityImportIntent {
     Iterable<CalendarAvailabilityImportMember> members,
   ) : members = List.unmodifiable(members);
   final List<CalendarAvailabilityImportMember> members;
+}
+
+/// Complete current selection, never a visibility-filtered management list.
+final class CalendarAvailabilityExportIntent {
+  CalendarAvailabilityExportIntent(
+    Iterable<CalendarAvailabilityPolicySnapshot> members,
+  ) : members = List.unmodifiable(members);
+  final List<CalendarAvailabilityPolicySnapshot> members;
 }
 
 final class CalendarAuthorizationDecision {

@@ -6,6 +6,7 @@ import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
 import 'availability_opening_screen.dart';
 import 'availability_metadata_editor.dart';
 import 'availability_import_screen.dart';
+import 'availability_export_screen.dart';
 import 'occurrence_timing_editor.dart' show occurrenceLabel;
 
 String _error(Object e) => e is cal.CalendarException
@@ -198,6 +199,22 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                             if (mounted) await _load();
                           },
                     child: const Text('Edit metadata'),
+                  ),
+                  TextButton(
+                    key: Key('availability-export-${rule.id}'),
+                    onPressed: _busy
+                        ? null
+                        : () async {
+                            await Navigator.of(context).push<void>(
+                              MaterialPageRoute(
+                                builder: (_) => AvailabilityExportScreen(
+                                  client: widget.client,
+                                  rule: rule,
+                                ),
+                              ),
+                            );
+                          },
+                    child: const Text('Export definition'),
                   ),
                   for (final o in rule.content.openings) ...[
                     TextButton(

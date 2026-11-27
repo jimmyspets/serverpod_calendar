@@ -636,6 +636,21 @@ void main() {
     expect((await rulesApi.list(calendar.id)).length, 1);
     await tester.pageBack();
     await _idle(tester);
+
+    await _tap(tester, 'availability-export-${importedHours.id}');
+    await _waitFor(tester, find.byKey(const Key('availability-export-source')));
+    final exportedText = tester
+        .widget<SelectableText>(
+          find.byKey(const Key('availability-export-source')),
+        )
+        .data!;
+    expect(exportedText, contains('BEGIN:VCALENDAR\r\n'));
+    expect(exportedText, contains('UID:example-hours@example.invalid\r\n'));
+    expect(exportedText, contains('CONTACT:Example contact only\r\n'));
+    expect(exportedText, isNot(contains(importedHours.id.toString())));
+    await tester.pageBack();
+    await _idle(tester);
+
     await _tap(tester, 'availability-delete-${importedHours.id}');
     await _idle(tester);
     expect(await rulesApi.list(calendar.id), isEmpty);

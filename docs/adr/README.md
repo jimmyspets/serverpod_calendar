@@ -77,6 +77,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0071](0071-create-only-availability-import.md) | Create-only availability import and storage prerequisites | Accepted scope/identity/source-version choices; schema/API mechanics proposed |
 | [0072](0072-source-preserving-availability-storage.md) | Source-preserving availability storage | Implemented scoped ADR 0071 prerequisites; representation/migration mechanics under review |
 | [0073](0073-authenticated-create-only-availability-import.md) | Authenticated create-only availability import | Accepted scope; concrete API/transaction mechanics under draft review |
+| [0074](0074-authenticated-availability-export.md) | Authenticated current-state availability export | Accepted explicit selection/all-or-nothing; API/serialization mechanics under draft review |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
