@@ -131,3 +131,9 @@ The maintainer selected actual-change SEQUENCE, stable protocol state on identic
 ## Bounded syntax foundation increment, 2026-10-21
 
 The maintainer selected strict UTF-8/CRLF input under [ADR 0062](adr/0062-bounded-icalendar-syntax-foundations.md). [The syntax guide](icalendar-syntax.md) records immutable ordered syntax, retained unknown/repeated data, separate TEXT/RFC 6868 parameter codecs, bounded atomic failure and deterministic folded output. These pure Dart syntax models add no Serverpod tables/endpoints or domain mapping. Semantic profile validation, supported-source preservation, database import, authorized export, scheduling and HTTP feed/client interoperability remain pending; syntax acceptance alone grants none of them.
+
+## Typed iCalendar temporal values, 2026-10-22
+
+[ADR 0063](adr/0063-icalendar-temporal-value-codecs.md) adds scoped pure DATE, UTC/named-zone DATE-TIME and DURATION wire-to-core codecs; [the guide](icalendar-temporal-values.md) records strict forms, endpoint gating, exact integer/resource bounds and normalization. Existing temporal policy is unchanged. Complete component/property validation, VTIMEZONE matching, recurrence wire mapping, source-preserving database import, authorized export and HTTP feeds remain pending. Value acceptance alone establishes no domain authorization or client interoperability.
+
+The maintainer selected VEVENT as the next component adapter after the temporal codecs, and requested named-zone events with VTIMEZONE validation in that first component batch. [ADR 0064](adr/0064-first-vevent-and-zone-validation-contract.md) records the subsequent confirmed full-horizon 1970–2099 matching requirement and permission to read earlier observance seeds solely for in-profile calculation. This is planned scope, not implemented component support; event storage bounds are unchanged.

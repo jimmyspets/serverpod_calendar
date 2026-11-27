@@ -66,6 +66,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0060](0060-availability-publication-metadata.md) | Availability organizer, text parameters and private extensions | Accepted batch choices; mechanics under review |
 | [0061](0061-availability-protocol-lifecycle-and-envelope-duration.md) | Availability protocol lifecycle and envelope duration | Accepted version/opening choices; mechanics under review |
 | [0062](0062-bounded-icalendar-syntax-foundations.md) | Bounded iCalendar syntax foundations | Accepted strict input; syntax/limit mechanics under review |
+| [0063](0063-icalendar-temporal-value-codecs.md) | iCalendar temporal value codecs | Proposed adapter API/mechanics; existing temporal policy unchanged |
+| [0064](0064-first-vevent-and-zone-validation-contract.md) | First VEVENT adapter and zone-validation contract | Confirmed scope/full-horizon matching/earlier seeds; implementation pending |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
