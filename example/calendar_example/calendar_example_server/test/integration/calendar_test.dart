@@ -559,6 +559,232 @@ void main() {
       ))!;
       expect(row.protocolMetadata, isNull);
     });
+    test(
+      'supplemental metadata round trips separately and is group-redacted',
+      () async {
+        final id = (await service.create(createInput('Native')))!.calendarId;
+        await service.updateSupplementalMetadata(
+          CalendarSupplementalMetadataUpdateRequest(
+            calendarId: id,
+            expectedRevision: 1,
+            metadata: CalendarSupplementalMetadata(
+              url: 'HTTP://EXAMPLE.INVALID/a%2Fb',
+              categories: [CalendarCategory(value: ' Work ', language: 'SV')],
+              images: [
+                CalendarImageLink(
+                  uri: 'https://example.invalid/a.png',
+                  display: ['BADGE', 'X-PRIVATE'],
+                  mediaType: 'image/png',
+                ),
+              ],
+              refreshHint: CalendarRefreshHint(days: 1),
+            ),
+          ),
+        );
+        var view = await service.get(id, groups);
+        expect(view.supplementalMetadata!.url, 'HTTP://EXAMPLE.INVALID/a%2Fb');
+        expect(view.supplementalMetadata!.images.single.display, [
+          'BADGE',
+          'X-PRIVATE',
+        ]);
+        expect(view.supplementalMetadata!.refreshHint!.days, 1);
+        expect(view.supplementalMetadata!.refreshHint!.hours, 0);
+        expect(view.protocolMetadata!.names, isEmpty);
+        await service.updateMetadata(
+          CalendarMetadataUpdateRequest(
+            calendarId: id,
+            expectedRevision: 2,
+            displayName: 'Renamed',
+          ),
+        );
+        view = await service.get(id, groups);
+        expect(view.supplementalMetadata!.categories.single.value, ' Work ');
+        policy.grants = {CalendarFieldGroup.metadata};
+        expect((await service.get(id, groups)).supplementalMetadata, isNull);
+        policy.denied.add(CalendarPermission.updateSupplementalMetadata);
+        await expectLater(
+          service.updateSupplementalMetadata(
+            CalendarSupplementalMetadataUpdateRequest(
+              calendarId: id,
+              expectedRevision: 3,
+              metadata: CalendarSupplementalMetadata(
+                categories: [],
+                images: [],
+              ),
+            ),
+          ),
+          failure(CalendarFailureCode.accessDenied),
+        );
+      },
+    );
+    test('category search checks disclosure and binds exact filter to continuation', () async {
+      final ids = <UuidValue>[];
+      for (final language in ['sv', 'en', 'de']) {
+        final id = (await service.create(createInput(language)))!.calendarId;
+        ids.add(id);
+        await service.updateSupplementalMetadata(
+          CalendarSupplementalMetadataUpdateRequest(
+            calendarId: id,
+            expectedRevision: 1,
+            metadata: CalendarSupplementalMetadata(
+              categories: [CalendarCategory(value: 'Work', language: language)],
+              images: [],
+            ),
+          ),
+        );
+      }
+      final filter = CalendarCategoryFilter(value: 'Work');
+      final page = await service.list(
+        pageSize: 1,
+        fieldGroups: [CalendarFieldGroup.metadata],
+        categoryFilter: filter,
+      );
+      expect(page.calendars.single.supplementalMetadata, isNull);
+      expect(page.nextCursor, isNotNull);
+      expect(policy.sawCategoryFilter, isTrue);
+      final second = await service.list(
+        pageSize: 1,
+        fieldGroups: [CalendarFieldGroup.metadata],
+        categoryFilter: filter,
+        cursor: page.nextCursor,
+      );
+      expect(second.calendars.single.id, isNot(page.calendars.single.id));
+      await expectLater(
+        service.list(
+          pageSize: 1,
+          fieldGroups: [CalendarFieldGroup.metadata],
+          categoryFilter: CalendarCategoryFilter(value: 'work'),
+          cursor: page.nextCursor,
+        ),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+      expect(
+        (await service.list(
+          pageSize: 10,
+          fieldGroups: groups,
+          categoryFilter: CalendarCategoryFilter(value: 'Work', language: 'SV'),
+        )).calendars.single.id,
+        ids.first,
+      );
+      expect(
+        (await service.list(
+          pageSize: 10,
+          fieldGroups: groups,
+          categoryFilter: CalendarCategoryFilter(value: 'work'),
+        )).calendars,
+        isEmpty,
+      );
+      policy.grants = {CalendarFieldGroup.metadata};
+      final hidden = await service.list(
+        pageSize: 10,
+        fieldGroups: groups,
+        categoryFilter: filter,
+      );
+      expect(hidden.calendars, isEmpty);
+      expect(hidden.nextCursor, isNull);
+      expect(
+        (await service.list(
+          pageSize: 10,
+          fieldGroups: [CalendarFieldGroup.metadata],
+        )).calendars.length,
+        3,
+      );
+    });
+    test('invalid and final-denied supplemental replacements cannot partially commit', () async {
+      final id = (await service.create(createInput()))!.calendarId;
+      await expectLater(
+        service.updateSupplementalMetadata(
+          CalendarSupplementalMetadataUpdateRequest(
+            calendarId: id,
+            expectedRevision: 1,
+            metadata: CalendarSupplementalMetadata(
+              categories: [CalendarCategory(value: 'Good')],
+              images: [CalendarImageLink(uri: 'data:image/png;base64,x')],
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      policy.denyFinal = true;
+      await expectLater(
+        service.updateSupplementalMetadata(
+          CalendarSupplementalMetadataUpdateRequest(
+            calendarId: id,
+            expectedRevision: 1,
+            metadata: CalendarSupplementalMetadata(
+              categories: [],
+              images: [],
+              refreshHint: CalendarRefreshHint(hours: 24),
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      final view = await service.get(id, groups);
+      expect(view.revision, 1);
+      expect(view.supplementalMetadata!.images, isEmpty);
+      expect(view.supplementalMetadata!.refreshHint, isNull);
+    });
+    test('nested supplemental commands freeze before host callbacks and deletion scrubs them', () async {
+      final id = (await service.create(createInput()))!.calendarId;
+      final value = CalendarSupplementalMetadata(
+        categories: [CalendarCategory(value: 'Original')],
+        images: [
+          CalendarImageLink(
+            uri: 'https://example.invalid/a',
+            display: ['THUMBNAIL'],
+          ),
+        ],
+        refreshHint: CalendarRefreshHint(hours: 24),
+      );
+      policy.onPreliminary = () {
+        value.categories.single.value = 'Changed';
+        value.images.single.display!.clear();
+        value.refreshHint!.hours = 48;
+      };
+      await service.updateSupplementalMetadata(
+        CalendarSupplementalMetadataUpdateRequest(
+          calendarId: id,
+          expectedRevision: 1,
+          metadata: value,
+        ),
+      );
+      policy.onPreliminary = null;
+      final view = await service.get(id, groups);
+      expect(view.supplementalMetadata!.categories.single.value, 'Original');
+      expect(view.supplementalMetadata!.images.single.display, ['THUMBNAIL']);
+      expect(view.supplementalMetadata!.refreshHint!.hours, 24);
+      expect(
+        () =>
+            policy.lastSupplementalIntent!.supplementalMetadata!.images.clear(),
+        throwsUnsupportedError,
+      );
+      await expectLater(
+        service.updateSupplementalMetadata(
+          CalendarSupplementalMetadataUpdateRequest(
+            calendarId: id,
+            expectedRevision: 1,
+            metadata: CalendarSupplementalMetadata(categories: [], images: []),
+          ),
+        ),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      await service.delete(id, 2);
+      expect(
+        await CalendarDataRecord.db.findFirstRow(
+          session,
+          where: (t) => t.calendarId.equals(id),
+        ),
+        isNull,
+      );
+      expect(
+        (await CalendarIdentityRecord.db.findById(
+          session,
+          id,
+        ))!.toJson().keys.toSet(),
+        {'__className__', 'id', 'scopeKey', 'revision', 'deletedAt'},
+      );
+    });
     test('unauthenticated direct service calls fail closed', () {
       expect(
         () => CalendarModule.service(builder.build()),
@@ -664,6 +890,8 @@ final class TestPolicy implements CalendarHostPolicy {
       sawActualSnapshot = false;
   String epoch = 'v1';
   CalendarProposedChange? lastProtocolIntent;
+  CalendarProposedChange? lastSupplementalIntent;
+  bool sawCategoryFilter = false;
   void Function()? onPreliminary;
   Duration delay = Duration.zero;
   CalendarAuthorizationGuarantee capability =
@@ -681,8 +909,9 @@ final class TestPolicy implements CalendarHostPolicy {
   Future<CalendarCandidatePlan> planQuery(
     Session s,
     CalendarHostContext c,
-    Set<CalendarFieldGroup> groups,
-  ) async => CalendarCandidatePlan();
+    Set<CalendarFieldGroup> groups, {
+    CalendarCategoryQuery? categoryFilter,
+  }) async => CalendarCandidatePlan();
   @override
   Future<List<CalendarAuthorizationDecision>> authorizeBatch(
     Session s,
@@ -704,6 +933,12 @@ final class TestPolicy implements CalendarHostPolicy {
     CalendarAuthorizationRequest r,
     CalendarAuthorizationPhase phase,
   ) {
+    if (r.categoryFilter != null) {
+      sawCategoryFilter = true;
+    }
+    if (r.proposed?.supplementalMetadata != null) {
+      lastSupplementalIntent = r.proposed;
+    }
     if (r.proposed?.protocolMetadata != null) {
       lastProtocolIntent = r.proposed;
     }

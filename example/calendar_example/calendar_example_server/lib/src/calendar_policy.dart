@@ -13,7 +13,7 @@ final class DemoCalendarPolicy implements CalendarHostPolicy {
     return CalendarHostContext(
       principalId: principal,
       scopeKey: 'demo:user:$principal',
-      policyRevision: 'private-scope-v2',
+      policyRevision: 'private-scope-v3',
     );
   }
 
@@ -21,8 +21,9 @@ final class DemoCalendarPolicy implements CalendarHostPolicy {
   Future<CalendarCandidatePlan> planQuery(
     Session session,
     CalendarHostContext context,
-    Set<CalendarFieldGroup> requestedGroups,
-  ) async => CalendarCandidatePlan();
+    Set<CalendarFieldGroup> requestedGroups, {
+    CalendarCategoryQuery? categoryFilter,
+  }) async => CalendarCandidatePlan();
 
   @override
   Future<List<CalendarAuthorizationDecision>> authorizeBatch(

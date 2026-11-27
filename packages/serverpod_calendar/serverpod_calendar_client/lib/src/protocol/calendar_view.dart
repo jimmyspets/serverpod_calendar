@@ -16,6 +16,7 @@ import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'calendar_field_group.dart' as _i73hgz1s;
 import 'calendar_no_rule_fallback.dart' as _itts4qyp;
 import 'calendar_protocol_metadata.dart' as _itchuj1l;
+import 'calendar_supplemental_metadata.dart' as _ixppc388;
 
 abstract class CalendarView
     implements _isc.SerializableModel, _isc.ProtocolSerialization {
@@ -29,6 +30,7 @@ abstract class CalendarView
     this.availabilityZoneId,
     this.noRuleFallback,
     this.protocolMetadata,
+    this.supplementalMetadata,
     this.createdAt,
     this.updatedAt,
   });
@@ -43,6 +45,7 @@ abstract class CalendarView
     String? availabilityZoneId,
     _itts4qyp.CalendarNoRuleFallback? noRuleFallback,
     _itchuj1l.CalendarProtocolMetadata? protocolMetadata,
+    _ixppc388.CalendarSupplementalMetadata? supplementalMetadata,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) = _CalendarViewImpl;
@@ -69,6 +72,12 @@ abstract class CalendarView
           : _ie4a1wrz.Protocol()
                 .deserialize<_itchuj1l.CalendarProtocolMetadata>(
                   jsonSerialization['protocolMetadata'],
+                ),
+      supplementalMetadata: jsonSerialization['supplementalMetadata'] == null
+          ? null
+          : _ie4a1wrz.Protocol()
+                .deserialize<_ixppc388.CalendarSupplementalMetadata>(
+                  jsonSerialization['supplementalMetadata'],
                 ),
       createdAt: jsonSerialization['createdAt'] == null
           ? null
@@ -97,6 +106,8 @@ abstract class CalendarView
 
   _itchuj1l.CalendarProtocolMetadata? protocolMetadata;
 
+  _ixppc388.CalendarSupplementalMetadata? supplementalMetadata;
+
   DateTime? createdAt;
 
   DateTime? updatedAt;
@@ -114,6 +125,7 @@ abstract class CalendarView
     String? availabilityZoneId,
     _itts4qyp.CalendarNoRuleFallback? noRuleFallback,
     _itchuj1l.CalendarProtocolMetadata? protocolMetadata,
+    _ixppc388.CalendarSupplementalMetadata? supplementalMetadata,
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -131,6 +143,8 @@ abstract class CalendarView
       if (noRuleFallback != null) 'noRuleFallback': noRuleFallback?.toJson(),
       if (protocolMetadata != null)
         'protocolMetadata': protocolMetadata?.toJson(),
+      if (supplementalMetadata != null)
+        'supplementalMetadata': supplementalMetadata?.toJson(),
       if (createdAt != null) 'createdAt': createdAt?.toJson(),
       if (updatedAt != null) 'updatedAt': updatedAt?.toJson(),
     };
@@ -150,6 +164,8 @@ abstract class CalendarView
       if (noRuleFallback != null) 'noRuleFallback': noRuleFallback?.toJson(),
       if (protocolMetadata != null)
         'protocolMetadata': protocolMetadata?.toJsonForProtocol(),
+      if (supplementalMetadata != null)
+        'supplementalMetadata': supplementalMetadata?.toJsonForProtocol(),
       if (createdAt != null) 'createdAt': createdAt?.toJson(),
       if (updatedAt != null) 'updatedAt': updatedAt?.toJson(),
     };
@@ -174,6 +190,7 @@ class _CalendarViewImpl extends CalendarView {
     String? availabilityZoneId,
     _itts4qyp.CalendarNoRuleFallback? noRuleFallback,
     _itchuj1l.CalendarProtocolMetadata? protocolMetadata,
+    _ixppc388.CalendarSupplementalMetadata? supplementalMetadata,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : super._(
@@ -186,6 +203,7 @@ class _CalendarViewImpl extends CalendarView {
          availabilityZoneId: availabilityZoneId,
          noRuleFallback: noRuleFallback,
          protocolMetadata: protocolMetadata,
+         supplementalMetadata: supplementalMetadata,
          createdAt: createdAt,
          updatedAt: updatedAt,
        );
@@ -204,6 +222,7 @@ class _CalendarViewImpl extends CalendarView {
     Object? availabilityZoneId = _Undefined,
     Object? noRuleFallback = _Undefined,
     Object? protocolMetadata = _Undefined,
+    Object? supplementalMetadata = _Undefined,
     Object? createdAt = _Undefined,
     Object? updatedAt = _Undefined,
   }) {
@@ -224,6 +243,10 @@ class _CalendarViewImpl extends CalendarView {
       protocolMetadata: protocolMetadata is _itchuj1l.CalendarProtocolMetadata?
           ? protocolMetadata
           : this.protocolMetadata?.copyWith(),
+      supplementalMetadata:
+          supplementalMetadata is _ixppc388.CalendarSupplementalMetadata?
+          ? supplementalMetadata
+          : this.supplementalMetadata?.copyWith(),
       createdAt: createdAt is DateTime? ? createdAt : this.createdAt,
       updatedAt: updatedAt is DateTime? ? updatedAt : this.updatedAt,
     );

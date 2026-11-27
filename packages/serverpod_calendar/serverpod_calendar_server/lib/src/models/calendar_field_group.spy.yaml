@@ -4,3 +4,4 @@ values:
   - metadata
   - availabilitySettings
   - protocolMetadata
+  - supplementalMetadata

@@ -71,7 +71,34 @@ BEGIN
 END;
 $verify$;
 """)
-        print("PASS: populated calendar schema upgrade preserves identity, revisions, content and associations.")
+        sql(database, """
+UPDATE serverpod_calendar_data SET description = 'Native before links', color = '#112233',
+"protocolMetadata" = '{"__className__":"serverpod_calendar.CalendarProtocolMetadata","names":[{"__className__":"serverpod_calendar.CalendarTextVariant","value":"Preserved protocol"}],"descriptions":[],"color":"red"}';
+INSERT INTO serverpod_calendar_cursor
+(token,"scopeKey","principalId","policyRevision","dataRevision","afterId","pageSize","fieldGroups","expiresAt")
+VALUES (repeat('a',43),'metadata-upgrade-test','fixture','v2',11,'11111111-1111-4111-8111-111111111111',1,'["metadata"]','2026-01-03');
+""")
+        sql(database, (SERVER / "migrations/20261021051116035-calendar-links-categories/migration.sql").read_text(encoding="utf-8"))
+        sql(database, """
+DO $links$
+BEGIN
+  IF (SELECT count(*) FROM serverpod_calendar_data WHERE description = 'Native before links'
+      AND color = '#112233' AND "protocolMetadata"->'names'->0->>'value' = 'Preserved protocol'
+      AND "supplementalMetadata" IS NULL AND "displayName" = 'Upgrade fixture'
+      AND "updatedAt" = '2026-01-02 00:00:00') <> 1 THEN
+    RAISE EXCEPTION 'Prior presentation/protocol content changed during links upgrade';
+  END IF;
+  IF (SELECT count(*) FROM serverpod_calendar_cursor WHERE "categoryFilter" IS NULL
+      AND token = repeat('a',43) AND "dataRevision" = 11 AND "pageSize" = 1) <> 1 THEN
+    RAISE EXCEPTION 'Old cursor filter or binding changed';
+  END IF;
+  IF (SELECT revision FROM serverpod_calendar_identity WHERE id = '11111111-1111-4111-8111-111111111111') <> 7 THEN
+    RAISE EXCEPTION 'Identity revision changed';
+  END IF;
+END;
+$links$;
+""")
+        print("PASS: populated schema upgrades preserve identity, revisions, content, associations and old cursor bindings.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")
 

@@ -259,6 +259,7 @@ final class CalendarService {
     _Active active, {
     CalendarProposedChange? proposed,
     Set<CalendarFieldGroup> groups = const {},
+    CalendarCategoryQuery? categoryFilter,
   }) => CalendarAuthorizationRequest(
     key: active.identity.id.toString(),
     operation: op,
@@ -266,6 +267,7 @@ final class CalendarService {
     current: active.snapshot,
     proposed: proposed,
     requestedGroups: groups,
+    categoryFilter: categoryFilter,
   );
   void _revision(_Active a, int expected) {
     if (expected < 1 || expected > _maxRevision) {
@@ -316,6 +318,10 @@ final class CalendarService {
       displayName: metadata ? a.data.displayName : null,
       description: metadata ? a.data.description : null,
       color: metadata ? a.data.color : null,
+      supplementalMetadata:
+          groups.contains(CalendarFieldGroup.supplementalMetadata)
+          ? _supplementalModel(a.supplementalMetadata)
+          : null,
       protocolMetadata: groups.contains(CalendarFieldGroup.protocolMetadata)
           ? _protocolModel(a.protocolMetadata)
           : null,
@@ -515,6 +521,40 @@ final class CalendarService {
       a.data.protocolMetadata = metadata.isEmpty
           ? null
           : _protocolModel(metadata);
+      return _saveMetadata(a, scope, tx, decisions.values);
+    });
+  }
+
+  Future<CalendarMutationReceipt?> updateSupplementalMetadata(
+    CalendarSupplementalMetadataUpdateRequest input,
+  ) async {
+    final id = input.calendarId;
+    final expected = input.expectedRevision;
+    late final IcalendarSupplementalMetadata value;
+    try {
+      value = _supplementalValue(input.metadata);
+    } on ArgumentError {
+      throw _failure(CalendarFailureCode.validation);
+    }
+    final c = await _context();
+    return _transaction(c, (tx, scope) async {
+      final a = await _active(c, id, tx);
+      final request = _request(
+        CalendarPermission.updateSupplementalMetadata,
+        a,
+        proposed: CalendarProposedChange(supplementalMetadata: value),
+      );
+      await _decide(
+        c,
+        [request],
+        tx,
+        CalendarAuthorizationPhase.preliminaryWrite,
+      );
+      _revision(a, expected);
+      final decisions = await _final(c, [request], tx);
+      a.data.supplementalMetadata = value.isEmpty
+          ? null
+          : _supplementalModel(value);
       return _saveMetadata(a, scope, tx, decisions.values);
     });
   }
@@ -756,9 +796,28 @@ final class CalendarService {
     required int pageSize,
     required List<CalendarFieldGroup> fieldGroups,
     String? cursor,
+    CalendarCategoryFilter? categoryFilter,
   }) async {
+    IcalendarCategory? filter;
+    try {
+      if (categoryFilter != null) {
+        filter = IcalendarCategory(
+          categoryFilter.value,
+          language: categoryFilter.language,
+        );
+      }
+    } on ArgumentError {
+      throw _failure(CalendarFailureCode.validation);
+    }
+    final queryFilter = filter == null
+        ? null
+        : CalendarCategoryQuery(filter.value, filter.language);
     final c = await _context();
     final groups = _groups(fieldGroups);
+    final evaluationGroups = Set<CalendarFieldGroup>.unmodifiable({
+      ...groups,
+      if (filter != null) CalendarFieldGroup.supplementalMetadata,
+    });
     if (pageSize < 1 || pageSize > _options.maxPageSize) {
       throw _failure(CalendarFailureCode.validation);
     }
@@ -769,11 +828,17 @@ final class CalendarService {
       final query = CalendarAuthorizationRequest(
         key: 'query',
         operation: CalendarPermission.list,
-        requestedGroups: groups,
+        requestedGroups: evaluationGroups,
+        categoryFilter: queryFilter,
       );
       await _decide(c, [query], tx, CalendarAuthorizationPhase.read);
       final plan = await _bounded(
-        () => _runtime.policy.planQuery(_session, c, groups),
+        () => _runtime.policy.planQuery(
+          _session,
+          c,
+          evaluationGroups,
+          categoryFilter: queryFilter,
+        ),
       );
       if (plan.calendarIds != null &&
           plan.calendarIds!.length > _options.maxScannedCalendars) {
@@ -796,6 +861,7 @@ final class CalendarService {
             saved.policyRevision != c.policyRevision ||
             saved.dataRevision != scope.revision ||
             saved.pageSize != pageSize ||
+            !_sameCategoryFilter(saved.categoryFilter, filter) ||
             saved.fieldGroups.length != canonicalGroups.length ||
             !Iterable<int>.generate(canonicalGroups.length)
                 .every((i) => saved.fieldGroups[i] == canonicalGroups[i])) {
@@ -833,7 +899,12 @@ final class CalendarService {
         }
         final requests = [
           for (final a in active)
-            _request(CalendarPermission.read, a, groups: groups),
+            _request(
+              CalendarPermission.read,
+              a,
+              groups: evaluationGroups,
+              categoryFilter: queryFilter,
+            ),
         ];
         final decisions = await _decide(
           c,
@@ -844,7 +915,14 @@ final class CalendarService {
         );
         for (final a in active) {
           final d = decisions[a.identity.id.toString()]!;
-          if (d.verdict == CalendarAuthorizationVerdict.allow) {
+          if (d.verdict == CalendarAuthorizationVerdict.allow &&
+              (filter == null ||
+                  (d.disclosedGroups.contains(
+                        CalendarFieldGroup.supplementalMetadata,
+                      ) &&
+                      a.supplementalMetadata.categories.any(
+                        (v) => v.matches(filter!),
+                      )))) {
             visible.add(_view(a, groups, d));
           }
           if (visible.length > pageSize) break;
@@ -893,6 +971,12 @@ final class CalendarService {
             dataRevision: scope.revision,
             afterId: visible[pageSize - 1].id,
             pageSize: pageSize,
+            categoryFilter: filter == null
+                ? null
+                : CalendarCategoryFilter(
+                    value: filter.value,
+                    language: filter.language,
+                  ),
             fieldGroups: canonicalGroups,
             expiresAt: DateTime.now().toUtc().add(_options.cursorLifetime),
           ),
@@ -910,6 +994,9 @@ final class CalendarService {
 final class _Active {
   _Active(this.identity, this.data, this.links) {
     try {
+      supplementalMetadata = data.supplementalMetadata == null
+          ? IcalendarSupplementalMetadata()
+          : _supplementalValue(data.supplementalMetadata!);
       protocolMetadata = data.protocolMetadata == null
           ? IcalendarCalendarTextMetadata()
           : _protocolValue(data.protocolMetadata!);
@@ -918,6 +1005,7 @@ final class _Active {
     }
   }
   late final IcalendarCalendarTextMetadata protocolMetadata;
+  late final IcalendarSupplementalMetadata supplementalMetadata;
   final CalendarIdentityRecord identity;
   final CalendarDataRecord data;
   final List<CalendarSubjectRecord> links;
@@ -928,6 +1016,7 @@ final class _Active {
     description: data.description,
     color: data.color,
     protocolMetadata: protocolMetadata,
+    supplementalMetadata: supplementalMetadata,
     availabilityZoneId: data.availabilityZoneId,
     noRuleFallback: data.noRuleFallback,
     subjects: links.map(
@@ -961,3 +1050,57 @@ CalendarProtocolMetadata _protocolModel(IcalendarCalendarTextMetadata value) =>
       ],
       color: value.color,
     );
+
+bool _sameCategoryFilter(
+  CalendarCategoryFilter? stored,
+  IcalendarCategory? value,
+) =>
+    stored?.value == value?.value &&
+    stored?.language?.toLowerCase() == value?.language?.toLowerCase();
+IcalendarSupplementalMetadata _supplementalValue(
+  CalendarSupplementalMetadata v,
+) => IcalendarSupplementalMetadata(
+  url: v.url,
+  categories: v.categories.map(
+    (c) => IcalendarCategory(c.value, language: c.language),
+  ),
+  images: v.images.map(
+    (i) =>
+        IcalendarImageLink(i.uri, display: i.display, mediaType: i.mediaType),
+  ),
+  refreshHint: v.refreshHint == null
+      ? null
+      : IcalendarRefreshHint(
+          weeks: v.refreshHint!.weeks,
+          days: v.refreshHint!.days,
+          hours: v.refreshHint!.hours,
+          minutes: v.refreshHint!.minutes,
+          seconds: v.refreshHint!.seconds,
+        ),
+);
+CalendarSupplementalMetadata _supplementalModel(
+  IcalendarSupplementalMetadata v,
+) => CalendarSupplementalMetadata(
+  url: v.url,
+  categories: [
+    for (final c in v.categories)
+      CalendarCategory(value: c.value, language: c.language),
+  ],
+  images: [
+    for (final i in v.images)
+      CalendarImageLink(
+        uri: i.uri,
+        display: i.display?.toList(),
+        mediaType: i.mediaType,
+      ),
+  ],
+  refreshHint: v.refreshHint == null
+      ? null
+      : CalendarRefreshHint(
+          weeks: v.refreshHint!.duration.weeks,
+          days: v.refreshHint!.duration.days,
+          hours: v.refreshHint!.duration.hours,
+          minutes: v.refreshHint!.duration.minutes,
+          seconds: v.refreshHint!.duration.seconds,
+        ),
+);

@@ -177,4 +177,8 @@ The first name/settings/association slice is implemented under [ADR 0049](adr/00
 
 ## Native presentation and protocol text increment
 
-[ADR 0050](adr/0050-calendar-presentation-and-protocol-text.md) records maintainer-confirmed separation of native/protocol values, RGB versus CSS3 colors, preserved multiline native descriptions with a 16,384-code-point cap, and a first NAME/DESCRIPTION/COLOR editing batch. [The implementation guide](calendar-metadata.md) distinguishes scoped native editing/storage from pending parsing/export/feed publication. URLs, categories, images, refresh hints and source/property-parameter preservation remain subsequent work.
+[ADR 0050](adr/0050-calendar-presentation-and-protocol-text.md) records maintainer-confirmed separation of native/protocol values, RGB versus CSS3 colors, preserved multiline native descriptions with a 16,384-code-point cap, and a first NAME/DESCRIPTION/COLOR editing batch. [The implementation guide](calendar-metadata.md) distinguishes scoped native editing/storage from pending parsing/export/feed publication. Native URLs, categories, images and refresh hints are implemented in the ADR 0051 increment below; source/property-parameter preservation and wire support remain pending.
+
+## Links, categories, images and refresh increment
+
+The maintainer selected HTTP/HTTPS links without user information, exact case-sensitive category text matching with optional language tags, and positive unit-preserving refresh hints with a one-year editing cap. [ADR 0051](adr/0051-calendar-links-categories-images-refresh.md) defines the cap as 365-day equivalent and keeps schema/limit/query mechanics under review. [The guide](calendar-links-and-categories.md) records this limited native FR-02/08/24 increment, including group-authorized category filtering, no link/image fetching or polling and pending parser/export/feed work.

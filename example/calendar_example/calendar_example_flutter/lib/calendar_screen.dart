@@ -4,6 +4,7 @@ import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
 import 'package:flutter/material.dart';
 
 import 'protocol_metadata_editor.dart';
+import 'supplemental_metadata_editor.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key, required this.client});
@@ -14,6 +15,9 @@ class CalendarScreen extends StatefulWidget {
 
 class _CalendarScreenState extends State<CalendarScreen> {
   final _items = <cal.CalendarView>[];
+  final _category = TextEditingController(),
+      _language = TextEditingController();
+  cal.CalendarCategoryFilter? _filter;
   String? _cursor, _error;
   bool _busy = true;
   @override
@@ -32,6 +36,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         pageSize: 25,
         fieldGroups: cal.CalendarFieldGroup.values,
         cursor: more ? _cursor : null,
+        categoryFilter: _filter,
       );
       if (mounted) {
         setState(() {
@@ -57,7 +62,35 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
   }
 
+  @override
+  void dispose() {
+    _category.dispose();
+    _language.dispose();
+    super.dispose();
+  }
+
+  Future<void> _search() async {
+    if (_category.text.isEmpty && _language.text.isNotEmpty) {
+      setState(() {
+        _error = 'Enter category text to filter by language.';
+      });
+      return;
+    }
+    _filter = _category.text.isEmpty
+        ? null
+        : cal.CalendarCategoryFilter(
+            value: _category.text,
+            language: _language.text.isEmpty ? null : _language.text,
+          );
+    await _load();
+  }
+
   Future<void> _open([cal.CalendarView? item]) async {
+    if (item == null) {
+      _filter = null;
+      _category.clear();
+      _language.clear();
+    }
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
         builder: (_) => CalendarEditor(client: widget.client, calendar: item),
@@ -91,10 +124,35 @@ class _CalendarScreenState extends State<CalendarScreen> {
         const Text(
           'Calendars in your private demo scope. Subject links do not grant access.',
         ),
+        TextField(
+          key: const Key('calendar-category-search'),
+          controller: _category,
+          enabled: !_busy,
+          decoration: const InputDecoration(
+            labelText: 'Category filter',
+            helperText: 'Exact text; empty means all calendars',
+          ),
+        ),
+        TextField(
+          key: const Key('calendar-category-language'),
+          controller: _language,
+          enabled: !_busy,
+          decoration: const InputDecoration(
+            labelText: 'Category language filter',
+            helperText: 'Optional; empty matches any language',
+          ),
+        ),
+        TextButton(
+          key: const Key('calendar-category-apply'),
+          onPressed: _busy ? null : _search,
+          child: const Text('Apply category filter'),
+        ),
         if (_busy) const LinearProgressIndicator(),
         if (_error != null) Text(_error!, key: const Key('calendar-error')),
         if (!_busy && _items.isEmpty && _error == null)
-          const Text('No calendars yet.'),
+          Text(
+            _filter == null ? 'No calendars yet.' : 'No matching calendars.',
+          ),
         for (final item in _items)
           Card(
             child: ListTile(
@@ -136,6 +194,7 @@ class CalendarEditor extends StatefulWidget {
 class _CalendarEditorState extends State<CalendarEditor> {
   late final TextEditingController _name, _zone, _description, _color;
   final _protocol = GlobalKey<ProtocolMetadataEditorState>();
+  final _supplemental = GlobalKey<SupplementalMetadataEditorState>();
   cal.CalendarView? _calendar;
   cal.CalendarNoRuleFallback _fallback = cal.CalendarNoRuleFallback.free;
   List<cal.CalendarSubjectView> _subjects = [];
@@ -205,6 +264,7 @@ class _CalendarEditorState extends State<CalendarEditor> {
     bool presentation = false,
     bool settings = false,
     bool protocol = false,
+    bool supplemental = false,
     int? afterRevision,
   }) async {
     final view = await widget.client.modules.serverpod_calendar.calendar
@@ -231,12 +291,21 @@ class _CalendarEditorState extends State<CalendarEditor> {
       if (protocol && !_requiresReload && view.protocolMetadata != null) {
         _protocol.currentState?.reset(view.protocolMetadata!);
       }
+      if (supplemental &&
+          !_requiresReload &&
+          view.supplementalMetadata != null) {
+        _supplemental.currentState?.reset(view.supplementalMetadata!);
+      }
     }
     await _readSubjects();
   }
 
-  Future<void> _reload() =>
-      _refresh(presentation: true, settings: true, protocol: true);
+  Future<void> _reload() => _refresh(
+    presentation: true,
+    settings: true,
+    protocol: true,
+    supplemental: true,
+  );
   Future<void> _create() => _run(() async {
     await widget.client.modules.serverpod_calendar.calendar.create(
       cal.CalendarCreateRequest(
@@ -276,6 +345,19 @@ class _CalendarEditorState extends State<CalendarEditor> {
           ),
         );
     await _refresh(protocol: true, afterRevision: expected + 1);
+  });
+  Future<void> _saveSupplemental() => _run(() async {
+    final expected = _calendar!.revision;
+    final metadata = _supplemental.currentState!.value;
+    await widget.client.modules.serverpod_calendar.calendar
+        .updateSupplementalMetadata(
+          cal.CalendarSupplementalMetadataUpdateRequest(
+            calendarId: _calendar!.id,
+            expectedRevision: expected,
+            metadata: metadata,
+          ),
+        );
+    await _refresh(supplemental: true, afterRevision: expected + 1);
   });
   Future<void> _settings() => _run(() async {
     final expected = _calendar!.revision;
@@ -464,6 +546,13 @@ class _CalendarEditorState extends State<CalendarEditor> {
                     nativeDescription: () => _description.text,
                     onSave: _saveProtocol,
                   ),
+                if (existing && _calendar!.supplementalMetadata != null)
+                  SupplementalMetadataEditor(
+                    key: _supplemental,
+                    initial: _calendar!.supplementalMetadata!,
+                    busy: locked,
+                    onSave: _saveSupplemental,
+                  ),
                 if (existing) ...[
                   const SizedBox(height: 24),
                   const Text('Subject associations'),
@@ -524,7 +613,9 @@ class _CalendarEditorState extends State<CalendarEditor> {
   }
 }
 
-String _message(Object error) => error is cal.CalendarException
+String _message(Object error) => error is FormatException
+    ? error.message
+    : error is cal.CalendarException
     ? (error.code == cal.CalendarFailureCode.staleRevision
           ? 'This calendar changed. Reload saved values before trying again.'
           : error.message)

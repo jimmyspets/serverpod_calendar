@@ -1,0 +1,4 @@
+class: CalendarCategoryFilter
+fields:
+  value: String
+  language: String?

@@ -14,6 +14,7 @@ enum CalendarPermission {
   create,
   updateMetadata,
   updateProtocolMetadata,
+  updateSupplementalMetadata,
   updateAvailabilitySettings,
   delete,
   readAssociations,
@@ -66,6 +67,7 @@ final class CalendarPolicySnapshot {
     required this.description,
     required this.color,
     required this.protocolMetadata,
+    required this.supplementalMetadata,
     required this.availabilityZoneId,
     required this.noRuleFallback,
     required Iterable<CalendarPolicySubject> subjects,
@@ -75,6 +77,7 @@ final class CalendarPolicySnapshot {
   final String displayName, availabilityZoneId;
   final String? description, color;
   final IcalendarCalendarTextMetadata protocolMetadata;
+  final IcalendarSupplementalMetadata supplementalMetadata;
   final CalendarNoRuleFallback noRuleFallback;
   final List<CalendarPolicySubject> subjects;
 }
@@ -98,12 +101,14 @@ final class CalendarProposedChange {
     this.subject,
     this.presentation,
     this.protocolMetadata,
+    this.supplementalMetadata,
   });
   final String? displayName, availabilityZoneId;
   final CalendarNoRuleFallback? noRuleFallback;
   final CalendarSubjectIntent? subject;
   final CalendarPresentationIntent? presentation;
   final IcalendarCalendarTextMetadata? protocolMetadata;
+  final IcalendarSupplementalMetadata? supplementalMetadata;
 }
 
 final class CalendarAuthorizationRequest {
@@ -113,10 +118,12 @@ final class CalendarAuthorizationRequest {
     this.current,
     this.proposed,
     this.calendarId,
+    this.categoryFilter,
     Iterable<CalendarFieldGroup> requestedGroups = const [],
   }) : requestedGroups = Set.unmodifiable(requestedGroups);
   final String key;
   final CalendarPermission operation;
+  final CalendarCategoryQuery? categoryFilter;
 
   /// Actual server-resolved collection/object identity, absent for scope/create.
   final UuidValue? calendarId;
@@ -139,6 +146,12 @@ final class CalendarAuthorizationDecision {
 }
 
 /// Server-owned coarse candidate constraint. Object decisions still apply.
+final class CalendarCategoryQuery {
+  const CalendarCategoryQuery(this.value, this.language);
+  final String value;
+  final String? language;
+}
+
 final class CalendarCandidatePlan {
   CalendarCandidatePlan({Iterable<UuidValue>? calendarIds})
     : calendarIds = calendarIds == null ? null : Set.unmodifiable(calendarIds);
@@ -153,8 +166,9 @@ abstract interface class CalendarHostPolicy {
   Future<CalendarCandidatePlan> planQuery(
     Session session,
     CalendarHostContext context,
-    Set<CalendarFieldGroup> requestedGroups,
-  );
+    Set<CalendarFieldGroup> requestedGroups, {
+    CalendarCategoryQuery? categoryFilter,
+  });
 
   /// For coordinated guarantees, finalWrite must coordinate every relevant
   /// policy revocation through this transaction until its actual commit.

@@ -11,6 +11,8 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_calendar_server/src/generated/calendar_category_filter.dart'
+    as _ith8xeb5;
 import 'package:serverpod_calendar_server/src/generated/calendar_create_request.dart'
     as _i287wpc6;
 import 'package:serverpod_calendar_server/src/generated/calendar_field_group.dart'
@@ -25,6 +27,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_settings_update
     as _i3f5mgyk;
 import 'package:serverpod_calendar_server/src/generated/calendar_subject_change_request.dart'
     as _ib1wmljm;
+import 'package:serverpod_calendar_server/src/generated/calendar_supplemental_metadata_update_request.dart'
+    as _ito4h8gf;
 import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
     as _ik9lwgjh;
 import '../endpoints/calendar_diagnostics_endpoint.dart' as _icr8drn5;
@@ -131,6 +135,11 @@ class Endpoints extends _is.EndpointDispatch {
               type: _is.getType<String?>(),
               nullable: true,
             ),
+            'categoryFilter': _is.ParameterDescription(
+              name: 'categoryFilter',
+              type: _is.getType<_ith8xeb5.CalendarCategoryFilter?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -142,6 +151,7 @@ class Endpoints extends _is.EndpointDispatch {
                     pageSize: params['pageSize'],
                     fieldGroups: params['fieldGroups'],
                     cursor: params['cursor'],
+                    categoryFilter: params['categoryFilter'],
                   ),
         ),
         'updateMetadata': _is.MethodConnector(
@@ -198,6 +208,28 @@ class Endpoints extends _is.EndpointDispatch {
                 Map<String, dynamic> params,
               ) async => (endpoints['calendar'] as _inx4l1vp.CalendarEndpoint)
                   .updateProtocolMetadata(
+                    session,
+                    params['request'],
+                  ),
+        ),
+        'updateSupplementalMetadata': _is.MethodConnector(
+          name: 'updateSupplementalMetadata',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is
+                  .getType<
+                    _ito4h8gf.CalendarSupplementalMetadataUpdateRequest
+                  >(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['calendar'] as _inx4l1vp.CalendarEndpoint)
+                  .updateSupplementalMetadata(
                     session,
                     params['request'],
                   ),

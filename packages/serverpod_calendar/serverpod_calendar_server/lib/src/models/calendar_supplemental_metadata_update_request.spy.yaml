@@ -1,0 +1,5 @@
+class: CalendarSupplementalMetadataUpdateRequest
+fields:
+  calendarId: UuidValue
+  expectedRevision: int
+  metadata: CalendarSupplementalMetadata

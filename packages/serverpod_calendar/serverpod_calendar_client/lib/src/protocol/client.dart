@@ -11,6 +11,8 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
+import 'package:serverpod_calendar_client/src/protocol/calendar_category_filter.dart'
+    as _in004d9w;
 import 'package:serverpod_calendar_client/src/protocol/calendar_create_request.dart'
     as _i3j5a5bv;
 import 'package:serverpod_calendar_client/src/protocol/calendar_field_group.dart'
@@ -31,6 +33,8 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_subject_change_r
     as _i4hdn2j8;
 import 'package:serverpod_calendar_client/src/protocol/calendar_subject_view.dart'
     as _iad1u4rm;
+import 'package:serverpod_calendar_client/src/protocol/calendar_supplemental_metadata_update_request.dart'
+    as _i18zqkab;
 import 'package:serverpod_calendar_client/src/protocol/calendar_view.dart'
     as _i6qyw4e7;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
@@ -82,6 +86,7 @@ class EndpointCalendar extends _isc.EndpointRef {
     required int pageSize,
     required List<_ioi1smgh.CalendarFieldGroup> fieldGroups,
     String? cursor,
+    _in004d9w.CalendarCategoryFilter? categoryFilter,
   }) => caller.callServerEndpoint<_iq8vfd61.CalendarPage>(
     'serverpod_calendar.calendar',
     'list',
@@ -89,6 +94,7 @@ class EndpointCalendar extends _isc.EndpointRef {
       'pageSize': pageSize,
       'fieldGroups': fieldGroups,
       'cursor': cursor,
+      'categoryFilter': categoryFilter,
     },
   );
 
@@ -113,6 +119,14 @@ class EndpointCalendar extends _isc.EndpointRef {
   ) => caller.callServerEndpoint<_ibyc2v98.CalendarMutationReceipt?>(
     'serverpod_calendar.calendar',
     'updateProtocolMetadata',
+    {'request': request},
+  );
+
+  _ida.Future<_ibyc2v98.CalendarMutationReceipt?> updateSupplementalMetadata(
+    _i18zqkab.CalendarSupplementalMetadataUpdateRequest request,
+  ) => caller.callServerEndpoint<_ibyc2v98.CalendarMutationReceipt?>(
+    'serverpod_calendar.calendar',
+    'updateSupplementalMetadata',
     {'request': request},
   );
 

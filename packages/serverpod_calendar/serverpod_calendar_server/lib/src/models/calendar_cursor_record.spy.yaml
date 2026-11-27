@@ -10,6 +10,7 @@ fields:
   afterId: UuidValue
   pageSize: int
   fieldGroups: List<CalendarFieldGroup>
+  categoryFilter: CalendarCategoryFilter?
   expiresAt: DateTime
 indexes:
   calendar_cursor_token_unique:

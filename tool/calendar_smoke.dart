@@ -136,6 +136,87 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
           cleared.protocolMetadata!.names.length == 2,
       'Clearing native fields changed protocol metadata',
     );
+    await a.updateSupplementalMetadata(
+      cal.CalendarSupplementalMetadataUpdateRequest(
+        calendarId: second.calendarId,
+        expectedRevision: cleared.revision,
+        metadata: cal.CalendarSupplementalMetadata(
+          url: 'https://example.invalid/calendar',
+          categories: [cal.CalendarCategory(value: 'Work', language: 'SV')],
+          images: [
+            cal.CalendarImageLink(
+              uri: 'https://example.invalid/image.png',
+              display: ['BADGE', 'X-PRIVATE'],
+              mediaType: 'image/png',
+            ),
+          ],
+          refreshHint: cal.CalendarRefreshHint(hours: 24),
+        ),
+      ),
+    );
+    final extra = await create();
+    await b.updateSupplementalMetadata(
+      cal.CalendarSupplementalMetadataUpdateRequest(
+        calendarId: extra.calendarId,
+        expectedRevision: 1,
+        metadata: cal.CalendarSupplementalMetadata(
+          categories: [cal.CalendarCategory(value: 'Work', language: 'en')],
+          images: [],
+        ),
+      ),
+    );
+    final category = cal.CalendarCategoryFilter(value: 'Work');
+    final categoryPage = await a.list(
+      pageSize: 1,
+      fieldGroups: [cal.CalendarFieldGroup.metadata],
+      categoryFilter: category,
+    );
+    check(
+      categoryPage.nextCursor != null &&
+          categoryPage.calendars.single.supplementalMetadata == null,
+      'Category filtering exposed unrequested link data or missed continuation',
+    );
+    final categoryNext = await b.list(
+      pageSize: 1,
+      fieldGroups: [cal.CalendarFieldGroup.metadata],
+      categoryFilter: category,
+      cursor: categoryPage.nextCursor,
+    );
+    check(
+      categoryNext.calendars.single.id != categoryPage.calendars.single.id,
+      'Cross-host category continuation',
+    );
+    await rejects(
+      () => b.list(
+        pageSize: 1,
+        fieldGroups: [cal.CalendarFieldGroup.metadata],
+        categoryFilter: cal.CalendarCategoryFilter(value: 'work'),
+        cursor: categoryPage.nextCursor,
+      ),
+      cal.CalendarFailureCode.invalidCursor,
+    );
+    final exact = await b.list(
+      pageSize: 10,
+      fieldGroups: groups,
+      categoryFilter: cal.CalendarCategoryFilter(value: 'Work', language: 'sv'),
+    );
+    check(
+      exact.calendars.single.id == second.calendarId &&
+          exact.calendars.single.supplementalMetadata!.refreshHint!.hours == 24,
+      'Exact/language category match or refresh unit retention',
+    );
+    check(
+      exact
+              .calendars
+              .single
+              .supplementalMetadata!
+              .images
+              .single
+              .display!
+              .last ==
+          'X-PRIVATE',
+      'Image hints lost',
+    );
     final page = await a.list(pageSize: 1, fieldGroups: groups);
     check(
       page.nextCursor != null && page.calendars.length == 1,
@@ -268,7 +349,7 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
       bob.close();
     }
     print(
-      'PASS: native/protocol metadata isolation, multilingual round trips and generated calendar CRUD, scope isolation, cursors, stale writes and cross-host delete/attach race.',
+      'PASS: links/categories/image/refresh metadata, cross-host filtered cursors, native/protocol metadata isolation, multilingual round trips and generated calendar CRUD, scope isolation, cursors, stale writes and cross-host delete/attach race.',
     );
   } finally {
     for (final id in ids) {

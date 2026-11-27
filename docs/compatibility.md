@@ -1,5 +1,8 @@
 # Module interfaces and interoperability profiles
 
+The next native increment adds [links, categories, images and refresh hints](calendar-links-and-categories.md) under [ADR 0051](adr/0051-calendar-links-categories-images-refresh.md), including authorized exact category filtering; wire/feed interoperability remains pending.
+
+
 The basic CRUD slice now also has [native presentation and scoped protocol text metadata](calendar-metadata.md) under [ADR 0050](adr/0050-calendar-presentation-and-protocol-text.md). This adds no wire/feed-client interoperability.
 
 

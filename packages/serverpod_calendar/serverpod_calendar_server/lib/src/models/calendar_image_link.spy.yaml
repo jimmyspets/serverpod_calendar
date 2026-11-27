@@ -1,0 +1,5 @@
+class: CalendarImageLink
+fields:
+  uri: String
+  display: List<String>?
+  mediaType: String?
