@@ -7,6 +7,14 @@ The maintainer has specified first-release capabilities in [requirements](requir
 | [Discussion migration](discussion-migration.md) | Source evidence, current instructions and remaining gaps |
 | [Timezone data](timezone-data.md) | Whole-second range limits, future-rule generation and database update/recalculation procedure |
 | [Requirements](requirements.md) | First-release capabilities and acceptance evidence |
+| [Calendar schema](calendar-schema.md) | Selected native name validation and identity/active-data layout; proposed fields and transactional invariants |
+| [Calendar storage](calendar-storage.md) | Separate native/protocol names, UUID identity, minimal deletion markers and proposed physical layout |
+| [Calendar CRUD contract](calendar-crud-contract.md) | Confirmed creation/deletion rules and proposed first native command/view batch |
+| [Authorization interfaces](authorization-adapter-contract.md) | Concrete proposals for context resolution, batch decisions, queries and commit guards |
+| [Authorization consistency](authorization-consistency.md) | Declared coordinated/external guarantees, revocation races and proposed transaction/retry handling |
+| [Authorized queries](authorization-queries.md) | Separate detail/free-busy results, field groups, no-total pages and proposed filtering/cursors |
+| [Authorization operations](authorization-operations.md) | Proposed action/target matrix, confirmed permission separations and composition examples |
+| [Host authorization](host-authorization.md) | Host-supplied rules, module enforcement and trusted collection/object/change context |
 | [Resource availability](adr/0006-resource-availability.md) | Proposed resource associations, free/busy semantics and privacy |
 | [Alarm and notification boundaries](adr/0009-alarms-and-notification-boundaries.md) | Recommended calendar/notification/Flutter ownership and first-release alarm scope |
 | [Architecture](architecture.md) | Module boundaries, proposed relationships and request flows |

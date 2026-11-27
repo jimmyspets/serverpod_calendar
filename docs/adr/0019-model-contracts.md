@@ -4,6 +4,8 @@
 
 Status: **Proposed**. Date: 2026-10-19. The maintainer requested documentation of the necessary models using current repository scope and Serverpod's model documentation. This request authorizes model documentation, not final schema selection or acceptance of this ADR.
 
+Authorization refinement: [ADR 0043](0043-host-authorization-context.md) confirms host-defined rules with module enforcement and requested collection/object context. Internal context models and precise API/transaction/query contracts remain proposals in the catalog.
+
 ## Context
 
 The architecture and RFC matrices describe required capabilities but do not provide a consolidated model catalog. One event table or a direct copy of ICS properties cannot express personal alarm state, recurring task progress, complete availability coverage, feed credential lifecycle and durable multi-instance scheduling work safely. Serverpod serialization/persistence models also need an explicit boundary from framework-independent calendar semantics.

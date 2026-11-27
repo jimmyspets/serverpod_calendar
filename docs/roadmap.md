@@ -25,6 +25,18 @@ Independent packages can progress in parallel after their contracts are defined.
 
 ## Design contracts
 
+- [ ] Implement the selected [native-name/schema shape](calendar-schema.md) under [ADR 0048](adr/0048-calendar-name-validation-and-row-layout.md): trimmed/nonempty/single-line labels up to 256 Unicode code points, identity-owned revision and content removal from separate active rows. Verify low-level Unicode/raw-byte limits, generated keys/indexes and two-host lifecycle invariants; marker retention remains undecided.
+
+- [ ] Finalize and implement [calendar storage](calendar-storage.md) under [ADR 0047](adr/0047-calendar-names-identifiers-and-deletion-storage.md): native/protocol/feed names stay distinct; server UUIDs have no public version requirement; deletion atomically removes content and retains only the selected internal marker. Review physical layout, text validation, retention/purge and generated UUID/schema behavior before claiming implementation.
+
+- [ ] Review [concrete adapter interfaces](authorization-adapter-contract.md) and the [first native calendar CRUD contract](calendar-crud-contract.md) under [ADR 0046](adr/0046-first-native-calendar-crud-contract.md). Preserve confirmed explicit-zone/nonempty-name creation and dependency-blocked deletion; apply ADR 0047 name-role separation and settle text validation, physical UUID/marker schema/retention, typed commands/results and real coordination before the calendar CRUD implementation batch.
+
+- [ ] Finalize and implement [authorization consistency contracts](authorization-consistency.md) under [ADR 0045](adr/0045-authorization-consistency-guarantees.md): declare coordinated/external guarantees, reject unsupported requirements without downgrade, define defaults/freshness/deadlines and effective coordination, and test two-host revocation/write ordering, retries and late external decisions.
+
+- [ ] Finalize and implement [authorized query/view contracts](authorization-queries.md) under [ADR 0044](adr/0044-authorized-query-projections-and-pagination.md): preserve separate detail/free-busy, typed groups and no initial totals; review batch constraints, mappings, pagination/cursors, snapshot freshness and two-host behavior before generated schemas.
+
+- [ ] Finalize and implement the accepted host authorization/context boundary under [ADR 0043](adr/0043-host-authorization-context.md) and the [guide](host-authorization.md): trusted actual collection/object/parent context, custom host policies, query visibility, transaction/revision integration, external-policy consistency and two-host enforcement. Preserve the confirmed permission separations and mixed-request checks in the [operation catalog](authorization-operations.md). Do not generate domain endpoints before these dependent contracts are reviewed.
+
 - [ ] Implement the confirmed optional HTTP feed module boundary under [ADR 0042](adr/0042-optional-http-feed-module.md): define calendar publication/policy contracts, keep feed storage/routes/credentials separate, and test installations with and without feeds. Package names and detailed contracts remain pending.
 
 - [ ] Review the [model catalog](models.md) and [ADR 0019](adr/0019-model-contracts.md): finalize logical fields/ownership, component cardinalities, physical schema/IDs, typed changes, uniqueness, retention and generated-client projections before writing model YAML or migrations. Preserve the selected RFC scope and resolve the catalog's explicit lifecycle/temporal review gates.

@@ -6,7 +6,7 @@ Status: **proposed domain catalog; bounded pure Dart temporal calculation is imp
 
 The catalog covers reusable values, durable calendar records, generated-client request/response models, internal protocol projections and the external notification boundary. It is a logical schema, not a promise of one table or YAML file per entry. `?` means optional; `List<T>` means a bounded collection, with legal minimum/maximum cardinality validated per component. Required server-managed fields are populated by services, not accepted as authority from clients. `Id` is a conceptual internal identifier: choose its Serverpod/Dart/database representation during scaffolding. `Ref<T>` denotes a constrained reference, not literal Serverpod YAML syntax.
 
-All durable calendar records belong to a server-resolved host isolation scope. Call it `scopeKey: String` here; whether the host uses one scope or tenant isolation is an adapter contract. It must not be inferred from an untrusted payload or confused with a subject's namespace. Parent/child and referenced targets must have compatible scope. Except append-only ledger/attempt records, mutable aggregates have `revision: int`, `createdAt: DateTime` and `updatedAt: DateTime`, using UTC instants. Child writes compare and advance their aggregate revision transactionally; independently writable records also require their own revision. Revision increments, timestamps and publication identities are server-controlled.
+All durable calendar records belong to a server-resolved host isolation scope. Call it `scopeKey: String` here; whether the host uses one scope or tenant isolation is an adapter contract. It must not be inferred from an untrusted payload or confused with a subject's namespace. Parent/child and referenced targets must have compatible scope. Except append-only ledger/attempt records and the selected minimal deleted-calendar markers under ADR 0047, mutable aggregates have `revision: int`, `createdAt: DateTime` and `updatedAt: DateTime`, using UTC instants. Child writes compare and advance their aggregate revision transactionally; independently writable records also require their own revision. Revision increments, timestamps and publication identities are server-controlled.
 
 Storage records are proposed as server-only. Explicit views expose authorized fields; explicit commands accept only writable fields. A generated model does not enforce authorization, recurrence validity, transaction isolation or uniqueness by itself. Pure Dart semantic types remain independent of Serverpod; mapping to generated transport/storage classes happens at the module boundary.
 
@@ -36,6 +36,41 @@ fields:
 ```
 
 The second snippet intentionally omits table, relation and index declarations; the complete logical record is below. Pin compatible Serverpod 4.x-or-later, Dart and Flutter versions before choosing actual model syntax, IDs, relations, indexes, nested-value storage or defaults. Validate generated serialization and migrations with that toolchain. Keep all YAML examples in Markdown until scaffolding; do not hand-edit generated Dart. Model documentation should describe invariants as well as fields using Serverpod's `###` comments. No SDK compatibility or executable validation is claimed here.
+
+## Server-only authorization context proposals
+
+The maintainer confirmed module-enforced, host-defined authorization with collection/object context under [ADR 0043](adr/0043-host-authorization-context.md). These are candidate internal contracts, not persistent tables, generated-client authority fields or finalized adapter signatures. See [the guide](host-authorization.md) for creates, queries, mutations and background/publication paths.
+
+| Candidate context | Information/invariants |
+| --- | --- |
+| `AuthorizationActorContext` | Host-authenticated principal or trusted purpose-specific execution/publication context and resolved isolation scope; never client-asserted membership or a raw JWT/feed secret |
+| `AuthorizationTargetContext` | Typed collection/object references and authoritative parent chain; calendar for contained items, host scope for calendar creation/listing; original recurrence identity for occurrence operations |
+| `AuthorizationChangeContext` | Validated proposed fields/references and destinations, distinguishable from the current server-loaded revision/metadata |
+| `AuthorizationRequestContext` | Actor, operation, target, relevant current/change/query/disclosure context and eventual transaction/snapshot integration; missing/denied/unresolved policy cannot allow access |
+
+Operation context must preserve the confirmed calendar presentation/availability and task content/progress/assignment separations. A candidate `operation` value comes from the [proposed operation catalog](authorization-operations.md); family identifiers do not bypass specific object/field/action checks. Mixed intents require all applicable permissions against a consistent snapshot before commit. Final enum and adapter result types remain proposed.
+
+A calendar is an item collection, not a general UI group or feed selection. Membership in a grouping or a subject link never grants access automatically. Context loading is internal and scope-limited; callers receive only authorized projections. Default ownership, role inheritance and adapter result/query types remain unselected. [ADR 0045](adr/0045-authorization-consistency-guarantees.md) selects support for declared coordinated/external guarantees; concrete consistency mechanisms/defaults remain proposed.
+
+## Authorized query/view proposals
+
+The maintainer selected separate detail/free-busy responses, typed field-group disclosure and initial pages with opaque continuation but no totals under [ADR 0044](adr/0044-authorized-query-projections-and-pagination.md). Candidate internal batch decisions carry object visibility and granted groups; a candidate view envelope records disclosed groups so undisclosed content differs from genuine null/empty values. Exact group-to-field mappings, policy result types and minimum envelope fields remain unselected. See [the query design](authorization-queries.md).
+
+No generic storage serializer becomes a response. Calendar/event/task pages contain authorized views only; a missing detail object does not remove it from a separately authorized busy calculation. `totalCount`, estimated/denied/candidate counts are excluded from the initial page contract. Cursor fields and snapshots are protected internal design, not client authority.
+
+## Authorization decision/transaction proposals
+
+[ADR 0045](adr/0045-authorization-consistency-guarantees.md) confirms support for both coordinated and external fresh-check host policies with declared guarantees and no silent downgrade. Candidate server-only decision evidence binds the actor/scope, operation, targets/revisions, validated change, attempt and guarantee/freshness context; exact types, persistence and validity rules remain proposed in [the consistency guide](authorization-consistency.md). A version label or same-database read alone is not a commit/revocation fence.
+
+Mutations compare revisions, reestablish authorization on retries and commit domain changes/invalidation/outbound intent atomically; external dispatch and response disclosure have separate current checks. Required operation profiles, mode defaults, deadlines and coordination mechanisms must be specified before model/schema implementation. No client payload or cached receipt can assert authority.
+
+## First calendar adapter/CRUD proposals
+
+[Adapter methods](authorization-adapter-contract.md) specify proposed context resolution, keyed batch decisions, query planning and guarded commit responsibilities. [ADR 0046](adr/0046-first-native-calendar-crud-contract.md) confirms nonempty native creation name, explicit named creation availability zone and active-dependency deletion rejection. The [CRUD contract](calendar-crud-contract.md) preserves separate presentation/settings/association gates and revision checks. [ADR 0047](adr/0047-calendar-names-identifiers-and-deletion-storage.md) selects separate native/protocol names, native server UUIDs without a version requirement and minimal deletion markers. Command/view types, name validation, physical active/marker layout, retention duration and coordination remain review gates.
+
+## Calendar identity/active-data schema refinement
+
+[ADR 0048](adr/0048-calendar-name-validation-and-row-layout.md) selects outer-trimmed, nonempty/single-line native labels capped at 256 Unicode code points and separate identity/active-data rows. The logical `CalendarRecord` aggregate below is not a third physical table. Its revision belongs to identity; active timestamps and calendar content belong to payload. `CalendarDeletionMarker` is the deleted identity state, not a third marker table. See [the concrete schema proposal](calendar-schema.md). Low-level validation, generated keys/relations/indexes, metadata storage and lifecycle coordination remain pending.
 
 ## Shared temporal and identity values
 
@@ -121,7 +156,10 @@ All records use the common isolation/revision contract above. Values in this sec
 
 | Record | Candidate fields beyond common fields | Relationships and invariants |
 | --- | --- | --- |
-| `CalendarRecord` | `id`, `description: CalendarDescription`, `availabilityZoneRef`, `noRuleFallback: free/unavailable`, import-preserved metadata | Owns events/tasks/rules. Default fallback free only for completely known unbooked time with no applicable rule. Calendar deletion policy pending. |
+| `CalendarRecord` | server-generated UUID `id`, native `displayName`, separate protocol `description: CalendarDescription`, `availabilityZoneRef`, `noRuleFallback: free/unavailable`, import-preserved metadata | Owns events/tasks/rules. Default fallback free only for completely known unbooked time with no applicable rule. Native creation requires a nonempty display name and explicit named availability zone; deletion rejects active dependencies under ADR 0046. ADR 0047 selects name-role separation and a minimal UUID/scope/revision/deletion-time marker with no content/archive/restore; exact physical layout, text validation and retention duration remain pending. |
+| `CalendarIdentityRecord` | UUID, trusted scope, authoritative revision, nullable deletion time | Selected small identity row under ADR 0048; no label/content/created/updated timestamps. Same row supplies the minimal deletion marker; no ordinary API discovery. |
+| `CalendarActiveDataRecord` | Unique UUID calendar reference, validated displayName, active settings/protocol metadata, createdAt/updatedAt; internal key if needed | Selected separate active payload under ADR 0048; no second public identity or competing aggregate revision. Final generated key/metadata fields pending. |
+| `CalendarDeletionMarker` | UUID calendar identity, trusted scope, final revision, deletion time only | Internal non-discoverable marker under ADR 0047; no label/content or implicit read/restore/sync rights. Deleted state of the identity row under ADR 0048, atomic with payload removal; final keys/indexes and retention duration pending. |
 | `CalendarSubjectRecord` | `id`, `calendarId`, `subject: SubjectRef`, `contributesAvailability: bool` | Many-to-many host links; unique calendar/subject tuple. Administration/access is host policy, not implied by this flag or link. |
 | `EventSeriesRecord` | `id`, `calendarId`, component identity, protocol stamp, `span`, `recurrence?`, `status`, `transparency`, `summary?`, `description?`, `location?`, `geo?`, `resourceLabels`, classification, comments, attachments, URL, organizer/attendee metadata, conferences, structured children, relationships, preserved metadata/extensions | Represents recurring or non-recurring VEVENT. Unique source UID in calendar collection; no title requirement invented for valid imported components. Opaque confirmed events block; tentative mapping remains policy. |
 | `EventOverrideRecord` | `id`, `eventSeriesId`, `originalStart`, `range: single/thisAndFuture`, explicit changes, cancellation state, protocol stamp | Unique original occurrence identity per series. Omitted versus cleared fields must differ. Retain cancellations; moved start never replaces original identity. |
@@ -217,7 +255,7 @@ These are candidate model families, not implemented endpoint signatures. Create/
 
 | Family | Required request data | Response/data model |
 | --- | --- | --- |
-| Calendar CRUD | `CalendarCreate`, `CalendarUpdate`, `CalendarDelete`: writable description/settings, ID and expected revision for changes | `CalendarView` with authorized metadata, settings and revision |
+| Calendar CRUD | Proposed `CalendarCreate/Get/List/UpdateMetadata/UpdateAvailabilitySettings/Delete`: explicit nonempty native name/named zone on creation, ID and expected revision for changes, separate metadata/settings gates | `CalendarView` with authorized groups and revision; dependency-blocked deletion. See [first CRUD contract](calendar-crud-contract.md); name-role separation follows ADR 0047; exact generated shapes/normalization remain proposed |
 | Associations | `CalendarSubjectChange`: calendar ID/revision, validated subject and contribution flag | Authorized association views and new calendar revision |
 | Event CRUD/series edits | `EventCreate`, `EventUpdate`, `EventDelete`: content, ID/revision, explicit whole/single/this-and-future scope and original identity where applicable | `EventView`, `EventOccurrenceView` with original and effective times, revision and permitted metadata |
 | Event query | `EventQuery`: calendars, bounded window, page size/cursor, approved filters | `EventPage`: occurrences/items, opaque next cursor, snapshot and explicit limit result; stable sort includes identity tie-breaker |
@@ -232,7 +270,7 @@ These are candidate model families, not implemented endpoint signatures. Create/
 | Import/export | Profile-specific `ImportRequest` / `ExportRequest` | `ImportResult` / `ExportResult`; scheduling has separate ingress |
 | Failures | Typed `CalendarException`: code, safe message, permitted field diagnostics, retryability?, current revision only if authorized | Codes for validation, unsupported profile, conflict/stale revision, access/unavailable, limits and temporary failure; no stack traces or private existence leaks |
 
-Cursor encoding, snapshot lifetime and limit behavior remain review gates. A page cursor must not bypass current authorization, nor silently skip items after concurrent edits. For mutation retries, a result lookup still checks current authority. Patch inputs require explicit field presence/clear semantics; clients cannot set DTSTAMP, revision, digest, trusted provenance, completion history or derived markers arbitrarily.
+Initial list pages omit total counts under ADR 0044; detail view groups remain explicit and separate from free/busy. Cursor encoding, snapshot lifetime and limit behavior remain review gates. A page cursor must not bypass current authorization, nor silently skip items after concurrent edits. For mutation retries, a result lookup still checks current authority. Patch inputs require explicit field presence/clear semantics; clients cannot set DTSTAMP, revision, digest, trusted provenance, completion history or derived markers arbitrarily.
 
 Enums should distinguish event/task statuses, participation state, coverage, busy classification, recurrence frequency/weekdays, edit scope, trigger/action, delivery state and protocol method. Avoid one universal status enum or treating unknown values as success/free/authorized. String-backed host kind/vocabulary extensions require server allowlists; they are not open-ended permission or protocol switches.
 
