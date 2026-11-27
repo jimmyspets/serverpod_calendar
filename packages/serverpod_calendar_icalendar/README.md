@@ -13,3 +13,5 @@ Typed DATE, UTC/named-zone DATE-TIME and DURATION codecs now map individual raw 
 The [first standalone non-recurring VEVENT/VTIMEZONE profile](../../docs/icalendar-event-adapter.md) now maps accepted DATE/UTC/named-zone timing to core spans, validates full-horizon pinned zone agreement and preserves accepted source syntax. Complete property coverage, database import, authorized export and feed publication remain pending. Unsupported data rejects instead of disappearing.
 
 [Recurring event masters](../../docs/icalendar-recurring-masters.md) now extend that profile with typed RRULE/start-only RDATE/EXDATE, first-period validation and aggregate work caps. PERIOD additions/override components still reject; source retention is separate from FREQ-first output and authorized native import/export.
+
+[Timed PERIOD additions](../../docs/icalendar-recurring-masters.md#period-valued-rdate-additions) now extend RDATE with preserved end/duration spans under ADR 0067. The older PERIOD-rejection checkpoint above is superseded for this pure adapter subset; native storage and occurrence components remain separate.

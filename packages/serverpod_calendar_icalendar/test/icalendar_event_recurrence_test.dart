@@ -484,49 +484,36 @@ void main() {
       rejects(IcalendarComponentError.invalidValue),
     );
   });
-  test(
-    'PERIOD, override components, SECONDLY and BYSECOND remain rejected',
-    () {
-      expect(
-        () => load(
-          file(
-            events: [
-              event(extra: ['RDATE;VALUE=PERIOD:20261023T120000Z/PT1H']),
-            ],
-          ),
+  test('override components, SECONDLY and BYSECOND remain rejected', () {
+    expect(
+      () => dateEvent(['RRULE:FREQ=SECONDLY']),
+      rejects(IcalendarComponentError.invalidValue),
+    );
+    expect(
+      () => load(
+        file(
+          events: [
+            event(extra: ['RRULE:FREQ=SECONDLY']),
+          ],
         ),
-        rejects(IcalendarComponentError.invalidValue),
-      );
-      expect(
-        () => dateEvent(['RRULE:FREQ=SECONDLY']),
-        rejects(IcalendarComponentError.invalidValue),
-      );
-      expect(
-        () => load(
-          file(
-            events: [
-              event(extra: ['RRULE:FREQ=SECONDLY']),
-            ],
-          ),
+      ),
+      rejects(IcalendarComponentError.invalidValue),
+    );
+    expect(
+      () => dateEvent(['RRULE:FREQ=DAILY;BYSECOND=0']),
+      rejects(IcalendarComponentError.unsupportedProperty),
+    );
+    expect(
+      () => load(
+        file(
+          events: [
+            event(extra: ['RECURRENCE-ID:20261022T120000Z']),
+          ],
         ),
-        rejects(IcalendarComponentError.invalidValue),
-      );
-      expect(
-        () => dateEvent(['RRULE:FREQ=DAILY;BYSECOND=0']),
-        rejects(IcalendarComponentError.unsupportedProperty),
-      );
-      expect(
-        () => load(
-          file(
-            events: [
-              event(extra: ['RECURRENCE-ID:20261022T120000Z']),
-            ],
-          ),
-        ),
-        rejects(IcalendarComponentError.unsupportedProperty),
-      );
-    },
-  );
+      ),
+      rejects(IcalendarComponentError.unsupportedProperty),
+    );
+  });
   test('duplicate/malformed rule parts and unsupported parameters reject', () {
     for (final rule in [
       '',

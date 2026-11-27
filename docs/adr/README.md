@@ -70,6 +70,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0064](0064-first-vevent-and-zone-validation-contract.md) | First VEVENT adapter and zone-validation contract | Confirmed scope/full-horizon matching/earlier seeds; scoped adapter under ADR 0065 |
 | [0065](0065-first-vevent-wire-adapter.md) | First standalone VEVENT wire-to-core adapter | Accepted bounded observances; API/limits under review |
 | [0066](0066-recurring-vevent-master-adapter.md) | Recurring VEVENT master adapter | Accepted batch; API/limits under review |
+| [0067](0067-vevent-period-additions.md) | VEVENT PERIOD additions | Accepted batch; adapter mechanics under review |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

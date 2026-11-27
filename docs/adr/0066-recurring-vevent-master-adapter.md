@@ -33,3 +33,7 @@ Rule/datetime/type errors fail the whole semantic parse with existing sanitized 
 Flattening occurrences would lose identity and bounded semantics. Silently dropping PERIOD or overrides would lose data, so they remain explicit rejections in this increment. A full expansion on import could be expensive or unbounded; validating only the complete first cadence period establishes DTSTART alignment while leaving queries independently bounded. Per-rule budgets alone could multiply work over many masters; the optional shared core object makes the aggregate ceiling enforceable without duplicating the recurrence engine.
 
 Test strict grammar and combination rejection, COUNT/UNTIL, earlier/duplicate inclusions, EXDATE precedence, exact profiles, all supported frequencies, WKST/BYWEEKNO versus ISO presentation, first-period BYSETPOS, DST gaps/durations, portable scalar bounds, serialization normalization and cross-event/zone aggregate exhaustion on VM/Chrome. Keep first-adapter regressions and core budget failure/accounting checks. Separate occurrence-override components, PERIOD support, native import/storage identity, scheduling/alarm execution, authorized export and HTTP feeds remain pending.
+
+## Subsequent scoped extension
+
+[ADR 0067](0067-vevent-period-additions.md) adds explicit timed RDATE PERIOD pairs to this master profile. It supersedes PERIOD rejection only for that bounded pure adapter extension; occurrence components and database import/export remain pending.

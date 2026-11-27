@@ -370,3 +370,16 @@ After focused review fixes, one complete `./tool/check.ps1` passed stable genera
 Relative Markdown links, consecutive ADR numbering through 0066, candidate credential scanning, changed-file scope and unchanged Apache 2.0 LICENSE were checked. PERIOD additions are the maintainer-selected next batch; separate occurrence components, authenticated database import/export, scheduling/alarms, HTTP feeds and external-client compatibility remain pending.
 
 The owned interactive development runner was restored. Serverpod MCP log inspection/hot reload succeeded; its configured Flutter example was launched, its own DTD/app connection verified, and Dart MCP hot reload succeeded.
+
+
+## Timed RDATE PERIOD additions, 2026-10-22
+
+[ADR 0067](adr/0067-vevent-period-additions.md) and [the PERIOD profile](icalendar-recurring-masters.md#period-valued-rdate-additions) document pure wire-to-core exceptional spans, reusing existing exact-profile, conflict, exclusion and endpoint policies. Root focused command `dart test packages/serverpod_calendar_icalendar/test/icalendar_event_period_test.dart packages/serverpod_calendar_icalendar/test/icalendar_event_recurrence_test.dart packages/serverpod_calendar_core/test/timed_event_series_test.dart --reporter expanded` passed **50 VM tests**, including 15 new PERIOD cases and affected recurrence/series regressions. Focused `dart analyze --fatal-infos packages/serverpod_calendar_icalendar` passed. Ignored `.local/period-focused.log` and `.local/period-analysis.log` retain results.
+
+Coverage includes RFC start/end and positive-duration examples, immutable semantic/source round trips, duplicate/conflicting forms, earlier/long overlapping additions, period precedence and COUNT/EXDATE, exact zone/alias contexts, DST nominal duration and explicit gaps/folds, ordinary/exclusive 2100 boundaries, malformed/fractional/leap/parameter rejection, combined raw caps and atomic private-free failure. No schema, migration, generated protocol/client or dependency changes were required. Native module PERIOD storage, occurrence components, authenticated import/export, scheduling/alarms, HTTP feeds and external-client compatibility remain separate work.
+
+One complete `./tool/check.ps1` passed stable generation, formatting, fatal-info analysis, **465 core VM + 465 core Chrome**, **140 iCalendar VM + 140 iCalendar Chrome**, **62 module VM + 17 module Chrome**, **3 Flutter widget** and **81 database/policy** tests, populated upgrades, host compilation, two independent host/generated-client/JWT checks, the Flutter WebDriver journey and web release build. It exited 0 with `All requested local checks passed.`; ignored `.local/period-batch-check.log` retains details. Wasm dry-run compilation passed; no Wasm runtime claim follows.
+
+Relative Markdown links, consecutive ADR numbering through 0067, candidate credential scanning, changed-file scope and unchanged Apache 2.0 LICENSE were checked. The next occurrence-component timing/single-cancellation batch is maintainer-approved but not implemented in this increment.
+
+The owned interactive development runner was restored. Serverpod MCP log inspection/hot reload succeeded; the configured Flutter example was launched, its own DTD/app connection verified, and Dart MCP hot reload succeeded.
