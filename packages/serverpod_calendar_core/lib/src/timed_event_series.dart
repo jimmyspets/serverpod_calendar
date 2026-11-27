@@ -143,12 +143,15 @@ final class TimedEventSeries {
   /// Scans original history once, including pre-query candidates, under shared
   /// caps. Conservative inverse range bounds include future originals moved in.
   /// No process-local cache, truncation or partial coverage result is returned.
+  /// Optional [sharedWorkBudget] also charges recurrence candidate work across
+  /// queries; local caps remain active and failure retains consumed work.
   List<TimedEventOccurrence> expandOverlapping({
     required UtcWindow window,
     required int maxCandidateWork,
     required int maxRuleOccurrences,
     required int maxBaseOccurrences,
     required int maxResults,
+    RecurrenceWorkBudget? sharedWorkBudget,
   }) {
     for (final e in {
       'maxBaseOccurrences': maxBaseOccurrences,
@@ -192,6 +195,7 @@ final class TimedEventSeries {
         maxCandidateWork: maxCandidateWork,
         maxRuleOccurrences: maxRuleOccurrences,
         maxResults: maxBaseOccurrences,
+        sharedWorkBudget: sharedWorkBudget,
       );
     } on RecurrenceLimitException catch (e) {
       if (e.limit == 'maxResults') {

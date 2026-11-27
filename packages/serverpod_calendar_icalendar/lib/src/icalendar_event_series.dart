@@ -19,9 +19,11 @@ final class IcalendarEventSeries {
 IcalendarEventSeries _eventSeries(
   IcalendarEvent master,
   List<IcalendarEvent> overrides,
-  ComponentBudget budget,
-) {
+  ComponentBudget budget, {
+  int? maxOverrides,
+}) {
   final limits = budget.limits;
+  final overrideLimit = maxOverrides ?? limits.maxOverridesPerEvent;
   if (overrides.isNotEmpty && master.recurrence == null) {
     componentFail(IcalendarComponentError.invalidValue);
   }
@@ -70,7 +72,7 @@ IcalendarEventSeries _eventSeries(
                   replacement: o.dateSpan!,
                 ),
       ],
-      maxExceptions: limits.maxOverridesPerEvent,
+      maxExceptions: overrideLimit,
       maxValidationCandidateDays: limits.maxCandidates,
       maxValidationRuleOccurrences: limits.maxValidationOccurrences,
       maxValidationResults: limits.maxValidationOccurrences,
@@ -85,7 +87,7 @@ IcalendarEventSeries _eventSeries(
             replacement: o.dateSpan!,
           ),
       ],
-      maxRangeChanges: limits.maxOverridesPerEvent,
+      maxRangeChanges: overrideLimit,
       maxValidationCandidateDays: limits.maxCandidates,
       maxValidationRuleOccurrences: limits.maxValidationOccurrences,
       maxValidationResults: limits.maxValidationOccurrences,
@@ -112,7 +114,7 @@ IcalendarEventSeries _eventSeries(
           replacement: o.timedSpan!,
         ),
     ],
-    maxChanges: limits.maxOverridesPerEvent,
+    maxChanges: overrideLimit,
     maxValidationCandidateWork: limits.maxCandidates,
     maxValidationOccurrences: limits.maxValidationOccurrences,
     sharedWorkBudget: budget.sharedWork,

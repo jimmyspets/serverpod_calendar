@@ -17,3 +17,5 @@ The [first standalone non-recurring VEVENT/VTIMEZONE profile](../../docs/icalend
 [Timed PERIOD additions](../../docs/icalendar-recurring-masters.md#period-valued-rdate-additions) now extend RDATE with preserved end/duration spans under ADR 0067. The older PERIOD-rejection checkpoint above is superseded for this pure adapter subset; native storage and occurrence components remain separate.
 
 [Occurrence timing/cancellation components](../../docs/icalendar-occurrence-components.md) now extend the pure profile under ADR 0068. This supersedes older blanket occurrence-component rejection for the documented subset only; content changes, future cancellation and authenticated import/export remain pending.
+
+The pure [availability adapter](../../docs/icalendar-availability-adapter.md) now adds standalone VAVAILABILITY/AVAILABLE timing, recurrence/overrides, bounded core projection and source serialization under ADR 0069. Rich metadata and authenticated import/export remain separate.

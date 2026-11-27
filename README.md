@@ -56,3 +56,7 @@ The [recurring VEVENT master adapter](docs/icalendar-recurring-masters.md) exten
 ## Occurrence wire timing profile
 
 [ADR 0068](docs/adr/0068-vevent-occurrence-components.md) adds pure [single timing/cancellation and timing-only THISANDFUTURE components](docs/icalendar-occurrence-components.md). Grouped core projections retain original identities, source versions and bounded validation. Earlier blanket occurrence-component-pending notes are superseded for this subset; content/future cancellation, authenticated import/export and HTTP publication remain pending.
+
+## Availability wire timing profile
+
+[ADR 0069](docs/adr/0069-first-availability-wire-adapter.md) adds the pure [VAVAILABILITY/AVAILABLE timing and composition profile](docs/icalendar-availability-adapter.md), including bounded recurrence/overrides, exact zones and positive openings. Rich metadata, authenticated import/export and HTTP publication remain pending; no host authorization or external-client compatibility follows from parsing.
