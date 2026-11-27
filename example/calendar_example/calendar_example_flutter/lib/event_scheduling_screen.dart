@@ -1,5 +1,5 @@
 import 'package:calendar_example_client/calendar_example_client.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'attendee_replies_screen.dart';
 

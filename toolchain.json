@@ -1,6 +1,6 @@
 {
-  "flutter": "3.47.7",
-  "dart": "3.13.5",
+  "flutter": "3.50.1",
+  "dart": "3.14.0",
   "serverpod": "4.1.0",
   "localImages": {
     "postgres": "ghcr.io/serverpod/postgres@sha256:a8ba1720aa58e55b3972a6db49a2311e8bbb60ea9341e5a68695c4b86ba81169",
@@ -27,6 +27,6 @@
     }
   },
   "ci": {
-    "flutterLinuxX64Sha256": "af7455f540df951184c7953fbe3cf884766e7541dacf8571f9f582db03dd6230"
+    "flutterLinuxX64Sha256": "4ad17fc8462fbcef2ba19ff4a78c0a16b7147fde1add8578e267ea62cdb92678"
   }
 }

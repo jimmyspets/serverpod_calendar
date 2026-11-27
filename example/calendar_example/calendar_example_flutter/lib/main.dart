@@ -2,7 +2,7 @@ import 'incoming_publications_screen.dart';
 import 'invitation_screen.dart';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'calendar_screen.dart';
 import 'live_notifications.dart';

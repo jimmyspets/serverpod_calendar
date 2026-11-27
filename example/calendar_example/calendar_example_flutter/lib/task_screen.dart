@@ -2,7 +2,7 @@ import 'item_category_filter.dart';
 import 'item_text_metadata_editor.dart';
 import 'personal_alarm_screen.dart';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'task_occurrence_screen.dart';
 import 'task_import_screen.dart';

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:calendar_example_flutter/availability_search_screen.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
