@@ -31,3 +31,7 @@ The effective exclusive end is calculated using the start's profile: calendar we
 Definition composition clips openings to this effective envelope before overlaying bookings. Calendar/subject/common-free queries therefore use identical semantics. Metadata-only updates cannot change duration or other structure; ordinary update authority is required, plus metadata authority if metadata changes. The host sees the preserved units and validated final state. The Flutter example can author UTC envelope durations with separate numeric unit fields; its existing advanced named-zone-envelope editing restriction avoids flattening configurations it cannot safely edit.
 
 The rule list shows the stored duration and read-only definition protocol version/time. Other editors copy unrelated fields. No text duration/ICS parser, wire timestamp serialization, CONTACT import, feed invalidation or scheduling version reconciliation is implied. See [validation](scaffold-validation.md) and [roadmap](roadmap.md).
+
+## Imported protocol lifecycle follow-up
+
+[ADR 0071](adr/0071-create-only-availability-import.md) confirms preserving source versions/dates separately from local audit time. [The proposed storage contract](availability-import.md) describes source omission, opening/override state and later native mutation. Imported-state support is not implemented: current local-creation invariants and legacy behavior above remain the runtime baseline until the reviewed storage/migration batch.

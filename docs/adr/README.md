@@ -73,8 +73,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0067](0067-vevent-period-additions.md) | VEVENT PERIOD additions | Accepted batch; adapter mechanics under review |
 | [0068](0068-vevent-occurrence-components.md) | VEVENT occurrence timing and cancellation components | Accepted scope/master requirement/inheritance; API/limits under review |
 | [0069](0069-first-availability-wire-adapter.md) | First availability wire adapter | Accepted timing/composition/positive openings; API/limits under review |
-
 | [0070](0070-availability-wire-metadata.md) | Availability wire publication metadata | Accepted batch/registry/source groups; API/limits under review |
+| [0071](0071-create-only-availability-import.md) | Create-only availability import and storage prerequisites | Accepted scope/identity/source-version choices; schema/API mechanics proposed |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
