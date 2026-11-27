@@ -80,8 +80,10 @@ DateEventRangeSet _dateOverrides(
 
 TimedEventSeries _timedOverrides(
   CalendarEventContent c,
-  CalendarEventTimingOverrides? v,
-) {
+  CalendarEventTimingOverrides? v, {
+  List<CalendarEventTiming>? periods,
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
   final span = validateEventTiming(c.timing).$2!;
   return TimedEventSeries(
     span: span,
@@ -98,6 +100,10 @@ TimedEventSeries _timedOverrides(
               .map((v) => validateEventTiming(v).$2!.start)
               .toList() ??
           [],
+      periods: [
+        for (final p in periods ?? <CalendarEventTiming>[])
+          validateEventTiming(p).$2!,
+      ],
       maxExplicitDates: eventMaxExplicitDates,
     ),
     exceptions: [
@@ -120,6 +126,7 @@ TimedEventSeries _timedOverrides(
         ),
     ],
     maxChanges: eventMaxOverrides,
+    sharedWorkBudget: sharedWorkBudget,
     maxValidationCandidateWork: eventMaxCandidateWork,
     maxValidationOccurrences: eventMaxRuleOccurrences,
   );
@@ -128,8 +135,9 @@ TimedEventSeries _timedOverrides(
 /// Freeze all stored/proposed timing state and validate original membership.
 CalendarEventTimingOverrides? validateEventOverrides(
   CalendarEventContent c,
-  CalendarEventTimingOverrides? input,
-) {
+  CalendarEventTimingOverrides? input, {
+  List<CalendarEventTiming>? periods,
+}) {
   if (input == null) return null;
   if (input.singles.length + input.future.length > eventMaxOverrides) {
     throw const RecurrenceLimitException('maxOverrides');
@@ -171,7 +179,7 @@ CalendarEventTimingOverrides? validateEventOverrides(
   if (c.timing.kind == CalendarEventTimeKind.date) {
     _dateOverrides(c, result);
   } else {
-    _timedOverrides(c, result);
+    _timedOverrides(c, result, periods: periods);
   }
   return result;
 }
@@ -180,8 +188,9 @@ CalendarEventTimingOverrides? validateEventOverrides(
 CalendarEventTimingOverrides? changeEventOverrides(
   CalendarEventContent c,
   CalendarEventTimingOverrides? current,
-  CalendarEventOccurrenceChange request,
-) {
+  CalendarEventOccurrenceChange request, {
+  List<CalendarEventTiming>? periods,
+}) {
   _profile(c.timing, request.originalStart, anchor: true);
   final replace =
       request.action == CalendarEventOccurrenceAction.replaceSingleTiming ||
@@ -258,6 +267,7 @@ CalendarEventTimingOverrides? changeEventOverrides(
   return validateEventOverrides(
     c,
     CalendarEventTimingOverrides(singles: singles, future: future),
+    periods: periods,
   );
 }
 
@@ -267,6 +277,8 @@ List<UtcWindow> eventOccupiedWindows(
   CalendarEventTimingOverrides? overrides,
   UtcWindow window, {
   required String dateZone,
+  List<CalendarEventTiming>? periods,
+  RecurrenceWorkBudget? sharedWorkBudget,
 }) {
   if (c.status == CalendarEventStatus.cancelled ||
       c.transparency == CalendarEventTransparency.transparent) {
@@ -298,13 +310,20 @@ List<UtcWindow> eventOccupiedWindows(
       if (clipped != null) result.add(clipped);
     }
   } else {
-    for (final occurrence in _timedOverrides(c, overrides).expandOverlapping(
-      window: window,
-      maxCandidateWork: eventMaxCandidateWork,
-      maxRuleOccurrences: eventMaxRuleOccurrences,
-      maxBaseOccurrences: eventMaxRuleOccurrences,
-      maxResults: eventMaxPreviewResults,
-    )) {
+    for (final occurrence
+        in _timedOverrides(
+          c,
+          overrides,
+          periods: periods,
+          sharedWorkBudget: sharedWorkBudget,
+        ).expandOverlapping(
+          window: window,
+          sharedWorkBudget: sharedWorkBudget,
+          maxCandidateWork: eventMaxCandidateWork,
+          maxRuleOccurrences: eventMaxRuleOccurrences,
+          maxBaseOccurrences: eventMaxRuleOccurrences,
+          maxResults: eventMaxPreviewResults,
+        )) {
       final clipped = occurrence.span.occupiedWindow?.intersection(window);
       if (clipped != null) result.add(clipped);
     }

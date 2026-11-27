@@ -32,6 +32,8 @@ class _AvailabilityMetadataEditorState
       _locationParameters = _TextParameters();
   final _commentParameters = <_TextParameters>[];
   final _categoryLanguage = TextEditingController();
+  List<cal.CalendarAvailabilityCategoryGroup>? _groups;
+  List<cal.CalendarAvailabilityText>? _contacts;
   final _organizerAddress = TextEditingController(),
       _organizerName = TextEditingController(),
       _organizerLanguage = TextEditingController(),
@@ -50,8 +52,13 @@ class _AvailabilityMetadataEditorState
     _summary.text = o == null ? c.summary ?? '' : o.summary ?? '';
     _description.text = o == null ? c.description ?? '' : o.description ?? '';
     _location.text = o == null ? c.location ?? '' : o.location ?? '';
+    _groups = o == null ? c.categoryGroups : o.categoryGroups;
+    _contacts = o == null ? c.contacts : o.contacts;
     _categories.text =
-        (o == null ? c.categories : o.categories)?.join('\n') ?? '';
+        (_groups?.firstOrNull?.values ??
+                (o == null ? c.categories : o.categories))
+            ?.join('\n') ??
+        '';
     _comments.addAll(
       (o == null ? c.comments : o.comments)?.map(
             (s) => TextEditingController(text: s),
@@ -62,7 +69,8 @@ class _AvailabilityMetadataEditorState
     _summaryParameters.load(parameters?.summary);
     _descriptionParameters.load(parameters?.description);
     _locationParameters.load(parameters?.location);
-    _categoryLanguage.text = parameters?.categoryLanguage ?? '';
+    _categoryLanguage.text =
+        _groups?.firstOrNull?.language ?? parameters?.categoryLanguage ?? '';
     for (var i = 0; i < _comments.length; i++) {
       _commentParameters.add(_TextParameters()..load(parameters?.comments?[i]));
     }
@@ -125,7 +133,7 @@ class _AvailabilityMetadataEditorState
         summary: _summaryParameters.value,
         description: _descriptionParameters.value,
         location: _locationParameters.value,
-        categoryLanguage: _categoryLanguage.text.isEmpty
+        categoryLanguage: _groups != null || _categoryLanguage.text.isEmpty
             ? null
             : _categoryLanguage.text,
         comments: _commentParameters.map((p) => p.value).toList(),
@@ -158,7 +166,19 @@ class _AvailabilityMetadataEditorState
               summary: summary,
               description: description,
               location: location,
-              categories: categories,
+              categories: _groups == null ? categories : null,
+              categoryGroups: _groups == null
+                  ? null
+                  : [
+                      if (categories.isNotEmpty)
+                        cal.CalendarAvailabilityCategoryGroup(
+                          values: categories,
+                          language: _categoryLanguage.text.isEmpty
+                              ? null
+                              : _categoryLanguage.text,
+                        ),
+                      ..._groups!.skip(1),
+                    ],
               comments: comments,
               url: _url.text.isEmpty ? null : _url.text,
               classification: _classification,
@@ -175,7 +195,19 @@ class _AvailabilityMetadataEditorState
                       summary: summary,
                       description: description,
                       location: location,
-                      categories: categories,
+                      categories: _groups == null ? categories : null,
+                      categoryGroups: _groups == null
+                          ? null
+                          : [
+                              if (categories.isNotEmpty)
+                                cal.CalendarAvailabilityCategoryGroup(
+                                  values: categories,
+                                  language: _categoryLanguage.text.isEmpty
+                                      ? null
+                                      : _categoryLanguage.text,
+                                ),
+                              ..._groups!.skip(1),
+                            ],
                       comments: comments,
                     ),
               ],
@@ -249,10 +281,20 @@ class _AvailabilityMetadataEditorState
             field('availability-meta-location', 'Location', _location),
             field(
               'availability-meta-categories',
-              'Categories, one per line (exact spelling)',
+              _groups == null
+                  ? 'Categories, one per line (exact spelling)'
+                  : 'First category group, one per line (exact spelling)',
               _categories,
               lines: 3,
             ),
+            if ((_groups?.length ?? 0) > 1)
+              Text(
+                'Additional category groups are preserved: ${_groups!.skip(1).map((g) => '${g.values.join(', ')} (${g.language ?? 'no language'})').join('; ')}',
+              ),
+            if (_contacts?.isNotEmpty ?? false)
+              Text(
+                'Imported contacts (preserved): ${_contacts!.map((v) => v.value).join('; ')}',
+              ),
             ExpansionTile(
               key: const Key('availability-text-parameters'),
               title: const Text('Text language and alternative links'),

@@ -17,3 +17,5 @@ fields:
   extensions: List<CalendarAvailabilityExtension>?
   organizer: CalendarAvailabilityOrganizer?
   validDuration: CalendarEventDuration?
+  categoryGroups: List<CalendarAvailabilityCategoryGroup>?
+  contacts: List<CalendarAvailabilityText>?

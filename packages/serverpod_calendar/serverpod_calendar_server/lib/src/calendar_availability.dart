@@ -47,15 +47,16 @@ final class _Availability {
               legacy: true,
             ),
         data.content,
+        edits: data.timingOverrides,
       );
-      if (data.protocolState!.created !=
-              availabilityProtocolInstant(data.createdAt) ||
-          data.protocolState!.lastModified.isAfter(
-            availabilityProtocolInstant(data.updatedAt),
-          )) {
-        throw StateError('Protocol state conflicts with storage time');
+      validateAvailabilityUid(data.protocolUid);
+      if (data.calendarId != identity.calendarId ||
+          data.uidDigest != availabilityUidDigest(data.protocolUid)) {
+        throw StateError('Invalid active protocol identity');
       }
-      if (data.content.openings.any((o) => o.uid == null)) {
+      if (data.content.openings.any(
+        (o) => o.uid == null || o.protocolUid == null,
+      )) {
         throw StateError('Persisted opening lacks identity');
       }
     } catch (_) {
@@ -183,11 +184,70 @@ extension CalendarAvailabilityOperations on CalendarService {
         throw _failure(CalendarFailureCode.validation);
       }
     }
-    return v.copyWith(
-      openings: List.unmodifiable([
-        for (final o in v.openings)
-          o.uid == null ? o.copyWith(uid: const Uuid().v4obj()) : o,
-      ]),
+    List<CalendarAvailabilityText>? retainContacts(
+      List<CalendarAvailabilityText>? proposed,
+      List<CalendarAvailabilityText>? current,
+    ) {
+      if (proposed != null &&
+          jsonEncode(proposed.map((v) => v.toJson()).toList()) !=
+              jsonEncode(
+                (current ?? <CalendarAvailabilityText>[])
+                    .map((v) => v.toJson())
+                    .toList(),
+              )) {
+        throw _failure(CalendarFailureCode.validation);
+      }
+      return current;
+    }
+
+    List<CalendarAvailabilityCategoryGroup>? retainGroups(
+      List<CalendarAvailabilityCategoryGroup>? proposed,
+      List<String>? nativeCategories,
+      CalendarAvailabilityTextParameters? parameters,
+      List<CalendarAvailabilityCategoryGroup>? current,
+    ) {
+      if (proposed != null || current == null) return proposed;
+      if ((nativeCategories?.isNotEmpty ?? false) ||
+          parameters?.categoryLanguage != null) {
+        throw _failure(CalendarFailureCode.validation);
+      }
+      return current;
+    }
+
+    return _validatedAvailability(
+      v.copyWith(
+        categoryGroups: retainGroups(
+          v.categoryGroups,
+          v.categories,
+          v.textParameters,
+          previous?.categoryGroups,
+        ),
+        contacts: retainContacts(v.contacts, previous?.contacts),
+        openings: List.unmodifiable([
+          for (final o in v.openings)
+            (() {
+              final old = previous?.openings
+                  .where((v) => v.uid == o.uid)
+                  .firstOrNull;
+              if (o.protocolUid != null && o.protocolUid != old?.protocolUid) {
+                throw _failure(CalendarFailureCode.validation);
+              }
+              final id = o.uid ?? const Uuid().v4obj();
+              return o.copyWith(
+                uid: id,
+                protocolUid: old?.protocolUid ?? id.toString(),
+                contacts: retainContacts(o.contacts, old?.contacts),
+                categoryGroups: retainGroups(
+                  o.categoryGroups,
+                  o.categories,
+                  o.textParameters,
+                  old?.categoryGroups,
+                ),
+                periods: o.periods ?? old?.periods,
+              );
+            })(),
+        ]),
+      ),
     );
   }
 
@@ -241,7 +301,7 @@ extension CalendarAvailabilityOperations on CalendarService {
   Future<CalendarAvailabilityReceipt?> createAvailability(
     CalendarAvailabilityCreateRequest input,
   ) async {
-    final proposed = _openingIdentities(_validatedAvailability(input.content));
+    final proposed = _openingIdentities(input.content);
     final c = await _context();
     return _transaction(c, (tx, scope) async {
       final parent = await _active(c, input.calendarId, tx);
@@ -293,10 +353,28 @@ extension CalendarAvailabilityOperations on CalendarService {
         CalendarAvailabilityRecord(calendarId: input.calendarId, revision: 1),
         transaction: tx,
       );
+      final uid = const Uuid().v4();
+      final digest = availabilityUidDigest(uid);
+      final candidates = await CalendarAvailabilityDataRecord.db.find(
+        _session,
+        where: (t) =>
+            t.calendarId.equals(input.calendarId) & t.uidDigest.equals(digest),
+        transaction: tx,
+        limit: availabilityMaxDefinitions + 1,
+      );
+      if (candidates.length > availabilityMaxDefinitions) {
+        throw _failure(CalendarFailureCode.unavailable);
+      }
+      if (availabilityUidConflicts(uid, candidates.map((v) => v.protocolUid))) {
+        throw _failure(CalendarFailureCode.dependencyConflict);
+      }
       final data = await CalendarAvailabilityDataRecord.db.insertRow(
         _session,
         CalendarAvailabilityDataRecord(
           availabilityId: identity.id!,
+          calendarId: input.calendarId,
+          protocolUid: uid,
+          uidDigest: digest,
           content: proposed,
           protocolState: protocol,
           createdAt: now,
@@ -379,8 +457,17 @@ extension CalendarAvailabilityOperations on CalendarService {
           );
           if (category == null ||
               rule.data.content.categories!.contains(category) ||
+              (rule.data.content.categoryGroups?.any(
+                    (g) => g.values.contains(category),
+                  ) ??
+                  false) ||
               rule.data.content.openings.any(
-                (o) => o.categories!.contains(category),
+                (o) =>
+                    o.categories!.contains(category) ||
+                    (o.categoryGroups?.any(
+                          (g) => g.values.contains(category),
+                        ) ??
+                        false),
               )) {
             result.add(rule.view);
           }
@@ -403,10 +490,24 @@ extension CalendarAvailabilityOperations on CalendarService {
     CalendarAvailabilityUpdateRequest input, {
     bool metadataOnly = false,
   }) async {
-    final value = _validatedAvailability(input.content);
+    final value = input.content;
     final c = await _context();
     return _transaction(c, (tx, scope) async {
       final rule = await _availability(c, input.availabilityId, tx);
+      final readonlyEcho =
+          value.contacts != null ||
+          value.openings.any(
+            (o) => o.contacts != null || o.protocolUid != null,
+          );
+      if (readonlyEcho) {
+        // Equality checks on source-only fields must not be a detail oracle.
+        await _decide(
+          c,
+          [_ar(rule.parent, CalendarPermission.readAvailability, rule: rule)],
+          tx,
+          CalendarAuthorizationPhase.read,
+        );
+      }
       final proposed = _openingIdentities(value, previous: rule.data.content);
       final requests = [
         _ar(
@@ -424,6 +525,14 @@ extension CalendarAvailabilityOperations on CalendarService {
           _ar(
             rule.parent,
             CalendarPermission.updateAvailabilityMetadata,
+            rule: rule,
+            proposed: proposed,
+            edits: rule.data.timingOverrides,
+          ),
+        if (readonlyEcho)
+          _ar(
+            rule.parent,
+            CalendarPermission.readAvailability,
             rule: rule,
             proposed: proposed,
             edits: rule.data.timingOverrides,
@@ -500,7 +609,11 @@ extension CalendarAvailabilityOperations on CalendarService {
         transaction: tx,
       );
       await _bump(scope, tx);
-      return _availabilityReceipt(rule, decisions.values);
+      return _availabilityReceipt(rule, [
+        for (final request in requests)
+          if (request.operation != CalendarPermission.readAvailability)
+            decisions[request.key]!,
+      ]);
     });
   }
 
@@ -609,6 +722,7 @@ extension CalendarAvailabilityOperations on CalendarService {
             untilUtc: window.end,
           ),
           overrides: openingEdits(rule.data.timingOverrides, input.openingUid),
+          periods: opening.periods,
         );
       });
       await _verifyContext(c);

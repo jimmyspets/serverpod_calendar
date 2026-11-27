@@ -1,0 +1,9 @@
+class: CalendarAvailabilityOverrideProtocolState
+immutable: true
+fields:
+  originalStart: CalendarEventTiming
+  isThisAndFuture: bool, default=false
+  stamp: DateTime
+  created: DateTime?
+  lastModified: DateTime?
+  metadata: CalendarAvailabilitySourceMetadata?

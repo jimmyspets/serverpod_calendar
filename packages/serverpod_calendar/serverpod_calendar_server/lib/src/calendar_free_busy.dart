@@ -16,6 +16,7 @@ UtcWindow _busyWindow(DateTime from, DateTime until) {
 
 /// Charged before expansion; shared across the entire subject search.
 final class _BusyBudget {
+  final recurrenceWork = RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
   int _events = 0, _rules = 0, _openings = 0, _bookings = 0, _projected = 0;
   void events(int n) {
     if ((_events += n) > 256) {
@@ -209,6 +210,7 @@ extension CalendarFreeBusyOperations on CalendarService {
           rule.data.content,
           window,
           edits: rule.data.timingOverrides,
+          sharedWorkBudget: budget.recurrenceWork,
         );
         budget.projected(evaluated.openings.length);
         openingCount += evaluated.openings.length;

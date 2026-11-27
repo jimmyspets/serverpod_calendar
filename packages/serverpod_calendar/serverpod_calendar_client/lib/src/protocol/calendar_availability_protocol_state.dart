@@ -20,18 +20,18 @@ import 'calendar_availability_opening_protocol_state.dart' as _ix3hb3ib;
 abstract class CalendarAvailabilityProtocolState
     implements _isc.SerializableModel, _isc.ProtocolSerialization {
   const CalendarAvailabilityProtocolState._({
-    required this.sequence,
-    required this.created,
+    this.sequence,
+    this.created,
     required this.stamp,
-    required this.lastModified,
+    this.lastModified,
     required this.openings,
   });
 
   const factory CalendarAvailabilityProtocolState({
-    required int sequence,
-    required DateTime created,
+    int? sequence,
+    DateTime? created,
     required DateTime stamp,
-    required DateTime lastModified,
+    DateTime? lastModified,
     required List<_ix3hb3ib.CalendarAvailabilityOpeningProtocolState> openings,
   }) = _CalendarAvailabilityProtocolStateImpl;
 
@@ -39,14 +39,16 @@ abstract class CalendarAvailabilityProtocolState
     Map<String, dynamic> jsonSerialization,
   ) {
     return CalendarAvailabilityProtocolState(
-      sequence: jsonSerialization['sequence'] as int,
-      created: _isc.DateTimeJsonExtension.fromJson(
-        jsonSerialization['created'],
-      ),
+      sequence: jsonSerialization['sequence'] as int?,
+      created: jsonSerialization['created'] == null
+          ? null
+          : _isc.DateTimeJsonExtension.fromJson(jsonSerialization['created']),
       stamp: _isc.DateTimeJsonExtension.fromJson(jsonSerialization['stamp']),
-      lastModified: _isc.DateTimeJsonExtension.fromJson(
-        jsonSerialization['lastModified'],
-      ),
+      lastModified: jsonSerialization['lastModified'] == null
+          ? null
+          : _isc.DateTimeJsonExtension.fromJson(
+              jsonSerialization['lastModified'],
+            ),
       openings: _ie4a1wrz.Protocol()
           .deserialize<
             List<_ix3hb3ib.CalendarAvailabilityOpeningProtocolState>
@@ -54,13 +56,13 @@ abstract class CalendarAvailabilityProtocolState
     );
   }
 
-  final int sequence;
+  final int? sequence;
 
-  final DateTime created;
+  final DateTime? created;
 
   final DateTime stamp;
 
-  final DateTime lastModified;
+  final DateTime? lastModified;
 
   final List<_ix3hb3ib.CalendarAvailabilityOpeningProtocolState> openings;
 
@@ -124,10 +126,10 @@ abstract class CalendarAvailabilityProtocolState
   Map<String, dynamic> toJson() {
     return {
       '__className__': 'serverpod_calendar.CalendarAvailabilityProtocolState',
-      'sequence': sequence,
-      'created': created.toJson(),
+      if (sequence != null) 'sequence': sequence,
+      if (created != null) 'created': created?.toJson(),
       'stamp': stamp.toJson(),
-      'lastModified': lastModified.toJson(),
+      if (lastModified != null) 'lastModified': lastModified?.toJson(),
       'openings': openings.toJson(valueToJson: (v) => v.toJson()),
     };
   }
@@ -136,10 +138,10 @@ abstract class CalendarAvailabilityProtocolState
   Map<String, dynamic> toJsonForProtocol() {
     return {
       '__className__': 'serverpod_calendar.CalendarAvailabilityProtocolState',
-      'sequence': sequence,
-      'created': created.toJson(),
+      if (sequence != null) 'sequence': sequence,
+      if (created != null) 'created': created?.toJson(),
       'stamp': stamp.toJson(),
-      'lastModified': lastModified.toJson(),
+      if (lastModified != null) 'lastModified': lastModified?.toJson(),
       'openings': openings.toJson(valueToJson: (v) => v.toJsonForProtocol()),
     };
   }
@@ -150,13 +152,15 @@ abstract class CalendarAvailabilityProtocolState
   }
 }
 
+class _Undefined {}
+
 class _CalendarAvailabilityProtocolStateImpl
     extends CalendarAvailabilityProtocolState {
   const _CalendarAvailabilityProtocolStateImpl({
-    required int sequence,
-    required DateTime created,
+    int? sequence,
+    DateTime? created,
     required DateTime stamp,
-    required DateTime lastModified,
+    DateTime? lastModified,
     required List<_ix3hb3ib.CalendarAvailabilityOpeningProtocolState> openings,
   }) : super._(
          sequence: sequence,
@@ -171,17 +175,19 @@ class _CalendarAvailabilityProtocolStateImpl
   @_isc.useResult
   @override
   CalendarAvailabilityProtocolState copyWith({
-    int? sequence,
-    DateTime? created,
+    Object? sequence = _Undefined,
+    Object? created = _Undefined,
     DateTime? stamp,
-    DateTime? lastModified,
+    Object? lastModified = _Undefined,
     List<_ix3hb3ib.CalendarAvailabilityOpeningProtocolState>? openings,
   }) {
     return CalendarAvailabilityProtocolState(
-      sequence: sequence ?? this.sequence,
-      created: created ?? this.created,
+      sequence: sequence is int? ? sequence : this.sequence,
+      created: created is DateTime? ? created : this.created,
       stamp: stamp ?? this.stamp,
-      lastModified: lastModified ?? this.lastModified,
+      lastModified: lastModified is DateTime?
+          ? lastModified
+          : this.lastModified,
       openings: openings ?? this.openings.map((e0) => e0.copyWith()).toList(),
     );
   }

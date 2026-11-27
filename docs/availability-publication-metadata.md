@@ -39,3 +39,7 @@ Subsequent native scope: [protocol lifecycle and envelope duration](availability
 ## Source-preserving storage follow-up
 
 [ADR 0071](adr/0071-create-only-availability-import.md) confirms extending storage for repeated category groups and annotated CONTACT before create-only import. [The proposed contract](availability-import.md) keeps CONTACT read-only through native edits and preserves grouping/annotations without a new native contact editor. This is a future model change, not an implemented extension of the current DTOs.
+
+## Implemented storage follow-up
+
+[ADR 0072](adr/0072-source-preserving-availability-storage.md) and [the implementation guide](availability-storage.md) supersede storage-pending wording for the scoped prerequisite/native behaviors. They document exact UID/group/CONTACT/PERIOD and component-version representations, retention, policy context, query caps and upgrade behavior. Authenticated import remains pending; conversion is not authorization or publication.

@@ -26,7 +26,7 @@ abstract class CalendarAvailabilityView
     required this.calendarId,
     required this.revision,
     required this.protocolUid,
-    required this.lastModified,
+    this.lastModified,
     this.timingOverrides,
     required this.content,
     required this.protocolState,
@@ -36,8 +36,8 @@ abstract class CalendarAvailabilityView
     required _is.UuidValue id,
     required _is.UuidValue calendarId,
     required int revision,
-    required _is.UuidValue protocolUid,
-    required DateTime lastModified,
+    required String protocolUid,
+    DateTime? lastModified,
     List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
     required _ifxxil5c.CalendarAvailabilityContent content,
     required _ib9yzivj.CalendarAvailabilityProtocolState protocolState,
@@ -52,12 +52,12 @@ abstract class CalendarAvailabilityView
         jsonSerialization['calendarId'],
       ),
       revision: jsonSerialization['revision'] as int,
-      protocolUid: _is.UuidValueJsonExtension.fromJson(
-        jsonSerialization['protocolUid'],
-      ),
-      lastModified: _is.DateTimeJsonExtension.fromJson(
-        jsonSerialization['lastModified'],
-      ),
+      protocolUid: jsonSerialization['protocolUid'] as String,
+      lastModified: jsonSerialization['lastModified'] == null
+          ? null
+          : _is.DateTimeJsonExtension.fromJson(
+              jsonSerialization['lastModified'],
+            ),
       timingOverrides: jsonSerialization['timingOverrides'] == null
           ? null
           : _ix00hwbf.Protocol()
@@ -81,9 +81,9 @@ abstract class CalendarAvailabilityView
 
   final int revision;
 
-  final _is.UuidValue protocolUid;
+  final String protocolUid;
 
-  final DateTime lastModified;
+  final DateTime? lastModified;
 
   final List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides;
 
@@ -98,7 +98,7 @@ abstract class CalendarAvailabilityView
     _is.UuidValue? id,
     _is.UuidValue? calendarId,
     int? revision,
-    _is.UuidValue? protocolUid,
+    String? protocolUid,
     DateTime? lastModified,
     List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
     _ifxxil5c.CalendarAvailabilityContent? content,
@@ -175,8 +175,8 @@ abstract class CalendarAvailabilityView
       'id': id.toJson(),
       'calendarId': calendarId.toJson(),
       'revision': revision,
-      'protocolUid': protocolUid.toJson(),
-      'lastModified': lastModified.toJson(),
+      'protocolUid': protocolUid,
+      if (lastModified != null) 'lastModified': lastModified?.toJson(),
       if (timingOverrides != null)
         'timingOverrides': timingOverrides?.toJson(
           valueToJson: (v) => v.toJson(),
@@ -193,8 +193,8 @@ abstract class CalendarAvailabilityView
       'id': id.toJson(),
       'calendarId': calendarId.toJson(),
       'revision': revision,
-      'protocolUid': protocolUid.toJson(),
-      'lastModified': lastModified.toJson(),
+      'protocolUid': protocolUid,
+      if (lastModified != null) 'lastModified': lastModified?.toJson(),
       if (timingOverrides != null)
         'timingOverrides': timingOverrides?.toJson(
           valueToJson: (v) => v.toJsonForProtocol(),
@@ -217,8 +217,8 @@ class _CalendarAvailabilityViewImpl extends CalendarAvailabilityView {
     required _is.UuidValue id,
     required _is.UuidValue calendarId,
     required int revision,
-    required _is.UuidValue protocolUid,
-    required DateTime lastModified,
+    required String protocolUid,
+    DateTime? lastModified,
     List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
     required _ifxxil5c.CalendarAvailabilityContent content,
     required _ib9yzivj.CalendarAvailabilityProtocolState protocolState,
@@ -241,8 +241,8 @@ class _CalendarAvailabilityViewImpl extends CalendarAvailabilityView {
     _is.UuidValue? id,
     _is.UuidValue? calendarId,
     int? revision,
-    _is.UuidValue? protocolUid,
-    DateTime? lastModified,
+    String? protocolUid,
+    Object? lastModified = _Undefined,
     Object? timingOverrides = _Undefined,
     _ifxxil5c.CalendarAvailabilityContent? content,
     _ib9yzivj.CalendarAvailabilityProtocolState? protocolState,
@@ -252,7 +252,9 @@ class _CalendarAvailabilityViewImpl extends CalendarAvailabilityView {
       calendarId: calendarId ?? this.calendarId,
       revision: revision ?? this.revision,
       protocolUid: protocolUid ?? this.protocolUid,
-      lastModified: lastModified ?? this.lastModified,
+      lastModified: lastModified is DateTime?
+          ? lastModified
+          : this.lastModified,
       timingOverrides:
           timingOverrides is List<_id5ke9r5.CalendarAvailabilityOpeningEdits>?
           ? timingOverrides

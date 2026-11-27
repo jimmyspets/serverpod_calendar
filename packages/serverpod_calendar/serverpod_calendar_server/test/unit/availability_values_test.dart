@@ -151,7 +151,7 @@ void main() {
       () => validateAvailabilityContent(
         CalendarAvailabilityContent(
           openings: List.generate(
-            17,
+            129,
             (_) => CalendarAvailabilityOpening(timing: timing(endHour: 17)),
           ),
         ),

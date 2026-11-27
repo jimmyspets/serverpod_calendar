@@ -5,7 +5,7 @@ import 'event_values.dart';
 import 'generated/protocol.dart';
 
 const availabilityMaxDefinitions = 64;
-const availabilityMaxOpenings = 16;
+const availabilityMaxOpenings = 128;
 
 /// A bound is a start-only UTC or named-zone civil value. The special 2100
 /// midnight is permitted only for the exclusive upper bound.
@@ -225,12 +225,77 @@ CalendarAvailabilityContent validateAvailabilityContent(
   }
   final envelopeCategories = categories(input.categories);
   final envelopeComments = comments(input.comments);
+  List<CalendarAvailabilityCategoryGroup>? groups(
+    List<CalendarAvailabilityCategoryGroup>? input,
+    List<String>? legacy,
+    CalendarAvailabilityTextParameters? parameters,
+  ) {
+    if (input == null || input.isEmpty) return null;
+    if ((legacy?.isNotEmpty ?? false) || parameters?.categoryLanguage != null) {
+      throw ArgumentError('Choose grouped or native single-group categories');
+    }
+    var count = 0;
+    final result = <CalendarAvailabilityCategoryGroup>[];
+    for (final group in input) {
+      if (group.values.isEmpty) throw ArgumentError('Empty category group');
+      if (group.language != null) {
+        validateCalendarLanguageTag(group.language!);
+        metadataWork += group.language!.runes.length;
+      }
+      for (final value in group.values) {
+        if (++count > 64) throw ArgumentError('At most 64 category values');
+        IcalendarCategory(value, language: group.language);
+        metadataWork += value.runes.length;
+      }
+      result.add(group.copyWith(values: List.unmodifiable(group.values)));
+    }
+    return List.unmodifiable(result);
+  }
+
+  List<CalendarAvailabilityText>? contacts(
+    List<CalendarAvailabilityText>? values,
+  ) {
+    if ((values?.length ?? 0) > 32) throw ArgumentError('At most 32 contacts');
+    for (final value in values ?? <CalendarAvailabilityText>[]) {
+      validateCalendarPlainText(value.value, maxCodePoints: 4096);
+      metadataWork += value.value.runes.length;
+      if (value.language != null) {
+        validateCalendarLanguageTag(value.language!);
+        metadataWork += value.language!.runes.length;
+      }
+      if (value.alternativeUri != null) {
+        validateAvailabilityMetadataUri(value.alternativeUri!);
+        metadataWork += value.alternativeUri!.length;
+      }
+    }
+    return values == null || values.isEmpty ? null : List.unmodifiable(values);
+  }
+
+  final envelopeGroups = groups(
+    input.categoryGroups,
+    input.categories,
+    input.textParameters,
+  );
+  final envelopeContacts = contacts(input.contacts);
+  final protocolUids = <String>{};
   final uids = <Object>{};
   final openings = <CalendarAvailabilityOpening>[];
   for (final opening in input.openings) {
     if (opening.uid != null && !uids.add(opening.uid!)) {
       throw ArgumentError('Duplicate opening identity');
     }
+    if (opening.protocolUid != null) {
+      validateAvailabilityUid(opening.protocolUid!);
+      if (!protocolUids.add(opening.protocolUid!)) {
+        throw ArgumentError('Duplicate opening protocol UID');
+      }
+    }
+    final grouped = groups(
+      opening.categoryGroups,
+      opening.categories,
+      opening.textParameters,
+    );
+    final contact = contacts(opening.contacts);
     text(opening.summary, opening.description, opening.location);
     final tags = categories(opening.categories);
     final notes = comments(opening.comments);
@@ -258,6 +323,13 @@ CalendarAvailabilityContent validateAvailabilityContent(
         extensions: extra,
         categories: tags,
         comments: notes,
+        categoryGroups: grouped,
+        contacts: contact,
+        periods: validateAvailabilityPeriods(
+          t,
+          opening.recurrence,
+          opening.periods,
+        ),
         recurrence: validateEventRecurrence(t, opening.recurrence),
       ),
     );
@@ -271,6 +343,8 @@ CalendarAvailabilityContent validateAvailabilityContent(
     extensions: envelopeExtensions,
     categories: envelopeCategories,
     comments: envelopeComments,
+    categoryGroups: envelopeGroups,
+    contacts: envelopeContacts,
   );
 }
 
@@ -280,7 +354,10 @@ AvailabilityDefinition evaluateAvailability(
   CalendarAvailabilityContent input,
   UtcWindow window, {
   List<CalendarAvailabilityOpeningEdits>? edits,
+  RecurrenceWorkBudget? sharedWorkBudget,
 }) {
+  final work =
+      sharedWorkBudget ?? RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
   final start = availabilityBound(input.validFrom);
   final end = availabilityEnvelopeEnd(input);
   final from = start != null && start.isAfter(window.start)
@@ -300,6 +377,8 @@ AvailabilityDefinition evaluateAvailability(
           openingEdits(edits, opening.uid),
           clipped,
           dateZone: 'UTC',
+          periods: opening.periods,
+          sharedWorkBudget: work,
         ),
       );
       if (openings.length > 5000) {
@@ -337,7 +416,7 @@ List<CalendarAvailabilityOpeningEdits>? validateAvailabilityEdits(
   List<CalendarAvailabilityOpeningEdits>? edits,
 ) {
   if (edits == null || edits.isEmpty) return null;
-  if (edits.length > 16) {
+  if (edits.length > availabilityMaxOpenings) {
     throw const AvailabilityLimitException('editedOpenings');
   }
   final seen = <Object>{};
@@ -367,6 +446,7 @@ List<CalendarAvailabilityOpeningEdits>? validateAvailabilityEdits(
     final validated = validateEventOverrides(
       openingEvent(matches.single),
       entry.overrides,
+      periods: matches.single.periods,
     );
     if (validated != null) result.add(entry.copyWith(overrides: validated));
   }
@@ -395,6 +475,7 @@ List<CalendarAvailabilityOpeningEdits>? changeAvailabilityEdits(
       action: request.action,
       replacement: request.replacement,
     ),
+    periods: opening.periods,
   );
   return validateAvailabilityEdits(content, [
     for (final entry in current ?? <CalendarAvailabilityOpeningEdits>[])
@@ -413,6 +494,8 @@ Object availabilityMetadata(CalendarAvailabilityContent value) => [
   value.description,
   value.location,
   value.categories,
+  value.categoryGroups?.map((v) => v.toJson()).toList(),
+  value.contacts?.map((v) => v.toJson()).toList(),
   value.comments,
   value.url,
   value.classification?.name,
@@ -426,6 +509,8 @@ Object availabilityMetadata(CalendarAvailabilityContent value) => [
       o.description,
       o.location,
       o.categories,
+      o.categoryGroups?.map((v) => v.toJson()).toList(),
+      o.contacts?.map((v) => v.toJson()).toList(),
       o.comments,
       o.textParameters?.toJson(),
       o.extensions?.map((v) => v.toJson()).toList(),
@@ -438,7 +523,13 @@ Object availabilityStructure(CalendarAvailabilityContent value) => [
   value.priority,
   value.closedKind.name,
   for (final o in value.openings)
-    [o.uid?.toString(), o.timing.toJson(), o.recurrence?.toJson()],
+    [
+      o.uid?.toString(),
+      o.protocolUid,
+      o.timing.toJson(),
+      o.recurrence?.toJson(),
+      o.periods?.map((v) => v.toJson()).toList(),
+    ],
 ];
 
 /// Decoded absolute URI metadata only; no retrieval or scheme-based authority.
@@ -466,4 +557,9 @@ void validateAvailabilityExtensionName(String name) {
       ).hasMatch(name)) {
     throw ArgumentError('Private extension name required');
   }
+}
+
+void validateAvailabilityUid(String value) {
+  if (value.isEmpty) throw ArgumentError('Protocol UID required');
+  validateCalendarPlainText(value, maxCodePoints: 4096);
 }

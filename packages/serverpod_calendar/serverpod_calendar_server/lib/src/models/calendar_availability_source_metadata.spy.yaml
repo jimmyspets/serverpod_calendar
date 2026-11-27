@@ -1,0 +1,10 @@
+class: CalendarAvailabilitySourceMetadata
+immutable: true
+fields:
+  summary: CalendarAvailabilityText?
+  description: CalendarAvailabilityText?
+  location: CalendarAvailabilityText?
+  categories: List<CalendarAvailabilityCategoryGroup>?
+  comments: List<CalendarAvailabilityText>?
+  contacts: List<CalendarAvailabilityText>?
+  extensions: List<CalendarAvailabilityExtension>?

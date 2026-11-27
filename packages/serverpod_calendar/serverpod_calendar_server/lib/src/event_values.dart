@@ -302,6 +302,7 @@ CalendarEventOccurrencePreview previewEventOccurrences(
   CalendarEventContent content,
   CalendarEventOccurrenceQuery q, {
   CalendarEventTimingOverrides? overrides,
+  List<CalendarEventTiming>? periods,
 }) {
   final (date, _) = validateEventTiming(content.timing);
   final result = <CalendarEventOccurrence>[];
@@ -352,7 +353,7 @@ CalendarEventOccurrencePreview previewEventOccurrences(
     if (q.untilUtc!.difference(q.fromUtc!) > const Duration(days: 366)) {
       throw const RecurrenceLimitException('maxQueryDays');
     }
-    final series = _timedOverrides(content, overrides);
+    final series = _timedOverrides(content, overrides, periods: periods);
     for (final occurrence in series.expandOverlapping(
       window: UtcWindow(start: q.fromUtc!, end: q.untilUtc!),
       maxCandidateWork: eventMaxCandidateWork,
@@ -377,4 +378,49 @@ CalendarEventOccurrencePreview previewEventOccurrences(
     zoneId: content.timing.zoneId,
     occurrences: result,
   );
+}
+
+/// Availability-only PERIOD adaptation. Event commands have no PERIOD field.
+List<CalendarEventTiming>? validateAvailabilityPeriods(
+  CalendarEventTiming timing,
+  CalendarEventRecurrence? recurrence,
+  List<CalendarEventTiming>? input,
+) {
+  if (input == null || input.isEmpty) return null;
+  if (input.length +
+          (recurrence?.inclusions.length ?? 0) +
+          (recurrence?.exclusions.length ?? 0) >
+      eventMaxExplicitDates) {
+    throw const RecurrenceLimitException('maxExplicitDates');
+  }
+  if (timing.kind != CalendarEventTimeKind.utc &&
+      timing.kind != CalendarEventTimeKind.zoned) {
+    throw ArgumentError('PERIOD requires timed availability');
+  }
+  for (final p in input) {
+    _profile(timing, p);
+    final span = validateEventTiming(p).$2!;
+    if ((p.end == null && p.duration == null) || span.isPoint) {
+      throw ArgumentError('Positive explicit PERIOD required');
+    }
+  }
+  final series = _timedOverrides(
+    CalendarEventContent(
+      timing: timing,
+      recurrence: recurrence,
+    ),
+    null,
+    periods: input,
+  );
+  series.expandOverlapping(
+    window: UtcWindow(
+      start: series.span.start.instant,
+      end: series.span.start.instant.add(const Duration(seconds: 1)),
+    ),
+    maxCandidateWork: eventMaxCandidateWork,
+    maxRuleOccurrences: eventMaxRuleOccurrences,
+    maxBaseOccurrences: eventMaxRuleOccurrences,
+    maxResults: eventMaxPreviewResults,
+  );
+  return List.unmodifiable(input);
 }

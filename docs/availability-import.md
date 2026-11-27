@@ -1,6 +1,6 @@
 # Create-only availability import and storage contract
 
-Status: **maintainer-confirmed product choices; proposed model, migration and API mechanics**. Date: 2026-10-22. [ADR 0071](adr/0071-create-only-availability-import.md) records the decisions. This document does not implement storage extensions or an import endpoint. Existing [native services](native-working-hours.md) and [pure wire adaptation](icalendar-availability-adapter.md) remain the runtime baseline.
+Status: **maintainer-confirmed product choices; proposed model, migration and API mechanics**. Date: 2026-10-22. [ADR 0071](adr/0071-create-only-availability-import.md) records the decisions. This document defines the import contract. The prerequisite storage is now implemented under [ADR 0072](adr/0072-source-preserving-availability-storage.md); the import endpoint remains pending. Existing [native services](native-working-hours.md) and [pure wire adaptation](icalendar-availability-adapter.md) remain the runtime baseline.
 
 ## Confirmed scope
 
@@ -88,7 +88,7 @@ The wire defaults are 1 MiB input, 64 definitions, 128 raw AVAILABLE components 
 
 Preserve populated native data in an upgrade: stringify existing protocol UUIDs exactly, retain native UUIDs/revisions, map existing opening UUIDs to stable API IDs and string protocol UIDs, turn the old category group and positional comments into equivalent typed groups, leave CONTACT/period/source-exception data absent, and preserve protocol baselines without read-time writes. Use generated migrations with an explicitly necessary data-preserving JSON/column transformation. Fresh schema and upgrade schema must agree. Do not hand-edit generated models, protocol clients or migration metadata.
 
-The API is unpublished, so reviewed breaking DTO changes are allowed. Update host adapters, generated clients, example editors and fixtures together; stale old full-content payloads must not silently erase new read-only/source metadata. This is a prerequisite storage batch, then a create-only import batch; do not mark either implemented from this contract.
+The API is unpublished, so reviewed breaking DTO changes are allowed. Update host adapters, generated clients, example editors and fixtures together; stale old full-content payloads must not silently erase new read-only/source metadata. The prerequisite storage batch now follows ADR 0072; the create-only import batch remains pending and cannot be marked implemented from this contract.
 
 ## Requirement coverage
 
@@ -112,3 +112,7 @@ Use focused mapping/lifecycle/module tests while building, then broader VM/Chrom
 Primary standards: [RFC 7953 component profile](https://www.rfc-editor.org/rfc/rfc7953.html#section-3.1), [RFC 5545 UID](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.4.7) and [change-management properties](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.7). These sources define protocol properties; the transaction, lookup and API designs above are repository proposals. See [host authorization](host-authorization.md), [consistency guarantees](authorization-consistency.md), [native protocol lifecycle](availability-protocol-lifecycle.md), [model review gates](adr/0019-model-contracts.md) and the [RFC scope table](rfc/rfc-7953.md).
 
 Review the model/identity/protocol/migration mechanics before changing schema. Implement the source-preserving storage batch first, then create-only authenticated import with end-to-end evidence. Source updates/reconciliation, authorized export, other component import, HTTP feeds, scheduling and external-client compatibility remain separate work.
+
+## Implemented storage follow-up
+
+[ADR 0072](adr/0072-source-preserving-availability-storage.md) and [the implementation guide](availability-storage.md) supersede storage-pending wording for the scoped prerequisite/native behaviors. They document exact UID/group/CONTACT/PERIOD and component-version representations, retention, policy context, query caps and upgrade behavior. Authenticated import remains pending; conversion is not authorization or publication.

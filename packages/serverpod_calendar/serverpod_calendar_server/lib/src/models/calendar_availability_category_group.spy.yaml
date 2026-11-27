@@ -1,0 +1,5 @@
+class: CalendarAvailabilityCategoryGroup
+immutable: true
+fields:
+  values: List<String>
+  language: String?

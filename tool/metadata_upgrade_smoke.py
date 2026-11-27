@@ -237,7 +237,49 @@ BEGIN
 END;
 $protocol$;
 """)
-        print("PASS: populated schema upgrades preserve identity, revisions, content, associations, unique protocol UIDs and old cursor bindings.")
+        sql(database, """
+UPDATE serverpod_calendar_availability_data SET content = jsonb_set(content::jsonb, '{openings}',
+  '[{"uid":"99999999-9999-4999-8999-999999999999","timing":{"kind":"utc","start":{"year":2026,"month":3,"day":29,"hour":9,"minute":0,"second":0,"microsecond":0},"duration":{"weeks":0,"days":0,"hours":1,"minutes":0,"seconds":0,"microsecond":0}},"categories":["Work"],"comments":["Desk"],"textParameters":{"categoryLanguage":"en","comments":[{"language":"sv"}]}}]'::jsonb)::json
+WHERE "availabilityId"='77777777-7777-4777-8777-777777777777';
+CREATE TABLE availability_before_storage AS SELECT * FROM serverpod_calendar_availability_data;
+""")
+        sql(database, (SERVER / "migrations/20261022151001963-availability-import-storage/migration.sql").read_text(encoding="utf-8"))
+        sql(database, """
+DO $storage$
+DECLARE item record;
+BEGIN
+  SELECT * INTO STRICT item FROM serverpod_calendar_availability_data WHERE "availabilityId"='77777777-7777-4777-8777-777777777777';
+  IF (SELECT column_default FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='serverpod_calendar_availability_data' AND column_name='protocolUid') IS NOT NULL
+     OR (SELECT data_type FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='serverpod_calendar_availability_data' AND column_name='protocolUid') <> 'text'
+     OR EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname='public' AND indexname='calendar_availability_data_uid_unique')
+     OR NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname='public' AND indexname='calendar_availability_data_uid_candidates'
+       AND indexdef NOT LIKE 'CREATE UNIQUE%') THEN
+    RAISE EXCEPTION 'Upgraded protocol UID schema differs from generated target';
+  END IF;
+  IF item."protocolUid" <> '88888888-8888-4888-8888-888888888888'
+     OR item."calendarId" <> '11111111-1111-4111-8111-111111111111'::uuid
+     OR item."uidDigest" <> encode(sha256(convert_to(item."protocolUid", 'UTF8')), 'hex')
+     OR item.content->'openings'->0->>'protocolUid' <> '99999999-9999-4999-8999-999999999999'
+     OR item."protocolState" IS NOT NULL THEN
+    RAISE EXCEPTION 'Storage upgrade changed protocol/native identity or fabricated dates';
+  END IF;
+  IF EXISTS (SELECT 1 FROM availability_before_storage AS old
+    JOIN serverpod_calendar_availability_data AS current ON current.id=old.id
+    WHERE current."availabilityId" <> old."availabilityId"
+      OR current."createdAt" <> old."createdAt" OR current."updatedAt" <> old."updatedAt"
+      OR current."timingOverrides"::jsonb IS DISTINCT FROM old."timingOverrides"::jsonb
+      OR (current.content::jsonb #- '{openings,0,protocolUid}') IS DISTINCT FROM old.content::jsonb)
+     OR (SELECT revision FROM serverpod_calendar_availability WHERE id='77777777-7777-4777-8777-777777777777') <> 4
+     OR (SELECT revision FROM serverpod_calendar_scope WHERE "scopeKey"='metadata-upgrade-test') <> 11 THEN
+    RAISE EXCEPTION 'Storage upgrade lost native content audit or revision state';
+  END IF;
+END;
+$storage$;
+DROP TABLE availability_before_storage;
+""")
+        print("PASS: populated schema upgrades preserve identity, revisions, content, associations, protocol UID strings and opening identities and old cursor bindings.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")
 

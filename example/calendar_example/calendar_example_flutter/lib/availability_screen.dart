@@ -156,7 +156,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                       'Validity duration: ${rule.content.validDuration!.weeks} weeks, ${rule.content.validDuration!.days} days, ${rule.content.validDuration!.hours} hours, ${rule.content.validDuration!.minutes} minutes, ${rule.content.validDuration!.seconds} seconds',
                     ),
                   Text(
-                    'Protocol version ${rule.protocolState.sequence}; created ${rule.protocolState.created.toIso8601String()}; modified ${rule.protocolState.lastModified.toIso8601String()}',
+                    'Protocol version ${rule.protocolState.sequence?.toString() ?? 'omitted'}; created ${rule.protocolState.created?.toIso8601String() ?? 'not supplied'}; modified ${rule.protocolState.lastModified?.toIso8601String() ?? 'not supplied'}',
                   ),
                   for (final o in rule.content.openings)
                     Text(
@@ -430,6 +430,8 @@ class _AvailabilityEditorState extends State<AvailabilityEditor> {
         description: widget.rule?.content.description,
         location: widget.rule?.content.location,
         categories: widget.rule?.content.categories,
+        categoryGroups: widget.rule?.content.categoryGroups,
+        contacts: widget.rule?.content.contacts,
         comments: widget.rule?.content.comments,
         textParameters: widget.rule?.content.textParameters,
         extensions: widget.rule?.content.extensions,
@@ -454,6 +456,12 @@ class _AvailabilityEditorState extends State<AvailabilityEditor> {
             : [
                 cal.CalendarAvailabilityOpening(
                   uid: widget.rule?.content.openings.firstOrNull?.uid,
+                  protocolUid:
+                      widget.rule?.content.openings.firstOrNull?.protocolUid,
+                  periods: widget.rule?.content.openings.firstOrNull?.periods,
+                  categoryGroups:
+                      widget.rule?.content.openings.firstOrNull?.categoryGroups,
+                  contacts: widget.rule?.content.openings.firstOrNull?.contacts,
                   summary: widget.rule?.content.openings.firstOrNull?.summary,
                   description:
                       widget.rule?.content.openings.firstOrNull?.description,

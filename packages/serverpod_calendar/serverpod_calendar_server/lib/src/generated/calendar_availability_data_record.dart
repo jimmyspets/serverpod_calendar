@@ -22,18 +22,22 @@ abstract class CalendarAvailabilityDataRecord
   CalendarAvailabilityDataRecord._({
     this.id,
     required this.availabilityId,
-    _is.UuidValue? protocolUid,
+    required this.protocolUid,
+    required this.calendarId,
+    required this.uidDigest,
     this.protocolState,
     this.timingOverrides,
     required this.content,
     required this.createdAt,
     required this.updatedAt,
-  }) : protocolUid = protocolUid ?? const _is.Uuid().v4obj();
+  });
 
   factory CalendarAvailabilityDataRecord({
     int? id,
     required _is.UuidValue availabilityId,
-    _is.UuidValue? protocolUid,
+    required String protocolUid,
+    required _is.UuidValue calendarId,
+    required String uidDigest,
     _ib9yzivj.CalendarAvailabilityProtocolState? protocolState,
     List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
     required _ifxxil5c.CalendarAvailabilityContent content,
@@ -49,11 +53,11 @@ abstract class CalendarAvailabilityDataRecord
       availabilityId: _is.UuidValueJsonExtension.fromJson(
         jsonSerialization['availabilityId'],
       ),
-      protocolUid: jsonSerialization['protocolUid'] == null
-          ? null
-          : _is.UuidValueJsonExtension.fromJson(
-              jsonSerialization['protocolUid'],
-            ),
+      protocolUid: jsonSerialization['protocolUid'] as String,
+      calendarId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['calendarId'],
+      ),
+      uidDigest: jsonSerialization['uidDigest'] as String,
       protocolState: jsonSerialization['protocolState'] == null
           ? null
           : _ix00hwbf.Protocol()
@@ -88,7 +92,11 @@ abstract class CalendarAvailabilityDataRecord
 
   _is.UuidValue availabilityId;
 
-  _is.UuidValue protocolUid;
+  String protocolUid;
+
+  _is.UuidValue calendarId;
+
+  String uidDigest;
 
   _ib9yzivj.CalendarAvailabilityProtocolState? protocolState;
 
@@ -109,7 +117,9 @@ abstract class CalendarAvailabilityDataRecord
   CalendarAvailabilityDataRecord copyWith({
     int? id,
     _is.UuidValue? availabilityId,
-    _is.UuidValue? protocolUid,
+    String? protocolUid,
+    _is.UuidValue? calendarId,
+    String? uidDigest,
     _ib9yzivj.CalendarAvailabilityProtocolState? protocolState,
     List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
     _ifxxil5c.CalendarAvailabilityContent? content,
@@ -122,7 +132,9 @@ abstract class CalendarAvailabilityDataRecord
       '__className__': 'serverpod_calendar.CalendarAvailabilityDataRecord',
       if (id != null) 'id': id,
       'availabilityId': availabilityId.toJson(),
-      'protocolUid': protocolUid.toJson(),
+      'protocolUid': protocolUid,
+      'calendarId': calendarId.toJson(),
+      'uidDigest': uidDigest,
       if (protocolState != null) 'protocolState': protocolState?.toJson(),
       if (timingOverrides != null)
         'timingOverrides': timingOverrides?.toJson(
@@ -174,7 +186,9 @@ class _CalendarAvailabilityDataRecordImpl
   _CalendarAvailabilityDataRecordImpl({
     int? id,
     required _is.UuidValue availabilityId,
-    _is.UuidValue? protocolUid,
+    required String protocolUid,
+    required _is.UuidValue calendarId,
+    required String uidDigest,
     _ib9yzivj.CalendarAvailabilityProtocolState? protocolState,
     List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
     required _ifxxil5c.CalendarAvailabilityContent content,
@@ -184,6 +198,8 @@ class _CalendarAvailabilityDataRecordImpl
          id: id,
          availabilityId: availabilityId,
          protocolUid: protocolUid,
+         calendarId: calendarId,
+         uidDigest: uidDigest,
          protocolState: protocolState,
          timingOverrides: timingOverrides,
          content: content,
@@ -198,7 +214,9 @@ class _CalendarAvailabilityDataRecordImpl
   CalendarAvailabilityDataRecord copyWith({
     Object? id = _Undefined,
     _is.UuidValue? availabilityId,
-    _is.UuidValue? protocolUid,
+    String? protocolUid,
+    _is.UuidValue? calendarId,
+    String? uidDigest,
     Object? protocolState = _Undefined,
     Object? timingOverrides = _Undefined,
     _ifxxil5c.CalendarAvailabilityContent? content,
@@ -209,6 +227,8 @@ class _CalendarAvailabilityDataRecordImpl
       id: id is int? ? id : this.id,
       availabilityId: availabilityId ?? this.availabilityId,
       protocolUid: protocolUid ?? this.protocolUid,
+      calendarId: calendarId ?? this.calendarId,
+      uidDigest: uidDigest ?? this.uidDigest,
       protocolState:
           protocolState is _ib9yzivj.CalendarAvailabilityProtocolState?
           ? protocolState
@@ -235,10 +255,20 @@ class CalendarAvailabilityDataRecordUpdateTable
     value,
   );
 
-  _is.ColumnValue<_is.UuidValue, _is.UuidValue> protocolUid(
+  _is.ColumnValue<String, String> protocolUid(String value) => _is.ColumnValue(
+    table.protocolUid,
+    value,
+  );
+
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> calendarId(
     _is.UuidValue value,
   ) => _is.ColumnValue(
-    table.protocolUid,
+    table.calendarId,
+    value,
+  );
+
+  _is.ColumnValue<String, String> uidDigest(String value) => _is.ColumnValue(
+    table.uidDigest,
     value,
   );
 
@@ -292,10 +322,17 @@ class CalendarAvailabilityDataRecordTable extends _is.Table<int?> {
       'availabilityId',
       this,
     );
-    protocolUid = _is.ColumnUuid(
+    protocolUid = _is.ColumnString(
       'protocolUid',
       this,
-      hasDefault: true,
+    );
+    calendarId = _is.ColumnUuid(
+      'calendarId',
+      this,
+    );
+    uidDigest = _is.ColumnString(
+      'uidDigest',
+      this,
     );
     protocolState =
         _is.ColumnSerializable<_ib9yzivj.CalendarAvailabilityProtocolState>(
@@ -327,7 +364,11 @@ class CalendarAvailabilityDataRecordTable extends _is.Table<int?> {
 
   late final _is.ColumnUuid availabilityId;
 
-  late final _is.ColumnUuid protocolUid;
+  late final _is.ColumnString protocolUid;
+
+  late final _is.ColumnUuid calendarId;
+
+  late final _is.ColumnString uidDigest;
 
   late final _is.ColumnSerializable<_ib9yzivj.CalendarAvailabilityProtocolState>
   protocolState;
@@ -349,6 +390,8 @@ class CalendarAvailabilityDataRecordTable extends _is.Table<int?> {
     id,
     availabilityId,
     protocolUid,
+    calendarId,
+    uidDigest,
     protocolState,
     timingOverrides,
     content,

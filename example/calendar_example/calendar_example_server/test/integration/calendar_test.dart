@@ -1,6 +1,11 @@
+import 'dart:convert';
+
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_calendar_server/serverpod_calendar_server.dart';
 import 'package:test/test.dart';
+import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
+import 'package:serverpod_calendar_server/src/availability_storage_values.dart';
+import 'package:serverpod_calendar_server/src/availability_wire_storage.dart';
 
 import 'test_tools/serverpod_test_tools.dart';
 
@@ -611,6 +616,407 @@ void main() {
       fromUtc: DateTime.utc(2026, 3, 29),
       untilUtc: DateTime.utc(2026, 4, 1),
     );
+    Future<CalendarAvailabilityView> storedSource({
+      UuidValue? parent,
+      String? uid,
+    }) async {
+      final calendar =
+          parent ?? (await service.create(createInput()))!.calendarId;
+      final receipt = (await service.createAvailability(
+        CalendarAvailabilityCreateRequest(
+          calendarId: calendar,
+          content: CalendarAvailabilityContent(openings: []),
+        ),
+      ))!;
+      final lines = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Synthetic storage fixture//EN',
+        'BEGIN:VAVAILABILITY',
+        'UID:${uid ?? 'source/界@example.invalid'}',
+        'DTSTAMP:20400101T000000Z',
+        'SEQUENCE:17',
+        'CATEGORIES;LANGUAGE=en:One,One',
+        'CATEGORIES;LANGUAGE=sv:Två',
+        'CONTACT;LANGUAGE=en;ALTREP="cid:desk@example.invalid":Desk',
+        'BEGIN:AVAILABLE',
+        'UID:hours/source@example.invalid',
+        'DTSTAMP:20500101T000000Z',
+        'DTSTART:20261022T090000Z',
+        'DURATION:PT1H',
+        'RDATE;VALUE=PERIOD:20261023T090000Z/PT2H',
+        'CONTACT:Opening desk',
+        'CATEGORIES;LANGUAGE=sv:Öppet',
+        'END:AVAILABLE',
+        'END:VAVAILABILITY',
+        'END:VCALENDAR',
+        '',
+      ];
+      final wire = parseIcalendarAvailabilityCalendar(
+        utf8.encode(lines.join('\r\n')),
+      );
+      final proposal = availabilityStorageProposal(wire.definitions.single);
+      final data = (await CalendarAvailabilityDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.availabilityId.equals(receipt.availabilityId),
+      ))!;
+      await CalendarAvailabilityDataRecord.db.updateRow(
+        session,
+        data.copyWith(
+          protocolUid: proposal.protocolUid,
+          uidDigest: availabilityUidDigest(proposal.protocolUid),
+          content: proposal.content,
+          timingOverrides: proposal.edits,
+          protocolState: proposal.protocolState,
+        ),
+      );
+      return service.getAvailability(receipt.availabilityId);
+    }
+
+    test('source storage preserves protocol dates metadata PERIOD calculation and native edit retention', () async {
+      var rule = await storedSource();
+      final initial = rule.protocolState.toJson();
+      expect(rule.lastModified, isNull);
+      expect(rule.content.categoryGroups!.first.values, ['One', 'One']);
+      expect(
+        (await service.listAvailability(
+          rule.calendarId,
+          category: 'Två',
+        )).single.id,
+        rule.id,
+      );
+      expect(
+        (await service.listAvailability(
+          rule.calendarId,
+          category: 'Öppet',
+        )).single.id,
+        rule.id,
+      );
+      expect(
+        await service.listAvailability(rule.calendarId, category: 'två'),
+        isEmpty,
+      );
+      policy.denied.add(CalendarPermission.readAvailability);
+      expect(
+        await service.listAvailability(rule.calendarId, category: 'Två'),
+        isEmpty,
+      );
+      policy.denied.clear();
+      final data = (await CalendarAvailabilityDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.availabilityId.equals(rule.id),
+      ))!;
+      expect(data.createdAt.year, 2026);
+      expect(rule.protocolState.stamp, DateTime.utc(2040));
+      final groups = rule.content.categoryGroups!
+          .map((g) => g.toJson())
+          .toList();
+      final openingId = rule.content.openings.single.uid;
+      await service.updateAvailability(
+        CalendarAvailabilityUpdateRequest(
+          availabilityId: rule.id,
+          expectedRevision: rule.revision,
+          content: rule.content.copyWith(
+            categoryGroups: null,
+            contacts: null,
+            openings: [
+              rule.content.openings.single.copyWith(
+                categoryGroups: null,
+                contacts: null,
+                periods: null,
+                protocolUid: null,
+              ),
+            ],
+          ),
+        ),
+      );
+      rule = await service.getAvailability(rule.id);
+      expect(rule.protocolState.toJson(), initial);
+      expect(
+        rule.content.categoryGroups!.map((g) => g.toJson()).toList(),
+        groups,
+      );
+      expect(rule.content.contacts!.single.value, 'Desk');
+      expect(rule.content.openings.single.uid, openingId);
+      expect(
+        rule.content.openings.single.contacts!.single.value,
+        'Opening desk',
+      );
+      expect(rule.content.openings.single.periods!.single.duration!.hours, 2);
+      expect(
+        policy
+            .lastAvailabilityRequest!
+            .currentAvailability!
+            .content
+            .contacts!
+            .single
+            .value,
+        'Desk',
+      );
+      final preview = await service.previewAvailabilityOccurrences(
+        CalendarAvailabilityOccurrenceQuery(
+          availabilityId: rule.id,
+          openingUid: openingId!,
+          expectedRevision: rule.revision,
+          fromUtc: DateTime.utc(2026, 10, 23),
+          untilUtc: DateTime.utc(2026, 10, 24),
+        ),
+      );
+      expect(
+        preview.occurrences.single.endUtc!
+            .difference(preview.occurrences.single.startUtc!)
+            .inHours,
+        2,
+      );
+      await service.updateAvailabilityMetadata(
+        CalendarAvailabilityUpdateRequest(
+          availabilityId: rule.id,
+          expectedRevision: rule.revision,
+          content: rule.content.copyWith(summary: 'Local name'),
+        ),
+      );
+      rule = await service.getAvailability(rule.id);
+      expect(rule.protocolState.sequence, 18);
+      expect(rule.protocolState.stamp, DateTime.utc(2040));
+      expect(rule.protocolState.created, isNull);
+      expect(
+        rule.content.contacts!.single.alternativeUri,
+        'cid:desk@example.invalid',
+      );
+    });
+    test('source CONTACT and protocol opening identity cannot be authored or altered natively', () async {
+      final rule = await storedSource();
+      for (final content in [
+        rule.content.copyWith(
+          contacts: [CalendarAvailabilityText(value: 'Changed')],
+        ),
+        rule.content.copyWith(contacts: []),
+        rule.content.copyWith(
+          openings: [
+            rule.content.openings.single.copyWith(protocolUid: 'changed'),
+          ],
+        ),
+        rule.content.copyWith(
+          openings: [
+            rule.content.openings.single.copyWith(
+              contacts: [CalendarAvailabilityText(value: 'Changed')],
+            ),
+          ],
+        ),
+      ]) {
+        await expectLater(
+          service.updateAvailabilityMetadata(
+            CalendarAvailabilityUpdateRequest(
+              availabilityId: rule.id,
+              expectedRevision: rule.revision,
+              content: content,
+            ),
+          ),
+          failure(CalendarFailureCode.validation),
+        );
+      }
+      final after = await service.getAvailability(rule.id);
+      expect(after.revision, rule.revision);
+      expect(after.content.toJson(), rule.content.toJson());
+      await expectLater(
+        service.createAvailability(
+          CalendarAvailabilityCreateRequest(
+            calendarId: rule.calendarId,
+            content: CalendarAvailabilityContent(
+              openings: [],
+              contacts: [CalendarAvailabilityText(value: 'Native contact')],
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+    });
+    test('source metadata policy denial and stale writes leave all retained data intact', () async {
+      final rule = await storedSource();
+      final command = CalendarAvailabilityUpdateRequest(
+        availabilityId: rule.id,
+        expectedRevision: rule.revision,
+        content: rule.content.copyWith(summary: 'Changed'),
+      );
+      policy.denyFinal = true;
+      await expectLater(
+        service.updateAvailabilityMetadata(command),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denyFinal = false;
+      await expectLater(
+        service.updateAvailabilityMetadata(
+          command.copyWith(expectedRevision: 99),
+        ),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      final after = await service.getAvailability(rule.id);
+      expect(after.revision, rule.revision);
+      expect(after.protocolState.toJson(), rule.protocolState.toJson());
+      expect(after.content.toJson(), rule.content.toJson());
+    });
+    test('long source UID storage allows independent destination copies and deletion scrubs active state', () async {
+      final uid = '界' * 4096;
+      final first = await storedSource(uid: uid);
+      final second = await storedSource(uid: uid);
+      expect(second.calendarId, isNot(first.calendarId));
+      expect(second.id, isNot(first.id));
+      expect(second.protocolUid, first.protocolUid);
+      expect(
+        second.content.openings.single.uid,
+        isNot(first.content.openings.single.uid),
+      );
+      await service.deleteAvailability(first.id, first.revision);
+      expect(
+        await CalendarAvailabilityDataRecord.db.findFirstRow(
+          session,
+          where: (t) => t.availabilityId.equals(first.id),
+        ),
+        isNull,
+      );
+      final marker = (await CalendarAvailabilityRecord.db.findById(
+        session,
+        first.id,
+      ))!;
+      expect(marker.deletedAt, isNotNull);
+      expect((await service.getAvailability(second.id)).protocolUid, uid);
+    });
+    test('UID candidate index permits digest collisions while equality remains exact', () async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      final a = await storedSource(parent: calendar, uid: 'A');
+      final b = await storedSource(parent: calendar, uid: 'B');
+      final row = (await CalendarAvailabilityDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.availabilityId.equals(b.id),
+      ))!;
+      final digest = availabilityUidDigest(a.protocolUid);
+      // Inject a collision only into this candidate-index test, then restore it.
+      await CalendarAvailabilityDataRecord.db.updateRow(
+        session,
+        row.copyWith(uidDigest: digest),
+      );
+      try {
+        final candidates = await CalendarAvailabilityDataRecord.db.find(
+          session,
+          where: (t) =>
+              t.calendarId.equals(calendar) & t.uidDigest.equals(digest),
+        );
+        expect(candidates, hasLength(2));
+        expect(
+          availabilityUidConflicts('A', candidates.map((v) => v.protocolUid)),
+          isTrue,
+        );
+        expect(
+          availabilityUidConflicts('B', candidates.map((v) => v.protocolUid)),
+          isTrue,
+        );
+        expect(
+          availabilityUidConflicts('C', candidates.map((v) => v.protocolUid)),
+          isFalse,
+        );
+      } finally {
+        await CalendarAvailabilityDataRecord.db.updateRow(session, row);
+      }
+    });
+    test(
+      'source-only echoes cannot disclose equality without raw read authority',
+      () async {
+        var rule = await storedSource();
+        final opening = rule.content.openings.single;
+        final bare = rule.content.copyWith(
+          contacts: null,
+          openings: [opening.copyWith(contacts: null, protocolUid: null)],
+        );
+        policy.denied.add(CalendarPermission.readAvailability);
+        for (final content in [
+          bare.copyWith(contacts: rule.content.contacts),
+          bare.copyWith(contacts: [CalendarAvailabilityText(value: 'Guess')]),
+          bare.copyWith(
+            openings: [
+              bare.openings.single.copyWith(protocolUid: opening.protocolUid),
+            ],
+          ),
+          bare.copyWith(
+            openings: [bare.openings.single.copyWith(protocolUid: 'Guess')],
+          ),
+        ]) {
+          await expectLater(
+            service.updateAvailabilityMetadata(
+              CalendarAvailabilityUpdateRequest(
+                availabilityId: rule.id,
+                expectedRevision: rule.revision,
+                content: content,
+              ),
+            ),
+            failure(CalendarFailureCode.accessDenied),
+          );
+        }
+        final receipt = await service.updateAvailabilityMetadata(
+          CalendarAvailabilityUpdateRequest(
+            availabilityId: rule.id,
+            expectedRevision: rule.revision,
+            content: bare.copyWith(summary: 'Write-only edit'),
+          ),
+        );
+        expect(receipt, isNotNull);
+        policy.denied.clear();
+        rule = await service.getAvailability(rule.id);
+        expect(rule.revision, 2);
+        expect(rule.content.contacts!.single.value, 'Desk');
+        expect(rule.content.openings.single.protocolUid, opening.protocolUid);
+      },
+    );
+    test('source-only echo rights are rechecked at final write without changing receipt rights', () async {
+      var rule = await storedSource();
+      final command = CalendarAvailabilityUpdateRequest(
+        availabilityId: rule.id,
+        expectedRevision: rule.revision,
+        content: rule.content.copyWith(summary: 'Changed'),
+      );
+      policy.onFinal = () =>
+          policy.denied.add(CalendarPermission.readAvailability);
+      await expectLater(
+        service.updateAvailabilityMetadata(command),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.onFinal = null;
+      policy.denied.clear();
+      expect((await service.getAvailability(rule.id)).revision, rule.revision);
+      final receipt = await service.updateAvailabilityMetadata(command);
+      expect(receipt, isNotNull);
+      rule = await service.getAvailability(rule.id);
+      expect(rule.revision, 2);
+    });
+    test('group and PERIOD clear require explicit empty lists and metadata authority', () async {
+      var rule = await storedSource();
+      policy.denied.add(CalendarPermission.updateAvailabilityMetadata);
+      await expectLater(
+        service.updateAvailability(
+          CalendarAvailabilityUpdateRequest(
+            availabilityId: rule.id,
+            expectedRevision: rule.revision,
+            content: rule.content.copyWith(categoryGroups: []),
+          ),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denied.clear();
+      await service.updateAvailability(
+        CalendarAvailabilityUpdateRequest(
+          availabilityId: rule.id,
+          expectedRevision: rule.revision,
+          content: rule.content.copyWith(
+            categoryGroups: [],
+            openings: [rule.content.openings.single.copyWith(periods: [])],
+          ),
+        ),
+      );
+      rule = await service.getAvailability(rule.id);
+      expect(rule.content.categoryGroups, isNull);
+      expect(rule.content.openings.single.periods, isNull);
+      expect(rule.content.contacts!.single.value, 'Desk');
+    });
+
     test('lifecycle protocol versions distinguish identical saves metadata and opening changes', () async {
       var rule = await editableHours();
       final initial = rule.protocolState.toJson();
@@ -756,7 +1162,10 @@ void main() {
           content: rule.content.copyWith(
             openings: [
               ...rule.content.openings,
-              rule.content.openings.single.copyWith(uid: null),
+              rule.content.openings.single.copyWith(
+                uid: null,
+                protocolUid: null,
+              ),
             ],
           ),
         ),
@@ -1409,7 +1818,7 @@ void main() {
         second.content.openings.single.uid,
         first.content.openings.single.uid,
       );
-      expect(second.lastModified.millisecond, 0);
+      expect(second.lastModified!.millisecond, 0);
       await expectLater(
         service.updateAvailability(
           CalendarAvailabilityUpdateRequest(
@@ -3770,7 +4179,7 @@ final class TestPolicy implements CalendarHostPolicy {
   CalendarProposedChange? lastProtocolIntent;
   CalendarProposedChange? lastSupplementalIntent;
   bool sawCategoryFilter = false;
-  void Function()? onPreliminary;
+  void Function()? onPreliminary, onFinal;
   Duration delay = Duration.zero;
   CalendarAuthorizationGuarantee capability =
       CalendarAuthorizationGuarantee.freshCheck;
@@ -3870,6 +4279,9 @@ final class TestPolicy implements CalendarHostPolicy {
     if (phase == CalendarAuthorizationPhase.preliminaryWrite) {
       onPreliminary?.call();
     }
+    if (phase == CalendarAuthorizationPhase.finalWrite) {
+      onFinal?.call();
+    }
     await Future<void>.delayed(delay);
     if (unavailable) throw StateError('Synthetic policy outage');
     if (malformed) return [];
@@ -3918,7 +4330,8 @@ final class TestPolicy implements CalendarHostPolicy {
           : CalendarAuthorizationVerdict.allow,
       disclosedGroups: grants,
       eventDisclosedGroups: eventGrants,
-      discloseMutationReceipt: true,
+      discloseMutationReceipt:
+          r.operation != CalendarPermission.readAvailability,
     );
   }
 }
