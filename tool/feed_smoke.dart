@@ -7,6 +7,7 @@ import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
 import 'package:serverpod_calendar_feed_client/serverpod_calendar_feed_client.dart'
     as feed;
+import 'package:yaml/yaml.dart';
 
 final class _Fetched {
   const _Fetched(this.code, this.headers, this.bytes);
@@ -193,9 +194,27 @@ Future<void> feedSmoke(
           unchanged.etag == get.etag,
       'Weak conditional subscription failed',
     );
+    final contentLength = unchanged.headers['content-length'];
+    var knownRelicZeroLength = false;
+    if (contentLength == '0' && get.bytes.isNotEmpty) {
+      // Remove this exception when the fix in Relic is adopted.
+      // https://github.com/jimmyspets/serverpod_calendar/issues/209
+      final lock =
+          loadYaml(await File('pubspec.lock').readAsString()) as YamlMap;
+      final packages = lock['packages'] as YamlMap;
+      knownRelicZeroLength =
+          packages['serverpod']?['version'] == '4.1.2' &&
+          packages['relic_io']?['version'] == '2.0.1';
+      if (knownRelicZeroLength) {
+        stdout.writeln(
+          'Known Relic 304 Content-Length exception (calendar issue #209).',
+        );
+      }
+    }
     _require(
-      unchanged.headers['content-length'] == null ||
-          unchanged.headers['content-length'] == '${get.bytes.length}',
+      contentLength == null ||
+          contentLength == '${get.bytes.length}' ||
+          knownRelicZeroLength,
       '304 reported an incorrect representation length',
     );
     final precondition = await _fetch(

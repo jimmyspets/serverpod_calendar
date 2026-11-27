@@ -18,6 +18,11 @@ import '../endpoints/notifications_diagnostics_endpoint.dart' as _iikyohz9;
 class Endpoints extends _is.EndpointDispatch {
   @override
   void initializeEndpoints(_is.Server server) {
+    initializeOwnEndpoints(server);
+  }
+
+  @override
+  void initializeOwnEndpoints(_is.Server server) {
     var endpoints = <String, _is.Endpoint>{
       'notification': _ihb11yhk.NotificationEndpoint()
         ..initialize(
