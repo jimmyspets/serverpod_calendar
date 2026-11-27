@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
@@ -390,6 +392,22 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
           cal.CalendarEventCreateRequest(
             calendarId: second.calendarId,
             content: cal.CalendarEventContent(
+              recurrence: cal.CalendarEventRecurrence(
+                rule: cal.CalendarEventRule(
+                  frequency: cal.CalendarEventFrequency.daily,
+                  count: 3,
+                  byDay: [],
+                  byMonthDay: [],
+                  byYearDay: [],
+                  byWeekNo: [],
+                  byMonth: [],
+                  byHour: [],
+                  byMinute: [],
+                  bySetPosition: [],
+                ),
+                inclusions: [],
+                exclusions: [],
+              ),
               timing: cal.CalendarEventTiming(
                 kind: kind,
                 start: cal.CalendarEventCivil(
@@ -417,7 +435,80 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
               view.summary == null,
           'Event temporal meaning or omitted summary changed',
         );
+        final query = cal.CalendarEventOccurrenceQuery(
+          eventId: receipt.eventId,
+          expectedRevision: 1,
+          fromDate: kind == cal.CalendarEventTimeKind.date
+              ? cal.CalendarEventCivil(year: 2026, month: 3, day: 27)
+              : null,
+          untilDate: kind == cal.CalendarEventTimeKind.date
+              ? cal.CalendarEventCivil(year: 2026, month: 4, day: 1)
+              : null,
+          fromUtc: kind != cal.CalendarEventTimeKind.date
+              ? DateTime.utc(2026, 3, 27)
+              : null,
+          untilUtc: kind != cal.CalendarEventTimeKind.date
+              ? DateTime.utc(2026, 4, 1)
+              : null,
+        );
+        final local = await ea.preview(query);
+        final remote = await eb.preview(query);
+        check(
+          jsonEncode(local.toJson()) == jsonEncode(remote.toJson()) &&
+              remote.occurrences.length == 3,
+          'Cross-host recurrence projection differs',
+        );
+        if (kind == cal.CalendarEventTimeKind.zoned) {
+          check(
+            remote.occurrences.first.endUtc!.difference(
+                  remote.occurrences.first.startUtc!,
+                ) ==
+                const Duration(hours: 23),
+            'Recurring nominal day lost DST semantics',
+          );
+        }
       }
+      final patternId = eventIds.last;
+      final patternOriginal = await eb.getEvent(
+        patternId,
+        cal.CalendarEventFieldGroup.values,
+      );
+      final patternOutcomes = await Future.wait([
+        for (final api in [ea, eb])
+          api
+              .update(
+                cal.CalendarEventUpdateRequest(
+                  eventId: patternId,
+                  expectedRevision: 1,
+                  content: cal.CalendarEventContent(
+                    timing: patternOriginal.timing!,
+                    recurrence: patternOriginal.recurrence!.copyWith(
+                      rule: patternOriginal.recurrence!.rule!.copyWith(
+                        count: 4,
+                      ),
+                    ),
+                  ),
+                ),
+              )
+              .then<Object?>((r) => r, onError: (Object e) => e),
+      ]);
+      check(
+        patternOutcomes.whereType<cal.CalendarEventReceipt>().length == 1 &&
+            patternOutcomes.whereType<cal.CalendarException>().single.code ==
+                cal.CalendarFailureCode.staleRevision,
+        'Recurrence pattern race did not reject a stale write',
+      );
+      await rejects(
+        () => ea.preview(
+          cal.CalendarEventOccurrenceQuery(
+            eventId: patternId,
+            expectedRevision: 1,
+            fromUtc: DateTime.utc(2026, 3, 27),
+            untilUtc: DateTime.utc(2026, 4, 1),
+          ),
+        ),
+        cal.CalendarFailureCode.staleRevision,
+      );
       final firstPage = await ea.list(
         second.calendarId,
         pageSize: 1,

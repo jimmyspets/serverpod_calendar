@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'calendar_event_field_group.dart' as _iftiwkuj;
+import 'calendar_event_recurrence.dart' as _iqxs44bf;
 import 'calendar_event_status.dart' as _ivzxk9bc;
 import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_event_transparency.dart' as _iwjkdwy7;
@@ -33,6 +34,7 @@ abstract class CalendarEventView
     this.transparency,
     this.protocolUid,
     this.lastModified,
+    this.recurrence,
   });
 
   factory CalendarEventView({
@@ -48,6 +50,7 @@ abstract class CalendarEventView
     _iwjkdwy7.CalendarEventTransparency? transparency,
     String? protocolUid,
     DateTime? lastModified,
+    _iqxs44bf.CalendarEventRecurrence? recurrence,
   }) = _CalendarEventViewImpl;
 
   factory CalendarEventView.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -85,6 +88,11 @@ abstract class CalendarEventView
           : _is.DateTimeJsonExtension.fromJson(
               jsonSerialization['lastModified'],
             ),
+      recurrence: jsonSerialization['recurrence'] == null
+          ? null
+          : _ix00hwbf.Protocol().deserialize<_iqxs44bf.CalendarEventRecurrence>(
+              jsonSerialization['recurrence'],
+            ),
     );
   }
 
@@ -112,6 +120,8 @@ abstract class CalendarEventView
 
   DateTime? lastModified;
 
+  _iqxs44bf.CalendarEventRecurrence? recurrence;
+
   /// Returns a shallow copy of this [CalendarEventView]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -128,6 +138,7 @@ abstract class CalendarEventView
     _iwjkdwy7.CalendarEventTransparency? transparency,
     String? protocolUid,
     DateTime? lastModified,
+    _iqxs44bf.CalendarEventRecurrence? recurrence,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -145,6 +156,7 @@ abstract class CalendarEventView
       if (transparency != null) 'transparency': transparency?.toJson(),
       if (protocolUid != null) 'protocolUid': protocolUid,
       if (lastModified != null) 'lastModified': lastModified?.toJson(),
+      if (recurrence != null) 'recurrence': recurrence?.toJson(),
     };
   }
 
@@ -164,6 +176,7 @@ abstract class CalendarEventView
       if (transparency != null) 'transparency': transparency?.toJson(),
       if (protocolUid != null) 'protocolUid': protocolUid,
       if (lastModified != null) 'lastModified': lastModified?.toJson(),
+      if (recurrence != null) 'recurrence': recurrence?.toJsonForProtocol(),
     };
   }
 
@@ -189,6 +202,7 @@ class _CalendarEventViewImpl extends CalendarEventView {
     _iwjkdwy7.CalendarEventTransparency? transparency,
     String? protocolUid,
     DateTime? lastModified,
+    _iqxs44bf.CalendarEventRecurrence? recurrence,
   }) : super._(
          id: id,
          calendarId: calendarId,
@@ -202,6 +216,7 @@ class _CalendarEventViewImpl extends CalendarEventView {
          transparency: transparency,
          protocolUid: protocolUid,
          lastModified: lastModified,
+         recurrence: recurrence,
        );
 
   /// Returns a shallow copy of this [CalendarEventView]
@@ -221,6 +236,7 @@ class _CalendarEventViewImpl extends CalendarEventView {
     Object? transparency = _Undefined,
     Object? protocolUid = _Undefined,
     Object? lastModified = _Undefined,
+    Object? recurrence = _Undefined,
   }) {
     return CalendarEventView(
       id: id ?? this.id,
@@ -242,6 +258,9 @@ class _CalendarEventViewImpl extends CalendarEventView {
       lastModified: lastModified is DateTime?
           ? lastModified
           : this.lastModified,
+      recurrence: recurrence is _iqxs44bf.CalendarEventRecurrence?
+          ? recurrence
+          : this.recurrence?.copyWith(),
     );
   }
 }

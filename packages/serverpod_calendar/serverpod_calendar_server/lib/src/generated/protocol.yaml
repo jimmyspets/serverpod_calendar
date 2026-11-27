@@ -16,6 +16,7 @@ calendarEvent:
   - create:
   - getEvent:
   - list:
+  - preview:
   - update:
   - changeStatus:
   - deleteEvent:

@@ -191,3 +191,18 @@ Commands/checks actually run:
 - Relative documentation links, consecutive ADRs 0001–0053, unchanged Apache 2.0 LICENSE, candidate-file local-credential exclusion and whitespace checks: passed. Credentials/logs/build artifacts remain ignored.
 
 These checks establish the scoped non-recurring native event increment. They do not establish recurring event persistence, full canonical/interchange metadata, complete availability coverage, exclusive reservations, scheduling/notification execution, production coordinated authorization, HTTP feeds or external calendar-client interoperability.
+
+## Native recurrence storage and previews, 2026-10-21
+
+[ADR 0054](adr/0054-native-event-recurrence-and-previews.md) and [the native guide](native-event-recurrence.md) scope this batch. The maintainer selected storage/previews first, preserved explicit dates on pattern edits and rejection of incompatible changes. Single/range occurrence editing remains pending.
+
+Commands/results for the pinned Dart 3.13.5, Flutter 3.47.7 and Serverpod 4.0.4 toolchain:
+
+- Focused `dart test test/unit/event_values_test.dart` from the module server: **12 passed**. Coverage includes earlier RDATE/EXDATE precedence, canonical filters/start matching, generated DST gaps, nominal duration, overlap/points, mixed profiles/fractions and input/query/result limits.
+- `./tool/reset-test.ps1`, then `dart test test/integration/calendar_test.dart --name 'recurrence|pattern changes|preview requires|preview caps|previous non-recurring'` from the example server: **5 passed**. Actual immutable parent/event/query policy context, separate read/preview rights and timing disclosure, preserved versus deliberate replacement dates, rollback, stale revisions, no read timestamp mutation and earlier JSON payload compatibility are exercised.
+- `./tool/check.ps1`: stable generation across all three module/host pairs, authored formatting, fatal-info analysis, **443 core VM + 443 core Chrome**, **29 module unit VM + 17 module unit Chrome**, **3 Flutter widget** and **42 database/policy tests**, populated schema upgrades, compiled host, two independent host processes/generated clients/JWT, Flutter WebDriver and Flutter web release build. Recurrence DTO tests are VM-only server adapter tests; generated browser transport is exercised by Flutter.
+- The two-host harness compares DATE/UTC/named-zone recurring projections across processes, verifies the 23-hour nominal day across Stockholm DST, races pattern edits at the same expected revision, and rejects stale previews. Existing event lifecycle/cursor/calendar dependency and JWT checks remain included.
+- The Flutter journey saves a daily series with an earlier inclusion and an exclusion, previews the three expected dates through the live endpoint and continues cancellation/deletion/stale-edit checks.
+- Serverpod MCP reports **no SQL schema changes**: optional recurrence is stored in the existing typed JSON content. A database test rewrites synthetic content to the prior `recurring:false` JSON form, then verifies unchanged UID/revision/time and absent recurrence.
+
+Relative links, consecutive ADR numbering through 0054, unchanged Apache 2.0 LICENSE, candidate-file credential exclusions and `git diff --check` are checked separately. Local credentials, logs and build artifacts remain ignored. These results establish native storage/previews, not occurrence editing, complete availability, scheduling/alarm execution, ICS/feed support or external-client interoperability.

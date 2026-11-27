@@ -1,0 +1,7 @@
+class: CalendarEventOccurrence
+fields:
+  originalStart: CalendarEventCivil
+  start: CalendarEventCivil
+  endDate: CalendarEventCivil?
+  startUtc: DateTime?
+  endUtc: DateTime?

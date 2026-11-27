@@ -22,12 +22,14 @@ abstract class CalendarEventUpdateRequest
     required this.eventId,
     required this.expectedRevision,
     required this.content,
-  });
+    bool? replaceRecurrenceDates,
+  }) : replaceRecurrenceDates = replaceRecurrenceDates ?? false;
 
   const factory CalendarEventUpdateRequest({
     required _is.UuidValue eventId,
     required int expectedRevision,
     required _id4cvk34.CalendarEventContent content,
+    bool? replaceRecurrenceDates,
   }) = _CalendarEventUpdateRequestImpl;
 
   factory CalendarEventUpdateRequest.fromJson(
@@ -41,6 +43,12 @@ abstract class CalendarEventUpdateRequest
       content: _ix00hwbf.Protocol().deserialize<_id4cvk34.CalendarEventContent>(
         jsonSerialization['content'],
       ),
+      replaceRecurrenceDates:
+          jsonSerialization['replaceRecurrenceDates'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(
+              jsonSerialization['replaceRecurrenceDates'],
+            ),
     );
   }
 
@@ -50,6 +58,8 @@ abstract class CalendarEventUpdateRequest
 
   final _id4cvk34.CalendarEventContent content;
 
+  final bool replaceRecurrenceDates;
+
   /// Returns a shallow copy of this [CalendarEventUpdateRequest]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -57,6 +67,7 @@ abstract class CalendarEventUpdateRequest
     _is.UuidValue? eventId,
     int? expectedRevision,
     _id4cvk34.CalendarEventContent? content,
+    bool? replaceRecurrenceDates,
   });
   @override
   bool operator ==(Object other) {
@@ -80,7 +91,12 @@ abstract class CalendarEventUpdateRequest
                   other.content,
                   content,
                 ) ||
-                other.content == content);
+                other.content == content) &&
+            (identical(
+                  other.replaceRecurrenceDates,
+                  replaceRecurrenceDates,
+                ) ||
+                other.replaceRecurrenceDates == replaceRecurrenceDates);
   }
 
   @override
@@ -90,6 +106,7 @@ abstract class CalendarEventUpdateRequest
       eventId,
       expectedRevision,
       content,
+      replaceRecurrenceDates,
     );
   }
 
@@ -100,6 +117,7 @@ abstract class CalendarEventUpdateRequest
       'eventId': eventId.toJson(),
       'expectedRevision': expectedRevision,
       'content': content.toJson(),
+      'replaceRecurrenceDates': replaceRecurrenceDates,
     };
   }
 
@@ -110,6 +128,7 @@ abstract class CalendarEventUpdateRequest
       'eventId': eventId.toJson(),
       'expectedRevision': expectedRevision,
       'content': content.toJsonForProtocol(),
+      'replaceRecurrenceDates': replaceRecurrenceDates,
     };
   }
 
@@ -124,10 +143,12 @@ class _CalendarEventUpdateRequestImpl extends CalendarEventUpdateRequest {
     required _is.UuidValue eventId,
     required int expectedRevision,
     required _id4cvk34.CalendarEventContent content,
+    bool? replaceRecurrenceDates,
   }) : super._(
          eventId: eventId,
          expectedRevision: expectedRevision,
          content: content,
+         replaceRecurrenceDates: replaceRecurrenceDates,
        );
 
   /// Returns a shallow copy of this [CalendarEventUpdateRequest]
@@ -138,11 +159,14 @@ class _CalendarEventUpdateRequestImpl extends CalendarEventUpdateRequest {
     _is.UuidValue? eventId,
     int? expectedRevision,
     _id4cvk34.CalendarEventContent? content,
+    bool? replaceRecurrenceDates,
   }) {
     return CalendarEventUpdateRequest(
       eventId: eventId ?? this.eventId,
       expectedRevision: expectedRevision ?? this.expectedRevision,
       content: content ?? this.content.copyWith(),
+      replaceRecurrenceDates:
+          replaceRecurrenceDates ?? this.replaceRecurrenceDates,
     );
   }
 }

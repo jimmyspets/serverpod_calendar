@@ -94,3 +94,9 @@ The maintainer selected support for both transaction-coordinated policies and ex
 - [ ] Exercise two independent host processes sharing storage; confirm no local allow cache or internal service bypass changes outcomes.
 
 These are future acceptance tests, not test results. Detailed role/grant semantics, method/type names, query integration, deletion policy and policy-revision protocols remain design work. See [models](models.md), [requirements](requirements.md), [external subjects](adr/0005-external-subjects.md) and [availability composition](adr/0012-calendar-availability-policy.md).
+
+## Native occurrence previews
+
+[ADR 0054](adr/0054-native-event-recurrence-and-previews.md) adds `previewEventOccurrences`, checked together with `readEvent`. Both must disclose the timing group. The request includes `occurrenceQuery` with the actual requested event UUID, saved revision and DATE/UTC bounds, alongside resolved parent/calendar and current event snapshots. Actor and scope remain host-derived. The preview returns only bounded geometry/original identities for that authorized event, not hidden titles/other groups or complete calendar availability. Ordinary timing disclosure also controls the recurrence definition in event views.
+
+Pattern updates authorize the fully merged and validated proposal: explicit dates survive by default; incompatible profiles reject, while `replaceRecurrenceDates=true` expresses deliberate replacement/clearing of both lists. Recurrence collections exposed to callbacks are frozen by adapter validation; generated immutable DTO declarations alone do not freeze incoming lists. No process-local permission cache is introduced. The private-scope example epoch becomes v6; it is still a replaceable example fresh-check policy.

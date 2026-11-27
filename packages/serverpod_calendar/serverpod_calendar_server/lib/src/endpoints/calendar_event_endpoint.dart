@@ -27,6 +27,10 @@ class CalendarEventEndpoint extends Endpoint {
     fieldGroups: fieldGroups,
     cursor: cursor,
   );
+  Future<CalendarEventOccurrencePreview> preview(
+    Session session,
+    CalendarEventOccurrenceQuery query,
+  ) => CalendarModule.service(session).previewOccurrences(query);
   Future<CalendarEventReceipt?> update(
     Session session,
     CalendarEventUpdateRequest request,

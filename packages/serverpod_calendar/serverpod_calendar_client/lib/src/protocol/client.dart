@@ -19,6 +19,10 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_event_create_req
     as _iwlxheag;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_field_group.dart'
     as _icxx5h8a;
+import 'package:serverpod_calendar_client/src/protocol/calendar_event_occurrence_preview.dart'
+    as _iz6iah5n;
+import 'package:serverpod_calendar_client/src/protocol/calendar_event_occurrence_query.dart'
+    as _iejw8qh7;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_page.dart'
     as _i8kstbs4;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_receipt.dart'
@@ -222,6 +226,14 @@ class EndpointCalendarEvent extends _isc.EndpointRef {
       'fieldGroups': fieldGroups,
       'cursor': cursor,
     },
+  );
+
+  _ida.Future<_iz6iah5n.CalendarEventOccurrencePreview> preview(
+    _iejw8qh7.CalendarEventOccurrenceQuery query,
+  ) => caller.callServerEndpoint<_iz6iah5n.CalendarEventOccurrencePreview>(
+    'serverpod_calendar.calendarEvent',
+    'preview',
+    {'query': query},
   );
 
   _ida.Future<_ieh64e0q.CalendarEventReceipt?> update(

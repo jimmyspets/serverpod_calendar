@@ -19,6 +19,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_event_create_re
     as _ixcfd9h0;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_field_group.dart'
     as _il5gdr09;
+import 'package:serverpod_calendar_server/src/generated/calendar_event_occurrence_query.dart'
+    as _i7o3kzld;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_status_request.dart'
     as _ib916yyf;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_update_request.dart'
@@ -422,6 +424,27 @@ class Endpoints extends _is.EndpointDispatch {
                         pageSize: params['pageSize'],
                         fieldGroups: params['fieldGroups'],
                         cursor: params['cursor'],
+                      ),
+        ),
+        'preview': _is.MethodConnector(
+          name: 'preview',
+          params: {
+            'query': _is.ParameterDescription(
+              name: 'query',
+              type: _is.getType<_i7o3kzld.CalendarEventOccurrenceQuery>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .preview(
+                        session,
+                        params['query'],
                       ),
         ),
         'update': _is.MethodConnector(

@@ -3,6 +3,8 @@ part of 'calendar_module.dart';
 CalendarEventContent _validatedEvent(CalendarEventContent input) {
   try {
     return validateEventContent(input);
+  } on RecurrenceLimitException {
+    throw _failure(CalendarFailureCode.limitExceeded);
   } on ArgumentError {
     throw _failure(CalendarFailureCode.validation);
   } on ZoneCoverageException {
@@ -13,7 +15,7 @@ CalendarEventContent _validatedEvent(CalendarEventContent input) {
 final class _Event {
   _Event(this.identity, this.data, this.parent) {
     try {
-      validateEventContent(data.content);
+      data.content = validateEventContent(data.content);
     } catch (_) {
       throw _failure(CalendarFailureCode.unavailable);
     }
@@ -44,6 +46,7 @@ extension CalendarEventOperations on CalendarService {
     CalendarPermission op, {
     _Event? event,
     CalendarEventContent? proposed,
+    CalendarEventOccurrenceQuery? query,
     Set<CalendarEventFieldGroup> groups = const {},
   }) => CalendarAuthorizationRequest(
     key: '${op.name}:${event?.identity.id ?? parent.identity.id}',
@@ -53,6 +56,7 @@ extension CalendarEventOperations on CalendarService {
     eventId: event?.identity.id,
     currentEvent: event?.snapshot,
     proposedEvent: proposed,
+    occurrenceQuery: query,
     eventGroups: groups,
   );
 
@@ -127,6 +131,7 @@ extension CalendarEventOperations on CalendarService {
           : null,
       location: has(CalendarEventFieldGroup.location) ? v.location : null,
       timing: has(CalendarEventFieldGroup.timing) ? v.timing : null,
+      recurrence: has(CalendarEventFieldGroup.timing) ? v.recurrence : null,
       status: has(CalendarEventFieldGroup.state) ? v.status : null,
       transparency: has(CalendarEventFieldGroup.state) ? v.transparency : null,
       protocolUid: has(CalendarEventFieldGroup.protocolIdentity)
@@ -213,11 +218,11 @@ extension CalendarEventOperations on CalendarService {
   Future<CalendarEventReceipt?> updateEvent(
     CalendarEventUpdateRequest input,
   ) async {
-    final content = _validatedEvent(input.content);
     return _changeEvent(
       input.eventId,
       input.expectedRevision,
-      content: content,
+      content: input.content,
+      replaceRecurrenceDates: input.replaceRecurrenceDates,
     );
   }
 
@@ -230,11 +235,40 @@ extension CalendarEventOperations on CalendarService {
     int expected, {
     CalendarEventContent? content,
     CalendarEventStatus? status,
+    bool replaceRecurrenceDates = false,
   }) async {
+    if (content != null) content = _validatedEvent(content);
     final c = await _context();
     return _transaction(c, (tx, scope) async {
       final e = await _event(c, id, tx);
-      final value = content ?? e.data.content.copyWith(status: status);
+      var value = content ?? e.data.content.copyWith(status: status);
+      if (content != null && !replaceRecurrenceDates) {
+        final old = e.data.content.recurrence;
+        // Pattern-only edits cannot discard explicit dates. Explicit replacement
+        // is opt-in; the complete merged proposal is validated and authorized.
+        if (old != null &&
+            (old.inclusions.isNotEmpty || old.exclusions.isNotEmpty)) {
+          final supplied = content.recurrence;
+          bool same(List<CalendarEventTiming> a, List<CalendarEventTiming> b) =>
+              jsonEncode(a.map((v) => v.toJson()).toList()) ==
+              jsonEncode(b.map((v) => v.toJson()).toList());
+          if (supplied != null &&
+              ((supplied.inclusions.isNotEmpty &&
+                      !same(supplied.inclusions, old.inclusions)) ||
+                  (supplied.exclusions.isNotEmpty &&
+                      !same(supplied.exclusions, old.exclusions)))) {
+            throw _failure(CalendarFailureCode.validation);
+          }
+          value = content.copyWith(
+            recurrence: CalendarEventRecurrence(
+              rule: supplied?.rule,
+              inclusions: old.inclusions,
+              exclusions: old.exclusions,
+            ),
+          );
+        }
+      }
+      value = _validatedEvent(value);
       final requests = [
         if (content != null)
           _er(
@@ -306,6 +340,62 @@ extension CalendarEventOperations on CalendarService {
       );
       await _bump(scope, tx);
       return _eventReceipt(e, decisions.values, deleted: true);
+    });
+  }
+
+  Future<CalendarEventOccurrencePreview> previewOccurrences(
+    CalendarEventOccurrenceQuery query,
+  ) async {
+    final c = await _context();
+    return _transaction(c, (tx, _) async {
+      final e = await _event(c, query.eventId, tx);
+      const groups = {CalendarEventFieldGroup.timing};
+      final requests = [
+        _er(
+          e.parent,
+          CalendarPermission.readEvent,
+          event: e,
+          groups: groups,
+          query: query,
+        ),
+        _er(
+          e.parent,
+          CalendarPermission.previewEventOccurrences,
+          event: e,
+          groups: groups,
+          query: query,
+        ),
+      ];
+      final decisions = await _decide(
+        c,
+        requests,
+        tx,
+        CalendarAuthorizationPhase.read,
+      );
+      if (decisions.values.any(
+        (d) => !d.eventDisclosedGroups.contains(CalendarEventFieldGroup.timing),
+      )) {
+        throw _failure(CalendarFailureCode.accessDenied);
+      }
+      if (query.expectedRevision < 1 ||
+          query.expectedRevision > CalendarService._maxRevision) {
+        throw _failure(CalendarFailureCode.validation);
+      }
+      if (query.expectedRevision != e.identity.revision) {
+        throw _failure(CalendarFailureCode.staleRevision);
+      }
+      late final CalendarEventOccurrencePreview result;
+      try {
+        result = previewEventOccurrences(e.data.content, query);
+      } on RecurrenceLimitException {
+        throw _failure(CalendarFailureCode.limitExceeded);
+      } on ArgumentError {
+        throw _failure(CalendarFailureCode.validation);
+      } on ZoneCoverageException {
+        throw _failure(CalendarFailureCode.unavailable);
+      }
+      await _verifyContext(c);
+      return result;
     });
   }
 

@@ -1,5 +1,7 @@
 # First native non-recurring events
 
+Current extension: [ADR 0054 recurrence storage/previews](native-event-recurrence.md) supersedes this initial slice's recurrence rejection and obsolete `recurring` boolean. The history and remaining single-event guarantees below describe the first batch.
+
 [ADR 0053](adr/0053-first-native-single-events.md) records the maintainer-selected first event batch, optional summary and separate cancellation/deletion/lifecycle authority. This implements native storage and authenticated generated-client CRUD. Recurring events remain first-release scope and follow separately. No ICS import/export, scheduling messages, alarms, feed or free/busy service is implemented here.
 
 ## Models and timing
