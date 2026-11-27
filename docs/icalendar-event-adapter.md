@@ -2,6 +2,8 @@
 
 The pure Dart serverpod_calendar_icalendar package now validates a bounded **standalone, non-recurring event-calendar profile** under [ADRs 0064](adr/0064-first-vevent-and-zone-validation-contract.md) and [0065](adr/0065-first-vevent-wire-adapter.md). It maps accepted timing to the existing core's DateEventSpan or TimedEventSpan and retains immutable source syntax. This is not a database import service, authenticated export API, scheduling processor or HTTP feed.
 
+Current extension: [recurring masters](icalendar-recurring-masters.md) under ADR 0066 now adds RRULE/start-only RDATE/EXDATE and FREQ-first serialization. This supersedes the original recurrence-rejection statements below for that subset; PERIOD and occurrence-override components still reject. Protocol tokens use ASCII case folding; Unicode text remains supported.
+
 ## API and supported fields
 
 Use parseIcalendarEventCalendar(bytes) for strict UTF-8/CRLF input, or validateIcalendarEventCalendar(syntaxDocument) for an existing/built tree. Both return IcalendarEventCalendar only after the complete supported source passes. serializeIcalendarEventCalendar(value) emits that accepted source with deterministic syntax quoting/folding, retaining metadata spelling/order and explicit omission. It performs no permission filtering.

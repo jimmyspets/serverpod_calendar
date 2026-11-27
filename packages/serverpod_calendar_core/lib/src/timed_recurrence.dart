@@ -137,12 +137,15 @@ final class TimedRecurrenceGenerator {
   /// Half-open instant query, with COUNT evaluated from original DTSTART.
   /// Full cadence periods are selected before BYSETPOS, COUNT and query filters.
   /// Invalid generated gaps do not consume COUNT; explicit gap DTSTART does.
+  /// Optional [sharedWorkBudget] also charges each unit of candidate work to a
+  /// trusted aggregate ceiling, without replacing the per-call work limit.
   List<TimedValue> expand({
     required TimedValue start,
     required TimedRecurrenceRule rule,
     required UtcWindow window,
     required int maxCandidateWork,
     required int maxResults,
+    RecurrenceWorkBudget? sharedWorkBudget,
   }) {
     start.civil.date.requireOrdinary('DTSTART');
     for (final entry in {
@@ -183,6 +186,7 @@ final class TimedRecurrenceGenerator {
       if (++work > maxCandidateWork) {
         throw const RecurrenceLimitException('maxCandidateWork');
       }
+      sharedWorkBudget?.charge();
     }
 
     List<TimedValue> select(_TimedPeriod period) {
