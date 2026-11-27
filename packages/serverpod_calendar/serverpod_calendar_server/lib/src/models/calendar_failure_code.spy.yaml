@@ -1,0 +1,11 @@
+enum: CalendarFailureCode
+serialized: byName
+values:
+  - validation
+  - accessDenied
+  - unavailable
+  - staleRevision
+  - dependencyConflict
+  - limitExceeded
+  - invalidCursor
+  - invariantViolation

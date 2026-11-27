@@ -1,6 +1,9 @@
 # Host authorization and requested resource context
 
-Status: **maintainer-confirmed responsibility boundary; API/data structures proposed, not implemented**. The host supplies replaceable authorization rules; the calendar and optional feed modules enforce them. The host policy must receive information about the collection or object being requested. See [ADR 0043](adr/0043-host-authorization-context.md).
+**Current implementation:** the first native calendar CRUD/association slice is described in [the implementation guide](calendar-crud-implementation.md) and [ADR 0049](adr/0049-first-calendar-crud-implementation.md). Broader model/interface proposals below remain future design unless explicitly covered there; this adds no iCalendar/feed-client compatibility.
+
+
+Status: **maintainer-confirmed responsibility boundary; first calendar slice implemented under ADR 0049, broader API/data structures proposed**. The host supplies replaceable authorization rules; the calendar and optional feed modules enforce them. The host policy must receive information about the collection or object being requested. See [ADR 0043](adr/0043-host-authorization-context.md).
 
 This is an integration adapter, not a required new authorization package, identity directory or fixed owner/role model. A host can use its existing ACLs, organization roles, membership service or custom business rules. The example will supply a simple synthetic policy; applications can replace it without changing the calendar module. Authentication identifies the caller; it does not grant calendar permissions by itself.
 
@@ -14,7 +17,7 @@ This is an integration adapter, not a required new authorization package, identi
 | Apply authorized query constraints and response disclosure | Which collections/objects are visible, editable or available for free/busy |
 | Reject absent, denied or unresolved authorization | Continuing publication authority and legitimate background-work recipients |
 
-No configured policy means no domain access. A timeout/error cannot become an allow decision or a partial successful result. Existing diagnostic endpoints only prove authenticated wiring; this contract is not implemented by their `requireLogin` flag.
+No configured policy means no domain access. A timeout/error cannot become an allow decision or a partial successful result. Existing diagnostic endpoints only prove authenticated wiring; their `requireLogin` flag alone does not implement this contract; the new native service applies host-policy checks separately.
 
 ## What collection means
 

@@ -1,2 +1,11 @@
 calendarDiagnostics:
   - check:
+calendar:
+  - create:
+  - getCalendar:
+  - list:
+  - updateMetadata:
+  - updateSettings:
+  - subjects:
+  - changeSubject:
+  - delete:

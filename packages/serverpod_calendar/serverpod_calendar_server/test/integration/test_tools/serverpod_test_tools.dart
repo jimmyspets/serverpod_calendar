@@ -14,6 +14,24 @@
 import 'dart:async' as _ida;
 import 'dart:io' as _idi;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_calendar_server/src/generated/calendar_create_request.dart'
+    as _i287wpc6;
+import 'package:serverpod_calendar_server/src/generated/calendar_field_group.dart'
+    as _i3d02yxy;
+import 'package:serverpod_calendar_server/src/generated/calendar_metadata_update_request.dart'
+    as _io29vhgw;
+import 'package:serverpod_calendar_server/src/generated/calendar_mutation_receipt.dart'
+    as _ied1lssg;
+import 'package:serverpod_calendar_server/src/generated/calendar_page.dart'
+    as _ibhixnze;
+import 'package:serverpod_calendar_server/src/generated/calendar_settings_update_request.dart'
+    as _i3f5mgyk;
+import 'package:serverpod_calendar_server/src/generated/calendar_subject_change_request.dart'
+    as _ib1wmljm;
+import 'package:serverpod_calendar_server/src/generated/calendar_subject_view.dart'
+    as _iwx7nyid;
+import 'package:serverpod_calendar_server/src/generated/calendar_view.dart'
+    as _id91u9he;
 import 'package:serverpod_test/serverpod_test.dart' as _ist;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart';
 import 'package:serverpod_calendar_server/src/generated/endpoints.dart';
@@ -149,6 +167,8 @@ void withServerpod(
 
 class TestEndpoints {
   late final _CalendarDiagnosticsEndpoint calendarDiagnostics;
+
+  late final _CalendarEndpoint calendar;
 }
 
 class _InternalTestEndpoints extends TestEndpoints
@@ -159,6 +179,10 @@ class _InternalTestEndpoints extends TestEndpoints
     _is.EndpointDispatch endpoints,
   ) {
     calendarDiagnostics = _CalendarDiagnosticsEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    calendar = _CalendarEndpoint(
       endpoints,
       serializationManager,
     );
@@ -196,6 +220,279 @@ class _CalendarDiagnosticsEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<String>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _CalendarEndpoint {
+  _CalendarEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_ied1lssg.CalendarMutationReceipt?> create(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i287wpc6.CalendarCreateRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendar',
+            method: 'create',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendar',
+          methodName: 'create',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_id91u9he.CalendarView> getCalendar(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue calendarId,
+    List<_i3d02yxy.CalendarFieldGroup> fieldGroups,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendar',
+            method: 'getCalendar',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendar',
+          methodName: 'getCalendar',
+          parameters: _ist.testObjectToJson({
+            'calendarId': calendarId,
+            'fieldGroups': fieldGroups,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_id91u9he.CalendarView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ibhixnze.CalendarPage> list(
+    _ist.TestSessionBuilder sessionBuilder, {
+    required int pageSize,
+    required List<_i3d02yxy.CalendarFieldGroup> fieldGroups,
+    String? cursor,
+  }) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendar',
+            method: 'list',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendar',
+          methodName: 'list',
+          parameters: _ist.testObjectToJson({
+            'pageSize': pageSize,
+            'fieldGroups': fieldGroups,
+            'cursor': cursor,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ibhixnze.CalendarPage>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ied1lssg.CalendarMutationReceipt?> updateMetadata(
+    _ist.TestSessionBuilder sessionBuilder,
+    _io29vhgw.CalendarMetadataUpdateRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendar',
+            method: 'updateMetadata',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendar',
+          methodName: 'updateMetadata',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ied1lssg.CalendarMutationReceipt?> updateSettings(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i3f5mgyk.CalendarSettingsUpdateRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendar',
+            method: 'updateSettings',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendar',
+          methodName: 'updateSettings',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<List<_iwx7nyid.CalendarSubjectView>> subjects(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue calendarId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendar',
+            method: 'subjects',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendar',
+          methodName: 'subjects',
+          parameters: _ist.testObjectToJson({'calendarId': calendarId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<List<_iwx7nyid.CalendarSubjectView>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ied1lssg.CalendarMutationReceipt?> changeSubject(
+    _ist.TestSessionBuilder sessionBuilder,
+    _ib1wmljm.CalendarSubjectChangeRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendar',
+            method: 'changeSubject',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendar',
+          methodName: 'changeSubject',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ied1lssg.CalendarMutationReceipt?> delete(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue calendarId,
+    int expectedRevision,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendar',
+            method: 'delete',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendar',
+          methodName: 'delete',
+          parameters: _ist.testObjectToJson({
+            'calendarId': calendarId,
+            'expectedRevision': expectedRevision,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

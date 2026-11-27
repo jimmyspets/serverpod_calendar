@@ -1,0 +1,6 @@
+class: CalendarSettingsUpdateRequest
+fields:
+  calendarId: UuidValue
+  expectedRevision: int
+  availabilityZoneId: String
+  noRuleFallback: CalendarNoRuleFallback

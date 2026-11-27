@@ -75,3 +75,7 @@ The maintainer selected a native UI label separate from preserved imported NAME 
 ## Native name validation and identity/data rows
 
 The maintainer selected a 256-Unicode-code-point native display-name cap, outer trimming with blank/multiline rejection and internal spacing/Unicode preservation, and separate identity/active-data rows. [ADR 0048](adr/0048-calendar-name-validation-and-row-layout.md) and [schema guidance](calendar-schema.md) record these choices. Surviving identity rows do not imply indefinite retention; exact validation/raw-byte limits, generated keys/metadata/indexes and concrete coordination remain proposed.
+
+## First native CRUD scope
+
+The maintainer selected duplicate native display names, private scopes per signed-in demo user only in the example, and basic calendar CRUD/subject associations before description/color/iCalendar metadata editing. [ADR 0049](adr/0049-first-calendar-crud-implementation.md) distinguishes those confirmed choices from the concrete implementation mechanics under review. [The implementation guide](calendar-crud-implementation.md) supersedes earlier blanket scaffold-only statements for this limited slice.

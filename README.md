@@ -11,13 +11,13 @@ A reusable calendar module intended for Serverpod projects, providing calendar, 
 
 **Week convention:** ISO 8601: Monday is the first day; week 1 contains January 4, equivalently the year's first Thursday. Use the ISO week-year at New Year. Honor explicit RFC 5545 WKST values for recurrence, including their rule-specific week numbers. See [ISO weeks and recurrence WKST](docs/week-conventions.md).
 
-**Authorization:** the modules enforce access; hosts provide replaceable rules using trusted caller, operation and requested collection/object context. No fixed ownership/role model is required. See the [authorization contract](docs/host-authorization.md); domain enforcement is not implemented yet.
+**Authorization:** the modules enforce access; hosts provide replaceable rules using trusted caller, operation and requested collection/object context. No fixed ownership/role model is required. See the [authorization contract](docs/host-authorization.md) and [first implemented CRUD slice](docs/calendar-crud-implementation.md).
 
 **HTTP subscriptions:** iCalendar feeds belong to a separate optional Serverpod module under [ADR 0042](docs/adr/0042-optional-http-feed-module.md). Hosts can use authenticated calendar APIs without installing feeds; the feed module itself is not implemented yet.
 
 **Platform target:** Serverpod 4.x and later. The initial scaffold pins Serverpod 4.0.4, Flutter 3.47.7 and Dart 3.13.5; additional supported versions require separate verification.
 
-**Status:** executable workspace/authentication scaffold with a tested pure Dart [temporal foundations and a bounded named-zone resolver](docs/temporal-core.md); calendar domain services are not implemented yet. The example provides seeded host authentication and generated-client connection checks for the calendar/notification module skeletons. First-release scope remains planned; see the [development guide](docs/development.md), [scaffolding plan](docs/scaffolding-plan.md) and [validation evidence](docs/scaffold-validation.md). Detailed domain designs remain under review. This repository retains its Apache 2.0 [license](LICENSE).
+**Status:** executable workspace/authentication scaffold with a tested pure Dart [temporal foundations and a bounded named-zone resolver](docs/temporal-core.md); the first calendar CRUD/association slice now has module storage, replaceable host-policy enforcement and a Flutter example. The example uses private demo-user scopes; production hosts supply their own rules. Descriptions/colors, iCalendar metadata editing and the remaining event/task/availability/feed services are still pending. First-release scope remains planned; see the [development guide](docs/development.md), [scaffolding plan](docs/scaffolding-plan.md) and [validation evidence](docs/scaffold-validation.md). Detailed domain designs remain under review. This repository retains its Apache 2.0 [license](LICENSE).
 
 ## Start here
 
@@ -39,7 +39,7 @@ See the [architecture](docs/architecture.md) for the proposed relationship diagr
 
 The example host/Flutter app must also serve as the automated integration-test application. The module must work with multiple concurrently active Serverpod instances, with cross-instance consistency, durable background-work coordination and recovery tested under [ADR 0018](docs/adr/0018-automated-example-and-multiple-instances.md).
 
-Pinned tools and local setup/run/check commands are documented in the [development guide](docs/development.md). This is the initial workspace/authentication milestone; the complete calendar first release and its client compatibility remain unimplemented and unverified.
+Pinned tools and local setup/run/check commands are documented in the [development guide](docs/development.md). This includes the initial calendar CRUD milestone; the complete calendar first release and its client compatibility remain unimplemented and unverified.
 
 ## Repository formatting
 

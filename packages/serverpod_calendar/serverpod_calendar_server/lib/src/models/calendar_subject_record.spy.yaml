@@ -1,0 +1,13 @@
+class: CalendarSubjectRecord
+serverOnly: true
+table: serverpod_calendar_subject
+fields:
+  calendarId: UuidValue, relation(parent=serverpod_calendar_identity)
+  namespace: String
+  kind: String
+  externalId: String
+  contributesAvailability: bool
+indexes:
+  calendar_subject_tuple_unique:
+    fields: calendarId, namespace, kind, externalId
+    unique: true

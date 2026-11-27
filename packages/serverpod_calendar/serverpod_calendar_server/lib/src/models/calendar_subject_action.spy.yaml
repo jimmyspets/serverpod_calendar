@@ -1,0 +1,6 @@
+enum: CalendarSubjectAction
+serialized: byName
+values:
+  - attach
+  - detach
+  - setContribution

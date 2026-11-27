@@ -10,6 +10,8 @@ void main() {
   testWidgets('real host sign-in, generated module calls and sign-out', (
     tester,
   ) async {
+    final label = 'Flutter ${DateTime.now().microsecondsSinceEpoch}';
+    final renamedLabel = '$label renamed';
     const password = String.fromEnvironment('DEMO_PASSWORD');
     expect(
       password,
@@ -37,6 +39,34 @@ void main() {
       find.textContaining('Connected: host, calendar and notifications'),
       findsOneWidget,
     );
+    await _tap(tester, 'open-calendars');
+    await _tap(tester, 'calendar-create');
+    await tester.enterText(
+      find.byKey(const Key('calendar-name')),
+      label,
+    );
+    await _tap(tester, 'calendar-submit-create');
+    await _waitFor(tester, find.text(label));
+    await tester.tap(find.text(label));
+    await _idle(tester);
+    await tester.enterText(
+      find.byKey(const Key('calendar-name')),
+      renamedLabel,
+    );
+    await _tap(tester, 'calendar-save-name');
+    await tester.enterText(find.byKey(const Key('calendar-zone')), 'UTC');
+    await _tap(tester, 'calendar-save-settings');
+    expect(find.text('UTC'), findsOneWidget);
+    await _tap(tester, 'calendar-attach-self');
+    await _tap(tester, 'calendar-delete');
+    await _tap(tester, 'calendar-confirm-delete');
+    expect(find.byKey(const Key('calendar-error')), findsOneWidget);
+    await _tap(tester, 'calendar-detach');
+    await _tap(tester, 'calendar-delete');
+    await _tap(tester, 'calendar-confirm-delete');
+    expect(find.text(renamedLabel), findsNothing);
+    await tester.pageBack();
+    await _idle(tester);
     await tester.tap(find.byKey(const Key('sign-out')));
     await _waitFor(tester, find.byKey(const Key('sign-in')));
     expect(find.byKey(const Key('result')), findsNothing);
@@ -52,4 +82,27 @@ Future<void> _waitFor(WidgetTester tester, Finder finder) async {
     );
   }
   fail('Timed out waiting for $finder');
+}
+
+Future<void> _tap(WidgetTester tester, String key) async {
+  final finder = find.byKey(Key(key));
+  await _waitFor(tester, finder);
+  await tester.ensureVisible(finder);
+  await tester.tap(finder);
+  await _idle(tester, step: key);
+}
+
+Future<void> _idle(WidgetTester tester, {String step = 'calendar'}) async {
+  await tester.pump(const Duration(milliseconds: 300));
+  for (var i = 0; i < 120; i++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+    if (find.byType(AlertDialog).evaluate().isNotEmpty ||
+        find.byType(LinearProgressIndicator).evaluate().isEmpty) {
+      return;
+    }
+  }
+  fail('Calendar request did not become idle: $step');
 }

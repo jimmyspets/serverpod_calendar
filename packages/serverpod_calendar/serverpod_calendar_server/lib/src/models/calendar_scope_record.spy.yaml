@@ -1,0 +1,10 @@
+class: CalendarScopeRecord
+serverOnly: true
+table: serverpod_calendar_scope
+fields:
+  scopeKey: String
+  revision: int
+indexes:
+  calendar_scope_key_unique:
+    fields: scopeKey
+    unique: true

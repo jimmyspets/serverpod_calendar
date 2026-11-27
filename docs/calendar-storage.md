@@ -1,6 +1,9 @@
 # Native calendar names, identifiers and storage
 
-Status: **maintainer-confirmed name separation, server-generated UUID identity and minimal deletion marker; physical layout and generator validation proposed**. See [ADR 0047](adr/0047-calendar-names-identifiers-and-deletion-storage.md) and the [first CRUD contract](calendar-crud-contract.md). No calendar domain schema or migration exists yet.
+**Current implementation:** the first native calendar CRUD/association slice is described in [the implementation guide](calendar-crud-implementation.md) and [ADR 0049](adr/0049-first-calendar-crud-implementation.md). Broader model/interface proposals below remain future design unless explicitly covered there; this adds no iCalendar/feed-client compatibility.
+
+
+Status: **maintainer-confirmed name separation, server-generated UUID identity and minimal deletion marker; physical layout and generator validation proposed**. See [ADR 0047](adr/0047-calendar-names-identifiers-and-deletion-storage.md) and the [first CRUD contract](calendar-crud-contract.md). The first native calendar schema/migrations now exist; later domain families remain proposed.
 
 ## Confirmed name mapping
 

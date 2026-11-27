@@ -1,0 +1,5 @@
+class: CalendarCreateRequest
+fields:
+  displayName: String
+  availabilityZoneId: String
+  noRuleFallback: CalendarNoRuleFallback

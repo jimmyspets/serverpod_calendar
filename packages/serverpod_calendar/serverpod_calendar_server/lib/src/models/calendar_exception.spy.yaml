@@ -1,0 +1,4 @@
+exception: CalendarException
+fields:
+  code: CalendarFailureCode
+  message: String

@@ -1,0 +1,5 @@
+class: CalendarMutationReceipt
+fields:
+  calendarId: UuidValue
+  revision: int
+  deleted: bool

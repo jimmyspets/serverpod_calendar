@@ -170,3 +170,7 @@ The **bounded pure-core calculation milestone is complete** under ADR 0040. Rema
 ## Later scope
 
 VTODO iTIP/inbound-outbound scheduling mail, CalDAV/CalDAV scheduling, general upstream synchronization, arbitrary custom zones, standalone VFREEBUSY import, VJOURNAL, proximity/geofencing, arbitrary audio/email alarm actions and an independently reusable Flutter UI package remain deferred or outside the selected first-release contract. Exact exclusions follow the RFC tables. Native recurring tasks, time-based alarms and the reusable notification module/connected streaming example remain first-release work.
+
+## First calendar CRUD increment
+
+The first name/settings/association slice is implemented under [ADR 0049](adr/0049-first-calendar-crud-implementation.md), with generated module/host migrations and replaceable host policy. Duplicate labels, private demo scopes and the basic-batch boundary are maintainer-confirmed. [The implementation guide](calendar-crud-implementation.md) records concrete API/storage/limits and remaining work. Broader persistence/authorization checks above remain open for event/task/rule/feed/worker families, production coordinated policy and retention/cleanup. Descriptions/colors and protocol metadata editing follow separately; no availability calculation or interoperability is claimed by storing a fallback/subject link.

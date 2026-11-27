@@ -1,5 +1,8 @@
 # Module interfaces and interoperability profiles
 
+**Current implementation:** the first native calendar CRUD/association slice is described in [the implementation guide](calendar-crud-implementation.md) and [ADR 0049](adr/0049-first-calendar-crud-implementation.md). Broader model/interface proposals below remain future design unless explicitly covered there; this adds no iCalendar/feed-client compatibility.
+
+
 Status: **calendar/interoperability requirements remain unimplemented and untested**. Initial host authentication and module diagnostic wiring have separate [scaffold evidence](scaffold-validation.md). The main product is a Serverpod module with generated Dart APIs used by host Flutter GUIs. External calendar feeds need only a documented subset. Their client limitations do not restrict canonical calendar/task/scheduling/availability capabilities.
 
 The baseline features formerly marked Proposed in the RFC matrices are now Yes — planned by maintainer instruction; see [RFC scope](rfc/README.md). This includes scoped UID/acknowledgement/snooze and DISPLAY alarm behavior, event/free-busy method baselines, calendar UID/update/color and the documented HTTP validation/caching policy. Detailed combinations and evidence remain pending; deferred rows retain their scope; the subsequent walkthrough resolved all listed Undecided rows.
@@ -12,15 +15,15 @@ Current native date/precision profile: **[1970-01-01, 2100-01-01)** and **whole 
 
 Host authorization boundary is selected under [ADR 0043](adr/0043-host-authorization-context.md): host-defined policy receives trusted collection/object context; modules enforce it. Domain policy, object-specific disclosure and query/mutation integration remain unimplemented. Authenticated diagnostic smoke tests do not verify this contract. See [the authorization guide](host-authorization.md).
 
-Native query response choices are selected in [ADR 0044](adr/0044-authorized-query-projections-and-pagination.md): separate detail/free-busy, predefined field groups and no-total initial pages. Domain policy/filter/cursor behavior is not implemented or verified; this does not change wire/feed-client support.
+Native query response choices are selected in [ADR 0044](adr/0044-authorized-query-projections-and-pagination.md): separate detail/free-busy, predefined field groups and no-total initial pages. Basic calendar policy/projection/cursor behavior is implemented under ADR 0049; event/task/free-busy queries remain pending; this does not change wire/feed-client support.
 
 [ADR 0045](adr/0045-authorization-consistency-guarantees.md) selects support for declared coordinated/external authorization guarantees without automatic downgrade. No concrete domain transaction/revocation protocol, remote provider integration or consistency evidence exists yet. Initial authenticated/JWT tests do not establish those guarantees.
 
 Native calendar creation/deletion rules are selected under [ADR 0046](adr/0046-first-native-calendar-crud-contract.md), with [CRUD](calendar-crud-contract.md) and [adapter interface](authorization-adapter-contract.md) proposals. A required native name is not an iCalendar NAME grammar constraint. Calendar CRUD, dependency coordination and related generated APIs remain unimplemented.
 
-[ADR 0047](adr/0047-calendar-names-identifiers-and-deletion-storage.md) keeps native labels/UUIDs/minimal deletion markers separate from protocol NAME/UID and feed metadata. These are selected logical rules, not implemented CRUD, tested migrations, deletion synchronization or new wire/client support.
+[ADR 0047](adr/0047-calendar-names-identifiers-and-deletion-storage.md) keeps native labels/UUIDs/minimal deletion markers separate from protocol NAME/UID and feed metadata. Basic native CRUD now applies these rules under ADR 0049; this does not add wire/client support.
 
-[ADR 0048](adr/0048-calendar-name-validation-and-row-layout.md) selects native label rules and separate identity/data rows; no native name length/trim restriction is imposed on protocol NAME by this choice. Generated calendar schema, Unicode-boundary and lifecycle tests are not implemented or claimed here.
+[ADR 0048](adr/0048-calendar-name-validation-and-row-layout.md) selects native label rules and separate identity/data rows; no native name length/trim restriction is imposed on protocol NAME by this choice. The first native calendar schema and focused Unicode/lifecycle tests now exist under ADR 0049; protocol metadata remains a following batch.
 
 ## Interface coverage
 

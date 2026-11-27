@@ -1,0 +1,14 @@
+class: CalendarDataRecord
+serverOnly: true
+table: serverpod_calendar_data
+fields:
+  calendarId: UuidValue, relation(parent=serverpod_calendar_identity)
+  displayName: String
+  availabilityZoneId: String
+  noRuleFallback: CalendarNoRuleFallback
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  calendar_data_identity_unique:
+    fields: calendarId
+    unique: true
