@@ -13,6 +13,10 @@
 import 'dart:async' as _ida;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_create_request.dart'
     as _i2zcamh9;
+import 'package:serverpod_calendar_client/src/protocol/calendar_availability_import_request.dart'
+    as _ilq73ar1;
+import 'package:serverpod_calendar_client/src/protocol/calendar_availability_import_result.dart'
+    as _iraz2mny;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_occurrence_change.dart'
     as _izaew8o2;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_occurrence_preview.dart'
@@ -87,6 +91,14 @@ class EndpointCalendarAvailability extends _isc.EndpointRef {
 
   @override
   String get name => 'serverpod_calendar.calendarAvailability';
+
+  _ida.Future<_iraz2mny.CalendarAvailabilityImportResult> importCalendar(
+    _ilq73ar1.CalendarAvailabilityImportRequest request,
+  ) => caller.callServerEndpoint<_iraz2mny.CalendarAvailabilityImportResult>(
+    'serverpod_calendar.calendarAvailability',
+    'importCalendar',
+    {'request': request},
+  );
 
   _ida.Future<_izuu9p5h.CalendarAvailabilityReceipt?> create(
     _i2zcamh9.CalendarAvailabilityCreateRequest request,

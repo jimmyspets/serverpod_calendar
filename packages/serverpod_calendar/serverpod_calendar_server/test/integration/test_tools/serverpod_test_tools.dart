@@ -16,6 +16,10 @@ import 'dart:io' as _idi;
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_create_request.dart'
     as _iys46g3v;
+import 'package:serverpod_calendar_server/src/generated/calendar_availability_import_request.dart'
+    as _itxm78f7;
+import 'package:serverpod_calendar_server/src/generated/calendar_availability_import_result.dart'
+    as _imwaqqth;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_occurrence_change.dart'
     as _ihzf1dkn;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_occurrence_preview.dart'
@@ -266,6 +270,37 @@ class _CalendarAvailabilityEndpoint {
   final _is.EndpointDispatch _endpointDispatch;
 
   final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_imwaqqth.CalendarAvailabilityImportResult> importCalendar(
+    _ist.TestSessionBuilder sessionBuilder,
+    _itxm78f7.CalendarAvailabilityImportRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarAvailability',
+            method: 'importCalendar',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarAvailability',
+          methodName: 'importCalendar',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_imwaqqth.CalendarAvailabilityImportResult>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 
   _ida.Future<_i6vowhmw.CalendarAvailabilityReceipt?> create(
     _ist.TestSessionBuilder sessionBuilder,

@@ -1,6 +1,6 @@
 # Source-preserving availability storage
 
-[ADR 0072](adr/0072-source-preserving-availability-storage.md) implements the storage prerequisites selected in [ADR 0071](adr/0071-create-only-availability-import.md). This extends native storage, validation, protocol lifecycle and calculation. Authenticated import/export, reconciliation and publication are still pending. The earlier [import contract](availability-import.md) remains the design for that subsequent service.
+[ADR 0072](adr/0072-source-preserving-availability-storage.md) implements the storage prerequisites selected in [ADR 0071](adr/0071-create-only-availability-import.md). This extends native storage, validation, protocol lifecycle and calculation. Authenticated create-only import now uses this representation under [ADR 0073](adr/0073-authenticated-create-only-availability-import.md) and [the import guide](availability-import.md). Authorized export, reconciliation and publication remain pending.
 
 ## Native identity and source UID
 
@@ -8,7 +8,7 @@ Definition API IDs remain server-generated UUIDs. Active definition protocolUid 
 
 Each opening keeps uid as its native UUID for occurrence actions, previews, edit lists and protocol checkpoints. A separate protocolUid string holds source identity. New native openings receive server-managed values; existing values are retained when omitted from ordinary edits, and attempts to change them reject. Cloning a new native opening must omit both uid and protocolUid; copied read-only source contacts cannot be authored through that operation. A native UID string can happen to equal its UUID spelling; the two identities still have different roles. Source conversion allocates new UUIDs while preserving arbitrary source UIDs.
 
-Active data now contains actual calendarId and a 64-character SHA-256 UTF-8 uidDigest. A non-unique (calendarId, uidDigest) candidate index replaces the global unique UUID index. Exact string equality under the existing durable scope transaction decides conflicts; matching digests alone never merge objects. Native creation uses this check. A future import must use the same locked check for its source UID; this storage batch does not expose a UID-setting endpoint or prove an import race before that endpoint exists. Row loading validates the actual parent/digest relationship and fails unavailable on corrupted state.
+Active data now contains actual calendarId and a 64-character SHA-256 UTF-8 uidDigest. A non-unique (calendarId, uidDigest) candidate index replaces the global unique UUID index. Exact string equality under the existing durable scope transaction decides conflicts; matching digests alone never merge objects. Native creation uses this check. ADR 0073 import uses the same locked check for source UIDs and adds its own two-host race evidence. Ordinary native creation still exposes no UID-setting field. Row loading validates the actual parent/digest relationship and fails unavailable on corrupted state.
 
 Deletion removes the active data, lookup values, content and protocol state. Existing native identity markers stay content-free. Active UID conflicts are destination-calendar scoped; another calendar may hold the same source UID with a different native identity.
 

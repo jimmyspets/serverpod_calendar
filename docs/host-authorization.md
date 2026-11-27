@@ -138,3 +138,8 @@ Pattern updates authorize the fully merged and validated proposal: explicit date
 [ADR 0072](adr/0072-source-preserving-availability-storage.md) and [the implementation guide](availability-storage.md) supersede storage-pending wording for the scoped prerequisite/native behaviors. They document exact UID/group/CONTACT/PERIOD and component-version representations, retention, policy context, query caps and upgrade behavior. Authenticated import remains pending; conversion is not authorization or publication.
 
 Source-preserving native writes under ADR 0072 gate echoed read-only CONTACT/opening protocol UIDs with readAvailability before equality checks and at final write. Correct/incorrect guesses both deny when raw read is unavailable. Write-only clients may omit these fields for server-side retention. Write-operation decisions continue to control receipt disclosure independently.
+
+
+## Create-only availability import, 2026-10-22
+
+[ADR 0073](adr/0073-authenticated-create-only-availability-import.md) and [the import guide](availability-import.md#implemented-create-only-operation) implement the bounded standalone availability import slice. `importAvailability` and per-definition `createAvailability` are independent, with full immutable batch context and actual parent/revision checks. Dedicated organizer and trusted extension validation run at both write phases. Exact active UID conflicts are destination-calendar scoped; the complete file commits atomically with source versions retained and final host-approved minimal receipts. This supersedes earlier pending-import wording only for this profile. Authorized export, source updates/reconciliation, other component import, feeds and external-client interoperability remain pending.

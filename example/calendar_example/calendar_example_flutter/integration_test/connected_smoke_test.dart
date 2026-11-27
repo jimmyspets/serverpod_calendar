@@ -617,6 +617,29 @@ void main() {
     await _tap(tester, 'availability-delete-${rules.single.id}');
     await _idle(tester);
     expect(await rulesApi.list(calendar.id), isEmpty);
+
+    await _tap(tester, 'availability-import');
+    await _tap(tester, 'availability-import-example');
+    await _tap(tester, 'availability-import-submit');
+    await _waitFor(tester, find.text('Imported example hours'));
+    final importedHours = (await rulesApi.list(calendar.id)).single;
+    expect(importedHours.protocolUid, 'example-hours@example.invalid');
+    expect(
+      importedHours.content.contacts!.single.value,
+      'Example contact only',
+    );
+    expect(importedHours.protocolState.sequence, isNull);
+    await _tap(tester, 'availability-import');
+    await _tap(tester, 'availability-import-example');
+    await _tap(tester, 'availability-import-submit');
+    await _waitFor(tester, find.byKey(const Key('availability-import-error')));
+    expect((await rulesApi.list(calendar.id)).length, 1);
+    await tester.pageBack();
+    await _idle(tester);
+    await _tap(tester, 'availability-delete-${importedHours.id}');
+    await _idle(tester);
+    expect(await rulesApi.list(calendar.id), isEmpty);
+
     await tester.pageBack();
     await _idle(tester);
 

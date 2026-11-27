@@ -9,6 +9,7 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  importAvailability,
   previewAvailabilityOccurrences,
   changeAvailabilityOccurrence,
   updateAvailabilityMetadata,
@@ -156,6 +157,7 @@ final class CalendarAuthorizationRequest {
     this.proposedAvailabilityEdits,
     this.proposedAvailabilityProtocolState,
     this.availabilityCategoryFilter,
+    this.availabilityImport,
     this.occurrenceChange,
     this.proposedTimingOverrides,
     Iterable<CalendarEventFieldGroup> eventGroups = const [],
@@ -179,6 +181,9 @@ final class CalendarAuthorizationRequest {
   final List<CalendarAvailabilityOpeningEdits>? proposedAvailabilityEdits;
   final CalendarAvailabilityProtocolState? proposedAvailabilityProtocolState;
   final String? availabilityCategoryFilter;
+
+  /// Full immutable batch, absent on the cheap pre-parse authority check.
+  final CalendarAvailabilityImportIntent? availabilityImport;
   final CalendarEventOccurrenceChange? occurrenceChange;
   final CalendarEventTimingOverrides? proposedTimingOverrides;
   final Set<CalendarEventFieldGroup> eventGroups;
@@ -189,6 +194,29 @@ final class CalendarAuthorizationRequest {
   final CalendarPolicySnapshot? current;
   final CalendarProposedChange? proposed;
   final Set<CalendarFieldGroup> requestedGroups;
+}
+
+/// Server-allocated identities and source state, never authority from the file.
+final class CalendarAvailabilityImportMember {
+  const CalendarAvailabilityImportMember({
+    required this.availabilityId,
+    required this.protocolUid,
+    required this.content,
+    required this.protocolState,
+    required this.timingOverrides,
+  });
+  final UuidValue availabilityId;
+  final String protocolUid;
+  final CalendarAvailabilityContent content;
+  final CalendarAvailabilityProtocolState protocolState;
+  final List<CalendarAvailabilityOpeningEdits>? timingOverrides;
+}
+
+final class CalendarAvailabilityImportIntent {
+  CalendarAvailabilityImportIntent(
+    Iterable<CalendarAvailabilityImportMember> members,
+  ) : members = List.unmodifiable(members);
+  final List<CalendarAvailabilityImportMember> members;
 }
 
 final class CalendarAuthorizationDecision {

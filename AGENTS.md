@@ -114,3 +114,8 @@ Under ADR 0069, the pure standalone VAVAILABILITY/AVAILABLE adapter supports tim
 ## Availability storage prerequisite increment, 2026-10-22
 
 [ADR 0072](docs/adr/0072-source-preserving-availability-storage.md) and [the storage guide](docs/availability-storage.md) implement source-preserving availability prerequisites: text protocol UIDs with native UUID separation, grouped categories/read-only CONTACT, availability PERIODs, source component versions and data-preserving upgrades. Native edits/calculation enforce the expanded state; pure conversion supplies no host authority or database import. Authenticated create-only import remains the next batch under ADR 0071.
+
+
+Under ADR 0073, create-only authenticated availability import accepts the bounded standalone wire profile using separate import/create authority, complete immutable source proposals, current organizer/extension checks and a durable scope transaction. Exact active UID conflicts are destination-calendar scoped; failures roll back the full file, native revisions start at 1, source versions remain distinct from database audit times, scope generation advances once and parent metadata stays unchanged. Receipts disclose only final host-approved members, without totals or implicit raw read. Byte input is strict; only the example paste form explicitly converts line endings. Export/reconciliation, other component import and feeds remain pending.
+
+The maintainer permits breaking API/schema changes requiring a fresh database before beta. Prefer clean reviewed models when appropriate and document required resets; identify and limit reset targets to development/test storage. This does not authorize deleting an unidentified database or rewriting committed decision history.

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
@@ -1018,6 +1019,137 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
             cal.CalendarFreeBusyKind.free,
         'Deleted rule continued restricting another host',
       );
+
+      final importParent = await create();
+      final importOther = await create();
+      cal.CalendarAvailabilityImportRequest importInput(
+        UuidValue parent,
+        String uid,
+      ) {
+        final bytes = Uint8List.fromList(
+          utf8.encode(
+            [
+              'BEGIN:VCALENDAR',
+              'VERSION:2.0',
+              'PRODID:-//Synthetic//EN',
+              'BEGIN:VAVAILABILITY',
+              'UID:$uid',
+              'DTSTAMP:20400101T000000Z',
+              'CONTACT:Source desk',
+              'CATEGORIES;LANGUAGE=sv:Öppet,Öppet',
+              'BEGIN:AVAILABLE',
+              'UID:opening@example.invalid',
+              'DTSTAMP:20390101T000000Z',
+              'DTSTART:20261022T090000Z',
+              'DURATION:PT1H',
+              'RDATE;VALUE=PERIOD:20261023T090000Z/PT2H',
+              'END:AVAILABLE',
+              'END:VAVAILABILITY',
+              'END:VCALENDAR',
+              '',
+            ].join('\r\n'),
+          ),
+        );
+        return cal.CalendarAvailabilityImportRequest(
+          calendarId: parent,
+          expectedRevision: 1,
+          bytes: ByteData.sublistView(bytes),
+        );
+      }
+
+      Future<Object?> importOutcome(
+        cal.EndpointCalendarAvailability api,
+        cal.CalendarAvailabilityImportRequest input,
+      ) => api
+          .importCalendar(input)
+          .then<Object?>((v) => v, onError: (Object e) => e);
+      final importRace = await Future.wait([
+        importOutcome(
+          aa,
+          importInput(importParent.calendarId, '來源@example.invalid'),
+        ),
+        importOutcome(
+          ab,
+          importInput(importParent.calendarId, '來源@example.invalid'),
+        ),
+      ]);
+      check(
+        importRace.whereType<cal.CalendarAvailabilityImportResult>().length ==
+                1 &&
+            importRace.whereType<cal.CalendarException>().single.code ==
+                cal.CalendarFailureCode.dependencyConflict,
+        'Same-destination import race must have exactly one winner',
+      );
+      final imported = importRace
+          .whereType<cal.CalendarAvailabilityImportResult>()
+          .single
+          .receipts
+          .single;
+      final copied = (await aa.importCalendar(
+        importInput(importOther.calendarId, '來源@example.invalid'),
+      )).receipts.single;
+      final remoteImport = await ab.getRule(imported.availabilityId);
+      final copy = await ab.getRule(copied.availabilityId);
+      check(
+        remoteImport.protocolUid == copy.protocolUid &&
+            remoteImport.id != copy.id &&
+            remoteImport.content.openings.single.uid !=
+                copy.content.openings.single.uid,
+        'Cross-calendar imports must retain protocol UID with distinct native identities',
+      );
+      check(
+        remoteImport.protocolState.sequence == null &&
+            remoteImport.protocolState.stamp == DateTime.utc(2040) &&
+            remoteImport.content.contacts!.single.value == 'Source desk' &&
+            remoteImport.content.categoryGroups!.single.values.length == 2 &&
+            remoteImport
+                    .content
+                    .openings
+                    .single
+                    .periods!
+                    .single
+                    .duration!
+                    .hours ==
+                2,
+        'Cross-host import lost source protocol or metadata state',
+      );
+      await ab.deleteRule(imported.availabilityId, 1);
+      await aa.deleteRule(copied.availabilityId, 1);
+      final importDeleteParent = await create();
+      final importDeleteRace = await Future.wait<Object?>([
+        a
+            .delete(importDeleteParent.calendarId, 1)
+            .then<Object?>((v) => v, onError: (Object e) => e),
+        importOutcome(
+          ab,
+          importInput(importDeleteParent.calendarId, 'delete-race'),
+        ),
+      ]);
+      if (importDeleteRace.last is cal.CalendarAvailabilityImportResult) {
+        check(
+          importDeleteRace.first is cal.CalendarException &&
+              (importDeleteRace.first as cal.CalendarException).code ==
+                  cal.CalendarFailureCode.dependencyConflict,
+          'Calendar deletion ignored imported dependencies',
+        );
+        await aa.deleteRule(
+          (importDeleteRace.last as cal.CalendarAvailabilityImportResult)
+              .receipts
+              .single
+              .availabilityId,
+          1,
+        );
+      } else {
+        check(
+          importDeleteRace.first is cal.CalendarMutationReceipt &&
+              importDeleteRace.last is cal.CalendarException &&
+              (importDeleteRace.last as cal.CalendarException).code ==
+                  cal.CalendarFailureCode.accessDenied,
+          'Import attached definitions to deleted calendar',
+        );
+        ids.remove(importDeleteParent.calendarId);
+      }
+
       final ruleParent = await create();
       final parentRace = await Future.wait<Object?>([
         a
