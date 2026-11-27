@@ -1,6 +1,6 @@
 # Native event recurrence and occurrence previews
 
-This increment extends [single-event CRUD](native-single-events.md) under [ADR 0054](adr/0054-native-event-recurrence-and-previews.md). Individual occurrence edits and THISANDFUTURE remain pending. The maintainer approved this batch and preservation behavior; API/budget mechanics remain reviewable.
+This increment extends [single-event CRUD](native-single-events.md) under [ADR 0054](adr/0054-native-event-recurrence-and-previews.md). The [ADR 0055 timing extension](native-occurrence-timing.md) now implements single/future timing edits and single cancellation/restoration; per-occurrence content and future cancellation remain pending. The maintainer approved this batch and preservation behavior; API/budget mechanics remain reviewable.
 
 ## Models and stored meaning
 
@@ -26,7 +26,7 @@ WKST defaults to Monday. Explicit Sunday/other values affect recurrence cadence 
 
 `update` still replaces native content, but preserves existing explicit dates by default. The server merges them before validation and host authorization. Omitting recurrence/removing its rule does not clear existing dates. An incompatible kind/zone change rejects without changing revision/content/time. Existing nonempty dates supplied differently require explicit replacement intent rather than being ignored.
 
-Set `CalendarEventUpdateRequest.replaceRecurrenceDates=true` only for deliberate replacement/clearing of both lists. Supply the desired complete recurrence definition; null clears it. This uses normal event editing authority and the actual merged proposed content; status changes still require the separate lifecycle permission. Series UUID/protocol UID remain stable, and the event revision/scope generation advance transactionally. Parent metadata time does not advance. No single-occurrence or future-range edit API is implied.
+Set `CalendarEventUpdateRequest.replaceRecurrenceDates=true` only for deliberate replacement/clearing of both lists. Supply the desired complete recurrence definition; null clears it. This uses normal event editing authority and the actual merged proposed content; status changes still require the separate lifecycle permission. Series UUID/protocol UID remain stable, and the event revision/scope generation advance transactionally. Parent metadata time does not advance. The separate ADR 0055 action API handles timing edits; this master update cannot clear its retained override state.
 
 ## Authorized previews
 

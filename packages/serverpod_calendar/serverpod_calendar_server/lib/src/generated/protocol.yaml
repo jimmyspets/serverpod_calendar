@@ -19,4 +19,5 @@ calendarEvent:
   - preview:
   - update:
   - changeStatus:
+  - changeOccurrence:
   - deleteEvent:

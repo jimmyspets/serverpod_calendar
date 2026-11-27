@@ -1,0 +1,5 @@
+class: CalendarEventTimingOverrides
+immutable: true
+fields:
+  singles: List<CalendarEventSingleOverride>
+  future: List<CalendarEventFutureOverride>

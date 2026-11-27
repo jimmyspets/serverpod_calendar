@@ -1,0 +1,8 @@
+class: CalendarEventOccurrenceChange
+immutable: true
+fields:
+  eventId: UuidValue
+  expectedRevision: int
+  originalStart: CalendarEventTiming
+  action: CalendarEventOccurrenceAction
+  replacement: CalendarEventTiming?

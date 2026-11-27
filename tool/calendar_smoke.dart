@@ -509,6 +509,129 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
         ),
         cal.CalendarFailureCode.staleRevision,
       );
+      cal.CalendarEventTiming anchorTiming(int day, {int? replacementDay}) =>
+          cal.CalendarEventTiming(
+            kind: patternOriginal.timing!.kind,
+            zoneId: patternOriginal.timing!.zoneId,
+            start: patternOriginal.timing!.start.copyWith(
+              day: replacementDay ?? day,
+            ),
+            duration: replacementDay == null
+                ? null
+                : cal.CalendarEventDuration(days: 1),
+          );
+      Future<void> applyOccurrence(
+        cal.EndpointCalendarEvent api,
+        int revision,
+        cal.CalendarEventOccurrenceAction action,
+        int day, {
+        int? moved,
+      }) async {
+        await api.changeOccurrence(
+          cal.CalendarEventOccurrenceChange(
+            eventId: patternId,
+            expectedRevision: revision,
+            originalStart: anchorTiming(day),
+            action: action,
+            replacement: moved == null
+                ? null
+                : anchorTiming(day, replacementDay: moved),
+          ),
+        );
+      }
+
+      await applyOccurrence(
+        ea,
+        2,
+        cal.CalendarEventOccurrenceAction.replaceFutureTiming,
+        29,
+        moved: 30,
+      );
+      await applyOccurrence(
+        eb,
+        3,
+        cal.CalendarEventOccurrenceAction.replaceSingleTiming,
+        30,
+        moved: 27,
+      );
+      final occurrenceQuery = cal.CalendarEventOccurrenceQuery(
+        eventId: patternId,
+        expectedRevision: 4,
+        fromUtc: DateTime.utc(2026, 3, 26),
+        untilUtc: DateTime.utc(2026, 4, 4),
+      );
+      final movedPreview = await ea.preview(occurrenceQuery);
+      check(
+        movedPreview.occurrences
+                    .singleWhere((o) => o.originalStart.day == 30)
+                    .start
+                    .day ==
+                27 &&
+            movedPreview.occurrences
+                    .singleWhere((o) => o.originalStart.day == 29)
+                    .start
+                    .day ==
+                30,
+        'Cross-host occurrence edits lost original identity or separate single precedence',
+      );
+      await applyOccurrence(
+        ea,
+        4,
+        cal.CalendarEventOccurrenceAction.cancelSingle,
+        30,
+      );
+      check(
+        (await eb.preview(occurrenceQuery.copyWith(expectedRevision: 5)))
+                .occurrences
+                .length ==
+            3,
+        'Single cancellation leaked into preview',
+      );
+      await applyOccurrence(
+        eb,
+        5,
+        cal.CalendarEventOccurrenceAction.restoreSingle,
+        30,
+      );
+      check(
+        (await ea.preview(occurrenceQuery.copyWith(expectedRevision: 6)))
+                .occurrences
+                .singleWhere((o) => o.originalStart.day == 30)
+                .start
+                .day ==
+            27,
+        'Restoring single occurrence discarded its timing',
+      );
+      final occurrenceOutcomes = await Future.wait([
+        for (final api in [ea, eb])
+          api
+              .changeOccurrence(
+                cal.CalendarEventOccurrenceChange(
+                  eventId: patternId,
+                  expectedRevision: 6,
+                  originalStart: anchorTiming(31),
+                  action: cal.CalendarEventOccurrenceAction.replaceSingleTiming,
+                  replacement: anchorTiming(31, replacementDay: 28),
+                ),
+              )
+              .then<Object?>((r) => r, onError: (Object e) => e),
+      ]);
+      check(
+        occurrenceOutcomes.whereType<cal.CalendarEventReceipt>().length == 1 &&
+            occurrenceOutcomes.whereType<cal.CalendarException>().single.code ==
+                cal.CalendarFailureCode.staleRevision,
+        'Competing occurrence timing writes did not reject one stale revision',
+      );
+      final edited = await eb.getEvent(
+        patternId,
+        cal.CalendarEventFieldGroup.values,
+      );
+      check(
+        edited.timing!.start.day == 28 &&
+            edited.protocolUid == patternOriginal.protocolUid &&
+            edited.timingOverrides!.singles.length == 2,
+        'Occurrence editing rewrote master content/identity',
+      );
       final firstPage = await ea.list(
         second.calendarId,
         pageSize: 1,
@@ -629,7 +752,7 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
       await b.delete(raceParent.calendarId, 1);
     }
     print(
-      'PASS: native events, temporal forms, lifecycle/cursors and cross-host stale-write race, stable calendar protocol UID/time, links/categories/image/refresh metadata, cross-host filtered cursors, native/protocol metadata isolation, multilingual round trips and generated calendar CRUD, scope isolation, cursors, stale writes and cross-host delete/attach race.',
+      'PASS: native events/recurrence/occurrence timing, temporal forms, lifecycle/cursors and cross-host stale-write race, stable calendar protocol UID/time, links/categories/image/refresh metadata, cross-host filtered cursors, native/protocol metadata isolation, multilingual round trips and generated calendar CRUD, scope isolation, cursors, stale writes and cross-host delete/attach race.',
     );
   } finally {
     for (final id in ids) {

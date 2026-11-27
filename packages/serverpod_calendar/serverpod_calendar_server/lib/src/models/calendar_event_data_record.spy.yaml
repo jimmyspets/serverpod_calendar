@@ -4,6 +4,7 @@ table: serverpod_calendar_event_data
 fields:
   eventId: UuidValue, relation(parent=serverpod_calendar_event)
   protocolUid: UuidValue, default=random
+  timingOverrides: CalendarEventTimingOverrides?
   content: CalendarEventContent
   createdAt: DateTime
   updatedAt: DateTime

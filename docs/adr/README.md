@@ -72,6 +72,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0054](0054-native-event-recurrence-and-previews.md) | Native event recurrence storage and bounded previews | Accepted batch/date preservation; mechanics under review |
 
+| [0055](0055-native-occurrence-timing-edits.md) | Native single/future occurrence timing edits | Accepted timing/cancellation/preservation scope; mechanics under review |
+
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
 Use the next consecutive number for a new ADR covering a material decision. Include context, proposal/decision, alternatives, consequences, and acceptance conditions. Preserve committed/accepted decision history; supersede accepted decisions with a linked ADR. Superseded uncommitted drafts may be removed under the maintainer-authorized cleanup. Mark an ADR accepted only after explicit maintainer agreement recorded in the PR or issue.

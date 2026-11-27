@@ -3,6 +3,8 @@ import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 
 import 'generated/protocol.dart';
 
+part 'event_override_values.dart';
+
 /// Native DTO conversion only; temporal rules remain in the independent core.
 (DateEventSpan?, TimedEventSpan?) validateEventTiming(CalendarEventTiming v) {
   CivilDateTime civil(CalendarEventCivil c, {bool end = false}) {
@@ -298,10 +300,10 @@ CalendarEventRecurrence? validateEventRecurrence(
 /// Complete overlap preview for one already-authorized event. No truncation.
 CalendarEventOccurrencePreview previewEventOccurrences(
   CalendarEventContent content,
-  CalendarEventOccurrenceQuery q,
-) {
-  final (date, timed) = validateEventTiming(content.timing);
-  final r = content.recurrence;
+  CalendarEventOccurrenceQuery q, {
+  CalendarEventTimingOverrides? overrides,
+}) {
+  final (date, _) = validateEventTiming(content.timing);
   final result = <CalendarEventOccurrence>[];
   if (date != null) {
     if (q.fromDate == null ||
@@ -319,26 +321,19 @@ CalendarEventOccurrencePreview previewEventOccurrences(
     if (from.daysUntil(until) > 366) {
       throw const RecurrenceLimitException('maxQueryDays');
     }
-    final series = DateEventSeries(
-      span: date,
-      recurrence: DateRecurrenceSet(
-        start: date.start,
-        rule: _dateRule(r?.rule),
-        inclusions: r?.inclusions.map((v) => _date(v.start)).toList() ?? [],
-        exclusions: r?.exclusions.map((v) => _date(v.start)).toList() ?? [],
-        maxExplicitDates: eventMaxExplicitDates,
-      ),
-    );
-    for (final span in series.expandOverlapping(
+    final series = _dateOverrides(content, overrides);
+    for (final occurrence in series.expandOverlapping(
       from: from,
       until: until,
       maxCandidateDays: eventMaxCandidateWork,
       maxRuleOccurrences: eventMaxRuleOccurrences,
+      maxBaseOccurrences: eventMaxRuleOccurrences,
       maxResults: eventMaxPreviewResults,
     )) {
+      final span = occurrence.span;
       result.add(
         CalendarEventOccurrence(
-          originalStart: eventDate(span.start),
+          originalStart: eventDate(occurrence.originalStart),
           start: eventDate(span.start),
           endDate: eventDate(span.endExclusive),
         ),
@@ -357,27 +352,7 @@ CalendarEventOccurrencePreview previewEventOccurrences(
     if (q.untilUtc!.difference(q.fromUtc!) > const Duration(days: 366)) {
       throw const RecurrenceLimitException('maxQueryDays');
     }
-    final series = TimedEventSeries(
-      span: timed!,
-      recurrence: TimedRecurrenceSet(
-        start: timed.start,
-        rule: _timedRule(r?.rule),
-        inclusions:
-            r?.inclusions
-                .map((v) => validateEventTiming(v).$2!.start)
-                .toList() ??
-            [],
-        exclusions:
-            r?.exclusions
-                .map((v) => validateEventTiming(v).$2!.start)
-                .toList() ??
-            [],
-        maxExplicitDates: eventMaxExplicitDates,
-      ),
-      maxChanges: 0,
-      maxValidationCandidateWork: eventMaxCandidateWork,
-      maxValidationOccurrences: eventMaxRuleOccurrences,
-    );
+    final series = _timedOverrides(content, overrides);
     for (final occurrence in series.expandOverlapping(
       window: UtcWindow(start: q.fromUtc!, end: q.untilUtc!),
       maxCandidateWork: eventMaxCandidateWork,

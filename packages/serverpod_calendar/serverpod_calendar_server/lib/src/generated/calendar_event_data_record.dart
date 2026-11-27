@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'calendar_event_content.dart' as _id4cvk34;
+import 'calendar_event_timing_overrides.dart' as _ijijze99;
 
 abstract class CalendarEventDataRecord
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
@@ -21,6 +22,7 @@ abstract class CalendarEventDataRecord
     this.id,
     required this.eventId,
     _is.UuidValue? protocolUid,
+    this.timingOverrides,
     required this.content,
     required this.createdAt,
     required this.updatedAt,
@@ -30,6 +32,7 @@ abstract class CalendarEventDataRecord
     int? id,
     required _is.UuidValue eventId,
     _is.UuidValue? protocolUid,
+    _ijijze99.CalendarEventTimingOverrides? timingOverrides,
     required _id4cvk34.CalendarEventContent content,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -48,6 +51,12 @@ abstract class CalendarEventDataRecord
           : _is.UuidValueJsonExtension.fromJson(
               jsonSerialization['protocolUid'],
             ),
+      timingOverrides: jsonSerialization['timingOverrides'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_ijijze99.CalendarEventTimingOverrides>(
+                  jsonSerialization['timingOverrides'],
+                ),
       content: _ix00hwbf.Protocol().deserialize<_id4cvk34.CalendarEventContent>(
         jsonSerialization['content'],
       ),
@@ -71,6 +80,8 @@ abstract class CalendarEventDataRecord
 
   _is.UuidValue protocolUid;
 
+  _ijijze99.CalendarEventTimingOverrides? timingOverrides;
+
   _id4cvk34.CalendarEventContent content;
 
   DateTime createdAt;
@@ -87,6 +98,7 @@ abstract class CalendarEventDataRecord
     int? id,
     _is.UuidValue? eventId,
     _is.UuidValue? protocolUid,
+    _ijijze99.CalendarEventTimingOverrides? timingOverrides,
     _id4cvk34.CalendarEventContent? content,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -98,6 +110,7 @@ abstract class CalendarEventDataRecord
       if (id != null) 'id': id,
       'eventId': eventId.toJson(),
       'protocolUid': protocolUid.toJson(),
+      if (timingOverrides != null) 'timingOverrides': timingOverrides?.toJson(),
       'content': content.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -144,6 +157,7 @@ class _CalendarEventDataRecordImpl extends CalendarEventDataRecord {
     int? id,
     required _is.UuidValue eventId,
     _is.UuidValue? protocolUid,
+    _ijijze99.CalendarEventTimingOverrides? timingOverrides,
     required _id4cvk34.CalendarEventContent content,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -151,6 +165,7 @@ class _CalendarEventDataRecordImpl extends CalendarEventDataRecord {
          id: id,
          eventId: eventId,
          protocolUid: protocolUid,
+         timingOverrides: timingOverrides,
          content: content,
          createdAt: createdAt,
          updatedAt: updatedAt,
@@ -164,6 +179,7 @@ class _CalendarEventDataRecordImpl extends CalendarEventDataRecord {
     Object? id = _Undefined,
     _is.UuidValue? eventId,
     _is.UuidValue? protocolUid,
+    Object? timingOverrides = _Undefined,
     _id4cvk34.CalendarEventContent? content,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -172,6 +188,10 @@ class _CalendarEventDataRecordImpl extends CalendarEventDataRecord {
       id: id is int? ? id : this.id,
       eventId: eventId ?? this.eventId,
       protocolUid: protocolUid ?? this.protocolUid,
+      timingOverrides:
+          timingOverrides is _ijijze99.CalendarEventTimingOverrides?
+          ? timingOverrides
+          : this.timingOverrides?.copyWith(),
       content: content ?? this.content.copyWith(),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -195,6 +215,16 @@ class CalendarEventDataRecordUpdateTable
     table.protocolUid,
     value,
   );
+
+  _is.ColumnValue<
+    _ijijze99.CalendarEventTimingOverrides,
+    _ijijze99.CalendarEventTimingOverrides
+  >
+  timingOverrides(_ijijze99.CalendarEventTimingOverrides? value) =>
+      _is.ColumnValue(
+        table.timingOverrides,
+        value,
+      );
 
   _is.ColumnValue<
     _id4cvk34.CalendarEventContent,
@@ -231,6 +261,11 @@ class CalendarEventDataRecordTable extends _is.Table<int?> {
       this,
       hasDefault: true,
     );
+    timingOverrides =
+        _is.ColumnSerializable<_ijijze99.CalendarEventTimingOverrides>(
+          'timingOverrides',
+          this,
+        );
     content = _is.ColumnSerializable<_id4cvk34.CalendarEventContent>(
       'content',
       this,
@@ -251,6 +286,9 @@ class CalendarEventDataRecordTable extends _is.Table<int?> {
 
   late final _is.ColumnUuid protocolUid;
 
+  late final _is.ColumnSerializable<_ijijze99.CalendarEventTimingOverrides>
+  timingOverrides;
+
   late final _is.ColumnSerializable<_id4cvk34.CalendarEventContent> content;
 
   late final _is.ColumnDateTime createdAt;
@@ -262,6 +300,7 @@ class CalendarEventDataRecordTable extends _is.Table<int?> {
     id,
     eventId,
     protocolUid,
+    timingOverrides,
     content,
     createdAt,
     updatedAt,
