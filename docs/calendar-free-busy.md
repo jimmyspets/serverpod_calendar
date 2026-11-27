@@ -1,6 +1,6 @@
 # First native per-calendar free/busy
 
-[ADR 0056](adr/0056-first-calendar-free-busy.md) implements the maintainer-selected first availability increment: one calendar, all required booking data and the stored no-rule fallback. [Native working-hours rules](native-working-hours.md) now extend this calculation under ADR 0057. Person/resource contributors and common-slot search remain pending. A result is neither a reservation nor VFREEBUSY serialization or external calendar-client evidence.
+[ADR 0056](adr/0056-first-calendar-free-busy.md) implements the maintainer-selected first availability increment: one calendar, all required booking data and the stored no-rule fallback. [Native working-hours rules](native-working-hours.md) now extend this calculation under ADR 0057. [Person/resource contributor resolution and common-free search](subject-availability-search.md) now extend native queries within one trusted scope. A result is neither a reservation nor VFREEBUSY serialization or external calendar-client evidence.
 
 ## Generated API and result meaning
 
@@ -48,4 +48,6 @@ The calendar editor opens a UTC-bound free/busy screen. It resets previous resul
 
 The reusable core now exposes bounded `partitionFreeBusy` for **already complete** UTC booking inputs; it cannot establish authorization/source completeness. Server adapters perform native event projection and policy enforcement. The initial booking query required no storage migration; the subsequent working-hours slice adds separate rule tables. See [validation](scaffold-validation.md).
 
-Scoped RFC 7953 rule CRUD/composition is now integrated, with additional limits in [working hours](native-working-hours.md). Rich rule metadata/interchange and host-resolved person/resource/common-free search follow separately. Supported stored definitions are applied or result in unknown/failure. Do not ignore external working-hours data and claim it was honored, or label one selected calendar as complete subject availability. Privacy-safe VFREEBUSY output, scheduling, alarms, exclusive reservations and feed interoperability remain separate work.
+Scoped RFC 7953 rule CRUD/composition is now integrated, with additional limits in [working hours](native-working-hours.md). Rich rule metadata/interchange and cross-scope coordination follow separately; [scoped person/resource and common-free search](subject-availability-search.md) is now implemented. Supported stored definitions are applied or result in unknown/failure. Do not ignore external working-hours data and claim it was honored, or label one selected calendar as complete subject availability. Privacy-safe VFREEBUSY output, scheduling, alarms, exclusive reservations and feed interoperability remain separate work.
+
+The calendar evaluator is reused internally under one subject-search transaction; direct `readFreeBusy` remains independent from summary authority. Subject search shares aggregate source/work caps across calendar evaluations and passes exact target/query context to required projections. Public per-calendar semantics and caps remain unchanged.

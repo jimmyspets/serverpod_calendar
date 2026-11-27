@@ -15,6 +15,8 @@ enum CalendarPermission {
   updateAvailability,
   deleteAvailability,
   projectAvailability,
+  readSubjectAvailability,
+  projectCalendarAvailability,
   readFreeBusy,
   projectEventBusy,
   previewEventOccurrences,
@@ -141,6 +143,8 @@ final class CalendarAuthorizationRequest {
     this.proposedEvent,
     this.occurrenceQuery,
     this.freeBusyQuery,
+    this.availabilitySearchQuery,
+    this.availabilityTarget,
     this.availabilityId,
     this.currentAvailability,
     this.proposedAvailability,
@@ -157,6 +161,8 @@ final class CalendarAuthorizationRequest {
   final CalendarEventContent? proposedEvent;
   final CalendarEventOccurrenceQuery? occurrenceQuery;
   final CalendarFreeBusyQuery? freeBusyQuery;
+  final CalendarAvailabilitySearchQuery? availabilitySearchQuery;
+  final CalendarAvailabilityTarget? availabilityTarget;
   final UuidValue? availabilityId;
   final CalendarAvailabilityPolicySnapshot? currentAvailability;
   final CalendarAvailabilityContent? proposedAvailability;
@@ -218,6 +224,17 @@ abstract interface class CalendarHostPolicy {
     CalendarHostContext context,
     CalendarPolicySnapshot calendar,
     Set<CalendarEventFieldGroup> requestedGroups,
+  );
+
+  /// Authoritative complete contributor set within the trusted scope. Never a
+  /// detail-filtered candidate plan. Unresolved/external coverage is incomplete.
+  /// Use this transaction to coordinate host mapping state when possible; an
+  /// external resolver must expose a revision that changes with its mapping.
+  Future<CalendarSubjectResolution> resolveAvailabilitySubject(
+    Session session,
+    CalendarHostContext context,
+    CalendarAvailabilityTarget target,
+    Transaction transaction,
   );
 
   /// For coordinated guarantees, finalWrite must coordinate every relevant
@@ -302,4 +319,16 @@ final class CalendarAvailabilityPolicySnapshot {
   final int revision;
   final CalendarAvailabilityContent content;
   final DateTime updatedAt;
+}
+
+/// Trusted host result; not client input. Empty sets never establish free time.
+final class CalendarSubjectResolution {
+  CalendarSubjectResolution({
+    required this.complete,
+    required this.revision,
+    required Iterable<UuidValue> calendarIds,
+  }) : calendarIds = List.unmodifiable(calendarIds);
+  final bool complete;
+  final String revision;
+  final List<UuidValue> calendarIds;
 }

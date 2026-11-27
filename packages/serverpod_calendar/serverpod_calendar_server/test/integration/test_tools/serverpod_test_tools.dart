@@ -18,6 +18,10 @@ import 'package:serverpod_calendar_server/src/generated/calendar_availability_cr
     as _iys46g3v;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_receipt.dart'
     as _i6vowhmw;
+import 'package:serverpod_calendar_server/src/generated/calendar_availability_search_query.dart'
+    as _iirwhdxv;
+import 'package:serverpod_calendar_server/src/generated/calendar_availability_search_view.dart'
+    as _i5d3khya;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_update_request.dart'
     as _i2zdh4d8;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_view.dart'
@@ -208,6 +212,8 @@ void withServerpod(
 class TestEndpoints {
   late final _CalendarAvailabilityEndpoint calendarAvailability;
 
+  late final _CalendarAvailabilitySearchEndpoint calendarAvailabilitySearch;
+
   late final _CalendarDiagnosticsEndpoint calendarDiagnostics;
 
   late final _CalendarEndpoint calendar;
@@ -223,6 +229,10 @@ class _InternalTestEndpoints extends TestEndpoints
     _is.EndpointDispatch endpoints,
   ) {
     calendarAvailability = _CalendarAvailabilityEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    calendarAvailabilitySearch = _CalendarAvailabilitySearchEndpoint(
       endpoints,
       serializationManager,
     );
@@ -403,6 +413,48 @@ class _CalendarAvailabilityEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_i6vowhmw.CalendarAvailabilityReceipt?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _CalendarAvailabilitySearchEndpoint {
+  _CalendarAvailabilitySearchEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_i5d3khya.CalendarAvailabilitySearchView> search(
+    _ist.TestSessionBuilder sessionBuilder,
+    _iirwhdxv.CalendarAvailabilitySearchQuery query,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarAvailabilitySearch',
+            method: 'search',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarAvailabilitySearch',
+          methodName: 'search',
+          parameters: _ist.testObjectToJson({'query': query}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i5d3khya.CalendarAvailabilitySearchView>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

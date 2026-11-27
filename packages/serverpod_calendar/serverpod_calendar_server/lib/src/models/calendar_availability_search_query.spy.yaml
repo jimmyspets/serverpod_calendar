@@ -1,0 +1,8 @@
+class: CalendarAvailabilitySearchQuery
+immutable: true
+fields:
+  targets: List<CalendarAvailabilityTarget>
+  fromUtc: DateTime
+  untilUtc: DateTime
+  mode: CalendarAvailabilitySearchMode
+  minimumSeconds: int, default=1

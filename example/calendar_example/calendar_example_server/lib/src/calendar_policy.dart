@@ -13,7 +13,55 @@ final class DemoCalendarPolicy implements CalendarHostPolicy {
     return CalendarHostContext(
       principalId: principal,
       scopeKey: 'demo:user:$principal',
-      policyRevision: 'private-scope-v9',
+      policyRevision: 'private-scope-v10',
+    );
+  }
+
+  @override
+  Future<CalendarSubjectResolution> resolveAvailabilitySubject(
+    Session session,
+    CalendarHostContext context,
+    CalendarAvailabilityTarget target,
+    Transaction transaction,
+  ) async {
+    final active = await CalendarIdentityRecord.db.find(
+      session,
+      where: (t) =>
+          t.scopeKey.equals(context.scopeKey) & t.deletedAt.equals(null),
+      orderBy: (t) => t.id,
+      limit: 257,
+      transaction: transaction,
+    );
+    if (active.length > 256) {
+      return CalendarSubjectResolution(
+        complete: false,
+        revision: context.policyRevision,
+        calendarIds: [],
+      );
+    }
+    final links = active.isEmpty
+        ? <CalendarSubjectRecord>[]
+        : await CalendarSubjectRecord.db.find(
+            session,
+            where: (t) =>
+                t.calendarId.inSet(active.map((a) => a.id!).toSet()) &
+                t.namespace.equals(target.namespace) &
+                t.kind.equals(target.kind) &
+                t.externalId.equals(target.externalId) &
+                t.contributesAvailability.equals(true),
+            orderBy: (t) => t.calendarId,
+            limit: 9,
+            transaction: transaction,
+          );
+    final scope = await CalendarScopeRecord.db.findFirstRow(
+      session,
+      where: (t) => t.scopeKey.equals(context.scopeKey),
+      transaction: transaction,
+    );
+    return CalendarSubjectResolution(
+      complete: links.length <= 8,
+      revision: '${context.policyRevision}:${scope?.revision ?? 0}',
+      calendarIds: links.map((l) => l.calendarId),
     );
   }
 
@@ -56,6 +104,13 @@ final class DemoCalendarPolicy implements CalendarHostPolicy {
     CalendarHostContext context,
     CalendarAuthorizationRequest request,
   ) {
+    final target = request.availabilityTarget;
+    if (target != null &&
+        (target.namespace != 'demo' ||
+            target.kind != 'user' ||
+            target.externalId != context.principalId)) {
+      return false;
+    }
     final subject = request.proposed?.subject?.subject;
     return subject == null ||
         (subject.namespace == 'demo' &&

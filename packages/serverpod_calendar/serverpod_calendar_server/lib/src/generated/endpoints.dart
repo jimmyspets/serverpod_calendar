@@ -13,6 +13,8 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_create_request.dart'
     as _iys46g3v;
+import 'package:serverpod_calendar_server/src/generated/calendar_availability_search_query.dart'
+    as _iirwhdxv;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_update_request.dart'
     as _i2zdh4d8;
 import 'package:serverpod_calendar_server/src/generated/calendar_category_filter.dart'
@@ -50,6 +52,7 @@ import 'package:serverpod_calendar_server/src/generated/calendar_supplemental_me
 import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
     as _ik9lwgjh;
 import '../endpoints/calendar_availability_endpoint.dart' as _imcvujmp;
+import '../endpoints/calendar_availability_search_endpoint.dart' as _icfitiep;
 import '../endpoints/calendar_diagnostics_endpoint.dart' as _icr8drn5;
 import '../endpoints/calendar_endpoint.dart' as _inx4l1vp;
 import '../endpoints/calendar_event_endpoint.dart' as _ibwv0suj;
@@ -64,6 +67,12 @@ class Endpoints extends _is.EndpointDispatch {
           'calendarAvailability',
           'serverpod_calendar',
         ),
+      'calendarAvailabilitySearch':
+          _icfitiep.CalendarAvailabilitySearchEndpoint()..initialize(
+            server,
+            'calendarAvailabilitySearch',
+            'serverpod_calendar',
+          ),
       'calendarDiagnostics': _icr8drn5.CalendarDiagnosticsEndpoint()
         ..initialize(
           server,
@@ -196,6 +205,33 @@ class Endpoints extends _is.EndpointDispatch {
                         session,
                         params['availabilityId'],
                         params['expectedRevision'],
+                      ),
+        ),
+      },
+    );
+    connectors['calendarAvailabilitySearch'] = _is.EndpointConnector(
+      name: 'calendarAvailabilitySearch',
+      endpoint: endpoints['calendarAvailabilitySearch']!,
+      methodConnectors: {
+        'search': _is.MethodConnector(
+          name: 'search',
+          params: {
+            'query': _is.ParameterDescription(
+              name: 'query',
+              type: _is.getType<_iirwhdxv.CalendarAvailabilitySearchQuery>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAvailabilitySearch']
+                          as _icfitiep.CalendarAvailabilitySearchEndpoint)
+                      .search(
+                        session,
+                        params['query'],
                       ),
         ),
       },

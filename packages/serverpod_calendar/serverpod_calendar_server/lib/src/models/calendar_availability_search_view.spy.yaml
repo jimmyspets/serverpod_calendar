@@ -1,0 +1,12 @@
+class: CalendarAvailabilitySearchView
+immutable: true
+fields:
+  snapshotId: UuidValue
+  calculatedAtUtc: DateTime
+  fromUtc: DateTime
+  untilUtc: DateTime
+  mode: CalendarAvailabilitySearchMode
+  minimumSeconds: int
+  results: List<CalendarSubjectAvailability>
+  commonCoverage: CalendarFreeBusyCoverage?
+  commonSlots: List<CalendarAvailabilitySlot>

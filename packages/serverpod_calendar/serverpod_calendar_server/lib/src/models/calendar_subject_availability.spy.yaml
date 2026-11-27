@@ -1,0 +1,7 @@
+class: CalendarSubjectAvailability
+immutable: true
+fields:
+  target: CalendarAvailabilityTarget
+  coverage: CalendarFreeBusyCoverage
+  periods: List<CalendarFreeBusyPeriod>
+  freeSlots: List<CalendarAvailabilitySlot>

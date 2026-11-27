@@ -4,6 +4,8 @@ calendarAvailability:
   - list:
   - update:
   - deleteRule:
+calendarAvailabilitySearch:
+  - search:
 calendarDiagnostics:
   - check:
 calendar:

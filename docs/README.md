@@ -55,3 +55,5 @@ See [native occurrence timing editing](native-occurrence-timing.md) for single/f
 See [per-calendar free/busy](calendar-free-busy.md) for the first bounded booking/fallback calculation under ADR 0056, with broader search scope still pending.
 
 See [native working hours](native-working-hours.md) for scoped rule CRUD, recurring openings and integrated per-calendar composition under ADR 0057.
+
+See [person/resource availability and common-free search](subject-availability-search.md) for host-resolved contributors, independent summary authority, bounded modes and unknown coverage under ADR 0058.

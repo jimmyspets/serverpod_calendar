@@ -1,0 +1,5 @@
+class: CalendarAvailabilitySlot
+immutable: true
+fields:
+  startUtc: DateTime
+  endUtc: DateTime

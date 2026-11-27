@@ -533,6 +533,40 @@ void main() {
     await tester.pageBack();
     await _idle(tester);
     await _tap(tester, 'calendar-attach-self');
+    await _tap(tester, 'calendar-subject-search');
+    await _enabledField(tester, find.byKey(const Key('search-from')));
+    await tester.enterText(
+      find.byKey(const Key('search-from')),
+      '2026-03-29T00:00:00Z',
+    );
+    await tester.enterText(
+      find.byKey(const Key('search-until')),
+      '2026-03-30T00:00:00Z',
+    );
+    await _tap(tester, 'search-load');
+    await _waitFor(tester, find.byKey(const Key('search-common-complete')));
+    expect(find.byKey(const Key('search-target-complete-0')), findsOneWidget);
+    await _tap(tester, 'search-add');
+    expect(find.byKey(const Key('search-common-complete')), findsNothing);
+    await tester.enterText(
+      find.byKey(const Key('search-reference-1')),
+      'not-a-demo-user',
+    );
+    await _tap(tester, 'search-load');
+    await _waitFor(tester, find.byKey(const Key('search-common-unknown')));
+    expect(find.byKey(const Key('search-target-complete-0')), findsOneWidget);
+    expect(find.byKey(const Key('search-target-unknown-1')), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('search-mode')));
+    await tester.tap(find.byKey(const Key('search-mode')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Per person/resource').last);
+    await tester.pumpAndSettle();
+    await _tap(tester, 'search-load');
+    await _waitFor(tester, find.byKey(const Key('search-per-target')));
+    expect(find.byKey(const Key('search-common-unknown')), findsNothing);
+    await tester.pageBack();
+    await _idle(tester);
+
     await _tap(tester, 'calendar-delete');
     await _tap(tester, 'calendar-confirm-delete');
     expect(find.byKey(const Key('calendar-error')), findsOneWidget);

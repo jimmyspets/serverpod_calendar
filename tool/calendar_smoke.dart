@@ -800,6 +800,86 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
           'Rule was attached to a deleted parent',
         );
       }
+      final sa =
+          clients.first.modules.serverpod_calendar.calendarAvailabilitySearch;
+      final sb =
+          clients.last.modules.serverpod_calendar.calendarAvailabilitySearch;
+      final association = (await a.getCalendar(
+        second.calendarId,
+        groups,
+      )).revision;
+      await a.changeSubject(
+        cal.CalendarSubjectChangeRequest(
+          calendarId: second.calendarId,
+          expectedRevision: association,
+          action: cal.CalendarSubjectAction.attach,
+          namespace: 'demo',
+          kind: 'user',
+          externalId: principal,
+          contributesAvailability: true,
+        ),
+      );
+      final searchInput = cal.CalendarAvailabilitySearchQuery(
+        targets: [
+          cal.CalendarAvailabilityTarget(
+            namespace: 'demo',
+            kind: 'user',
+            externalId: principal,
+          ),
+        ],
+        fromUtc: busyQuery.fromUtc,
+        untilUtc: busyQuery.untilUtc,
+        mode: cal.CalendarAvailabilitySearchMode.commonFree,
+      );
+      final localSubject = await sa.search(searchInput);
+      final remoteSubject = await sb.search(searchInput);
+      check(
+        localSubject.commonCoverage == cal.CalendarFreeBusyCoverage.complete &&
+            jsonEncode(
+                  localSubject.commonSlots.map((s) => s.toJson()).toList(),
+                ) ==
+                jsonEncode(
+                  remoteSubject.commonSlots.map((s) => s.toJson()).toList(),
+                ),
+        'Cross-host subject resolution or common slots differ',
+      );
+      check(
+        !remoteSubject.toJson().toString().contains(
+          second.calendarId.toString(),
+        ),
+        'Subject summary disclosed a contributing calendar ID',
+      );
+      final another = (await aa.create(
+        cal.CalendarAvailabilityCreateRequest(
+          calendarId: second.calendarId,
+          content: cal.CalendarAvailabilityContent(openings: []),
+        ),
+      ))!;
+      check(
+        (await sb.search(searchInput)).commonSlots.isEmpty,
+        'Remote subject query ignored committed closure',
+      );
+      await ab.deleteRule(another.availabilityId, 1);
+      final unlinkRevision = (await b.getCalendar(
+        second.calendarId,
+        groups,
+      )).revision;
+      await b.changeSubject(
+        cal.CalendarSubjectChangeRequest(
+          calendarId: second.calendarId,
+          expectedRevision: unlinkRevision,
+          action: cal.CalendarSubjectAction.detach,
+          namespace: 'demo',
+          kind: 'user',
+          externalId: principal,
+          contributesAvailability: true,
+        ),
+      );
+      check(
+        (await sa.search(searchInput)).commonCoverage ==
+            cal.CalendarFreeBusyCoverage.unknown,
+        'Remote contributor removal was interpreted as free',
+      );
       final firstPage = await ea.list(
         second.calendarId,
         pageSize: 1,
@@ -920,7 +1000,7 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
       await b.delete(raceParent.calendarId, 1);
     }
     print(
-      'PASS: working-hours CRUD/composition and cross-host rule writes/parent races, per-calendar free/busy and native events/recurrence/occurrence timing, temporal forms, lifecycle/cursors and cross-host stale-write race, stable calendar protocol UID/time, links/categories/image/refresh metadata, cross-host filtered cursors, native/protocol metadata isolation, multilingual round trips and generated calendar CRUD, scope isolation, cursors, stale writes and cross-host delete/attach race.',
+      'PASS: subject/common-free resolution across hosts and remote source/association changes, working-hours CRUD/composition and cross-host rule writes/parent races, per-calendar free/busy and native events/recurrence/occurrence timing, temporal forms, lifecycle/cursors and cross-host stale-write race, stable calendar protocol UID/time, links/categories/image/refresh metadata, cross-host filtered cursors, native/protocol metadata isolation, multilingual round trips and generated calendar CRUD, scope isolation, cursors, stale writes and cross-host delete/attach race.',
     );
   } finally {
     for (final id in ids) {

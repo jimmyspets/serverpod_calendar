@@ -7,6 +7,7 @@ import 'protocol_metadata_editor.dart';
 import 'event_screen.dart';
 import 'calendar_free_busy_screen.dart';
 import 'availability_screen.dart';
+import 'availability_search_screen.dart';
 import 'supplemental_metadata_editor.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -107,6 +108,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
     appBar: AppBar(
       title: const Text('My calendars'),
       actions: [
+        IconButton(
+          key: const Key('availability-search-open'),
+          tooltip: 'Person/resource availability',
+          icon: const Icon(Icons.manage_search),
+          onPressed: _busy
+              ? null
+              : () => Navigator.of(context).push<void>(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        AvailabilitySearchScreen(client: widget.client),
+                  ),
+                ),
+        ),
         IconButton(
           key: const Key('calendar-refresh'),
           onPressed: _busy ? null : _load,
@@ -504,6 +518,20 @@ class _CalendarEditorState extends State<CalendarEditor> {
                             ),
                           ),
                     child: const Text('Working hours'),
+                  ),
+                if (existing)
+                  OutlinedButton(
+                    key: const Key('calendar-subject-search'),
+                    onPressed: locked
+                        ? null
+                        : () => Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (_) => AvailabilitySearchScreen(
+                                client: widget.client,
+                              ),
+                            ),
+                          ),
+                    child: const Text('Person/resource availability'),
                   ),
                 if (existing && _calendar!.protocolIdentity != null) ...[
                   SelectableText(
