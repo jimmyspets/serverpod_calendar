@@ -611,6 +611,248 @@ void main() {
       fromUtc: DateTime.utc(2026, 3, 29),
       untilUtc: DateTime.utc(2026, 4, 1),
     );
+    test('lifecycle protocol versions distinguish identical saves metadata and opening changes', () async {
+      var rule = await editableHours();
+      final initial = rule.protocolState.toJson();
+      expect(rule.protocolState.sequence, 0);
+      expect(rule.protocolState.openings.single.created, isNotNull);
+      await service.updateAvailabilityMetadata(
+        CalendarAvailabilityUpdateRequest(
+          availabilityId: rule.id,
+          expectedRevision: rule.revision,
+          content: rule.content,
+        ),
+      );
+      expect(
+        policy.lastAvailabilityRequest!.proposedAvailabilityProtocolState!
+            .toJson(),
+        initial,
+      );
+      rule = await service.getAvailability(rule.id);
+      expect(rule.revision, 2);
+      expect(rule.protocolState.toJson(), initial);
+      await service.updateAvailabilityMetadata(
+        CalendarAvailabilityUpdateRequest(
+          availabilityId: rule.id,
+          expectedRevision: rule.revision,
+          content: rule.content.copyWith(description: 'Changed metadata'),
+        ),
+      );
+      expect(
+        policy
+            .lastAvailabilityRequest!
+            .proposedAvailabilityProtocolState!
+            .sequence,
+        1,
+      );
+      rule = await service.getAvailability(rule.id);
+      expect(
+        rule.protocolState.openings.single.toJson(),
+        (initial['openings'] as List).single,
+      );
+      expect(rule.lastModified, rule.protocolState.stamp);
+      final before = rule.protocolState.toJson();
+      policy.denyFinal = true;
+      await expectLater(
+        service.updateAvailabilityMetadata(
+          CalendarAvailabilityUpdateRequest(
+            availabilityId: rule.id,
+            expectedRevision: rule.revision,
+            content: rule.content.copyWith(description: 'Denied'),
+          ),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denyFinal = false;
+      expect(
+        (await service.getAvailability(rule.id)).protocolState.toJson(),
+        before,
+      );
+      await expectLater(
+        service.updateAvailabilityMetadata(
+          CalendarAvailabilityUpdateRequest(
+            availabilityId: rule.id,
+            expectedRevision: 1,
+            content: rule.content,
+          ),
+        ),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      expect(
+        () => policy
+            .lastAvailabilityRequest!
+            .currentAvailability!
+            .protocolState
+            .openings
+            .clear(),
+        throwsUnsupportedError,
+      );
+    });
+    test('lifecycle occurrence mutations advance protocol once while redundant skips preserve it', () async {
+      var rule = await editableHours();
+      await service.changeAvailabilityOccurrence(
+        openingChange(rule, CalendarEventOccurrenceAction.cancelSingle),
+      );
+      expect(
+        policy
+            .lastAvailabilityRequest!
+            .proposedAvailabilityProtocolState!
+            .sequence,
+        1,
+      );
+      rule = await service.getAvailability(rule.id);
+      final state = rule.protocolState.toJson();
+      await service.changeAvailabilityOccurrence(
+        openingChange(rule, CalendarEventOccurrenceAction.cancelSingle),
+      );
+      rule = await service.getAvailability(rule.id);
+      expect(rule.protocolState.toJson(), state);
+      expect(rule.revision, 3);
+      await service.changeAvailabilityOccurrence(
+        openingChange(rule, CalendarEventOccurrenceAction.restoreSingle),
+      );
+      rule = await service.getAvailability(rule.id);
+      expect(rule.protocolState.sequence, 2);
+    });
+    test('lifecycle legacy baseline does not write on reads or invent opening creation', () async {
+      var rule = await editableHours();
+      var data = (await CalendarAvailabilityDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.availabilityId.equals(rule.id),
+      ))!;
+      data = data.copyWith(
+        protocolState: null,
+        createdAt: DateTime.utc(2020),
+        updatedAt: DateTime.utc(2021),
+      );
+      await CalendarAvailabilityDataRecord.db.updateRow(session, data);
+      rule = await service.getAvailability(rule.id);
+      expect(rule.protocolState.created, DateTime.utc(2020));
+      expect(rule.protocolState.stamp, DateTime.utc(2021));
+      expect(rule.protocolState.openings.single.created, isNull);
+      final stored = (await CalendarAvailabilityDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.availabilityId.equals(rule.id),
+      ))!;
+      expect(stored.protocolState, isNull);
+      expect(stored.updatedAt, data.updatedAt);
+      await service.updateAvailabilityMetadata(
+        CalendarAvailabilityUpdateRequest(
+          availabilityId: rule.id,
+          expectedRevision: rule.revision,
+          content: rule.content.copyWith(description: 'Envelope only'),
+        ),
+      );
+      rule = await service.getAvailability(rule.id);
+      expect(
+        rule.protocolState.openings.single.lastModified,
+        DateTime.utc(2021),
+      );
+      expect(rule.protocolState.openings.single.created, isNull);
+      await service.updateAvailability(
+        CalendarAvailabilityUpdateRequest(
+          availabilityId: rule.id,
+          expectedRevision: rule.revision,
+          content: rule.content.copyWith(
+            openings: [
+              ...rule.content.openings,
+              rule.content.openings.single.copyWith(uid: null),
+            ],
+          ),
+        ),
+      );
+      rule = await service.getAvailability(rule.id);
+      expect(rule.protocolState.openings.last.created, isNotNull);
+      expect(rule.protocolState.sequence, 2);
+    });
+    test('lifecycle envelope duration clips free busy and requires structural authority', () async {
+      var rule = await editableHours();
+      final next = rule.content.copyWith(
+        openings: [],
+        validFrom: CalendarEventTiming(
+          kind: CalendarEventTimeKind.utc,
+          start: CalendarEventCivil(year: 2026, month: 3, day: 29, hour: 8),
+        ),
+        validDuration: CalendarEventDuration(hours: 1),
+      );
+      final request = CalendarAvailabilityUpdateRequest(
+        availabilityId: rule.id,
+        expectedRevision: rule.revision,
+        content: next,
+      );
+      await expectLater(
+        service.updateAvailabilityMetadata(request),
+        failure(CalendarFailureCode.validation),
+      );
+      policy.denied.add(CalendarPermission.updateAvailability);
+      await expectLater(
+        service.updateAvailability(request),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denied.clear();
+      await service.updateAvailability(request);
+      rule = await service.getAvailability(rule.id);
+      expect(rule.content.validDuration!.hours, 1);
+      expect(rule.content.validUntil, isNull);
+      final result = await service.freeBusy(
+        CalendarFreeBusyQuery(
+          calendarId: rule.calendarId,
+          fromUtc: DateTime.utc(2026, 3, 29),
+          untilUtc: DateTime.utc(2026, 3, 30),
+        ),
+      );
+      expect(result.coverage, CalendarFreeBusyCoverage.complete);
+      expect(result.periods.map((p) => p.kind), [
+        CalendarFreeBusyKind.free,
+        CalendarFreeBusyKind.unavailable,
+        CalendarFreeBusyKind.free,
+      ]);
+      expect(result.periods[1].startUtc, DateTime.utc(2026, 3, 29, 8));
+      expect(result.periods[1].endUtc, DateTime.utc(2026, 3, 29, 9));
+      expect(result.toJson().toString(), isNot(contains('sequence')));
+    });
+    test(
+      'lifecycle sequence overflow cannot partially change active state',
+      () async {
+        var rule = await editableHours();
+        final data = (await CalendarAvailabilityDataRecord.db.findFirstRow(
+          session,
+          where: (t) => t.availabilityId.equals(rule.id),
+        ))!;
+        await CalendarAvailabilityDataRecord.db.updateRow(
+          session,
+          data.copyWith(
+            protocolState: data.protocolState!.copyWith(sequence: 2147483647),
+          ),
+        );
+        rule = await service.getAvailability(rule.id);
+        await expectLater(
+          service.updateAvailabilityMetadata(
+            CalendarAvailabilityUpdateRequest(
+              availabilityId: rule.id,
+              expectedRevision: rule.revision,
+              content: rule.content.copyWith(description: 'Overflow'),
+            ),
+          ),
+          failure(CalendarFailureCode.limitExceeded),
+        );
+        expect(
+          (await service.getAvailability(rule.id)).revision,
+          rule.revision,
+        );
+        await service.updateAvailabilityMetadata(
+          CalendarAvailabilityUpdateRequest(
+            availabilityId: rule.id,
+            expectedRevision: rule.revision,
+            content: rule.content,
+          ),
+        );
+        expect(
+          (await service.getAvailability(rule.id)).protocolState.sequence,
+          2147483647,
+        );
+      },
+    );
     test('publication organizer creation denial and adapter timeout leave no active data', () async {
       final parent = (await service.create(createInput()))!.calendarId;
       final input = CalendarAvailabilityCreateRequest(

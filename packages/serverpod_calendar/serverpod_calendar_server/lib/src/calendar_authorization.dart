@@ -154,6 +154,7 @@ final class CalendarAuthorizationRequest {
     this.availabilityOccurrenceChange,
     this.availabilityOccurrenceQuery,
     this.proposedAvailabilityEdits,
+    this.proposedAvailabilityProtocolState,
     this.availabilityCategoryFilter,
     this.occurrenceChange,
     this.proposedTimingOverrides,
@@ -176,6 +177,7 @@ final class CalendarAuthorizationRequest {
   final CalendarAvailabilityOccurrenceChange? availabilityOccurrenceChange;
   final CalendarAvailabilityOccurrenceQuery? availabilityOccurrenceQuery;
   final List<CalendarAvailabilityOpeningEdits>? proposedAvailabilityEdits;
+  final CalendarAvailabilityProtocolState? proposedAvailabilityProtocolState;
   final String? availabilityCategoryFilter;
   final CalendarEventOccurrenceChange? occurrenceChange;
   final CalendarEventTimingOverrides? proposedTimingOverrides;
@@ -337,8 +339,10 @@ final class CalendarAvailabilityPolicySnapshot {
     this.protocolUid,
     this.updatedAt, {
     this.timingOverrides,
+    required this.protocolState,
   });
   final List<CalendarAvailabilityOpeningEdits>? timingOverrides;
+  final CalendarAvailabilityProtocolState protocolState;
   final UuidValue availabilityId, calendarId, protocolUid;
   final int revision;
   final CalendarAvailabilityContent content;

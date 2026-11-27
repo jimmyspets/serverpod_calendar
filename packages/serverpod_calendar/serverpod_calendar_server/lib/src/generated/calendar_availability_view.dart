@@ -16,6 +16,7 @@ import 'package:serverpod_calendar_server/src/generated/protocol.dart'
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
 import 'calendar_availability_content.dart' as _ifxxil5c;
 import 'calendar_availability_opening_edits.dart' as _id5ke9r5;
+import 'calendar_availability_protocol_state.dart' as _ib9yzivj;
 
 @_is.immutable
 abstract class CalendarAvailabilityView
@@ -28,6 +29,7 @@ abstract class CalendarAvailabilityView
     required this.lastModified,
     this.timingOverrides,
     required this.content,
+    required this.protocolState,
   });
 
   const factory CalendarAvailabilityView({
@@ -38,6 +40,7 @@ abstract class CalendarAvailabilityView
     required DateTime lastModified,
     List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
     required _ifxxil5c.CalendarAvailabilityContent content,
+    required _ib9yzivj.CalendarAvailabilityProtocolState protocolState,
   }) = _CalendarAvailabilityViewImpl;
 
   factory CalendarAvailabilityView.fromJson(
@@ -65,6 +68,10 @@ abstract class CalendarAvailabilityView
           .deserialize<_ifxxil5c.CalendarAvailabilityContent>(
             jsonSerialization['content'],
           ),
+      protocolState: _ix00hwbf.Protocol()
+          .deserialize<_ib9yzivj.CalendarAvailabilityProtocolState>(
+            jsonSerialization['protocolState'],
+          ),
     );
   }
 
@@ -82,6 +89,8 @@ abstract class CalendarAvailabilityView
 
   final _ifxxil5c.CalendarAvailabilityContent content;
 
+  final _ib9yzivj.CalendarAvailabilityProtocolState protocolState;
+
   /// Returns a shallow copy of this [CalendarAvailabilityView]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -93,6 +102,7 @@ abstract class CalendarAvailabilityView
     DateTime? lastModified,
     List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
     _ifxxil5c.CalendarAvailabilityContent? content,
+    _ib9yzivj.CalendarAvailabilityProtocolState? protocolState,
   });
   @override
   bool operator ==(Object other) {
@@ -135,7 +145,12 @@ abstract class CalendarAvailabilityView
                   other.content,
                   content,
                 ) ||
-                other.content == content);
+                other.content == content) &&
+            (identical(
+                  other.protocolState,
+                  protocolState,
+                ) ||
+                other.protocolState == protocolState);
   }
 
   @override
@@ -149,6 +164,7 @@ abstract class CalendarAvailabilityView
       lastModified,
       const _iss.DeepCollectionEquality().hash(timingOverrides),
       content,
+      protocolState,
     );
   }
 
@@ -166,6 +182,7 @@ abstract class CalendarAvailabilityView
           valueToJson: (v) => v.toJson(),
         ),
       'content': content.toJson(),
+      'protocolState': protocolState.toJson(),
     };
   }
 
@@ -183,6 +200,7 @@ abstract class CalendarAvailabilityView
           valueToJson: (v) => v.toJsonForProtocol(),
         ),
       'content': content.toJsonForProtocol(),
+      'protocolState': protocolState.toJsonForProtocol(),
     };
   }
 
@@ -203,6 +221,7 @@ class _CalendarAvailabilityViewImpl extends CalendarAvailabilityView {
     required DateTime lastModified,
     List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
     required _ifxxil5c.CalendarAvailabilityContent content,
+    required _ib9yzivj.CalendarAvailabilityProtocolState protocolState,
   }) : super._(
          id: id,
          calendarId: calendarId,
@@ -211,6 +230,7 @@ class _CalendarAvailabilityViewImpl extends CalendarAvailabilityView {
          lastModified: lastModified,
          timingOverrides: timingOverrides,
          content: content,
+         protocolState: protocolState,
        );
 
   /// Returns a shallow copy of this [CalendarAvailabilityView]
@@ -225,6 +245,7 @@ class _CalendarAvailabilityViewImpl extends CalendarAvailabilityView {
     DateTime? lastModified,
     Object? timingOverrides = _Undefined,
     _ifxxil5c.CalendarAvailabilityContent? content,
+    _ib9yzivj.CalendarAvailabilityProtocolState? protocolState,
   }) {
     return CalendarAvailabilityView(
       id: id ?? this.id,
@@ -237,6 +258,7 @@ class _CalendarAvailabilityViewImpl extends CalendarAvailabilityView {
           ? timingOverrides
           : this.timingOverrides?.map((e0) => e0.copyWith()).toList(),
       content: content ?? this.content.copyWith(),
+      protocolState: protocolState ?? this.protocolState.copyWith(),
     );
   }
 }

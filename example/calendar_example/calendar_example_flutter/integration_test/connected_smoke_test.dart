@@ -474,11 +474,25 @@ void main() {
       find.byKey(const Key('availability-end')),
       '2026-03-30T17:00:00',
     );
+    await tester.enterText(
+      find.byKey(const Key('availability-from')),
+      '2026-03-30T00:00:00',
+    );
+    await _tap(tester, 'availability-duration-envelope');
+    await tester.enterText(
+      find.byKey(const Key('availability-duration-1')),
+      '7',
+    );
     await _tap(tester, 'availability-save');
     await _waitFor(tester, find.text('Example working hours'));
     final rulesApi = client.modules.serverpod_calendar.calendarAvailability;
     var rules = await rulesApi.list(calendar.id);
     expect(rules, hasLength(1));
+    expect(rules.single.content.validDuration!.days, 7);
+    expect(rules.single.content.validUntil, isNull);
+    expect(rules.single.protocolState.sequence, 0);
+    final protocolCreated = rules.single.protocolState.created;
+
     final hoursQuery = await client.modules.serverpod_calendar.calendar
         .freeBusy(
           cal.CalendarFreeBusyQuery(
@@ -571,6 +585,10 @@ void main() {
     );
     expect(rules.single.content.organizer!.commonName, 'Demo organizer');
     expect(rules.single.content.extensions!.single.value, 'Demo label');
+    expect(rules.single.protocolState.sequence, 5);
+    expect(rules.single.protocolState.created, protocolCreated);
+    expect(rules.single.content.validDuration!.days, 7);
+
     expect(rules.single.content.categories, ['Work']);
     expect(rules.single.timingOverrides, isNull);
     await _tap(tester, 'availability-edit-${rules.single.id}');

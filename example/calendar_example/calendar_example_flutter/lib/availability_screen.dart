@@ -145,7 +145,18 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                     'Priority ${rule.content.priority}; closed: ${rule.content.closedKind.name}',
                   ),
                   Text(
-                    'From: ${rule.content.validFrom == null ? 'unbounded' : occurrenceLabel(rule.content.validFrom!.start)}; until: ${rule.content.validUntil == null ? 'unbounded' : occurrenceLabel(rule.content.validUntil!.start)}',
+                    'From: ${rule.content.validFrom == null ? 'unbounded' : occurrenceLabel(rule.content.validFrom!.start)}; until: ${rule.content.validDuration != null
+                        ? 'duration below'
+                        : rule.content.validUntil == null
+                        ? 'unbounded'
+                        : occurrenceLabel(rule.content.validUntil!.start)}',
+                  ),
+                  if (rule.content.validDuration != null)
+                    Text(
+                      'Validity duration: ${rule.content.validDuration!.weeks} weeks, ${rule.content.validDuration!.days} days, ${rule.content.validDuration!.hours} hours, ${rule.content.validDuration!.minutes} minutes, ${rule.content.validDuration!.seconds} seconds',
+                    ),
+                  Text(
+                    'Protocol version ${rule.protocolState.sequence}; created ${rule.protocolState.created.toIso8601String()}; modified ${rule.protocolState.lastModified.toIso8601String()}',
                   ),
                   for (final o in rule.content.openings)
                     Text(
@@ -250,6 +261,11 @@ class _AvailabilityEditorState extends State<AvailabilityEditor> {
   final _start = TextEditingController(), _end = TextEditingController();
   final _days = TextEditingController(text: '1,2,3,4,5');
   final _priority = TextEditingController(text: '0');
+  final _durationFields = List.generate(
+    5,
+    (_) => TextEditingController(text: '0'),
+  );
+  bool _durationEnvelope = false;
   final _inclusions = TextEditingController(),
       _exclusions = TextEditingController();
   bool _closed = false,
@@ -276,6 +292,20 @@ class _AvailabilityEditorState extends State<AvailabilityEditor> {
     if (c == null) return;
     _summary.text = c.summary ?? '';
     _priority.text = c.priority.toString();
+    final duration = c.validDuration;
+    _durationEnvelope = duration != null;
+    if (duration != null) {
+      final values = [
+        duration.weeks,
+        duration.days,
+        duration.hours,
+        duration.minutes,
+        duration.seconds,
+      ];
+      for (var i = 0; i < values.length; i++) {
+        _durationFields[i].text = values[i].toString();
+      }
+    }
     _closedKind = c.closedKind;
     _from.text = c.validFrom == null ? '' : occurrenceLabel(c.validFrom!.start);
     _until.text = c.validUntil == null
@@ -344,6 +374,7 @@ class _AvailabilityEditorState extends State<AvailabilityEditor> {
       _priority,
       _inclusions,
       _exclusions,
+      ..._durationFields,
     ]) {
       c.dispose();
     }
@@ -408,7 +439,16 @@ class _AvailabilityEditorState extends State<AvailabilityEditor> {
         priority: int.parse(_priority.text),
         closedKind: _closedKind,
         validFrom: _bound(_from.text),
-        validUntil: _bound(_until.text),
+        validUntil: _durationEnvelope ? null : _bound(_until.text),
+        validDuration: _durationEnvelope
+            ? cal.CalendarEventDuration(
+                weeks: int.parse(_durationFields[0].text),
+                days: int.parse(_durationFields[1].text),
+                hours: int.parse(_durationFields[2].text),
+                minutes: int.parse(_durationFields[3].text),
+                seconds: int.parse(_durationFields[4].text),
+              )
+            : null,
         openings: _closed
             ? []
             : [
@@ -506,101 +546,126 @@ class _AvailabilityEditorState extends State<AvailabilityEditor> {
     );
     return Scaffold(
       appBar: AppBar(title: const Text('Working-hours definition')),
-      body: ListView(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        children: [
-          if (!_supported)
-            const Text(
-              'This definition uses advanced timing. This small example cannot edit it safely; use the native API. No values have been changed.',
-            ),
-          if (_failure != null)
-            Text(_failure!, key: const Key('availability-editor-error')),
-          if (_stale)
-            const Text(
-              'Saved values changed. Close and reopen to review them; your draft has not been applied.',
-            ),
-          field('availability-summary', 'Label', _summary),
-          field(
-            'availability-priority',
-            'Priority: 1 highest; 0 lowest',
-            _priority,
-          ),
-          field('availability-from', 'Valid from UTC (optional)', _from),
-          field(
-            'availability-until',
-            'Valid until UTC, exclusive (optional)',
-            _until,
-          ),
-          DropdownButtonFormField<cal.CalendarFreeBusyKind>(
-            initialValue: _closedKind,
-            decoration: const InputDecoration(labelText: 'Closed-time type'),
-            items: [
-              for (final k in cal.CalendarFreeBusyKind.values.where(
-                (k) => k != cal.CalendarFreeBusyKind.free,
-              ))
-                DropdownMenuItem(value: k, child: Text(k.name)),
-            ],
-            onChanged: locked ? null : (v) => setState(() => _closedKind = v!),
-          ),
-          SwitchListTile(
-            key: const Key('availability-closed'),
-            title: const Text('Closed throughout validity range'),
-            value: _closed,
-            onChanged: locked ? null : (v) => setState(() => _closed = v),
-          ),
-          if (!_closed) ...[
-            SwitchListTile(
-              title: const Text('Use UTC instead of a named timezone'),
-              value: _utc,
-              onChanged: locked ? null : (v) => setState(() => _utc = v),
-            ),
-            if (!_utc) field('availability-zone', 'Opening timezone', _zone),
-            field(
-              'availability-start',
-              'First opening start (civil date/time)',
-              _start,
-            ),
-            field(
-              'availability-end',
-              'First opening end, exclusive (civil date/time)',
-              _end,
-            ),
-            DropdownButtonFormField<String>(
-              key: const Key('availability-frequency'),
-              initialValue: ['once', 'daily', 'weekly'].contains(_frequency)
-                  ? _frequency
-                  : 'once',
-              items: [
-                for (final f in ['once', 'daily', 'weekly'])
-                  DropdownMenuItem(value: f, child: Text(f)),
-              ],
-              onChanged: locked ? null : (v) => setState(() => _frequency = v!),
-            ),
-            if (_frequency == 'weekly')
-              field(
-                'availability-days',
-                'Weekdays: Monday=1 … Sunday=7',
-                _days,
+        child: Column(
+          children: [
+            if (!_supported)
+              const Text(
+                'This definition uses advanced timing. This small example cannot edit it safely; use the native API. No values have been changed.',
               ),
+            if (_failure != null)
+              Text(_failure!, key: const Key('availability-editor-error')),
+            if (_stale)
+              const Text(
+                'Saved values changed. Close and reopen to review them; your draft has not been applied.',
+              ),
+            field('availability-summary', 'Label', _summary),
             field(
-              'availability-inclusions',
-              'Additional starts (one per line)',
-              _inclusions,
-              lines: 3,
+              'availability-priority',
+              'Priority: 1 highest; 0 lowest',
+              _priority,
             ),
-            field(
-              'availability-exclusions',
-              'Excluded starts (one per line)',
-              _exclusions,
-              lines: 3,
+            field('availability-from', 'Valid from UTC (optional)', _from),
+            SwitchListTile(
+              key: const Key('availability-duration-envelope'),
+              title: const Text('Use a validity duration instead of an end'),
+              value: _durationEnvelope,
+              onChanged: locked
+                  ? null
+                  : (v) => setState(() => _durationEnvelope = v),
+            ),
+            if (_durationEnvelope) ...[
+              const Text(
+                'A start is required. Use weeks alone, or days and clock units. Values are preserved without rounding.',
+              ),
+              for (var i = 0; i < _durationFields.length; i++)
+                field(
+                  'availability-duration-$i',
+                  ['Weeks', 'Days', 'Hours', 'Minutes', 'Seconds'][i],
+                  _durationFields[i],
+                ),
+            ] else
+              field(
+                'availability-until',
+                'Valid until UTC, exclusive (optional)',
+                _until,
+              ),
+            DropdownButtonFormField<cal.CalendarFreeBusyKind>(
+              initialValue: _closedKind,
+              decoration: const InputDecoration(labelText: 'Closed-time type'),
+              items: [
+                for (final k in cal.CalendarFreeBusyKind.values.where(
+                  (k) => k != cal.CalendarFreeBusyKind.free,
+                ))
+                  DropdownMenuItem(value: k, child: Text(k.name)),
+              ],
+              onChanged: locked
+                  ? null
+                  : (v) => setState(() => _closedKind = v!),
+            ),
+            SwitchListTile(
+              key: const Key('availability-closed'),
+              title: const Text('Closed throughout validity range'),
+              value: _closed,
+              onChanged: locked ? null : (v) => setState(() => _closed = v),
+            ),
+            if (!_closed) ...[
+              SwitchListTile(
+                title: const Text('Use UTC instead of a named timezone'),
+                value: _utc,
+                onChanged: locked ? null : (v) => setState(() => _utc = v),
+              ),
+              if (!_utc) field('availability-zone', 'Opening timezone', _zone),
+              field(
+                'availability-start',
+                'First opening start (civil date/time)',
+                _start,
+              ),
+              field(
+                'availability-end',
+                'First opening end, exclusive (civil date/time)',
+                _end,
+              ),
+              DropdownButtonFormField<String>(
+                key: const Key('availability-frequency'),
+                initialValue: ['once', 'daily', 'weekly'].contains(_frequency)
+                    ? _frequency
+                    : 'once',
+                items: [
+                  for (final f in ['once', 'daily', 'weekly'])
+                    DropdownMenuItem(value: f, child: Text(f)),
+                ],
+                onChanged: locked
+                    ? null
+                    : (v) => setState(() => _frequency = v!),
+              ),
+              if (_frequency == 'weekly')
+                field(
+                  'availability-days',
+                  'Weekdays: Monday=1 … Sunday=7',
+                  _days,
+                ),
+              field(
+                'availability-inclusions',
+                'Additional starts (one per line)',
+                _inclusions,
+                lines: 3,
+              ),
+              field(
+                'availability-exclusions',
+                'Excluded starts (one per line)',
+                _exclusions,
+                lines: 3,
+              ),
+            ],
+            ElevatedButton(
+              key: const Key('availability-save'),
+              onPressed: locked ? null : _save,
+              child: const Text('Save working hours'),
             ),
           ],
-          ElevatedButton(
-            key: const Key('availability-save'),
-            onPressed: locked ? null : _save,
-            child: const Text('Save working hours'),
-          ),
-        ],
+        ),
       ),
     );
   }

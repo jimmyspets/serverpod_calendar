@@ -16,3 +16,4 @@ fields:
   textParameters: CalendarAvailabilityTextParameters?
   extensions: List<CalendarAvailabilityExtension>?
   organizer: CalendarAvailabilityOrganizer?
+  validDuration: CalendarEventDuration?
