@@ -52,3 +52,7 @@ Pinned tools and local setup/run/check commands are documented in the [developme
 ## Recurring event wire profile
 
 The [recurring VEVENT master adapter](docs/icalendar-recurring-masters.md) extends the pure event/zone adapter with RRULE and start-only RDATE/EXDATE. Source retention, native temporal meaning and whole-calendar work limits are explicit. [PERIOD-valued RDATE additions](docs/icalendar-recurring-masters.md#period-valued-rdate-additions) now preserve exceptional timed spans. Separate occurrence components, database import/export and HTTP publication remain pending; this does not establish external-client compatibility.
+
+## Occurrence wire timing profile
+
+[ADR 0068](docs/adr/0068-vevent-occurrence-components.md) adds pure [single timing/cancellation and timing-only THISANDFUTURE components](docs/icalendar-occurrence-components.md). Grouped core projections retain original identities, source versions and bounded validation. Earlier blanket occurrence-component-pending notes are superseded for this subset; content/future cancellation, authenticated import/export and HTTP publication remain pending.

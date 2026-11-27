@@ -12,6 +12,8 @@ import 'date_recurrence_rule.dart';
 /// Anchors and subsequent order use original dates, never actual start order.
 /// No rule rewriting, range cancellation, tasks or wire/storage behavior.
 final class DateEventRangeSet {
+  /// Optional [sharedWorkBudget] charges range-anchor membership work across
+  /// constructions; local validation caps remain active and work is not refunded.
   factory DateEventRangeSet({
     required DateEventExceptionSet base,
     required List<DateEventRangeChange> changes,
@@ -19,6 +21,7 @@ final class DateEventRangeSet {
     required int maxValidationCandidateDays,
     required int maxValidationRuleOccurrences,
     required int maxValidationResults,
+    RecurrenceWorkBudget? sharedWorkBudget,
   }) {
     _budget(maxRangeChanges, 'maxRangeChanges', minimum: 0);
     _budget(maxValidationCandidateDays, 'maxValidationCandidateDays');
@@ -41,6 +44,7 @@ final class DateEventRangeSet {
       maxValidationCandidateDays: maxValidationCandidateDays,
       maxValidationRuleOccurrences: maxValidationRuleOccurrences,
       maxValidationResults: maxValidationResults,
+      sharedWorkBudget: sharedWorkBudget,
     );
     final singles = {for (final value in base.exceptions) value.originalStart};
     if (values.any((value) => singles.contains(value.originalStart))) {

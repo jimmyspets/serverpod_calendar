@@ -69,12 +69,15 @@ final class IcalendarComponentLimits {
     this.maxRuleValues = 512,
     this.maxCalendarExplicitDates = 4096,
     this.maxCalendarRuleValues = 4096,
+    this.maxOverridesPerEvent = 64,
+    this.maxValidationOccurrences = 10000,
   });
   final int maxEvents, maxZones, maxObservances, maxOnsets, maxCandidates;
   final int maxExplicitDates,
       maxRuleValues,
       maxCalendarExplicitDates,
       maxCalendarRuleValues;
+  final int maxOverridesPerEvent, maxValidationOccurrences;
   void validate() {
     for (final n in [
       maxEvents,
@@ -86,6 +89,8 @@ final class IcalendarComponentLimits {
       maxRuleValues,
       maxCalendarExplicitDates,
       maxCalendarRuleValues,
+      maxOverridesPerEvent,
+      maxValidationOccurrences,
     ]) {
       if (n < 1 || n > 1000000) throw ArgumentError('Invalid component limit');
     }

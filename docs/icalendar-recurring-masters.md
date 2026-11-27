@@ -55,3 +55,7 @@ A pair must have positive resolved length. UTC/named profile and exact zone alia
 PERIOD supplies the full span when its original start also appears in DTSTART/RRULE/start-only RDATE. Earlier additions preserve DTSTART and COUNT; EXDATE wins over all additions. Identical canonical spans coalesce; conflicting spans/forms at one identity reject even if excluded. Equal end instants do not erase the distinction between explicit end and duration, or nominal P1D and elapsed PT24H. This conflict policy comes from the core profile rather than a new RFC requirement.
 
 Use core TimedEventSeries overlap expansion with the returned recurrence and master span when calculating intervals: start-only set expansion returns identities, not occupied spans, and a long PERIOD can overlap a query whose start is later than its own start. Parsing does not flatten or precompute occurrences. Native module JSON/storage still rejects PERIOD input; authenticated database import, identity reconciliation and authorized export are separate work.
+
+## Occurrence-component extension
+
+[ADR 0068](adr/0068-vevent-occurrence-components.md) adds [grouped timing/single-cancellation components and timing-only THISANDFUTURE](icalendar-occurrence-components.md). This supersedes occurrence-component rejection above only for that subset. Master/event lists remain separate from grouped overrides; content/future cancellation and native import/export remain pending.

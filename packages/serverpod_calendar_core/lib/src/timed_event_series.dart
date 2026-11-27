@@ -54,6 +54,8 @@ final class TimedEventRangeChange {
 /// Native bounded timed series. Single overrides take precedence over ranges.
 /// Construction validates all anchors in one shared bounded membership scan.
 final class TimedEventSeries {
+  /// Optional [sharedWorkBudget] charges anchor-membership candidate work across
+  /// constructions; local validation caps remain active and work is not refunded.
   TimedEventSeries({
     required this.recurrence,
     required this.span,
@@ -62,6 +64,7 @@ final class TimedEventSeries {
     required int maxChanges,
     required int maxValidationCandidateWork,
     required int maxValidationOccurrences,
+    RecurrenceWorkBudget? sharedWorkBudget,
   }) {
     if (span.start != recurrence.start) {
       throw ArgumentError('Master starts differ');
@@ -117,6 +120,7 @@ final class TimedEventSeries {
             maxCandidateWork: maxValidationCandidateWork,
             maxRuleOccurrences: maxValidationOccurrences,
             maxResults: maxValidationOccurrences,
+            sharedWorkBudget: sharedWorkBudget,
           )
           .toSet();
       if (!anchors.every(effective.contains)) {

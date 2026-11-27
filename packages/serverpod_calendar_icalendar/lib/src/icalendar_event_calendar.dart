@@ -9,6 +9,8 @@ import 'icalendar_temporal_values.dart';
 import 'icalendar_time_zone.dart';
 import 'icalendar_event_recurrence.dart';
 
+part 'icalendar_event_series.dart';
+
 enum IcalendarEventStatus { tentative, confirmed, cancelled }
 
 enum IcalendarEventTransparency { opaque, transparent }
@@ -19,7 +21,7 @@ final class IcalendarEventText {
   final String? language, alternativeUri;
 }
 
-/// Read-only semantic projection of one supported source master event.
+/// Read-only semantic projection of one supported source event component.
 /// UID is source protocol identity, never a native UUID or authorization proof.
 final class IcalendarEvent {
   IcalendarEvent._({
@@ -37,6 +39,9 @@ final class IcalendarEvent {
     this.status,
     this.transparency,
     this.recurrence,
+    this.recurrenceDate,
+    this.recurrenceTime,
+    this.isThisAndFuture = false,
   });
   final IcalendarSyntaxComponent source;
   final String uid;
@@ -46,6 +51,11 @@ final class IcalendarEvent {
   final DateEventSpan? dateSpan;
   final TimedEventSpan? timedSpan;
   final IcalendarEventRecurrence? recurrence;
+  final CalendarDate? recurrenceDate;
+  final TimedValue? recurrenceTime;
+  final bool isThisAndFuture;
+  Object? get originalStart => recurrenceDate ?? recurrenceTime;
+  bool get isOverride => originalStart != null;
   final IcalendarEventText? summary, description, location;
   final IcalendarEventStatus? status;
   final IcalendarEventTransparency? transparency;
@@ -58,13 +68,17 @@ final class IcalendarEventCalendar {
   IcalendarEventCalendar._(
     this.source,
     this.productId,
-    List<IcalendarEvent> events,
+    List<IcalendarEventSeries> series,
     Map<String, IcalendarValidatedTimeZone> zones,
-  ) : events = List.unmodifiable(events),
+  ) : series = List.unmodifiable(series),
+      events = List.unmodifiable(series.map((s) => s.master)),
       timeZones = Map.unmodifiable(zones);
   final IcalendarSyntaxDocument source;
   final String productId;
+
+  /// Master components only, in master source order; see [series] for overrides.
   final List<IcalendarEvent> events;
+  final List<IcalendarEventSeries> series;
   final Map<String, IcalendarValidatedTimeZone> timeZones;
 }
 
@@ -84,7 +98,7 @@ IcalendarEventCalendar parseIcalendarEventCalendar(
 /// Validates a complete supported source before returning any semantic results.
 ///
 /// Unsupported properties/parameters/components fail, including METHOD,
-/// override components, alarms and unprofiled calendar metadata/extensions.
+/// content overrides, future cancellation, alarms and unprofiled metadata.
 IcalendarEventCalendar validateIcalendarEventCalendar(
   IcalendarSyntaxDocument source, {
   IcalendarSyntaxLimits syntaxLimits = const IcalendarSyntaxLimits(),
@@ -138,16 +152,30 @@ IcalendarEventCalendar validateIcalendarEventCalendar(
       }
     }
     if (rawEvents.isEmpty) componentFail(IcalendarComponentError.missing);
-    final events = <IcalendarEvent>[];
-    final uids = <String>{};
+    final masters = <String, IcalendarEvent>{};
+    final overrides = <String, List<IcalendarEvent>>{};
     for (final raw in rawEvents) {
       final event = _event(raw, zones, budget);
-      if (!uids.add(event.uid)) {
+      if (event.isOverride) {
+        final list = overrides.putIfAbsent(event.uid, () => []);
+        if (list.length >= limits.maxOverridesPerEvent) {
+          componentFail(IcalendarComponentError.limitExceeded);
+        }
+        list.add(event);
+      } else if (masters.containsKey(event.uid)) {
         componentFail(IcalendarComponentError.duplicate);
+      } else {
+        masters[event.uid] = event;
       }
-      events.add(event);
     }
-    return IcalendarEventCalendar._(source, producer, events, zones);
+    if (overrides.keys.any((uid) => !masters.containsKey(uid))) {
+      componentFail(IcalendarComponentError.missing);
+    }
+    final series = [
+      for (final master in masters.values)
+        _eventSeries(master, overrides[master.uid] ?? [], budget),
+    ];
+    return IcalendarEventCalendar._(source, producer, series, zones);
   });
 }
 
@@ -212,12 +240,43 @@ IcalendarEvent _event(
       'RRULE',
       'RDATE',
       'EXDATE',
+      'RECURRENCE-ID',
     },
     repeated: {'RDATE', 'EXDATE'},
   );
   final uid = componentText(requiredProperty(p, 'UID'));
   if (uid.isEmpty) componentFail(IcalendarComponentError.invalidValue);
   final stamp = componentUtc(requiredProperty(p, 'DTSTAMP'));
+  Object? original;
+  var future = false;
+  final identity = p['RECURRENCE-ID']?.single;
+  if (identity != null) {
+    if (['RRULE', 'RDATE', 'EXDATE'].any(p.containsKey)) {
+      componentFail(IcalendarComponentError.unsupportedProperty);
+    }
+    final parameters = componentParameters(identity, {
+      'VALUE',
+      'TZID',
+      'RANGE',
+    });
+    final range = parameters['RANGE'];
+    if (range != null) {
+      if (componentToken(range) != 'THISANDFUTURE') {
+        componentFail(IcalendarComponentError.invalidValue);
+      }
+      future = true;
+    }
+    original = _temporal(
+      IcalendarSyntaxProperty(
+        identity.name,
+        identity.value,
+        parameters: identity.parameters.where(
+          (p) => p.canonicalName != 'RANGE',
+        ),
+      ),
+      zones,
+    );
+  }
   final start = _temporal(requiredProperty(p, 'DTSTART'), zones);
   final end = p['DTEND'] == null
       ? null
@@ -316,6 +375,9 @@ IcalendarEvent _event(
     stamp: stamp,
     dateSpan: dateSpan,
     timedSpan: timedSpan,
+    recurrenceDate: original is CalendarDate ? original : null,
+    recurrenceTime: original is TimedValue ? original : null,
+    isThisAndFuture: future,
     recurrence: componentEventRecurrence(
       start,
       p,

@@ -171,7 +171,6 @@ void main() {
   );
   test('unsupported properties never disappear from a semantic import', () {
     for (final line in [
-      'RECURRENCE-ID:20261022T120000Z',
       'ATTENDEE:mailto:person@example.invalid',
       'CONTACT:Unmapped',
       'X-PRIVATE:Unregistered',
