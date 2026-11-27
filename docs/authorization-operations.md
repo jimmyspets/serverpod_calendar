@@ -99,3 +99,7 @@ The first native event implementation maps list/read/create/update/status/delete
 The [ADR 0055 timing increment](native-occurrence-timing.md) maps single/future timing replacement/clearing to `updateEvent`, and single cancellation/restoration to `changeEventStatus`. Exact action/original anchor and current/final proposed overrides distinguish scope without inferring authority from the parent or ordinary event read access.
 
 The [ADR 0056 per-calendar free/busy service](calendar-free-busy.md) requires `readFreeBusy` and every required `projectEventBusy` decision. It supplies actual parent/event and immutable query bounds, does not reuse detail candidate plans, and cannot turn denied coverage into free time.
+
+## Native availability definition authority
+
+[ADR 0057](adr/0057-native-working-hours.md) adds independent `listAvailability`, `readAvailability`, `createAvailability`, `updateAvailability`, `deleteAvailability` and `projectAvailability` operations. Requests include actual calendar/definition UUIDs, frozen `currentAvailability`, full validated `proposedAvailability` and projection `freeBusyQuery`. Raw reads are all-or-nothing in this slice; receipts remain independently disclosable. Filtered management lists cannot supply coverage. Denied required projection yields unknown with no periods, while raw details can remain denied during successful projection. Expected revisions, final authorization and parent dependencies use the durable scope transaction across hosts. The private demo epoch is v9; host guarantees remain explicitly declared.

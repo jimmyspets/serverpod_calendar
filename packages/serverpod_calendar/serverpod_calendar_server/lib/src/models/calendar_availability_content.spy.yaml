@@ -1,0 +1,9 @@
+class: CalendarAvailabilityContent
+immutable: true
+fields:
+  summary: String?
+  validFrom: CalendarEventTiming?
+  validUntil: CalendarEventTiming?
+  priority: int, default=0
+  closedKind: CalendarFreeBusyKind, default=unavailable
+  openings: List<CalendarAvailabilityOpening>

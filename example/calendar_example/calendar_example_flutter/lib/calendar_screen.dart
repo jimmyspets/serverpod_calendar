@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'protocol_metadata_editor.dart';
 import 'event_screen.dart';
 import 'calendar_free_busy_screen.dart';
+import 'availability_screen.dart';
 import 'supplemental_metadata_editor.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -486,6 +487,23 @@ class _CalendarEditorState extends State<CalendarEditor> {
                             ),
                           ),
                     child: const Text('Free / busy'),
+                  ),
+                if (existing)
+                  OutlinedButton(
+                    key: const Key('calendar-availability'),
+                    onPressed: locked
+                        ? null
+                        : () => Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (_) => AvailabilityScreen(
+                                client: widget.client,
+                                calendarId: _calendar!.id,
+                                initialZone:
+                                    _calendar!.availabilityZoneId ?? 'Etc/UTC',
+                              ),
+                            ),
+                          ),
+                    child: const Text('Working hours'),
                   ),
                 if (existing && _calendar!.protocolIdentity != null) ...[
                   SelectableText(

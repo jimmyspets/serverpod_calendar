@@ -11,6 +11,14 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
+import 'package:serverpod_calendar_client/src/protocol/calendar_availability_create_request.dart'
+    as _i2zcamh9;
+import 'package:serverpod_calendar_client/src/protocol/calendar_availability_receipt.dart'
+    as _izuu9p5h;
+import 'package:serverpod_calendar_client/src/protocol/calendar_availability_update_request.dart'
+    as _ifcp60op;
+import 'package:serverpod_calendar_client/src/protocol/calendar_availability_view.dart'
+    as _imwdhk62;
 import 'package:serverpod_calendar_client/src/protocol/calendar_category_filter.dart'
     as _in004d9w;
 import 'package:serverpod_calendar_client/src/protocol/calendar_create_request.dart'
@@ -62,6 +70,58 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_supplemental_met
 import 'package:serverpod_calendar_client/src/protocol/calendar_view.dart'
     as _i6qyw4e7;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
+/// {@category Endpoint}
+class EndpointCalendarAvailability extends _isc.EndpointRef {
+  EndpointCalendarAvailability(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'serverpod_calendar.calendarAvailability';
+
+  _ida.Future<_izuu9p5h.CalendarAvailabilityReceipt?> create(
+    _i2zcamh9.CalendarAvailabilityCreateRequest request,
+  ) => caller.callServerEndpoint<_izuu9p5h.CalendarAvailabilityReceipt?>(
+    'serverpod_calendar.calendarAvailability',
+    'create',
+    {'request': request},
+  );
+
+  _ida.Future<_imwdhk62.CalendarAvailabilityView> getRule(
+    _isc.UuidValue availabilityId,
+  ) => caller.callServerEndpoint<_imwdhk62.CalendarAvailabilityView>(
+    'serverpod_calendar.calendarAvailability',
+    'getRule',
+    {'availabilityId': availabilityId},
+  );
+
+  _ida.Future<List<_imwdhk62.CalendarAvailabilityView>> list(
+    _isc.UuidValue calendarId,
+  ) => caller.callServerEndpoint<List<_imwdhk62.CalendarAvailabilityView>>(
+    'serverpod_calendar.calendarAvailability',
+    'list',
+    {'calendarId': calendarId},
+  );
+
+  _ida.Future<_izuu9p5h.CalendarAvailabilityReceipt?> update(
+    _ifcp60op.CalendarAvailabilityUpdateRequest request,
+  ) => caller.callServerEndpoint<_izuu9p5h.CalendarAvailabilityReceipt?>(
+    'serverpod_calendar.calendarAvailability',
+    'update',
+    {'request': request},
+  );
+
+  _ida.Future<_izuu9p5h.CalendarAvailabilityReceipt?> deleteRule(
+    _isc.UuidValue availabilityId,
+    int expectedRevision,
+  ) => caller.callServerEndpoint<_izuu9p5h.CalendarAvailabilityReceipt?>(
+    'serverpod_calendar.calendarAvailability',
+    'deleteRule',
+    {
+      'availabilityId': availabilityId,
+      'expectedRevision': expectedRevision,
+    },
+  );
+}
 
 /// Authenticated module wiring check; no calendar/notification domain behavior.
 /// {@category Endpoint}
@@ -289,10 +349,13 @@ class EndpointCalendarEvent extends _isc.EndpointRef {
 
 class Caller extends _isc.ModuleEndpointCaller {
   Caller(_isc.ServerpodClientShared client) : super(client) {
+    calendarAvailability = EndpointCalendarAvailability(this);
     calendarDiagnostics = EndpointCalendarDiagnostics(this);
     calendar = EndpointCalendar(this);
     calendarEvent = EndpointCalendarEvent(this);
   }
+
+  late final EndpointCalendarAvailability calendarAvailability;
 
   late final EndpointCalendarDiagnostics calendarDiagnostics;
 
@@ -302,6 +365,7 @@ class Caller extends _isc.ModuleEndpointCaller {
 
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
+    'serverpod_calendar.calendarAvailability': calendarAvailability,
     'serverpod_calendar.calendarDiagnostics': calendarDiagnostics,
     'serverpod_calendar.calendar': calendar,
     'serverpod_calendar.calendarEvent': calendarEvent,

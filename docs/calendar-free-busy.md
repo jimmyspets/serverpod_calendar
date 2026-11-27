@@ -1,6 +1,6 @@
 # First native per-calendar free/busy
 
-[ADR 0056](adr/0056-first-calendar-free-busy.md) implements the maintainer-selected first availability increment: one calendar, all required booking data and the stored no-rule fallback. **Working-hours/RFC 7953 rules, person/resource contributors and common-slot search are still pending.** A result is neither a reservation nor VFREEBUSY serialization or external calendar-client evidence.
+[ADR 0056](adr/0056-first-calendar-free-busy.md) implements the maintainer-selected first availability increment: one calendar, all required booking data and the stored no-rule fallback. [Native working-hours rules](native-working-hours.md) now extend this calculation under ADR 0057. Person/resource contributors and common-slot search remain pending. A result is neither a reservation nor VFREEBUSY serialization or external calendar-client evidence.
 
 ## Generated API and result meaning
 
@@ -14,7 +14,7 @@ Call `client.modules.serverpod_calendar.calendar.freeBusy(CalendarFreeBusyQuery(
 | `CalendarFreeBusyPeriod` | Positive clipped UTC start/end and classification |
 | `CalendarFreeBusyView` | Authorized target, bounds, coverage and chronological periods |
 
-Complete results partition the query into disjoint positive intervals; adjacent equal classes merge, so periods are not private event boundaries or source counts. Confirmed opaque events block as busy; tentative opaque events block as tentative. Native precedence is unavailable, then busy, tentative, free. The stored unavailable fallback applies to the entire no-rule query and can mask booking classifications; free fallback allows only unbooked intervals to be free. This is not RFC 7953 component priority composition.
+Complete results partition the query into disjoint positive intervals; adjacent equal classes merge, so periods are not private event boundaries or source counts. Confirmed opaque events block as busy; tentative opaque events block as tentative. Native precedence is unavailable, then busy, tentative, free. The stored unavailable fallback applies only where no definition is effective and can mask booking classifications; free fallback allows only unbooked intervals to be free. RFC 7953 definition priority and equal-priority BUSYTYPE composition happen first, as explained in [working hours](native-working-hours.md); native final precedence is a separate step.
 
 Cancelled masters, individually cancelled occurrences, transparent events and omitted-end timed points do not create positive booking intervals. DATE is not UTC midnight: it projects through the calendar's stored named availability zone. Named-zone recurrence, original identities, independent singles/future timing and nominal/exact duration semantics follow the existing core. A wholly skipped DATE can occupy no instants; missing coverage fails instead of being guessed. See [timing edits](native-occurrence-timing.md) and [timezone updates/limits](timezone-data.md).
 
@@ -22,9 +22,9 @@ Cancelled masters, individually cancelled occurrences, transparent events and om
 
 ## Host authorization and snapshots
 
-The host must grant `readFreeBusy` for the actual calendar and `projectEventBusy` for every inspected active event. Requests include immutable `freeBusyQuery` and actual calendar/event snapshots. Calendar metadata, event-list/detail permissions and disclosure groups are independent; a host can deny all details while permitting a complete busy projection. The detail candidate plan is deliberately ignored. A denied required source is not silently omitted.
+The host must grant `readFreeBusy` for the actual calendar, `projectEventBusy` for every inspected active event and `projectAvailability` for every active definition. Requests include immutable `freeBusyQuery` and actual calendar/event snapshots. Calendar metadata, event-list/detail permissions and disclosure groups are independent; a host can deny all details while permitting a complete busy projection. The detail candidate plan is deliberately ignored. A denied required source is not silently omitted.
 
-The response contains no source event UUIDs, titles, descriptions, locations, participants, counts, raw rules or private scope-generation metadata. It includes only the already-authorized requested calendar identity, bounds, coverage and merged periods. The shared scope transaction provides a consistent module-data snapshot across compatible hosts, rechecking trusted context before return. Reads do not update calendar/event revisions or timestamps. No cache or sticky routing supplies correctness. The shipped private-scope demo epoch becomes v8 and retains its declared fresh-check guarantee.
+The response contains no source event UUIDs, titles, descriptions, locations, participants, counts, raw rules or private scope-generation metadata. It includes only the already-authorized requested calendar identity, bounds, coverage and merged periods. The shared scope transaction provides a consistent module-data snapshot across compatible hosts, rechecking trusted context before return. Reads do not update calendar/event revisions or timestamps. No cache or sticky routing supplies correctness. The shipped private-scope demo epoch becomes v9 and retains its declared fresh-check guarantee.
 
 ## Bounded first profile
 
@@ -46,6 +46,6 @@ These are trusted implementation caps, not client parameters. Policy batches use
 
 The calendar editor opens a UTC-bound free/busy screen. It resets previous results on each request, clearly distinguishes unknown coverage and displays classifications without event text. Server checks remain authoritative; the example's private-user policy is replaceable.
 
-The reusable core now exposes bounded `partitionFreeBusy` for **already complete** UTC booking inputs; it cannot establish authorization/source completeness. Server adapters perform native event projection and policy enforcement. This query requires no new storage/migration. See [validation](scaffold-validation.md).
+The reusable core now exposes bounded `partitionFreeBusy` for **already complete** UTC booking inputs; it cannot establish authorization/source completeness. Server adapters perform native event projection and policy enforcement. The initial booking query required no storage migration; the subsequent working-hours slice adds separate rule tables. See [validation](scaffold-validation.md).
 
-RFC 7953 rule CRUD/composition and host-resolved person/resource/common-free search follow separately. Once supported rules can be stored, this service must apply them or fail/return unknown. Do not ignore external working-hours data and claim it was honored, or label one selected calendar as complete subject availability. Privacy-safe VFREEBUSY output, scheduling, alarms, exclusive reservations and feed interoperability remain separate work.
+Scoped RFC 7953 rule CRUD/composition is now integrated, with additional limits in [working hours](native-working-hours.md). Rich rule metadata/interchange and host-resolved person/resource/common-free search follow separately. Supported stored definitions are applied or result in unknown/failure. Do not ignore external working-hours data and claim it was honored, or label one selected calendar as complete subject availability. Privacy-safe VFREEBUSY output, scheduling, alarms, exclusive reservations and feed interoperability remain separate work.

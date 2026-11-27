@@ -456,6 +456,69 @@ void main() {
     await tester.pageBack();
     await _idle(tester);
     await events.deleteEvent(busyExample.eventId, 1);
+    await _tap(tester, 'calendar-availability');
+    await _tap(tester, 'availability-create');
+    await tester.enterText(
+      find.byKey(const Key('availability-summary')),
+      'Example working hours',
+    );
+    await tester.enterText(
+      find.byKey(const Key('availability-zone')),
+      'Europe/Stockholm',
+    );
+    await tester.enterText(
+      find.byKey(const Key('availability-start')),
+      '2026-03-30T09:00:00',
+    );
+    await tester.enterText(
+      find.byKey(const Key('availability-end')),
+      '2026-03-30T17:00:00',
+    );
+    await _tap(tester, 'availability-save');
+    await _waitFor(tester, find.text('Example working hours'));
+    final rulesApi = client.modules.serverpod_calendar.calendarAvailability;
+    final rules = await rulesApi.list(calendar.id);
+    expect(rules, hasLength(1));
+    final hoursQuery = await client.modules.serverpod_calendar.calendar
+        .freeBusy(
+          cal.CalendarFreeBusyQuery(
+            calendarId: calendar.id,
+            fromUtc: DateTime.utc(2026, 3, 30),
+            untilUtc: DateTime.utc(2026, 3, 31),
+          ),
+        );
+    expect(hoursQuery.coverage, cal.CalendarFreeBusyCoverage.complete);
+    expect(hoursQuery.periods[1].kind, cal.CalendarFreeBusyKind.free);
+    expect(hoursQuery.periods[1].startUtc, DateTime.utc(2026, 3, 30, 7));
+    await _tap(tester, 'availability-edit-${rules.single.id}');
+    await tester.enterText(
+      find.byKey(const Key('availability-summary')),
+      'Unsaved hours draft',
+    );
+    await rulesApi.update(
+      cal.CalendarAvailabilityUpdateRequest(
+        availabilityId: rules.single.id,
+        expectedRevision: rules.single.revision,
+        content: rules.single.content.copyWith(summary: 'Changed elsewhere'),
+      ),
+    );
+    await _tap(tester, 'availability-save');
+    await _waitFor(tester, find.byKey(const Key('availability-editor-error')));
+    expect(find.text('Unsaved hours draft'), findsOneWidget);
+    expect(
+      (tester.widget<ElevatedButton>(
+        find.byKey(const Key('availability-save')),
+      )).onPressed,
+      isNull,
+    );
+    await tester.pageBack();
+    await _waitFor(tester, find.text('Changed elsewhere'));
+    await _tap(tester, 'availability-delete-${rules.single.id}');
+    await _idle(tester);
+    expect(await rulesApi.list(calendar.id), isEmpty);
+    await tester.pageBack();
+    await _idle(tester);
+
     await _tap(tester, 'calendar-delete');
     await _tap(tester, 'calendar-confirm-delete');
     expect(find.byKey(const Key('calendar-error')), findsOneWidget);

@@ -238,3 +238,23 @@ Final occurrence-batch `flutter build web --no-pub`: **passed**, including Wasm 
 Relative documentation links, consecutive ADRs through 0056, unchanged Apache 2.0 LICENSE, credential exclusions and `git diff --check` passed. The current source cap counts all active event records across a calendar; proven time-indexed candidates remain a roadmap item for larger calendars. No complete rule/subject availability, VFREEBUSY serialization, scheduling, alarms, reservation, CI or external-client evidence is inferred.
 
 The free/busy `./tool/check.ps1` run completed successfully through the final Flutter web release build. Its Wasm dry run compiled successfully; a separate Wasm runtime was not exercised.
+
+## Native working-hours batch, 2026-10-21
+
+[ADR 0057](adr/0057-native-working-hours.md) adds native rule CRUD, recurring opening evaluation and composition into per-calendar free/busy. Pinned Dart 3.13.5 / Flutter 3.47.7 / Serverpod 4.0.4 remain unchanged. All fixtures are synthetic; no real mail, provider push, calendar feed or production service is exercised.
+
+Focused commands passed during implementation:
+
+- Core directory: `dart test test/availability_rules_test.dart` — 5 tests, covering optional bounds/clipping, default/high/equal priorities, closures, an independent hourly oracle, input-order invariance and limits.
+- Calendar server module directory: `dart test test/unit/availability_values_test.dart` — 4 tests, covering explicit named-zone DST, recurring inclusion/exclusion dates, frozen collections, exclusive boundaries and rejected invalid timing/priority/type/caps.
+- Example server directory: `dart test test/integration/calendar_test.dart --name availability` — the initial 4 focused CRUD/policy tests passed. A fifth zone-independence/source-cap test was added before the broader database run.
+
+Serverpod MCP was verified with `tail_server_logs`. Its initial `create_migration` reported no host changes before the module migration existed. The pinned CLI created module `20261021121921134-availability-rules` and host `20261021121924598-availability-rules`; reviewed SQL only creates the two rule tables, indexes and foreign keys plus migration versions. MCP `apply_migrations` succeeded. Generated models/endpoints/client/test tools come from `.spy.yaml` and endpoint sources via `./tool/generate.ps1`; none were hand-edited.
+
+The broader `./tool/check.ps1` passed stable generation, formatting, fatal-info analysis, **453 core VM + 453 core Chrome**, **43 module VM + 17 module Chrome**, **3 Flutter widget** and **58 real database/policy** tests. The populated upgrade helper replayed the new migration without changing old calendar/event content, UIDs, revisions, cursor bindings or precise timestamps. The host compiled and two independent host processes sharing test storage passed generated-client/JWT smoke checks, remote working-hours visibility, one-winner rule updates and parent-delete/rule-create races. Flutter WebDriver passed create/read, explicit-zone recurring hours/free-busy, stale draft preservation, disabled stale save and deletion through the real generated API. The final added timezone field input also passed focused fatal-info analysis of `connected_smoke_test.dart`.
+
+The same uninterrupted broader run also passed the Flutter web release build, including its Wasm dry-run compilation (no Wasm runtime claim), and ended `All requested local checks passed.` The owned development runner was restored hidden afterwards, and the existing calendar Flutter app hot-restarted successfully through Dart MCP.
+
+The batch log is ignored `.local/availability-batch-check.log`. The local link/numbering/credential checks found no missing relative Markdown links, consecutive ADRs 0001–0057, no candidate-file matches for local credential values and an unchanged Apache 2.0 LICENSE. Raw/projection permissions, final-denied atomic writes, minimal deletion markers, stable opening identities, parent dependencies, scope isolation, unavailable projection and source-cap unknown are covered by the new database cases. Named-zone hours remain unchanged when the calendar availability zone changes.
+
+This is native calculation evidence. Rich availability metadata, opening-occurrence overrides, wire import/export, host-selected subject/common-slot search, indexed larger-calendar coverage and external-client interoperability remain pending. No full RFC 7953 or reservation guarantee is claimed.

@@ -1,6 +1,6 @@
 # Proposed model catalog
 
-[First native non-recurring event CRUD](native-single-events.md) now implements scoped event storage/commands/projections under [ADR 0053](adr/0053-first-native-single-events.md). Recurrence persistence, free/busy and wire/client interoperability remain pending.
+[First native non-recurring event CRUD](native-single-events.md) now implements scoped event storage/commands/projections under [ADR 0053](adr/0053-first-native-single-events.md). Native recurrence, occurrence timing, free/busy and scoped working-hours composition are implemented in the increments linked below; wire/client interoperability remains pending.
 
 [Native protocol UID and modification time](calendar-protocol-identity.md) add read-only identity/time disclosure under [ADR 0052](adr/0052-calendar-protocol-identity-and-revision-time.md), without parsing/export or feed validators.
 
@@ -356,4 +356,6 @@ Future validation must use synthetic fixtures and real migrations/generated APIs
 
 ## First calendar free/busy models, 2026-10-21
 
-[ADR 0056](adr/0056-first-calendar-free-busy.md) adds `CalendarFreeBusyQuery`, `CalendarFreeBusyCoverage`, `CalendarFreeBusyKind`, `CalendarFreeBusyPeriod` and `CalendarFreeBusyView`, with no new table. [The guide](calendar-free-busy.md) defines per-calendar booking/fallback coverage and merged UTC classifications without private source identities/counts. Unknown has no periods and establishes no free time. Rule/subject/common-free models remain pending; the existing logical catalog still describes the larger release.
+[ADR 0056](adr/0056-first-calendar-free-busy.md) adds `CalendarFreeBusyQuery`, `CalendarFreeBusyCoverage`, `CalendarFreeBusyKind`, `CalendarFreeBusyPeriod` and `CalendarFreeBusyView`, with no new table. [The guide](calendar-free-busy.md) defines per-calendar booking/fallback coverage and merged UTC classifications without private source identities/counts. Unknown has no periods and establishes no free time. Broader rule/subject/common-free models remain pending; the existing logical catalog still describes the larger release.
+
+[Native working-hours CRUD/composition](native-working-hours.md) implements `CalendarAvailabilityContent`, `CalendarAvailabilityOpening`, create/update requests, views/receipts and separate identity/active-data records under [ADR 0057](adr/0057-native-working-hours.md). Raw management and private projection have separate host gates. Rich metadata, opening-occurrence overrides and wire import/export remain planned.

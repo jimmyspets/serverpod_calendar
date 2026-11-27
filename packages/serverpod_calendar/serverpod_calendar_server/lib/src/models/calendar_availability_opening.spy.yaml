@@ -1,0 +1,6 @@
+class: CalendarAvailabilityOpening
+immutable: true
+fields:
+  uid: UuidValue?
+  timing: CalendarEventTiming
+  recurrence: CalendarEventRecurrence?

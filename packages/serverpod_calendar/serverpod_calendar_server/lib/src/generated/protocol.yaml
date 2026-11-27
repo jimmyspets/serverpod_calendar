@@ -1,3 +1,9 @@
+calendarAvailability:
+  - create:
+  - getRule:
+  - list:
+  - update:
+  - deleteRule:
 calendarDiagnostics:
   - check:
 calendar:

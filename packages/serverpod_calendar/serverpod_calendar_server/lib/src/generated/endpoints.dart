@@ -11,6 +11,10 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_calendar_server/src/generated/calendar_availability_create_request.dart'
+    as _iys46g3v;
+import 'package:serverpod_calendar_server/src/generated/calendar_availability_update_request.dart'
+    as _i2zdh4d8;
 import 'package:serverpod_calendar_server/src/generated/calendar_category_filter.dart'
     as _ith8xeb5;
 import 'package:serverpod_calendar_server/src/generated/calendar_create_request.dart'
@@ -45,6 +49,7 @@ import 'package:serverpod_calendar_server/src/generated/calendar_supplemental_me
     as _ito4h8gf;
 import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
     as _ik9lwgjh;
+import '../endpoints/calendar_availability_endpoint.dart' as _imcvujmp;
 import '../endpoints/calendar_diagnostics_endpoint.dart' as _icr8drn5;
 import '../endpoints/calendar_endpoint.dart' as _inx4l1vp;
 import '../endpoints/calendar_event_endpoint.dart' as _ibwv0suj;
@@ -53,6 +58,12 @@ class Endpoints extends _is.EndpointDispatch {
   @override
   void initializeEndpoints(_is.Server server) {
     var endpoints = <String, _is.Endpoint>{
+      'calendarAvailability': _imcvujmp.CalendarAvailabilityEndpoint()
+        ..initialize(
+          server,
+          'calendarAvailability',
+          'serverpod_calendar',
+        ),
       'calendarDiagnostics': _icr8drn5.CalendarDiagnosticsEndpoint()
         ..initialize(
           server,
@@ -72,6 +83,123 @@ class Endpoints extends _is.EndpointDispatch {
           'serverpod_calendar',
         ),
     };
+    connectors['calendarAvailability'] = _is.EndpointConnector(
+      name: 'calendarAvailability',
+      endpoint: endpoints['calendarAvailability']!,
+      methodConnectors: {
+        'create': _is.MethodConnector(
+          name: 'create',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_iys46g3v.CalendarAvailabilityCreateRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAvailability']
+                          as _imcvujmp.CalendarAvailabilityEndpoint)
+                      .create(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'getRule': _is.MethodConnector(
+          name: 'getRule',
+          params: {
+            'availabilityId': _is.ParameterDescription(
+              name: 'availabilityId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAvailability']
+                          as _imcvujmp.CalendarAvailabilityEndpoint)
+                      .getRule(
+                        session,
+                        params['availabilityId'],
+                      ),
+        ),
+        'list': _is.MethodConnector(
+          name: 'list',
+          params: {
+            'calendarId': _is.ParameterDescription(
+              name: 'calendarId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAvailability']
+                          as _imcvujmp.CalendarAvailabilityEndpoint)
+                      .list(
+                        session,
+                        params['calendarId'],
+                      ),
+        ),
+        'update': _is.MethodConnector(
+          name: 'update',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i2zdh4d8.CalendarAvailabilityUpdateRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAvailability']
+                          as _imcvujmp.CalendarAvailabilityEndpoint)
+                      .update(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'deleteRule': _is.MethodConnector(
+          name: 'deleteRule',
+          params: {
+            'availabilityId': _is.ParameterDescription(
+              name: 'availabilityId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'expectedRevision': _is.ParameterDescription(
+              name: 'expectedRevision',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAvailability']
+                          as _imcvujmp.CalendarAvailabilityEndpoint)
+                      .deleteRule(
+                        session,
+                        params['availabilityId'],
+                        params['expectedRevision'],
+                      ),
+        ),
+      },
+    );
     connectors['calendarDiagnostics'] = _is.EndpointConnector(
       name: 'calendarDiagnostics',
       endpoint: endpoints['calendarDiagnostics']!,
