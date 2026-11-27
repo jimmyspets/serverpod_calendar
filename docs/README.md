@@ -45,3 +45,5 @@ Use Mermaid for documentation diagrams, including architecture, relationships, a
 - [Calendar links, categories, images and refresh hints](calendar-links-and-categories.md)
 
 See [native protocol UID and modification time](calendar-protocol-identity.md) for the read-only identity/time increment under ADR 0052.
+
+See [first native non-recurring events](native-single-events.md) for typed timing, separate lifecycle permissions, event storage and example behavior under ADR 0053.

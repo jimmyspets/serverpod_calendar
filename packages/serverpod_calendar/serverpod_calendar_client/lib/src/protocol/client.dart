@@ -15,6 +15,20 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_category_filter.
     as _in004d9w;
 import 'package:serverpod_calendar_client/src/protocol/calendar_create_request.dart'
     as _i3j5a5bv;
+import 'package:serverpod_calendar_client/src/protocol/calendar_event_create_request.dart'
+    as _iwlxheag;
+import 'package:serverpod_calendar_client/src/protocol/calendar_event_field_group.dart'
+    as _icxx5h8a;
+import 'package:serverpod_calendar_client/src/protocol/calendar_event_page.dart'
+    as _i8kstbs4;
+import 'package:serverpod_calendar_client/src/protocol/calendar_event_receipt.dart'
+    as _ieh64e0q;
+import 'package:serverpod_calendar_client/src/protocol/calendar_event_status_request.dart'
+    as _ignysrxk;
+import 'package:serverpod_calendar_client/src/protocol/calendar_event_update_request.dart'
+    as _itsbll8l;
+import 'package:serverpod_calendar_client/src/protocol/calendar_event_view.dart'
+    as _ixldy3zv;
 import 'package:serverpod_calendar_client/src/protocol/calendar_field_group.dart'
     as _ioi1smgh;
 import 'package:serverpod_calendar_client/src/protocol/calendar_metadata_update_request.dart'
@@ -167,19 +181,95 @@ class EndpointCalendar extends _isc.EndpointRef {
   );
 }
 
+/// {@category Endpoint}
+class EndpointCalendarEvent extends _isc.EndpointRef {
+  EndpointCalendarEvent(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'serverpod_calendar.calendarEvent';
+
+  _ida.Future<_ieh64e0q.CalendarEventReceipt?> create(
+    _iwlxheag.CalendarEventCreateRequest request,
+  ) => caller.callServerEndpoint<_ieh64e0q.CalendarEventReceipt?>(
+    'serverpod_calendar.calendarEvent',
+    'create',
+    {'request': request},
+  );
+
+  _ida.Future<_ixldy3zv.CalendarEventView> getEvent(
+    _isc.UuidValue eventId,
+    List<_icxx5h8a.CalendarEventFieldGroup> groups,
+  ) => caller.callServerEndpoint<_ixldy3zv.CalendarEventView>(
+    'serverpod_calendar.calendarEvent',
+    'getEvent',
+    {
+      'eventId': eventId,
+      'groups': groups,
+    },
+  );
+
+  _ida.Future<_i8kstbs4.CalendarEventPage> list(
+    _isc.UuidValue calendarId, {
+    required int pageSize,
+    required List<_icxx5h8a.CalendarEventFieldGroup> fieldGroups,
+    String? cursor,
+  }) => caller.callServerEndpoint<_i8kstbs4.CalendarEventPage>(
+    'serverpod_calendar.calendarEvent',
+    'list',
+    {
+      'calendarId': calendarId,
+      'pageSize': pageSize,
+      'fieldGroups': fieldGroups,
+      'cursor': cursor,
+    },
+  );
+
+  _ida.Future<_ieh64e0q.CalendarEventReceipt?> update(
+    _itsbll8l.CalendarEventUpdateRequest request,
+  ) => caller.callServerEndpoint<_ieh64e0q.CalendarEventReceipt?>(
+    'serverpod_calendar.calendarEvent',
+    'update',
+    {'request': request},
+  );
+
+  _ida.Future<_ieh64e0q.CalendarEventReceipt?> changeStatus(
+    _ignysrxk.CalendarEventStatusRequest request,
+  ) => caller.callServerEndpoint<_ieh64e0q.CalendarEventReceipt?>(
+    'serverpod_calendar.calendarEvent',
+    'changeStatus',
+    {'request': request},
+  );
+
+  _ida.Future<_ieh64e0q.CalendarEventReceipt?> deleteEvent(
+    _isc.UuidValue eventId,
+    int expectedRevision,
+  ) => caller.callServerEndpoint<_ieh64e0q.CalendarEventReceipt?>(
+    'serverpod_calendar.calendarEvent',
+    'deleteEvent',
+    {
+      'eventId': eventId,
+      'expectedRevision': expectedRevision,
+    },
+  );
+}
+
 class Caller extends _isc.ModuleEndpointCaller {
   Caller(_isc.ServerpodClientShared client) : super(client) {
     calendarDiagnostics = EndpointCalendarDiagnostics(this);
     calendar = EndpointCalendar(this);
+    calendarEvent = EndpointCalendarEvent(this);
   }
 
   late final EndpointCalendarDiagnostics calendarDiagnostics;
 
   late final EndpointCalendar calendar;
 
+  late final EndpointCalendarEvent calendarEvent;
+
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
     'serverpod_calendar.calendarDiagnostics': calendarDiagnostics,
     'serverpod_calendar.calendar': calendar,
+    'serverpod_calendar.calendarEvent': calendarEvent,
   };
 }

@@ -1,0 +1,10 @@
+class: CalendarEventContent
+immutable: true
+fields:
+  summary: String?
+  description: String?
+  location: String?
+  timing: CalendarEventTiming
+  status: CalendarEventStatus, default=confirmed
+  transparency: CalendarEventTransparency, default=opaque
+  recurring: bool, default=false

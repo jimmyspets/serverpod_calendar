@@ -13,6 +13,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/protocol.dart' as _isp;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_calendar_server/src/generated/calendar_event_field_group.dart'
+    as _il5gdr09;
 import 'package:serverpod_calendar_server/src/generated/calendar_field_group.dart'
     as _i3d02yxy;
 import 'package:serverpod_calendar_server/src/generated/calendar_subject_view.dart'
@@ -24,6 +26,22 @@ import 'calendar_category_filter.dart' as _i9j129by;
 import 'calendar_create_request.dart' as _i8chn2wc;
 import 'calendar_cursor_record.dart' as _iptr9vfe;
 import 'calendar_data_record.dart' as _ix6i00tg;
+import 'calendar_event_civil.dart' as _i1bb5k1r;
+import 'calendar_event_content.dart' as _id4cvk34;
+import 'calendar_event_create_request.dart' as _i0orp171;
+import 'calendar_event_data_record.dart' as _i23wc83s;
+import 'calendar_event_duration.dart' as _idn2i48l;
+import 'calendar_event_field_group.dart' as _iftiwkuj;
+import 'calendar_event_page.dart' as _iaayjmj1;
+import 'calendar_event_receipt.dart' as _i500bvo7;
+import 'calendar_event_record.dart' as _ilvoe14z;
+import 'calendar_event_status.dart' as _ivzxk9bc;
+import 'calendar_event_status_request.dart' as _i3kbbl30;
+import 'calendar_event_time_kind.dart' as _idbnuf6y;
+import 'calendar_event_timing.dart' as _ieswiaty;
+import 'calendar_event_transparency.dart' as _iwjkdwy7;
+import 'calendar_event_update_request.dart' as _i3ofr0ug;
+import 'calendar_event_view.dart' as _iqr733fy;
 import 'calendar_exception.dart' as _ioicq9ju;
 import 'calendar_failure_code.dart' as _i7h2f30k;
 import 'calendar_field_group.dart' as _i73hgz1s;
@@ -53,6 +71,22 @@ export 'calendar_category_filter.dart';
 export 'calendar_create_request.dart';
 export 'calendar_cursor_record.dart';
 export 'calendar_data_record.dart';
+export 'calendar_event_civil.dart';
+export 'calendar_event_content.dart';
+export 'calendar_event_create_request.dart';
+export 'calendar_event_data_record.dart';
+export 'calendar_event_duration.dart';
+export 'calendar_event_field_group.dart';
+export 'calendar_event_page.dart';
+export 'calendar_event_receipt.dart';
+export 'calendar_event_record.dart';
+export 'calendar_event_status.dart';
+export 'calendar_event_status_request.dart';
+export 'calendar_event_time_kind.dart';
+export 'calendar_event_timing.dart';
+export 'calendar_event_transparency.dart';
+export 'calendar_event_update_request.dart';
+export 'calendar_event_view.dart';
 export 'calendar_exception.dart';
 export 'calendar_failure_code.dart';
 export 'calendar_field_group.dart';
@@ -148,6 +182,18 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnType: _isp.ColumnType.json,
           isNullable: false,
           dartType: 'List<protocol:CalendarFieldGroup>',
+        ),
+        _isp.ColumnDefinition(
+          name: 'eventCalendarId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'eventFieldGroups',
+          columnType: _isp.ColumnType.json,
+          isNullable: true,
+          dartType: 'List<protocol:CalendarEventFieldGroup>?',
         ),
         _isp.ColumnDefinition(
           name: 'categoryFilter',
@@ -307,6 +353,158 @@ class Protocol extends _is.DatabaseSerializationManager {
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
               definition: 'calendarId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'serverpod_calendar_event',
+      dartName: 'CalendarEventRecord',
+      schema: 'public',
+      module: 'serverpod_calendar',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'calendarId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'revision',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'deletedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_event_fk_0',
+          columns: ['calendarId'],
+          referenceTable: 'serverpod_calendar_identity',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_event_parent_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'calendarId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'serverpod_calendar_event_data',
+      dartName: 'CalendarEventDataRecord',
+      schema: 'public',
+      module: 'serverpod_calendar',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'eventId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'protocolUid',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'content',
+          columnType: _isp.ColumnType.json,
+          isNullable: false,
+          dartType: 'protocol:CalendarEventContent',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_event_data_fk_0',
+          columns: ['eventId'],
+          referenceTable: 'serverpod_calendar_event',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_event_data_identity_unique',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'eventId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_event_data_uid_unique',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'protocolUid',
             ),
           ],
           type: 'btree',
@@ -553,6 +751,54 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _ix6i00tg.CalendarDataRecord) {
       return _ix6i00tg.CalendarDataRecord.fromJson(data) as T;
     }
+    if (t == _i1bb5k1r.CalendarEventCivil) {
+      return _i1bb5k1r.CalendarEventCivil.fromJson(data) as T;
+    }
+    if (t == _id4cvk34.CalendarEventContent) {
+      return _id4cvk34.CalendarEventContent.fromJson(data) as T;
+    }
+    if (t == _i0orp171.CalendarEventCreateRequest) {
+      return _i0orp171.CalendarEventCreateRequest.fromJson(data) as T;
+    }
+    if (t == _i23wc83s.CalendarEventDataRecord) {
+      return _i23wc83s.CalendarEventDataRecord.fromJson(data) as T;
+    }
+    if (t == _idn2i48l.CalendarEventDuration) {
+      return _idn2i48l.CalendarEventDuration.fromJson(data) as T;
+    }
+    if (t == _iftiwkuj.CalendarEventFieldGroup) {
+      return _iftiwkuj.CalendarEventFieldGroup.fromJson(data) as T;
+    }
+    if (t == _iaayjmj1.CalendarEventPage) {
+      return _iaayjmj1.CalendarEventPage.fromJson(data) as T;
+    }
+    if (t == _i500bvo7.CalendarEventReceipt) {
+      return _i500bvo7.CalendarEventReceipt.fromJson(data) as T;
+    }
+    if (t == _ilvoe14z.CalendarEventRecord) {
+      return _ilvoe14z.CalendarEventRecord.fromJson(data) as T;
+    }
+    if (t == _ivzxk9bc.CalendarEventStatus) {
+      return _ivzxk9bc.CalendarEventStatus.fromJson(data) as T;
+    }
+    if (t == _i3kbbl30.CalendarEventStatusRequest) {
+      return _i3kbbl30.CalendarEventStatusRequest.fromJson(data) as T;
+    }
+    if (t == _idbnuf6y.CalendarEventTimeKind) {
+      return _idbnuf6y.CalendarEventTimeKind.fromJson(data) as T;
+    }
+    if (t == _ieswiaty.CalendarEventTiming) {
+      return _ieswiaty.CalendarEventTiming.fromJson(data) as T;
+    }
+    if (t == _iwjkdwy7.CalendarEventTransparency) {
+      return _iwjkdwy7.CalendarEventTransparency.fromJson(data) as T;
+    }
+    if (t == _i3ofr0ug.CalendarEventUpdateRequest) {
+      return _i3ofr0ug.CalendarEventUpdateRequest.fromJson(data) as T;
+    }
+    if (t == _iqr733fy.CalendarEventView) {
+      return _iqr733fy.CalendarEventView.fromJson(data) as T;
+    }
     if (t == _ioicq9ju.CalendarException) {
       return _ioicq9ju.CalendarException.fromJson(data) as T;
     }
@@ -651,6 +897,96 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _is.getType<_ix6i00tg.CalendarDataRecord?>()) {
       return (data != null ? _ix6i00tg.CalendarDataRecord.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i1bb5k1r.CalendarEventCivil?>()) {
+      return (data != null ? _i1bb5k1r.CalendarEventCivil.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_id4cvk34.CalendarEventContent?>()) {
+      return (data != null
+              ? _id4cvk34.CalendarEventContent.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i0orp171.CalendarEventCreateRequest?>()) {
+      return (data != null
+              ? _i0orp171.CalendarEventCreateRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i23wc83s.CalendarEventDataRecord?>()) {
+      return (data != null
+              ? _i23wc83s.CalendarEventDataRecord.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_idn2i48l.CalendarEventDuration?>()) {
+      return (data != null
+              ? _idn2i48l.CalendarEventDuration.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iftiwkuj.CalendarEventFieldGroup?>()) {
+      return (data != null
+              ? _iftiwkuj.CalendarEventFieldGroup.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iaayjmj1.CalendarEventPage?>()) {
+      return (data != null ? _iaayjmj1.CalendarEventPage.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i500bvo7.CalendarEventReceipt?>()) {
+      return (data != null
+              ? _i500bvo7.CalendarEventReceipt.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ilvoe14z.CalendarEventRecord?>()) {
+      return (data != null
+              ? _ilvoe14z.CalendarEventRecord.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ivzxk9bc.CalendarEventStatus?>()) {
+      return (data != null
+              ? _ivzxk9bc.CalendarEventStatus.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i3kbbl30.CalendarEventStatusRequest?>()) {
+      return (data != null
+              ? _i3kbbl30.CalendarEventStatusRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_idbnuf6y.CalendarEventTimeKind?>()) {
+      return (data != null
+              ? _idbnuf6y.CalendarEventTimeKind.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ieswiaty.CalendarEventTiming?>()) {
+      return (data != null
+              ? _ieswiaty.CalendarEventTiming.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iwjkdwy7.CalendarEventTransparency?>()) {
+      return (data != null
+              ? _iwjkdwy7.CalendarEventTransparency.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i3ofr0ug.CalendarEventUpdateRequest?>()) {
+      return (data != null
+              ? _i3ofr0ug.CalendarEventUpdateRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iqr733fy.CalendarEventView?>()) {
+      return (data != null ? _iqr733fy.CalendarEventView.fromJson(data) : null)
           as T;
     }
     if (t == _is.getType<_ioicq9ju.CalendarException?>()) {
@@ -794,6 +1130,28 @@ class Protocol extends _is.DatabaseSerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_iftiwkuj.CalendarEventFieldGroup>) {
+      return (data as List)
+              .map((e) => deserialize<_iftiwkuj.CalendarEventFieldGroup>(e))
+              .toList()
+          as T;
+    }
+    if (t == _is.getType<List<_iftiwkuj.CalendarEventFieldGroup>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map(
+                      (e) => deserialize<_iftiwkuj.CalendarEventFieldGroup>(e),
+                    )
+                    .toList()
+              : null)
+          as T;
+    }
+    if (t == List<_iqr733fy.CalendarEventView>) {
+      return (data as List)
+              .map((e) => deserialize<_iqr733fy.CalendarEventView>(e))
+              .toList()
+          as T;
+    }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
@@ -839,6 +1197,12 @@ class Protocol extends _is.DatabaseSerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_il5gdr09.CalendarEventFieldGroup>) {
+      return (data as List)
+              .map((e) => deserialize<_il5gdr09.CalendarEventFieldGroup>(e))
+              .toList()
+          as T;
+    }
     try {
       return _ik9lwgjh.Protocol().deserialize<T>(data, t);
     } on _is.DeserializationTypeNotFoundException catch (_) {}
@@ -855,6 +1219,22 @@ class Protocol extends _is.DatabaseSerializationManager {
       _i8chn2wc.CalendarCreateRequest => 'CalendarCreateRequest',
       _iptr9vfe.CalendarCursorRecord => 'CalendarCursorRecord',
       _ix6i00tg.CalendarDataRecord => 'CalendarDataRecord',
+      _i1bb5k1r.CalendarEventCivil => 'CalendarEventCivil',
+      _id4cvk34.CalendarEventContent => 'CalendarEventContent',
+      _i0orp171.CalendarEventCreateRequest => 'CalendarEventCreateRequest',
+      _i23wc83s.CalendarEventDataRecord => 'CalendarEventDataRecord',
+      _idn2i48l.CalendarEventDuration => 'CalendarEventDuration',
+      _iftiwkuj.CalendarEventFieldGroup => 'CalendarEventFieldGroup',
+      _iaayjmj1.CalendarEventPage => 'CalendarEventPage',
+      _i500bvo7.CalendarEventReceipt => 'CalendarEventReceipt',
+      _ilvoe14z.CalendarEventRecord => 'CalendarEventRecord',
+      _ivzxk9bc.CalendarEventStatus => 'CalendarEventStatus',
+      _i3kbbl30.CalendarEventStatusRequest => 'CalendarEventStatusRequest',
+      _idbnuf6y.CalendarEventTimeKind => 'CalendarEventTimeKind',
+      _ieswiaty.CalendarEventTiming => 'CalendarEventTiming',
+      _iwjkdwy7.CalendarEventTransparency => 'CalendarEventTransparency',
+      _i3ofr0ug.CalendarEventUpdateRequest => 'CalendarEventUpdateRequest',
+      _iqr733fy.CalendarEventView => 'CalendarEventView',
       _ioicq9ju.CalendarException => 'CalendarException',
       _i7h2f30k.CalendarFailureCode => 'CalendarFailureCode',
       _i73hgz1s.CalendarFieldGroup => 'CalendarFieldGroup',
@@ -911,6 +1291,38 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarCursorRecord';
       case _ix6i00tg.CalendarDataRecord():
         return 'CalendarDataRecord';
+      case _i1bb5k1r.CalendarEventCivil():
+        return 'CalendarEventCivil';
+      case _id4cvk34.CalendarEventContent():
+        return 'CalendarEventContent';
+      case _i0orp171.CalendarEventCreateRequest():
+        return 'CalendarEventCreateRequest';
+      case _i23wc83s.CalendarEventDataRecord():
+        return 'CalendarEventDataRecord';
+      case _idn2i48l.CalendarEventDuration():
+        return 'CalendarEventDuration';
+      case _iftiwkuj.CalendarEventFieldGroup():
+        return 'CalendarEventFieldGroup';
+      case _iaayjmj1.CalendarEventPage():
+        return 'CalendarEventPage';
+      case _i500bvo7.CalendarEventReceipt():
+        return 'CalendarEventReceipt';
+      case _ilvoe14z.CalendarEventRecord():
+        return 'CalendarEventRecord';
+      case _ivzxk9bc.CalendarEventStatus():
+        return 'CalendarEventStatus';
+      case _i3kbbl30.CalendarEventStatusRequest():
+        return 'CalendarEventStatusRequest';
+      case _idbnuf6y.CalendarEventTimeKind():
+        return 'CalendarEventTimeKind';
+      case _ieswiaty.CalendarEventTiming():
+        return 'CalendarEventTiming';
+      case _iwjkdwy7.CalendarEventTransparency():
+        return 'CalendarEventTransparency';
+      case _i3ofr0ug.CalendarEventUpdateRequest():
+        return 'CalendarEventUpdateRequest';
+      case _iqr733fy.CalendarEventView():
+        return 'CalendarEventView';
       case _ioicq9ju.CalendarException():
         return 'CalendarException';
       case _i7h2f30k.CalendarFailureCode():
@@ -987,6 +1399,54 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'CalendarDataRecord') {
       return deserialize<_ix6i00tg.CalendarDataRecord>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventCivil') {
+      return deserialize<_i1bb5k1r.CalendarEventCivil>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventContent') {
+      return deserialize<_id4cvk34.CalendarEventContent>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventCreateRequest') {
+      return deserialize<_i0orp171.CalendarEventCreateRequest>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventDataRecord') {
+      return deserialize<_i23wc83s.CalendarEventDataRecord>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventDuration') {
+      return deserialize<_idn2i48l.CalendarEventDuration>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventFieldGroup') {
+      return deserialize<_iftiwkuj.CalendarEventFieldGroup>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventPage') {
+      return deserialize<_iaayjmj1.CalendarEventPage>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventReceipt') {
+      return deserialize<_i500bvo7.CalendarEventReceipt>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventRecord') {
+      return deserialize<_ilvoe14z.CalendarEventRecord>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventStatus') {
+      return deserialize<_ivzxk9bc.CalendarEventStatus>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventStatusRequest') {
+      return deserialize<_i3kbbl30.CalendarEventStatusRequest>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventTimeKind') {
+      return deserialize<_idbnuf6y.CalendarEventTimeKind>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventTiming') {
+      return deserialize<_ieswiaty.CalendarEventTiming>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventTransparency') {
+      return deserialize<_iwjkdwy7.CalendarEventTransparency>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventUpdateRequest') {
+      return deserialize<_i3ofr0ug.CalendarEventUpdateRequest>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventView') {
+      return deserialize<_iqr733fy.CalendarEventView>(data['data']);
     }
     if (dataClassName == 'CalendarException') {
       return deserialize<_ioicq9ju.CalendarException>(data['data']);
@@ -1151,6 +1611,10 @@ class Protocol extends _is.DatabaseSerializationManager {
         return _iptr9vfe.CalendarCursorRecord.t;
       case _ix6i00tg.CalendarDataRecord:
         return _ix6i00tg.CalendarDataRecord.t;
+      case _i23wc83s.CalendarEventDataRecord:
+        return _i23wc83s.CalendarEventDataRecord.t;
+      case _ilvoe14z.CalendarEventRecord:
+        return _ilvoe14z.CalendarEventRecord.t;
       case _ibccnfmr.CalendarIdentityRecord:
         return _ibccnfmr.CalendarIdentityRecord.t;
       case _i9mvj7kq.CalendarScopeRecord:

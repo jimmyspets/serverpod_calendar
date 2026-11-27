@@ -1,0 +1,9 @@
+class: CalendarEventDuration
+immutable: true
+fields:
+  weeks: int, default=0
+  days: int, default=0
+  hours: int, default=0
+  minutes: int, default=0
+  seconds: int, default=0
+  microsecond: int, default=0

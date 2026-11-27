@@ -1,0 +1,6 @@
+class: CalendarEventStatusRequest
+immutable: true
+fields:
+  eventId: UuidValue
+  expectedRevision: int
+  status: CalendarEventStatus

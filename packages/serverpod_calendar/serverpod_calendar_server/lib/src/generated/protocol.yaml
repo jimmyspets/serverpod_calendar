@@ -12,3 +12,10 @@ calendar:
   - subjects:
   - changeSubject:
   - delete:
+calendarEvent:
+  - create:
+  - getEvent:
+  - list:
+  - update:
+  - changeStatus:
+  - deleteEvent:

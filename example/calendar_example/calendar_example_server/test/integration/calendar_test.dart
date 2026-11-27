@@ -5,6 +5,19 @@ import 'package:test/test.dart';
 import 'test_tools/serverpod_test_tools.dart';
 
 const groups = CalendarFieldGroup.values;
+const eventGroups = CalendarEventFieldGroup.values;
+CalendarEventContent eventInput({
+  String? summary,
+  CalendarEventStatus status = CalendarEventStatus.confirmed,
+}) => CalendarEventContent(
+  summary: summary,
+  status: status,
+  timing: CalendarEventTiming(
+    kind: CalendarEventTimeKind.date,
+    start: CalendarEventCivil(year: 2026, month: 3, day: 29),
+  ),
+);
+
 CalendarCreateRequest createInput([String name = 'Calendar']) =>
     CalendarCreateRequest(
       displayName: name,
@@ -40,6 +53,365 @@ void main() {
         ),
       );
       service = CalendarModule.service(session);
+    });
+    test('event lifecycle preserves UID, separates cancel/delete and blocks parent deletion', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final calendar = await service.get(parent, groups);
+      final receipt = (await service.createEvent(
+        CalendarEventCreateRequest(calendarId: parent, content: eventInput()),
+      ))!;
+      final first = await service.getEvent(receipt.eventId, eventGroups);
+      expect(first.summary, isNull);
+      expect(first.timing!.kind, CalendarEventTimeKind.date);
+      expect(first.protocolUid, isNot(receipt.eventId.toString()));
+      await expectLater(
+        service.delete(parent, 1),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      await service.changeEventStatus(
+        CalendarEventStatusRequest(
+          eventId: receipt.eventId,
+          expectedRevision: 1,
+          status: CalendarEventStatus.cancelled,
+        ),
+      );
+      expect(
+        (await service.getEvent(receipt.eventId, eventGroups)).status,
+        CalendarEventStatus.cancelled,
+      );
+      await expectLater(
+        service.delete(parent, 1),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      await service.changeEventStatus(
+        CalendarEventStatusRequest(
+          eventId: receipt.eventId,
+          expectedRevision: 2,
+          status: CalendarEventStatus.tentative,
+        ),
+      );
+      final after = await service.getEvent(receipt.eventId, eventGroups);
+      expect(after.protocolUid, first.protocolUid);
+      expect(after.lastModified!.isBefore(first.lastModified!), isFalse);
+      expect((await service.get(parent, groups)).updatedAt, calendar.updatedAt);
+      expect((await service.get(parent, groups)).revision, 1);
+      await service.deleteEvent(receipt.eventId, 3);
+      expect(await CalendarEventDataRecord.db.count(session), 0);
+      final marker = (await CalendarEventRecord.db.findById(
+        session,
+        receipt.eventId,
+      ))!;
+      expect(marker.toJson().keys.toSet(), {
+        '__className__',
+        'id',
+        'calendarId',
+        'revision',
+        'deletedAt',
+      });
+      await expectLater(
+        service.getEvent(receipt.eventId, eventGroups),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      await service.delete(parent, 1);
+    });
+    test('event edit cannot bypass separate lifecycle checks including cancelled creation', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final event = (await service.createEvent(
+        CalendarEventCreateRequest(
+          calendarId: parent,
+          content: eventInput(summary: 'Original'),
+        ),
+      ))!;
+      policy.denied.add(CalendarPermission.changeEventStatus);
+      await expectLater(
+        service.updateEvent(
+          CalendarEventUpdateRequest(
+            eventId: event.eventId,
+            expectedRevision: 1,
+            content: eventInput(status: CalendarEventStatus.cancelled),
+          ),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      await expectLater(
+        service.createEvent(
+          CalendarEventCreateRequest(
+            calendarId: parent,
+            content: eventInput(status: CalendarEventStatus.cancelled),
+          ),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(await CalendarEventRecord.db.count(session), 1);
+      await service.updateEvent(
+        CalendarEventUpdateRequest(
+          eventId: event.eventId,
+          expectedRevision: 1,
+          content: eventInput(summary: 'Edited'),
+        ),
+      );
+      policy.denied.clear();
+      policy.denied.add(CalendarPermission.updateEvent);
+      await service.changeEventStatus(
+        CalendarEventStatusRequest(
+          eventId: event.eventId,
+          expectedRevision: 2,
+          status: CalendarEventStatus.cancelled,
+        ),
+      );
+      expect(
+        (await service.getEvent(event.eventId, eventGroups)).summary,
+        'Edited',
+      );
+    });
+    test('event context and disclosure are independent of calendar metadata rights', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final event = (await service.createEvent(
+        CalendarEventCreateRequest(
+          calendarId: parent,
+          content: eventInput(summary: 'Private'),
+        ),
+      ))!;
+      policy.denied.add(CalendarPermission.read);
+      policy.eventGrants = {CalendarEventFieldGroup.timing};
+      final view = await service.getEvent(event.eventId, eventGroups);
+      expect(view.summary, isNull);
+      expect(view.status, isNull);
+      expect(view.protocolUid, isNull);
+      expect(view.timing, isNotNull);
+      expect(policy.lastEventRequest!.calendarId, parent);
+      expect(policy.lastEventRequest!.current!.calendarId, parent);
+      expect(policy.lastEventRequest!.currentEvent!.eventId, event.eventId);
+      expect(policy.lastEventRequest!.currentEvent!.content.summary, 'Private');
+      expect(
+        () => policy.lastEventRequest!.eventGroups.clear(),
+        throwsUnsupportedError,
+      );
+      policy.denied.add(CalendarPermission.readEvent);
+      await expectLater(
+        service.getEvent(event.eventId, eventGroups),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(
+        (await service.listEvents(
+          parent,
+          pageSize: 10,
+          fieldGroups: eventGroups,
+        )).events,
+        isEmpty,
+      );
+    });
+    test('event scopes and host candidate constraints cannot disclose other parents', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final other = (await service.create(createInput()))!.calendarId;
+      final event = (await service.createEvent(
+        CalendarEventCreateRequest(calendarId: parent, content: eventInput()),
+      ))!;
+      policy.eventCandidates = {event.eventId};
+      expect(
+        (await service.listEvents(
+          other,
+          pageSize: 10,
+          fieldGroups: eventGroups,
+        )).events,
+        isEmpty,
+      );
+      final bobSession = builder
+          .copyWith(
+            authentication: AuthenticationOverride.authenticationInfo(
+              'bob',
+              {},
+            ),
+          )
+          .build();
+      final bob = CalendarModule.service(bobSession);
+      await expectLater(
+        bob.getEvent(event.eventId, eventGroups),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      await expectLater(
+        bob.createEvent(
+          CalendarEventCreateRequest(calendarId: parent, content: eventInput()),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.eventCandidates = {};
+      expect(
+        (await service.listEvents(
+          parent,
+          pageSize: 10,
+          fieldGroups: eventGroups,
+        )).events,
+        isEmpty,
+      );
+    });
+    test(
+      'event cursors bind query kind parent groups policy data and page size',
+      () async {
+        final parent = (await service.create(createInput()))!.calendarId;
+        final other = (await service.create(createInput()))!.calendarId;
+        for (var i = 0; i < 3; i++) {
+          await service.createEvent(
+            CalendarEventCreateRequest(
+              calendarId: parent,
+              content: eventInput(),
+            ),
+          );
+        }
+        final page = await service.listEvents(
+          parent,
+          pageSize: 1,
+          fieldGroups: eventGroups,
+        );
+        expect(page.nextCursor, isNotNull);
+        final next = await service.listEvents(
+          parent,
+          pageSize: 1,
+          fieldGroups: eventGroups,
+          cursor: page.nextCursor,
+        );
+        expect(next.events.single.id, isNot(page.events.single.id));
+        await expectLater(
+          service.listEvents(
+            other,
+            pageSize: 1,
+            fieldGroups: eventGroups,
+            cursor: page.nextCursor,
+          ),
+          failure(CalendarFailureCode.invalidCursor),
+        );
+        await expectLater(
+          service.listEvents(
+            parent,
+            pageSize: 2,
+            fieldGroups: eventGroups,
+            cursor: page.nextCursor,
+          ),
+          failure(CalendarFailureCode.invalidCursor),
+        );
+        await expectLater(
+          service.listEvents(
+            parent,
+            pageSize: 1,
+            fieldGroups: [],
+            cursor: page.nextCursor,
+          ),
+          failure(CalendarFailureCode.invalidCursor),
+        );
+        await expectLater(
+          service.list(
+            pageSize: 1,
+            fieldGroups: groups,
+            cursor: page.nextCursor,
+          ),
+          failure(CalendarFailureCode.invalidCursor),
+        );
+        final calendars = await service.list(pageSize: 1, fieldGroups: groups);
+        await expectLater(
+          service.listEvents(
+            parent,
+            pageSize: 1,
+            fieldGroups: eventGroups,
+            cursor: calendars.nextCursor,
+          ),
+          failure(CalendarFailureCode.invalidCursor),
+        );
+        policy.epoch = 'changed';
+        await expectLater(
+          service.listEvents(
+            parent,
+            pageSize: 1,
+            fieldGroups: eventGroups,
+            cursor: page.nextCursor,
+          ),
+          failure(CalendarFailureCode.invalidCursor),
+        );
+        policy.epoch = 'v1';
+        await service.changeEventStatus(
+          CalendarEventStatusRequest(
+            eventId: page.events.single.id,
+            expectedRevision: 1,
+            status: CalendarEventStatus.cancelled,
+          ),
+        );
+        await expectLater(
+          service.listEvents(
+            parent,
+            pageSize: 1,
+            fieldGroups: eventGroups,
+            cursor: page.nextCursor,
+          ),
+          failure(CalendarFailureCode.invalidCursor),
+        );
+      },
+    );
+    test('event hidden scan exhaustion fails instead of reporting an empty complete list', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      for (var i = 0; i < 3; i++) {
+        await service.createEvent(
+          CalendarEventCreateRequest(calendarId: parent, content: eventInput()),
+        );
+      }
+      policy.denied.add(CalendarPermission.readEvent);
+      CalendarModule.install(
+        session.serverpod,
+        policy: policy,
+        options: const CalendarModuleOptions(
+          requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+          maxScannedEvents: 2,
+        ),
+      );
+      await expectLater(
+        CalendarModule.service(session)
+            .listEvents(parent, pageSize: 1, fieldGroups: eventGroups),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+    });
+    test('invalid stale final-denied and post-write-failed event commands are atomic', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final event = (await service.createEvent(
+        CalendarEventCreateRequest(
+          calendarId: parent,
+          content: eventInput(summary: 'Before'),
+        ),
+      ))!;
+      final before = await service.getEvent(event.eventId, eventGroups);
+      final update = CalendarEventUpdateRequest(
+        eventId: event.eventId,
+        expectedRevision: 1,
+        content: eventInput(summary: 'After'),
+      );
+      policy.denyFinal = true;
+      await expectLater(
+        service.updateEvent(update),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denyFinal = false;
+      await expectLater(
+        service.updateEvent(update.copyWith(expectedRevision: 2)),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      await expectLater(
+        service.updateEvent(
+          update.copyWith(content: update.content.copyWith(recurring: true)),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      final scope = (await CalendarScopeRecord.db.findFirstRow(
+        session,
+        where: (t) => t.scopeKey.equals('test:alice'),
+      ))!;
+      scope.revision = 9007199254740991;
+      await CalendarScopeRecord.db.updateRow(session, scope);
+      await expectLater(
+        service.updateEvent(update),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      final after = await service.getEvent(event.eventId, eventGroups);
+      expect(after.summary, before.summary);
+      expect(after.revision, 1);
+      expect(after.lastModified, before.lastModified);
+      expect(after.protocolUid, before.protocolUid);
     });
     test(
       'protocol identity is stable, separate and independently disclosed',
@@ -1109,6 +1481,9 @@ final class TestPolicy implements CalendarHostPolicy {
   final denied = <CalendarPermission>{};
   final hidden = <UuidValue>{};
   Set<CalendarFieldGroup> grants = groups.toSet();
+  Set<CalendarEventFieldGroup> eventGrants = eventGroups.toSet();
+  Set<UuidValue>? eventCandidates;
+  CalendarAuthorizationRequest? lastEventRequest;
   bool denyFinal = false,
       malformed = false,
       unavailable = false,
@@ -1131,6 +1506,13 @@ final class TestPolicy implements CalendarHostPolicy {
         scopeKey: 'test:${session.authenticated!.userIdentifier}',
         policyRevision: epoch,
       );
+  @override
+  Future<CalendarEventCandidatePlan> planEventQuery(
+    Session s,
+    CalendarHostContext c,
+    CalendarPolicySnapshot calendar,
+    Set<CalendarEventFieldGroup> groups,
+  ) async => CalendarEventCandidatePlan(eventIds: eventCandidates);
   @override
   Future<CalendarCandidatePlan> planQuery(
     Session s,
@@ -1159,6 +1541,7 @@ final class TestPolicy implements CalendarHostPolicy {
     CalendarAuthorizationRequest r,
     CalendarAuthorizationPhase phase,
   ) {
+    if (r.eventId != null) lastEventRequest = r;
     if (r.categoryFilter != null) {
       sawCategoryFilter = true;
     }
@@ -1184,6 +1567,7 @@ final class TestPolicy implements CalendarHostPolicy {
           ? CalendarAuthorizationVerdict.deny
           : CalendarAuthorizationVerdict.allow,
       disclosedGroups: grants,
+      eventDisclosedGroups: eventGrants,
       discloseMutationReceipt: true,
     );
   }

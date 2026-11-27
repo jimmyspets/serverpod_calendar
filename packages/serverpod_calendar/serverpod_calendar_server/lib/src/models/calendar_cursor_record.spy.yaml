@@ -10,6 +10,8 @@ fields:
   afterId: UuidValue
   pageSize: int
   fieldGroups: List<CalendarFieldGroup>
+  eventCalendarId: UuidValue?
+  eventFieldGroups: List<CalendarEventFieldGroup>?
   categoryFilter: CalendarCategoryFilter?
   expiresAt: DateTime
 indexes:

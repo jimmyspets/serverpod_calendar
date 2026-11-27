@@ -1,0 +1,10 @@
+class: CalendarEventCivil
+immutable: true
+fields:
+  year: int
+  month: int
+  day: int
+  hour: int, default=0
+  minute: int, default=0
+  second: int, default=0
+  microsecond: int, default=0

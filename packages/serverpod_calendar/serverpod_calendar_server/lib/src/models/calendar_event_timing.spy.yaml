@@ -1,0 +1,8 @@
+class: CalendarEventTiming
+immutable: true
+fields:
+  kind: CalendarEventTimeKind
+  start: CalendarEventCivil
+  end: CalendarEventCivil?
+  duration: CalendarEventDuration?
+  zoneId: String?

@@ -1,0 +1,5 @@
+enum: CalendarEventTransparency
+serialized: byName
+values:
+  - opaque
+  - transparent

@@ -1,0 +1,6 @@
+class: CalendarEventUpdateRequest
+immutable: true
+fields:
+  eventId: UuidValue
+  expectedRevision: int
+  content: CalendarEventContent

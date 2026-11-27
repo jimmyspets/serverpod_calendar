@@ -143,6 +143,21 @@ BEGIN
 END;
 $identity$;
 """)
+        sql(database, (SERVER / "migrations/20261021064805603-native-single-events/migration.sql").read_text(encoding="utf-8"))
+        sql(database, """
+DO $events$
+BEGIN
+  IF (SELECT count(*) FROM serverpod_calendar_event) <> 0
+     OR (SELECT count(*) FROM serverpod_calendar_event_data) <> 0
+     OR (SELECT count(*) FROM serverpod_calendar_data) <> 2
+     OR EXISTS (SELECT 1 FROM serverpod_calendar_cursor WHERE "eventCalendarId" IS NOT NULL OR "eventFieldGroups" IS NOT NULL)
+     OR (SELECT revision FROM serverpod_calendar_scope WHERE "scopeKey" = 'metadata-upgrade-test') <> 11
+     OR (SELECT count(*) FROM serverpod_calendar_data WHERE "protocolUid" IS NOT NULL AND "updatedAt" = '2026-01-02 03:04:05.987654') <> 2 THEN
+    RAISE EXCEPTION 'Event schema upgrade modified existing payloads, time, scopes or cursors';
+  END IF;
+END;
+$events$;
+""")
         print("PASS: populated schema upgrades preserve identity, revisions, content, associations, unique protocol UIDs and old cursor bindings.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

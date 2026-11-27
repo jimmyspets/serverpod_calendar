@@ -1,0 +1,7 @@
+class: CalendarEventReceipt
+immutable: true
+fields:
+  eventId: UuidValue
+  calendarId: UuidValue
+  revision: int
+  deleted: bool

@@ -1,5 +1,7 @@
 # Module interfaces and interoperability profiles
 
+[First native non-recurring event CRUD](native-single-events.md) now implements scoped event storage/commands/projections under [ADR 0053](adr/0053-first-native-single-events.md). Recurrence persistence, free/busy and wire/client interoperability remain pending.
+
 [Native protocol UID and modification time](calendar-protocol-identity.md) add read-only identity/time disclosure under [ADR 0052](adr/0052-calendar-protocol-identity-and-revision-time.md), without parsing/export or feed validators.
 
 Native metadata includes [links, categories, images and refresh hints](calendar-links-and-categories.md) under [ADR 0051](adr/0051-calendar-links-categories-images-refresh.md), including authorized exact category filtering; wire/feed interoperability remains pending.

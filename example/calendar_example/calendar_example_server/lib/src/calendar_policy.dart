@@ -13,10 +13,17 @@ final class DemoCalendarPolicy implements CalendarHostPolicy {
     return CalendarHostContext(
       principalId: principal,
       scopeKey: 'demo:user:$principal',
-      policyRevision: 'private-scope-v4',
+      policyRevision: 'private-scope-v5',
     );
   }
 
+  @override
+  Future<CalendarEventCandidatePlan> planEventQuery(
+    Session s,
+    CalendarHostContext c,
+    CalendarPolicySnapshot calendar,
+    Set<CalendarEventFieldGroup> groups,
+  ) async => CalendarEventCandidatePlan();
   @override
   Future<CalendarCandidatePlan> planQuery(
     Session session,
@@ -40,6 +47,7 @@ final class DemoCalendarPolicy implements CalendarHostPolicy {
             ? CalendarAuthorizationVerdict.allow
             : CalendarAuthorizationVerdict.deny,
         disclosedGroups: request.requestedGroups,
+        eventDisclosedGroups: request.eventGroups,
         discloseMutationReceipt: true,
       ),
   ];
