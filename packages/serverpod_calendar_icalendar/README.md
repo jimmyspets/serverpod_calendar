@@ -9,3 +9,5 @@ See [syntax behavior, limits and boundaries](../../docs/icalendar-syntax.md) and
 From this directory, run `dart test` for VM tests or `dart test --platform chrome` for browser tests. The root check script includes both suites with the pinned workspace toolchain.
 
 Typed DATE, UTC/named-zone DATE-TIME and DURATION codecs now map individual raw wire values to core types. See [value behavior and boundaries](../../docs/icalendar-temporal-values.md). They preserve the whole-second 1970–2099 profile, explicit exclusive endpoints and duration units; this does not validate VTIMEZONE or a complete import.
+
+The [first standalone non-recurring VEVENT/VTIMEZONE profile](../../docs/icalendar-event-adapter.md) now maps accepted DATE/UTC/named-zone timing to core spans, validates full-horizon pinned zone agreement and preserves accepted source syntax. Complete property coverage, database import, authorized export and feed publication remain pending. Unsupported data rejects instead of disappearing.

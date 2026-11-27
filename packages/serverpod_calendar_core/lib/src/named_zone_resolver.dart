@@ -308,6 +308,69 @@ final class NamedZoneResolver {
     );
   }
 
+  /// Offset evidence over all supported civil dates plus UTC calculation edges.
+  ///
+  /// The fixed UTC horizon [1969-12-31, 2100-01-02) covers every ordinary local
+  /// value/exclusive endpoint under offsets smaller than one day. Unlike
+  /// [snapshot], this does not require padding instants to be ordinary civil
+  /// values. It never makes those dates valid for event storage or resolution.
+  ZoneRulesSnapshot calendarProfileSnapshot({
+    required String zoneId,
+    required int maxTransitions,
+  }) {
+    RangeError.checkValueInInterval(
+      maxTransitions,
+      0,
+      DateRecurrenceRule.maxScalar,
+      'maxTransitions',
+    );
+    final rules = _rules[zoneId];
+    if (rules == null) throw ArgumentError('Unknown exact IANA name');
+    final horizon = UtcWindow(
+      start: DateTime.utc(1969, 12, 31),
+      end: DateTime.utc(2100, 1, 2),
+    );
+    final first = horizon.start.microsecondsSinceEpoch;
+    final last = horizon.end.microsecondsSinceEpoch;
+    // This diagnostic field is a representative in-profile boundary, not an
+    // attempt to construct ordinary civil values from UTC padding.
+    final boundary = CivilDateTime(
+      date: CalendarDate(year: 1970, month: 1, day: 1),
+      hour: 0,
+      minute: 0,
+    );
+    void requireKnown(int at) {
+      if (!rules.covers(at) || !rules.at(at).known) {
+        throw ZoneCoverageException(zoneId, boundary);
+      }
+    }
+
+    requireKnown(first);
+    requireKnown(last - 1000000);
+    final changes = <ZoneOffsetChange>[];
+    for (final at in rules.transitions) {
+      if (at <= first || at >= last) continue;
+      requireKnown(at);
+      if (changes.length >= maxTransitions) {
+        throw const RecurrenceLimitException('maxTransitions');
+      }
+      changes.add(
+        ZoneOffsetChange(
+          instant: DateTime.fromMicrosecondsSinceEpoch(at, isUtc: true),
+          offset: Duration(microseconds: rules.at(at).micros),
+        ),
+      );
+    }
+    return ZoneRulesSnapshot(
+      zoneId: zoneId,
+      horizon: horizon,
+      initialOffset: Duration(microseconds: rules.at(first).micros),
+      changes: changes,
+      maxTransitions: maxTransitions,
+      dataVersion: dataVersion,
+    );
+  }
+
   /// Known-zone matching is limited to the supplied, fully expanded horizon.
   /// This does not parse or trust an imported VTIMEZONE component.
   bool matchesDefinition(
