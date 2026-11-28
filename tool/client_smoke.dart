@@ -121,6 +121,11 @@ Future<void> main(List<String> args) async {
         clients,
         values['demoBobPassword'] as String,
       );
+      await incomingPublicationSmoke(
+        clients,
+        values['demoBobPassword'] as String,
+        bundled: true,
+      );
     }
     if (args.contains('--incoming-publications-only')) return;
     if (mode == 'test' &&

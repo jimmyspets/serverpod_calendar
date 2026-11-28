@@ -92,6 +92,58 @@ DROP TABLE incoming_source_guard;
     print("PASS: incoming publication upgrades preserve populated legacy rows, add no invented state and retain separate cancellation source basis through index upgrades.")
 
 
+def verify_publication_bundle_upgrade(database):
+    sql(database, """
+INSERT INTO serverpod_calendar_identity(id,"scopeKey",revision)
+VALUES('18500000-0000-4000-8000-000000000010','bundle-upgrade',3);
+INSERT INTO serverpod_calendar_event(id,"calendarId",revision,"deletedAt") VALUES
+('18500000-0000-4000-8000-000000000011','18500000-0000-4000-8000-000000000010',2,NULL),
+('18500000-0000-4000-8000-000000000012','18500000-0000-4000-8000-000000000010',4,'2026-11-13');
+INSERT INTO serverpod_calendar_incoming_publication
+(id,"scopeKey","recipientKey","correlationDigest",uid,organizer,recurring,revision,"currentSourceId",kind,sequence,stamp,digest,"createdAt","updatedAt")
+SELECT ('18500000-0000-4000-8000-00000000000'||i)::uuid,'bundle-upgrade','alice',repeat(i::text,64),'synthetic-'||i,'mailto:publisher@example.invalid',true,2,
+('18500000-0000-4000-8000-00000000000'||(i+2))::uuid,'publication',0,'2026-11-13',repeat('3',64),'2026-11-13','2026-11-13' FROM generate_series(1,2) i;
+INSERT INTO serverpod_calendar_incoming_publication_link
+(id,"scopeKey","recipientKey","entryId","correlationDigest","calendarId","eventId","creationActorId","creationCommandId","creationDigest","creationReceipt","deletedAt")
+SELECT ('18500000-0000-4000-8000-00000000002'||i)::uuid,'bundle-upgrade','alice',
+('18500000-0000-4000-8000-00000000000'||i)::uuid,repeat(i::text,64),'18500000-0000-4000-8000-000000000010',
+('18500000-0000-4000-8000-00000000001'||i)::uuid,'alice',('18500000-0000-4000-8000-00000000003'||i)::uuid,repeat('4',64),'synthetic retained receipt',
+CASE WHEN i=2 THEN '2026-11-13'::timestamp ELSE NULL END FROM generate_series(1,2) i;
+CREATE TABLE publication_bundle_upgrade_guard(table_name text PRIMARY KEY,rows jsonb NOT NULL);
+DO $snapshot$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+ AND tablename NOT IN ('serverpod_migrations','publication_bundle_upgrade_guard') LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s',item.tablename) INTO contents;
+  INSERT INTO publication_bundle_upgrade_guard VALUES(item.tablename,contents);
+ END LOOP;
+END;
+$snapshot$;
+""")
+    sql(database, (SERVER / "migrations/20261113223532209-incoming-publication-bundles/migration.sql").read_text(encoding="utf-8"))
+    sql(database, """
+DO $verify$
+DECLARE item record; contents jsonb; expression text;
+BEGIN
+ FOR item IN SELECT * FROM publication_bundle_upgrade_guard LOOP
+  expression:=CASE WHEN item.table_name IN ('serverpod_calendar_incoming_publication','serverpod_calendar_incoming_publication_link') THEN 'to_jsonb(t)-''bundledPublication''' ELSE 'to_jsonb(t)' END;
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT %s AS v FROM %I t) s',expression,item.table_name) INTO contents;
+  IF contents IS DISTINCT FROM item.rows THEN RAISE EXCEPTION 'Bundle migration changed %',item.table_name; END IF;
+ END LOOP;
+ IF EXISTS(SELECT 1 FROM serverpod_calendar_incoming_publication WHERE "bundledPublication")
+ OR EXISTS(SELECT 1 FROM serverpod_calendar_incoming_publication_link WHERE "bundledPublication")
+ OR (SELECT count(*) FROM information_schema.columns WHERE table_schema='public'
+ AND table_name IN ('serverpod_calendar_incoming_publication','serverpod_calendar_incoming_publication_link')
+ AND column_name='bundledPublication' AND data_type='boolean' AND is_nullable='NO' AND column_default='false')<>2
+ THEN RAISE EXCEPTION 'Bundle migration guessed legacy profiles or differs from approved schema'; END IF;
+END;
+$verify$;
+DROP TABLE publication_bundle_upgrade_guard;
+""")
+    print("PASS: populated schema and active/deleted links survive publication bundle flags with false legacy profiles and no invented history.")
+
+
 def verify_information_publication_upgrade(database):
     sql(database, """
 CREATE TABLE information_upgrade_guard (table_name text PRIMARY KEY, rows jsonb NOT NULL);
@@ -817,8 +869,12 @@ def main():
     assert re.fullmatch(r"calendar_metadata_upgrade_[0-9]+", database)
     sql("postgres", f"CREATE DATABASE {database};")
     try:
-        if "--incoming-fresh-only" in __import__("sys").argv:
+        if "--publication-bundles-only" in __import__("sys").argv:
             sql(database, (SERVER / "migrations/20261113083105671-publication-retention-indexes/definition.sql").read_text(encoding="utf-8"))
+            verify_publication_bundle_upgrade(database)
+            return
+        if "--incoming-fresh-only" in __import__("sys").argv:
+            sql(database, (SERVER / "migrations/20261113223532209-incoming-publication-bundles/definition.sql").read_text(encoding="utf-8"))
             sql(database, """
 DO $verify_fresh_incoming$
 BEGIN
@@ -833,6 +889,10 @@ BEGIN
  OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='serverpod_calendar_cursor'
    AND column_name='incomingPublicationState' AND data_type='json' AND is_nullable='YES')
  THEN RAISE EXCEPTION 'Fresh publication basis/cursor shape differs'; END IF;
+ IF (SELECT count(*) FROM information_schema.columns WHERE table_schema='public'
+ AND table_name IN ('serverpod_calendar_incoming_publication','serverpod_calendar_incoming_publication_link')
+ AND column_name='bundledPublication' AND data_type='boolean' AND is_nullable='NO' AND column_default='false')<>2
+ THEN RAISE EXCEPTION 'Fresh bundle profiles differ'; END IF;
  IF EXISTS(SELECT 1 FROM serverpod_calendar_incoming_publication)
  OR EXISTS(SELECT 1 FROM serverpod_calendar_incoming_publication_source)
  OR EXISTS(SELECT 1 FROM serverpod_calendar_incoming_publication_receipt)
@@ -1543,6 +1603,7 @@ DROP TABLE reply_upgrade_guard;
         verify_freebusy_exchange_upgrade(database)
         verify_information_publication_upgrade(database)
         verify_incoming_publication_upgrade(database)
+        verify_publication_bundle_upgrade(database)
         print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated replies/invitations/links/checkpoints through instance, adoption, cancellation and private attendee-response upgrades; no personal response history is invented and ordinary cursor rows survive the occurrence-state addition without invented query state; known old invitation modes remain false without invented recurrence history.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

@@ -448,8 +448,10 @@ class EndpointPublicationDemo extends _isc.EndpointRef {
     int sequence,
     bool cancel,
     bool recurring,
-    String summary,
-  ) => caller
+    String summary, {
+    required bool bundled,
+    int? occurrenceSequence,
+  }) => caller
       .callServerEndpoint<_imrxcdin.CalendarIncomingPublicationIngressReceipt>(
         'publicationDemo',
         'simulate',
@@ -460,6 +462,8 @@ class EndpointPublicationDemo extends _isc.EndpointRef {
           'cancel': cancel,
           'recurring': recurring,
           'summary': summary,
+          'bundled': bundled,
+          'occurrenceSequence': occurrenceSequence,
         },
       );
 }

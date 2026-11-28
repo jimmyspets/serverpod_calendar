@@ -6,6 +6,16 @@ import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 /// Development/test provider fixture only; not production mailbox verification.
 final class DemoIncomingPublicationHost
     implements CalendarIncomingPublicationHost {
+  bool _supportedClaims(IcalendarSchedulingMessage message) =>
+      message.events.isNotEmpty &&
+      message.events.length <= 65 &&
+      message.events.every(
+        (event) =>
+            event.participants.organizer?.address ==
+                'mailto:publisher@example.invalid' &&
+            event.participants.organizer?.sentBy == null &&
+            event.participants.attendees.isEmpty,
+      );
   @override
   CalendarAuthorizationGuarantee get guarantee =>
       CalendarAuthorizationGuarantee.freshCheck;
@@ -35,11 +45,7 @@ final class DemoIncomingPublicationHost
         delivery.namespace != 'example.publication' ||
         delivery.originReference != 'synthetic:${recipient.key}' ||
         !message.uid.startsWith('synthetic-publication:${recipient.key}:') ||
-        message.events.length != 1 ||
-        message.events.single.participants.organizer?.address !=
-            'mailto:publisher@example.invalid' ||
-        message.events.single.participants.organizer?.sentBy != null ||
-        message.events.single.participants.attendees.isNotEmpty) {
+        !_supportedClaims(message)) {
       throw CalendarException(
         code: CalendarFailureCode.accessDenied,
         message: 'Publication access denied',
@@ -100,9 +106,7 @@ final class DemoIncomingPublicationHost
     ]) {
       if (message != null &&
           (!message.uid.startsWith('synthetic-publication:${recipient.key}:') ||
-              message.events.single.participants.organizer?.address !=
-                  'mailto:publisher@example.invalid' ||
-              message.events.single.participants.attendees.isNotEmpty)) {
+              !_supportedClaims(message))) {
         return CalendarAuthorizationVerdict.deny;
       }
     }

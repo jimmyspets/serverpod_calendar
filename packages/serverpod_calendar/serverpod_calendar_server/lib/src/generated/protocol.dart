@@ -192,7 +192,10 @@ import 'calendar_identity_record.dart' as _ibccnfmr;
 import 'calendar_image_link.dart' as _igf45b52;
 import 'calendar_incoming_publication_add_request.dart' as _iw4tkvp1;
 import 'calendar_incoming_publication_apply_request.dart' as _iwx57dr8;
+import 'calendar_incoming_publication_bundle_link_view.dart' as _iuuwg5p1;
+import 'calendar_incoming_publication_bundle_source_view.dart' as _i643jity;
 import 'calendar_incoming_publication_command_receipt.dart' as _i81webjm;
+import 'calendar_incoming_publication_component_version.dart' as _ifx9uy7a;
 import 'calendar_incoming_publication_cursor_state.dart' as _ihr6rru8;
 import 'calendar_incoming_publication_ingress_receipt.dart' as _i6qpukro;
 import 'calendar_incoming_publication_kind.dart' as _ing1vpo7;
@@ -511,7 +514,10 @@ export 'calendar_identity_record.dart';
 export 'calendar_image_link.dart';
 export 'calendar_incoming_publication_add_request.dart';
 export 'calendar_incoming_publication_apply_request.dart';
+export 'calendar_incoming_publication_bundle_link_view.dart';
+export 'calendar_incoming_publication_bundle_source_view.dart';
 export 'calendar_incoming_publication_command_receipt.dart';
+export 'calendar_incoming_publication_component_version.dart';
 export 'calendar_incoming_publication_cursor_state.dart';
 export 'calendar_incoming_publication_ingress_receipt.dart';
 export 'calendar_incoming_publication_kind.dart';
@@ -841,7 +847,10 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.getType<_igf45b52.CalendarImageLink>,
       _is.getType<_iw4tkvp1.CalendarIncomingPublicationAddRequest>,
       _is.getType<_iwx57dr8.CalendarIncomingPublicationApplyRequest>,
+      _is.getType<_iuuwg5p1.CalendarIncomingPublicationBundleLinkView>,
+      _is.getType<_i643jity.CalendarIncomingPublicationBundleSourceView>,
       _is.getType<_i81webjm.CalendarIncomingPublicationCommandReceipt>,
+      _is.getType<_ifx9uy7a.CalendarIncomingPublicationComponentVersion>,
       _is.getType<_ihr6rru8.CalendarIncomingPublicationCursorState>,
       _is.getType<_i6qpukro.CalendarIncomingPublicationIngressReceipt>,
       _is.getType<_ing1vpo7.CalendarIncomingPublicationKind>,
@@ -1157,7 +1166,10 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.getType<_igf45b52.CalendarImageLink?>,
       _is.getType<_iw4tkvp1.CalendarIncomingPublicationAddRequest?>,
       _is.getType<_iwx57dr8.CalendarIncomingPublicationApplyRequest?>,
+      _is.getType<_iuuwg5p1.CalendarIncomingPublicationBundleLinkView?>,
+      _is.getType<_i643jity.CalendarIncomingPublicationBundleSourceView?>,
       _is.getType<_i81webjm.CalendarIncomingPublicationCommandReceipt?>,
+      _is.getType<_ifx9uy7a.CalendarIncomingPublicationComponentVersion?>,
       _is.getType<_ihr6rru8.CalendarIncomingPublicationCursorState?>,
       _is.getType<_i6qpukro.CalendarIncomingPublicationIngressReceipt?>,
       _is.getType<_ing1vpo7.CalendarIncomingPublicationKind?>,
@@ -1387,6 +1399,8 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.getType<List<_iu6vjwqv.CalendarFreeBusyMessageView>>,
       _is.getType<List<_ilawc3ua.CalendarFreeBusyOutgoingView>>,
       _is.getType<List<_i82zcrxb.CalendarFreeBusyPeriod>>,
+      _is.getType<List<_ifx9uy7a.CalendarIncomingPublicationComponentVersion>>,
+      _is.getType<List<_ifx9uy7a.CalendarIncomingPublicationComponentVersion>?>,
       _is.getType<List<_i2n6sv2t.CalendarIncomingPublicationView>>,
       _is.getType<List<_iu3tvjvj.CalendarInvitationBundleComponentVersion>>,
       _is.getType<List<_iu3tvjvj.CalendarInvitationBundleComponentVersion>?>,
@@ -1585,7 +1599,10 @@ class Protocol extends _is.DatabaseSerializationManager
       'CalendarImageLink',
       'CalendarIncomingPublicationAddRequest',
       'CalendarIncomingPublicationApplyRequest',
+      'CalendarIncomingPublicationBundleLinkView',
+      'CalendarIncomingPublicationBundleSourceView',
       'CalendarIncomingPublicationCommandReceipt',
+      'CalendarIncomingPublicationComponentVersion',
       'CalendarIncomingPublicationCursorState',
       'CalendarIncomingPublicationIngressReceipt',
       'CalendarIncomingPublicationKind',
@@ -4680,6 +4697,13 @@ class Protocol extends _is.DatabaseSerializationManager
           columnDefault: 'random',
         ),
         _isp.ColumnDefinition(
+          name: 'bundledPublication',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isp.ColumnDefinition(
           name: 'scopeKey',
           columnType: _isp.ColumnType.text,
           isNullable: false,
@@ -4825,6 +4849,13 @@ class Protocol extends _is.DatabaseSerializationManager
           isNullable: false,
           dartType: 'UuidValue?',
           columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'bundledPublication',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
         ),
         _isp.ColumnDefinition(
           name: 'scopeKey',
@@ -9027,9 +9058,23 @@ class Protocol extends _is.DatabaseSerializationManager
       return _iwx57dr8.CalendarIncomingPublicationApplyRequest.fromJson(data)
           as T;
     }
+    if (t == _iuuwg5p1.CalendarIncomingPublicationBundleLinkView) {
+      return _iuuwg5p1.CalendarIncomingPublicationBundleLinkView.fromJson(data)
+          as T;
+    }
+    if (t == _i643jity.CalendarIncomingPublicationBundleSourceView) {
+      return _i643jity.CalendarIncomingPublicationBundleSourceView.fromJson(
+        data,
+      ) as T;
+    }
     if (t == _i81webjm.CalendarIncomingPublicationCommandReceipt) {
       return _i81webjm.CalendarIncomingPublicationCommandReceipt.fromJson(data)
           as T;
+    }
+    if (t == _ifx9uy7a.CalendarIncomingPublicationComponentVersion) {
+      return _ifx9uy7a.CalendarIncomingPublicationComponentVersion.fromJson(
+        data,
+      ) as T;
     }
     if (t == _ihr6rru8.CalendarIncomingPublicationCursorState) {
       return _ihr6rru8.CalendarIncomingPublicationCursorState.fromJson(data)
@@ -10468,9 +10513,36 @@ class Protocol extends _is.DatabaseSerializationManager
           as T;
     }
     if (t ==
+        _is.getType<_iuuwg5p1.CalendarIncomingPublicationBundleLinkView?>()) {
+      return (data != null
+              ? _iuuwg5p1.CalendarIncomingPublicationBundleLinkView.fromJson(
+                  data,
+                )
+              : null)
+          as T;
+    }
+    if (t ==
+        _is.getType<_i643jity.CalendarIncomingPublicationBundleSourceView?>()) {
+      return (data != null
+              ? _i643jity.CalendarIncomingPublicationBundleSourceView.fromJson(
+                  data,
+                )
+              : null)
+          as T;
+    }
+    if (t ==
         _is.getType<_i81webjm.CalendarIncomingPublicationCommandReceipt?>()) {
       return (data != null
               ? _i81webjm.CalendarIncomingPublicationCommandReceipt.fromJson(
+                  data,
+                )
+              : null)
+          as T;
+    }
+    if (t ==
+        _is.getType<_ifx9uy7a.CalendarIncomingPublicationComponentVersion?>()) {
+      return (data != null
+              ? _ifx9uy7a.CalendarIncomingPublicationComponentVersion.fromJson(
                   data,
                 )
               : null)
@@ -12054,6 +12126,34 @@ class Protocol extends _is.DatabaseSerializationManager
               .toList()
           as T;
     }
+    if (t == List<_ifx9uy7a.CalendarIncomingPublicationComponentVersion>) {
+      return (data as List)
+              .map(
+                (e) =>
+                    deserialize<
+                      _ifx9uy7a.CalendarIncomingPublicationComponentVersion
+                    >(e),
+              )
+              .toList()
+          as T;
+    }
+    if (t ==
+        _is
+            .getType<
+              List<_ifx9uy7a.CalendarIncomingPublicationComponentVersion>?
+            >()) {
+      return (data != null
+              ? (data as List)
+                    .map(
+                      (e) =>
+                          deserialize<
+                            _ifx9uy7a.CalendarIncomingPublicationComponentVersion
+                          >(e),
+                    )
+                    .toList()
+              : null)
+          as T;
+    }
     if (t == List<_i2n6sv2t.CalendarIncomingPublicationView>) {
       return (data as List)
               .map(
@@ -12552,8 +12652,14 @@ class Protocol extends _is.DatabaseSerializationManager
         'CalendarIncomingPublicationAddRequest',
       _iwx57dr8.CalendarIncomingPublicationApplyRequest =>
         'CalendarIncomingPublicationApplyRequest',
+      _iuuwg5p1.CalendarIncomingPublicationBundleLinkView =>
+        'CalendarIncomingPublicationBundleLinkView',
+      _i643jity.CalendarIncomingPublicationBundleSourceView =>
+        'CalendarIncomingPublicationBundleSourceView',
       _i81webjm.CalendarIncomingPublicationCommandReceipt =>
         'CalendarIncomingPublicationCommandReceipt',
+      _ifx9uy7a.CalendarIncomingPublicationComponentVersion =>
+        'CalendarIncomingPublicationComponentVersion',
       _ihr6rru8.CalendarIncomingPublicationCursorState =>
         'CalendarIncomingPublicationCursorState',
       _i6qpukro.CalendarIncomingPublicationIngressReceipt =>
@@ -13128,8 +13234,14 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'CalendarIncomingPublicationAddRequest';
       case _iwx57dr8.CalendarIncomingPublicationApplyRequest():
         return 'CalendarIncomingPublicationApplyRequest';
+      case _iuuwg5p1.CalendarIncomingPublicationBundleLinkView():
+        return 'CalendarIncomingPublicationBundleLinkView';
+      case _i643jity.CalendarIncomingPublicationBundleSourceView():
+        return 'CalendarIncomingPublicationBundleSourceView';
       case _i81webjm.CalendarIncomingPublicationCommandReceipt():
         return 'CalendarIncomingPublicationCommandReceipt';
+      case _ifx9uy7a.CalendarIncomingPublicationComponentVersion():
+        return 'CalendarIncomingPublicationComponentVersion';
       case _ihr6rru8.CalendarIncomingPublicationCursorState():
         return 'CalendarIncomingPublicationCursorState';
       case _i6qpukro.CalendarIncomingPublicationIngressReceipt():
@@ -14026,8 +14138,23 @@ class Protocol extends _is.DatabaseSerializationManager
         data['data'],
       );
     }
+    if (dataClassName == 'CalendarIncomingPublicationBundleLinkView') {
+      return deserialize<_iuuwg5p1.CalendarIncomingPublicationBundleLinkView>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarIncomingPublicationBundleSourceView') {
+      return deserialize<_i643jity.CalendarIncomingPublicationBundleSourceView>(
+        data['data'],
+      );
+    }
     if (dataClassName == 'CalendarIncomingPublicationCommandReceipt') {
       return deserialize<_i81webjm.CalendarIncomingPublicationCommandReceipt>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarIncomingPublicationComponentVersion') {
+      return deserialize<_ifx9uy7a.CalendarIncomingPublicationComponentVersion>(
         data['data'],
       );
     }

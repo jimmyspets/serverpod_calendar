@@ -74,7 +74,7 @@ try {
   try { Invoke-Checked dart @('test', 'test/unit') }
   finally { Pop-Location }
   Push-Location $ExampleServer
-  try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/calendar_test.dart', 'test/integration/incoming_publications_test.dart', 'test/integration/notification_test.dart', 'test/integration/feed_test.dart', 'test/integration/scheduling_test.dart', 'test/integration/scheduling_replies_test.dart', 'test/integration/recurring_scheduling_replies_test.dart', 'test/integration/item_text_metadata_test.dart', 'test/integration/item_category_search_test.dart', 'test/integration/invitation_test.dart', 'test/integration/invitation_adoption_test.dart', 'test/integration/invitation_application_test.dart', 'test/integration/invitation_cancellation_test.dart', 'test/integration/invitation_cancellation_application_test.dart', 'test/integration/imip_ingress_test.dart') }
+  try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/calendar_test.dart', 'test/integration/incoming_publications_test.dart', 'test/integration/incoming_publication_bundles_test.dart', 'test/integration/notification_test.dart', 'test/integration/feed_test.dart', 'test/integration/scheduling_test.dart', 'test/integration/scheduling_replies_test.dart', 'test/integration/recurring_scheduling_replies_test.dart', 'test/integration/item_text_metadata_test.dart', 'test/integration/item_category_search_test.dart', 'test/integration/invitation_test.dart', 'test/integration/invitation_adoption_test.dart', 'test/integration/invitation_application_test.dart', 'test/integration/invitation_cancellation_test.dart', 'test/integration/invitation_cancellation_application_test.dart', 'test/integration/imip_ingress_test.dart') }
   finally { Pop-Location }
   Push-Location $ExampleServer
   try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/invitation_responses_test.dart') }
@@ -98,6 +98,7 @@ try {
   Invoke-Checked dart @('run', 'tool/scheduling_work_smoke.dart', '--information')
   Invoke-Checked dart @('run', 'tool/scheduling_work_smoke.dart', '--information-occurrences')
   Invoke-Checked dart @('run', 'tool/incoming_publication_work_smoke.dart')
+    Invoke-Checked dart @('run', 'tool/incoming_publication_work_smoke.dart', '--bundles')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--recurring')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--instances')

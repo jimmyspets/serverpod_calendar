@@ -1036,9 +1036,10 @@ Accepted [ADR 0182](adr/0182-native-event-information-publication.md) authorizes
 - [ ] Inspect full exact-feature-head hosted inspection/runtime before readiness.
 
 
-## Proposed incoming complete information-publication bundles
+## Approved incoming complete information-publication bundles
 
-[Proposed ADR 0185](adr/0185-incoming-information-publication-bundles.md) groups initial PUBLISH bundle review/Add, complete component-aware updates and whole cancellation/reopening. It proposes two permanent profile columns, protected component-vector wrappers, dedicated authority/APIs and unchanged caps, preserving separate sender cancellation and accepted native bases. Complete-set/regression rejection is recommended, not a confirmed answer. Receipt remains review-only, Apply requires a clean entire series, and the implementation stays master-only until explicit agreement. No runtime/schema source is changed by this proposal.
+[Accepted ADR 0185](adr/0185-incoming-information-publication-bundles.md) groups initial complete PUBLISH review/Add, component-aware updates and whole cancellation/reopening. The maintainer approved the entire storage/API/version/authority contract and complete-set/regression policy. The [grouped implementation](incoming-information-publication-bundles.md) preserves sender/native cancellation bases and native drafts under unchanged caps. [Actual validation](validation-incoming-information-publication-bundles.md) is in progress; remaining partial-message and real-transport gates stay explicit.
 
-- [ ] Review the complete ADR 0185 product/model/API/version/lifecycle contract.
-- [ ] After approval, implement and validate the group together; retain remaining partial-message, cancellation and real-transport gates.
+- [x] Review and explicitly approve the complete ADR 0185 contract and complete-set policy.
+- [ ] Finish the grouped implementation and batch-end VM/Chrome/SDK/migration/recovery/JWT/Flutter checks before one feature commit.
+- [ ] Inspect full exact-head hosted inspection/runtime before readiness.

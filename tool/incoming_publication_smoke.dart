@@ -16,14 +16,42 @@ final class _Storage implements ClientAuthSuccessStorage {
 /// Real JWT clients on independent hosts; all source mail remains synthetic.
 Future<void> incomingPublicationSmoke(
   List<Client> clients,
-  String bobPassword,
-) async {
+  String bobPassword, {
+  bool bundled = false,
+}) async {
   if (clients.length != 2) throw StateError('Two hosts required');
   final a = clients[0].modules.serverpod_calendar,
       b = clients[1].modules.serverpod_calendar;
   final bob = Client(clients[1].host)
     ..authSessionManager = ClientAuthSessionManager(storage: _Storage());
   final anonymous = Client(clients[0].host);
+  final apis = [a.calendarIncomingPublication, b.calendarIncomingPublication];
+  Future<cal.CalendarIncomingPublicationCommandReceipt> add(
+    int host,
+    cal.CalendarIncomingPublicationAddRequest request,
+  ) => bundled
+      ? apis[host].addBundleToCalendar(request)
+      : apis[host].addToCalendar(request);
+  Future<cal.CalendarIncomingPublicationCommandReceipt> apply(
+    int host,
+    cal.CalendarIncomingPublicationApplyRequest request,
+  ) => bundled
+      ? apis[host].applyBundleSource(request)
+      : apis[host].applySource(request);
+  Future<cal.CalendarIncomingPublicationSourceView> source(
+    int host,
+    cal.UuidValue entry,
+    cal.UuidValue id,
+  ) async => bundled
+      ? (await apis[host].getBundleSource(entry, id)).source
+      : await apis[host].getSource(entry, id);
+  Future<cal.CalendarIncomingPublicationLinkView?> link(
+    int host,
+    cal.UuidValue entry,
+  ) async => bundled
+      ? (await apis[host].getBundleLink(entry))?.link
+      : await apis[host].getLink(entry);
+
   void require(bool ok, String reason) {
     if (!ok) throw StateError(reason);
   }
@@ -60,6 +88,7 @@ Future<void> incomingPublicationSmoke(
       false,
       true,
       'Synthetic published event',
+      bundled: bundled,
     );
     final repeated = await clients[1].publicationDemo.simulate(
       fixture,
@@ -68,11 +97,14 @@ Future<void> incomingPublicationSmoke(
       false,
       true,
       'Synthetic published event',
+      bundled: bundled,
     );
     require(repeated.id == received.id, 'Cross-host ingress receipt changed');
     final view = await b.calendarIncomingPublication.getEntry(received.entryId);
     require(
-      view.recurring && view.summary == 'Synthetic published event',
+      view.recurring &&
+          view.bundledPublication == bundled &&
+          view.summary == 'Synthetic published event',
       'Review projection changed',
     );
     await denied(
@@ -99,8 +131,8 @@ Future<void> incomingPublicationSmoke(
       expectedCalendarRevision: 1,
       commandId: cal.Uuid().v4obj(),
     );
-    final created = await a.calendarIncomingPublication.addToCalendar(input);
-    final retry = await b.calendarIncomingPublication.addToCalendar(input);
+    final created = await add(0, input);
+    final retry = await add(1, input);
     require(
       retry.unchanged && retry.eventId == created.eventId,
       'Cross-host Add receipt changed',
@@ -112,6 +144,7 @@ Future<void> incomingPublicationSmoke(
       false,
       true,
       'Synthetic published event',
+      bundled: bundled,
     );
     require(
       pending.outcome == cal.CalendarIncomingPublicationOutcome.selected,
@@ -124,13 +157,15 @@ Future<void> incomingPublicationSmoke(
       true,
       true,
       'Synthetic published event',
+      bundled: bundled,
     );
-    final source = await b.calendarIncomingPublication.getSource(
+    final cancellationSource = await source(
+      1,
       cancelled.entryId,
       cancelled.sourceId,
     );
     require(
-      source.basisSourceId == pending.sourceId,
+      cancellationSource.basisSourceId == pending.sourceId,
       'Cancellation lost newer unapplied source basis',
     );
     final cancelInput = cal.CalendarIncomingPublicationApplyRequest(
@@ -141,8 +176,8 @@ Future<void> incomingPublicationSmoke(
       commandId: cal.Uuid().v4obj(),
     );
     final results = await Future.wait([
-      a.calendarIncomingPublication.applySource(cancelInput),
-      b.calendarIncomingPublication.applySource(cancelInput),
+      apply(0, cancelInput),
+      apply(1, cancelInput),
     ]);
     require(
       results.every(
@@ -165,6 +200,7 @@ Future<void> incomingPublicationSmoke(
       false,
       true,
       'Synthetic published event',
+      bundled: bundled,
     );
     final reopenInput = cal.CalendarIncomingPublicationApplyRequest(
       entryId: reopen.entryId,
@@ -173,7 +209,7 @@ Future<void> incomingPublicationSmoke(
       expectedEventRevision: 2,
       commandId: cal.Uuid().v4obj(),
     );
-    await a.calendarIncomingPublication.applySource(reopenInput);
+    await apply(0, reopenInput);
     final restored = await b.calendarEvent.getEvent(
       created.eventId,
       cal.CalendarEventFieldGroup.values,
@@ -184,17 +220,14 @@ Future<void> incomingPublicationSmoke(
       'Explicit reopening failed',
     );
     await b.calendarEvent.deleteEvent(created.eventId, 3);
-    final historical = await a.calendarIncomingPublication.addToCalendar(input);
+    final historical = await add(0, input);
     require(
       historical.unchanged && historical.eventId == created.eventId,
       'Deleted creation retry recreated event',
     );
-    require(
-      (await b.calendarIncomingPublication.getLink(view.id))!.deleted,
-      'Deletion link marker absent',
-    );
+    require((await link(1, view.id))!.deleted, 'Deletion link marker absent');
     print(
-      'PASS: incoming publication MIME/JWT cross-host review, private source, separate basis, competing application, reopening and deletion retry.',
+      'PASS: incoming ${bundled ? "bundle" : "master"} publication MIME/JWT cross-host review, private source, separate basis, competing application, reopening and deletion retry.',
     );
   } finally {
     bob.close();

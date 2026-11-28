@@ -5,7 +5,7 @@ extension CalendarIncomingPublicationCommands on CalendarService {
     IcalendarSchedulingMessage message,
     UuidValue id,
   ) {
-    final p = _schedulingMasterProposal(message);
+    final p = _incomingProposal(message);
     return CalendarEventImportMember(
       eventId: id,
       protocolUid: p.protocolUid,
@@ -24,6 +24,7 @@ extension CalendarIncomingPublicationCommands on CalendarService {
           m.content,
           m.timingOverrides,
           m.protocolState,
+          sharedWorkBudget: _incomingWork,
         ),
       );
   String _incomingEventDigest(_Event e) => _incomingBaselineDigest(
@@ -32,6 +33,7 @@ extension CalendarIncomingPublicationCommands on CalendarService {
       e.data.content,
       e.data.timingOverrides,
       e.data.protocolState!,
+      sharedWorkBudget: _incomingWork,
     ),
   );
   CalendarIncomingPublicationCommandReceipt _incomingReceipt(
@@ -107,7 +109,7 @@ extension CalendarIncomingPublicationCommands on CalendarService {
     if (basis.method != IcalendarSchedulingMethod.publish) {
       throw _failure(CalendarFailureCode.unavailable);
     }
-    final proposal = _schedulingMasterProposal(basis);
+    final proposal = _incomingProposal(basis);
     if (_incomingBaselineDigest(proposal.importBaseline) !=
             link.baselineDigest ||
         _incomingBaselineDigest(e.data.importBaseline!) !=
@@ -285,8 +287,15 @@ extension CalendarIncomingPublicationCommands on CalendarService {
         if (proofLink?.acceptedSourceId != null) proofLink!.acceptedSourceId!,
         if (proofLink?.basisSourceId != null) proofLink!.basisSourceId!,
       }..remove(source.id);
-      for (final proofId in proofIds) {
+      final pendingProofs = proofIds.toList();
+      for (var i = 0; i < pendingProofs.length; i++) {
+        final proofId = pendingProofs[i];
         final proof = await _incomingSourceRow(entry, proofId, tx);
+        if (entry.bundledPublication &&
+            proof.basisSourceId != null &&
+            proofIds.add(proof.basisSourceId!)) {
+          pendingProofs.add(proof.basisSourceId!);
+        }
         await _incomingAuthorize(
           CalendarIncomingPublicationPolicyContext(
             operation: CalendarIncomingPublicationOperation.readSource,
@@ -320,6 +329,10 @@ extension CalendarIncomingPublicationCommands on CalendarService {
         tx,
         phase,
       );
+    }
+    if (entry.bundledPublication &&
+        phase == CalendarAuthorizationPhase.finalWrite) {
+      await _incomingRecheckBundleProofs(r, tx, actor: actor);
     }
     if (operation == CalendarIncomingPublicationOperation.applyUpdate &&
         current?.data.content.status == CalendarEventStatus.cancelled &&
@@ -372,8 +385,87 @@ extension CalendarIncomingPublicationCommands on CalendarService {
 
   Future<CalendarIncomingPublicationLinkView?> _incomingLinkView(
     UuidValue id,
+  ) => _incomingLinkQuery(
+    id,
+    false,
+    (view, entry, link, event, actor, recipient, tx) async => view,
+  );
+
+  Future<CalendarIncomingPublicationBundleLinkView?> _incomingGetBundleLink(
+    UuidValue id,
+  ) => _incomingLinkQuery(id, true, (
+    view,
+    entry,
+    link,
+    event,
+    actor,
+    recipient,
+    tx,
+  ) async {
+    if (view.deleted) {
+      return CalendarIncomingPublicationBundleLinkView(
+        link: view,
+        acceptedSourceUnavailable: true,
+        currentSourceUnavailable: true,
+      );
+    }
+    final current = await _incomingSourceRow(entry, entry.currentSourceId, tx);
+    final accepted = await _incomingSourceRow(
+      entry,
+      link.acceptedSourceId!,
+      tx,
+    );
+    final basis = await _incomingSourceRow(entry, link.basisSourceId!, tx);
+    final acceptedMessage = _incomingStored(entry, accepted);
+    final currentMessage = current.normalizedSource == null
+        ? null
+        : _incomingStored(entry, current);
+    await _incomingCommandHost(
+      CalendarIncomingPublicationOperation.readLink,
+      actor,
+      recipient,
+      entry,
+      current,
+      currentMessage,
+      tx,
+      CalendarAuthorizationPhase.read,
+      parent: event!.parent,
+      current: event,
+      basis: _incomingStored(entry, basis),
+      link: link,
+    );
+    return CalendarIncomingPublicationBundleLinkView(
+      link: view,
+      acceptedComponentVersions: _incomingBundleVersions(
+        _incomingStored(entry, basis),
+      ),
+      acceptedCancellationVersion:
+          acceptedMessage.method == IcalendarSchedulingMethod.cancel
+          ? _incomingBundleVersions(acceptedMessage).single
+          : null,
+      currentComponentVersions: currentMessage == null
+          ? null
+          : _incomingBundleVersions(currentMessage),
+      currentSourceUnavailable: currentMessage == null,
+    );
+  });
+
+  Future<T?> _incomingLinkQuery<T>(
+    UuidValue id,
+    bool bundled,
+    Future<T> Function(
+      CalendarIncomingPublicationLinkView,
+      CalendarIncomingPublicationRecord,
+      CalendarIncomingPublicationLinkRecord,
+      _Event?,
+      CalendarHostContext,
+      CalendarIncomingPublicationRecipient,
+      Transaction,
+    )
+    project,
   ) => _incomingScoped((actor, r, tx, _) async {
     final entry = await _incomingEntry(id, r, tx);
+    _incomingProfile(entry, bundled);
     final link = await _incomingFindLink(entry, tx);
     await _incomingAuthorize(
       CalendarIncomingPublicationPolicyContext(
@@ -401,7 +493,8 @@ extension CalendarIncomingPublicationCommands on CalendarService {
           marker.calendarId != link.calendarId) {
         throw _failure(CalendarFailureCode.unavailable);
       }
-      return CalendarIncomingPublicationLinkView(
+      final view = CalendarIncomingPublicationLinkView(
+        bundledPublication: entry.bundledPublication,
         id: link.id!,
         entryId: entry.id!,
         calendarId: link.calendarId,
@@ -413,6 +506,7 @@ extension CalendarIncomingPublicationCommands on CalendarService {
         creationReceipt: creation,
         latestApplyReceipt: latest,
       );
+      return project(view, entry, link, null, actor, r, tx);
     }
     final e = await _incomingLinkedEvent(link, entry, tx);
     await _incomingNative(
@@ -428,7 +522,8 @@ extension CalendarIncomingPublicationCommands on CalendarService {
       link.acceptedSourceId!,
       tx,
     );
-    return CalendarIncomingPublicationLinkView(
+    final view = CalendarIncomingPublicationLinkView(
+      bundledPublication: entry.bundledPublication,
       id: link.id!,
       entryId: entry.id!,
       calendarId: link.calendarId,
@@ -445,15 +540,18 @@ extension CalendarIncomingPublicationCommands on CalendarService {
       creationReceipt: creation,
       latestApplyReceipt: latest,
     );
+    return project(view, entry, link, e, actor, r, tx);
   });
 
   Future<CalendarIncomingPublicationCommandReceipt> _incomingAdd(
-    CalendarIncomingPublicationAddRequest input,
-  ) => _incomingScoped((actor, r, tx, scope) async {
+    CalendarIncomingPublicationAddRequest input, {
+    bool bundled = false,
+  }) => _incomingScoped((actor, r, tx, scope) async {
     final entry = await _incomingEntry(input.entryId, r, tx);
+    _incomingProfile(entry, bundled);
     final existing = await _incomingFindLink(entry, tx);
     final digest = _invitationHash([
-      'publication-add-v1',
+      bundled ? 'publication-bundle-add-v1' : 'publication-add-v1',
       actor.principalId,
       input.entryId.toString(),
       input.sourceId.toString(),
@@ -657,6 +755,7 @@ extension CalendarIncomingPublicationCommands on CalendarService {
     final link = await CalendarIncomingPublicationLinkRecord.db.insertRow(
       _session,
       CalendarIncomingPublicationLinkRecord(
+        bundledPublication: entry.bundledPublication,
         id: linkId,
         scopeKey: r.scopeKey,
         recipientKey: r.key,
@@ -711,13 +810,15 @@ extension CalendarIncomingPublicationCommands on CalendarService {
   });
 
   Future<CalendarIncomingPublicationCommandReceipt> _incomingApply(
-    CalendarIncomingPublicationApplyRequest input,
-  ) => _incomingScoped((actor, r, tx, scope) async {
+    CalendarIncomingPublicationApplyRequest input, {
+    bool bundled = false,
+  }) => _incomingScoped((actor, r, tx, scope) async {
     final entry = await _incomingEntry(input.entryId, r, tx);
+    _incomingProfile(entry, bundled);
     final link = await _incomingFindLink(entry, tx);
     if (link == null) throw _failure(CalendarFailureCode.dependencyConflict);
     final digest = _invitationHash([
-      'publication-apply-v1',
+      bundled ? 'publication-bundle-apply-v1' : 'publication-apply-v1',
       actor.principalId,
       input.entryId.toString(),
       input.sourceId.toString(),
@@ -902,7 +1003,17 @@ extension CalendarIncomingPublicationCommands on CalendarService {
       link.acceptedSourceId!,
       tx,
     );
-    if (_incomingVersion(
+    if (entry.bundledPublication) {
+      await _incomingBundleAdmission(
+        entry,
+        link,
+        message,
+        source.digest,
+        r,
+        tx,
+        actor: actor,
+      );
+    } else if (_incomingVersion(
           source.sequence,
           source.stamp,
           accepted.sequence,
@@ -921,6 +1032,7 @@ extension CalendarIncomingPublicationCommands on CalendarService {
             member.content,
             member.timingOverrides,
             member.protocolState,
+            sharedWorkBudget: _incomingWork,
           )
         : e.data.importBaseline!;
     final receipt = CalendarIncomingPublicationCommandReceipt(

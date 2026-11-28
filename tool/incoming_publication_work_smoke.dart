@@ -6,16 +6,17 @@ import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
 
 final class _Probe {
-  _Probe(this.process, this.lines, this.log) {
+  _Probe(this.process, this.lines, this.log, {this.bundled = false}) {
     unawaited(process.exitCode.then((_) => exited = true));
   }
   final Process process;
   final StreamIterator<String> lines;
   final IOSink log;
+  final bool bundled;
   Completer<void>? paused;
   bool stopped = false, exited = false;
   Future<Map<String, dynamic>> command(Map<String, Object?> input) async {
-    process.stdin.writeln(jsonEncode(input));
+    process.stdin.writeln(jsonEncode({...input, 'bundled': bundled}));
     await process.stdin.flush();
     while (await lines.moveNext().timeout(const Duration(seconds: 60))) {
       final line = lines.current;
@@ -49,7 +50,12 @@ final class _Probe {
   }
 }
 
-String _wire(String id, int sequence, {bool cancel = false}) => [
+String _wire(
+  String id,
+  int sequence, {
+  bool cancel = false,
+  bool bundled = false,
+}) => [
   'BEGIN:VCALENDAR',
   'VERSION:2.0',
   'PRODID:-//Synthetic recovery//EN',
@@ -58,16 +64,30 @@ String _wire(String id, int sequence, {bool cancel = false}) => [
   'UID:probe-$id@example.invalid',
   'ORGANIZER:mailto:publisher@example.invalid',
   'DTSTAMP:20261113T070000Z',
-  'SEQUENCE:$sequence',
+  'SEQUENCE:${bundled && sequence == 1 && !cancel ? 0 : sequence}',
   'DTSTART:20270328T090000Z',
   'DURATION:PT1H',
   'SUMMARY:Synthetic publication',
+  if (bundled) 'RRULE:FREQ=DAILY;COUNT=4',
   if (cancel) 'STATUS:CANCELLED',
   'END:VEVENT',
+  if (bundled && !cancel) ...[
+    'BEGIN:VEVENT',
+    'UID:probe-$id@example.invalid',
+    'ORGANIZER:mailto:publisher@example.invalid',
+    'DTSTAMP:20261113T070000Z',
+    'SEQUENCE:$sequence',
+    'RECURRENCE-ID:20270329T090000Z',
+    'DTSTART:20270329T${11 + sequence}0000Z',
+    'DURATION:PT1H',
+    'SUMMARY:Synthetic occurrence',
+    'END:VEVENT',
+  ],
   'END:VCALENDAR',
   '',
 ].join('\r\n');
-Future<void> main() async {
+Future<void> main(List<String> args) async {
+  final bundled = args.contains('--bundles');
   final root = Directory.current.absolute.path, probes = <_Probe>[];
   final markers = <File>[];
   final server = '$root/example/calendar_example/calendar_example_server';
@@ -112,7 +132,7 @@ Future<void> main() async {
     final lines = StreamIterator(
       process.stdout.transform(utf8.decoder).transform(const LineSplitter()),
     );
-    final probe = _Probe(process, lines, log);
+    final probe = _Probe(process, lines, log, bundled: bundled);
     probes.add(probe);
     while (await lines.moveNext().timeout(const Duration(seconds: 90))) {
       log.writeln(lines.current);
@@ -139,7 +159,7 @@ Future<void> main() async {
           'command': 'receive',
           'caseId': id,
           'key': cal.Uuid().v4(),
-          'wire': _wire(id, sequence, cancel: cancel),
+          'wire': _wire(id, sequence, cancel: cancel, bundled: bundled),
         });
         late Map<String, Object?> command;
         if (operation == 'receive') {
@@ -147,7 +167,7 @@ Future<void> main() async {
             'command': 'receive',
             'caseId': id,
             'key': key,
-            'wire': _wire(id, 0),
+            'wire': _wire(id, 0, bundled: bundled),
           };
         } else {
           final source = await receive(0),
@@ -249,6 +269,18 @@ Future<void> main() async {
                     : 2),
             'Recovery committed mutation twice',
           );
+          if (bundled) {
+            require(
+              jsonEncode(state['bundled']) == '[true]' &&
+                  jsonEncode(state['childSequences']) ==
+                      (operation == 'update'
+                          ? '[1]'
+                          : operation == 'reopen'
+                          ? '[2]'
+                          : '[0]'),
+              'Recovery changed the bundle profile or independent child version',
+            );
+          }
         }
         print(
           'PASS: publication $operation $stage-commit process loss and reauthorized exact retry.',
@@ -257,6 +289,75 @@ Future<void> main() async {
           a = await start('a-$operation-$stage', 18780);
         }
       }
+    }
+    if (bundled) {
+      a = await start('bundle-races', 18780);
+      final id = cal.Uuid().v4();
+      final intake = <String, Object?>{
+        'command': 'receive',
+        'caseId': id,
+        'key': cal.Uuid().v4(),
+        'wire': _wire(id, 0, bundled: true),
+      };
+      final received = await Future.wait([
+        a.command(intake),
+        b.command(intake),
+      ]);
+      require(
+        received[0]['id'] == received[1]['id'],
+        'Competing intake duplicated the receipt',
+      );
+      final source = received.first;
+      final parent = await b.command({'command': 'calendar', 'caseId': id});
+      final add = <String, Object?>{
+        'command': 'add',
+        'caseId': id,
+        'request': {
+          'entryId': source['entryId'],
+          'sourceId': source['sourceId'],
+          'expectedRevision': source['entryRevision'],
+          'calendarId': parent['calendarId'],
+          'expectedCalendarRevision': 1,
+          'commandId': cal.Uuid().v4(),
+        },
+      };
+      final additions = await Future.wait([a.command(add), b.command(add)]);
+      require(
+        additions[0]['eventId'] != null &&
+            additions[0]['eventId'] == additions[1]['eventId'],
+        'Competing adoption did not converge on one event',
+      );
+      final update = await b.command({
+        ...intake,
+        'key': cal.Uuid().v4(),
+        'wire': _wire(id, 1, bundled: true),
+      });
+      final apply = <String, Object?>{
+        'command': 'apply',
+        'caseId': id,
+        'request': {
+          'entryId': update['entryId'],
+          'sourceId': update['sourceId'],
+          'expectedRevision': update['entryRevision'],
+          'expectedEventRevision': 1,
+          'commandId': cal.Uuid().v4(),
+        },
+      };
+      final applied = await Future.wait([a.command(apply), b.command(apply)]);
+      require(
+        applied.every((r) => r['eventRevision'] == 2 && r['error'] == null),
+        'Competing child-only application changed the result',
+      );
+      final state = await b.command({'command': 'inspect', 'caseId': id});
+      require(
+        state['events'] == 1 &&
+            jsonEncode(state['revisions']) == '[2]' &&
+            jsonEncode(state['childSequences']) == '[1]',
+        'Concurrent bundle mutations were duplicated',
+      );
+      print(
+        'PASS: two independent hosts converge on bundle intake, adoption and child-only application.',
+      );
     }
   } finally {
     for (final probe in probes.reversed) {

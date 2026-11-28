@@ -34,4 +34,23 @@ class CalendarIncomingPublicationEndpoint extends Endpoint {
     Session session,
     CalendarIncomingPublicationApplyRequest input,
   ) => CalendarModule.service(session).incomingPublicationApply(input);
+  Future<CalendarIncomingPublicationBundleSourceView> getBundleSource(
+    Session session,
+    UuidValue id,
+    UuidValue sourceId,
+  ) =>
+      CalendarModule.service(session)
+          .incomingPublicationBundleSource(id, sourceId);
+  Future<CalendarIncomingPublicationBundleLinkView?> getBundleLink(
+    Session session,
+    UuidValue id,
+  ) => CalendarModule.service(session).incomingPublicationBundleLink(id);
+  Future<CalendarIncomingPublicationCommandReceipt> addBundleToCalendar(
+    Session session,
+    CalendarIncomingPublicationAddRequest input,
+  ) => CalendarModule.service(session).incomingPublicationAddBundle(input);
+  Future<CalendarIncomingPublicationCommandReceipt> applyBundleSource(
+    Session session,
+    CalendarIncomingPublicationApplyRequest input,
+  ) => CalendarModule.service(session).incomingPublicationApplyBundle(input);
 }

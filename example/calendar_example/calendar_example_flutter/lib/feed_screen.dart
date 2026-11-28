@@ -82,6 +82,9 @@ class _FeedScreenState extends State<FeedScreen> {
         ),
       ],
     ),
+    bottomNavigationBar: _busy
+        ? const LinearProgressIndicator(key: Key('feed-list-progress'))
+        : null,
     body: ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -89,7 +92,6 @@ class _FeedScreenState extends State<FeedScreen> {
           'Read-only event subscriptions. Choose calendars and explicit feed presentation. '
           'Tasks, working-hours rules and alarms are excluded. Anyone holding a subscription URL can forward it.',
         ),
-        if (_busy) const LinearProgressIndicator(),
         if (_error != null) Text(_error!, key: const Key('feed-error')),
         FilledButton(
           key: const Key('feed-create'),
@@ -278,104 +280,114 @@ class _FeedEditorState extends State<FeedEditor> {
             : 'Edit subscription feed',
       ),
     ),
-    body: ListView(
+    bottomNavigationBar: _busy
+        ? const LinearProgressIndicator(key: Key('feed-editor-progress'))
+        : null,
+    // Both metadata panels own unsaved form state. Keep this bounded example
+    // form mounted when the Save control scrolls a panel out of view.
+    body: SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      children: [
-        if (_busy) const LinearProgressIndicator(),
-        if (_error != null) Text(_error!, key: const Key('feed-error')),
-        TextField(
-          key: const Key('feed-name'),
-          controller: _name,
-          enabled: !_busy,
-          decoration: const InputDecoration(labelText: 'Feed management label'),
-        ),
-        const Text(
-          'Select one to sixteen calendars. The server rechecks publication permission for every source. '
-          'A missing, unsupported or unauthorized source prevents the whole feed from being published.',
-        ),
-        for (final calendar in _calendars)
-          CheckboxListTile(
-            key: Key('feed-calendar-${calendar.id}'),
-            title: Text(calendar.displayName ?? calendar.id.toString()),
-            value: _selected.contains(calendar.id),
-            onChanged:
-                _busy ||
-                    !_selected.contains(calendar.id) && _selected.length >= 16
-                ? null
-                : (value) => setState(() {
-                    if (value == true) {
-                      _selected.add(calendar.id);
-                    } else {
-                      _selected.remove(calendar.id);
-                    }
-                  }),
-          ),
-        for (final id
-            in _selected
-                .where((id) => !_calendars.any((c) => c.id == id))
-                .toList())
-          CheckboxListTile(
-            key: Key('feed-calendar-$id'),
-            title: Text('Selected calendar $id'),
-            value: true,
-            onChanged: _busy
-                ? null
-                : (_) => setState(() => _selected.remove(id)),
-          ),
-        if (_cursor != null)
-          TextButton(
-            onPressed: _busy ? null : _more,
-            child: const Text('More calendars'),
-          ),
-        ExpansionTile(
-          title: const Text('Publication text and color'),
-          maintainState: true,
-          children: [
-            const Text(
-              'These are feed values, separate from management labels and calendar metadata. Copying is explicit.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_error != null) Text(_error!, key: const Key('feed-error')),
+          TextField(
+            key: const Key('feed-name'),
+            controller: _name,
+            enabled: !_busy,
+            decoration: const InputDecoration(
+              labelText: 'Feed management label',
             ),
-            ProtocolMetadataEditor(
-              key: _protocol,
-              initial: _text,
-              busy: _busy || !_loaded,
-              nativeName: () => _name.text,
-              nativeDescription: () => '',
-              onSave: _save,
+          ),
+          const Text(
+            'Select one to sixteen calendars. The server rechecks publication permission for every source. '
+            'A missing, unsupported or unauthorized source prevents the whole feed from being published.',
+          ),
+          for (final calendar in _calendars)
+            CheckboxListTile(
+              key: Key('feed-calendar-${calendar.id}'),
+              title: Text(calendar.displayName ?? calendar.id.toString()),
+              value: _selected.contains(calendar.id),
+              onChanged:
+                  _busy ||
+                      !_selected.contains(calendar.id) && _selected.length >= 16
+                  ? null
+                  : (value) => setState(() {
+                      if (value == true) {
+                        _selected.add(calendar.id);
+                      } else {
+                        _selected.remove(calendar.id);
+                      }
+                    }),
+            ),
+          for (final id
+              in _selected
+                  .where((id) => !_calendars.any((c) => c.id == id))
+                  .toList())
+            CheckboxListTile(
+              key: Key('feed-calendar-$id'),
+              title: Text('Selected calendar $id'),
+              value: true,
+              onChanged: _busy
+                  ? null
+                  : (_) => setState(() => _selected.remove(id)),
+            ),
+          if (_cursor != null)
+            TextButton(
+              key: const Key('feed-more-calendars'),
+              onPressed: _busy ? null : _more,
+              child: const Text('More calendars'),
+            ),
+          ExpansionTile(
+            title: const Text('Publication text and color'),
+            maintainState: true,
+            children: [
+              const Text(
+                'These are feed values, separate from management labels and calendar metadata. Copying is explicit.',
+              ),
+              ProtocolMetadataEditor(
+                key: _protocol,
+                initial: _text,
+                busy: _busy || !_loaded,
+                nativeName: () => _name.text,
+                nativeDescription: () => '',
+                onSave: _save,
+              ),
+            ],
+          ),
+          ExpansionTile(
+            title: const Text('Publication links and hints'),
+            maintainState: true,
+            children: [
+              SupplementalMetadataEditor(
+                key: _extra,
+                initial: _supplemental,
+                busy: _busy || !_loaded,
+                onSave: _save,
+              ),
+            ],
+          ),
+          FilledButton(
+            key: const Key('feed-save'),
+            onPressed: _busy || !_loaded ? null : _save,
+            child: const Text('Save feed'),
+          ),
+          if (_view != null) ...[
+            Text(
+              'Revision ${_view!.revision}. Publication identity ${_view!.protocolUid}.',
+            ),
+            TextButton(
+              onPressed: _busy ? null : _load,
+              child: const Text('Reload saved settings'),
+            ),
+            TextButton(
+              key: const Key('feed-delete'),
+              onPressed: _busy ? null : _delete,
+              child: const Text('Delete feed'),
             ),
           ],
-        ),
-        ExpansionTile(
-          title: const Text('Publication links and hints'),
-          maintainState: true,
-          children: [
-            SupplementalMetadataEditor(
-              key: _extra,
-              initial: _supplemental,
-              busy: _busy || !_loaded,
-              onSave: _save,
-            ),
-          ],
-        ),
-        FilledButton(
-          key: const Key('feed-save'),
-          onPressed: _busy || !_loaded ? null : _save,
-          child: const Text('Save feed'),
-        ),
-        if (_view != null) ...[
-          Text(
-            'Revision ${_view!.revision}. Publication identity ${_view!.protocolUid}.',
-          ),
-          TextButton(
-            onPressed: _busy ? null : _load,
-            child: const Text('Reload saved settings'),
-          ),
-          TextButton(
-            key: const Key('feed-delete'),
-            onPressed: _busy ? null : _delete,
-            child: const Text('Delete feed'),
-          ),
         ],
-      ],
+      ),
     ),
   );
 }

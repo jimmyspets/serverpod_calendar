@@ -1,6 +1,6 @@
 # ADR 0185: Incoming complete information-publication bundles
 
-Status: **Proposed; explicit maintainer agreement required before model/runtime changes.** Complete-set/regression rejection is the recommended policy, not a recorded maintainer answer. This document makes the next grouped review concrete.
+Status: **Accepted by explicit maintainer agreement, 2026-11-13.** The maintainer approved the complete grouped contract in PR #201 and confirmed complete component sets with regression rejection. Implementation/validation are tracked separately.
 
 ## Context and source evidence
 
@@ -10,7 +10,7 @@ The [incoming master workflow](../incoming-event-publications.md) deliberately r
 
 Accepted ADRs [0174](0174-complete-bundled-invitation-updates.md), [0175](0175-bundled-invitation-whole-lifecycle.md) and [0183](0183-incoming-event-publication-workflow.md) provide the component-vector, lossless lifecycle and separate sender/native cancellation-basis precedents. Information publication must retain its independent purpose and authority.
 
-## Proposed complete group
+## Approved complete group
 
 Implement trusted complete PUBLISH intake/private review, explicit Add, clean-series complete update, whole CANCEL/reopening, generated clients and synthetic MIME/Flutter/two-host recovery together. Receipt/dismissal sends no reply and changes no calendar. No partial component merge, detached message, instance/range cancellation, participant response, real transport or alarm adoption is added.
 
@@ -28,7 +28,7 @@ Whole CANCEL requires known bundle correlation and an explicit SEQUENCE above ev
 
 Keep the last complete accepted PUBLISH baseline unchanged. Apply cancellation changes only the approved native lifecycle/protocol projection; retain component values, omissions and independent versions for later reopening. The cancellation source's existing `basisSourceId` identifies the sender's full packet, which may differ from the link's accepted native `basisSourceId`. Never adopt an unapplied sender update through cancellation. Preserve this separation through pruning, retries and repeated lifecycle cycles; reject any unrepresentable projection without partial writes.
 
-## Proposed storage and API review
+## Approved storage and API
 
 Add `bundledPublication: bool, default=false` to the existing **entry and permanent link tables**: two additive SQL columns, no new table/index or larger quota. False initializes the previously enforced master-only profile, not inferred provenance. True is fixed by first complete-bundle admission/adoption; retain it through cancellation, queue pruning/reconstruction and content-free deleted-link retries. Reject profile disagreement or attempted conversion. Generate module/example migrations and prove fresh/populated upgrade behavior; never hand-edit generated metadata.
 

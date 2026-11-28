@@ -405,7 +405,7 @@ void main() {
       },
     );
     test(
-      'master-only incoming publication intake still rejects a complete bundle',
+      'complete outgoing PUBLISH enters only the dedicated incoming bundle profile',
       () async {
         await change(
           1,
@@ -413,19 +413,37 @@ void main() {
           replacement: 2,
         );
         final outgoing = await record(await publish());
+        final received = await CalendarModule.receiveIncomingPublication(
+          session,
+          CalendarIncomingPublicationDelivery(
+            namespace: 'synthetic',
+            deliveryKey: 'bundle',
+            originReference: 'verified-publisher',
+            bytes: Uint8List.fromList(utf8.encode(outgoing.payload)),
+          ),
+        );
+        expect(await CalendarIncomingPublicationRecord.db.count(session), 1);
+        expect(
+          (await service.incomingPublicationGet(received.entryId))
+              .bundledPublication,
+          isTrue,
+        );
+        final source = await service.incomingPublicationBundleSource(
+          received.entryId,
+          received.sourceId,
+        );
+        expect(source.componentVersions, hasLength(2));
         await expectLater(
-          CalendarModule.receiveIncomingPublication(
-            session,
-            CalendarIncomingPublicationDelivery(
-              namespace: 'synthetic',
-              deliveryKey: 'bundle',
-              originReference: 'verified-publisher',
-              bytes: Uint8List.fromList(utf8.encode(outgoing.payload)),
-            ),
+          service.incomingPublicationSource(
+            received.entryId,
+            received.sourceId,
           ),
           failure(CalendarFailureCode.validation),
         );
-        expect(await CalendarIncomingPublicationRecord.db.count(session), 0);
+        await expectLater(
+          service.incomingPublicationLink(received.entryId),
+          failure(CalendarFailureCode.validation),
+        );
       },
     );
     test(
