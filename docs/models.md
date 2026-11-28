@@ -696,3 +696,7 @@ Accepted ADR 0135 adds shared immutable category/comment/field/patch DTOs, separ
 Accepted [ADR 0136](adr/0136-authorized-item-category-search.md) reuses CalendarCategoryFilter and existing cursor categoryFilter JSON for event/task list APIs, with immutable host query context and family/criteria binding. Pinned migration generation detected no SQL changes. Generated endpoint/client and host query-adapter signatures change together.
 
 Accepted ADR 0136 implements scoped per-calendar event/task master-category filtering with authorized category disclosure, immutable host query context, criteria-bound opaque continuations and Flutter Apply/Clear. See [the matching/privacy/limit guide](item-category-search.md) and batch validation. This supersedes earlier search-pending statements only for this bounded profile; broader queries and external interoperability remain separate.
+
+## Proposed invitation review storage
+
+[ADR 0137](adr/0137-trusted-invitation-intake-and-review.md) proposes CalendarInvitationRecord, CalendarInvitationSourceRecord and CalendarInvitationReceiptRecord for recipient-scoped correlation/current state, normalized source and trusted delivery-key receipts. Digest indexes verify retained exact values and avoid indexing large raw source identifiers. Review-first is confirmed; the concrete schemas, bounds, APIs and retention need explicit approval before table sources/migrations. No event/booking/participation link is proposed in this first batch.

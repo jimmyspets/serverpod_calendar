@@ -261,3 +261,7 @@ Accepted ADR 0135 adds independent event/task text metadata operations and URL/c
 Accepted [ADR 0136](adr/0136-authorized-item-category-search.md) requires category disclosure plus ordinary item-read authority before a filtered candidate can qualify. Immutable exact text/language criteria accompany actual list/item contexts and candidate planning; response groups remain caller-selected. A hidden matching label must not disclose an item through search. This provides no separate search-only permission or free/busy guarantee.
 
 Accepted ADR 0136 implements scoped per-calendar event/task master-category filtering with authorized category disclosure, immutable host query context, criteria-bound opaque continuations and Flutter Apply/Clear. See [the matching/privacy/limit guide](item-category-search.md) and batch validation. This supersedes earlier search-pending statements only for this bounded profile; broader queries and external interoperability remain separate.
+
+## Proposed invitation review authorization
+
+[ADR 0137](adr/0137-trusted-invitation-intake-and-review.md) proposes a trusted server-only ingress adapter resolving actual scope/recipient and verifying authority for the exact organizer/target address. Native review resolves the current recipient server-side, with independent receive/list/summary/source/dismiss gates and immutable preliminary/final context. Source claims and mail headers supply no authority. These concrete mechanics require approval; current reply ingress does not implement organizer REQUEST intake.

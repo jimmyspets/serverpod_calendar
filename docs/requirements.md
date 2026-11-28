@@ -442,3 +442,7 @@ Accepted ADR 0135 adds selected-field native event/task URL, classification, cat
 Searchable free-form labels and exact text matching are selected requirements. Accepted [ADR 0136](adr/0136-authorized-item-category-search.md) implements: one-calendar master-category queries, authorized membership disclosure, bounded scanning, criteria-bound opaque cursors and Flutter Apply/Clear journeys. The scoped query and editor behavior have separate validation; broader search remains outside this increment.
 
 Accepted ADR 0136 implements scoped per-calendar event/task master-category filtering with authorized category disclosure, immutable host query context, criteria-bound opaque continuations and Flutter Apply/Clear. See [the matching/privacy/limit guide](item-category-search.md) and batch validation. This supersedes earlier search-pending statements only for this bounded profile; broader queries and external interoperability remain separate.
+
+## Incoming invitation review policy
+
+The maintainer confirmed that a new authenticated non-recurring REQUEST remains in private review before explicit calendar addition. Receipt creates no event, booking or reply and records no acceptance. [ADR 0137](adr/0137-trusted-invitation-intake-and-review.md) proposes trusted intake/review/dismissal first; calendar adoption and existing-meeting reconciliation remain separate required work. Storage/API/retention mechanics are proposed, not implemented or approved by this product choice alone.
