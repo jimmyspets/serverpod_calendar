@@ -5,6 +5,7 @@ import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
 
 Future<void> invitationBundleSmoke(List<Client> clients) async {
+  await invitationBundleOccurrenceResponseSmoke(clients);
   final a = clients.first, b = clients.last;
   final api = a.modules.serverpod_calendar;
   final calendar = (await api.calendar.create(
@@ -327,5 +328,80 @@ Future<void> invitationBundleSmoke(List<Client> clients) async {
       await api.calendarEvent.deleteEvent(event, current.revision);
     }
     await api.calendar.delete(calendar, 1);
+  }
+}
+
+Future<void> invitationBundleOccurrenceResponseSmoke(
+  List<Client> clients,
+) async {
+  final a = clients.first.modules.serverpod_calendar.calendarInvitation,
+      b = clients.last.modules.serverpod_calendar.calendarInvitation;
+  final source = await clients.first.invitationDemo.simulateBundle(
+    const cal.Uuid().v4obj(),
+    const cal.Uuid().v4obj(),
+    2,
+    'Original response selection',
+  );
+  final ids = <cal.UuidValue>[];
+  try {
+    for (final (day, sequence) in [(1, 2), (3, null), (5, 12)]) {
+      final original = cal.CalendarEventTiming(
+        kind: cal.CalendarEventTimeKind.utc,
+        start: cal.CalendarEventCivil(year: 2030, month: 1, day: day, hour: 9),
+      );
+      final view = await b.bundleOccurrenceResponse(source.entryId, original);
+      if (!view.response.canSend ||
+          view.componentVersion?.sequence != sequence ||
+          view.response.revision != 0) {
+        throw StateError(
+          'Bundle target selected the wrong original/component version',
+        );
+      }
+      final command = cal.CalendarInvitationBundleOccurrenceResponseRequest(
+        originalStart: original,
+        request: cal.CalendarInvitationResponseRequest(
+          invitationId: source.entryId,
+          sourceId: view.currentSourceId!,
+          expectedInvitationRevision: view.invitationRevision,
+          expectedResponseRevision: 0,
+          commandId: const cal.Uuid().v4obj(),
+          choice: cal.CalendarInvitationResponseChoice.tentative,
+        ),
+      );
+      final raced = await Future.wait([
+        a.sendBundleOccurrenceResponse(command),
+        b.sendBundleOccurrenceResponse(command),
+      ]);
+      if (raced.first.id != raced.last.id || raced.first.stateRevision != 1) {
+        throw StateError('Cross-host target retry changed immutable receipt');
+      }
+      ids.add(raced.first.id);
+      final actual = await a.bundleOccurrenceResponse(source.entryId, original);
+      final history = await b.bundleOccurrenceResponseActivity(
+        source.entryId,
+        original,
+      );
+      if (actual.response.revision != 1 ||
+          actual.response.originalStart?.start.day != day ||
+          history.single.sourceSequence != sequence ||
+          !actual.response.appliesToCurrentSource ||
+          await a.link(source.entryId) != null ||
+          (await b.bundleResponse(source.entryId)).revision != 0) {
+        throw StateError(
+          'Target reply changed a sibling/master/adoption or lost selected version',
+        );
+      }
+    }
+    if (ids.toSet().length != 3) {
+      throw StateError('Distinct originals share reply identity');
+    }
+    stdout.writeln(
+      'PASS: two JWT hosts independently respond to unlisted, moved single and range/PERIOD originals with exact component versions, stable retries and no adoption/master participation.',
+    );
+  } finally {
+    final current = await b.getInvitation(source.entryId);
+    if (current.dismissedAt == null) {
+      await b.dismiss(current.id, current.revision);
+    }
   }
 }

@@ -13,7 +13,10 @@
 import 'dart:async' as _ida;
 
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_calendar_server/src/generated/protocol.dart'
+    as _ix00hwbf;
 
+import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_invitation_response_choice.dart' as _il64jj9v;
 import 'calendar_invitation_response_delivery_state.dart' as _iw51ozry;
 
@@ -24,6 +27,8 @@ abstract class CalendarInvitationResponseStateRecord
     required this.scopeKey,
     required this.recipientKey,
     required this.entryId,
+    String? targetKey,
+    this.responseOriginalStart,
     required this.recipientAddress,
     required this.revision,
     required this.latestResponseId,
@@ -37,13 +42,15 @@ abstract class CalendarInvitationResponseStateRecord
     required this.outcome,
     required this.createdAt,
     required this.updatedAt,
-  });
+  }) : targetKey = targetKey ?? 'entry';
 
   factory CalendarInvitationResponseStateRecord({
     _is.UuidValue? id,
     required String scopeKey,
     required String recipientKey,
     required _is.UuidValue entryId,
+    String? targetKey,
+    _ieswiaty.CalendarEventTiming? responseOriginalStart,
     required String recipientAddress,
     required int revision,
     required _is.UuidValue latestResponseId,
@@ -71,6 +78,12 @@ abstract class CalendarInvitationResponseStateRecord
       entryId: _is.UuidValueJsonExtension.fromJson(
         jsonSerialization['entryId'],
       ),
+      targetKey: jsonSerialization['targetKey'] as String?,
+      responseOriginalStart: jsonSerialization['responseOriginalStart'] == null
+          ? null
+          : _ix00hwbf.Protocol().deserialize<_ieswiaty.CalendarEventTiming>(
+              jsonSerialization['responseOriginalStart'],
+            ),
       recipientAddress: jsonSerialization['recipientAddress'] as String,
       revision: jsonSerialization['revision'] as int,
       latestResponseId: _is.UuidValueJsonExtension.fromJson(
@@ -116,6 +129,10 @@ abstract class CalendarInvitationResponseStateRecord
 
   _is.UuidValue entryId;
 
+  String targetKey;
+
+  _ieswiaty.CalendarEventTiming? responseOriginalStart;
+
   String recipientAddress;
 
   int revision;
@@ -153,6 +170,9 @@ abstract class CalendarInvitationResponseStateRecord
     String? scopeKey,
     String? recipientKey,
     _is.UuidValue? entryId,
+    String? targetKey,
+    _ieswiaty.CalendarEventTiming? responseOriginalStart =
+        const _UndefinedCalendarInvitationResponseStateRecord$responseOriginalStart(),
     String? recipientAddress,
     int? revision,
     _is.UuidValue? latestResponseId,
@@ -176,6 +196,9 @@ abstract class CalendarInvitationResponseStateRecord
       'scopeKey': scopeKey,
       'recipientKey': recipientKey,
       'entryId': entryId.toJson(),
+      'targetKey': targetKey,
+      if (responseOriginalStart != null)
+        'responseOriginalStart': responseOriginalStart?.toJson(),
       'recipientAddress': recipientAddress,
       'revision': revision,
       'latestResponseId': latestResponseId.toJson(),
@@ -229,6 +252,12 @@ abstract class CalendarInvitationResponseStateRecord
 
 class _Undefined {}
 
+class _UndefinedCalendarInvitationResponseStateRecord$responseOriginalStart
+    extends _is.UndefinedSentinel
+    implements _ieswiaty.CalendarEventTiming {
+  const _UndefinedCalendarInvitationResponseStateRecord$responseOriginalStart();
+}
+
 class _CalendarInvitationResponseStateRecordImpl
     extends CalendarInvitationResponseStateRecord {
   _CalendarInvitationResponseStateRecordImpl({
@@ -236,6 +265,8 @@ class _CalendarInvitationResponseStateRecordImpl
     required String scopeKey,
     required String recipientKey,
     required _is.UuidValue entryId,
+    String? targetKey,
+    _ieswiaty.CalendarEventTiming? responseOriginalStart,
     required String recipientAddress,
     required int revision,
     required _is.UuidValue latestResponseId,
@@ -254,6 +285,8 @@ class _CalendarInvitationResponseStateRecordImpl
          scopeKey: scopeKey,
          recipientKey: recipientKey,
          entryId: entryId,
+         targetKey: targetKey,
+         responseOriginalStart: responseOriginalStart,
          recipientAddress: recipientAddress,
          revision: revision,
          latestResponseId: latestResponseId,
@@ -278,6 +311,9 @@ class _CalendarInvitationResponseStateRecordImpl
     String? scopeKey,
     String? recipientKey,
     _is.UuidValue? entryId,
+    String? targetKey,
+    _ieswiaty.CalendarEventTiming? responseOriginalStart =
+        const _UndefinedCalendarInvitationResponseStateRecord$responseOriginalStart(),
     String? recipientAddress,
     int? revision,
     _is.UuidValue? latestResponseId,
@@ -297,6 +333,10 @@ class _CalendarInvitationResponseStateRecordImpl
       scopeKey: scopeKey ?? this.scopeKey,
       recipientKey: recipientKey ?? this.recipientKey,
       entryId: entryId ?? this.entryId,
+      targetKey: targetKey ?? this.targetKey,
+      responseOriginalStart: responseOriginalStart is _is.UndefinedSentinel
+          ? this.responseOriginalStart?.copyWith()
+          : responseOriginalStart,
       recipientAddress: recipientAddress ?? this.recipientAddress,
       revision: revision ?? this.revision,
       latestResponseId: latestResponseId ?? this.latestResponseId,
@@ -333,6 +373,18 @@ class CalendarInvitationResponseStateRecordUpdateTable
   _is.ColumnValue<_is.UuidValue, _is.UuidValue> entryId(_is.UuidValue value) =>
       _is.ColumnValue(
         table.entryId,
+        value,
+      );
+
+  _is.ColumnValue<String, String> targetKey(String value) => _is.ColumnValue(
+    table.targetKey,
+    value,
+  );
+
+  _is.ColumnValue<_ieswiaty.CalendarEventTiming, _ieswiaty.CalendarEventTiming>
+  responseOriginalStart(_ieswiaty.CalendarEventTiming? value) =>
+      _is.ColumnValue(
+        table.responseOriginalStart,
         value,
       );
 
@@ -436,6 +488,16 @@ class CalendarInvitationResponseStateRecordTable
       'entryId',
       this,
     );
+    targetKey = _is.ColumnString(
+      'targetKey',
+      this,
+      hasDefault: true,
+    );
+    responseOriginalStart =
+        _is.ColumnSerializable<_ieswiaty.CalendarEventTiming>(
+          'responseOriginalStart',
+          this,
+        );
     recipientAddress = _is.ColumnString(
       'recipientAddress',
       this,
@@ -500,6 +562,11 @@ class CalendarInvitationResponseStateRecordTable
 
   late final _is.ColumnUuid entryId;
 
+  late final _is.ColumnString targetKey;
+
+  late final _is.ColumnSerializable<_ieswiaty.CalendarEventTiming>
+  responseOriginalStart;
+
   late final _is.ColumnString recipientAddress;
 
   late final _is.ColumnInt revision;
@@ -533,6 +600,8 @@ class CalendarInvitationResponseStateRecordTable
     scopeKey,
     recipientKey,
     entryId,
+    targetKey,
+    responseOriginalStart,
     recipientAddress,
     revision,
     latestResponseId,

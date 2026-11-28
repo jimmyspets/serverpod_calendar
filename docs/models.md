@@ -912,8 +912,10 @@ The approved generated refinements append `bundleCancellation` to `CalendarInvit
 See [the scoped master-response guide](bundled-master-attendee-responses.md) and actual grouped validation; this does not establish complete scheduling interoperability.
 
 
-## Proposed bundle occurrence attendee responses
+## Bundle occurrence attendee responses
 
-[Proposed ADR 0177](adr/0177-bundled-occurrence-attendee-responses.md) records the confirmed any-validated-original/effective-component-version policy and proposes one grouped durable API/Flutter/recovery batch. The mechanics add a private target key and typed response original to each of the two existing response state/delivery tables, replace the state uniqueness index, and retain old target/hash identity and aggregate caps. No implementation or schema change follows before explicit model/ADR agreement. Master and occurrence responses remain independent; RANGE/real mail stay separate.
+[Accepted ADR 0177](adr/0177-bundled-occurrence-attendee-responses.md) implements the approved any-validated-original/effective-component-version policy in one grouped durable API/Flutter/recovery batch. The mechanics add a private target key and typed response original to each of the two existing response state/delivery tables, replace the state uniqueness index, and retain old target/hash identity and aggregate caps. The complete grouped mechanics have explicit maintainer agreement; actual implementation validation is recorded separately. Master and occurrence responses remain independent; RANGE/real mail stay separate.
 
-ADR 0177 additionally proposes two public immutable wrappers: the nested existing command plus required original, and the authorized read result separating current packet/component proof from recorded personal state. No existing command JSON shape is changed. These are review proposals, not generated models.
+ADR 0177 additionally proposes two public immutable wrappers: the nested existing command plus required original, and the authorized read result separating current packet/component proof from recorded personal state. No existing command JSON shape is changed. The wrappers are generated from their approved model sources; implementation validation is recorded separately.
+
+See [the scoped occurrence-response guide](bundled-occurrence-attendee-responses.md) for the selected-original API, current versus recorded versions, independent authority/state, generated migration and unchanged shared quotas.

@@ -6,6 +6,8 @@ fields:
   scopeKey: String
   recipientKey: String
   entryId: UuidValue, relation(parent=serverpod_calendar_invitation)
+  targetKey: String, default="entry"
+  responseOriginalStart: CalendarEventTiming?
   recipientAddress: String
   revision: int
   latestResponseId: UuidValue
@@ -21,7 +23,7 @@ fields:
   updatedAt: DateTime
 indexes:
   calendar_invitation_response_state_unique:
-    fields: scopeKey, recipientKey, entryId
+    fields: scopeKey, recipientKey, entryId, targetKey
     unique: true
   calendar_invitation_response_state_scope_idx:
     fields: scopeKey, recipientKey

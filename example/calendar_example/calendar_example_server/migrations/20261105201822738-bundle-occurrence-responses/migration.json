@@ -1,0 +1,137 @@
+{
+  "__className__": "serverpod.DatabaseMigration",
+  "actions": [
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "serverpod_calendar_invitation_response",
+        "schema": "public",
+        "addColumns": [
+          {
+            "__className__": "serverpod.ColumnDefinition",
+            "name": "targetKey",
+            "fieldName": "targetKey",
+            "columnType": 0,
+            "isNullable": false,
+            "columnDefault": "'entry'",
+            "dartType": "String"
+          },
+          {
+            "__className__": "serverpod.ColumnDefinition",
+            "name": "responseOriginalStart",
+            "fieldName": "responseOriginalStart",
+            "columnType": 8,
+            "isNullable": true,
+            "dartType": "protocol:CalendarEventTiming?"
+          }
+        ],
+        "deleteColumns": [],
+        "modifyColumns": [],
+        "addIndexes": [],
+        "deleteIndexes": [],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": []
+      }
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "serverpod_calendar_invitation_response_state",
+        "schema": "public",
+        "addColumns": [
+          {
+            "__className__": "serverpod.ColumnDefinition",
+            "name": "targetKey",
+            "fieldName": "targetKey",
+            "columnType": 0,
+            "isNullable": false,
+            "columnDefault": "'entry'",
+            "dartType": "String"
+          },
+          {
+            "__className__": "serverpod.ColumnDefinition",
+            "name": "responseOriginalStart",
+            "fieldName": "responseOriginalStart",
+            "columnType": 8,
+            "isNullable": true,
+            "dartType": "protocol:CalendarEventTiming?"
+          }
+        ],
+        "deleteColumns": [],
+        "modifyColumns": [],
+        "addIndexes": [
+          {
+            "__className__": "serverpod.IndexDefinition",
+            "indexName": "calendar_invitation_response_state_unique",
+            "elements": [
+              {
+                "__className__": "serverpod.IndexElementDefinition",
+                "type": 0,
+                "definition": "scopeKey"
+              },
+              {
+                "__className__": "serverpod.IndexElementDefinition",
+                "type": 0,
+                "definition": "recipientKey"
+              },
+              {
+                "__className__": "serverpod.IndexElementDefinition",
+                "type": 0,
+                "definition": "entryId"
+              },
+              {
+                "__className__": "serverpod.IndexElementDefinition",
+                "type": 0,
+                "definition": "targetKey"
+              }
+            ],
+            "type": "btree",
+            "isUnique": true,
+            "isPrimary": false
+          }
+        ],
+        "deleteIndexes": [
+          "calendar_invitation_response_state_unique"
+        ],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": [
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "uniqueIndexCreated",
+            "message": "Unique index \"calendar_invitation_response_state_unique\" is added to table \"serverpod_calendar_invitation_response_state\". If there are existing rows with duplicate values, this migration will fail.",
+            "table": "serverpod_calendar_invitation_response_state",
+            "columns": [
+              "scopeKey",
+              "recipientKey",
+              "entryId",
+              "targetKey"
+            ],
+            "destrucive": false
+          }
+        ]
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "uniqueIndexCreated",
+      "message": "Unique index \"calendar_invitation_response_state_unique\" is added to table \"serverpod_calendar_invitation_response_state\". If there are existing rows with duplicate values, this migration will fail.",
+      "table": "serverpod_calendar_invitation_response_state",
+      "columns": [
+        "scopeKey",
+        "recipientKey",
+        "entryId",
+        "targetKey"
+      ],
+      "destrucive": false
+    }
+  ],
+  "migrationApiVersion": 1
+}

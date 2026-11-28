@@ -247,7 +247,9 @@ Future<void> main(List<String> args) async {
         '-d',
         'web-server',
         '--driver=test_driver/integration_test.dart',
-        args.contains('--bundle-responses')
+        args.contains('--bundle-occurrence-responses')
+            ? '--target=integration_test/bundle_occurrence_response_smoke_test.dart'
+            : args.contains('--bundle-responses')
             ? '--target=integration_test/bundle_response_smoke_test.dart'
             : args.contains('--bundles')
             ? '--target=integration_test/bundle_update_smoke_test.dart'
@@ -298,6 +300,7 @@ Future<void> main(List<String> args) async {
       final output = result.stdout.transform(utf8.decoder).listen(stdout.write);
       final error = result.stderr.transform(utf8.decoder).listen(stderr.write);
       final focused =
+          args.contains('--bundle-occurrence-responses') ||
           args.contains('--bundle-responses') ||
           args.contains('--bundles') ||
           args.contains('--native-future') ||

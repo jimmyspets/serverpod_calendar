@@ -15,6 +15,7 @@ import 'scheduling_runtime.dart';
 import 'inbound_reply_runtime.dart';
 import 'invitation_runtime.dart';
 import 'invitation_bundle_values.dart';
+import 'invitation_bundle_response_values.dart';
 import 'invitation_bundle_update_values.dart';
 import 'invitation_occurrence_values.dart';
 import 'invitation_response_runtime.dart';

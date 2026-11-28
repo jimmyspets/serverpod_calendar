@@ -77,6 +77,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_invitation_adop
     as _ia1wppub;
 import 'package:serverpod_calendar_server/src/generated/calendar_invitation_apply_request.dart'
     as _i3h34hei;
+import 'package:serverpod_calendar_server/src/generated/calendar_invitation_bundle_occurrence_response_request.dart'
+    as _i21ov7xc;
 import 'package:serverpod_calendar_server/src/generated/calendar_invitation_occurrence_apply_request.dart'
     as _ituh8bkh;
 import 'package:serverpod_calendar_server/src/generated/calendar_invitation_response_request.dart'
@@ -2292,6 +2294,84 @@ class Endpoints extends _is.EndpointDispatch {
                   (endpoints['calendarInvitation']
                           as _iolttv0d.CalendarInvitationEndpoint)
                       .sendBundleResponse(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'bundleOccurrenceResponse': _is.MethodConnector(
+          name: 'bundleOccurrenceResponse',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'originalStart': _is.ParameterDescription(
+              name: 'originalStart',
+              type: _is.getType<_i3rsvgvx.CalendarEventTiming>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .bundleOccurrenceResponse(
+                        session,
+                        params['id'],
+                        params['originalStart'],
+                      ),
+        ),
+        'bundleOccurrenceResponseActivity': _is.MethodConnector(
+          name: 'bundleOccurrenceResponseActivity',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'originalStart': _is.ParameterDescription(
+              name: 'originalStart',
+              type: _is.getType<_i3rsvgvx.CalendarEventTiming>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .bundleOccurrenceResponseActivity(
+                        session,
+                        params['id'],
+                        params['originalStart'],
+                      ),
+        ),
+        'sendBundleOccurrenceResponse': _is.MethodConnector(
+          name: 'sendBundleOccurrenceResponse',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is
+                  .getType<
+                    _i21ov7xc.CalendarInvitationBundleOccurrenceResponseRequest
+                  >(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .sendBundleOccurrenceResponse(
                         session,
                         params['request'],
                       ),

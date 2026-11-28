@@ -123,6 +123,10 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_apply
     as _ilrmykvj;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_bundle_application_view.dart'
     as _i6v5qd2v;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_bundle_occurrence_response_request.dart'
+    as _i54ocklt;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_bundle_occurrence_response_view.dart'
+    as _is8q3tgm;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_document.dart'
     as _ig6t0ro8;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_occurrence_application_view.dart'
@@ -1122,6 +1126,47 @@ class EndpointCalendarInvitation extends _isc.EndpointRef {
   ) => caller.callServerEndpoint<_iepygmya.CalendarInvitationResponseReceipt>(
     'serverpod_calendar.calendarInvitation',
     'sendBundleResponse',
+    {'request': request},
+  );
+
+  _ida.Future<_is8q3tgm.CalendarInvitationBundleOccurrenceResponseView>
+  bundleOccurrenceResponse(
+    _isc.UuidValue id,
+    _i71qtqle.CalendarEventTiming originalStart,
+  ) =>
+      caller.callServerEndpoint<
+        _is8q3tgm.CalendarInvitationBundleOccurrenceResponseView
+      >(
+        'serverpod_calendar.calendarInvitation',
+        'bundleOccurrenceResponse',
+        {
+          'id': id,
+          'originalStart': originalStart,
+        },
+      );
+
+  _ida.Future<List<_ihlye3x3.CalendarInvitationResponseActivityView>>
+  bundleOccurrenceResponseActivity(
+    _isc.UuidValue id,
+    _i71qtqle.CalendarEventTiming originalStart,
+  ) =>
+      caller.callServerEndpoint<
+        List<_ihlye3x3.CalendarInvitationResponseActivityView>
+      >(
+        'serverpod_calendar.calendarInvitation',
+        'bundleOccurrenceResponseActivity',
+        {
+          'id': id,
+          'originalStart': originalStart,
+        },
+      );
+
+  _ida.Future<_iepygmya.CalendarInvitationResponseReceipt>
+  sendBundleOccurrenceResponse(
+    _i54ocklt.CalendarInvitationBundleOccurrenceResponseRequest request,
+  ) => caller.callServerEndpoint<_iepygmya.CalendarInvitationResponseReceipt>(
+    'serverpod_calendar.calendarInvitation',
+    'sendBundleOccurrenceResponse',
     {'request': request},
   );
 }

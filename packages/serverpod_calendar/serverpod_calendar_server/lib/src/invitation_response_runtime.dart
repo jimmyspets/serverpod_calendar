@@ -15,6 +15,9 @@ enum CalendarInvitationResponseOperation {
   readBundleMaster,
   sendBundleMaster,
   dispatchBundleMaster,
+  readBundleOccurrence,
+  sendBundleOccurrence,
+  dispatchBundleOccurrence,
 }
 
 final class CalendarInvitationResponseAuthority {
@@ -47,6 +50,8 @@ final class CalendarInvitationResponsePolicyContext {
     this.payloadDigest,
     this.authority,
     this.isRetry = false,
+    this.responseOriginalStart,
+    this.responseComponentVersion,
     this.occurrenceBasis,
     this.occurrenceBasisUnavailable = false,
   });
@@ -65,6 +70,8 @@ final class CalendarInvitationResponsePolicyContext {
   final String? payloadDigest;
   final CalendarInvitationResponseAuthority? authority;
   final bool isRetry;
+  final CalendarEventTiming? responseOriginalStart;
+  final CalendarInvitationBundleComponentVersion? responseComponentVersion;
   final CalendarInvitationOccurrenceBasis? occurrenceBasis;
   final bool occurrenceBasisUnavailable;
 
@@ -73,6 +80,7 @@ final class CalendarInvitationResponsePolicyContext {
     required bool unavailable,
     required CalendarInvitationResponseView state,
     CalendarInvitationResponseOperation? operation,
+    CalendarInvitationBundleComponentVersion? responseComponentVersion,
   }) => CalendarInvitationResponsePolicyContext(
     operation: operation ?? this.operation,
     recipient: recipient,
@@ -90,6 +98,8 @@ final class CalendarInvitationResponsePolicyContext {
     payloadDigest: payloadDigest,
     authority: authority,
     isRetry: isRetry,
+    responseOriginalStart: responseOriginalStart,
+    responseComponentVersion: responseComponentVersion,
     occurrenceBasis: basis,
     occurrenceBasisUnavailable: unavailable,
   );

@@ -1,6 +1,6 @@
 # ADR 0177: Independent occurrence responses to bundled invitations
 
-Status: **Proposed mechanics; explicit maintainer agreement required before implementation.** The maintainer confirmed that any validated original occurrence may be selected, including one without an explicit exception, using the effective master/range/single version and keeping its response separate from the master. That policy approval does not yet approve the schema/API mechanics below.
+Status: **Accepted by explicit maintainer agreement on 2026-11-05, including grouped schema/API/quota/migration mechanics.** The maintainer confirmed that any validated original occurrence may be selected, including one without an explicit exception, using the effective master/range/single version and keeping its response separate from the master. The complete grouped mechanics below are also explicitly approved; implementation and actual validation are recorded separately.
 
 ## Context and inspected evidence
 
@@ -77,4 +77,4 @@ Workers revalidate exact source/target/version/authority/generation/expiry and f
 
 Only explicit exception targets would contradict the maintainer's any-original choice. Reusing master state would overwrite unrelated intent; creating artificial instance inbox entries would conflate source receipt and user selection. Per-target copied source bodies or larger caps are unnecessary. Master-first migration cannot infer occurrence acceptance from prior master replies.
 
-RANGE responses, response fan-out, native participation synchronization, partial bundle reconciliation, source participant/delegation changes, VALARM-bearing scheduling messages, real mail and external-client interoperability remain separate required work. This proposed grouped increment does not claim full RFC 5546/6047 support.
+RANGE responses, response fan-out, native participation synchronization, partial bundle reconciliation, source participant/delegation changes, VALARM-bearing scheduling messages, real mail and external-client interoperability remain separate required work. This scoped grouped increment does not claim full RFC 5546/6047 support. Actual checks are recorded in [validation](../scaffold-validation.md#adr-0177-grouped-occurrence-responses-2026-11-05).

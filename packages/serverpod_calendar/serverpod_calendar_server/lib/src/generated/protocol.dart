@@ -180,6 +180,9 @@ import 'calendar_invitation_apply_receipt.dart' as _ic2yh4ry;
 import 'calendar_invitation_apply_request.dart' as _iivrx0vm;
 import 'calendar_invitation_bundle_application_view.dart' as _idg5aw79;
 import 'calendar_invitation_bundle_component_version.dart' as _iu3tvjvj;
+import 'calendar_invitation_bundle_occurrence_response_request.dart'
+    as _iwp546an;
+import 'calendar_invitation_bundle_occurrence_response_view.dart' as _inbjcy2u;
 import 'calendar_invitation_document.dart' as _iwcng7rp;
 import 'calendar_invitation_link_record.dart' as _ibnm4ujx;
 import 'calendar_invitation_occurrence_application_record.dart' as _i48y6d6c;
@@ -451,6 +454,8 @@ export 'calendar_invitation_apply_receipt.dart';
 export 'calendar_invitation_apply_request.dart';
 export 'calendar_invitation_bundle_application_view.dart';
 export 'calendar_invitation_bundle_component_version.dart';
+export 'calendar_invitation_bundle_occurrence_response_request.dart';
+export 'calendar_invitation_bundle_occurrence_response_view.dart';
 export 'calendar_invitation_document.dart';
 export 'calendar_invitation_link_record.dart';
 export 'calendar_invitation_occurrence_application_record.dart';
@@ -738,6 +743,8 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.getType<_iivrx0vm.CalendarInvitationApplyRequest>,
       _is.getType<_idg5aw79.CalendarInvitationBundleApplicationView>,
       _is.getType<_iu3tvjvj.CalendarInvitationBundleComponentVersion>,
+      _is.getType<_iwp546an.CalendarInvitationBundleOccurrenceResponseRequest>,
+      _is.getType<_inbjcy2u.CalendarInvitationBundleOccurrenceResponseView>,
       _is.getType<_iwcng7rp.CalendarInvitationDocument>,
       _is.getType<_ibnm4ujx.CalendarInvitationLinkRecord>,
       _is.getType<_i48y6d6c.CalendarInvitationOccurrenceApplicationRecord>,
@@ -1009,6 +1016,8 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.getType<_iivrx0vm.CalendarInvitationApplyRequest?>,
       _is.getType<_idg5aw79.CalendarInvitationBundleApplicationView?>,
       _is.getType<_iu3tvjvj.CalendarInvitationBundleComponentVersion?>,
+      _is.getType<_iwp546an.CalendarInvitationBundleOccurrenceResponseRequest?>,
+      _is.getType<_inbjcy2u.CalendarInvitationBundleOccurrenceResponseView?>,
       _is.getType<_iwcng7rp.CalendarInvitationDocument?>,
       _is.getType<_ibnm4ujx.CalendarInvitationLinkRecord?>,
       _is.getType<_i48y6d6c.CalendarInvitationOccurrenceApplicationRecord?>,
@@ -1385,6 +1394,8 @@ class Protocol extends _is.DatabaseSerializationManager
       'CalendarInvitationApplyRequest',
       'CalendarInvitationBundleApplicationView',
       'CalendarInvitationBundleComponentVersion',
+      'CalendarInvitationBundleOccurrenceResponseRequest',
+      'CalendarInvitationBundleOccurrenceResponseView',
       'CalendarInvitationDocument',
       'CalendarInvitationLinkRecord',
       'CalendarInvitationOccurrenceApplicationRecord',
@@ -3635,6 +3646,19 @@ class Protocol extends _is.DatabaseSerializationManager
           dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
+          name: 'targetKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+          columnDefault: '\'entry\'',
+        ),
+        _isp.ColumnDefinition(
+          name: 'responseOriginalStart',
+          columnType: _isp.ColumnType.json,
+          isNullable: true,
+          dartType: 'protocol:CalendarEventTiming?',
+        ),
+        _isp.ColumnDefinition(
           name: 'commandId',
           columnType: _isp.ColumnType.uuid,
           isNullable: false,
@@ -4050,6 +4074,19 @@ class Protocol extends _is.DatabaseSerializationManager
           dartType: 'UuidValue',
         ),
         _isp.ColumnDefinition(
+          name: 'targetKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+          columnDefault: '\'entry\'',
+        ),
+        _isp.ColumnDefinition(
+          name: 'responseOriginalStart',
+          columnType: _isp.ColumnType.json,
+          isNullable: true,
+          dartType: 'protocol:CalendarEventTiming?',
+        ),
+        _isp.ColumnDefinition(
           name: 'recipientAddress',
           columnType: _isp.ColumnType.text,
           isNullable: false,
@@ -4156,6 +4193,10 @@ class Protocol extends _is.DatabaseSerializationManager
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
               definition: 'entryId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'targetKey',
             ),
           ],
           type: 'btree',
@@ -6383,6 +6424,16 @@ class Protocol extends _is.DatabaseSerializationManager
       return _iu3tvjvj.CalendarInvitationBundleComponentVersion.fromJson(data)
           as T;
     }
+    if (t == _iwp546an.CalendarInvitationBundleOccurrenceResponseRequest) {
+      return _iwp546an
+              .CalendarInvitationBundleOccurrenceResponseRequest.fromJson(data)
+          as T;
+    }
+    if (t == _inbjcy2u.CalendarInvitationBundleOccurrenceResponseView) {
+      return _inbjcy2u.CalendarInvitationBundleOccurrenceResponseView.fromJson(
+        data,
+      ) as T;
+    }
     if (t == _iwcng7rp.CalendarInvitationDocument) {
       return _iwcng7rp.CalendarInvitationDocument.fromJson(data) as T;
     }
@@ -7631,6 +7682,32 @@ class Protocol extends _is.DatabaseSerializationManager
         _is.getType<_iu3tvjvj.CalendarInvitationBundleComponentVersion?>()) {
       return (data != null
               ? _iu3tvjvj.CalendarInvitationBundleComponentVersion.fromJson(
+                  data,
+                )
+              : null)
+          as T;
+    }
+    if (t ==
+        _is
+            .getType<
+              _iwp546an.CalendarInvitationBundleOccurrenceResponseRequest?
+            >()) {
+      return (data != null
+              ? _iwp546an
+                    .CalendarInvitationBundleOccurrenceResponseRequest.fromJson(
+                  data,
+                )
+              : null)
+          as T;
+    }
+    if (t ==
+        _is
+            .getType<
+              _inbjcy2u.CalendarInvitationBundleOccurrenceResponseView?
+            >()) {
+      return (data != null
+              ? _inbjcy2u
+                    .CalendarInvitationBundleOccurrenceResponseView.fromJson(
                   data,
                 )
               : null)
@@ -9421,6 +9498,10 @@ class Protocol extends _is.DatabaseSerializationManager
         'CalendarInvitationBundleApplicationView',
       _iu3tvjvj.CalendarInvitationBundleComponentVersion =>
         'CalendarInvitationBundleComponentVersion',
+      _iwp546an.CalendarInvitationBundleOccurrenceResponseRequest =>
+        'CalendarInvitationBundleOccurrenceResponseRequest',
+      _inbjcy2u.CalendarInvitationBundleOccurrenceResponseView =>
+        'CalendarInvitationBundleOccurrenceResponseView',
       _iwcng7rp.CalendarInvitationDocument => 'CalendarInvitationDocument',
       _ibnm4ujx.CalendarInvitationLinkRecord => 'CalendarInvitationLinkRecord',
       _i48y6d6c.CalendarInvitationOccurrenceApplicationRecord =>
@@ -9911,6 +9992,10 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'CalendarInvitationBundleApplicationView';
       case _iu3tvjvj.CalendarInvitationBundleComponentVersion():
         return 'CalendarInvitationBundleComponentVersion';
+      case _iwp546an.CalendarInvitationBundleOccurrenceResponseRequest():
+        return 'CalendarInvitationBundleOccurrenceResponseRequest';
+      case _inbjcy2u.CalendarInvitationBundleOccurrenceResponseView():
+        return 'CalendarInvitationBundleOccurrenceResponseView';
       case _iwcng7rp.CalendarInvitationDocument():
         return 'CalendarInvitationDocument';
       case _ibnm4ujx.CalendarInvitationLinkRecord():
@@ -10706,6 +10791,16 @@ class Protocol extends _is.DatabaseSerializationManager
       return deserialize<_iu3tvjvj.CalendarInvitationBundleComponentVersion>(
         data['data'],
       );
+    }
+    if (dataClassName == 'CalendarInvitationBundleOccurrenceResponseRequest') {
+      return deserialize<
+        _iwp546an.CalendarInvitationBundleOccurrenceResponseRequest
+      >(data['data']);
+    }
+    if (dataClassName == 'CalendarInvitationBundleOccurrenceResponseView') {
+      return deserialize<
+        _inbjcy2u.CalendarInvitationBundleOccurrenceResponseView
+      >(data['data']);
     }
     if (dataClassName == 'CalendarInvitationDocument') {
       return deserialize<_iwcng7rp.CalendarInvitationDocument>(data['data']);

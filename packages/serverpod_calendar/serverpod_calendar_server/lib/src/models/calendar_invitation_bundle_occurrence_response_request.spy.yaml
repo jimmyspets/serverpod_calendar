@@ -1,0 +1,5 @@
+class: CalendarInvitationBundleOccurrenceResponseRequest
+immutable: true
+fields:
+  request: CalendarInvitationResponseRequest
+  originalStart: CalendarEventTiming

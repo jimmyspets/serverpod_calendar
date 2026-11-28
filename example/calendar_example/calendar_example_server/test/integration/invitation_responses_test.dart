@@ -572,14 +572,19 @@ void main() {
         CalendarInvitationResponseDeliveryState.expired,
       );
     });
-    for (final (recurring, instance, bundled) in [
-      (false, false, false),
-      (true, false, false),
-      (true, true, false),
-      (true, false, true),
+    for (final (recurring, instance, bundled, targetDay) in [
+      (false, false, false, null),
+      (true, false, false, null),
+      (true, true, false, null),
+      (true, false, true, null),
+      (true, false, true, 29),
+      (true, false, true, 30),
+      (true, false, true, 31),
     ]) {
       test(
-        'synthetic ${bundled
+        'synthetic ${targetDay != null
+            ? 'bundle original $targetDay'
+            : bundled
             ? 'bundle-master'
             : instance
             ? 'single-instance'
@@ -644,7 +649,9 @@ void main() {
                   kind: CalendarEventTimeKind.date,
                   start: CalendarEventCivil(year: 2026, month: 3, day: 30),
                 ),
-                action: CalendarEventOccurrenceAction.replaceSingleTiming,
+                action: targetDay == null
+                    ? CalendarEventOccurrenceAction.replaceSingleTiming
+                    : CalendarEventOccurrenceAction.replaceFutureTiming,
                 replacement: CalendarEventTiming(
                   kind: CalendarEventTimeKind.date,
                   start: CalendarEventCivil(year: 2026, month: 4, day: 2),
@@ -652,10 +659,31 @@ void main() {
               ),
             );
           }
+          if (targetDay == 31) {
+            await service.changeOccurrence(
+              CalendarEventOccurrenceChange(
+                eventId: event.eventId,
+                expectedRevision: 2,
+                originalStart: CalendarEventTiming(
+                  kind: CalendarEventTimeKind.date,
+                  start: CalendarEventCivil(year: 2026, month: 3, day: 31),
+                ),
+                action: CalendarEventOccurrenceAction.replaceSingleTiming,
+                replacement: CalendarEventTiming(
+                  kind: CalendarEventTimeKind.date,
+                  start: CalendarEventCivil(year: 2026, month: 4, day: 5),
+                ),
+              ),
+            );
+          }
           final published = await service.saveAndNotify(
             CalendarSchedulingSaveRequest(
               eventId: event.eventId,
-              expectedRevision: bundled ? 2 : 1,
+              expectedRevision: targetDay == 31
+                  ? 3
+                  : bundled
+                  ? 2
+                  : 1,
               commandId: const Uuid().v4obj(),
               recipients: ['mailto:bob@example.invalid'],
               content: content('Loopback published'),
@@ -737,9 +765,28 @@ void main() {
               CalendarInvitationSourceKind.requestBundle,
             );
           }
-          final send = bundled
-              ? service.sendInvitationBundleResponse
-              : service.sendInvitationResponse;
+          final targetOriginal = targetDay == null
+              ? null
+              : CalendarEventTiming(
+                  kind: CalendarEventTimeKind.date,
+                  start: CalendarEventCivil(
+                    year: 2026,
+                    month: 3,
+                    day: targetDay,
+                  ),
+                );
+          Future<CalendarInvitationResponseReceipt> send(
+            CalendarInvitationResponseRequest request,
+          ) => targetOriginal != null
+              ? service.sendInvitationBundleOccurrenceResponse(
+                  CalendarInvitationBundleOccurrenceResponseRequest(
+                    request: request,
+                    originalStart: targetOriginal,
+                  ),
+                )
+              : bundled
+              ? service.sendInvitationBundleResponse(request)
+              : service.sendInvitationResponse(request);
           await send(
             CalendarInvitationResponseRequest(
               invitationId: received.entryId,
@@ -776,10 +823,10 @@ void main() {
           final first = await reconcile('verified', 'verified-bob');
           expect(first.outcome, CalendarSchedulingReplyOutcome.applied);
           expect(
-            (instance
+            (instance || targetOriginal != null
                     ? (await service.schedulingInstanceResponses(
                         event.eventId,
-                        original,
+                        targetOriginal ?? original,
                       )).responses
                     : (await service.schedulingResponses(event.eventId))
                           .responses)

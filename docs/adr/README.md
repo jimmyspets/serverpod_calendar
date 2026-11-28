@@ -201,7 +201,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0176](0176-bundled-master-attendee-responses.md) | Explicit master responses to bundled invitations | Accepted by explicit maintainer agreement; scoped implementation and local validation recorded, full hosted readiness separate |
 
-| [0177](0177-bundled-occurrence-attendee-responses.md) | Independent occurrence responses to bundled invitations | Proposed mechanics; confirmed any-original policy, existing-table target columns/index and grouped durable API/Flutter/recovery review |
+| [0177](0177-bundled-occurrence-attendee-responses.md) | Independent occurrence responses to bundled invitations | Accepted by explicit maintainer agreement; any-original policy, existing-table target columns/index and grouped durable API/Flutter/recovery mechanics |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

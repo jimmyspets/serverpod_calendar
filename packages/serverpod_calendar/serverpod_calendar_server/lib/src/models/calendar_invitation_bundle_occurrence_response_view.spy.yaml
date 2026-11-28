@@ -1,0 +1,7 @@
+class: CalendarInvitationBundleOccurrenceResponseView
+immutable: true
+fields:
+  response: CalendarInvitationResponseView
+  invitationRevision: int
+  currentSourceId: UuidValue?
+  componentVersion: CalendarInvitationBundleComponentVersion?

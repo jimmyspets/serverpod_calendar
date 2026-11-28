@@ -51,12 +51,16 @@ final class _ResponseHost implements CalendarInvitationResponseHost {
           CalendarInvitationResponseOperation.dispatch,
           CalendarInvitationResponseOperation.dispatchOccurrence,
           CalendarInvitationResponseOperation.dispatchBundleMaster,
+          CalendarInvitationResponseOperation.dispatchBundleOccurrence,
         }.contains(c.operation) &&
         c.actor != null) {
       throw StateError('Fabricated dispatch actor');
     }
     if (host.pause == 'bundle-response-before' &&
-        c.operation == CalendarInvitationResponseOperation.sendBundleMaster &&
+        {
+          CalendarInvitationResponseOperation.sendBundleMaster,
+          CalendarInvitationResponseOperation.sendBundleOccurrence,
+        }.contains(c.operation) &&
         phase == CalendarAuthorizationPhase.finalWrite) {
       stdout.writeln('INVITATION_PAUSED ${jsonEncode(c.receipt!.toJson())}');
       await Completer<void>().future;
@@ -382,6 +386,7 @@ Future<void> main(List<String> args) async {
             };
           case 'response':
           case 'bundle-response':
+          case 'bundle-occurrence-response':
             session.updateAuthenticated(
               AuthenticationInfo('recipient', {}, authId: 'invitation-probe'),
             );
@@ -390,7 +395,26 @@ Future<void> main(List<String> args) async {
               final request = CalendarInvitationResponseRequest.fromJson(
                 input['request'] as Map<String, dynamic>,
               );
-              final receipt = input['command'] == 'bundle-response'
+              final receipt = input['command'] == 'bundle-occurrence-response'
+                  ? await service.sendInvitationBundleOccurrenceResponse(
+                      CalendarInvitationBundleOccurrenceResponseRequest(
+                        request: request,
+                        originalStart: input['originalStart'] == null
+                            ? CalendarEventTiming(
+                                kind: CalendarEventTimeKind.utc,
+                                start: CalendarEventCivil(
+                                  year: 2030,
+                                  month: 1,
+                                  day: 1,
+                                  hour: 9,
+                                ),
+                              )
+                            : CalendarEventTiming.fromJson(
+                                input['originalStart'] as Map<String, dynamic>,
+                              ),
+                      ),
+                    )
+                  : input['command'] == 'bundle-response'
                   ? await service.sendInvitationBundleResponse(request)
                   : await service.sendInvitationResponse(request);
               if (host.pause == 'bundle-response-after') {
@@ -691,6 +715,9 @@ Future<void> main(List<String> args) async {
                     'state': r.state.name,
                     'attempts': r.attemptCount,
                     'digest': r.payloadDigest,
+                    'targetKey': r.targetKey,
+                    'original': r.responseOriginalStart?.start.day,
+                    'sourceSequence': r.sourceSequence,
                   },
               ],
               'occurrenceApplications':
