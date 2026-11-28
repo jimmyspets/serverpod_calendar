@@ -10,6 +10,64 @@ class SchedulingDemoEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
 
+  Future<UuidValue> simulateRefresh(
+    Session session,
+    UuidValue eventId,
+    UuidValue commandId,
+    String attendeeAddress,
+  ) async {
+    if (!{'development', 'test'}.contains(session.serverpod.runMode) ||
+        !RegExp(r'^mailto:[A-Za-z0-9._+\-]+@example\.invalid$')
+            .hasMatch(attendeeAddress)) {
+      throw CalendarException(
+        code: CalendarFailureCode.validation,
+        message: 'Invalid simulation',
+      );
+    }
+    final service = CalendarModule.service(session);
+    await service.listEventRefresh(eventId, 1, null);
+    final event = await service.getEvent(
+      eventId,
+      CalendarEventFieldGroup.values,
+    );
+    final published = await service.schedulingStatus(eventId);
+    final bytes = serializeIcalendarSyntax(
+      IcalendarSyntaxDocument([
+        IcalendarSyntaxComponent('VCALENDAR', [
+          IcalendarSyntaxProperty('VERSION', '2.0'),
+          IcalendarSyntaxProperty(
+            'PRODID',
+            '-//Synthetic refresh simulation//EN',
+          ),
+          IcalendarSyntaxProperty('METHOD', 'REFRESH'),
+          IcalendarSyntaxComponent('VEVENT', [
+            IcalendarSyntaxProperty(
+              'UID',
+              encodeIcalendarText(event.protocolUid!),
+            ),
+            IcalendarSyntaxProperty('DTSTAMP', '20261128T120000Z'),
+            IcalendarSyntaxProperty('ORGANIZER', published.organizerAddress!),
+            IcalendarSyntaxProperty('ATTENDEE', attendeeAddress),
+          ]),
+        ]),
+      ]),
+    );
+    final id = session.authenticated!.userIdentifier;
+    return receiveHostImipRefresh(
+      session,
+      scopeKey: 'demo:user:$id',
+      eventId: eventId,
+      namespace: 'demo-synthetic-refresh',
+      deliveryKey: commandId.toString(),
+      originReference: 'demo-refresh:$id:$attendeeAddress',
+      outerProtection: ImipProtection.none,
+      raw: composeSyntheticIngressMime(
+        bytes,
+        method: IcalendarSchedulingMethod.refresh,
+      ),
+    );
+  }
+
   Future<CalendarSchedulingReplyReceipt> simulateReply(
     Session session,
     UuidValue eventId,

@@ -2,6 +2,7 @@ import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'attendee_replies_screen.dart';
+import 'event_refresh_screen.dart';
 
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
@@ -432,6 +433,24 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
       appBar: AppBar(
         title: const Text('Meeting invitations'),
         actions: [
+          if (eligible &&
+              _status?.publicationId != null &&
+              _event.recurrence == null &&
+              (_event.periods?.isEmpty ?? true))
+            TextButton(
+              key: const Key('scheduling-refresh-requests'),
+              onPressed: _busy
+                  ? null
+                  : () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => EventRefreshScreen(
+                          client: widget.client,
+                          eventId: _event.id,
+                        ),
+                      ),
+                    ),
+              child: const Text('Refresh requests'),
+            ),
           if (_status?.publicationId != null)
             TextButton(
               key: const Key('scheduling-replies'),

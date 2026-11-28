@@ -159,6 +159,61 @@ final class _ReplyHost implements CalendarSchedulingReplyHost {
   }
 }
 
+final class _RefreshProbeHost implements CalendarRefreshHost {
+  String pause = '';
+
+  @override
+  CalendarAuthorizationGuarantee get guarantee =>
+      CalendarAuthorizationGuarantee.freshCheck;
+
+  Future<CalendarAuthorizationVerdict> _authorize(
+    String scope,
+    String origin,
+    String attendee,
+    CalendarAuthorizationPhase phase,
+  ) async {
+    if (!scope.startsWith('scheduling-work-probe:') ||
+        origin != 'verified:$attendee' ||
+        attendee != 'mailto:bob@example.invalid') {
+      return CalendarAuthorizationVerdict.deny;
+    }
+    if (pause == 'before' && phase == CalendarAuthorizationPhase.finalWrite) {
+      stdout.writeln('SCHEDULING_SUBMITTED');
+      await Completer<void>().future;
+    }
+    return CalendarAuthorizationVerdict.allow;
+  }
+
+  @override
+  Future<CalendarAuthorizationVerdict> authorizeReceipt(
+    Session session,
+    CalendarRefreshDelivery delivery,
+    CalendarEventPolicySnapshot event,
+    String attendeeAddress,
+    Transaction transaction,
+    CalendarAuthorizationPhase phase,
+  ) => _authorize(
+    delivery.scopeKey,
+    delivery.originReference,
+    attendeeAddress,
+    phase,
+  );
+
+  @override
+  Future<CalendarAuthorizationVerdict> authorizeResend(
+    Session session,
+    CalendarSchedulingPolicyContext context,
+    String originReference,
+    Transaction transaction,
+    CalendarAuthorizationPhase phase,
+  ) => _authorize(
+    context.scopeKey,
+    originReference,
+    context.recipient!.address,
+    phase,
+  );
+}
+
 /// Internal isolated-storage process fixture. No endpoint or real mail transport.
 Future<void> main(List<String> args) async {
   final pod = generated.Serverpod([
@@ -173,6 +228,7 @@ Future<void> main(List<String> args) async {
   }
   final transport = _Transport();
   final replies = _ReplyHost();
+  final refresh = _RefreshProbeHost();
   final host = _Host();
   CalendarModule.install(
     pod,
@@ -185,6 +241,7 @@ Future<void> main(List<String> args) async {
       host: host,
       transport: transport,
       replies: CalendarSchedulingReplyRuntime(host: replies),
+      refresh: refresh,
       options: CalendarSchedulingOptions(
         lease: const Duration(seconds: 6),
         transportTimeout: const Duration(seconds: 5),
@@ -200,6 +257,104 @@ Future<void> main(List<String> args) async {
       final input = jsonDecode(line) as Map<String, dynamic>;
       Object? result;
       switch (input['command']) {
+        case 'refresh':
+          final eventId = UuidValue.fromString(input['eventId'] as String);
+          final meeting = (await CalendarSchedulingMeetingRecord.db
+              .findFirstRow(
+                s,
+                where: (row) => row.eventId.equals(eventId),
+              ))!;
+          if (!meeting.scopeKey.startsWith('scheduling-work-probe:')) {
+            throw StateError('Foreign refresh fixture');
+          }
+          final publication = (await CalendarSchedulingPublicationRecord.db
+              .findById(s, meeting.latestPublicationId!))!;
+          refresh.pause = input['pause'] as String? ?? '';
+          host.scope = meeting.scopeKey;
+          s.updateAuthenticated(
+            AuthenticationInfo('synthetic', {}, authId: 'refresh-probe'),
+          );
+          try {
+            if (input['requestId'] case final String requestId) {
+              final receipt = await CalendarModule.service(s)
+                  .resendEventRefresh(
+                    CalendarRefreshResendCommand(
+                      eventId: eventId,
+                      requestId: UuidValue.fromString(requestId),
+                      commandId: UuidValue.fromString(input['key'] as String),
+                      publicationId: publication.id!,
+                      generation: publication.generation,
+                    ),
+                  );
+              result = {
+                'id': receipt.resendId.toString(),
+                'unchanged': receipt.unchanged,
+              };
+            } else {
+              final source = utf8.encode(
+                [
+                  'BEGIN:VCALENDAR',
+                  'VERSION:2.0',
+                  'PRODID:-//Synthetic REFRESH//EN',
+                  'METHOD:REFRESH',
+                  'BEGIN:VEVENT',
+                  'UID:${encodeIcalendarText(publication.protocolUid)}',
+                  'DTSTAMP:20261128T100000Z',
+                  'ORGANIZER:${meeting.organizerAddress}',
+                  'ATTENDEE:mailto:bob@example.invalid',
+                  'END:VEVENT',
+                  'END:VCALENDAR',
+                  '',
+                ].join('\r\n'),
+              );
+              final requestId = await receiveHostImipRefresh(
+                s,
+                raw: composeSyntheticIngressMime(
+                  source,
+                  method: IcalendarSchedulingMethod.refresh,
+                ),
+                outerProtection: ImipProtection.none,
+                scopeKey: meeting.scopeKey,
+                eventId: eventId,
+                namespace: 'refresh-probe',
+                deliveryKey: input['key'] as String,
+                originReference: 'verified:mailto:bob@example.invalid',
+              );
+              result = {
+                'id': requestId.toString(),
+                'count': await CalendarRefreshRequestRecord.db.count(
+                  s,
+                  where: (row) => row.meetingId.equals(meeting.id!),
+                ),
+              };
+            }
+            if (refresh.pause == 'after') {
+              stdout.writeln('SCHEDULING_SUBMITTED');
+              await Completer<void>().future;
+            }
+          } finally {
+            refresh.pause = '';
+            s.updateAuthenticated(null);
+          }
+        case 'inspect-refresh':
+          final id = UuidValue.fromString(input['resendId'] as String);
+          final row = (await CalendarRefreshResendRecord.db.findById(s, id))!;
+          if (!row.scopeKey.startsWith('scheduling-work-probe:')) {
+            throw StateError('Foreign refresh fixture');
+          }
+          if (input['expireLease'] == true) {
+            row.leaseUntil = DateTime.utc(2000);
+            await CalendarRefreshResendRecord.db.updateRow(s, row);
+          }
+          final attempts = await CalendarRefreshAttemptRecord.db.find(
+            s,
+            where: (entry) => entry.resendId.equals(id),
+            orderBy: (entry) => entry.attemptNumber,
+          );
+          result = {
+            'state': row.state.name,
+            'attempts': attempts.map((attempt) => attempt.outcome).toList(),
+          };
         case 'information-command':
           final id = UuidValue.fromString(input['eventId'] as String);
           final meeting = (await CalendarSchedulingMeetingRecord.db
@@ -426,6 +581,20 @@ Future<void> main(List<String> args) async {
               !meeting.scopeKey.startsWith('scheduling-work-probe:')) {
             throw StateError('Foreign fixture');
           }
+          for (final resend in await CalendarRefreshResendRecord.db.find(
+            s,
+            where: (row) => row.meetingId.equals(meeting.id!),
+          )) {
+            await CalendarRefreshAttemptRecord.db.deleteWhere(
+              s,
+              where: (row) => row.resendId.equals(resend.id!),
+            );
+            await CalendarRefreshResendRecord.db.deleteRow(s, resend);
+          }
+          await CalendarRefreshRequestRecord.db.deleteWhere(
+            s,
+            where: (row) => row.meetingId.equals(meeting.id!),
+          );
           await CalendarSchedulingAttendeeResponseRecord.db.deleteWhere(
             s,
             where: (t) => t.meetingId.equals(meeting.id!),

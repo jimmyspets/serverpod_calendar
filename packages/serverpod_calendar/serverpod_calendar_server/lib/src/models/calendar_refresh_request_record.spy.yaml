@@ -1,0 +1,25 @@
+class: CalendarRefreshRequestRecord
+serverOnly: true
+table: serverpod_calendar_refresh_request
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  meetingId: UuidValue, relation(parent=serverpod_calendar_scheduling_meeting)
+  namespace: String
+  deliveryKey: String
+  originReference: String
+  sourceDigest: String
+  attendeeAddress: String
+  sourceStamp: DateTime
+  comments: List<String>
+  receivedAt: DateTime
+  expiresAt: DateTime
+  dismissedAt: DateTime?
+indexes:
+  calendar_refresh_request_delivery_unique:
+    fields: scopeKey, namespace, deliveryKey
+    unique: true
+  calendar_refresh_request_review_idx:
+    fields: scopeKey, meetingId, id
+  calendar_refresh_request_retention_idx:
+    fields: expiresAt

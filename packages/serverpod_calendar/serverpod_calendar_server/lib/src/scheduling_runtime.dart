@@ -5,6 +5,7 @@ import 'calendar_authorization.dart';
 import 'generated/calendar_event_timing.dart';
 import 'generated/calendar_scheduling_binding_purpose.dart';
 import 'inbound_reply_runtime.dart';
+import 'refresh_runtime.dart';
 
 /// Trusted routing result. Neither the stored reference nor address grants access.
 final class CalendarSchedulingRoute {
@@ -216,10 +217,12 @@ final class CalendarSchedulingRuntime {
     required this.host,
     required this.transport,
     this.replies,
+    this.refresh,
     CalendarSchedulingOptions? options,
   }) : options = options ?? CalendarSchedulingOptions();
   final CalendarSchedulingHost host;
   final CalendarSchedulingTransport transport;
   final CalendarSchedulingOptions options;
   final CalendarSchedulingReplyRuntime? replies;
+  final CalendarRefreshHost? refresh;
 }

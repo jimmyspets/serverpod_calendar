@@ -95,6 +95,7 @@ Future<void> run(List<String> args) async {
       host: DemoSchedulingHost(),
       transport: DemoSchedulingTransport(),
       replies: CalendarSchedulingReplyRuntime(host: DemoSchedulingReplyHost()),
+      refresh: DemoRefreshHost(),
     ),
     alarms: CalendarAlarmRuntime(
       policy: DemoAlarmBackgroundPolicy(),

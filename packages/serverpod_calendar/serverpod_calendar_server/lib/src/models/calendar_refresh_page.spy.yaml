@@ -1,0 +1,6 @@
+class: CalendarRefreshPage
+fields:
+  entries: List<CalendarRefreshView>
+  publicationId: UuidValue?
+  generation: int?
+  nextCursor: String?

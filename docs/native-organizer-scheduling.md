@@ -205,6 +205,46 @@ cancel/restore/cycle profile. [ADR 0189](adr/0189-whole-series-lifecycle-with-pu
 extends it with explicit whole-series cancellation and reopening while a
 provable finite suffix remains cancelled. See [the scoped range guide](published-range-controls.md).
 
+## Invitation refresh requests
+
+[ADR 0190](adr/0190-authenticated-event-refresh.md) adds organizer-side
+VEVENT REFRESH for native non-recurring invitations. Trusted receipt creates
+a private review entry. The organizer can dismiss it or explicitly resend
+the current published REQUEST to the verified requester. Resend retains
+the publication's exact bytes, sequence, stamp and wire attendees. Only
+the physical destination is reduced to the requester's authorized route.
+Native edits and the original publication generation and deliveries are
+independent of the refresh exchange.
+
+The example's **Refresh requests** screen lists and dismisses private requests
+and lets the organizer resend with the reviewed publication ID and generation.
+The synthetic fixture writes local MIME for the new delivery identity. The
+actual publication remains pinned while its resend receipt is retained. Worker
+checks enforce current generation, disclosure, route, expiry and lease ownership.
+The scope remains one non-recurring invitation. See the ADR for limits and
+the remaining first-release scheduling boundaries.
+
+Workspace analysis passed. The core and iCalendar suites passed 540 and 642
+cases respectively, on both VM and Chrome. The calendar server unit suite
+passed 820 VM and 31 Chrome cases. All four focused database cases passed,
+covering admission and final denial, cursor invalidation, exact retry,
+latest-generation fencing, publication pins, and actor-free dispatch.
+`python tool/metadata_upgrade_smoke.py --refresh-upgrade-only` verified
+fresh and populated synthetic schema behavior.
+
+`dart run tool/scheduling_work_smoke.dart --refresh` passed the competing
+intake and actual process-loss checks around receipt, resend and transport.
+A first attempt hit an occupied local port. The rerun used dedicated REFRESH
+probe ports. `dart run tool/host_smoke.dart --flutter --refresh --browser-only`
+passed the focused connected journey against the freshly built example. It
+exercised review, dismiss and resend through generated-client calls. All nine
+Flutter widget tests also passed.
+
+The calendar module and example migrations were generated with the pinned
+CLI. A separate feed-module snapshot migration attempt surfaced the existing
+invitation-response index warning. Feed snapshot reconciliation remains
+separate. Full exact-head hosted validation is tracked in the [roadmap](roadmap.md).
+
 
 ## Separate information-publication purpose
 

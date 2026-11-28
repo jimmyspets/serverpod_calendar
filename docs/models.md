@@ -982,3 +982,14 @@ Accepted ADR 0184 extends outgoing information publication with supported single
 
 
 [Proposed ADR 0185](adr/0185-incoming-information-publication-bundles.md) groups incoming complete PUBLISH review/Add, component-aware updates and whole lifecycle. Two permanent profile columns, protected vector DTOs/APIs, complete-set ordering and independent authority are review material, not implemented support or an approved model. Existing incoming master-only guards and synthetic transport remain until explicit agreement.
+
+## Organizer REFRESH review and resend
+
+[Accepted ADR 0190](adr/0190-authenticated-event-refresh.md) adds the private
+`CalendarRefreshRequestRecord`, `CalendarRefreshResendRecord` and
+`CalendarRefreshAttemptRecord` tables. Independent receipt and command keys
+preserve retries. A resend pins the original publication by reference and
+uses its own delivery identity and fenced attempts. Review pages use the
+existing private cursor table with an operation-bound fingerprint. The
+generated review, resend command and receipt DTOs expose only protected
+review and delivery fields. See the [organizer guide](native-organizer-scheduling.md#invitation-refresh-requests).

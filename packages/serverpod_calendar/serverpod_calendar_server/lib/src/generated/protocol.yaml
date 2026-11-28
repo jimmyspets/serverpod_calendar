@@ -40,6 +40,9 @@ calendar:
   - changeSubject:
   - delete:
 calendarEvent:
+  - listEventRefresh:
+  - dismissEventRefresh:
+  - resendEventRefresh:
   - listOccurrences:
   - updateTextMetadata:
   - updateDescriptiveMetadata:
