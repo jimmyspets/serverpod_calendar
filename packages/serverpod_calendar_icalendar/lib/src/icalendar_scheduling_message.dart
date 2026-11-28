@@ -14,6 +14,8 @@ final class IcalendarSchedulingMessage {
     required this.participants,
     required this.metadata,
     required this.references,
+    required Iterable<IcalendarSchedulingRequestStatus> requestStatuses,
+    required Iterable<IcalendarSchedulingResourceGroup> resources,
     required Map<String, IcalendarValidatedTimeZone> timeZones,
     this.sequence,
     this.created,
@@ -30,7 +32,11 @@ final class IcalendarSchedulingMessage {
     this.location,
     this.status,
     this.transparency,
-  }) : timeZones = Map.unmodifiable(timeZones);
+    this.priority,
+    this.geographicPosition,
+  }) : timeZones = Map.unmodifiable(timeZones),
+       requestStatuses = List.unmodifiable(requestStatuses),
+       resources = List.unmodifiable(resources);
 
   final IcalendarSyntaxDocument source;
   final String productId, uid;
@@ -52,6 +58,10 @@ final class IcalendarSchedulingMessage {
   final IcalendarEventParticipants participants;
   final IcalendarEventMetadata metadata;
   final IcalendarEventReferences references;
+  final List<IcalendarSchedulingRequestStatus> requestStatuses;
+  final List<IcalendarSchedulingResourceGroup> resources;
+  final int? priority;
+  final IcalendarSchedulingGeographicPosition? geographicPosition;
   final Map<String, IcalendarValidatedTimeZone> timeZones;
 }
 
@@ -157,9 +167,20 @@ IcalendarSchedulingMessage validateIcalendarSchedulingMessage(
         'ATTENDEE',
         'RELATED-TO',
         'ATTACH',
+        'PRIORITY',
+        'GEO',
+        'RESOURCES',
+        if (method == IcalendarSchedulingMethod.reply) 'REQUEST-STATUS',
         ..._eventMetadataProperties,
       },
-      repeated: {'ATTENDEE', 'RELATED-TO', 'ATTACH', ..._eventRepeatedMetadata},
+      repeated: {
+        'ATTENDEE',
+        'RELATED-TO',
+        'ATTACH',
+        'RESOURCES',
+        if (method == IcalendarSchedulingMethod.reply) 'REQUEST-STATUS',
+        ..._eventRepeatedMetadata,
+      },
     );
     final uid = componentText(requiredProperty(p, 'UID'));
     if (uid.isEmpty) componentFail(IcalendarComponentError.invalidValue);
@@ -291,6 +312,16 @@ IcalendarSchedulingMessage validateIcalendarSchedulingMessage(
       participants: participants,
       metadata: _eventMetadata(event, budget),
       references: _eventReferences(event, budget),
+      requestStatuses: _schedulingRequestStatuses(
+        p['REQUEST-STATUS'] ?? [],
+        budget,
+      ),
+      resources: _schedulingResources(p['RESOURCES'] ?? [], budget),
+      priority: _componentInteger(p['PRIORITY']?.single, maximum: 9),
+      geographicPosition: _schedulingGeographicPosition(
+        p['GEO']?.single,
+        budget,
+      ),
       timeZones: zones,
       sequence: _componentInteger(p['SEQUENCE']?.single),
       created: p['CREATED'] == null ? null : componentUtc(p['CREATED']!.single),
