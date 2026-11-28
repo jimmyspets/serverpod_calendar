@@ -1,0 +1,14 @@
+class: CalendarInvitationView
+immutable: true
+fields:
+  id: UuidValue
+  revision: int
+  uid: String
+  organizer: String
+  sequence: int?
+  stamp: DateTime
+  sourceId: UuidValue?
+  summary: String?
+  timing: CalendarEventTiming?
+  receivedAt: DateTime?
+  dismissedAt: DateTime?

@@ -249,6 +249,31 @@ class EndpointRefreshJwtTokens extends _iacc.EndpointRefreshJwtTokens {
       );
 }
 
+/// Development/test simulator. No untrusted sender proof or bytes are accepted.
+/// {@category Endpoint}
+class EndpointInvitationDemo extends _isc.EndpointRef {
+  EndpointInvitationDemo(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'invitationDemo';
+
+  _ida.Future<_imrxcdin.CalendarInvitationReceipt> simulate(
+    _isc.UuidValue invitationId,
+    _isc.UuidValue commandId,
+    int? sequence,
+    String summary,
+  ) => caller.callServerEndpoint<_imrxcdin.CalendarInvitationReceipt>(
+    'invitationDemo',
+    'simulate',
+    {
+      'invitationId': invitationId,
+      'commandId': commandId,
+      'sequence': sequence,
+      'summary': summary,
+    },
+  );
+}
+
 /// Transient authorized hints only. Recovery reads the durable generic module.
 /// {@category Endpoint}
 class EndpointNotificationStream extends _isc.EndpointRef {
@@ -366,6 +391,7 @@ class Client extends _isc.ServerpodClientShared {
        ) {
     emailIdp = EndpointEmailIdp(this);
     refreshJwtTokens = EndpointRefreshJwtTokens(this);
+    invitationDemo = EndpointInvitationDemo(this);
     notificationStream = EndpointNotificationStream(this);
     schedulingDemo = EndpointSchedulingDemo(this);
     smoke = EndpointSmoke(this);
@@ -375,6 +401,8 @@ class Client extends _isc.ServerpodClientShared {
   late final EndpointEmailIdp emailIdp;
 
   late final EndpointRefreshJwtTokens refreshJwtTokens;
+
+  late final EndpointInvitationDemo invitationDemo;
 
   late final EndpointNotificationStream notificationStream;
 
@@ -388,6 +416,7 @@ class Client extends _isc.ServerpodClientShared {
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
     'emailIdp': emailIdp,
     'refreshJwtTokens': refreshJwtTokens,
+    'invitationDemo': invitationDemo,
     'notificationStream': notificationStream,
     'schedulingDemo': schedulingDemo,
     'smoke': smoke,

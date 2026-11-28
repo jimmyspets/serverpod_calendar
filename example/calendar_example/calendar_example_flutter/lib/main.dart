@@ -1,3 +1,5 @@
+import 'invitation_screen.dart';
+
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:flutter/material.dart';
 
@@ -188,6 +190,18 @@ class _ConnectionScreenState extends State<_ConnectionScreen> {
                             ),
                           ),
                     child: const Text('My calendars'),
+                  ),
+                  FilledButton(
+                    key: const Key('open-invitations'),
+                    onPressed: _busy
+                        ? null
+                        : () => Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  InvitationScreen(client: widget.client),
+                            ),
+                          ),
+                    child: const Text('Review invitations'),
                   ),
                   FilledButton(
                     key: const Key('open-feeds'),

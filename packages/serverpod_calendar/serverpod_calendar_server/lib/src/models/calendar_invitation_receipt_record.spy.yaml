@@ -1,0 +1,22 @@
+class: CalendarInvitationReceiptRecord
+serverOnly: true
+table: serverpod_calendar_invitation_receipt
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  recipientKey: String
+  ingressDigest: String
+  sourceId: UuidValue, relation(parent=serverpod_calendar_invitation_source)
+  originDigest: String
+  outcome: CalendarInvitationOutcome
+  entryRevision: int
+  receivedAt: DateTime
+  expiresAt: DateTime
+indexes:
+  calendar_invitation_receipt_key_unique:
+    fields: scopeKey, recipientKey, ingressDigest
+    unique: true
+  calendar_invitation_receipt_source_idx:
+    fields: sourceId
+  calendar_invitation_receipt_expiry_idx:
+    fields: scopeKey, recipientKey, expiresAt

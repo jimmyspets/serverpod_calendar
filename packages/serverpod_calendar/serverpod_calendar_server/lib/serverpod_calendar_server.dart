@@ -9,3 +9,5 @@ export 'src/native_calendar_name.dart' show validateCalendarOpaqueText;
 export 'src/scheduling_runtime.dart';
 
 export 'src/inbound_reply_runtime.dart';
+
+export 'src/invitation_runtime.dart';

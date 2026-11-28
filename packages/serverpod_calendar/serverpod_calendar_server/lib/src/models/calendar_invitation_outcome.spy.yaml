@@ -1,0 +1,6 @@
+enum: CalendarInvitationOutcome
+values:
+  - selected
+  - stale
+  - conflict
+  - duplicate

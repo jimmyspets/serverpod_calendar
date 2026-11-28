@@ -9,6 +9,8 @@ emailIdp:
   - hasAccount:
 refreshJwtTokens:
   - refreshAccessToken:
+invitationDemo:
+  - simulate:
 notificationStream:
   - watch:
 schedulingDemo:

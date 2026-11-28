@@ -63,6 +63,12 @@ calendarEvent:
   - changeOccurrence:
   - changeOccurrenceContent:
   - deleteEvent:
+calendarInvitation:
+  - list:
+  - getInvitation:
+  - sources:
+  - source:
+  - dismiss:
 calendarTask:
   - updateTextMetadata:
   - replaceFromImport:

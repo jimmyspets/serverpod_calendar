@@ -106,6 +106,12 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_free_busy_query.
     as _isyn5yvo;
 import 'package:serverpod_calendar_client/src/protocol/calendar_free_busy_view.dart'
     as _i2cb1v6y;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_document.dart'
+    as _ig6t0ro8;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_source_view.dart'
+    as _i7zq6sue;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_view.dart'
+    as _igeeqe4z;
 import 'package:serverpod_calendar_client/src/protocol/calendar_metadata_update_request.dart'
     as _imfz6psz;
 import 'package:serverpod_calendar_client/src/protocol/calendar_mutation_receipt.dart'
@@ -803,6 +809,61 @@ class EndpointCalendarEvent extends _isc.EndpointRef {
 }
 
 /// {@category Endpoint}
+class EndpointCalendarInvitation extends _isc.EndpointRef {
+  EndpointCalendarInvitation(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'serverpod_calendar.calendarInvitation';
+
+  _ida.Future<List<_igeeqe4z.CalendarInvitationView>> list() =>
+      caller.callServerEndpoint<List<_igeeqe4z.CalendarInvitationView>>(
+        'serverpod_calendar.calendarInvitation',
+        'list',
+        {},
+      );
+
+  _ida.Future<_igeeqe4z.CalendarInvitationView> getInvitation(
+    _isc.UuidValue id,
+  ) => caller.callServerEndpoint<_igeeqe4z.CalendarInvitationView>(
+    'serverpod_calendar.calendarInvitation',
+    'getInvitation',
+    {'id': id},
+  );
+
+  _ida.Future<List<_i7zq6sue.CalendarInvitationSourceView>> sources(
+    _isc.UuidValue id,
+  ) => caller.callServerEndpoint<List<_i7zq6sue.CalendarInvitationSourceView>>(
+    'serverpod_calendar.calendarInvitation',
+    'sources',
+    {'id': id},
+  );
+
+  _ida.Future<_ig6t0ro8.CalendarInvitationDocument> source(
+    _isc.UuidValue id,
+    _isc.UuidValue sourceId,
+  ) => caller.callServerEndpoint<_ig6t0ro8.CalendarInvitationDocument>(
+    'serverpod_calendar.calendarInvitation',
+    'source',
+    {
+      'id': id,
+      'sourceId': sourceId,
+    },
+  );
+
+  _ida.Future<void> dismiss(
+    _isc.UuidValue id,
+    int expectedRevision,
+  ) => caller.callServerEndpoint<void>(
+    'serverpod_calendar.calendarInvitation',
+    'dismiss',
+    {
+      'id': id,
+      'expectedRevision': expectedRevision,
+    },
+  );
+}
+
+/// {@category Endpoint}
 class EndpointCalendarTask extends _isc.EndpointRef {
   EndpointCalendarTask(_isc.EndpointCaller caller) : super(caller);
 
@@ -964,6 +1025,7 @@ class Caller extends _isc.ModuleEndpointCaller {
     calendarDiagnostics = EndpointCalendarDiagnostics(this);
     calendar = EndpointCalendar(this);
     calendarEvent = EndpointCalendarEvent(this);
+    calendarInvitation = EndpointCalendarInvitation(this);
     calendarTask = EndpointCalendarTask(this);
   }
 
@@ -979,6 +1041,8 @@ class Caller extends _isc.ModuleEndpointCaller {
 
   late final EndpointCalendarEvent calendarEvent;
 
+  late final EndpointCalendarInvitation calendarInvitation;
+
   late final EndpointCalendarTask calendarTask;
 
   @override
@@ -989,6 +1053,7 @@ class Caller extends _isc.ModuleEndpointCaller {
     'serverpod_calendar.calendarDiagnostics': calendarDiagnostics,
     'serverpod_calendar.calendar': calendar,
     'serverpod_calendar.calendarEvent': calendarEvent,
+    'serverpod_calendar.calendarInvitation': calendarInvitation,
     'serverpod_calendar.calendarTask': calendarTask,
   };
 }

@@ -25,6 +25,7 @@ import 'package:serverpod_notifications_server/serverpod_notifications_server.da
     as _ik9lwgjh;
 import '../auth/email_idp_endpoint.dart' as _iuc1hd5t;
 import '../auth/refresh_jwt_tokens_endpoint.dart' as _ih79u0oj;
+import '../endpoints/invitation_demo_endpoint.dart' as _i9j0zg07;
 import '../endpoints/notification_stream_endpoint.dart' as _ixiz6tz4;
 import '../endpoints/scheduling_demo_endpoint.dart' as _ik68ors2;
 import '../endpoints/smoke_endpoint.dart' as _ivabzmjp;
@@ -44,6 +45,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'refreshJwtTokens',
+          null,
+        ),
+      'invitationDemo': _i9j0zg07.InvitationDemoEndpoint()
+        ..initialize(
+          server,
+          'invitationDemo',
           null,
         ),
       'notificationStream': _ixiz6tz4.NotificationStreamEndpoint()
@@ -268,6 +275,51 @@ class Endpoints extends _is.EndpointDispatch {
                       .refreshAccessToken(
                         session,
                         refreshToken: params['refreshToken'],
+                      ),
+        ),
+      },
+    );
+    connectors['invitationDemo'] = _is.EndpointConnector(
+      name: 'invitationDemo',
+      endpoint: endpoints['invitationDemo']!,
+      methodConnectors: {
+        'simulate': _is.MethodConnector(
+          name: 'simulate',
+          params: {
+            'invitationId': _is.ParameterDescription(
+              name: 'invitationId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'commandId': _is.ParameterDescription(
+              name: 'commandId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'sequence': _is.ParameterDescription(
+              name: 'sequence',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+            'summary': _is.ParameterDescription(
+              name: 'summary',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['invitationDemo']
+                          as _i9j0zg07.InvitationDemoEndpoint)
+                      .simulate(
+                        session,
+                        params['invitationId'],
+                        params['commandId'],
+                        params['sequence'],
+                        params['summary'],
                       ),
         ),
       },

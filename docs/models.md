@@ -697,6 +697,8 @@ Accepted [ADR 0136](adr/0136-authorized-item-category-search.md) reuses Calendar
 
 Accepted ADR 0136 implements scoped per-calendar event/task master-category filtering with authorized category disclosure, immutable host query context, criteria-bound opaque continuations and Flutter Apply/Clear. See [the matching/privacy/limit guide](item-category-search.md) and batch validation. This supersedes earlier search-pending statements only for this bounded profile; broader queries and external interoperability remain separate.
 
-## Proposed invitation review storage
+## Invitation review storage
 
-[ADR 0137](adr/0137-trusted-invitation-intake-and-review.md) proposes CalendarInvitationRecord, CalendarInvitationSourceRecord and CalendarInvitationReceiptRecord for recipient-scoped correlation/current state, normalized source and trusted delivery-key receipts. Digest indexes verify retained exact values and avoid indexing large raw source identifiers. Review-first is confirmed; the concrete schemas, bounds, APIs and retention need explicit approval before table sources/migrations. No event/booking/participation link is proposed in this first batch.
+[ADR 0137](adr/0137-trusted-invitation-intake-and-review.md) implements CalendarInvitationRecord, CalendarInvitationSourceRecord and CalendarInvitationReceiptRecord for recipient-scoped correlation/current state, normalized source and trusted delivery-key receipts. Digest indexes verify retained exact values and avoid indexing large raw source identifiers. The concrete schemas, bounds, APIs and retention were explicitly approved before source generation; the scoped migrations and upgrade checks are recorded in validation. No event/booking/participation link is proposed in this first batch.
+
+Accepted ADR 0137 implements bounded trusted non-recurring REQUEST intake and private review/dismissal, with separate source access, retained source ordering/receipts and three private tables. Receipt creates no calendar event, booking or reply. See [the implementation and limits](invitation-intake-and-review.md); calendar adoption, updates, recurrence/CANCEL and mail remain separate.

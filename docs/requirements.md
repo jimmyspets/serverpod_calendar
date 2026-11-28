@@ -445,4 +445,6 @@ Accepted ADR 0136 implements scoped per-calendar event/task master-category filt
 
 ## Incoming invitation review policy
 
-The maintainer confirmed that a new authenticated non-recurring REQUEST remains in private review before explicit calendar addition. Receipt creates no event, booking or reply and records no acceptance. [ADR 0137](adr/0137-trusted-invitation-intake-and-review.md) proposes trusted intake/review/dismissal first; calendar adoption and existing-meeting reconciliation remain separate required work. Storage/API/retention mechanics are proposed, not implemented or approved by this product choice alone.
+The maintainer confirmed that a new authenticated non-recurring REQUEST remains in private review before explicit calendar addition. Receipt creates no event, booking or reply and records no acceptance. [ADR 0137](adr/0137-trusted-invitation-intake-and-review.md) implements trusted intake/review/dismissal first; calendar adoption and existing-meeting reconciliation remain separate required work. The concrete storage/API/retention batch was separately approved and has a scoped implementation; it does not complete invitation reconciliation.
+
+Accepted ADR 0137 implements bounded trusted non-recurring REQUEST intake and private review/dismissal, with separate source access, retained source ordering/receipts and three private tables. Receipt creates no calendar event, booking or reply. See [the implementation and limits](invitation-intake-and-review.md); calendar adoption, updates, recurrence/CANCEL and mail remain separate.

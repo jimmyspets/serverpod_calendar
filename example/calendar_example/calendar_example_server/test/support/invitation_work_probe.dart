@@ -1,0 +1,218 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_calendar_server/serverpod_calendar_server.dart';
+import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
+import 'package:calendar_example_server/src/generated/serverpod.dart'
+    as generated;
+
+final class _Host implements CalendarInvitationHost {
+  String scope = '', pause = '';
+  @override
+  CalendarAuthorizationGuarantee get guarantee =>
+      CalendarAuthorizationGuarantee.freshCheck;
+  CalendarInvitationRecipient get recipient => CalendarInvitationRecipient(
+    scopeKey: scope,
+    key: 'recipient',
+    calendarAddress: 'mailto:recipient@example.invalid',
+  );
+  @override
+  Future<CalendarInvitationRecipient> resolveDelivery(
+    Session s,
+    CalendarInvitationDelivery d,
+    IcalendarSchedulingMessage m,
+  ) async {
+    if (!scope.startsWith('invitation-probe:') ||
+        d.originReference != 'verified-probe' ||
+        m.events.single.participants.organizer!.address !=
+            'mailto:organizer@example.invalid') {
+      throw StateError('Foreign fixture');
+    }
+    return recipient;
+  }
+
+  @override
+  Future<CalendarInvitationRecipient> resolveCurrent(
+    Session s,
+    CalendarHostContext actor,
+    Transaction tx,
+  ) async => recipient;
+  @override
+  Future<CalendarAuthorizationVerdict> authorize(
+    Session s,
+    CalendarInvitationPolicyContext c,
+    Transaction tx,
+    CalendarAuthorizationPhase phase,
+  ) async {
+    if (!c.recipient.same(recipient)) return CalendarAuthorizationVerdict.deny;
+    if (pause == 'before' &&
+        c.operation == CalendarInvitationOperation.receive &&
+        phase == CalendarAuthorizationPhase.finalWrite) {
+      stdout.writeln('INVITATION_PAUSED ${jsonEncode(c.receipt!.toJson())}');
+      await Completer<void>().future;
+    }
+    return CalendarAuthorizationVerdict.allow;
+  }
+}
+
+final class _Policy implements CalendarHostPolicy {
+  _Policy(this.host);
+  final _Host host;
+  @override
+  CalendarAuthorizationGuarantee get guarantee =>
+      CalendarAuthorizationGuarantee.freshCheck;
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw StateError('Unexpected synthetic policy operation');
+  @override
+  Future<CalendarHostContext> resolveContext(Session s) async =>
+      CalendarHostContext(
+        principalId: 'recipient',
+        scopeKey: host.scope,
+        policyRevision: 'synthetic-probe-v1',
+      );
+}
+
+Future<void> main(List<String> args) async {
+  final pod = generated.Serverpod([
+    '--mode=test',
+    '--server-id=invitation-probe-${args.first}',
+    '--apply-migrations',
+  ]);
+  final session = await pod.createSession(enableLogging: false);
+  if ((await session.db.unsafeQuery('SELECT current_database()'))
+          .single
+          .single !=
+      'calendar_example_test') {
+    throw StateError('Synthetic test storage required');
+  }
+  final host = _Host();
+  CalendarModule.install(
+    pod,
+    policy: _Policy(host),
+    options: const CalendarModuleOptions(
+      requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+      policyTimeout: Duration(seconds: 30),
+    ),
+    invitations: CalendarInvitationRuntime(host: host),
+  );
+  await pod.start();
+  stdout.writeln('INVITATION_READY');
+  try {
+    await for (final line
+        in stdin.transform(utf8.decoder).transform(const LineSplitter())) {
+      final input = jsonDecode(line) as Map<String, dynamic>;
+      final caseId = UuidValue.fromString(input['caseId'] as String).toString();
+      host.scope = 'invitation-probe:$caseId';
+      host.pause = input['pause'] as String? ?? '';
+      Object? result;
+      try {
+        switch (input['command']) {
+          case 'receive':
+            final body = [
+              'BEGIN:VCALENDAR',
+              'VERSION:2.0',
+              'PRODID:-//Synthetic probe//EN',
+              'METHOD:REQUEST',
+              'BEGIN:VEVENT',
+              'UID:invitation:$caseId',
+              'DTSTAMP:20260101T000000Z',
+              if (input['sequence'] != null) 'SEQUENCE:${input['sequence']}',
+              'DTSTART:20300101T090000Z',
+              'SUMMARY:${encodeIcalendarText(input['summary'] as String? ?? 'Review')}',
+              'ORGANIZER:mailto:organizer@example.invalid',
+              'ATTENDEE:mailto:recipient@example.invalid',
+              'END:VEVENT',
+              'END:VCALENDAR',
+              '',
+            ].join('\r\n');
+            final receipt = await CalendarModule.receiveSchedulingInvitation(
+              session,
+              CalendarInvitationDelivery(
+                namespace: 'process-loss',
+                deliveryKey: input['key'] as String,
+                originReference: 'verified-probe',
+                bytes: Uint8List.fromList(utf8.encode(body)),
+              ),
+            );
+            if (host.pause == 'after') {
+              stdout.writeln(
+                'INVITATION_PAUSED ${jsonEncode(receipt.toJson())}',
+              );
+              await Completer<void>().future;
+            }
+            result = receipt.toJson();
+          case 'inspect':
+            final entries = await CalendarInvitationRecord.db.find(
+              session,
+              where: (t) => t.scopeKey.equals(host.scope),
+            );
+            final sources = entries.isEmpty
+                ? <CalendarInvitationSourceRecord>[]
+                : await CalendarInvitationSourceRecord.db.find(
+                    session,
+                    where: (t) =>
+                        t.entryId.inSet(entries.map((e) => e.id!).toSet()),
+                  );
+            result = {
+              'entries': entries.length,
+              'sources': sources.length,
+              'receipts': await CalendarInvitationReceiptRecord.db.count(
+                session,
+                where: (t) => t.scopeKey.equals(host.scope),
+              ),
+              'revision': entries.firstOrNull?.revision,
+              'dismissed': entries.firstOrNull?.dismissedAt != null,
+            };
+          case 'dismiss':
+            // Explicit test-only native identity; trusted ingress stays unauthenticated.
+            session.updateAuthenticated(
+              AuthenticationInfo('recipient', {}, authId: 'invitation-probe'),
+            );
+            try {
+              await CalendarModule.service(session).dismissInvitation(
+                UuidValue.fromString(input['entryId'] as String),
+                input['revision'] as int,
+              );
+            } finally {
+              session.updateAuthenticated(null);
+            }
+            result = true;
+          case 'cleanup':
+            final entries = await CalendarInvitationRecord.db.find(
+              session,
+              where: (t) => t.scopeKey.equals(host.scope),
+            );
+            await CalendarInvitationReceiptRecord.db.deleteWhere(
+              session,
+              where: (t) => t.scopeKey.equals(host.scope),
+            );
+            if (entries.isNotEmpty) {
+              await CalendarInvitationSourceRecord.db.deleteWhere(
+                session,
+                where: (t) =>
+                    t.entryId.inSet(entries.map((e) => e.id!).toSet()),
+              );
+              await CalendarInvitationRecord.db.delete(session, entries);
+            }
+            await CalendarScopeRecord.db.deleteWhere(
+              session,
+              where: (t) => t.scopeKey.equals(host.scope),
+            );
+            result = true;
+          default:
+            throw StateError('Unknown fixture command');
+        }
+      } on CalendarException catch (e) {
+        result = {'error': e.code.name};
+      }
+      stdout.writeln('INVITATION_RESULT ${jsonEncode(result)}');
+    }
+  } finally {
+    await session.close();
+    await pod.shutdown();
+  }
+}

@@ -13,6 +13,7 @@ import 'alarm_values.dart';
 import 'alarm_runtime.dart';
 import 'scheduling_runtime.dart';
 import 'inbound_reply_runtime.dart';
+import 'invitation_runtime.dart';
 import 'alarm_work_store.dart';
 import 'generated/protocol.dart';
 import 'native_calendar_name.dart';
@@ -33,6 +34,7 @@ import 'availability_wire_output.dart';
 import 'availability_import_baseline.dart';
 
 part 'calendar_publication.dart';
+part 'calendar_invitations.dart';
 part 'calendar_alarms.dart';
 part 'calendar_alarm_adoption.dart';
 part 'calendar_alarm_actions.dart';
@@ -84,6 +86,7 @@ abstract final class CalendarModule {
     required CalendarModuleOptions options,
     CalendarAlarmRuntime? alarms,
     CalendarSchedulingRuntime? scheduling,
+    CalendarInvitationRuntime? invitations,
     CalendarPublicationPolicy? publicationPolicy,
     List<CalendarDependencyProvider> dependencies = const [],
     List<CalendarAvailabilityExtensionRegistration> availabilityExtensions =
@@ -143,6 +146,13 @@ abstract final class CalendarModule {
             CalendarAuthorizationGuarantee.coordinated) {
       throw ArgumentError('Reply host cannot supply required guarantee');
     }
+    if (invitations != null &&
+        options.requiredWriteGuarantee ==
+            CalendarAuthorizationGuarantee.coordinated &&
+        invitations.host.guarantee !=
+            CalendarAuthorizationGuarantee.coordinated) {
+      throw ArgumentError('Invitation host cannot supply required guarantee');
+    }
     final registry = <String, CalendarAvailabilityExtensionRegistration>{};
     if (availabilityExtensions.length > 32) {
       throw ArgumentError('Too many extension registrations');
@@ -163,7 +173,20 @@ abstract final class CalendarModule {
       alarms,
       publicationPolicy,
       scheduling,
+      invitations,
     );
+  }
+
+  /// Server-only invitation ingress: installed host verifies origin and target.
+  static Future<CalendarInvitationReceipt> receiveSchedulingInvitation(
+    Session session,
+    CalendarInvitationDelivery delivery,
+  ) {
+    final runtime = _installed[session.serverpod];
+    if (runtime?.invitations == null) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
+    return CalendarService._(session, runtime!)._receiveInvitation(delivery);
   }
 
   /// Trusted inbound receipt; the installed host must verify exact origin.
@@ -299,10 +322,12 @@ final class _Runtime {
     this.alarms,
     this.publicationPolicy,
     this.scheduling,
+    this.invitations,
   );
   final Map<String, CalendarAvailabilityExtensionRegistration>
   availabilityExtensions;
   final CalendarSchedulingRuntime? scheduling;
+  final CalendarInvitationRuntime? invitations;
   final CalendarAlarmRuntime? alarms;
   final CalendarPublicationPolicy? publicationPolicy;
   final CalendarHostPolicy policy;

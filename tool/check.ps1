@@ -71,9 +71,10 @@ try {
   finally { Pop-Location }
   & "$PSScriptRoot/reset-test.ps1"
   Push-Location $ExampleServer
-  try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/calendar_test.dart', 'test/integration/notification_test.dart', 'test/integration/feed_test.dart', 'test/integration/scheduling_test.dart', 'test/integration/scheduling_replies_test.dart', 'test/integration/recurring_scheduling_replies_test.dart', 'test/integration/item_text_metadata_test.dart', 'test/integration/item_category_search_test.dart') }
+  try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/calendar_test.dart', 'test/integration/notification_test.dart', 'test/integration/feed_test.dart', 'test/integration/scheduling_test.dart', 'test/integration/scheduling_replies_test.dart', 'test/integration/recurring_scheduling_replies_test.dart', 'test/integration/item_text_metadata_test.dart', 'test/integration/item_category_search_test.dart', 'test/integration/invitation_test.dart') }
   finally { Pop-Location }
   Invoke-Checked python @('tool/metadata_upgrade_smoke.py')
+  Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart')
   Invoke-Checked dart @('run', 'tool/alarm_work_smoke.dart')
   Invoke-Checked dart @('run', 'tool/notification_work_smoke.dart')
   Invoke-Checked dart @('run', 'tool/scheduling_work_smoke.dart')

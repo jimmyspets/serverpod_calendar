@@ -164,6 +164,8 @@ Accepted ADR 0135 adds selected-field native event/task URL, classification, cat
 
 Accepted ADR 0136 implements exact native event/task master-category filtering with independent disclosure and cursor binding. This application query does not extend RFC wire grammar, schedule meetings, query busy time or establish external-client rendering/search compatibility. See [the bounded query profile](item-category-search.md).
 
-## Incoming organizer REQUEST review proposal
+## Incoming organizer REQUEST review
 
-The confirmed review-first policy keeps receipt separate from calendar adoption and participation. [ADR 0137](adr/0137-trusted-invitation-intake-and-review.md) proposes bounded trusted non-recurring intake with source ordering, duplicate receipts and private review. It adds no implemented method/MIME conformance today; recurrence, calendar reconciliation, responses and RFC 6047 mail remain separate required work.
+The confirmed review-first policy keeps receipt separate from calendar adoption and participation. [ADR 0137](adr/0137-trusted-invitation-intake-and-review.md) implements bounded trusted non-recurring intake with source ordering, duplicate receipts and private review. This scoped intake/review runtime applies no calendar mutation and does not establish MIME conformance; recurrence, calendar reconciliation, responses and RFC 6047 mail remain separate required work.
+
+Accepted ADR 0137 implements bounded trusted non-recurring REQUEST intake and private review/dismissal, with separate source access, retained source ordering/receipts and three private tables. Receipt creates no calendar event, booking or reply. See [the implementation and limits](invitation-intake-and-review.md); calendar adoption, updates, recurrence/CANCEL and mail remain separate.

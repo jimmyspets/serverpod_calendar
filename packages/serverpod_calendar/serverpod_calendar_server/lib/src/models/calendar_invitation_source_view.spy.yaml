@@ -1,0 +1,11 @@
+class: CalendarInvitationSourceView
+immutable: true
+fields:
+  id: UuidValue
+  entryId: UuidValue
+  sequence: int?
+  stamp: DateTime
+  outcome: CalendarInvitationOutcome
+  isCurrent: bool
+  receivedAt: DateTime
+  inactiveAt: DateTime?

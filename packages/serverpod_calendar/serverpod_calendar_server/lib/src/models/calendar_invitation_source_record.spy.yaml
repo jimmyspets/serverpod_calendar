@@ -1,0 +1,20 @@
+class: CalendarInvitationSourceRecord
+serverOnly: true
+table: serverpod_calendar_invitation_source
+fields:
+  id: UuidValue?, defaultPersist=random
+  entryId: UuidValue, relation(parent=serverpod_calendar_invitation)
+  normalizedSource: String
+  byteCount: int
+  digest: String
+  sequence: int?
+  stamp: DateTime
+  outcome: CalendarInvitationOutcome
+  receivedAt: DateTime
+  inactiveAt: DateTime?
+indexes:
+  calendar_invitation_source_digest_unique:
+    fields: entryId, digest
+    unique: true
+  calendar_invitation_source_entry_time_idx:
+    fields: entryId, inactiveAt

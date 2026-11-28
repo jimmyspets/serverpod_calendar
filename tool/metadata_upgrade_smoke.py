@@ -88,15 +88,80 @@ DROP TABLE instance_receipt_guard;
 """)
 
 
+def verify_invitation_upgrade(database):
+    # This process owns the synthetic database; snapshot every existing domain row.
+    sql(database, """
+CREATE TABLE invitation_upgrade_guard(table_name text, rows jsonb);
+DO $snapshot_invitation$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+  AND (tablename LIKE 'serverpod_calendar_%' OR tablename LIKE 'serverpod_notifications_%') LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s', item.tablename) INTO contents;
+  INSERT INTO invitation_upgrade_guard VALUES(item.tablename, contents);
+ END LOOP;
+END;
+$snapshot_invitation$;
+""")
+    sql(database, (SERVER / "migrations/20261028182538524-invitation-review/migration.sql").read_text(encoding="utf-8"))
+    sql(database, """
+DO $verify_invitation$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT * FROM invitation_upgrade_guard LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s', item.table_name) INTO contents;
+  IF contents IS DISTINCT FROM item.rows THEN RAISE EXCEPTION 'Invitation migration changed %', item.table_name; END IF;
+ END LOOP;
+ IF (SELECT count(*) FROM serverpod_calendar_invitation)<>0
+ OR (SELECT count(*) FROM serverpod_calendar_invitation_source)<>0
+ OR (SELECT count(*) FROM serverpod_calendar_invitation_receipt)<>0
+ THEN RAISE EXCEPTION 'Invitation migration invented intake state'; END IF;
+END;
+$verify_invitation$;
+DROP TABLE invitation_upgrade_guard;
+-- Structural index fixtures only, never adopted or interpreted as source.
+INSERT INTO serverpod_calendar_invitation(id,"scopeKey","recipientKey","correlationDigest",uid,organizer,revision,stamp,digest,"createdAt","updatedAt","dismissedAt")
+VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','invitation-upgrade','recipient',repeat('0',64),repeat('u',4096),'mailto:'||repeat('o',2048),1,now(),repeat('1',64),now(),now(),now());
+DO $verify_invitation_key$
+BEGIN
+ BEGIN
+  INSERT INTO serverpod_calendar_invitation(id,"scopeKey","recipientKey","correlationDigest",uid,organizer,revision,stamp,digest,"createdAt","updatedAt","dismissedAt")
+  SELECT 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',"scopeKey","recipientKey","correlationDigest",uid,organizer,revision,stamp,digest,"createdAt","updatedAt","dismissedAt" FROM serverpod_calendar_invitation;
+  RAISE EXCEPTION 'Missing invitation correlation uniqueness';
+ EXCEPTION WHEN unique_violation THEN NULL;
+ END;
+END;
+$verify_invitation_key$;
+INSERT INTO serverpod_calendar_invitation_source(id,"entryId","normalizedSource","byteCount",digest,stamp,outcome,"receivedAt","inactiveAt")
+VALUES ('cccccccc-cccc-4ccc-8ccc-cccccccccccc','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','structural fixture',18,repeat('2',64),now(),'selected',now(),now());
+INSERT INTO serverpod_calendar_invitation_receipt(id,"scopeKey","recipientKey","ingressDigest","sourceId","originDigest",outcome,"entryRevision","receivedAt","expiresAt")
+VALUES ('dddddddd-dddd-4ddd-8ddd-dddddddddddd','invitation-upgrade','recipient',repeat('3',64),'cccccccc-cccc-4ccc-8ccc-cccccccccccc',repeat('4',64),'selected',1,now(),now()+interval '30 days');
+DO $verify_invitation_receipt_key$
+BEGIN
+ BEGIN
+  INSERT INTO serverpod_calendar_invitation_receipt(id,"scopeKey","recipientKey","ingressDigest","sourceId","originDigest",outcome,"entryRevision","receivedAt","expiresAt")
+  SELECT 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',"scopeKey","recipientKey","ingressDigest","sourceId","originDigest",outcome,"entryRevision","receivedAt","expiresAt" FROM serverpod_calendar_invitation_receipt;
+  RAISE EXCEPTION 'Missing invitation delivery-key uniqueness';
+ EXCEPTION WHEN unique_violation THEN NULL;
+ END;
+END;
+$verify_invitation_receipt_key$;
+""")
+
+
 def main():
     # Drop only a database this process successfully creates on the test service.
     database = f"calendar_metadata_upgrade_{os.getpid()}"
     assert re.fullmatch(r"calendar_metadata_upgrade_[0-9]+", database)
     sql("postgres", f"CREATE DATABASE {database};")
     try:
-        if "--instance-replies-only" in __import__("sys").argv:
+        if any(arg in __import__("sys").argv for arg in ["--instance-replies-only", "--invitations-only"]):
             sql(database, (SERVER / "migrations/20261027194429192-attendee-replies/definition.sql").read_text(encoding="utf-8"))
             verify_instance_reply_upgrade(database)
+            if "--invitations-only" in __import__("sys").argv:
+                verify_invitation_upgrade(database)
+                print("PASS: invitation upgrade preserves populated prior domain rows, creates no invitation state and enforces bounded digest correlation/delivery keys.")
+                return
             print("PASS: populated master reply source/response/receipt rows preserved, master defaults and target uniqueness verified.")
             return
         sql(database, (SERVER / "migrations/20261020142844886-calendar-crud/definition.sql").read_text(encoding="utf-8"))
@@ -732,7 +797,8 @@ $verify_replies$;
 DROP TABLE reply_upgrade_guard;
 """)
         verify_instance_reply_upgrade(database)
-        print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated master replies/receipts through the instance-target upgrade.")
+        verify_invitation_upgrade(database)
+        print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated master replies/receipts through the instance-target and invitation-review upgrades.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")
 

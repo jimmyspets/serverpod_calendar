@@ -1,0 +1,5 @@
+class: CalendarInvitationDocument
+immutable: true
+fields:
+  sourceId: UuidValue
+  text: String
