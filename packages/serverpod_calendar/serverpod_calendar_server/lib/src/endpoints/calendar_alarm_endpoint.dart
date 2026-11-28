@@ -14,6 +14,22 @@ class CalendarAlarmEndpoint extends Endpoint {
     Session session,
     CalendarAlarmCreateRequest request,
   ) => CalendarModule.service(session).createPersonalAlarm(request);
+  Future<CalendarAlarmSourceTimings> sourceTimings(
+    Session session,
+    CalendarAlarmParent parent,
+    String? dateZoneId,
+  ) =>
+      CalendarModule.service(session)
+          .personalAlarmSourceTimings(parent, dateZoneId);
+  Future<CalendarAlarmView?> adopt(
+    Session session,
+    CalendarAlarmParent parent,
+    int expectedParentRevision,
+    int sourceIndex,
+    String? dateZoneId,
+  ) => CalendarModule.service(
+    session,
+  ).adoptPersonalAlarm(parent, expectedParentRevision, sourceIndex, dateZoneId);
   Future<CalendarAlarmView?> update(
     Session session,
     CalendarAlarmUpdateRequest request,

@@ -629,3 +629,8 @@ The maintainer approved the [ADR 0112](adr/0112-bounded-durable-alarm-planning.m
 ## Approved reusable notification storage, 2026-10-25
 
 [ADR 0114](adr/0114-reusable-notification-delivery.md) proposes separate generic scope-lock, delivery/retry and cursor tables. The recommended live profile retains bounded source references and idempotency/lifecycle state, projecting current authorized text instead of storing a content inbox. The live profile was confirmed on 2026-10-25; the maintainer also approved all three physical models and defaults. Table sources, generated module/example migrations and the scoped delivery/recovery implementation now follow that approval, with batch evidence recorded separately. Calendar owns alarm timing/actions; the example owns the connected stream adapter.
+
+
+## Timing-only source alarm adoption, 2026-10-25
+
+[ADR 0115](adr/0115-timing-only-source-alarm-adoption.md) implements [explicit master-timing copying](imported-alarm-adoption.md) into new unarmed personal definitions, using current authorized item text. It reuses existing storage without a migration and enforces source-read/adopt/create rights, actual parent revisions and trusted recipients. This supersedes earlier adoption-pending wording only for this bounded flow. Source text/UID/acknowledgement/snooze state stays inert; broader profiles, private exports and release gates remain separate. Full local batch validation passed; see the validation record for exact evidence.

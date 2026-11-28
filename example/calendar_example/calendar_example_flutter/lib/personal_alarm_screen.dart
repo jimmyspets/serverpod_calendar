@@ -23,11 +23,65 @@ class PersonalAlarmScreen extends StatefulWidget {
 class _PersonalAlarmScreenState extends State<PersonalAlarmScreen> {
   List<cal.CalendarAlarmView> _alarms = [];
   bool _busy = true;
+  cal.CalendarAlarmSourceTimings? _source;
+  late final TextEditingController _sourceZone;
   String? _error;
   @override
   void initState() {
     super.initState();
+    _sourceZone = TextEditingController(text: widget.initialZone);
     _load();
+  }
+
+  @override
+  void dispose() {
+    _sourceZone.dispose();
+    super.dispose();
+  }
+
+  String? get _zone =>
+      _sourceZone.text.trim().isEmpty ? null : _sourceZone.text.trim();
+  Future<void> _reviewSource() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+      _source = null;
+    });
+    try {
+      final source = await widget
+          .client
+          .modules
+          .serverpod_calendar
+          .calendarAlarm
+          .sourceTimings(widget.parent, _zone);
+      if (mounted) setState(() => _source = source);
+    } catch (e) {
+      if (mounted) setState(() => _error = _message(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _adopt(int index) async {
+    final source = _source;
+    if (source == null) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await widget.client.modules.serverpod_calendar.calendarAlarm.adopt(
+        widget.parent,
+        source.parentRevision,
+        index,
+        _zone,
+      );
+      if (mounted) await _load();
+    } catch (e) {
+      if (mounted) setState(() => _error = _message(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   Future<void> _load() async {
@@ -156,9 +210,42 @@ class _PersonalAlarmScreenState extends State<PersonalAlarmScreen> {
         const Text(
           'Private timing definitions for your current host recipient. '
           'Save first, then explicitly arm to request planning. '
-          'Notification delivery is not connected in this example yet. '
-          'Imported source alarms are separate and are never adopted here.',
+          'Live reminder text comes from the current authorized item. '
+          'Copying imported timing does not copy source text, acknowledgement or snooze state.',
         ),
+        TextField(
+          controller: _sourceZone,
+          key: const Key('alarm-source-zone'),
+          enabled: !_busy,
+          decoration: const InputDecoration(
+            labelText: 'Zone for imported DATE-relative timing',
+          ),
+          onChanged: (_) => setState(() => _source = null),
+        ),
+        OutlinedButton(
+          key: const Key('alarm-source-review'),
+          onPressed: _busy ? null : _reviewSource,
+          child: const Text('Review imported alarm timing'),
+        ),
+        if (_source != null) ...[
+          Text(
+            'Source revision ${_source!.parentRevision}. Copies remain unarmed.',
+          ),
+          if (_source!.definitions.isEmpty)
+            const Text('No imported master alarm timing.'),
+          for (var i = 0; i < _source!.definitions.length; i++)
+            ListTile(
+              title: Text(_label(_source!.definitions[i])),
+              subtitle: Text(_sourceRepeats(_source!.definitions[i])),
+              trailing: TextButton(
+                key: Key('alarm-source-adopt-$i'),
+                onPressed: _busy || _alarms.length >= 16
+                    ? null
+                    : () => _adopt(i),
+                child: const Text('Copy as unarmed'),
+              ),
+            ),
+        ],
         if (_busy) const LinearProgressIndicator(),
         if (_error != null) Text(_error!, key: const Key('alarm-error')),
         if (!_busy && _alarms.isEmpty)
@@ -211,6 +298,12 @@ class _PersonalAlarmScreenState extends State<PersonalAlarmScreen> {
       ],
     ),
   );
+}
+
+String _sourceRepeats(cal.CalendarAlarmDefinition d) {
+  if (d.repeat == null) return 'No automatic repeats';
+  final v = d.repeatInterval!;
+  return '${d.repeat} repeats every ${v.weeks}w ${v.days}d ${v.hours}h ${v.minutes}m ${v.seconds}s';
 }
 
 String _message(Object e) =>

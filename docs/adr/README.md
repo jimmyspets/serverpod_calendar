@@ -131,6 +131,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0113](0113-native-alarm-actions.md) | Native personal alarm actions | Due/accepted snooze, future-only reset and additive storage approved; scoped action/activity implementation under review |
 
 | [0114](0114-reusable-notification-delivery.md) | Reusable notification delivery and connected recovery | Live profile, three tables and defaults approved; scoped implementation/batch validation under review |
+| [0115](0115-timing-only-source-alarm-adoption.md) | Timing-only source alarm adoption | Timing/current-text choice confirmed; API mechanics under draft review, no table changes |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

@@ -206,6 +206,72 @@ class Endpoints extends _is.EndpointDispatch {
                         params['request'],
                       ),
         ),
+        'sourceTimings': _is.MethodConnector(
+          name: 'sourceTimings',
+          params: {
+            'parent': _is.ParameterDescription(
+              name: 'parent',
+              type: _is.getType<_i3f0y8iu.CalendarAlarmParent>(),
+              nullable: false,
+            ),
+            'dateZoneId': _is.ParameterDescription(
+              name: 'dateZoneId',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAlarm']
+                          as _ifkkyj2z.CalendarAlarmEndpoint)
+                      .sourceTimings(
+                        session,
+                        params['parent'],
+                        params['dateZoneId'],
+                      ),
+        ),
+        'adopt': _is.MethodConnector(
+          name: 'adopt',
+          params: {
+            'parent': _is.ParameterDescription(
+              name: 'parent',
+              type: _is.getType<_i3f0y8iu.CalendarAlarmParent>(),
+              nullable: false,
+            ),
+            'expectedParentRevision': _is.ParameterDescription(
+              name: 'expectedParentRevision',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'sourceIndex': _is.ParameterDescription(
+              name: 'sourceIndex',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'dateZoneId': _is.ParameterDescription(
+              name: 'dateZoneId',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAlarm']
+                          as _ifkkyj2z.CalendarAlarmEndpoint)
+                      .adopt(
+                        session,
+                        params['parent'],
+                        params['expectedParentRevision'],
+                        params['sourceIndex'],
+                        params['dateZoneId'],
+                      ),
+        ),
         'update': _is.MethodConnector(
           name: 'update',
           params: {

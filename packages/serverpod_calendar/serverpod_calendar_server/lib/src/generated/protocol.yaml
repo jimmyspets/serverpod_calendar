@@ -1,6 +1,8 @@
 calendarAlarm:
   - list:
   - create:
+  - sourceTimings:
+  - adopt:
   - update:
   - setArmed:
   - delete:
