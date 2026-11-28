@@ -282,3 +282,8 @@ Accepted [ADR 0139](adr/0139-explicit-linked-invitation-updates.md) implements e
 ## Incoming whole-meeting cancellation review
 
 Accepted [ADR 0140](adr/0140-trusted-cancellation-intake-and-review.md) adds scoped trusted non-recurring whole-meeting CANCEL intake/private review, current source-kind storage/DTOs, independent cancellation authority and known-correlation/accepted-version ordering. Receipt leaves native events, baselines/checkpoints, personal alarms and outbound intent unchanged. See [the supported profile and limits](invitation-cancellation-review.md) and separate batch validation; explicit cancellation application, attendee removal, recurring intake and mail remain separate.
+
+
+## Proposed linked cancellation application
+
+Proposed [ADR 0141](adr/0141-explicit-linked-cancellation-application.md) covers explicit clean-baseline cancellation application and a later explicit newer REQUEST reopening. The clean-baseline product choice is confirmed; status/version projection, kind-aware acceptance checkpoint/latest-result DTOs, independent action authority and atomic retry mechanics remain unapproved. No automatic application, local-draft overwrite, recurring lifecycle or mail follows.
