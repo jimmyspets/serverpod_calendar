@@ -667,3 +667,12 @@ Completed selected-instance response implementation is in PR #137; local batch c
 - [x] Implement scoped trusted range intake/private review, source binding, every master/single action guard, synthetic MIME, generated clients and Flutter.
 - [x] Complete focused and broader batch validation before one implementation commit; the broader aggregate run and final-source focused continuation passed and are recorded separately.
 - [ ] Review range calendar application/cancellation/restoration, overlap/version coordination and participation separately. This scoped intake implementation completes none of those runtime paths.
+
+## Pure range REQUEST projection (proposed)
+
+Completed range-review implementation is in PR #139. Proposed [ADR 0155](adr/0155-pure-range-invitation-projection.md) is the next prerequisite for faithful range application.
+
+- [x] Inspect source/core future projection, explicit singles/later ranges, independent versions and primary RFC original-range rules.
+- [ ] Obtain review of the pure helper, selected-anchor collision/replacement, bounded anchor-content profile and work/slot limits.
+- [ ] After approval, implement pure REQUEST projection plus focused and complete batch checks.
+- [ ] Design durable clean-series range application, accepted checkpoints/retention, overlap/version reconciliation, future cancellation/restoration and range responses separately. Current server-side range-action guards stay in place.
