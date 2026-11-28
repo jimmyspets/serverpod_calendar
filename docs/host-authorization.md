@@ -294,3 +294,6 @@ Accepted [ADR 0147](adr/0147-bounded-calendar-occurrence-queries.md) adds a sepa
 
 
 ADR 0161 adds independent `composeAcceptedRangeCancellation` when an active master REQUEST preserves an accepted range cutoff, alongside `composeAcceptedOccurrences` and ordinary native/host update rights. Masked eligibility previews check these operations in the read phase against trusted current/proposed native and private checkpoint snapshots; they make no writes. A denied update disables eligibility while separately authorized readable state remains available. Raw accepted cancellation source reads use its actual IDs/body, even when another master is selected. Preliminary/final write and retry checks remain independent. See [the scoped profile](range-cancellation-master-composition.md).
+
+
+ADR 0162 reuses the masked composition authority for explicit whole-master CANCEL/reopening. Read eligibility checks `applyCancellation` plus native lifecycle rights for whole cancellation, or `apply` plus status-change rights when reopening. Preliminary/final checks retain the actual original range source and distinct current/proposed native/private state. Source participants/versions grant no authority. See [the lifecycle profile](range-cancellation-master-lifecycle.md); no new host operation or view field is added.

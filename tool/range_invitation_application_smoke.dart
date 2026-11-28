@@ -283,8 +283,93 @@ Future<void> rangeInvitationApplicationSmoke(List<Client> clients) async {
           (await fetch(url)).$1 != 200,
       'Master composition published a lossy masked feed or stale 304',
     );
+    await a.invitationDemo.simulateCancellation(
+      id,
+      const cal.Uuid().v4obj(),
+      6,
+    );
+    final whole = await api.calendarInvitation.application(master.entryId);
+    require(
+      whole.canApplyCancellation && whole.hasAcceptedRangeCancellation,
+      'Masked whole cancellation remained blocked',
+    );
+    cal.CalendarInvitationApplyRequest masterCommand(
+      cal.CalendarInvitationApplicationView v,
+    ) => cal.CalendarInvitationApplyRequest(
+      invitationId: v.invitationId,
+      sourceId: v.incomingSourceId!,
+      linkId: v.linkId,
+      expectedInvitationRevision: v.invitationRevision!,
+      expectedEventRevision: v.eventRevision,
+      expectedCalendarRevision: v.calendarRevision,
+      expectedApplicationRevision: v.applicationRevision,
+      expectedOccurrenceRevision: v.occurrenceRevision,
+    );
+    final wholeInput = masterCommand(whole);
+    final wholeRace = await Future.wait(
+      clients.map(
+        (c) => c.modules.serverpod_calendar.calendarInvitation
+            .applyCancellation(wholeInput),
+      ),
+    );
+    require(
+      wholeRace.first.id == wholeRace.last.id &&
+          wholeRace.first.eventRevision == 6,
+      'Whole cancellation race duplicated effect',
+    );
+    final wholeState = await api.calendarInvitation.application(master.entryId);
+    require(
+      wholeState.currentContent.status == cal.CalendarEventStatus.cancelled &&
+          !wholeState.hasLocalChanges &&
+          wholeState.hasAcceptedRangeCancellation,
+      'Whole cancellation lost protected mask or clean state',
+    );
+    require(
+      (await fetch(url, currentFeed.$2)).$1 != 304 &&
+          (await fetch(url)).$1 != 200,
+      'Whole cancellation erased mask for a lossy feed',
+    );
+    await a.invitationDemo.simulateRecurring(
+      id,
+      const cal.Uuid().v4obj(),
+      7,
+      'Reopened master keeps cancelled suffix',
+    );
+    final reopen = await api.calendarInvitation.application(master.entryId);
+    require(
+      reopen.canApply && reopen.hasAcceptedRangeCancellation,
+      'Explicit reopening remained blocked',
+    );
+    final reopenInput = masterCommand(reopen);
+    final reopenedRace = await Future.wait(
+      clients.map(
+        (c) => c.modules.serverpod_calendar.calendarInvitation.applyUpdate(
+          reopenInput,
+        ),
+      ),
+    );
+    require(
+      reopenedRace.first.id == reopenedRace.last.id &&
+          reopenedRace.first.eventRevision == 7,
+      'Reopening race duplicated effect',
+    );
+    final reopened = await api.calendarInvitation.application(master.entryId),
+        stillMasked = await api.calendarInvitation.rangeApplication(entry);
+    require(
+      reopened.currentContent.status == cal.CalendarEventStatus.confirmed &&
+          !reopened.hasLocalChanges &&
+          stillMasked.currentOccurrence!.status ==
+              cal.CalendarEventStatus.cancelled &&
+          stillMasked.acceptedVersion.sequence == 4,
+      'Reopening restored the cancelled suffix or changed its version',
+    );
+    require(
+      (await api.calendarInvitation.applyRangeCancellation(cancelInput)).id ==
+          cancelledRace.first.id,
+      'Lifecycle transitions superseded original range cancellation receipt',
+    );
     stdout.writeln(
-      'PASS: generated-client two-host range preview/apply and master races, preserved source versions/retries, receipt-only versus applied feed ETags and explicit range cancellation, masked-feed rejection, v5 master composition and stable independent retries.',
+      'PASS: generated-client two-host range preview/apply and master races, preserved source versions/retries, receipt-only versus applied feed ETags and explicit range cancellation, masked-feed rejection, v5/v6 master composition/cancellation/reopening and stable independent retries.',
     );
   } finally {
     if (subscription != null) {

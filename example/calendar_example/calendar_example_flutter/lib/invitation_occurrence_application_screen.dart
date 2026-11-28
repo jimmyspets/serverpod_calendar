@@ -139,7 +139,7 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
           if (v != null) ...[
             if (v.hasAcceptedRangeCancellation)
               const Text(
-                'A source range cancellation is accepted. Occurrence and cancellation source applications remain blocked. Eligible master updates preserve the cutoff; exact retained retries remain available.',
+                'A source range cancellation is accepted. Occurrence source applications remain blocked. Whole-meeting changes preserve the cutoff; exact retained retries remain available.',
               ),
             Text('Original: ${invitationTimingLabel(v.originalStart)}'),
             Text(
@@ -197,7 +197,7 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
             if (v.incomingKind ==
                 cal.CalendarInvitationSourceKind.rangeCancellation)
               const Text(
-                'Apply explicitly cancels all originals from the anchor, including moved exceptions. Timing, content and source versions are retained. Eligible master updates preserve the cutoff. Other source applications and source restoration remain guarded.',
+                'Apply explicitly cancels all originals from the anchor, including moved exceptions. Timing, content and source versions are retained. Eligible master updates preserve the cutoff. Occurrence applications and source-cutoff restoration remain separate.',
               ),
             const Text(
               'New whole-series sources preserve accepted occurrence edits and individual cancellations. Updates that remove an accepted original are rejected.',

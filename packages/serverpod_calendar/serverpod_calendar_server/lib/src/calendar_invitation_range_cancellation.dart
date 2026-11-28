@@ -1,7 +1,7 @@
 part of 'calendar_module.dart';
 
 bool _occHasRangeCancellation(Map<String, dynamic>? state) =>
-    {4, 5}.contains(state?['version']);
+    {4, 5, 6}.contains(state?['version']);
 
 Map<String, dynamic> _occLatestTarget(Map<String, dynamic> state) {
   if (_occHasRangeCancellation(state)) {
@@ -54,7 +54,7 @@ extension CalendarInvitationRangeCancellationOperations on CalendarService {
     CalendarInvitationOccurrenceApplicationRecord row,
     Map<String, dynamic> state,
   ) {
-    final composed = state['version'] == 5;
+    final composed = {5, 6}.contains(state['version']);
     final basis = composed
         ? CalendarEventImportBaseline.fromJson(state['cancellationBasis'])
         : event.data.importBaseline!;
@@ -160,7 +160,9 @@ extension CalendarInvitationRangeCancellationOperations on CalendarService {
     CalendarInvitationLinkRecord link,
     Map<String, dynamic> state,
   ) => _invitationHash([
-    'range-cancel-composition-v5',
+    state['version'] == 6
+        ? 'range-cancel-composition-v6'
+        : 'range-cancel-composition-v5',
     link.scopeKey,
     link.recipientKey,
     link.id.toString(),
@@ -184,14 +186,15 @@ extension CalendarInvitationRangeCancellationOperations on CalendarService {
     required CalendarEventImportBaseline baseline,
     required CalendarEventImportMember member,
     required CalendarInvitationApplicationRecord? master,
+    bool lifecycle = false,
   }) {
     final next = <String, dynamic>{
       ...state,
-      'version': 5,
-      'cancellationBasis': state['version'] == 5
+      'version': lifecycle || state['version'] == 6 ? 6 : 5,
+      'cancellationBasis': {5, 6}.contains(state['version'])
           ? state['cancellationBasis']
           : event.data.importBaseline!.toJson(),
-      'cancellationNativeDigest': state['version'] == 5
+      'cancellationNativeDigest': {5, 6}.contains(state['version'])
           ? state['cancellationNativeDigest']
           : state['expectedNativeDigest'],
       'masterBaseline': masterBaseline.toJson(),

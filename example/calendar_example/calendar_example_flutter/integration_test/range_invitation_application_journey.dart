@@ -215,6 +215,59 @@ Future<void> runRangeInvitationApplicationJourney(
     );
     navigator.pop();
     await tester.pumpAndSettle();
+    await client.invitationDemo.simulateCancellation(
+      id,
+      const cal.Uuid().v4obj(),
+      6,
+    );
+    navigator.push(
+      MaterialPageRoute<void>(
+        builder: (_) => InvitationUpdateScreen(
+          client: client,
+          invitationId: master.entryId,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await loaded();
+    expect(
+      find.byKey(const Key('invitation-master-range-cancellation')),
+      findsOneWidget,
+    );
+    await tap('invitation-cancellation-apply');
+    final whole = await api.calendarInvitation.application(master.entryId);
+    expect(whole.currentContent.status, cal.CalendarEventStatus.cancelled);
+    expect(whole.hasAcceptedRangeCancellation, isTrue);
+    navigator.pop();
+    await tester.pumpAndSettle();
+    await client.invitationDemo.simulateRecurring(
+      id,
+      const cal.Uuid().v4obj(),
+      7,
+      'Reopened meeting retains cancelled suffix',
+    );
+    navigator.push(
+      MaterialPageRoute<void>(
+        builder: (_) => InvitationUpdateScreen(
+          client: client,
+          invitationId: master.entryId,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await loaded();
+    await tap('invitation-update-apply');
+    final reopened = await api.calendarInvitation.application(master.entryId);
+    expect(reopened.currentContent.status, cal.CalendarEventStatus.confirmed);
+    expect(reopened.hasAcceptedRangeCancellation, isTrue);
+    expect(
+      (await api.calendarInvitation.rangeApplication(source.entryId))
+          .currentOccurrence!
+          .status,
+      cal.CalendarEventStatus.cancelled,
+    );
+    navigator.pop();
+    await tester.pumpAndSettle();
   } finally {
     final event = await api.calendarEvent.getEvent(link.eventId, []);
     await api.calendarEvent.deleteEvent(link.eventId, event.revision);
