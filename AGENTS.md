@@ -22,6 +22,8 @@ Under accepted ADR 0126, the maintainer explicitly approved durable REQUEST bund
 
 ## Current state and sources
 
+The maintainer selected retaining published original identities and re-projecting current effective values after a native follow-series reset. ADR 0127 records that policy separately from proposed v3 private checkpoint, retained-slot, optional-text clearing and single/future reset mechanics. Those mechanics remain unapproved and unimplemented. Current ADR 0126 publication still rejects removed published exceptions; do not silently omit them or claim to erase a recipient's exception record.
+
 This repository now contains an initial workspace/authentication scaffold; calendar domain features remain documentation-first. Read README.md, docs/discussion-migration.md, docs/requirements.md, and the relevant proposed ADRs before changes. The per-RFC tables in docs/rfc/ are the latest feature-scope source; explicit newer maintainer instructions take precedence. Reconcile older narrative text with the table statuses and notes without treating unapproved implementation detail as accepted. Architecture documents describe proposals, not implemented behavior. Do not invent earlier chat decisions or claim complete iCalendar, CalDAV, or client compatibility.
 
 ## Implemented calendar increments

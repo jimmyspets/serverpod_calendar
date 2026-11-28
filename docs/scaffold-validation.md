@@ -1017,3 +1017,9 @@ Focused scheduling development runs covered DATE/UTC/named-zone bundles and DST,
 Final changed-Dart formatting and workspace `dart analyze --fatal-infos` passed after the last acceptance-test addition. Owned interactive Serverpod/Chrome runners were restored without resetting development storage. Serverpod MCP hot reload and the actual Flutter Chrome VM hot reload succeeded; Flutter runtime-error inspection returned none, and recent Serverpod maintenance operations succeeded. No new migration was needed or applied by this batch.
 
 Before staging, relative Markdown links, consecutive ADRs, changed-file scope, local credential values, unchanged Apache 2.0 LICENSE and whitespace are checked. Keep external scheduling-client and RFC 6047 mail evidence separate; native reset/instance cancellation and broader lifecycle/inbound profiles remain first-release work.
+
+## Retained occurrence reset contract, 2026-10-26
+
+The maintainer selected retaining original identities and re-projecting current values after native follow-series resets. ADR 0127 records that choice separately from the proposed v3 checkpoint, bounded projection slots, empty optional-text clearing and single/future timing mechanics. No runtime, model, migration or generated client changed in this documentation-only batch; current publication-removal guards remain enforced.
+
+Relative links, consecutive ADRs through 0127, changed-file/credential/LICENSE and whitespace checks are run before staging. Requirements, roadmap and RFC notes distinguish confirmed policy from unapproved mechanics and implemented behavior. No runtime tests were repeated; the preceding occurrence-bundle batch evidence remains separate.
