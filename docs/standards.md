@@ -217,3 +217,8 @@ Accepted [ADR 0146](adr/0146-explicit-private-attendee-responses.md) implements 
 
 
 Accepted [ADR 0176](adr/0176-bundled-master-attendee-responses.md) extends the response contract with [dedicated bundle master responses](bundled-master-attendee-responses.md). Existing response tables/caps are reused, with independent authority and source-derived digest families. A master REPLY does not acknowledge independently versioned exceptions. Grouped implementation validation is recorded separately; occurrence/range bundle replies and real transport remain required separate work.
+
+
+## Proposed bundle occurrence attendee responses
+
+[Proposed ADR 0177](adr/0177-bundled-occurrence-attendee-responses.md) records the confirmed any-validated-original/effective-component-version policy and proposes one grouped durable API/Flutter/recovery batch. The mechanics add a private target key and typed response original to each of the two existing response state/delivery tables, replace the state uniqueness index, and retain old target/hash identity and aggregate caps. No implementation or schema change follows before explicit model/ADR agreement. Master and occurrence responses remain independent; RANGE/real mail stay separate.
