@@ -141,5 +141,6 @@ Future<void> invitationSmoke(List<Client> clients) async {
   await invitationResponseSmoke(clients);
   await recurringInvitationSmoke(clients);
   await instanceInvitationSmoke(clients);
+  await rangeInvitationSmoke(clients);
   await instanceInvitationApplicationSmoke(clients);
 }

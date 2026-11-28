@@ -658,11 +658,12 @@ Completed ADR 0152 implementation is in PR #135. Accepted [ADR 0153](adr/0153-ex
 - [x] Implement approved native/worker/MIME/client/Flutter behavior; focused and complete batch checks passed across the documented full run and browser/build continuation.
 - [ ] Keep arbitrary master-original selection, RANGE, delegation, wider reconciliation and real mail as separate required work.
 
-## Trusted range invitation review (proposed)
+## Trusted range invitation review
 
-Completed selected-instance response implementation is in PR #137; local batch checks passed and hosted CI is a separate result. Proposed [ADR 0154](adr/0154-trusted-range-invitation-review.md) is the next bounded prerequisite for original-scope range reconciliation.
+Completed selected-instance response implementation is in PR #137; local batch checks passed and hosted CI is a separate result. Accepted [ADR 0154](adr/0154-trusted-range-invitation-review.md) is the next bounded prerequisite for original-scope range reconciliation.
 
 - [x] Inspect existing intake/target/source/receipt, known-series, MIME, response and application boundaries plus primary RFC range rules.
-- [ ] Obtain explicit review of target separation, source-kind/view changes, receive authority and guarded review-only behavior.
-- [ ] After approval, implement and verify trusted range intake/private review, source binding, every master/single action guard, synthetic MIME, generated clients and Flutter.
-- [ ] Review range calendar application/cancellation/restoration, overlap/version coordination and participation separately. This intake proposal completes none of those runtime paths.
+- [x] Obtain explicit review of target separation, source-kind/view changes, receive authority and guarded review-only behavior.
+- [x] Implement scoped trusted range intake/private review, source binding, every master/single action guard, synthetic MIME, generated clients and Flutter.
+- [x] Complete focused and broader batch validation before one implementation commit; the broader aggregate run and final-source focused continuation passed and are recorded separately.
+- [ ] Review range calendar application/cancellation/restoration, overlap/version coordination and participation separately. This scoped intake implementation completes none of those runtime paths.

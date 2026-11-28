@@ -246,6 +246,8 @@ Future<void> main(List<String> args) async {
         '--driver=test_driver/integration_test.dart',
         args.contains('--occurrences')
             ? '--target=integration_test/occurrence_query_smoke_test.dart'
+            : args.contains('--ranges')
+            ? '--target=integration_test/range_invitation_smoke_test.dart'
             : args.contains('--instance-responses')
             ? '--target=integration_test/instance_invitation_response_smoke_test.dart'
             : args.contains('--occurrence-applications')
@@ -285,6 +287,7 @@ Future<void> main(List<String> args) async {
       final output = result.stdout.transform(utf8.decoder).listen(stdout.write);
       final error = result.stderr.transform(utf8.decoder).listen(stderr.write);
       final focused =
+          args.contains('--ranges') ||
           args.contains('--instance-responses') ||
           args.contains('--occurrence-applications') ||
           args.contains('--occurrences') ||

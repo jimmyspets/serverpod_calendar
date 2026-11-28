@@ -19,6 +19,38 @@ class InvitationDemoEndpoint extends Endpoint {
     UuidValue commandId,
     int sequence,
     bool cancel,
+  ) => _simulateOccurrence(
+    session,
+    invitationId,
+    commandId,
+    sequence,
+    cancel,
+    false,
+  );
+
+  /// Synthetic review-only range; never applies native future cancellation.
+  Future<CalendarInvitationReceipt> simulateRange(
+    Session session,
+    UuidValue invitationId,
+    UuidValue commandId,
+    int sequence,
+    bool cancel,
+  ) => _simulateOccurrence(
+    session,
+    invitationId,
+    commandId,
+    sequence,
+    cancel,
+    true,
+  );
+
+  Future<CalendarInvitationReceipt> _simulateOccurrence(
+    Session session,
+    UuidValue invitationId,
+    UuidValue commandId,
+    int sequence,
+    bool cancel,
+    bool range,
   ) async {
     if (!{'development', 'test'}.contains(session.serverpod.runMode) ||
         sequence < 1 ||
@@ -41,7 +73,7 @@ class InvitationDemoEndpoint extends Endpoint {
       'UID:synthetic-invitation:$user:$invitationId',
       'DTSTAMP:20260101T000000Z',
       'SEQUENCE:$sequence',
-      'RECURRENCE-ID:20300103T090000Z',
+      'RECURRENCE-ID${range ? ';RANGE=THISANDFUTURE' : ''}:20300103T090000Z',
       if (cancel)
         'STATUS:CANCELLED'
       else ...[

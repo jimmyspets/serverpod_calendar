@@ -211,7 +211,8 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
         final single = accepted.edits?.singles
             .where((v) => _replySamePoint(v.originalStart, original))
             .single;
-        if (message.uid != link.uid ||
+        if (source.isThisAndFuture ||
+            message.uid != link.uid ||
             source.participants.organizer?.address != link.organizer ||
             !source.participants.attendees.any(
               (a) => a.address == target['recipientAddress'],
@@ -317,7 +318,7 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
   }) async {
     if (entry != null) {
       _invTargetValid(entry);
-      if (entry.targetKey == 'master') {
+      if (entry.targetKey == 'master' || _invRange(entry)) {
         throw _failure(CalendarFailureCode.validation);
       }
     }

@@ -293,7 +293,7 @@ Future<void> main(List<String> args) async {
               'DTSTAMP:20260101T000000Z',
               if (input['sequence'] != null) 'SEQUENCE:${input['sequence']}',
               if (input['instance'] == true)
-                'RECURRENCE-ID:${input['original'] ?? '20300103T090000Z'}',
+                'RECURRENCE-ID${input['range'] == true ? ';RANGE=THISANDFUTURE' : ''}:${input['original'] ?? '20300103T090000Z'}',
               if (input['cancel'] == true) 'STATUS:CANCELLED',
               if (input['cancel'] != true) 'DTSTART:20300101T090000Z',
               if (input['cancel'] != true &&

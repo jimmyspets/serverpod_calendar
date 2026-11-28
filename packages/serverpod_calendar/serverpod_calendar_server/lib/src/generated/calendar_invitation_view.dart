@@ -23,6 +23,7 @@ abstract class CalendarInvitationView
     required this.id,
     _ilccsff7.CalendarInvitationSourceKind? kind,
     bool? recurring,
+    bool? isThisAndFuture,
     this.originalStart,
     required this.revision,
     required this.uid,
@@ -35,12 +36,14 @@ abstract class CalendarInvitationView
     this.receivedAt,
     this.dismissedAt,
   }) : kind = kind ?? _ilccsff7.CalendarInvitationSourceKind.request,
-       recurring = recurring ?? false;
+       recurring = recurring ?? false,
+       isThisAndFuture = isThisAndFuture ?? false;
 
   const factory CalendarInvitationView({
     required _is.UuidValue id,
     _ilccsff7.CalendarInvitationSourceKind? kind,
     bool? recurring,
+    bool? isThisAndFuture,
     _ieswiaty.CalendarEventTiming? originalStart,
     required int revision,
     required String uid,
@@ -67,6 +70,11 @@ abstract class CalendarInvitationView
       recurring: jsonSerialization['recurring'] == null
           ? null
           : _is.BoolJsonExtension.fromJson(jsonSerialization['recurring']),
+      isThisAndFuture: jsonSerialization['isThisAndFuture'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(
+              jsonSerialization['isThisAndFuture'],
+            ),
       originalStart: jsonSerialization['originalStart'] == null
           ? null
           : _ix00hwbf.Protocol().deserialize<_ieswiaty.CalendarEventTiming>(
@@ -101,6 +109,8 @@ abstract class CalendarInvitationView
 
   final bool recurring;
 
+  final bool isThisAndFuture;
+
   final _ieswiaty.CalendarEventTiming? originalStart;
 
   final _is.UuidValue id;
@@ -132,6 +142,7 @@ abstract class CalendarInvitationView
     _is.UuidValue? id,
     _ilccsff7.CalendarInvitationSourceKind? kind,
     bool? recurring,
+    bool? isThisAndFuture,
     _ieswiaty.CalendarEventTiming? originalStart,
     int? revision,
     String? uid,
@@ -167,6 +178,11 @@ abstract class CalendarInvitationView
                   recurring,
                 ) ||
                 other.recurring == recurring) &&
+            (identical(
+                  other.isThisAndFuture,
+                  isThisAndFuture,
+                ) ||
+                other.isThisAndFuture == isThisAndFuture) &&
             (identical(
                   other.originalStart,
                   originalStart,
@@ -231,6 +247,7 @@ abstract class CalendarInvitationView
       id,
       kind,
       recurring,
+      isThisAndFuture,
       originalStart,
       revision,
       uid,
@@ -252,6 +269,7 @@ abstract class CalendarInvitationView
       'id': id.toJson(),
       'kind': kind.toJson(),
       'recurring': recurring,
+      'isThisAndFuture': isThisAndFuture,
       if (originalStart != null) 'originalStart': originalStart?.toJson(),
       'revision': revision,
       'uid': uid,
@@ -273,6 +291,7 @@ abstract class CalendarInvitationView
       'id': id.toJson(),
       'kind': kind.toJson(),
       'recurring': recurring,
+      'isThisAndFuture': isThisAndFuture,
       if (originalStart != null)
         'originalStart': originalStart?.toJsonForProtocol(),
       'revision': revision,
@@ -301,6 +320,7 @@ class _CalendarInvitationViewImpl extends CalendarInvitationView {
     required _is.UuidValue id,
     _ilccsff7.CalendarInvitationSourceKind? kind,
     bool? recurring,
+    bool? isThisAndFuture,
     _ieswiaty.CalendarEventTiming? originalStart,
     required int revision,
     required String uid,
@@ -316,6 +336,7 @@ class _CalendarInvitationViewImpl extends CalendarInvitationView {
          id: id,
          kind: kind,
          recurring: recurring,
+         isThisAndFuture: isThisAndFuture,
          originalStart: originalStart,
          revision: revision,
          uid: uid,
@@ -337,6 +358,7 @@ class _CalendarInvitationViewImpl extends CalendarInvitationView {
     _is.UuidValue? id,
     _ilccsff7.CalendarInvitationSourceKind? kind,
     bool? recurring,
+    bool? isThisAndFuture,
     Object? originalStart = _Undefined,
     int? revision,
     String? uid,
@@ -353,6 +375,7 @@ class _CalendarInvitationViewImpl extends CalendarInvitationView {
       id: id ?? this.id,
       kind: kind ?? this.kind,
       recurring: recurring ?? this.recurring,
+      isThisAndFuture: isThisAndFuture ?? this.isThisAndFuture,
       originalStart: originalStart is _ieswiaty.CalendarEventTiming?
           ? originalStart
           : this.originalStart?.copyWith(),

@@ -11,6 +11,7 @@ refreshJwtTokens:
   - refreshAccessToken:
 invitationDemo:
   - simulateOccurrence:
+  - simulateRange:
   - simulate:
   - simulateRecurring:
   - simulateCancellation:

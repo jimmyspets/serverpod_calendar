@@ -13,6 +13,8 @@ String _invitationHash(Iterable<String> parts) {
 CalendarInvitationSourceKind _invKind(IcalendarSchedulingMessage message) =>
     message.method == IcalendarSchedulingMethod.request
     ? CalendarInvitationSourceKind.request
+    : message.events.single.isThisAndFuture
+    ? CalendarInvitationSourceKind.rangeCancellation
     : message.events.single.isOverride
     ? CalendarInvitationSourceKind.instanceCancellation
     : CalendarInvitationSourceKind.meetingCancellation;
@@ -49,14 +51,14 @@ CalendarEventTiming? _invitationTiming(IcalendarSchedulingEvent event) {
   );
 }
 
-String _invTargetKey(CalendarEventTiming? point) {
+String _invTargetKey(CalendarEventTiming? point, {bool range = false}) {
   if (point == null) return 'master';
   if (point.end != null || point.duration != null) {
     throw _failure(CalendarFailureCode.validation);
   }
   validateEventTiming(point);
   final c = point.start;
-  return 'instance-v1:${_invitationHash([
+  return '${range ? 'range-v1' : 'instance-v1'}:${_invitationHash([
     point.kind.name,
     point.zoneId ?? '',
     '${c.year}',
@@ -68,13 +70,25 @@ String _invTargetKey(CalendarEventTiming? point) {
   ])}';
 }
 
+bool _invRange(CalendarInvitationRecord entry) =>
+    entry.targetKey.startsWith('range-v1:');
+
 extension CalendarInvitationOperations on CalendarService {
+  void _invNonRange(CalendarInvitationRecord entry) {
+    _invTargetValid(entry);
+    if (_invRange(entry)) throw _failure(CalendarFailureCode.validation);
+  }
+
   void _invTargetValid(CalendarInvitationRecord entry) {
     try {
-      if (entry.targetKey != _invTargetKey(entry.originalStart) ||
+      if (entry.targetKey !=
+              _invTargetKey(entry.originalStart, range: _invRange(entry)) ||
+          _invRange(entry) && entry.originalStart == null ||
           entry.originalStart != null && !entry.recurring ||
           entry.kind == CalendarInvitationSourceKind.instanceCancellation &&
-              entry.originalStart == null ||
+              (entry.originalStart == null || _invRange(entry)) ||
+          entry.kind == CalendarInvitationSourceKind.rangeCancellation &&
+              !_invRange(entry) ||
           entry.kind == CalendarInvitationSourceKind.meetingCancellation &&
               entry.originalStart != null) {
         throw StateError('Invalid invitation target');
@@ -143,7 +157,11 @@ extension CalendarInvitationOperations on CalendarService {
     if (request.operation == CalendarInvitationOperation.receive &&
         request.message?.events.single.isOverride == true) {
       await _invAuthorize(
-        request.forOperation(CalendarInvitationOperation.receiveOccurrence),
+        request.forOperation(
+          request.message!.events.single.isThisAndFuture
+              ? CalendarInvitationOperation.receiveRange
+              : CalendarInvitationOperation.receiveOccurrence,
+        ),
         tx,
         phase,
       );
@@ -169,7 +187,6 @@ extension CalendarInvitationOperations on CalendarService {
       final event = message.events.single;
       if (message.method == IcalendarSchedulingMethod.cancel &&
               event.status != IcalendarEventStatus.cancelled ||
-          event.isThisAndFuture ||
           event.isOverride && event.recurrence != null ||
           message.method == IcalendarSchedulingMethod.cancel &&
               event.recurrence != null ||
@@ -220,6 +237,7 @@ extension CalendarInvitationOperations on CalendarService {
         event = message.events.single;
     if ((entry.currentSourceId == source.id &&
             _invKind(message) != entry.kind) ||
+        event.isThisAndFuture != _invRange(entry) ||
         !_replySamePoint(_replyOriginal(event), entry.originalStart) ||
         message.uid != entry.uid ||
         message.method == IcalendarSchedulingMethod.request &&
@@ -260,6 +278,7 @@ extension CalendarInvitationOperations on CalendarService {
     return CalendarInvitationView(
       kind: entry.kind,
       recurring: entry.recurring,
+      isThisAndFuture: _invRange(entry),
       originalStart: entry.originalStart,
       id: entry.id!,
       revision: entry.revision,
@@ -470,7 +489,7 @@ extension CalendarInvitationOperations on CalendarService {
       event.participants.organizer!.address,
     ]);
     final original = _replyOriginal(event);
-    final targetKey = _invTargetKey(original);
+    final targetKey = _invTargetKey(original, range: event.isThisAndFuture);
     final ingress = _invitationHash([delivery.namespace, delivery.deliveryKey]);
     final origin = _invitationHash([
       delivery.namespace,
