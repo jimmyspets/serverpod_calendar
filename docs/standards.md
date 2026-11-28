@@ -1,6 +1,6 @@
 # Standards scope and extension review
 
-The maintainer-approved [ADR 0117 profile](itip-message-profile.md) adds pure PUBLISH/REQUEST/REPLY/CANCEL validation, extended by ADR 0119 with recurring masters and untrusted detached instances and ADR 0120 with ADD/REFRESH/COUNTER/DECLINECOUNTER. It does not establish full RFC 5546 conformance, authenticated scheduling transitions or RFC 6047 transport. Unsupported message data rejects explicitly; canonical import/export and subscription profiles remain separate.
+The maintainer-approved [ADR 0117 profile](itip-message-profile.md) adds pure PUBLISH/REQUEST/REPLY/CANCEL validation, extended by ADR 0119 with recurring masters and untrusted detached instances and ADR 0120 with ADD/REFRESH/COUNTER/DECLINECOUNTER. A separate [VFREEBUSY adapter](itip-freebusy-profile.md) adds source-only PUBLISH/REQUEST/REPLY under ADR 0121. It does not establish full RFC 5546 conformance, authenticated scheduling transitions or RFC 6047 transport. Unsupported message data rejects explicitly; canonical import/export and subscription profiles remain separate.
 
 Status: **required standards, implementation pending**. Maintainer instruction on 2026-10-19 adds RFC 7953, iTIP and iMIP. Calendar descriptions now target RFC 7986; RFC 9074 now targets a scoped first-release alarm capability; RFCs 9073/9253 now have selected scoped metadata profiles; detailed constraints remain pending, while proximity and arbitrary audio/email actions are deferred. Detailed component/method coverage must be approved and tested before claiming conformance.
 

@@ -24,6 +24,7 @@ part 'icalendar_availability_calendar.dart';
 part 'icalendar_availability_metadata.dart';
 part 'icalendar_scheduling_message.dart';
 part 'icalendar_scheduling_payload.dart';
+part 'icalendar_free_busy_message.dart';
 
 enum IcalendarEventStatus { tentative, confirmed, cancelled }
 
