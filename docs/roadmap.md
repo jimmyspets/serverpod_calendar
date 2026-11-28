@@ -17,8 +17,9 @@ Checked items describe only the stated implemented slice or explicitly selected 
 **Baseline reviewed 2026-11-28.** Main includes Flutter 3.50.1/Dart 3.14.0 and
 Serverpod 4.1.2. The upgrade PR's hosted inspection and runtime jobs passed
 with the maintainer-approved feed-test exception. The run records PR head
-`a683145`. The eventual merged tree includes later changes and has no recorded
-repository-check run at merge commit `f6c2994`. See the [upgrade validation
+`a683145`. The eventual merged tree includes later changes. The follow-up
+repository check at merge commit `f6c2994` passed inspection and its runtime
+job was still running when checked. See the [upgrade validation
 record](serverpod-4.1-upgrade.md#serverpod-412).
 The [feed 304 wire defect](feed-304-compatibility.md) remains open.
 

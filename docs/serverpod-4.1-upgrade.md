@@ -31,7 +31,11 @@ PR #210 recorded the following results on its branch. `flutter pub get --enforce
 GitHub Actions reported success for both `inspect` and `runtime` on PR #210's
 recorded head `a68314589ef6b55ce87b7893e408d392ccb498e1`. The eventual PR head
 `ab72ead` and main merge `f6c2994` have identical trees, with 31 files changed
-from `a683145`. As of 2026-11-28, the Actions API lists no repository-check
-run at `f6c2994`. Full hosted results for that merged stack are still needed.
+from `a683145`.
 [Upgrade PR](https://github.com/jimmyspets/serverpod_calendar/pull/210) ·
 [Hosted run 46058419488](https://github.com/jimmyspets/serverpod_calendar/actions/runs/46058419488)
+
+On 2026-11-28, a manual dispatch started the full repository check on main
+at `f6c2994a803b22f3033e7e368dc626e7777a51e5`. Inspection passed and runtime
+was in progress when checked.
+[Hosted run 46131904608](https://github.com/jimmyspets/serverpod_calendar/actions/runs/46131904608)
