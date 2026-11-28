@@ -255,3 +255,7 @@ Accepted ADR 0134 adds updateEventDescriptiveMetadata and independent priority/r
 ## Native item text/link metadata
 
 Accepted ADR 0135 adds independent event/task text metadata operations and URL/classification/categories/comments groups. Immutable itemTextMetadataPatch context accompanies actual current/final state; source replacements derive affected fields across master/explicit component presence. Hosts may map field-specific rules without trusting labels or client parentage. See [the boundaries](native-item-text-metadata.md).
+
+## Proposed item category search
+
+[ADR 0136](adr/0136-authorized-item-category-search.md) proposes category disclosure plus ordinary item-read authority before a filtered candidate can qualify. Immutable exact text/language criteria accompany actual list/item contexts and candidate planning; response groups remain caller-selected. A hidden matching label must not disclose an item through search. This is proposed, not an implemented search-only permission or free/busy guarantee.
