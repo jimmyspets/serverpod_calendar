@@ -20,7 +20,13 @@ Serverpod 4.1.2 with `relic_io` 2.0.1 under
 [calendar issue #209](https://github.com/jimmyspets/serverpod_calendar/issues/209).
 The wire behavior is tracked in
 [Relic issue #454](https://github.com/serverpod/relic/issues/454).
-Run `dart run tool/host_smoke.dart --feeds-only` to exercise the feed in
-isolation on the configured synthetic test hosts.
-The separate stale imported feed-schema snapshot warning is tracked in the
-[upgrade record](serverpod-4.1.2-upgrade.md).
+As of 2026-11-28, the upstream issue is open and the newest published
+`relic_io` version is 2.0.1.
+[Published versions](https://pub.dev/packages/relic_io/versions)
+
+After adopting a compatible fix, remove the version-specific test exception
+and run `dart run tool/host_smoke.dart --feeds-only` on the two synthetic hosts.
+The smoke test requires the matching ETag, no body and either an absent
+Content-Length or the length of the corresponding 200 response. Run the full
+repository checks on the same revision. The [current upgrade record](serverpod-4.1-upgrade.md#serverpod-412)
+lists the results obtained with the exception.

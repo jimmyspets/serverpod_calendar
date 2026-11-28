@@ -26,4 +26,12 @@ The maintainer approved a temporary exception in the two-host feed smoke test. I
 
 PR #210 recorded the following results on its branch. `flutter pub get --enforce-lockfile`, `tool/generate.ps1`, `dart format tool/feed_smoke.dart`, and `dart analyze --fatal-infos` passed. The core suite passed 540 cases each on VM and Chrome, and the iCalendar suite passed 642 each. The calendar module passed 789 VM and 31 Chrome cases. The feed module passed 13 VM cases, and all nine Flutter widget tests and the Web release build passed. `tool/build-host.ps1` compiled the example host. All 17 cases in `test/integration/feed_test.dart` passed using fresh synthetic test storage.
 
-`dart run tool/host_smoke.dart --feeds --flutter` passed. The two-host HTTP smoke log recorded the issue #209 exception before the feed check passed. Cross-host JWT rotation and revocation and the connected Flutter feed journey also passed. This run covered the targeted runtime checks. The complete hosted sequence is the remaining readiness gate.
+`dart run tool/host_smoke.dart --feeds --flutter` passed. The two-host HTTP smoke log recorded the issue #209 exception before the feed check passed. Cross-host JWT rotation and revocation and the connected Flutter feed journey also passed.
+
+GitHub Actions reported success for both `inspect` and `runtime` on PR #210's
+recorded head `a68314589ef6b55ce87b7893e408d392ccb498e1`. The eventual PR head
+`ab72ead` and main merge `f6c2994` have identical trees, with 31 files changed
+from `a683145`. As of 2026-11-28, the Actions API lists no repository-check
+run at `f6c2994`. Full hosted results for that merged stack are still needed.
+[Upgrade PR](https://github.com/jimmyspets/serverpod_calendar/pull/210) ·
+[Hosted run 46058419488](https://github.com/jimmyspets/serverpod_calendar/actions/runs/46058419488)

@@ -30,6 +30,7 @@ durable outbox and fixed-recipient transport. This feature does not send real
 mail or change the host's responsibility for identity and authorization.
 
 [Validation](validation-durable-exceptional-range.md) records the focused,
-two-host, browser and broader checks separately. The 4.1.2 workspace remains
-in draft because of the independent [feed 304 regression](feed-304-compatibility.md);
-passing scheduling tests does not establish release readiness.
+two-host, browser and broader checks separately. The scoped implementation
+merged in [PR #205](https://github.com/jimmyspets/serverpod_calendar/pull/205).
+The [feed 304 regression](feed-304-compatibility.md) and full hosted validation
+for the merged stack remain separate readiness gates.
