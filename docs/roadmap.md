@@ -678,12 +678,13 @@ Completed range-review implementation is in PR #139. Accepted [ADR 0155](adr/015
 - [x] Complete focused and broader grouped checks before one batch commit; all scoped checks passed. Full repository hosted CI remains a gate before PR readiness.
 - [ ] Design durable clean-series range application, accepted checkpoints/retention, overlap/version reconciliation, future cancellation/restoration and range responses separately. Current server-side range-action guards stay in place.
 
-## Explicit range REQUEST application (proposed)
+## Explicit range REQUEST application
 
-Completed pure projection implementation is in PR #141; grouped local evidence passed and full hosted CI remains a readiness gate. Proposed [ADR 0156](adr/0156-explicit-range-invitation-application.md) is the next grouped durable increment.
+Completed pure projection implementation is in PR #141; grouped local evidence passed and full hosted CI remains a readiness gate. Accepted [ADR 0156](adr/0156-explicit-range-invitation-application.md) is the next grouped durable increment.
 
 - [x] Inspect single checkpoint/source/version/retry, canonical master composition, existing view/receipt/API and native write/cleanup boundaries.
-- [ ] Obtain explicit model/ADR review for v3 source/component/latest-target bindings, derived view/API fields, independent authority and master/range composition.
-- [ ] After approval, implement explicit clean-series range REQUEST application, master composition and generated-client/Flutter controls with unchanged retention limits.
-- [ ] Validate focused rejection/atomicity, legacy/corrupt checkpoints, actual two-host/loss recovery and grouped/full CI gates before readiness.
+- [x] Obtain explicit model/ADR review for v3 source/component/latest-target bindings, derived view/API fields, independent authority and master/range composition.
+- [x] Implement explicit clean-series range REQUEST application, master composition and generated-client/Flutter controls with unchanged retention limits.
+- [x] Validate focused rejection/atomicity, legacy/corrupt checkpoints, actual two-host/loss recovery, generated clients/feed and Flutter; grouped checks passed as recorded in validation.
+- [ ] Pass full exact-head hosted CI before PR readiness.
 - [ ] Keep future cancellation/restoration, range responses, same-anchor conversion and remaining method reconciliation separate. Range review/pure projection alone enables none of these native actions.

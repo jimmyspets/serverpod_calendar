@@ -54,7 +54,9 @@ void require(bool value, String message) {
 }
 
 Future<void> main(List<String> args) async {
-  final occurrenceApply = args.contains('--occurrence-applications');
+  final rangeApply = args.contains('--range-applications');
+  final occurrenceApply =
+      args.contains('--occurrence-applications') || rangeApply;
   final instanceResponses = args.contains('--instance-responses');
   final ranges = args.contains('--ranges');
   final instance = args.contains('--instances') || ranges;
@@ -257,13 +259,19 @@ Future<void> main(List<String> args) async {
     if (occurrenceApply) {
       Future<Map> prepare(String id) async {
         final master = await b.command({
+          'range': rangeApply,
           'command': 'receive',
           'caseId': id,
           'key': 'master',
           'sequence': 1,
         }) as Map;
-        final calendar = await b.command({'command': 'calendar', 'caseId': id});
+        final calendar = await b.command({
+          'range': rangeApply,
+          'command': 'calendar',
+          'caseId': id,
+        });
         final link = await b.command({
+          'range': rangeApply,
           'command': 'adopt',
           'caseId': id,
           'request': {
@@ -276,6 +284,7 @@ Future<void> main(List<String> args) async {
         }) as Map;
         require(link['eventId'] != null, 'Probe adoption failed');
         final source = await b.command({
+          'range': rangeApply,
           'command': 'receive',
           'caseId': id,
           'key': 'instance',
@@ -283,6 +292,7 @@ Future<void> main(List<String> args) async {
           'sequence': 2,
         }) as Map;
         final v = await b.command({
+          'range': rangeApply,
           'command': 'occurrence-view',
           'caseId': id,
           'entryId': source['entryId'],
@@ -308,6 +318,7 @@ Future<void> main(List<String> args) async {
       final race = await Future.wait(
         [a, b].map(
           (p) => p.command({
+            'range': rangeApply,
             'command': 'occurrence-apply',
             'caseId': raceId,
             'request': raceRequest,
@@ -324,6 +335,7 @@ Future<void> main(List<String> args) async {
         a.paused = Completer<Map<String, dynamic>>();
         final lost = a
             .command({
+              'range': rangeApply,
               'command': 'occurrence-apply',
               'caseId': id,
               'request': request,
@@ -333,8 +345,11 @@ Future<void> main(List<String> args) async {
         final submitted = await a.paused!.future.timeout(
           const Duration(seconds: 40),
         );
-        final visible =
-            await b.command({'command': 'inspect', 'caseId': id}) as Map;
+        final visible = await b.command({
+          'range': rangeApply,
+          'command': 'inspect',
+          'caseId': id,
+        }) as Map;
         require(
           visible['occurrenceApplications'] ==
                   (pause == 'occurrence-before' ? 0 : 1) &&
@@ -345,6 +360,7 @@ Future<void> main(List<String> args) async {
         await a.stop();
         await lost;
         final recovered = await b.command({
+          'range': rangeApply,
           'command': 'occurrence-apply',
           'caseId': id,
           'request': request,
@@ -355,8 +371,11 @@ Future<void> main(List<String> args) async {
                   (recovered['id'] == submitted['id'])),
           'Occurrence loss recovery changed retry semantics',
         );
-        final complete =
-            await b.command({'command': 'inspect', 'caseId': id}) as Map;
+        final complete = await b.command({
+          'range': rangeApply,
+          'command': 'inspect',
+          'caseId': id,
+        }) as Map;
         require(
           complete['occurrenceApplications'] == 1 &&
               complete['eventRevision'] == 2 &&
@@ -367,12 +386,14 @@ Future<void> main(List<String> args) async {
       }
       Future<Map<String, dynamic>> composedCommand(String id) async {
         final incoming = await b.command({
+          'range': rangeApply,
           'command': 'receive',
           'caseId': id,
           'key': 'new-master',
           'sequence': 3,
         }) as Map;
         final v = await b.command({
+          'range': rangeApply,
           'command': 'application',
           'caseId': id,
           'entryId': incoming['entryId'],
@@ -397,6 +418,7 @@ Future<void> main(List<String> args) async {
       for (final pause in ['apply-before', 'apply-after']) {
         final id = nextCase(), occurrence = await prepare(id);
         final original = await b.command({
+          'range': rangeApply,
           'command': 'occurrence-apply',
           'caseId': id,
           'request': occurrence,
@@ -405,6 +427,7 @@ Future<void> main(List<String> args) async {
         a.paused = Completer<Map<String, dynamic>>();
         final lost = a
             .command({
+              'range': rangeApply,
               'command': 'apply',
               'caseId': id,
               'request': request,
@@ -414,8 +437,11 @@ Future<void> main(List<String> args) async {
         final submitted = await a.paused!.future.timeout(
           const Duration(seconds: 40),
         );
-        final visible =
-            await b.command({'command': 'inspect', 'caseId': id}) as Map;
+        final visible = await b.command({
+          'range': rangeApply,
+          'command': 'inspect',
+          'caseId': id,
+        }) as Map;
         require(
           visible['eventRevision'] == (pause == 'apply-before' ? 2 : 3) &&
               visible['occurrenceRevision'] ==
@@ -426,6 +452,7 @@ Future<void> main(List<String> args) async {
         await a.stop();
         await lost;
         final recovered = await b.command({
+          'range': rangeApply,
           'command': 'apply',
           'caseId': id,
           'request': request,
@@ -437,6 +464,7 @@ Future<void> main(List<String> args) async {
           'Composition loss retry changed result',
         );
         final retry = await b.command({
+          'range': rangeApply,
           'command': 'occurrence-apply',
           'caseId': id,
           'request': occurrence,
@@ -450,12 +478,14 @@ Future<void> main(List<String> args) async {
       // Different valid master/instance commands from one snapshot have one winner.
       final id = nextCase(), initial = await prepare(id);
       await b.command({
+        'range': rangeApply,
         'command': 'occurrence-apply',
         'caseId': id,
         'request': initial,
       });
       final masterRequest = await composedCommand(id);
       final source = await b.command({
+        'range': rangeApply,
         'command': 'receive',
         'caseId': id,
         'key': 'next-instance',
@@ -463,6 +493,7 @@ Future<void> main(List<String> args) async {
         'sequence': 4,
       }) as Map;
       final v = await b.command({
+        'range': rangeApply,
         'command': 'occurrence-view',
         'caseId': id,
         'entryId': source['entryId'],
@@ -478,8 +509,14 @@ Future<void> main(List<String> args) async {
         'expectedOccurrenceRevision': v['occurrenceRevision'],
       };
       final compositionRace = await Future.wait([
-        a.command({'command': 'apply', 'caseId': id, 'request': masterRequest}),
+        a.command({
+          'range': rangeApply,
+          'command': 'apply',
+          'caseId': id,
+          'request': masterRequest,
+        }),
         b.command({
+          'range': rangeApply,
           'command': 'occurrence-apply',
           'caseId': id,
           'request': instanceRequest,
@@ -494,7 +531,7 @@ Future<void> main(List<String> args) async {
         'Master/instance revision fence failed',
       );
       stdout.writeln(
-        'PASS: independent occurrence-application hosts, same-command race, atomic event/checkpoint/review visibility and actual loss before/after occurrence and composed-master commits, historical retry recovery and master/instance races.',
+        'PASS: independent ${rangeApply ? 'range' : 'occurrence'}-application hosts, same-command race, atomic event/checkpoint/review visibility and actual loss before/after occurrence and composed-master commits, historical retry recovery and master/instance races.',
       );
       return;
     }

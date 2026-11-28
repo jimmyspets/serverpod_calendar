@@ -1,6 +1,7 @@
 import 'recurring_invitation_smoke.dart';
 import 'instance_invitation_smoke.dart';
 import 'instance_invitation_application_smoke.dart';
+import 'range_invitation_application_smoke.dart';
 import 'invitation_cancellation_application_smoke.dart';
 import 'invitation_application_smoke.dart';
 import 'invitation_adoption_smoke.dart';
@@ -143,4 +144,5 @@ Future<void> invitationSmoke(List<Client> clients) async {
   await instanceInvitationSmoke(clients);
   await rangeInvitationSmoke(clients);
   await instanceInvitationApplicationSmoke(clients);
+  await rangeInvitationApplicationSmoke(clients);
 }

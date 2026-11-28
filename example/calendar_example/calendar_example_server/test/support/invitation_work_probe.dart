@@ -151,6 +151,7 @@ final class _Host implements CalendarInvitationHost {
         {
           CalendarInvitationOperation.applyOccurrenceUpdate,
           CalendarInvitationOperation.applyOccurrenceCancellation,
+          CalendarInvitationOperation.applyRangeUpdate,
         }.contains(c.operation) &&
         phase == CalendarAuthorizationPhase.finalWrite) {
       stdout.writeln(
@@ -375,10 +376,13 @@ Future<void> main(List<String> args) async {
             );
             try {
               result =
-                  (await CalendarModule.service(session)
-                          .invitationOccurrenceApplication(
-                            UuidValue.fromString(input['entryId'] as String),
-                          ))
+                  (await (input['range'] == true
+                          ? CalendarModule.service(session)
+                                .invitationRangeApplication
+                          : CalendarModule.service(session)
+                                .invitationOccurrenceApplication)(
+                        UuidValue.fromString(input['entryId'] as String),
+                      ))
                       .toJson();
             } finally {
               session.updateAuthenticated(null);
@@ -392,7 +396,9 @@ Future<void> main(List<String> args) async {
               final request = CalendarInvitationOccurrenceApplyRequest.fromJson(
                 input['request'] as Map<String, dynamic>,
               );
-              final receipt = input['cancel'] == true
+              final receipt = input['range'] == true
+                  ? await service.applyInvitationRangeUpdate(request)
+                  : input['cancel'] == true
                   ? await service.applyInvitationOccurrenceCancellation(request)
                   : await service.applyInvitationOccurrenceUpdate(request);
               if (host.pause == 'occurrence-after') {

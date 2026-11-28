@@ -566,7 +566,9 @@ extension CalendarInvitationApplicationOperations on CalendarService {
   ) => _eventProtocolValue(() {
     final work = RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
     final accepted = _occAccepted(event.data.importBaseline!);
-    final keys = (state['targets'] as List)
+    final targets = (state['targets'] as List).cast<Map<String, dynamic>>();
+    Set<String> keysFor(bool range) => targets
+        .where((t) => (t['key'] as String).startsWith('range-v1:') == range)
         .map(
           (t) => eventComponentKey(
             CalendarEventTiming.fromJson(t['original']),
@@ -574,14 +576,27 @@ extension CalendarInvitationApplicationOperations on CalendarService {
           ),
         )
         .toSet();
+    final singleKeys = keysFor(false), rangeKeys = keysFor(true);
+    final keys = {...singleKeys, ...rangeKeys};
     final singles =
         accepted.edits?.singles
             .where(
-              (v) => keys.contains(eventComponentKey(v.originalStart, false)),
+              (v) => singleKeys.contains(
+                eventComponentKey(v.originalStart, false),
+              ),
             )
             .toList() ??
         [];
-    if (singles.length != keys.length ||
+    final future =
+        accepted.edits?.future
+            .where(
+              (v) =>
+                  rangeKeys.contains(eventComponentKey(v.originalStart, false)),
+            )
+            .toList() ??
+        [];
+    if (singles.length + future.length != targets.length ||
+        keys.length != targets.length ||
         (master.timingOverrides?.singles ?? []).any(
           (v) => keys.contains(eventComponentKey(v.originalStart, false)),
         ) ||
@@ -598,7 +613,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       content,
       CalendarEventTimingOverrides(
         singles: [...?master.timingOverrides?.singles, ...singles],
-        future: master.timingOverrides?.future ?? [],
+        future: [...?master.timingOverrides?.future, ...future],
       ),
       sharedWorkBudget: work,
     );
@@ -607,9 +622,9 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         overrides: [
           ...master.protocolState.overrides,
           ...accepted.protocol.overrides.where(
-            (v) =>
-                !v.isThisAndFuture &&
-                keys.contains(eventComponentKey(v.originalStart, false)),
+            (v) => (v.isThisAndFuture ? rangeKeys : singleKeys).contains(
+              eventComponentKey(v.originalStart, false),
+            ),
           ),
         ],
       ),
@@ -932,21 +947,8 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         updatedAt: now,
         stateJson: jsonEncode({
           ...occurrenceState!,
-          'version': 2,
-          'receiptDigest': _invitationHash([
-            occurrenceState['requestDigest'] as String,
-            jsonEncode(_occOrdered(occurrenceState['receipt'])),
-            ((occurrenceState['targets'] as List).singleWhere(
-                  (t) =>
-                      t['key'] ==
-                      _invTargetKey(
-                        CalendarInvitationOccurrenceApplyReceipt.fromJson(
-                          occurrenceState['receipt'],
-                        ).originalStart,
-                      ),
-                ))['digest']
-                as String,
-          ]),
+          'version': occurrenceState['version'] == 3 ? 3 : 2,
+          'receiptDigest': _occReceiptDigest(occurrenceState),
           'masterBaseline': masterBaseline.toJson(),
           'masterBaselineDigest': _invBaselineDigest(masterBaseline),
           'masterDigest': _occMasterDigest(link, next),

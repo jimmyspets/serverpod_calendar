@@ -4,6 +4,7 @@ import 'invitation_response_journey.dart';
 import 'instance_invitation_journey.dart';
 import 'range_invitation_journey.dart';
 import 'instance_invitation_application_journey.dart';
+import 'range_invitation_application_journey.dart';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:calendar_example_flutter/invitation_screen.dart';
@@ -133,4 +134,5 @@ Future<void> runInvitationJourney(WidgetTester tester, Client client) async {
   await runInstanceInvitationJourney(tester, client);
   await runRangeInvitationJourney(tester, client);
   await runInstanceInvitationApplicationJourney(tester, client);
+  await runRangeInvitationApplicationJourney(tester, client);
 }

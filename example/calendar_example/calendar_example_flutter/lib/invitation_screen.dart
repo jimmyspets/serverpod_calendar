@@ -257,8 +257,11 @@ class _InvitationScreenState extends State<InvitationScreen> {
                     Text(
                       'First affected original: ${invitationTimingLabel(entry.originalStart!)}',
                     ),
-                    const Text(
-                      'Review only. Calendar application and participation responses for ranges are not supported.',
+                    Text(
+                      entry.kind ==
+                              cal.CalendarInvitationSourceKind.rangeCancellation
+                          ? 'Range cancellation is review-only. Range participation responses are not supported.'
+                          : 'Calendar application is an explicit action. Range participation responses are not supported.',
                     ),
                   ] else if (entry.originalStart != null) ...[
                     Text(
@@ -295,6 +298,32 @@ class _InvitationScreenState extends State<InvitationScreen> {
                     ),
                   Wrap(
                     children: [
+                      if (entry.isThisAndFuture)
+                        TextButton(
+                          key: ValueKey(
+                            'invitation-range-apply-view-${entry.id}',
+                          ),
+                          onPressed: _busy
+                              ? null
+                              : () => Navigator.of(context).push<void>(
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        InvitationOccurrenceApplicationScreen(
+                                          client: widget.client,
+                                          id: entry.id,
+                                          range: true,
+                                        ),
+                                  ),
+                                ),
+                          child: Text(
+                            entry.kind ==
+                                    cal
+                                        .CalendarInvitationSourceKind
+                                        .rangeCancellation
+                                ? 'View accepted range'
+                                : 'Preview / apply range update',
+                          ),
+                        ),
                       if (entry.originalStart != null && !entry.isThisAndFuture)
                         TextButton(
                           key: ValueKey(
