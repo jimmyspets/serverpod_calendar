@@ -1,0 +1,5 @@
+class: CalendarRefreshResendReceipt
+fields:
+  resendId: UuidValue
+  state: CalendarSchedulingDeliveryState
+  unchanged: bool

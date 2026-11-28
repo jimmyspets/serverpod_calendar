@@ -6,6 +6,35 @@ import 'package:serverpod_calendar_server/serverpod_calendar_server.dart';
 
 import 'imip_mime_input.dart';
 
+/// Dedicated organizer REFRESH ingress using the host's resolved binding.
+Future<UuidValue> receiveHostImipRefresh(
+  Session session, {
+  required List<int> raw,
+  required ImipProtection outerProtection,
+  required String scopeKey,
+  required UuidValue eventId,
+  required String namespace,
+  required String deliveryKey,
+  required String originReference,
+}) => CalendarModule.receiveEventRefresh(
+  session,
+  CalendarRefreshDelivery(
+    scopeKey: scopeKey,
+    eventId: eventId,
+    namespace: namespace,
+    deliveryKey: deliveryKey,
+    originReference: originReference,
+    bytes: Uint8List.fromList(
+      _calendar(
+        raw,
+        outerProtection,
+        const {IcalendarSchedulingMethod.refresh},
+        32768,
+      ),
+    ),
+  ),
+);
+
 List<int> _calendar(
   List<int> raw,
   ImipProtection protection,

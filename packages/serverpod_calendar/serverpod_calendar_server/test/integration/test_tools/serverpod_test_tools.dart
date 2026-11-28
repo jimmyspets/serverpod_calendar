@@ -198,6 +198,12 @@ import 'package:serverpod_calendar_server/src/generated/calendar_presentation_up
     as _i1sjay6c;
 import 'package:serverpod_calendar_server/src/generated/calendar_protocol_metadata_update_request.dart'
     as _i53ouodu;
+import 'package:serverpod_calendar_server/src/generated/calendar_refresh_page.dart'
+    as _i7wgmb3l;
+import 'package:serverpod_calendar_server/src/generated/calendar_refresh_resend_command.dart'
+    as _idrwihi2;
+import 'package:serverpod_calendar_server/src/generated/calendar_refresh_resend_receipt.dart'
+    as _iydoprrg;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_cancel_request.dart'
     as _ih6si8n9;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_future_cancel_request.dart'
@@ -1648,6 +1654,103 @@ class _CalendarEventEndpoint {
   final _is.EndpointDispatch _endpointDispatch;
 
   final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_i7wgmb3l.CalendarRefreshPage> listEventRefresh(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue eventId,
+    int pageSize,
+    String? cursor,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarEvent',
+            method: 'listEventRefresh',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarEvent',
+          methodName: 'listEventRefresh',
+          parameters: _ist.testObjectToJson({
+            'eventId': eventId,
+            'pageSize': pageSize,
+            'cursor': cursor,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i7wgmb3l.CalendarRefreshPage>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<void> dismissEventRefresh(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue eventId,
+    _is.UuidValue requestId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarEvent',
+            method: 'dismissEventRefresh',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarEvent',
+          methodName: 'dismissEventRefresh',
+          parameters: _ist.testObjectToJson({
+            'eventId': eventId,
+            'requestId': requestId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_iydoprrg.CalendarRefreshResendReceipt> resendEventRefresh(
+    _ist.TestSessionBuilder sessionBuilder,
+    _idrwihi2.CalendarRefreshResendCommand command,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarEvent',
+            method: 'resendEventRefresh',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarEvent',
+          methodName: 'resendEventRefresh',
+          parameters: _ist.testObjectToJson({'command': command}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_iydoprrg.CalendarRefreshResendReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 
   _ida.Future<_ifhgp6vp.CalendarEventOccurrencePage> listOccurrences(
     _ist.TestSessionBuilder sessionBuilder,

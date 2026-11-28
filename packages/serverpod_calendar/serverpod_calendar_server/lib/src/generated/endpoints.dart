@@ -101,6 +101,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_presentation_up
     as _i1sjay6c;
 import 'package:serverpod_calendar_server/src/generated/calendar_protocol_metadata_update_request.dart'
     as _i53ouodu;
+import 'package:serverpod_calendar_server/src/generated/calendar_refresh_resend_command.dart'
+    as _idrwihi2;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_cancel_request.dart'
     as _ih6si8n9;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_future_cancel_request.dart'
@@ -1119,6 +1121,87 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'calendarEvent',
       endpoint: endpoints['calendarEvent']!,
       methodConnectors: {
+        'listEventRefresh': _is.MethodConnector(
+          name: 'listEventRefresh',
+          params: {
+            'eventId': _is.ParameterDescription(
+              name: 'eventId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'pageSize': _is.ParameterDescription(
+              name: 'pageSize',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'cursor': _is.ParameterDescription(
+              name: 'cursor',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .listEventRefresh(
+                        session,
+                        params['eventId'],
+                        params['pageSize'],
+                        params['cursor'],
+                      ),
+        ),
+        'dismissEventRefresh': _is.MethodConnector(
+          name: 'dismissEventRefresh',
+          params: {
+            'eventId': _is.ParameterDescription(
+              name: 'eventId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'requestId': _is.ParameterDescription(
+              name: 'requestId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .dismissEventRefresh(
+                        session,
+                        params['eventId'],
+                        params['requestId'],
+                      ),
+        ),
+        'resendEventRefresh': _is.MethodConnector(
+          name: 'resendEventRefresh',
+          params: {
+            'command': _is.ParameterDescription(
+              name: 'command',
+              type: _is.getType<_idrwihi2.CalendarRefreshResendCommand>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .resendEventRefresh(
+                        session,
+                        params['command'],
+                      ),
+        ),
         'listOccurrences': _is.MethodConnector(
           name: 'listOccurrences',
           params: {

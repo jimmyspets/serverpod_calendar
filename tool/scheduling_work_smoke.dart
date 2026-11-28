@@ -45,7 +45,9 @@ Future<void> main(List<String> args) async {
   final root = Directory.current.absolute.path, probes = <_Probe>[];
   final fixtures = <Map<String, dynamic>>[];
   final informationOccurrences = args.contains('--information-occurrences');
-  final compiled = informationOccurrences || args.contains('--compiled');
+  final refresh = args.contains('--refresh');
+  final compiled =
+      informationOccurrences || args.contains('--compiled') || refresh;
   final compiledProbe =
       '$root/.local/scheduling-work-probe${Platform.isWindows ? '.exe' : ''}';
   if (compiled) {
@@ -118,8 +120,9 @@ Future<void> main(List<String> args) async {
   }
 
   try {
-    var a = await start('a', 18580);
-    final b = await start('b', 18680);
+    final firstPort = refresh ? 18780 : 18580;
+    var a = await start('a', firstPort);
+    final b = await start('b', refresh ? 18880 : 18680);
     if (args.contains('--information') ||
         informationOccurrences ||
         args.contains('--information-commands')) {
@@ -233,6 +236,76 @@ Future<void> main(List<String> args) async {
             : args.contains('--recurring')
             ? 'recurring-master'
             : 'non-recurring'} reply hosts, raced stable keys, actual loss before commit and after commit, atomic three-table recovery.',
+      );
+      return;
+    }
+    if (refresh) {
+      final fixture = (await b.command({
+        'command': 'seed',
+        'method': 'REPLY',
+      })) as Map<String, dynamic>;
+      fixtures.add(fixture);
+      await drainPublication(b, fixture);
+      final intake = {'command': 'refresh', ...fixture, 'key': Uuid().v4()};
+      final raced = (await Future.wait([a.command(intake), b.command(intake)]))
+          .cast<Map>();
+      if (raced.first['id'] != raced.last['id'] ||
+          raced.any((row) => row['count'] != 1)) {
+        throw StateError(
+          'Competing REFRESH intake did not converge on one request',
+        );
+      }
+      Future<void> lose(String name, Map<String, Object?> command) async {
+        a.submitted = Completer<void>();
+        final lost = a
+            .command(command)
+            .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+        await a.submitted!.future.timeout(const Duration(seconds: 30));
+        await a.stop();
+        await lost;
+        a = await start('refresh-$name', firstPort);
+      }
+
+      for (final pause in ['before', 'after']) {
+        final next = {...intake, 'key': Uuid().v4()};
+        await lose('intake-$pause', {...next, 'pause': pause});
+        final request = (await b.command(next)) as Map;
+        final resend = {
+          ...next,
+          'requestId': request['id'],
+          'key': Uuid().v4(),
+        };
+        await lose('resend-$pause', {...resend, 'pause': pause});
+        final receipt = (await b.command(resend)) as Map;
+        if (receipt['unchanged'] != (pause == 'after')) {
+          throw StateError(
+            'REFRESH resend receipt did not recover across hosts',
+          );
+        }
+        await lose('transport-$pause', {'command': 'work', 'pause': pause});
+        final inspect = {
+          'command': 'inspect-refresh',
+          'resendId': receipt['id'],
+        };
+        final interrupted =
+            (await b.command({...inspect, 'expireLease': true})) as Map;
+        if (interrupted['state'] != 'claimed') {
+          throw StateError(
+            'REFRESH resend did not retain its interrupted lease',
+          );
+        }
+        await b.command({'command': 'work'});
+        final recovered = (await b.command(inspect)) as Map;
+        if (recovered['state'] != 'accepted' ||
+            jsonEncode(recovered['attempts']) !=
+                jsonEncode(['uncertain', 'accepted'])) {
+          throw StateError(
+            'REFRESH resend did not recover one fenced delivery',
+          );
+        }
+      }
+      stdout.writeln(
+        'PASS: two-host REFRESH intake race, receipt and resend recovery, and fenced synthetic transport recovery.',
       );
       return;
     }

@@ -1,0 +1,10 @@
+class: CalendarRefreshView
+fields:
+  requestId: UuidValue
+  attendeeAddress: String
+  sourceStamp: DateTime
+  comments: List<String>
+  receivedAt: DateTime
+  expiresAt: DateTime
+  dismissedAt: DateTime?
+  resendState: CalendarSchedulingDeliveryState?

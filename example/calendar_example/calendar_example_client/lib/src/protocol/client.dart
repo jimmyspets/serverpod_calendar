@@ -476,6 +476,20 @@ class EndpointSchedulingDemo extends _isc.EndpointRef {
   @override
   String get name => 'schedulingDemo';
 
+  _ida.Future<_isc.UuidValue> simulateRefresh(
+    _isc.UuidValue eventId,
+    _isc.UuidValue commandId,
+    String attendeeAddress,
+  ) => caller.callServerEndpoint<_isc.UuidValue>(
+    'schedulingDemo',
+    'simulateRefresh',
+    {
+      'eventId': eventId,
+      'commandId': commandId,
+      'attendeeAddress': attendeeAddress,
+    },
+  );
+
   _ida.Future<_imrxcdin.CalendarSchedulingReplyReceipt> simulateReply(
     _isc.UuidValue eventId,
     _isc.UuidValue commandId,

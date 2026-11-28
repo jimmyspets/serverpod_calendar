@@ -1,6 +1,6 @@
 # ADR 0190: Authenticated organizer handling of VEVENT REFRESH
 
-Status: **Proposed for maintainer review.**
+Status: **Accepted by explicit maintainer agreement on 2026-11-28. The scoped implementation passed local validation.** [Organizer guide and validation](../native-organizer-scheduling.md#invitation-refresh-requests)
 
 ## Context
 

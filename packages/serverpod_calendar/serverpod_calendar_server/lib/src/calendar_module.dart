@@ -12,6 +12,7 @@ import 'calendar_authorization.dart';
 import 'alarm_values.dart';
 import 'alarm_runtime.dart';
 import 'scheduling_runtime.dart';
+import 'refresh_runtime.dart';
 import 'free_busy_exchange_runtime.dart';
 import 'free_busy_exchange_values.dart';
 import 'subject_free_busy_export_values.dart';
@@ -91,6 +92,8 @@ part 'calendar_scheduling_checkpoint_v9.dart';
 part 'calendar_scheduling_range.dart';
 part 'calendar_scheduling_cutoff_lifecycle.dart';
 part 'calendar_scheduling_worker.dart';
+part 'calendar_refresh.dart';
+part 'calendar_refresh_worker.dart';
 part 'calendar_event_occurrence_content.dart';
 part 'calendar_tasks.dart';
 part 'calendar_task_occurrences.dart';
@@ -328,8 +331,18 @@ abstract final class CalendarModule {
     if (runtime?.scheduling == null) {
       throw _failure(CalendarFailureCode.unavailable);
     }
-    await _SchedulingWorker(CalendarService._(session, runtime!)).run();
+    final service = CalendarService._(session, runtime!);
+    if (runtime.scheduling!.refresh != null) {
+      await _RefreshWorker(service).run();
+    }
+    await _SchedulingWorker(service).run();
   }
+
+  /// Host-only intake. Receipt creates a private review without sending.
+  static Future<UuidValue> receiveEventRefresh(
+    Session session,
+    CalendarRefreshDelivery delivery,
+  ) => service(session)._receiveEventRefresh(delivery);
 
   /// Trusted server maintenance entry point; never a client endpoint.
   static Future<void> runAlarmMaintenance(Session session) async {

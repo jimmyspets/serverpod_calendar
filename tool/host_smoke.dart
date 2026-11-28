@@ -310,7 +310,7 @@ Future<void> main(List<String> args) async {
             ? '--target=integration_test/event_descriptive_smoke_test.dart'
             : args.contains('--replies')
             ? '--target=integration_test/attendee_replies_smoke_test.dart'
-            : args.contains('--scheduling')
+            : args.contains('--scheduling') || args.contains('--refresh')
             ? '--target=integration_test/scheduling_smoke_test.dart'
             : args.contains('--feeds')
             ? '--target=integration_test/feed_smoke_test.dart'
@@ -326,6 +326,7 @@ Future<void> main(List<String> args) async {
         '--web-hostname=localhost',
         '--headless',
         '--dart-define-from-file=$root/.local/test_defines.json',
+        if (args.contains('--refresh')) '--dart-define=REFRESH_ONLY=true',
       ], workingDirectory: '$server/../calendar_example_flutter');
       unawaited(
         result.exitCode.then((_) {
@@ -355,6 +356,7 @@ Future<void> main(List<String> args) async {
           args.contains('--descriptive') ||
           args.contains('--replies') ||
           args.contains('--scheduling') ||
+          args.contains('--refresh') ||
           args.contains('--feeds') ||
           args.contains('--task-replacement') ||
           args.contains('--event-replacement') ||

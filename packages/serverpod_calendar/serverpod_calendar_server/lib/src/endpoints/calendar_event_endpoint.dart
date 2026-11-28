@@ -6,6 +6,26 @@ import '../calendar_module.dart';
 import '../generated/protocol.dart';
 
 class CalendarEventEndpoint extends Endpoint {
+  Future<CalendarRefreshPage> listEventRefresh(
+    Session session,
+    UuidValue eventId,
+    int pageSize,
+    String? cursor,
+  ) =>
+      CalendarModule.service(session)
+          .listEventRefresh(eventId, pageSize, cursor);
+
+  Future<void> dismissEventRefresh(
+    Session session,
+    UuidValue eventId,
+    UuidValue requestId,
+  ) => CalendarModule.service(session).dismissEventRefresh(eventId, requestId);
+
+  Future<CalendarRefreshResendReceipt> resendEventRefresh(
+    Session session,
+    CalendarRefreshResendCommand command,
+  ) => CalendarModule.service(session).resendEventRefresh(command);
+
   Future<CalendarEventOccurrencePage> listOccurrences(
     Session session,
     CalendarEventOccurrenceListQuery query,

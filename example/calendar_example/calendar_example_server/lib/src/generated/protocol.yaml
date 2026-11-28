@@ -25,6 +25,7 @@ notificationStream:
 publicationDemo:
   - simulate:
 schedulingDemo:
+  - simulateRefresh:
   - simulateReply:
 smoke:
   - whoAmI:

@@ -4,6 +4,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
+import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
+    as cal;
 
 import 'scheduling_journey.dart';
 import 'attendee_reply_journey.dart';
@@ -41,7 +43,19 @@ void main() {
     expect(find.byKey(const Key('check')), findsOneWidget);
     tester.testTextInput.register();
     addTearDown(tester.testTextInput.unregister);
-    await runSchedulingJourney(tester, client);
-    await runAttendeeReplyJourney(tester, client);
+    if (const bool.fromEnvironment('REFRESH_ONLY')) {
+      final api = client.modules.serverpod_calendar;
+      final calendar = (await api.calendar.create(
+        cal.CalendarCreateRequest(
+          displayName: 'Synthetic Flutter REFRESH',
+          availabilityZoneId: 'Etc/UTC',
+          noRuleFallback: cal.CalendarNoRuleFallback.free,
+        ),
+      ))!;
+      await runEventRefreshJourney(tester, client, calendar.calendarId);
+    } else {
+      await runSchedulingJourney(tester, client);
+      await runAttendeeReplyJourney(tester, client);
+    }
   });
 }

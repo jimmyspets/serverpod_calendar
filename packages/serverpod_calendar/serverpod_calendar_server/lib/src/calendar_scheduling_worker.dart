@@ -557,7 +557,10 @@ final class _SchedulingWorker {
   Future<void> _cleanup() async {
     final candidates = await s._session.db.unsafeQuery(
       'SELECT p.id FROM serverpod_calendar_scheduling_publication p WHERE "completedAt" IS NOT NULL '
-      'AND "completedAt"<clock_timestamp()-(@seconds * interval \'1 second\') AND NOT EXISTS (SELECT 1 FROM serverpod_calendar_scheduling_meeting m WHERE m."latestPublicationId"=p.id) ORDER BY "completedAt" LIMIT @limit',
+      'AND "completedAt"<clock_timestamp()-(@seconds * interval \'1 second\') '
+      'AND NOT EXISTS (SELECT 1 FROM serverpod_calendar_scheduling_meeting m WHERE m."latestPublicationId"=p.id) '
+      'AND NOT EXISTS (SELECT 1 FROM serverpod_calendar_refresh_resend r WHERE r."publicationId"=p.id) '
+      'ORDER BY "completedAt" LIMIT @limit',
       parameters: QueryParameters.named({
         'seconds': options.retention.inSeconds,
         'limit': options.batchSize,
@@ -584,7 +587,14 @@ final class _SchedulingWorker {
         if (current?.completedAt == null ||
             meeting == null ||
             meeting.latestPublicationId == p.id ||
-            !current!.completedAt!.isBefore(now.subtract(options.retention))) {
+            !current!.completedAt!.isBefore(now.subtract(options.retention)) ||
+            await CalendarRefreshResendRecord.db.count(
+                  s._session,
+                  where: (row) => row.publicationId.equals(p.id!),
+                  transaction: tx,
+                  limit: 1,
+                ) !=
+                0) {
           return;
         }
         final deliveries = await CalendarSchedulingDeliveryRecord.db.find(

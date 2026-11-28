@@ -1,0 +1,7 @@
+class: CalendarRefreshResendCommand
+fields:
+  eventId: UuidValue
+  requestId: UuidValue
+  commandId: UuidValue
+  publicationId: UuidValue
+  generation: int

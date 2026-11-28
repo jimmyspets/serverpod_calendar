@@ -984,6 +984,41 @@ class _SchedulingDemoEndpoint {
 
   final _is.SerializationManager _serializationManager;
 
+  _ida.Future<_is.UuidValue> simulateRefresh(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue eventId,
+    _is.UuidValue commandId,
+    String attendeeAddress,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'schedulingDemo',
+            method: 'simulateRefresh',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'schedulingDemo',
+          methodName: 'simulateRefresh',
+          parameters: _ist.testObjectToJson({
+            'eventId': eventId,
+            'commandId': commandId,
+            'attendeeAddress': attendeeAddress,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_is.UuidValue>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _ida.Future<_ipn35bcd.CalendarSchedulingReplyReceipt> simulateReply(
     _ist.TestSessionBuilder sessionBuilder,
     _is.UuidValue eventId,

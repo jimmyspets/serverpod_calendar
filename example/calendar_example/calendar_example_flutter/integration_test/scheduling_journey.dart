@@ -679,6 +679,104 @@ Future<void> runSchedulingJourney(WidgetTester tester, Client client) async {
   await rangeTerminal(true);
   await tester.pageBack();
   await tester.pumpAndSettle();
+  await runEventRefreshJourney(tester, client, calendar.calendarId);
   // This profile deliberately has no binding deletion API. The root harness
   // owns and resets this isolated synthetic storage; no cleanup endpoint exists.
+}
+
+Future<void> runEventRefreshJourney(
+  WidgetTester tester,
+  Client client,
+  cal.UuidValue calendarId,
+) async {
+  final api = client.modules.serverpod_calendar.calendarEvent;
+  final content = cal.CalendarEventContent(
+    summary: 'Synthetic Flutter REFRESH',
+    timing: cal.CalendarEventTiming(
+      kind: cal.CalendarEventTimeKind.date,
+      start: cal.CalendarEventCivil(year: 2026, month: 11, day: 15),
+    ),
+  );
+  final created = (await api.create(
+    cal.CalendarEventCreateRequest(calendarId: calendarId, content: content),
+  ))!;
+  final eventId = created.eventId;
+  const attendee = 'mailto:bob@example.invalid';
+  final published = await api.saveAndNotify(
+    cal.CalendarSchedulingSaveRequest(
+      eventId: eventId,
+      expectedRevision: 1,
+      commandId: cal.Uuid().v4obj(),
+      content: content,
+      recipients: [attendee],
+    ),
+  );
+  Future<void> waitFor(Future<bool> Function() current) async {
+    for (var i = 0; i < 250; i++) {
+      if (await current()) return;
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    fail('REFRESH delivery did not finish');
+  }
+
+  await waitFor(
+    () async =>
+        (await api.schedulingStatus(eventId)).deliveries.single.state ==
+        cal.CalendarSchedulingDeliveryState.accepted,
+  );
+  final resend = await client.schedulingDemo.simulateRefresh(
+    eventId,
+    cal.Uuid().v4obj(),
+    attendee,
+  );
+  final dismiss = await client.schedulingDemo.simulateRefresh(
+    eventId,
+    cal.Uuid().v4obj(),
+    attendee,
+  );
+  final view = await api.getEvent(eventId, cal.CalendarEventFieldGroup.values);
+  unawaited(
+    Navigator.of(tester.element(find.byType(Scaffold).first)).push<void>(
+      MaterialPageRoute(
+        builder: (_) => EventSchedulingScreen(client: client, event: view),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+  await _wait(
+    tester,
+    () => find
+        .byKey(const Key('scheduling-refresh-requests'))
+        .evaluate()
+        .isNotEmpty,
+  );
+  await tester.tap(find.byKey(const Key('scheduling-refresh-requests')));
+  await tester.pumpAndSettle();
+  await _wait(
+    tester,
+    () =>
+        find.byKey(ValueKey('refresh-dismiss-$dismiss')).evaluate().isNotEmpty,
+  );
+  await tester.tap(find.byKey(ValueKey('refresh-dismiss-$dismiss')));
+  await _wait(tester, () => find.text('Dismissed').evaluate().isNotEmpty);
+  await tester.tap(find.byKey(ValueKey('refresh-resend-$resend')));
+  await waitFor(() async {
+    final page = await api.listEventRefresh(eventId, 16, null);
+    return page.entries
+            .singleWhere((row) => row.requestId == resend)
+            .resendState ==
+        cal.CalendarSchedulingDeliveryState.accepted;
+  });
+  expect(
+    (await api.schedulingStatus(eventId)).publicationId,
+    published.publicationId,
+  );
+  expect(find.byKey(const Key('refresh-error')), findsNothing);
+  await tester.pageBack();
+  await tester.pumpAndSettle();
+  await tester.pageBack();
+  await tester.pumpAndSettle();
 }

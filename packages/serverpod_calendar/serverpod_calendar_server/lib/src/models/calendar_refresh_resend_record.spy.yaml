@@ -1,0 +1,37 @@
+class: CalendarRefreshResendRecord
+serverOnly: true
+table: serverpod_calendar_refresh_resend
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  meetingId: UuidValue, relation(parent=serverpod_calendar_scheduling_meeting)
+  requestId: UuidValue, relation(parent=serverpod_calendar_refresh_request)
+  commandId: UuidValue
+  actorId: String
+  publicationId: UuidValue, relation(parent=serverpod_calendar_scheduling_publication)
+  generation: int
+  payloadDigest: String
+  recipientAddress: String
+  routeRef: String
+  state: CalendarSchedulingDeliveryState, default=pending
+  attemptCount: int, default=0
+  createdAt: DateTime
+  expiresAt: DateTime
+  nextAttemptAt: DateTime
+  leaseToken: UuidValue?
+  leaseUntil: DateTime?
+  terminalAt: DateTime?
+  resultCode: String?
+indexes:
+  calendar_refresh_resend_request_unique:
+    fields: requestId
+    unique: true
+  calendar_refresh_resend_command_unique:
+    fields: scopeKey, commandId
+    unique: true
+  calendar_refresh_resend_due_idx:
+    fields: terminalAt, nextAttemptAt, leaseUntil
+  calendar_refresh_resend_published_idx:
+    fields: publicationId
+  calendar_refresh_resend_scope_idx:
+    fields: scopeKey, meetingId

@@ -863,12 +863,79 @@ DROP TABLE freebusy_upgrade_guard;
     print("PASS: VFREEBUSY upgrade preserves populated legacy rows and cursors, adds a null private cursor field and seven empty private exchange tables without invented mail, grants or history.")
 
 
+def verify_refresh_schema(database):
+    sql(database, """
+DO $refresh$
+BEGIN
+ IF EXISTS (SELECT 1 FROM serverpod_calendar_refresh_request)
+ OR EXISTS (SELECT 1 FROM serverpod_calendar_refresh_resend)
+ OR EXISTS (SELECT 1 FROM serverpod_calendar_refresh_attempt)
+ THEN RAISE EXCEPTION 'REFRESH migration invented private requests or work'; END IF;
+ IF (SELECT count(*) FROM pg_constraint WHERE contype='f'
+ AND conrelid IN ('serverpod_calendar_refresh_request'::regclass,
+ 'serverpod_calendar_refresh_resend'::regclass,
+ 'serverpod_calendar_refresh_attempt'::regclass)) <> 5
+ THEN RAISE EXCEPTION 'REFRESH source/attempt references are missing'; END IF;
+END;
+$refresh$;
+""")
+
+
+def verify_refresh_upgrade(database):
+    migrations = SERVER / "migrations"
+    prior = migrations / "20261113223532209-incoming-publication-bundles"
+    refresh = migrations / "20261128121233666-authenticated-event-refresh"
+    sql(database, (prior / "definition.sql").read_text(encoding="utf-8"))
+    sql(database, """
+INSERT INTO serverpod_calendar_identity(id,"scopeKey",revision)
+VALUES('19000000-0000-4000-8000-000000000001','refresh-upgrade',1);
+INSERT INTO serverpod_calendar_event(id,"calendarId",revision)
+VALUES('19000000-0000-4000-8000-000000000002','19000000-0000-4000-8000-000000000001',2);
+INSERT INTO serverpod_calendar_scheduling_meeting
+(id,"scopeKey","calendarId","eventId","organizerAddress","authorityRef",revision,generation,"latestPublicationId","createdAt","updatedAt")
+VALUES('19000000-0000-4000-8000-000000000003','refresh-upgrade','19000000-0000-4000-8000-000000000001','19000000-0000-4000-8000-000000000002',
+'mailto:organizer@example.invalid','fixture',2,1,'19000000-0000-4000-8000-000000000004','2026-11-28','2026-11-28');
+INSERT INTO serverpod_calendar_scheduling_publication
+(id,"scopeKey","meetingId",generation,method,"protocolUid",sequence,stamp,snapshot,projection,payload,"payloadDigest",recipients,"commandId","actorId","requestDigest","expectedRevision","eventRevision","createdAt","expiresAt",outcome)
+VALUES('19000000-0000-4000-8000-000000000004','refresh-upgrade','19000000-0000-4000-8000-000000000003',1,'REQUEST','fixture@example.invalid',1,'2026-11-28',
+'fixture snapshot','fixture projection','fixture payload',repeat('1',64),'["mailto:attendee@example.invalid"]','19000000-0000-4000-8000-000000000005',
+'fixture',repeat('2',64),1,2,'2026-11-28','2026-12-05','accepted');
+CREATE TABLE refresh_upgrade_meeting AS SELECT to_jsonb(m) AS body FROM serverpod_calendar_scheduling_meeting m;
+CREATE TABLE refresh_upgrade_publication AS SELECT to_jsonb(p) AS body FROM serverpod_calendar_scheduling_publication p;
+""")
+    sql(database, (refresh / "migration.sql").read_text(encoding="utf-8"))
+    verify_refresh_schema(database)
+    sql(database, """
+DO $preserved$
+BEGIN
+ IF (SELECT body FROM refresh_upgrade_meeting) IS DISTINCT FROM
+     (SELECT to_jsonb(m) FROM serverpod_calendar_scheduling_meeting m)
+ OR (SELECT body FROM refresh_upgrade_publication) IS DISTINCT FROM
+     (SELECT to_jsonb(p) FROM serverpod_calendar_scheduling_publication p)
+ THEN RAISE EXCEPTION 'REFRESH migration changed organizer publication history'; END IF;
+END;
+$preserved$;
+""")
+    fresh = f"{database}_refresh_fresh"
+    assert re.fullmatch(r"calendar_metadata_upgrade_[0-9]+_refresh_fresh", fresh)
+    sql("postgres", f"CREATE DATABASE {fresh};")
+    try:
+        sql(fresh, (refresh / "definition.sql").read_text(encoding="utf-8"))
+        verify_refresh_schema(fresh)
+    finally:
+        sql("postgres", f"DROP DATABASE {fresh};")
+    print("PASS: REFRESH upgrade preserves the organizer binding and publication. Fresh and upgraded schemas start with three empty tables and their source references.")
+
+
 def main():
     # Drop only a database this process successfully creates on the test service.
     database = f"calendar_metadata_upgrade_{os.getpid()}"
     assert re.fullmatch(r"calendar_metadata_upgrade_[0-9]+", database)
     sql("postgres", f"CREATE DATABASE {database};")
     try:
+        if "--refresh-upgrade-only" in __import__("sys").argv:
+            verify_refresh_upgrade(database)
+            return
         if "--publication-bundles-only" in __import__("sys").argv:
             sql(database, (SERVER / "migrations/20261113083105671-publication-retention-indexes/definition.sql").read_text(encoding="utf-8"))
             verify_publication_bundle_upgrade(database)

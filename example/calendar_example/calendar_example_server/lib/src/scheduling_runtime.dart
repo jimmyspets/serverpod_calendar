@@ -158,6 +158,75 @@ final class DemoSchedulingReplyHost implements CalendarSchedulingReplyHost {
   }
 }
 
+/// Synthetic organizer-side REFRESH authority for the private owner fixture.
+final class DemoRefreshHost implements CalendarRefreshHost {
+  final _scheduling = DemoSchedulingHost();
+
+  @override
+  CalendarAuthorizationGuarantee get guarantee => _scheduling.guarantee;
+
+  @override
+  Future<CalendarAuthorizationVerdict> authorizeReceipt(
+    Session session,
+    CalendarRefreshDelivery delivery,
+    CalendarEventPolicySnapshot event,
+    String attendeeAddress,
+    Transaction transaction,
+    CalendarAuthorizationPhase phase,
+  ) async {
+    final id = session.authenticated?.userIdentifier;
+    final scope = 'demo:user:$id';
+    return {'development', 'test'}.contains(session.serverpod.runMode) &&
+            id != null &&
+            delivery.scopeKey == scope &&
+            delivery.eventId == event.eventId &&
+            delivery.namespace == 'demo-synthetic-refresh' &&
+            delivery.originReference == 'demo-refresh:$id:$attendeeAddress' &&
+            _scheduling._synthetic(attendeeAddress) &&
+            await _scheduling._active(session, scope, scope, transaction)
+        ? CalendarAuthorizationVerdict.allow
+        : CalendarAuthorizationVerdict.deny;
+  }
+
+  @override
+  Future<CalendarAuthorizationVerdict> authorizeResend(
+    Session session,
+    CalendarSchedulingPolicyContext context,
+    String originReference,
+    Transaction transaction,
+    CalendarAuthorizationPhase phase,
+  ) async {
+    final route = context.recipient;
+    final scope = context.scopeKey;
+    if (!{'development', 'test'}.contains(session.serverpod.runMode) ||
+        route == null ||
+        !scope.startsWith('demo:user:') ||
+        context.intent.method != 'REQUEST' ||
+        context.intent.recipients.singleOrNull != route.address ||
+        !_scheduling._synthetic(route.address) ||
+        route.routeRef != route.address ||
+        context.actor != null && context.actor!.scopeKey != scope ||
+        !await _scheduling._active(
+          session,
+          scope,
+          context.authority.authorityRef,
+          transaction,
+        )) {
+      return CalendarAuthorizationVerdict.deny;
+    }
+    final id = scope.substring('demo:user:'.length);
+    final event = context.outgoingMessage.events.single;
+    return originReference == 'demo-refresh:$id:${route.address}' &&
+            event.participants.organizer?.address ==
+                _scheduling._organizer(id) &&
+            event.participants.attendees.any(
+              (attendee) => attendee.address == route.address,
+            )
+        ? CalendarAuthorizationVerdict.allow
+        : CalendarAuthorizationVerdict.deny;
+  }
+}
+
 /// Synthetic MIME recording only: no network provider or body in application logs.
 final class DemoSchedulingTransport implements CalendarSchedulingTransport {
   @override

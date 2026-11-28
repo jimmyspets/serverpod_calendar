@@ -758,6 +758,39 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'schedulingDemo',
       endpoint: endpoints['schedulingDemo']!,
       methodConnectors: {
+        'simulateRefresh': _is.MethodConnector(
+          name: 'simulateRefresh',
+          params: {
+            'eventId': _is.ParameterDescription(
+              name: 'eventId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'commandId': _is.ParameterDescription(
+              name: 'commandId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'attendeeAddress': _is.ParameterDescription(
+              name: 'attendeeAddress',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['schedulingDemo']
+                          as _ik68ors2.SchedulingDemoEndpoint)
+                      .simulateRefresh(
+                        session,
+                        params['eventId'],
+                        params['commandId'],
+                        params['attendeeAddress'],
+                      ),
+        ),
         'simulateReply': _is.MethodConnector(
           name: 'simulateReply',
           params: {

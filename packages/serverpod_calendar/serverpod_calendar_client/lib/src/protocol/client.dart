@@ -195,6 +195,12 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_presentation_upd
     as _iju8myao;
 import 'package:serverpod_calendar_client/src/protocol/calendar_protocol_metadata_update_request.dart'
     as _i3063onq;
+import 'package:serverpod_calendar_client/src/protocol/calendar_refresh_page.dart'
+    as _i8xezs8e;
+import 'package:serverpod_calendar_client/src/protocol/calendar_refresh_resend_command.dart'
+    as _i60ynkvv;
+import 'package:serverpod_calendar_client/src/protocol/calendar_refresh_resend_receipt.dart'
+    as _ixb7doaw;
 import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_cancel_request.dart'
     as _i9pzc99x;
 import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_future_cancel_request.dart'
@@ -673,6 +679,40 @@ class EndpointCalendarEvent extends _isc.EndpointRef {
 
   @override
   String get name => 'serverpod_calendar.calendarEvent';
+
+  _ida.Future<_i8xezs8e.CalendarRefreshPage> listEventRefresh(
+    _isc.UuidValue eventId,
+    int pageSize,
+    String? cursor,
+  ) => caller.callServerEndpoint<_i8xezs8e.CalendarRefreshPage>(
+    'serverpod_calendar.calendarEvent',
+    'listEventRefresh',
+    {
+      'eventId': eventId,
+      'pageSize': pageSize,
+      'cursor': cursor,
+    },
+  );
+
+  _ida.Future<void> dismissEventRefresh(
+    _isc.UuidValue eventId,
+    _isc.UuidValue requestId,
+  ) => caller.callServerEndpoint<void>(
+    'serverpod_calendar.calendarEvent',
+    'dismissEventRefresh',
+    {
+      'eventId': eventId,
+      'requestId': requestId,
+    },
+  );
+
+  _ida.Future<_ixb7doaw.CalendarRefreshResendReceipt> resendEventRefresh(
+    _i60ynkvv.CalendarRefreshResendCommand command,
+  ) => caller.callServerEndpoint<_ixb7doaw.CalendarRefreshResendReceipt>(
+    'serverpod_calendar.calendarEvent',
+    'resendEventRefresh',
+    {'command': command},
+  );
 
   _ida.Future<_ilw191qa.CalendarEventOccurrencePage> listOccurrences(
     _i8mlm4xn.CalendarEventOccurrenceListQuery query,

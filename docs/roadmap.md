@@ -1112,14 +1112,15 @@ Accepted [ADR 0182](adr/0182-native-event-information-publication.md) authorizes
 - [x] Obtain maintainer agreement on the bounded v9 proof, version/reply authority and restoration contract in ADR 0189.
 - [x] Implement the finite-cutoff lifecycle, prove exact v7/v8 restoration after pruning and validate two-host process-loss recovery. See the [implementation and validation record](published-range-controls.md#adr-0189-validation).
 - [x] Verify the connected Flutter scheduling journey against the freshly built example.
-- [ ] Verify full exact-head hosted inspection and runtime results before readiness.
+- [x] Verify full exact-head hosted inspection and runtime results at `bd2e7b9` in [run 46135475702](https://github.com/jimmyspets/serverpod_calendar/actions/runs/46135475702).
 
 ## Authenticated organizer handling of VEVENT REFRESH
 
-[Proposed ADR 0190](adr/0190-authenticated-event-refresh.md) advances the
+[Accepted ADR 0190](adr/0190-authenticated-event-refresh.md) advances the
 independent scheduling-method lane. It groups trusted private intake,
 organizer review and explicit single-recipient resend from the current
 non-recurring published REQUEST.
 
-- [ ] Obtain maintainer agreement on the first profile and its permission, storage and retention contract.
-- [ ] Implement and validate approved ingress, review and durable synthetic resend across the generated client, two hosts and Flutter.
+- [x] Obtain maintainer agreement on the first profile and its permission, storage and retention contract.
+- [x] Implement and validate approved ingress, review and durable synthetic resend across the generated client, two hosts and Flutter. See the [organizer guide and validation](native-organizer-scheduling.md#invitation-refresh-requests).
+- [ ] Observe full exact-head hosted inspection and runtime before readiness.
