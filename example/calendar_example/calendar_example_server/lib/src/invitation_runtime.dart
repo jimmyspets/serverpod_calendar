@@ -80,7 +80,11 @@ final class DemoInvitationHost implements CalendarInvitationHost {
       return CalendarAuthorizationVerdict.deny;
     }
     if (context.operation == CalendarInvitationOperation.adopt ||
-        context.operation == CalendarInvitationOperation.readLink) {
+        {
+          CalendarInvitationOperation.readLink,
+          CalendarInvitationOperation.apply,
+          CalendarInvitationOperation.readApplication,
+        }.contains(context.operation)) {
       final message = context.message;
       if (message != null &&
           (message.events.single.participants.organizer?.address !=

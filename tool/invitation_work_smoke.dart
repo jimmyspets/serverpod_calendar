@@ -278,6 +278,107 @@ Future<void> main() async {
         18780,
       );
     }
+    Future<Map<String, Object?>> updateRequest(String id) async {
+      final received = await b.command({
+        'command': 'receive',
+        'caseId': id,
+        'key': 'initial',
+      }) as Map;
+      final parent =
+          await b.command({'command': 'calendar', 'caseId': id}) as String;
+      await b.command({
+        'command': 'adopt',
+        'caseId': id,
+        'request': adoptionRequest(received, parent),
+      });
+      await b.command({
+        'command': 'receive',
+        'caseId': id,
+        'key': 'update',
+        'sequence': 1,
+        'summary': 'Updated',
+      });
+      final view = await b.command({
+        'command': 'application',
+        'caseId': id,
+        'entryId': received['entryId'],
+      }) as Map;
+      return {
+        'invitationId': view['invitationId'],
+        'sourceId': view['incomingSourceId'],
+        'expectedInvitationRevision': view['invitationRevision'],
+        'linkId': view['linkId'],
+        'expectedEventRevision': view['eventRevision'],
+        'expectedCalendarRevision': view['calendarRevision'],
+        'expectedApplicationRevision': view['applicationRevision'],
+      };
+    }
+
+    final applyCase = nextCase(), applyBody = await updateRequest(applyCase);
+    final appliedRace = await Future.wait(
+      [a, b].map(
+        (p) => p.command({
+          'command': 'apply',
+          'caseId': applyCase,
+          'request': applyBody,
+        }),
+      ),
+    );
+    require(
+      (appliedRace.first as Map)['id'] != null &&
+          (appliedRace.first as Map)['id'] == (appliedRace.last as Map)['id'],
+      'Competing update changed latest receipt',
+    );
+    for (final pause in ['apply-before', 'apply-after']) {
+      final id = nextCase(), request = await updateRequest(id);
+      a.paused = Completer<Map<String, dynamic>>();
+      final lost = a
+          .command({
+            'command': 'apply',
+            'caseId': id,
+            'request': request,
+            'pause': pause,
+          })
+          .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+      final submitted = await a.paused!.future.timeout(
+        const Duration(seconds: 40),
+      );
+      final visible =
+          await b.command({'command': 'inspect', 'caseId': id}) as Map;
+      final committed = pause == 'apply-after';
+      require(
+        visible['applications'] == (committed ? 1 : 0) &&
+            visible['eventRevision'] == (committed ? 2 : 1) &&
+            visible['dismissed'] == committed,
+        'Update was partially visible',
+      );
+      await a.stop();
+      await lost;
+      final recovered = await b.command({
+        'command': 'apply',
+        'caseId': id,
+        'request': request,
+      }) as Map;
+      require(
+        recovered['id'] != null &&
+            committed == (recovered['id'] == submitted['id']),
+        'Update loss did not recover correct result',
+      );
+      final state =
+          await b.command({'command': 'inspect', 'caseId': id}) as Map;
+      require(
+        state['events'] == 1 &&
+            state['links'] == 1 &&
+            state['applications'] == 1 &&
+            state['eventRevision'] == 2 &&
+            state['dismissed'] == true,
+        'Update recovery duplicated writes',
+      );
+      a = await start(
+        'a-apply-recovered-${committed ? 'after' : 'before'}',
+        18780,
+      );
+    }
     for (final pause in ['before', 'after']) {
       final id = nextCase();
       a.paused = Completer<Map<String, dynamic>>();
@@ -320,7 +421,7 @@ Future<void> main() async {
       if (pause == 'before') a = await start('a-recovered', 18780);
     }
     stdout.writeln(
-      'PASS: independent invitation hosts, duplicate/conflicting ingress and dismissal races, actual loss before/after commit, stable receipt recovery, one-event adoption races/loss and no partial state.',
+      'PASS: independent invitation hosts, duplicate/conflicting ingress and dismissal races, actual loss before/after commit, stable receipt recovery, one-event adoption and latest-update races/loss with no partial state.',
     );
   } finally {
     final live = probes.where((p) => !p.stopped && !p.exited).toList();

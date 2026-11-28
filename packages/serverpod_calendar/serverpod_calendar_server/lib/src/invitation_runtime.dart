@@ -46,6 +46,8 @@ enum CalendarInvitationOperation {
   dismiss,
   adopt,
   readLink,
+  apply,
+  readApplication,
 }
 
 /// Original link source evidence, retained independently of a prunable body.
@@ -64,6 +66,30 @@ final class CalendarInvitationLinkSource {
   final String uid, organizer, digest;
   final int? sequence;
   final DateTime stamp;
+}
+
+/// Current accepted source, distinct from the immutable creation descriptor.
+final class CalendarInvitationApplicationState {
+  const CalendarInvitationApplicationState({
+    required this.linkId,
+    required this.revision,
+    required this.invitationId,
+    required this.sourceId,
+    required this.digest,
+    required this.sequence,
+    required this.stamp,
+    required this.baselineDigest,
+    required this.eventRevision,
+    required this.invitationRevision,
+    required this.appliedAt,
+    this.latestResult,
+  });
+  final UuidValue linkId, invitationId, sourceId;
+  final int revision, eventRevision, invitationRevision;
+  final String digest, baselineDigest;
+  final int? sequence;
+  final DateTime stamp, appliedAt;
+  final CalendarInvitationApplyReceipt? latestResult;
 }
 
 /// Immutable actual source/target context; absent current means not yet loaded.
@@ -92,6 +118,12 @@ final class CalendarInvitationPolicyContext {
     this.currentEvent,
     this.proposedEvent,
     this.historicalSourceUnavailable,
+    this.applyRequest,
+    this.currentApplication,
+    this.proposedApplication,
+    this.applicationReceipt,
+    this.proposedBaseline,
+    this.localChanges,
   });
   final CalendarInvitationOperation operation;
   final CalendarInvitationRecipient recipient;
@@ -114,6 +146,12 @@ final class CalendarInvitationPolicyContext {
 
   /// True only when the original retained body is actually unavailable.
   final bool? historicalSourceUnavailable;
+  final CalendarInvitationApplyRequest? applyRequest;
+  final CalendarInvitationApplicationState? currentApplication,
+      proposedApplication;
+  final CalendarInvitationApplyReceipt? applicationReceipt;
+  final CalendarEventImportBaseline? proposedBaseline;
+  final bool? localChanges;
 }
 
 abstract interface class CalendarInvitationHost {

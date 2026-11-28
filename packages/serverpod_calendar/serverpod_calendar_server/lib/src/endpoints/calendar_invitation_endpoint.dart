@@ -29,4 +29,12 @@ class CalendarInvitationEndpoint extends Endpoint {
     Session session,
     CalendarInvitationAdoptionRequest request,
   ) => CalendarModule.service(session).adoptInvitation(request);
+  Future<CalendarInvitationApplicationView> application(
+    Session session,
+    UuidValue id,
+  ) => CalendarModule.service(session).invitationApplication(id);
+  Future<CalendarInvitationApplyReceipt> applyUpdate(
+    Session session,
+    CalendarInvitationApplyRequest request,
+  ) => CalendarModule.service(session).applyInvitationUpdate(request);
 }

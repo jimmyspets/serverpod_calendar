@@ -1,3 +1,5 @@
+import 'invitation_update_screen.dart';
+
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
@@ -148,6 +150,21 @@ class _InvitationAdoptionScreenState extends State<InvitationAdoptionScreen> {
           SelectableText(
             'Linked event: ${_link!.eventId}\nCalendar: ${_link!.calendarId}',
             key: const Key('invitation-linked-event'),
+          ),
+        if (_link != null)
+          TextButton(
+            key: const Key('invitation-review-update'),
+            onPressed: _busy
+                ? null
+                : () => Navigator.of(context).push<void>(
+                    MaterialPageRoute(
+                      builder: (_) => InvitationUpdateScreen(
+                        client: widget.client,
+                        invitationId: _entry.id,
+                      ),
+                    ),
+                  ),
+            child: const Text('Review incoming update'),
           ),
         if (_checked && _link == null) ...[
           if (_entry.dismissedAt != null || _entry.sourceId == null)

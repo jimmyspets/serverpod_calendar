@@ -93,6 +93,8 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
     );
     if (identity == null ||
         identity.deletedAt != null ||
+        identity.revision < 1 ||
+        identity.revision > CalendarService._maxRevision ||
         identity.calendarId != link.calendarId) {
       throw _failure(CalendarFailureCode.unavailable);
     }
@@ -102,18 +104,7 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
         event.data.importBaseline == null) {
       throw _failure(CalendarFailureCode.unavailable);
     }
-    final baseline = jsonDecode(
-      event.data.importBaseline!.canonicalValue,
-    ) as Map<String, dynamic>;
-    final protocol = baseline['protocol'] as Map<String, dynamic>;
-    final version = protocol['version'] as Map<String, dynamic>;
-    final metadata = protocol['sourceMetadata'] as Map<String, dynamic>?;
-    final organizer = metadata?['organizer'] as Map<String, dynamic>?;
-    if (version['sequence'] != link.sequence ||
-        DateTime.tryParse(version['stamp'] as String? ?? '') != link.stamp ||
-        organizer?['address'] != link.organizer) {
-      throw _failure(CalendarFailureCode.unavailable);
-    }
+    await _invCheckpoint(link, event, tx);
     return event;
   }
 
@@ -234,6 +225,20 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
     UuidValue? lookupId,
   }) async {
     final view = entry == null ? null : await _invView(entry, tx);
+    CalendarInvitationApplicationState? application;
+    if (event != null && receipt != null) {
+      final actualLink = await CalendarInvitationLinkRecord.db.findById(
+        _session,
+        receipt.id,
+        transaction: tx,
+      );
+      if (actualLink == null) throw _failure(CalendarFailureCode.unavailable);
+      application = _invApplicationState(
+        actualLink,
+        event,
+        await _invCheckpoint(actualLink, event, tx),
+      );
+    }
     for (final op in [
       CalendarInvitationOperation.readSummary,
       CalendarInvitationOperation.readSource,
@@ -255,6 +260,7 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
           normalizedSource: source?.normalizedSource,
           sourceDigest: source?.digest ?? linkSource?.digest,
           adoptionRequest: input,
+          currentApplication: application,
           link: receipt,
           linkSource: linkSource,
           calendar: parent?.snapshot,

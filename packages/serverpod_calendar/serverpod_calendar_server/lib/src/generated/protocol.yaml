@@ -71,6 +71,8 @@ calendarInvitation:
   - dismiss:
   - link:
   - adopt:
+  - application:
+  - applyUpdate:
 calendarTask:
   - updateTextMetadata:
   - replaceFromImport:

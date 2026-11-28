@@ -125,6 +125,57 @@ Future<void> runInvitationAdoptionJourney(
       (await module.calendarInvitation.getInvitation(entry.id)).dismissedAt,
       isNull,
     );
+    await tap(find.byKey(const Key('invitation-review-update')));
+    expect(find.byKey(const Key('invitation-update-source')), findsOneWidget);
+    final initialUpdate = await module.calendarInvitation.application(entry.id);
+    await module.calendarEvent.update(
+      cal.CalendarEventUpdateRequest(
+        eventId: link.eventId,
+        expectedRevision: initialUpdate.eventRevision,
+        content: initialUpdate.currentContent,
+      ),
+    );
+    await tap(find.byKey(const Key('invitation-update-apply')));
+    expect(find.byKey(const Key('invitation-update-error')), findsOneWidget);
+    expect(find.text('Retry the same update'), findsOneWidget);
+    await tap(find.byKey(const Key('invitation-update-refresh')));
+    await tap(find.byKey(const Key('invitation-update-apply')));
+    expect(find.byKey(const Key('invitation-update-result')), findsOneWidget);
+    final applied = await module.calendarInvitation.application(entry.id);
+    expect(applied.applicationRevision, 1);
+    expect(applied.currentContent.summary, 'New invitation review');
+    await client.invitationDemo.simulate(
+      id,
+      const cal.Uuid().v4obj(),
+      2,
+      'Pending second update',
+    );
+    final beforeLocal = await module.calendarInvitation.application(entry.id);
+    await module.calendarEvent.update(
+      cal.CalendarEventUpdateRequest(
+        eventId: link.eventId,
+        expectedRevision: beforeLocal.eventRevision,
+        content: beforeLocal.currentContent.copyWith(
+          summary: 'Local Flutter draft',
+        ),
+      ),
+    );
+    await tap(find.byKey(const Key('invitation-update-refresh')));
+    expect(find.byKey(const Key('invitation-update-conflict')), findsOneWidget);
+    expect(
+      tester
+          .widget<ElevatedButton>(
+            find.byKey(const Key('invitation-update-apply')),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(
+      (await module.calendarInvitation.getInvitation(entry.id)).dismissedAt,
+      isNull,
+    );
+    navigator.pop();
+    await tester.pumpAndSettle();
     navigator.pop();
     await tester.pumpAndSettle();
   } finally {
@@ -133,7 +184,8 @@ Future<void> runInvitationAdoptionJourney(
       await module.calendarInvitation.dismiss(entry.id, current.revision);
     }
     if (eventId != null) {
-      await module.calendarEvent.deleteEvent(eventId, 1);
+      final currentEvent = await module.calendarEvent.getEvent(eventId, []);
+      await module.calendarEvent.deleteEvent(eventId, currentEvent.revision);
     }
     await module.calendar.delete(calendar, parentRevision);
   }

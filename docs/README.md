@@ -266,3 +266,5 @@ The maintainer confirmed a private review queue before adding a new authenticate
 Accepted ADR 0137 implements bounded trusted non-recurring REQUEST intake and private review/dismissal, with separate source access, retained source ordering/receipts and three private tables. Receipt creates no calendar event, booking or reply. See [the implementation and limits](invitation-intake-and-review.md); calendar adoption, updates, recurrence/CANCEL and mail remain separate.
 
 - [Explicit invitation calendar addition](invitation-calendar-adoption.md): stable local copy, atomic writes, authority and retention limits.
+
+- [Explicit linked invitation updates](linked-invitation-updates.md): conflict checks, current accepted source, immutable creation and latest-result retry limits.

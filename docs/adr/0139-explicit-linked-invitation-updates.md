@@ -1,16 +1,16 @@
 # ADR 0139: Explicit linked invitation updates with conflict checks
 
-Status: **Proposed. The maintainer confirmed explicit Apply update and rejection of local content conflicts on 2026-10-29. The checkpoint model, API, ordering, retry of the latest update result and lifecycle mechanics below require explicit agreement.**
+Status: **Accepted by explicit maintainer approval on 2026-10-29 for the complete update/checkpoint/authority/latest-result retry batch. The scoped implementation and batch validation are complete.**
 
 ## Context and boundary
 
-Accepted ADR 0138 adds one imported-origin event and immutable creation receipt per logical recipient invitation. Receiving a newer REQUEST only reopens private review. The next proposed increment explicitly replaces that linked non-recurring event from a newer current source, preserving local work through baseline conflict detection. It does not create another event, move the link, accept participation or send a reply. Reviewed overwrite/merge, recurrence/CANCEL intake, organizer adoption and mail remain separate.
+Accepted ADR 0138 adds one imported-origin event and immutable creation receipt per logical recipient invitation. Receiving a newer REQUEST only reopens private review. The approved increment explicitly replaces that linked non-recurring event from a newer current source, preserving local work through baseline conflict detection. It does not create another event, move the link, accept participation or send a reply. Reviewed overwrite/merge, recurrence/CANCEL intake, organizer adoption and mail remain separate.
 
 The current link verifies its original source version against the immutable import baseline. Applying a later source must deliberately introduce a current accepted-source checkpoint rather than mutate the creation receipt or pretend the original source is still the current baseline. Ordinary file replacement remains blocked for linked events on all hosts.
 
 The existing strict REQUEST profile, accepted source-version ordering and host authority boundaries remain the starting point. [RFC 5546 REQUEST and sequencing](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.2) defines the scheduling context; the explicit review, checkpoint, capacity and retry choices below are application policies. Models follow the pinned Serverpod 4.0.4 generator and [current model guidance](https://docs.serverpod.dev/concepts/data-and-the-database/models). These sources do not prescribe this database design.
 
-## Proposed command and application
+## Approved command and application
 
 An immutable request contains the invitation UUID, selected current source UUID, expected invitation revision, known link UUID, expected event/calendar revisions and expected application revision. Revision zero identifies the initial accepted source before a checkpoint exists; later revisions are positive. The destination comes from the actual stored link, never a new client calendar/event selection. Resolve the actual actor/recipient/scope, source, link, calendar and event before deciding. Cross-scope operations and changing UID/organizer/correlation reject.
 
@@ -22,7 +22,7 @@ Before replacement, compare current normalized native content/overrides/protocol
 
 Event replacement, new baseline, checkpoint/latest receipt and dismissal of exactly that source version commit together under the existing shared database scope lock. Final checks occur after proposed writes inside the same transaction; denial/unavailability rolls everything back. A competing newer intake, local edit, deletion or application causes an explicit stale/conflict/unavailable result rather than replay or retargeting. Ordinary intake, native edits/deletion, export and generic file replacement keep their current separate behavior.
 
-## Proposed authority and context
+## Approved authority and context
 
 Add independent invitation apply and application-read operations. Application requires existing summary/source/link access and fresh host approval of the actual proposed source/recipient mapping; source participant strings never establish authority. Require calendar import/replacement permissions plus full ordinary event disclosure and event source-read access. Require applicable native content, descriptive/text-metadata and lifecycle permissions for the actual replacement, as in existing event-source replacement. Hosts may map these gates to shared rules; blind or redacted updates are outside the first profile.
 
@@ -30,9 +30,9 @@ Context includes the immutable request, current queue/source version, actual sto
 
 Reads independently protect the accepted-source descriptor and any local-conflict indication with link/full-event/source authority. Unknown, denied or deleted state is never reported as a false unlinked/clean result. No global UID search, inferred ownership or scheduling authority follows.
 
-## One proposed private checkpoint table
+## Approved private checkpoint table
 
-Propose **CalendarInvitationApplicationRecord**, server-only, one row per link with unique link UUID FK. Store server checkpoint UUID, trusted scope/recipient, application revision; current accepted inbox/source UUIDs as historical references, source digest/SEQUENCE presence/DTSTAMP; accepted native-baseline digest; a digest of the immutable creation descriptor; accepted event/invitation revisions and application time; latest complete request digest and latest server-generated result UUID. No copied source body/title/location, provider data or second canonical snapshot is stored. The current full normalized baseline remains solely in active event data.
+Use **CalendarInvitationApplicationRecord**, server-only, one row per link with unique link UUID FK. Store server checkpoint UUID, trusted scope/recipient, application revision; current accepted inbox/source UUIDs as historical references, source digest/SEQUENCE presence/DTSTAMP; accepted native-baseline digest; a digest of the immutable creation descriptor; accepted event/invitation revisions and application time; latest complete request digest and latest server-generated result UUID. No copied source body/title/location, provider data or second canonical snapshot is stored. The current full normalized baseline remains solely in active event data.
 
 The immutable creation link/receipt does not change. Before the first update, absence of a checkpoint means the existing initial baseline/version rules, not an invented application row. After update, validate the current baseline against the accepted checkpoint/version and stable UID/organizer; the creation-descriptor digest checks internal record consistency while preserving the original result. It is not a cryptographic claim against a database administrator. An absent, incompatible or inconsistent required record fails unavailable; never silently fall back to initial-source semantics after an update.
 
@@ -40,7 +40,7 @@ Inbox/source history keeps its independent retention and has no new FK pins. Nat
 
 All participating module hosts must understand the new checkpoint before enabling updates. Mixed old/new implementations are not claimed as a supported rolling-upgrade mode; APIs are unpublished. Generate and test fresh/populated upgrades without inventing accepted-source history.
 
-## Proposed retry contract
+## Approved retry contract
 
 The checkpoint keeps exactly the latest accepted command/result, not a history ledger. Hash every immutable request field in an unambiguous encoding. An exact retained latest command reauthorizes against actual current link/event/source access and returns the same flat result (result/link/source/event identities, created application/event/invitation revisions and application time). It never reapplies content, overwrites later local edits, dismisses a newer source, resets alarms or advances revisions/generation.
 
@@ -56,4 +56,4 @@ Updating immediately on receipt violates the confirmed review policy. Reusing or
 
 Test source UID/organizer/profile/version ordering and omissions; strict current membership and baseline conflict detection; identical native saves versus source-content changes; independent permissions, immutable complete context and final rollback; exact latest retry after local edits/newer intake/source expiry, and explicit rejection after another application; unchanged personal actions/imported origin/no outbound or auto-arming; missing/corrupt checkpoints, deleted links and no recreation. Exercise fresh/populated upgrades, two actual hosts racing apply/local edits/intake/deletion, loss before/after commit with stable latest results, generated clients and Flutter preview/apply/conflict/reload. Run focused checks during development and the complete agreed batch before one code commit. No source implementation precedes explicit maintainer model/ADR agreement.
 
-Open issues/PRs were checked across all pages (104 open before the adoption implementation PR); no overlapping linked-update work was found. This documentation-only proposal follows the completed ADR 0138 implementation in PR #106. It adds no source models, generated code, migration or runtime behavior before explicit model/ADR agreement.
+Open issues/PRs were checked across all pages (104 open before the adoption implementation PR); no overlapping linked-update work was found. The original documentation-only proposal followed completed ADR 0138 implementation PR #106. The maintainer subsequently approved the complete model/API/latest-result batch before generation; see [the scoped implementation guide](../linked-invitation-updates.md).

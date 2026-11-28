@@ -66,9 +66,15 @@ Future<void> runAttendeeReplyJourney(WidgetTester tester, Client client) async {
         () => Future<void>.delayed(const Duration(milliseconds: 100)),
       );
       await tester.pump(const Duration(milliseconds: 100));
-      final finder = find.byKey(const Key('replies-reload'));
+      // The master and instance routes coexist during the push transition.
+      final finder = find.byElementPredicate(
+        (element) =>
+            element.widget.key == const Key('replies-reload') &&
+            ModalRoute.of(element)?.isCurrent == true,
+      );
       if (finder.evaluate().isNotEmpty &&
           tester.widget<TextButton>(finder).onPressed != null) {
+        await tester.pumpAndSettle();
         return;
       }
     }

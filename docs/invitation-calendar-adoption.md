@@ -45,6 +45,6 @@ The invitation screen opens a protected calendar-addition/link view. It requires
 The synthetic example and tests send no mail. Participation responses, updates to linked events, source adoption as organizer, moving/copying/relinking, recurring/CANCEL intake, link purge and external client/mail interoperability remain separate required work.
 
 
-## Next proposed update profile
+## Explicit update profile
 
-The maintainer confirmed explicit Apply update with rejection of local content conflicts. [ADR 0139](adr/0139-explicit-linked-invitation-updates.md) proposes one current accepted-source checkpoint per stable link, atomic source replacement/review writes, independent authority and a latest-result retry contract. The original creation receipt remains immutable. Earlier update commands would become stale after a later different application; the checkpoint/API/retention mechanics await explicit review and are not implemented. Receiving a newer invitation still only reopens review; participation replies and reviewed overwrite/merge remain separate.
+Accepted [ADR 0139](adr/0139-explicit-linked-invitation-updates.md) implements explicit conflict-protected application of newer linked non-recurring REQUEST sources. One private checkpoint tracks current acceptance and the latest retry result, while the creation receipt stays unchanged. See [the scope, permissions and retry limits](linked-invitation-updates.md) and separate batch validation. Receipt remains review-only; local changes reject replacement and no participation reply is sent.

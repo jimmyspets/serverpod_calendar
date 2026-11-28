@@ -73,6 +73,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_query
     as _imwtl5fr;
 import 'package:serverpod_calendar_server/src/generated/calendar_invitation_adoption_request.dart'
     as _ia1wppub;
+import 'package:serverpod_calendar_server/src/generated/calendar_invitation_apply_request.dart'
+    as _i3h34hei;
 import 'package:serverpod_calendar_server/src/generated/calendar_metadata_update_request.dart'
     as _io29vhgw;
 import 'package:serverpod_calendar_server/src/generated/calendar_presentation_update_request.dart'
@@ -1758,6 +1760,48 @@ class Endpoints extends _is.EndpointDispatch {
                   (endpoints['calendarInvitation']
                           as _iolttv0d.CalendarInvitationEndpoint)
                       .adopt(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'application': _is.MethodConnector(
+          name: 'application',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .application(
+                        session,
+                        params['id'],
+                      ),
+        ),
+        'applyUpdate': _is.MethodConnector(
+          name: 'applyUpdate',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i3h34hei.CalendarInvitationApplyRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .applyUpdate(
                         session,
                         params['request'],
                       ),
