@@ -47,3 +47,62 @@ Accepted [ADR 0176](adr/0176-bundled-master-attendee-responses.md) extends the r
 ## Shared ordinary-recurring occurrence responses
 
 Accepted [ADR 0179](adr/0179-durable-shared-recurring-occurrence-responses.md) adds the opt-in fresh-history profile documented in [the durable guide](durable-recurring-occurrence-responses.md). Master and instance entry paths share one personal state per original; effective source history and restore-only eligibility remain independent of calendar Add/Apply. Old scalar single-instance sends stay unavailable for enrolled histories, and range entries require the new explicit-original API. Legacy/non-enrolled and complete-bundle behavior remains separate.
+
+## Requesting a current invitation
+
+[ADR 0191](adr/0191-attendee-event-refresh.md) adds explicit attendee VEVENT
+REFRESH for a retained non-recurring REQUEST. The generated
+`calendarInvitation.attendeeRefresh(id)` API shows eligibility and the
+latest retained delivery state. `requestAttendeeRefresh(command)` takes
+the invitation ID, reviewed revision and client command UUID. The Flutter
+invitation view exposes **Request current invitation** and keeps the command
+UUID when the transport result is unknown to the client.
+
+Install optional `CalendarInvitationRuntime.attendeeRefresh` with a
+`CalendarAttendeeRefreshHost` and attendee-sender transport. The native
+invitation host still approves access to each exact source. The refresh host
+independently approves read, send and actor-free dispatch. The module verifies
+the sender and organizer against the retained source and checks the immutable
+payload and route at both dispatch phases.
+
+The wire message contains the source UID and organizer, verified attendee and
+actual database-second DTSTAMP. The private delivery retains the exact source
+and its optional SEQUENCE. The command leaves participation, adoption, native
+events, alarms and dismissal independent. A newer REQUEST, meeting CANCEL or
+revoked route withdraws queued work. Retrying a retained command returns the
+same delivery identity after renewed source and route checks. Terminal
+retention keeps the source pinned while the delivery is retryable or reviewable.
+
+The example writes synthetic attendee-to-organizer MIME. Organizer approval
+and resend use [ADR 0190](adr/0190-authenticated-event-refresh.md), and the
+returned REQUEST follows ordinary trusted invitation receipt and explicit
+application. Recurring, delegated and real-mail REFRESH remain separate.
+
+### Attendee REFRESH validation
+
+- `./tool/generate.ps1` and the pinned Serverpod migration generator
+  regenerated the module and example host bindings and migrations.
+  `python tool/metadata_upgrade_smoke.py --attendee-refresh-upgrade-only`
+  verified the fresh schema, three source/attempt references and preservation
+  of populated invitation and source rows.
+- Dart VM and Chrome unit suites passed for core (540 each), iCalendar
+  (642 each) and the calendar Serverpod module (820 VM and 31 Chrome).
+- The attendee and organizer REFRESH database integration suites passed
+  seven attendee cases and five organizer cases. Coverage includes the
+  verified synthetic round trip through the two directions, clean native
+  state, source and route changes, exact command and submission retries,
+  cancellation, recurring rejection and eventual source-pin pruning.
+  The full focused run, including the existing attendee response and MIME
+  regression suites, passed 61 tests.
+- `dart run tool/invitation_work_smoke.dart --attendee-refresh` passed
+  across two independent host processes and shared test storage. It
+  exercised competing commands and leases, actual process loss before and
+  after commit and synthetic submission, and exact payload and MIME recovery.
+- `./tool/build-host.ps1` and
+  `dart run tool/host_smoke.dart --flutter --browser-only --attendee-refresh`
+  passed the connected Flutter invitation journey and generated-client
+  checks against the real example host. Live reload had no connected IDE
+  app. The journey launched a fresh browser test app.
+
+Complete hosted inspection and runtime results are tracked in the
+[roadmap](roadmap.md#explicit-attendee-vevent-refresh).

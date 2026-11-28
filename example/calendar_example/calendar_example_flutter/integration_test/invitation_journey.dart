@@ -58,6 +58,18 @@ Future<void> runInvitationJourney(WidgetTester tester, Client client) async {
       find.byKey(ValueKey('invitation-add-${receipt.entryId}')),
       findsOneWidget,
     );
+    await tap(find.byKey(ValueKey('invitation-refresh-${receipt.entryId}')));
+    expect(find.text('Request current invitation'), findsOneWidget);
+    await tap(find.byKey(const Key('send-attendee-refresh')));
+    final refresh = await api.attendeeRefresh(receipt.entryId);
+    expect(refresh.deliveryId, isNotNull);
+    expect(refresh.state, isNotNull);
+    expect(
+      (await api.getInvitation(receipt.entryId)).revision,
+      receipt.entryRevision,
+    );
+    navigator.pop();
+    await tester.pumpAndSettle();
     await tap(find.byKey(ValueKey('invitation-source-${receipt.entryId}')));
     await tap(find.byKey(ValueKey('invitation-history-${receipt.sourceId}')));
     final document = tester
@@ -92,6 +104,15 @@ Future<void> runInvitationJourney(WidgetTester tester, Client client) async {
       cal.CalendarInvitationSourceKind.meetingCancellation,
     );
     expect(cancellation.timing, isNull);
+    await tap(find.byKey(ValueKey('invitation-refresh-${receipt.entryId}')));
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const Key('send-attendee-refresh')))
+          .onPressed,
+      isNull,
+    );
+    navigator.pop();
+    await tester.pumpAndSettle();
     await tap(find.byKey(ValueKey('invitation-source-${receipt.entryId}')));
     await tap(
       find.byKey(ValueKey('invitation-history-${cancellation.sourceId}')),
@@ -122,6 +143,7 @@ Future<void> runInvitationJourney(WidgetTester tester, Client client) async {
       await api.dismiss(current.id, current.revision);
     }
   }
+  if (const bool.fromEnvironment('ATTENDEE_REFRESH_ONLY')) return;
   await runInvitationAdoptionJourney(tester, client);
   await runInvitationCancellationApplicationJourney(tester, client);
   await runInvitationResponseJourney(tester, client);

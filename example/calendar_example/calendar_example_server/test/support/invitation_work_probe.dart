@@ -71,9 +71,56 @@ final class _ResponseHost implements CalendarInvitationResponseHost {
   }
 }
 
-final class _ResponseTransport implements CalendarInvitationResponseTransport {
-  _ResponseTransport(this.host);
+final class _RefreshHost implements CalendarAttendeeRefreshHost {
+  _RefreshHost(this.host);
+
   final _Host host;
+
+  @override
+  CalendarAuthorizationGuarantee get guarantee =>
+      CalendarAuthorizationGuarantee.freshCheck;
+
+  @override
+  Future<CalendarInvitationResponseAuthority> resolve(
+    Session session,
+    CalendarAttendeeRefreshContext c,
+    Transaction tx,
+  ) async => CalendarInvitationResponseAuthority(
+    attendeeAddress: host.recipient.calendarAddress,
+    authorityRef: 'verified-probe',
+    organizer: CalendarSchedulingRoute(
+      c.invitation.organizer,
+      'verified-probe-route',
+    ),
+  );
+
+  @override
+  Future<CalendarAuthorizationVerdict> authorize(
+    Session session,
+    CalendarAttendeeRefreshContext c,
+    Transaction tx,
+    CalendarAuthorizationPhase phase,
+  ) async {
+    if (!c.recipient.same(host.recipient) ||
+        await _responseFile(host.scope, 'revoked').exists()) {
+      return CalendarAuthorizationVerdict.deny;
+    }
+    if (c.operation == CalendarAttendeeRefreshOperation.send &&
+        phase == CalendarAuthorizationPhase.finalWrite &&
+        host.pause == 'refresh-commit-before') {
+      stdout.writeln(
+        'INVITATION_PAUSED ${jsonEncode({'digest': c.payloadDigest})}',
+      );
+      await Completer<void>().future;
+    }
+    return CalendarAuthorizationVerdict.allow;
+  }
+}
+
+final class _ResponseTransport implements CalendarInvitationResponseTransport {
+  _ResponseTransport(this.host, {this.refresh = false});
+  final _Host host;
+  final bool refresh;
   @override
   Future<CalendarSchedulingTransportResult> submit(
     Session s,
@@ -82,6 +129,7 @@ final class _ResponseTransport implements CalendarInvitationResponseTransport {
     final mime = composeSyntheticInvitationResponseMime(
       input,
       requireProtection: false,
+      refresh: refresh,
     );
     final evidence = {
       'mimeDigest': sha256.convert(utf8.encode(mime)).toString(),
@@ -282,6 +330,10 @@ Future<void> main(List<String> args) async {
     ),
     invitations: CalendarInvitationRuntime(
       host: host,
+      attendeeRefresh: CalendarAttendeeRefreshRuntime(
+        host: _RefreshHost(host),
+        transport: _ResponseTransport(host, refresh: true),
+      ),
       responses: CalendarInvitationResponseRuntime(
         options: CalendarInvitationResponseOptions(
           recurringOccurrences: CalendarRecurringResponseOptions(
@@ -477,8 +529,35 @@ Future<void> main(List<String> args) async {
             } finally {
               session.updateAuthenticated(null);
             }
+          case 'attendee-refresh':
+            session.updateAuthenticated(
+              AuthenticationInfo('recipient', {}, authId: 'invitation-probe'),
+            );
+            try {
+              result =
+                  (await CalendarModule.service(session).requestAttendeeRefresh(
+                    CalendarAttendeeRefreshCommand.fromJson(
+                      input['request'] as Map<String, dynamic>,
+                    ),
+                  )).toJson();
+              if (host.pause == 'refresh-commit-after') {
+                stdout.writeln('INVITATION_PAUSED ${jsonEncode(result)}');
+                await Completer<void>().future;
+              }
+            } finally {
+              session.updateAuthenticated(null);
+            }
           case 'response-work':
             await CalendarModule.runInvitationResponseMaintenance(session);
+            result = true;
+          case 'refresh-expire-lease':
+            await session.db.unsafeQuery(
+              'UPDATE serverpod_calendar_attendee_refresh '
+              'SET "nextAttemptAt" = clock_timestamp() - interval \'1 hour\', '
+              '"leaseUntil" = clock_timestamp() - interval \'1 hour\' '
+              'WHERE "scopeKey" = @scope AND "terminalAt" IS NULL',
+              parameters: QueryParameters.named({'scope': host.scope}),
+            );
             result = true;
           case 'response-expire-lease':
             final rows = await CalendarInvitationResponseRecord.db.find(
@@ -769,6 +848,18 @@ Future<void> main(List<String> args) async {
                         ),
                       );
             result = {
+              'refreshDeliveries': [
+                for (final row in await CalendarAttendeeRefreshRecord.db.find(
+                  session,
+                  where: (t) => t.scopeKey.equals(host.scope),
+                ))
+                  {
+                    'id': row.id.toString(),
+                    'state': row.state.name,
+                    'attempts': row.attemptCount,
+                    'digest': row.payloadDigest,
+                  },
+              ],
               'selectionHeads': selectionHeads.length,
               'selectionEvidence': selectionEvidence.length,
               'selectionPins': selectionEvidence.isEmpty
@@ -888,6 +979,21 @@ Future<void> main(List<String> args) async {
             }
             result = true;
           case 'cleanup':
+            final refreshRows = await CalendarAttendeeRefreshRecord.db.find(
+              session,
+              where: (t) => t.scopeKey.equals(host.scope),
+            );
+            if (refreshRows.isNotEmpty) {
+              await CalendarAttendeeRefreshAttemptRecord.db.deleteWhere(
+                session,
+                where: (t) =>
+                    t.deliveryId.inSet(refreshRows.map((r) => r.id!).toSet()),
+              );
+              await CalendarAttendeeRefreshRecord.db.delete(
+                session,
+                refreshRows,
+              );
+            }
             final responseRows = await CalendarInvitationResponseRecord.db.find(
               session,
               where: (t) => t.scopeKey.equals(host.scope),

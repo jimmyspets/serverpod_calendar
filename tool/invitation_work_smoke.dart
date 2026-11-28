@@ -91,6 +91,7 @@ void require(bool value, String message) {
 }
 
 Future<void> main(List<String> args) async {
+  final attendeeRefresh = args.contains('--attendee-refresh');
   final recurringResponses = args.contains('--recurring-responses');
   _recurringResponseMode = recurringResponses;
   final bundles = args.contains('--bundles');
@@ -172,6 +173,128 @@ Future<void> main(List<String> args) async {
   try {
     var a = await start('a', 18780);
     final b = await start('b', 18880);
+    if (attendeeRefresh) {
+      for (final pause in [
+        'refresh-commit-before',
+        'refresh-commit-after',
+        'response-before',
+        'response-after',
+      ]) {
+        final id = nextCase();
+        Future<dynamic> probe(_Probe probe, String command) =>
+            probe.command({'command': command, 'caseId': id});
+        final incoming = await b.command({
+          'command': 'receive',
+          'caseId': id,
+          'key': 'refresh',
+        }) as Map;
+        final request = cal.CalendarAttendeeRefreshCommand(
+          invitationId: cal.UuidValue.fromString(incoming['entryId'] as String),
+          expectedInvitationRevision: incoming['entryRevision'] as int,
+          commandId: const cal.Uuid().v4obj(),
+        );
+        final input = {
+          'command': 'attendee-refresh',
+          'caseId': id,
+          'request': request.toJson(),
+        };
+        final aroundCommit = pause.startsWith('refresh-commit');
+        if (!aroundCommit) {
+          final results = await Future.wait([
+            a.command(input),
+            b.command(input),
+          ]);
+          final first = results.first as Map;
+          final second = results.last as Map;
+          require(
+            first['deliveryId'] != null &&
+                first['deliveryId'] == second['deliveryId'] &&
+                first['unchanged'] != second['unchanged'],
+            'Competing attendee REFRESH commands duplicated the delivery',
+          );
+        }
+        a.paused = Completer<Map<String, dynamic>>();
+        final lost = a
+            .command({
+              if (aroundCommit)
+                ...input
+              else ...{
+                'command': 'response-work',
+                'caseId': id,
+              },
+              'pause': pause,
+            })
+            .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+        final paused = await a.paused!.future.timeout(
+          const Duration(seconds: 40),
+        );
+        final during = await probe(b, 'inspect') as Map;
+        final before = during['refreshDeliveries'] as List;
+        require(
+          before.length == (pause == 'refresh-commit-before' ? 0 : 1),
+          'Attendee REFRESH was partially visible across the commit boundary',
+        );
+        if (!aroundCommit) {
+          await probe(b, 'response-work');
+          require(
+            ((before.single as Map)['attempts'] == 1),
+            'Attendee REFRESH did not fence its first transport claim',
+          );
+          final competing = await probe(b, 'inspect') as Map;
+          require(
+            ((competing['refreshDeliveries'] as List).single
+                    as Map)['attempts'] ==
+                1,
+            'Competing host acquired the active attendee REFRESH lease',
+          );
+        }
+        await a.stop();
+        await lost;
+        final retry = await b.command(input) as Map;
+        require(
+          retry['deliveryId'] != null &&
+              retry['unchanged'] == (pause != 'refresh-commit-before') &&
+              (pause != 'refresh-commit-after' ||
+                  retry['deliveryId'] == paused['deliveryId']),
+          'Attendee REFRESH commit recovery lost its stable receipt',
+        );
+        if (!aroundCommit) await probe(b, 'refresh-expire-lease');
+        await probe(b, 'response-work');
+        final after = await probe(b, 'inspect') as Map;
+        final row = (after['refreshDeliveries'] as List).single as Map;
+        require(
+          row['state'] == 'accepted' &&
+              row['attempts'] == (aroundCommit ? 1 : 2) &&
+              after['events'] == 0 &&
+              after['links'] == 0 &&
+              (after['responses'] as List).isEmpty,
+          'Attendee REFRESH recovery changed calendar or participation state',
+        );
+        final evidence = await File(
+          '$root/.local/invitation-response-probe-$id.jsonl',
+        ).readAsLines();
+        require(
+          evidence.length == (pause == 'response-after' ? 2 : 1),
+          'Synthetic transport did not record the expected number of submissions',
+        );
+        for (final line in evidence) {
+          final submission = jsonDecode(line) as Map;
+          require(
+            submission['key'] == retry['deliveryId'] &&
+                submission['digest'] == row['digest'] &&
+                (aroundCommit ||
+                    submission['digest'] == paused['digest'] &&
+                        submission['mimeDigest'] == paused['mimeDigest']),
+            'Attendee REFRESH recovery changed transport identity or bytes',
+          );
+        }
+        a = await start('a-refresh-recovered-$pause', 18780);
+      }
+      stdout.writeln(
+        'PASS: two independent attendee REFRESH hosts, durable command retries, competing leases and actual process loss before and after commit and synthetic submission with stable payload and MIME.',
+      );
+      return;
+    }
     if (bundles) {
       Map<String, Object?> request(Map source, String parent) => {
         'invitationId': source['entryId'],

@@ -5,7 +5,10 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_calendar_server/serverpod_calendar_server.dart';
 import 'package:test/test.dart';
 
+import 'attendee_event_refresh_test.dart' show AttendeeRefreshTestHost;
 import 'calendar_test.dart' show TestPolicy, createInput, eventInput, failure;
+import 'invitation_responses_test.dart'
+    show LoopbackInvitationHost, ResponseTransport;
 import 'scheduling_test.dart' show SchedulingHost, SchedulingTransport;
 import 'test_tools/serverpod_test_tools.dart';
 
@@ -56,6 +59,7 @@ void main() {
     late UuidValue eventId;
     late CalendarSchedulingPublicationRecord publication;
     late CalendarEventContent content;
+    late ResponseTransport attendeeTransport;
 
     setUp(() async {
       session = builder
@@ -68,9 +72,10 @@ void main() {
           .build();
       host = _RefreshHost();
       transport = SchedulingTransport();
+      attendeeTransport = ResponseTransport();
       CalendarModule.install(
         session.serverpod,
-        policy: TestPolicy(),
+        policy: TestPolicy()..scopeOverride = 'test:alice',
         options: const CalendarModuleOptions(
           requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
         ),
@@ -78,6 +83,13 @@ void main() {
           host: SchedulingHost(),
           transport: transport,
           refresh: host,
+        ),
+        invitations: CalendarInvitationRuntime(
+          host: LoopbackInvitationHost(),
+          attendeeRefresh: CalendarAttendeeRefreshRuntime(
+            host: AttendeeRefreshTestHost(),
+            transport: attendeeTransport,
+          ),
         ),
       );
       service = CalendarModule.service(session);
@@ -140,6 +152,67 @@ void main() {
           publicationId: publication.id!,
           generation: publication.generation,
         );
+
+    test('attendee origin, verified organizer resend and normal receipt form a round trip', () async {
+      final attendee = builder
+          .copyWith(
+            authentication: AuthenticationOverride.authenticationInfo(
+              'bob',
+              {},
+            ),
+          )
+          .build();
+      final attendeeService = CalendarModule.service(attendee);
+      Future<CalendarInvitationReceipt> receive(
+        String deliveryKey,
+        String payload,
+      ) => CalendarModule.receiveSchedulingInvitation(
+        attendee,
+        CalendarInvitationDelivery(
+          namespace: 'synthetic-loopback',
+          deliveryKey: deliveryKey,
+          originReference: 'verified-alice',
+          bytes: Uint8List.fromList(utf8.encode(payload)),
+        ),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      final initial = transport.submissions.singleWhere(
+        (row) => row.recipient.address == recipient,
+      );
+      final invitation = await receive('published', initial.payload);
+      final queued = await attendeeService.requestAttendeeRefresh(
+        CalendarAttendeeRefreshCommand(
+          invitationId: invitation.entryId,
+          expectedInvitationRevision: invitation.entryRevision,
+          commandId: const Uuid().v4obj(),
+        ),
+      );
+      await CalendarModule.runInvitationResponseMaintenance(session);
+      final refresh = attendeeTransport.submissions.single;
+      expect(refresh.deliveryKey, queued.deliveryId);
+      final refreshId = await CalendarModule.receiveEventRefresh(
+        session,
+        CalendarRefreshDelivery(
+          scopeKey: 'test:alice',
+          eventId: eventId,
+          namespace: 'synthetic-loopback',
+          deliveryKey: refresh.deliveryKey.toString(),
+          originReference: 'verified:$recipient',
+          bytes: Uint8List.fromList(utf8.encode(refresh.payload)),
+        ),
+      );
+      expect(transport.submissions, hasLength(2));
+      final resend = await service.resendEventRefresh(command(refreshId));
+      await CalendarModule.runSchedulingMaintenance(session);
+      final returned = transport.submissions.last;
+      expect(returned.deliveryKey, resend.resendId);
+      expect(returned.payload, initial.payload);
+      final reviewed = await receive('returned', returned.payload);
+      expect(reviewed.entryId, invitation.entryId);
+      expect(reviewed.sourceId, invitation.sourceId);
+      expect(await CalendarInvitationLinkRecord.db.count(session), 0);
+      expect(await CalendarInvitationResponseStateRecord.db.count(session), 0);
+    });
 
     test('intake is idempotent and explicit resend preserves bytes, recipients and generation', () async {
       final delivery = input('one');

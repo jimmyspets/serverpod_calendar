@@ -49,3 +49,4 @@
 20261113083045903-publication-retention-indexes
 20261113223525401-incoming-publication-bundles
 20261128121110483-authenticated-event-refresh
+20261128151834089-attendee-event-refresh

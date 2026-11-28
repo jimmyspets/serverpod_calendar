@@ -99,6 +99,8 @@ calendarIncomingPublication:
   - addBundleToCalendar:
   - applyBundleSource:
 calendarInvitation:
+  - attendeeRefresh:
+  - requestAttendeeRefresh:
   - list:
   - getInvitation:
   - sources:

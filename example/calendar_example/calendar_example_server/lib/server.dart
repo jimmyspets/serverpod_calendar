@@ -83,6 +83,10 @@ Future<void> run(List<String> args) async {
     ),
     invitations: CalendarInvitationRuntime(
       host: DemoInvitationHost(),
+      attendeeRefresh: CalendarAttendeeRefreshRuntime(
+        host: DemoAttendeeRefreshHost(),
+        transport: DemoInvitationResponseTransport(refresh: true),
+      ),
       responses: CalendarInvitationResponseRuntime(
         options: CalendarInvitationResponseOptions(
           recurringOccurrences: CalendarRecurringResponseOptions(enabled: true),

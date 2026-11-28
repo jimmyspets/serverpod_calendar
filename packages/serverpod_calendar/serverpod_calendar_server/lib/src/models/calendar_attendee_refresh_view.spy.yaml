@@ -1,0 +1,6 @@
+class: CalendarAttendeeRefreshView
+fields:
+  deliveryId: UuidValue?
+  state: CalendarInvitationResponseDeliveryState?
+  unchanged: bool
+  canRequest: bool

@@ -13,6 +13,7 @@ import 'alarm_values.dart';
 import 'alarm_runtime.dart';
 import 'scheduling_runtime.dart';
 import 'refresh_runtime.dart';
+import 'attendee_refresh_runtime.dart';
 import 'free_busy_exchange_runtime.dart';
 import 'free_busy_exchange_values.dart';
 import 'subject_free_busy_export_values.dart';
@@ -94,6 +95,8 @@ part 'calendar_scheduling_cutoff_lifecycle.dart';
 part 'calendar_scheduling_worker.dart';
 part 'calendar_refresh.dart';
 part 'calendar_refresh_worker.dart';
+part 'calendar_attendee_refresh.dart';
+part 'calendar_attendee_refresh_worker.dart';
 part 'calendar_event_occurrence_content.dart';
 part 'calendar_tasks.dart';
 part 'calendar_task_occurrences.dart';
@@ -318,11 +321,17 @@ abstract final class CalendarModule {
     return CalendarService._(session, runtime!)._receiveReply(delivery);
   }
 
-  /// Trusted private attendee-response worker. Never fabricates a login.
+  /// Trusted private attendee delivery workers. Never fabricate a login.
   static Future<void> runInvitationResponseMaintenance(Session session) async {
     final runtime = _installed[session.serverpod];
-    if (runtime?.invitations?.responses == null) return;
-    await _InvitationResponseWorker(CalendarService._(session, runtime!)).run();
+    if (runtime?.invitations == null) return;
+    final service = CalendarService._(session, runtime!);
+    if (runtime.invitations!.attendeeRefresh != null) {
+      await _AttendeeRefreshWorker(service).run();
+    }
+    if (runtime.invitations!.responses != null) {
+      await _InvitationResponseWorker(service).run();
+    }
   }
 
   /// Trusted bounded scheduling worker; no client or fabricated login.

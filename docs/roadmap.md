@@ -1127,10 +1127,11 @@ non-recurring published REQUEST.
 
 ## Explicit attendee VEVENT REFRESH
 
-[Proposed ADR 0191](adr/0191-attendee-event-refresh.md) covers the other
+[Accepted ADR 0191](adr/0191-attendee-event-refresh.md) covers the other
 direction of the same non-recurring profile. It groups an
 explicit attendee action, pinned-source delivery and a synthetic round trip
 through organizer review/resend and ordinary REQUEST intake.
 
-- [ ] Obtain explicit maintainer approval of the source profile, permission, storage and retention contract.
-- [ ] Implement and validate attendee REFRESH, including trusted synthetic loopback, generated clients, two hosts and Flutter.
+- [x] Obtain explicit maintainer approval of the source profile, permission, storage and retention contract.
+- [x] Implement and validate attendee REFRESH, including trusted synthetic loopback, generated clients, two hosts and Flutter. See the [attendee validation record](private-attendee-responses.md#attendee-refresh-validation).
+- [ ] Verify full exact-head hosted inspection and runtime.

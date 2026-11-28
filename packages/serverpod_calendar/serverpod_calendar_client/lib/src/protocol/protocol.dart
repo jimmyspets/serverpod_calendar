@@ -53,6 +53,8 @@ import 'calendar_alarm_plan_status.dart' as _irtomk7p;
 import 'calendar_alarm_source_timings.dart' as _ig76ry9v;
 import 'calendar_alarm_update_request.dart' as _im2lo7e9;
 import 'calendar_alarm_view.dart' as _ie7u1nxa;
+import 'calendar_attendee_refresh_command.dart' as _id6m67f7;
+import 'calendar_attendee_refresh_view.dart' as _iyptnwhe;
 import 'calendar_availability_category_group.dart' as _iywbqexh;
 import 'calendar_availability_class.dart' as _iucw7bzg;
 import 'calendar_availability_content.dart' as _ifxxil5c;
@@ -304,6 +306,8 @@ export 'calendar_alarm_plan_status.dart';
 export 'calendar_alarm_source_timings.dart';
 export 'calendar_alarm_update_request.dart';
 export 'calendar_alarm_view.dart';
+export 'calendar_attendee_refresh_command.dart';
+export 'calendar_attendee_refresh_view.dart';
 export 'calendar_availability_category_group.dart';
 export 'calendar_availability_class.dart';
 export 'calendar_availability_content.dart';
@@ -569,6 +573,8 @@ class Protocol extends _isc.SerializationManager
       _isc.getType<_ig76ry9v.CalendarAlarmSourceTimings>,
       _isc.getType<_im2lo7e9.CalendarAlarmUpdateRequest>,
       _isc.getType<_ie7u1nxa.CalendarAlarmView>,
+      _isc.getType<_id6m67f7.CalendarAttendeeRefreshCommand>,
+      _isc.getType<_iyptnwhe.CalendarAttendeeRefreshView>,
       _isc.getType<_iywbqexh.CalendarAvailabilityCategoryGroup>,
       _isc.getType<_iucw7bzg.CalendarAvailabilityClass>,
       _isc.getType<_ifxxil5c.CalendarAvailabilityContent>,
@@ -819,6 +825,8 @@ class Protocol extends _isc.SerializationManager
       _isc.getType<_ig76ry9v.CalendarAlarmSourceTimings?>,
       _isc.getType<_im2lo7e9.CalendarAlarmUpdateRequest?>,
       _isc.getType<_ie7u1nxa.CalendarAlarmView?>,
+      _isc.getType<_id6m67f7.CalendarAttendeeRefreshCommand?>,
+      _isc.getType<_iyptnwhe.CalendarAttendeeRefreshView?>,
       _isc.getType<_iywbqexh.CalendarAvailabilityCategoryGroup?>,
       _isc.getType<_iucw7bzg.CalendarAvailabilityClass?>,
       _isc.getType<_ifxxil5c.CalendarAvailabilityContent?>,
@@ -1166,6 +1174,8 @@ class Protocol extends _isc.SerializationManager
       'CalendarAlarmSourceTimings',
       'CalendarAlarmUpdateRequest',
       'CalendarAlarmView',
+      'CalendarAttendeeRefreshCommand',
+      'CalendarAttendeeRefreshView',
       'CalendarAvailabilityCategoryGroup',
       'CalendarAvailabilityClass',
       'CalendarAvailabilityContent',
@@ -1490,6 +1500,12 @@ class Protocol extends _isc.SerializationManager
     }
     if (t == _ie7u1nxa.CalendarAlarmView) {
       return _ie7u1nxa.CalendarAlarmView.fromJson(data) as T;
+    }
+    if (t == _id6m67f7.CalendarAttendeeRefreshCommand) {
+      return _id6m67f7.CalendarAttendeeRefreshCommand.fromJson(data) as T;
+    }
+    if (t == _iyptnwhe.CalendarAttendeeRefreshView) {
+      return _iyptnwhe.CalendarAttendeeRefreshView.fromJson(data) as T;
     }
     if (t == _iywbqexh.CalendarAvailabilityCategoryGroup) {
       return _iywbqexh.CalendarAvailabilityCategoryGroup.fromJson(data) as T;
@@ -2327,6 +2343,18 @@ class Protocol extends _isc.SerializationManager
     }
     if (t == _isc.getType<_ie7u1nxa.CalendarAlarmView?>()) {
       return (data != null ? _ie7u1nxa.CalendarAlarmView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_id6m67f7.CalendarAttendeeRefreshCommand?>()) {
+      return (data != null
+              ? _id6m67f7.CalendarAttendeeRefreshCommand.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_iyptnwhe.CalendarAttendeeRefreshView?>()) {
+      return (data != null
+              ? _iyptnwhe.CalendarAttendeeRefreshView.fromJson(data)
+              : null)
           as T;
     }
     if (t == _isc.getType<_iywbqexh.CalendarAvailabilityCategoryGroup?>()) {
@@ -4500,6 +4528,9 @@ class Protocol extends _isc.SerializationManager
       _ig76ry9v.CalendarAlarmSourceTimings => 'CalendarAlarmSourceTimings',
       _im2lo7e9.CalendarAlarmUpdateRequest => 'CalendarAlarmUpdateRequest',
       _ie7u1nxa.CalendarAlarmView => 'CalendarAlarmView',
+      _id6m67f7.CalendarAttendeeRefreshCommand =>
+        'CalendarAttendeeRefreshCommand',
+      _iyptnwhe.CalendarAttendeeRefreshView => 'CalendarAttendeeRefreshView',
       _iywbqexh.CalendarAvailabilityCategoryGroup =>
         'CalendarAvailabilityCategoryGroup',
       _iucw7bzg.CalendarAvailabilityClass => 'CalendarAvailabilityClass',
@@ -4892,6 +4923,10 @@ class Protocol extends _isc.SerializationManager
         return 'CalendarAlarmUpdateRequest';
       case _ie7u1nxa.CalendarAlarmView():
         return 'CalendarAlarmView';
+      case _id6m67f7.CalendarAttendeeRefreshCommand():
+        return 'CalendarAttendeeRefreshCommand';
+      case _iyptnwhe.CalendarAttendeeRefreshView():
+        return 'CalendarAttendeeRefreshView';
       case _iywbqexh.CalendarAvailabilityCategoryGroup():
         return 'CalendarAvailabilityCategoryGroup';
       case _iucw7bzg.CalendarAvailabilityClass():
@@ -5415,6 +5450,14 @@ class Protocol extends _isc.SerializationManager
     }
     if (dataClassName == 'CalendarAlarmView') {
       return deserialize<_ie7u1nxa.CalendarAlarmView>(data['data']);
+    }
+    if (dataClassName == 'CalendarAttendeeRefreshCommand') {
+      return deserialize<_id6m67f7.CalendarAttendeeRefreshCommand>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarAttendeeRefreshView') {
+      return deserialize<_iyptnwhe.CalendarAttendeeRefreshView>(data['data']);
     }
     if (dataClassName == 'CalendarAvailabilityCategoryGroup') {
       return deserialize<_iywbqexh.CalendarAvailabilityCategoryGroup>(

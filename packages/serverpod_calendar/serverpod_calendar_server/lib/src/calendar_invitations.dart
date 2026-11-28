@@ -475,13 +475,30 @@ extension CalendarInvitationOperations on CalendarService {
         .map((r) => r.sourceId)
         .toSet();
     protectedSources.addAll(responsePins.map((r) => r.sourceId));
+    final refreshPins = await CalendarAttendeeRefreshRecord.db.find(
+      _session,
+      where: (row) =>
+          row.scopeKey.equals(recipient.scopeKey) &
+          row.recipientKey.equals(recipient.key),
+      limit: 513,
+      transaction: tx,
+    );
+    if (refreshPins.length > 512) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
+    protectedSources.addAll(refreshPins.map((row) => row.sourceId));
     protectedSources.addAll(await _rrProtectedSources(recipient, tx));
     final sources = await _invSources(entries, tx);
     if (responsePins.any(
-      (r) =>
-          !entries.any((e) => e.id == r.entryId) ||
-          !sources.any((v) => v.id == r.sourceId && v.entryId == r.entryId),
-    )) {
+          (r) =>
+              !entries.any((e) => e.id == r.entryId) ||
+              !sources.any((v) => v.id == r.sourceId && v.entryId == r.entryId),
+        ) ||
+        refreshPins.any(
+          (r) =>
+              !entries.any((e) => e.id == r.entryId) ||
+              !sources.any((v) => v.id == r.sourceId && v.entryId == r.entryId),
+        )) {
       throw _failure(CalendarFailureCode.unavailable);
     }
     final threshold = now.subtract(_invOptions.terminalRetention);

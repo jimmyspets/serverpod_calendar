@@ -58,6 +58,10 @@ import 'calendar_alarm_record.dart' as _iralscit;
 import 'calendar_alarm_source_timings.dart' as _ig76ry9v;
 import 'calendar_alarm_update_request.dart' as _im2lo7e9;
 import 'calendar_alarm_view.dart' as _ie7u1nxa;
+import 'calendar_attendee_refresh_attempt_record.dart' as _iqhys38p;
+import 'calendar_attendee_refresh_command.dart' as _id6m67f7;
+import 'calendar_attendee_refresh_record.dart' as _ivcrs9wl;
+import 'calendar_attendee_refresh_view.dart' as _iyptnwhe;
 import 'calendar_availability_category_group.dart' as _iywbqexh;
 import 'calendar_availability_class.dart' as _iucw7bzg;
 import 'calendar_availability_content.dart' as _ifxxil5c;
@@ -387,6 +391,10 @@ export 'calendar_alarm_record.dart';
 export 'calendar_alarm_source_timings.dart';
 export 'calendar_alarm_update_request.dart';
 export 'calendar_alarm_view.dart';
+export 'calendar_attendee_refresh_attempt_record.dart';
+export 'calendar_attendee_refresh_command.dart';
+export 'calendar_attendee_refresh_record.dart';
+export 'calendar_attendee_refresh_view.dart';
 export 'calendar_availability_category_group.dart';
 export 'calendar_availability_class.dart';
 export 'calendar_availability_content.dart';
@@ -727,6 +735,10 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.getType<_ig76ry9v.CalendarAlarmSourceTimings>,
       _is.getType<_im2lo7e9.CalendarAlarmUpdateRequest>,
       _is.getType<_ie7u1nxa.CalendarAlarmView>,
+      _is.getType<_iqhys38p.CalendarAttendeeRefreshAttemptRecord>,
+      _is.getType<_id6m67f7.CalendarAttendeeRefreshCommand>,
+      _is.getType<_ivcrs9wl.CalendarAttendeeRefreshRecord>,
+      _is.getType<_iyptnwhe.CalendarAttendeeRefreshView>,
       _is.getType<_iywbqexh.CalendarAvailabilityCategoryGroup>,
       _is.getType<_iucw7bzg.CalendarAvailabilityClass>,
       _is.getType<_ifxxil5c.CalendarAvailabilityContent>,
@@ -1053,6 +1065,10 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.getType<_ig76ry9v.CalendarAlarmSourceTimings?>,
       _is.getType<_im2lo7e9.CalendarAlarmUpdateRequest?>,
       _is.getType<_ie7u1nxa.CalendarAlarmView?>,
+      _is.getType<_iqhys38p.CalendarAttendeeRefreshAttemptRecord?>,
+      _is.getType<_id6m67f7.CalendarAttendeeRefreshCommand?>,
+      _is.getType<_ivcrs9wl.CalendarAttendeeRefreshRecord?>,
+      _is.getType<_iyptnwhe.CalendarAttendeeRefreshView?>,
       _is.getType<_iywbqexh.CalendarAvailabilityCategoryGroup?>,
       _is.getType<_iucw7bzg.CalendarAvailabilityClass?>,
       _is.getType<_ifxxil5c.CalendarAvailabilityContent?>,
@@ -1494,6 +1510,10 @@ class Protocol extends _is.DatabaseSerializationManager
       'CalendarAlarmSourceTimings',
       'CalendarAlarmUpdateRequest',
       'CalendarAlarmView',
+      'CalendarAttendeeRefreshAttemptRecord',
+      'CalendarAttendeeRefreshCommand',
+      'CalendarAttendeeRefreshRecord',
+      'CalendarAttendeeRefreshView',
       'CalendarAvailabilityCategoryGroup',
       'CalendarAvailabilityClass',
       'CalendarAvailabilityContent',
@@ -2722,6 +2742,350 @@ class Protocol extends _is.DatabaseSerializationManager
           ],
           type: 'btree',
           isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'serverpod_calendar_attendee_refresh',
+      dartName: 'CalendarAttendeeRefreshRecord',
+      schema: 'public',
+      module: 'serverpod_calendar',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'scopeKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'recipientKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'entryId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'commandId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'actorId',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'sourceId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'sourceRevision',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'sourceDigest',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'sourceSequence',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'sourceStamp',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'attendeeAddress',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'organizerAddress',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'authorityRef',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'routeRef',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'payload',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'payloadDigest',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'stamp',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'state',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:CalendarInvitationResponseDeliveryState',
+          columnDefault: '\'queued\'',
+        ),
+        _isp.ColumnDefinition(
+          name: 'attemptCount',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'expiresAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'nextAttemptAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseToken',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseUntil',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'terminalAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'resultCode',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_attendee_refresh_fk_0',
+          columns: ['entryId'],
+          referenceTable: 'serverpod_calendar_invitation',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_attendee_refresh_fk_1',
+          columns: ['sourceId'],
+          referenceTable: 'serverpod_calendar_invitation_source',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_attendee_refresh_command_unique',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'scopeKey',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'recipientKey',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'commandId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_attendee_refresh_owner_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'scopeKey',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'recipientKey',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'entryId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_attendee_refresh_due_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'terminalAt',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'nextAttemptAt',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'leaseUntil',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'serverpod_calendar_attendee_refresh_attempt',
+      dartName: 'CalendarAttendeeRefreshAttemptRecord',
+      schema: 'public',
+      module: 'serverpod_calendar',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'deliveryId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'attemptNumber',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseToken',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'startedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'finishedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'outcome',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_attendee_refresh_attempt_fk_0',
+          columns: ['deliveryId'],
+          referenceTable: 'serverpod_calendar_attendee_refresh',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_attendee_refresh_attempt_unique',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'deliveryId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'attemptNumber',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
           isPrimary: false,
         ),
       ],
@@ -9175,6 +9539,18 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _ie7u1nxa.CalendarAlarmView) {
       return _ie7u1nxa.CalendarAlarmView.fromJson(data) as T;
     }
+    if (t == _iqhys38p.CalendarAttendeeRefreshAttemptRecord) {
+      return _iqhys38p.CalendarAttendeeRefreshAttemptRecord.fromJson(data) as T;
+    }
+    if (t == _id6m67f7.CalendarAttendeeRefreshCommand) {
+      return _id6m67f7.CalendarAttendeeRefreshCommand.fromJson(data) as T;
+    }
+    if (t == _ivcrs9wl.CalendarAttendeeRefreshRecord) {
+      return _ivcrs9wl.CalendarAttendeeRefreshRecord.fromJson(data) as T;
+    }
+    if (t == _iyptnwhe.CalendarAttendeeRefreshView) {
+      return _iyptnwhe.CalendarAttendeeRefreshView.fromJson(data) as T;
+    }
     if (t == _iywbqexh.CalendarAvailabilityCategoryGroup) {
       return _iywbqexh.CalendarAvailabilityCategoryGroup.fromJson(data) as T;
     }
@@ -10267,6 +10643,30 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (t == _is.getType<_ie7u1nxa.CalendarAlarmView?>()) {
       return (data != null ? _ie7u1nxa.CalendarAlarmView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iqhys38p.CalendarAttendeeRefreshAttemptRecord?>()) {
+      return (data != null
+              ? _iqhys38p.CalendarAttendeeRefreshAttemptRecord.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_id6m67f7.CalendarAttendeeRefreshCommand?>()) {
+      return (data != null
+              ? _id6m67f7.CalendarAttendeeRefreshCommand.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ivcrs9wl.CalendarAttendeeRefreshRecord?>()) {
+      return (data != null
+              ? _ivcrs9wl.CalendarAttendeeRefreshRecord.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iyptnwhe.CalendarAttendeeRefreshView?>()) {
+      return (data != null
+              ? _iyptnwhe.CalendarAttendeeRefreshView.fromJson(data)
+              : null)
           as T;
     }
     if (t == _is.getType<_iywbqexh.CalendarAvailabilityCategoryGroup?>()) {
@@ -13057,6 +13457,13 @@ class Protocol extends _is.DatabaseSerializationManager
       _ig76ry9v.CalendarAlarmSourceTimings => 'CalendarAlarmSourceTimings',
       _im2lo7e9.CalendarAlarmUpdateRequest => 'CalendarAlarmUpdateRequest',
       _ie7u1nxa.CalendarAlarmView => 'CalendarAlarmView',
+      _iqhys38p.CalendarAttendeeRefreshAttemptRecord =>
+        'CalendarAttendeeRefreshAttemptRecord',
+      _id6m67f7.CalendarAttendeeRefreshCommand =>
+        'CalendarAttendeeRefreshCommand',
+      _ivcrs9wl.CalendarAttendeeRefreshRecord =>
+        'CalendarAttendeeRefreshRecord',
+      _iyptnwhe.CalendarAttendeeRefreshView => 'CalendarAttendeeRefreshView',
       _iywbqexh.CalendarAvailabilityCategoryGroup =>
         'CalendarAvailabilityCategoryGroup',
       _iucw7bzg.CalendarAvailabilityClass => 'CalendarAvailabilityClass',
@@ -13569,6 +13976,14 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'CalendarAlarmUpdateRequest';
       case _ie7u1nxa.CalendarAlarmView():
         return 'CalendarAlarmView';
+      case _iqhys38p.CalendarAttendeeRefreshAttemptRecord():
+        return 'CalendarAttendeeRefreshAttemptRecord';
+      case _id6m67f7.CalendarAttendeeRefreshCommand():
+        return 'CalendarAttendeeRefreshCommand';
+      case _ivcrs9wl.CalendarAttendeeRefreshRecord():
+        return 'CalendarAttendeeRefreshRecord';
+      case _iyptnwhe.CalendarAttendeeRefreshView():
+        return 'CalendarAttendeeRefreshView';
       case _iywbqexh.CalendarAvailabilityCategoryGroup():
         return 'CalendarAvailabilityCategoryGroup';
       case _iucw7bzg.CalendarAvailabilityClass():
@@ -14252,6 +14667,22 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (dataClassName == 'CalendarAlarmView') {
       return deserialize<_ie7u1nxa.CalendarAlarmView>(data['data']);
+    }
+    if (dataClassName == 'CalendarAttendeeRefreshAttemptRecord') {
+      return deserialize<_iqhys38p.CalendarAttendeeRefreshAttemptRecord>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarAttendeeRefreshCommand') {
+      return deserialize<_id6m67f7.CalendarAttendeeRefreshCommand>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarAttendeeRefreshRecord') {
+      return deserialize<_ivcrs9wl.CalendarAttendeeRefreshRecord>(data['data']);
+    }
+    if (dataClassName == 'CalendarAttendeeRefreshView') {
+      return deserialize<_iyptnwhe.CalendarAttendeeRefreshView>(data['data']);
     }
     if (dataClassName == 'CalendarAvailabilityCategoryGroup') {
       return deserialize<_iywbqexh.CalendarAvailabilityCategoryGroup>(
@@ -15525,6 +15956,10 @@ class Protocol extends _is.DatabaseSerializationManager
         return _iid4j1lu.CalendarAlarmPlanRecord.t;
       case _iralscit.CalendarAlarmRecord:
         return _iralscit.CalendarAlarmRecord.t;
+      case _iqhys38p.CalendarAttendeeRefreshAttemptRecord:
+        return _iqhys38p.CalendarAttendeeRefreshAttemptRecord.t;
+      case _ivcrs9wl.CalendarAttendeeRefreshRecord:
+        return _ivcrs9wl.CalendarAttendeeRefreshRecord.t;
       case _ie9je6js.CalendarAvailabilityDataRecord:
         return _ie9je6js.CalendarAvailabilityDataRecord.t;
       case _inwzhb5r.CalendarAvailabilityRecord:
