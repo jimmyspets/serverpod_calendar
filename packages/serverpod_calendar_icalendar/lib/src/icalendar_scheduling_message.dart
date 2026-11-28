@@ -1,6 +1,26 @@
 part of 'icalendar_event_calendar.dart';
 
-enum IcalendarSchedulingMethod { publish, request, reply, cancel }
+enum IcalendarSchedulingMethod {
+  publish,
+  request,
+  reply,
+  cancel,
+  add,
+  refresh,
+  counter,
+  declineCounter,
+}
+
+const _schedulingSingleComponentMethods = {
+  IcalendarSchedulingMethod.add,
+  IcalendarSchedulingMethod.refresh,
+  IcalendarSchedulingMethod.counter,
+};
+const _schedulingResultMethods = {
+  IcalendarSchedulingMethod.reply,
+  IcalendarSchedulingMethod.counter,
+  IcalendarSchedulingMethod.declineCounter,
+};
 
 /// One UID's untrusted scheduling envelope and independently versioned components.
 /// Parsing establishes neither stored membership nor permission to reconcile.
@@ -142,6 +162,10 @@ IcalendarSchedulingMessage validateIcalendarSchedulingMessage(
       'REQUEST' => IcalendarSchedulingMethod.request,
       'REPLY' => IcalendarSchedulingMethod.reply,
       'CANCEL' => IcalendarSchedulingMethod.cancel,
+      'ADD' => IcalendarSchedulingMethod.add,
+      'REFRESH' => IcalendarSchedulingMethod.refresh,
+      'COUNTER' => IcalendarSchedulingMethod.counter,
+      'DECLINECOUNTER' => IcalendarSchedulingMethod.declineCounter,
       _ => componentFail(IcalendarComponentError.unsupportedProperty),
     };
     final budget = ComponentBudget(limits);
@@ -175,6 +199,10 @@ IcalendarSchedulingMessage validateIcalendarSchedulingMessage(
       } else if (c.canonicalName == 'VEVENT') {
         if (rawEvents.length >= limits.maxEvents) {
           componentFail(IcalendarComponentError.limitExceeded);
+        }
+        if (_schedulingSingleComponentMethods.contains(method) &&
+            rawEvents.isNotEmpty) {
+          componentFail(IcalendarComponentError.unsupportedComponent);
         }
         rawEvents.add(c);
       } else {
@@ -264,7 +292,7 @@ IcalendarSchedulingEvent _schedulingEvent(
       'PRIORITY',
       'GEO',
       'RESOURCES',
-      if (method == IcalendarSchedulingMethod.reply) 'REQUEST-STATUS',
+      if (_schedulingResultMethods.contains(method)) 'REQUEST-STATUS',
       ..._eventMetadataProperties,
     },
     repeated: {
@@ -274,16 +302,34 @@ IcalendarSchedulingEvent _schedulingEvent(
       'RELATED-TO',
       'ATTACH',
       'RESOURCES',
-      if (method == IcalendarSchedulingMethod.reply) 'REQUEST-STATUS',
+      if (_schedulingResultMethods.contains(method)) 'REQUEST-STATUS',
       ..._eventRepeatedMetadata,
     },
   );
+  if (method == IcalendarSchedulingMethod.refresh &&
+      p.keys.any(
+        (name) => !const {
+          'UID',
+          'DTSTAMP',
+          'ORGANIZER',
+          'ATTENDEE',
+          'COMMENT',
+          'RECURRENCE-ID',
+        }.contains(name),
+      )) {
+    componentFail(IcalendarComponentError.unsupportedProperty);
+  }
+  if (method == IcalendarSchedulingMethod.add &&
+      const {'RRULE', 'RDATE', 'EXDATE', 'RECURRENCE-ID'}.any(p.containsKey)) {
+    componentFail(IcalendarComponentError.unsupportedProperty);
+  }
   final uid = componentText(requiredProperty(p, 'UID'));
   if (uid.isEmpty) {
     componentFail(IcalendarComponentError.invalidValue);
   }
   final stamp = componentUtc(requiredProperty(p, 'DTSTAMP'));
   requiredProperty(p, 'ORGANIZER');
+  final sequence = _componentInteger(p['SEQUENCE']?.single);
   final participants = _eventParticipants(event, budget, isOverride: false);
   final count = participants.attendees.length;
   switch (method) {
@@ -295,6 +341,7 @@ IcalendarSchedulingEvent _schedulingEvent(
         componentFail(IcalendarComponentError.duplicate);
       }
     case IcalendarSchedulingMethod.request:
+    case IcalendarSchedulingMethod.declineCounter:
       if (count == 0) {
         componentFail(IcalendarComponentError.missing);
       }
@@ -310,9 +357,29 @@ IcalendarSchedulingEvent _schedulingEvent(
       }
     case IcalendarSchedulingMethod.cancel:
       requiredProperty(p, 'SEQUENCE');
+    case IcalendarSchedulingMethod.add:
+      if (sequence == null) {
+        componentFail(IcalendarComponentError.missing);
+      }
+      if (sequence <= 0) {
+        componentFail(IcalendarComponentError.invalidValue);
+      }
+    case IcalendarSchedulingMethod.refresh:
+      if (count != 1) {
+        componentFail(IcalendarComponentError.invalidValue);
+      }
+    case IcalendarSchedulingMethod.counter:
+      break;
   }
-  if (method == IcalendarSchedulingMethod.publish ||
-      method == IcalendarSchedulingMethod.request) {
+  if (method == IcalendarSchedulingMethod.declineCounter) {
+    requiredProperty(p, 'SEQUENCE');
+  }
+  if (const {
+    IcalendarSchedulingMethod.publish,
+    IcalendarSchedulingMethod.request,
+    IcalendarSchedulingMethod.add,
+    IcalendarSchedulingMethod.counter,
+  }.contains(method)) {
     requiredProperty(p, 'DTSTART');
     requiredProperty(p, 'SUMMARY');
   }
@@ -330,7 +397,11 @@ IcalendarSchedulingEvent _schedulingEvent(
     'CANCELLED' => IcalendarEventStatus.cancelled,
     _ => componentFail(IcalendarComponentError.invalidValue),
   };
-  if (method == IcalendarSchedulingMethod.request &&
+  if (const {
+            IcalendarSchedulingMethod.request,
+            IcalendarSchedulingMethod.add,
+            IcalendarSchedulingMethod.declineCounter,
+          }.contains(method) &&
           status == IcalendarEventStatus.cancelled ||
       method == IcalendarSchedulingMethod.cancel &&
           status != null &&
@@ -472,7 +543,7 @@ IcalendarSchedulingEvent _schedulingEvent(
     resources: _schedulingResources(p['RESOURCES'] ?? [], budget),
     priority: _componentInteger(p['PRIORITY']?.single, maximum: 9),
     geographicPosition: _schedulingGeographicPosition(p['GEO']?.single, budget),
-    sequence: _componentInteger(p['SEQUENCE']?.single),
+    sequence: sequence,
     created: p['CREATED'] == null ? null : componentUtc(p['CREATED']!.single),
     lastModified: p['LAST-MODIFIED'] == null
         ? null

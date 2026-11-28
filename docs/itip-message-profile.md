@@ -1,8 +1,8 @@
 # Pure scheduling messages
 
-Status: scoped pure implementation under [ADRs 0117](adr/0117-first-itip-message-profile.md), [0118](adr/0118-scheduling-status-and-payload-metadata.md) and the maintainer-approved detached boundary in [0119](adr/0119-recurring-itip-message-boundary.md). The first two increments passed selected broader checks; selected recurring-message batch checks passed. This is a pure message adapter, with no scheduling reconciliation or email runtime.
+Status: scoped pure implementation under [ADRs 0117](adr/0117-first-itip-message-profile.md), [0118](adr/0118-scheduling-status-and-payload-metadata.md), the maintainer-approved detached boundary in [0119](adr/0119-recurring-itip-message-boundary.md), and the remaining event-method profile in [0120](adr/0120-remaining-pure-event-scheduling-methods.md). All four pure scheduling increments passed their selected broader batch checks. This is a pure message adapter, with no scheduling reconciliation or email runtime.
 
-The iCalendar package exposes `parseIcalendarSchedulingMessage`, `validateIcalendarSchedulingMessage` and `serializeIcalendarSchedulingMessage`. They handle one source UID's VEVENT components inside one VCALENDAR, for PUBLISH, REQUEST, REPLY or CANCEL. The ordinary standalone event parser still rejects METHOD. Source import/export, event feed publication and scheduling are distinct interfaces.
+The iCalendar package exposes `parseIcalendarSchedulingMessage`, `validateIcalendarSchedulingMessage` and `serializeIcalendarSchedulingMessage`. They handle one source UID's VEVENT components inside one VCALENDAR, for PUBLISH, REQUEST, REPLY, CANCEL, ADD, REFRESH, COUNTER or DECLINECOUNTER. The ordinary standalone event parser still rejects METHOD. Source import/export, event feed publication and scheduling are distinct interfaces.
 
 The method restrictions follow [RFC 5546 sections 3.1–3.2](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2). This first application profile is narrower than those RFC tables:
 
@@ -12,6 +12,10 @@ The method restrictions follow [RFC 5546 sections 3.1–3.2](https://www.rfc-edi
 | REQUEST | DTSTART and SUMMARY required; at least one ATTENDEE; STATUS cannot be CANCELLED |
 | REPLY | Exactly one ATTENDEE per component; timing and SUMMARY may be absent; at most one VTIMEZONE per envelope |
 | CANCEL | SEQUENCE required; supplied STATUS must be CANCELLED; absent STATUS denotes attendee removal and requires an ATTENDEE |
+| ADD | Exactly one component; DTSTART/SUMMARY and positive explicit SEQUENCE; RECURRENCE-ID/RRULE/RDATE/EXDATE forbidden |
+| REFRESH | Exactly one component/ATTENDEE; only UID/DTSTAMP/ORGANIZER/ATTENDEE, optional COMMENT/RECURRENCE-ID |
+| COUNTER | Exactly one component; DTSTART/SUMMARY required; optional source SEQUENCE needs later original-version verification; ATTENDEE values may be proposals |
+| DECLINECOUNTER | Explicit SEQUENCE and at least one ATTENDEE per component; supplied STATUS limited to tentative/confirmed |
 
 Every envelope requires VERSION 2.0, nonempty PRODID and a supported METHOD. Every component requires the same nonempty UID, its own UTC DTSTAMP and ORGANIZER; the method restrictions apply to each component. Empty SUMMARY is distinct from omission. SEQUENCE remains nullable where optional; a supplied zero is preserved. The adapter does not establish that a cancellation increments a stored version or that optional reply fields match an earlier request. Those checks require trusted prior scheduling state.
 
@@ -29,7 +33,7 @@ The strict UTF-8/CRLF boundary, whole-second precision, [1970-01-01, 2100-01-01)
 
 In addition to the method fields, this increment supports optional DTEND/DURATION, DESCRIPTION, LOCATION, STATUS, TRANSP, CREATED and LAST-MODIFIED, plus the existing bounded event CLASS/URL, grouped CATEGORIES/COMMENT/CONTACT, ORGANIZER/ATTENDEE parameters, RELATED-TO and URI ATTACH codecs. Language/ALTREP annotations and source groups remain intact. Links and attachments remain inert; their presence causes no fetching or host association.
 
-VTODO/VFREEBUSY/other component families, all VALARM components and arbitrary extension properties/parameters reject. Other selected methods remain first-release work rather than being treated as successful input. The one-attendee REPLY slice rejects PARTSTAT=DELEGATED: the RFC delegation workflow needs a separately validated multi-attendee profile. Ordinary source participant preservation is unchanged.
+VTODO/VFREEBUSY/other component families, all VALARM components and arbitrary extension properties/parameters reject. Unknown methods never silently become PUBLISH or import. The one-attendee REPLY slice rejects PARTSTAT=DELEGATED: the RFC delegation workflow needs a separately validated multi-attendee profile. Ordinary source participant preservation is unchanged.
 
 ## Recurring masters and detached instances
 
@@ -45,9 +49,9 @@ Scheduling zone observances additionally enforce the common iTIP restriction cla
 
 ## Reply results and payload metadata
 
-ADR 0118 extends the first slice with REQUEST-STATUS in REPLY only, plus independently optional PRIORITY/GEO and grouped RESOURCES on all four methods. These source codecs do not widen ordinary event/task import or native storage.
+ADR 0118 first added REQUEST-STATUS in REPLY and independently optional PRIORITY/GEO/grouped RESOURCES. ADR 0120 also permits source results in COUNTER/DECLINECOUNTER; REFRESH forbids those payload properties. These codecs do not widen ordinary event/task import or native storage.
 
-`requestStatuses` retains up to 32 reported results in source order. Each keeps its original numeric code spelling, immutable two/three integer levels, decoded description, optional extra data and LANGUAGE. Missing extra data differs from an explicitly empty third field. Escaped commas, semicolons, backslashes and text newlines remain text. Code spelling is capped at 32 characters, numeric levels at 2,147,483,647 and each decoded text component at 4,096 code points. Unknown numeric codes remain data; no success/retry decision or automatic response follows.
+Each component's `requestStatuses` retains up to 32 reported results in source order where the method permits them. Each keeps its original numeric code spelling, immutable two/three integer levels, decoded description, optional extra data and LANGUAGE. Missing extra data differs from an explicitly empty third field. Escaped commas, semicolons, backslashes and text newlines remain text. Code spelling is capped at 32 characters, numeric levels at 2,147,483,647 and each decoded text component at 4,096 code points. Unknown numeric codes remain data; no success/retry decision or automatic response follows.
 
 `priority` preserves omission independently of a supplied 0–9 value. `geographicPosition` retains exact latitude/longitude decimal strings, each at most 64 characters, with exact latitude ±90 and longitude ±180 bounds. Convenience double getters are approximate; serialization preserves the source decimals without rounding. Geographic fractions are independent of the whole-second timing rule. No mapping/geocoding is started.
 
@@ -59,4 +63,10 @@ ORGANIZER, ATTENDEE, SENT-BY and delegation parameters are unverified claims. Th
 
 Focused fixtures cover method-specific required/forbidden fields and cardinality, omitted versus empty values, partial timing, DATE/UTC/named-zone semantics, source claims/metadata/references, strict rejection and budgets. [The validation record](scaffold-validation.md) records actual broader results. No new tables, migrations, endpoints or package dependencies are needed for this increment.
 
-The next work remains the other selected methods and missing property/delegation profiles, followed by separately reviewed reconciliation/identity/authority/retention/inbox/outbox contracts. MIME and trusted inbound/outbound host adapters follow under the restricted email profile. No real mail or external scheduling-client interoperability follows from pure parser tests.
+## Additional method boundaries
+
+ADD's timing describes an untrusted proposed addition, not a replacement master. REFRESH's whitelist applies even to an explicit SEQUENCE:0 or an empty SUMMARY: neither is permitted. It triggers no lookup or automatic reply.
+
+The COUNTER table's SEQUENCE presence column lists one while its comment permits the zero case. This reader interprets that conditional comment by preserving omission as null. It neither manufactures zero nor establishes that the source echoes a stored request; later reconciliation must reject an incompatible omission. Explicit zero remains distinct. Counter participant values do not identify a verified sender; a cancelled STATUS is only a proposal, not a cancellation action. DECLINECOUNTER likewise changes no event state.
+
+The next work remains VFREEBUSY scheduling and missing property/delegation profiles, followed by separately reviewed reconciliation/identity/authority/retention/inbox/outbox contracts. MIME and trusted inbound/outbound host adapters follow under the restricted email profile. No real mail or external scheduling-client interoperability follows from pure parser tests.
