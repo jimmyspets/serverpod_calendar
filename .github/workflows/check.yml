@@ -1,0 +1,101 @@
+name: Repository checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      runtime: ${{ steps.changes.outputs.runtime }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Documentation paths and ADR numbering
+        run: python tool/check_docs.py
+      - name: Select runtime checks
+        id: changes
+        env:
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          python - <<'PY'
+          import os, re, subprocess
+          base = os.environ.get('CI_BASE_SHA', '')
+          runtime = True
+          if base and base != '0' * 40:
+              if not re.fullmatch(r'[a-f0-9]{40}', base):
+                  raise SystemExit('Invalid base commit')
+              names = subprocess.check_output(['git', 'diff', '--name-only', '-z', base, 'HEAD']).decode().split('\0')
+              runtime = any(name and not name.endswith('.md') for name in names)
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
+              output.write(f'runtime={str(runtime).lower()}\n')
+          PY
+
+  runtime:
+    needs: inspect
+    if: needs.inspect.outputs.runtime == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      CI: 'true'
+      TZ: UTC
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install the pinned test toolchain
+        run: bash tool/setup-ci-linux.sh
+      - name: Generate private synthetic test configuration
+        shell: pwsh
+        run: |
+          flutter pub get --enforce-lockfile
+          if ($LASTEXITCODE -ne 0) { throw 'Dependency resolution failed' }
+          dart run tool/setup.dart
+          if ($LASTEXITCODE -ne 0) { throw 'Test setup failed' }
+      - name: Mask generated local credentials
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          values = set()
+          def visit(value):
+              if isinstance(value, dict):
+                  for child in value.values(): visit(child)
+              elif isinstance(value, list):
+                  for child in value: visit(child)
+              elif isinstance(value, str) and len(value) >= 16:
+                  values.add(value)
+          visit(json.loads(Path('.local/credentials.json').read_text()))
+          for value in sorted(values, key=len, reverse=True):
+              print('::add-mask::' + value.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          PY
+      - name: Complete local-check entry point
+        shell: pwsh
+        run: ./tool/check.ps1 *>&1 | Tee-Object -FilePath .local/ci-check.log
+      - name: Test summary
+        if: always()
+        run: |
+          if [[ -f .local/ci-check.log ]]; then
+            grep -E '^PASS:|All tests passed|All requested local checks passed' .local/ci-check.log >> "$GITHUB_STEP_SUMMARY" || true
+          fi
+      - name: Remove disposable test services
+        if: always()
+        run: |
+          if [[ -f .local/compose.env ]]; then
+            docker compose --env-file .local/compose.env -f example/calendar_example/calendar_example_server/docker-compose.yaml down --volumes
+          fi

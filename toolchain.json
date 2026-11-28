@@ -25,5 +25,8 @@
       "tzcode2026e.tar.gz": "cc3d27ca2a0d8399504551b920970d80af83bfb9c216e8082a15491921935d54",
       "tzdata2026e.tar.gz": "b26882805f26aac59d5b222978e6580484b834ccdc98be89df2f05a6dc53a652"
     }
+  },
+  "ci": {
+    "flutterLinuxX64Sha256": "af7455f540df951184c7953fbe3cf884766e7541dacf8571f9f582db03dd6230"
   }
 }
