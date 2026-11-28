@@ -1,0 +1,9 @@
+class: CalendarIncomingPublicationIngressReceipt
+immutable: true
+fields:
+  id: UuidValue
+  entryId: UuidValue
+  sourceId: UuidValue
+  outcome: CalendarIncomingPublicationOutcome
+  entryRevision: int
+  receivedAt: DateTime

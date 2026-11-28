@@ -29,6 +29,7 @@ import '../auth/refresh_jwt_tokens_endpoint.dart' as _ih79u0oj;
 import '../endpoints/free_busy_demo_endpoint.dart' as _iak2lljh;
 import '../endpoints/invitation_demo_endpoint.dart' as _i9j0zg07;
 import '../endpoints/notification_stream_endpoint.dart' as _ixiz6tz4;
+import '../endpoints/publication_demo_endpoint.dart' as _i7uwgavh;
 import '../endpoints/scheduling_demo_endpoint.dart' as _ik68ors2;
 import '../endpoints/smoke_endpoint.dart' as _ivabzmjp;
 export 'future_calls.dart' show ServerpodFutureCallsGetter;
@@ -65,6 +66,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'notificationStream',
+          null,
+        ),
+      'publicationDemo': _i7uwgavh.PublicationDemoEndpoint()
+        ..initialize(
+          server,
+          'publicationDemo',
           null,
         ),
       'schedulingDemo': _ik68ors2.SchedulingDemoEndpoint()
@@ -660,6 +667,63 @@ class Endpoints extends _is.EndpointDispatch {
                   (endpoints['notificationStream']
                           as _ixiz6tz4.NotificationStreamEndpoint)
                       .watch(session),
+        ),
+      },
+    );
+    connectors['publicationDemo'] = _is.EndpointConnector(
+      name: 'publicationDemo',
+      endpoint: endpoints['publicationDemo']!,
+      methodConnectors: {
+        'simulate': _is.MethodConnector(
+          name: 'simulate',
+          params: {
+            'publicationId': _is.ParameterDescription(
+              name: 'publicationId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'commandId': _is.ParameterDescription(
+              name: 'commandId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'sequence': _is.ParameterDescription(
+              name: 'sequence',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'cancel': _is.ParameterDescription(
+              name: 'cancel',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+            'recurring': _is.ParameterDescription(
+              name: 'recurring',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+            'summary': _is.ParameterDescription(
+              name: 'summary',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['publicationDemo']
+                          as _i7uwgavh.PublicationDemoEndpoint)
+                      .simulate(
+                        session,
+                        params['publicationId'],
+                        params['commandId'],
+                        params['sequence'],
+                        params['cancel'],
+                        params['recurring'],
+                        params['summary'],
+                      ),
         ),
       },
     );

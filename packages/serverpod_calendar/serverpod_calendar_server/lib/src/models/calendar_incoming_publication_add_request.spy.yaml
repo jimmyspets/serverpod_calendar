@@ -1,0 +1,9 @@
+class: CalendarIncomingPublicationAddRequest
+immutable: true
+fields:
+  entryId: UuidValue
+  sourceId: UuidValue
+  expectedRevision: int
+  calendarId: UuidValue
+  expectedCalendarRevision: int
+  commandId: UuidValue

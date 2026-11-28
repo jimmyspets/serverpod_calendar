@@ -143,8 +143,21 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
 
   EventStorageProposal _invRequestProposal(
     IcalendarSchedulingMessage message,
-  ) => _eventReplacementValue(() {
+  ) {
     if (message.method != IcalendarSchedulingMethod.request) {
+      throw _failure(CalendarFailureCode.validation);
+    }
+    return _schedulingMasterProposal(message);
+  }
+
+  EventStorageProposal _schedulingMasterProposal(
+    IcalendarSchedulingMessage message, {
+    RecurrenceWorkBudget? sharedWorkBudget,
+  }) => _eventReplacementValue(() {
+    if (!{
+      IcalendarSchedulingMethod.request,
+      IcalendarSchedulingMethod.publish,
+    }.contains(message.method)) {
       throw _failure(CalendarFailureCode.validation);
     }
     final envelope = message.source.components.single;
@@ -156,8 +169,9 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
         ),
       ),
     ]);
-    final parsed = parseIcalendarEventCalendar(
-      serializeIcalendarSyntax(document),
+    final parsed = validateIcalendarEventCalendar(
+      document,
+      sharedWorkBudget: sharedWorkBudget,
     );
     if (parsed.series.length != 1) {
       throw _failure(CalendarFailureCode.validation);

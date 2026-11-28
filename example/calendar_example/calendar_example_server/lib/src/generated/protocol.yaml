@@ -22,6 +22,8 @@ invitationDemo:
   - simulateCancellation:
 notificationStream:
   - watch:
+publicationDemo:
+  - simulate:
 schedulingDemo:
   - simulateReply:
 smoke:

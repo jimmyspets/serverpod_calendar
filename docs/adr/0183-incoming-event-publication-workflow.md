@@ -1,6 +1,6 @@
 # ADR 0183: Incoming event publication review and calendar workflow
 
-Status: **Proposed, 2026-11-13.** The maintainer confirmed private review, explicit Add/Apply and clean-baseline conflict protection for incoming PUBLISH. The grouped model/API/retention mechanics below still require explicit agreement before implementation. No table source, endpoint or migration is added by this document.
+Status: **Accepted by explicit maintainer agreement, 2026-11-13.** The maintainer approved the complete grouped workflow, four-table/cursor storage and API/retention mechanics in PR #197 after separately confirming review first and explicit Add/Apply. Implementation and actual validation remain separate.
 
 ## Context and inspected evidence
 
@@ -78,3 +78,12 @@ Exercise at least two real host processes sharing test storage, competing same-c
 ## Alternatives and consequences
 
 Automatic receipt-to-calendar mutation contradicts the confirmed review-first policy. Reusing invitation rows with an implicit no-attendee fallback would require purpose/index/retention/response rewrites across existing histories. Four separate private records cost schema but keep role/correlation and API isolation explicit while sharing established helpers. A detached source-document archive or generic mailbox is outside this bounded feature. This proposal completes only one-master publication consumption and whole lifecycle; occurrence/bundle publications, remaining methods, retirement/recipient changes, real transport and external-client release evidence stay on the roadmap.
+
+
+## Accepted implementation refinement
+
+Review of the producer-to-consumer lifecycle exposed a distinct pending-update case: a CANCEL can describe the publisher's newer PUBLISH while the recipient's linked event still contains the older accepted publication. Matching that cancellation against only the native accepted basis would reject it or accidentally require adopting an update the recipient has not approved.
+
+Propose preserving both meanings. A CANCEL source gets one nullable `basisSourceId` referencing a retained complete PUBLISH source for its exact source-timing/content match. The link's existing `basisSourceId` continues to mean the native accepted complete basis. Applying CANCEL changes only status/version on the accepted native values, leaving pending newer values unadopted. Source views/host context distinguish the cancellation source basis from the accepted native basis. Each referenced basis must be a complete same-correlation PUBLISH, never another CANCEL; no recursive chain is permitted.
+
+Protect this source-to-basis reference transitively while the current review or any retained accepted/creation/link proof needs the cancellation. A terminal cancellation/source basis may prune together after ordinary retention. Count every distinct referenced body and baseline against the existing entry, link, recipient and scope byte/slot caps. Add only that one nullable source-reference field (and immutable source/host-view projection), no table or capacity expansion. Existing legacy invitation/outgoing tables stay unchanged. Prove receive-review-cancel of an unapplied newer update, native text/timing preservation, later explicit newer reopening, pruning and multi-host rollback/retries. The maintainer explicitly approved this separate source-basis field, immutable projections and transitive retention under unchanged caps on 2026-11-13.

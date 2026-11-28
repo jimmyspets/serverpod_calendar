@@ -64,12 +64,24 @@ Future<void> runFreeBusyExchangeJourney(
   }
 
   Future<void> tap(Finder finder, {bool allowError = false}) async {
+    // Source inspection/dismissal can rebuild the outgoing command controls.
+    // Wait before locating the button as well as after invoking its action.
+    await idle(allowError: true);
     await top();
     await tester.scrollUntilVisible(
       finder,
       250,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.ensureVisible(finder);
+    final control = tester.widget<Widget>(finder);
+    if (control is ButtonStyleButton) {
+      expect(
+        control.onPressed,
+        isNotNull,
+        reason: 'Command control is disabled',
+      );
+    }
     await tester.tap(finder);
     await tester.pump();
     await idle(allowError: allowError);

@@ -1,3 +1,4 @@
+import 'src/incoming_publication_runtime.dart';
 import 'src/free_busy_runtime.dart';
 
 import 'dart:io';
@@ -76,6 +77,9 @@ Future<void> run(List<String> args) async {
     freeBusyExchanges: CalendarFreeBusyExchangeRuntime(
       host: DemoFreeBusyHost(),
       transport: DemoFreeBusyTransport(),
+    ),
+    incomingPublications: CalendarIncomingPublicationRuntime(
+      host: DemoIncomingPublicationHost(),
     ),
     invitations: CalendarInvitationRuntime(
       host: DemoInvitationHost(),

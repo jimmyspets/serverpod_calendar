@@ -23,6 +23,75 @@ def sql(database, statement):
         raise RuntimeError(result.stderr)
 
 
+def verify_incoming_publication_upgrade(database):
+    sql(database, """
+CREATE TABLE incoming_upgrade_guard (table_name text PRIMARY KEY, rows jsonb NOT NULL);
+DO $snapshot_incoming$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+  AND tablename NOT IN ('serverpod_migrations','incoming_upgrade_guard') LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s',item.tablename) INTO contents;
+  INSERT INTO incoming_upgrade_guard VALUES(item.tablename,contents);
+ END LOOP;
+END;
+$snapshot_incoming$;
+""")
+    sql(database, (SERVER / "migrations/20261113075420884-incoming-publications/migration.sql").read_text(encoding="utf-8"))
+    sql(database, """
+DO $verify_incoming$
+DECLARE item record; contents jsonb; expression text;
+BEGIN
+ FOR item IN SELECT * FROM incoming_upgrade_guard LOOP
+  expression:=CASE WHEN item.table_name='serverpod_calendar_cursor' THEN format('to_jsonb(t)-%L','incomingPublicationState') ELSE 'to_jsonb(t)' END;
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT %s AS v FROM %I t) s',expression,item.table_name) INTO contents;
+  IF contents IS DISTINCT FROM item.rows THEN RAISE EXCEPTION 'Incoming migration changed %',item.table_name; END IF;
+ END LOOP;
+ IF EXISTS(SELECT 1 FROM serverpod_calendar_cursor WHERE "incomingPublicationState" IS NOT NULL)
+ OR EXISTS(SELECT 1 FROM serverpod_calendar_incoming_publication)
+ OR EXISTS(SELECT 1 FROM serverpod_calendar_incoming_publication_source)
+ OR EXISTS(SELECT 1 FROM serverpod_calendar_incoming_publication_receipt)
+ OR EXISTS(SELECT 1 FROM serverpod_calendar_incoming_publication_link)
+ THEN RAISE EXCEPTION 'Incoming migration invented private publication state'; END IF;
+END;
+$verify_incoming$;
+DROP TABLE incoming_upgrade_guard;
+INSERT INTO serverpod_calendar_incoming_publication
+(id,"scopeKey","recipientKey","correlationDigest",uid,organizer,recurring,revision,"currentSourceId",kind,sequence,stamp,digest,"createdAt","updatedAt")
+VALUES('18300000-0000-4000-8000-000000000001','synthetic-upgrade','alice',repeat('1',64),'source@example.invalid','mailto:publisher@example.invalid',false,2,'18300000-0000-4000-8000-000000000003','cancellation',2,'2026-11-13',repeat('2',64),'2026-11-13','2026-11-13');
+INSERT INTO serverpod_calendar_incoming_publication_source
+(id,"entryId","normalizedSource","byteCount",digest,kind,sequence,stamp,outcome,"receivedAt") VALUES
+('18300000-0000-4000-8000-000000000002','18300000-0000-4000-8000-000000000001','Synthetic preserved PUBLISH',26,repeat('3',64),'publication',1,'2026-11-13','selected','2026-11-13'),
+('18300000-0000-4000-8000-000000000003','18300000-0000-4000-8000-000000000001','Synthetic preserved CANCEL',25,repeat('4',64),'cancellation',2,'2026-11-13','selected','2026-11-13');
+CREATE TABLE incoming_source_guard AS SELECT id,to_jsonb(t) AS payload FROM serverpod_calendar_incoming_publication_source t;
+""")
+    sql(database,(SERVER / "migrations/20261113081427669-publication-source-basis/migration.sql").read_text(encoding="utf-8"))
+    sql(database,"""
+DO $verify_basis$
+BEGIN
+ IF EXISTS(SELECT 1 FROM incoming_source_guard g LEFT JOIN serverpod_calendar_incoming_publication_source s USING(id)
+ WHERE s.id IS NULL OR to_jsonb(s)-'basisSourceId' IS DISTINCT FROM g.payload OR s."basisSourceId" IS NOT NULL)
+ THEN RAISE EXCEPTION 'Source basis migration changed or guessed source history'; END IF;
+END;
+$verify_basis$;
+DROP TABLE incoming_source_guard;
+UPDATE serverpod_calendar_incoming_publication_source SET "basisSourceId"='18300000-0000-4000-8000-000000000002' WHERE id='18300000-0000-4000-8000-000000000003';
+CREATE TABLE incoming_source_guard AS SELECT id,to_jsonb(t) AS payload FROM serverpod_calendar_incoming_publication_source t;
+""")
+    sql(database,(SERVER / "migrations/20261113083105671-publication-retention-indexes/migration.sql").read_text(encoding="utf-8"))
+    sql(database,"""
+DO $verify_indexes$
+BEGIN
+ IF EXISTS(SELECT 1 FROM incoming_source_guard g LEFT JOIN serverpod_calendar_incoming_publication_source s USING(id)
+ WHERE s.id IS NULL OR to_jsonb(s) IS DISTINCT FROM g.payload)
+ THEN RAISE EXCEPTION 'Retention indexes changed incoming source/basis history'; END IF;
+END;
+$verify_indexes$;
+DROP TABLE incoming_source_guard;
+""")
+    print("PASS: incoming publication upgrades preserve populated legacy rows, add no invented state and retain separate cancellation source basis through index upgrades.")
+
+
 def verify_information_publication_upgrade(database):
     sql(database, """
 CREATE TABLE information_upgrade_guard (table_name text PRIMARY KEY, rows jsonb NOT NULL);
@@ -748,6 +817,32 @@ def main():
     assert re.fullmatch(r"calendar_metadata_upgrade_[0-9]+", database)
     sql("postgres", f"CREATE DATABASE {database};")
     try:
+        if "--incoming-fresh-only" in __import__("sys").argv:
+            sql(database, (SERVER / "migrations/20261113083105671-publication-retention-indexes/definition.sql").read_text(encoding="utf-8"))
+            sql(database, """
+DO $verify_fresh_incoming$
+BEGIN
+ IF (SELECT count(*) FROM information_schema.tables WHERE table_schema='public'
+   AND table_name IN ('serverpod_calendar_incoming_publication',
+     'serverpod_calendar_incoming_publication_source',
+     'serverpod_calendar_incoming_publication_receipt',
+     'serverpod_calendar_incoming_publication_link')) <> 4
+ THEN RAISE EXCEPTION 'Fresh publication tables are missing'; END IF;
+ IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='serverpod_calendar_incoming_publication_source'
+   AND column_name='basisSourceId' AND data_type='uuid' AND is_nullable='YES')
+ OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='serverpod_calendar_cursor'
+   AND column_name='incomingPublicationState' AND data_type='json' AND is_nullable='YES')
+ THEN RAISE EXCEPTION 'Fresh publication basis/cursor shape differs'; END IF;
+ IF EXISTS(SELECT 1 FROM serverpod_calendar_incoming_publication)
+ OR EXISTS(SELECT 1 FROM serverpod_calendar_incoming_publication_source)
+ OR EXISTS(SELECT 1 FROM serverpod_calendar_incoming_publication_receipt)
+ OR EXISTS(SELECT 1 FROM serverpod_calendar_incoming_publication_link)
+ THEN RAISE EXCEPTION 'Fresh schema invented incoming publication state'; END IF;
+END;
+$verify_fresh_incoming$;
+""")
+            print("PASS: fresh latest generated definition creates the complete incoming-publication schema with nullable separate source basis/private cursor state and no invented data.")
+            return
         if "--freebusy-only" in __import__("sys").argv:
             sql(database, (SERVER / "migrations/20261106101331242-recurring-response-proof/definition.sql").read_text(encoding="utf-8"))
             verify_freebusy_exchange_upgrade(database)
@@ -1447,6 +1542,7 @@ DROP TABLE reply_upgrade_guard;
         verify_recurring_response_proof_upgrade(database)
         verify_freebusy_exchange_upgrade(database)
         verify_information_publication_upgrade(database)
+        verify_incoming_publication_upgrade(database)
         print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated replies/invitations/links/checkpoints through instance, adoption, cancellation and private attendee-response upgrades; no personal response history is invented and ordinary cursor rows survive the occurrence-state addition without invented query state; known old invitation modes remain false without invented recurrence history.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

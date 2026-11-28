@@ -169,6 +169,8 @@ class TestEndpoints {
 
   late final _NotificationStreamEndpoint notificationStream;
 
+  late final _PublicationDemoEndpoint publicationDemo;
+
   late final _SchedulingDemoEndpoint schedulingDemo;
 
   late final _SmokeEndpoint smoke;
@@ -198,6 +200,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     notificationStream = _NotificationStreamEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    publicationDemo = _PublicationDemoEndpoint(
       endpoints,
       serializationManager,
     );
@@ -909,6 +915,58 @@ class _NotificationStreamEndpoint {
       _localTestStreamManager.outputStreamController,
     );
     return _localTestStreamManager.outputStreamController.stream;
+  }
+}
+
+class _PublicationDemoEndpoint {
+  _PublicationDemoEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_ipn35bcd.CalendarIncomingPublicationIngressReceipt> simulate(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue publicationId,
+    _is.UuidValue commandId,
+    int sequence,
+    bool cancel,
+    bool recurring,
+    String summary,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'publicationDemo',
+            method: 'simulate',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'publicationDemo',
+          methodName: 'simulate',
+          parameters: _ist.testObjectToJson({
+            'publicationId': publicationId,
+            'commandId': commandId,
+            'sequence': sequence,
+            'cancel': cancel,
+            'recurring': recurring,
+            'summary': summary,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ipn35bcd.CalendarIncomingPublicationIngressReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
   }
 }
 

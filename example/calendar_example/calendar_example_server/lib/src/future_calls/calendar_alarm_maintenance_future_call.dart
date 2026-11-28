@@ -11,6 +11,7 @@ class CalendarAlarmMaintenanceFutureCall extends FutureCall {
     await CalendarModule.runAlarmMaintenance(session);
     await CalendarModule.runSchedulingMaintenance(session);
     await CalendarModule.runFreeBusyExchangeMaintenance(session);
+    await CalendarModule.runIncomingPublicationMaintenance(session);
     await CalendarModule.runInvitationResponseMaintenance(session);
     await notify.NotificationModule.runMaintenance(session);
     await feed.CalendarFeedModule.runMaintenance(session);

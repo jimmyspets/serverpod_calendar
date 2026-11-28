@@ -77,6 +77,12 @@ import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_query
     as _imwtl5fr;
 import 'package:serverpod_calendar_server/src/generated/calendar_free_busy_reply_request.dart'
     as _i62tyvsw;
+import 'package:serverpod_calendar_server/src/generated/calendar_incoming_publication_add_request.dart'
+    as _ixdjc3o1;
+import 'package:serverpod_calendar_server/src/generated/calendar_incoming_publication_apply_request.dart'
+    as _inbibr77;
+import 'package:serverpod_calendar_server/src/generated/calendar_incoming_publication_query.dart'
+    as _ixepoeah;
 import 'package:serverpod_calendar_server/src/generated/calendar_invitation_adoption_request.dart'
     as _ia1wppub;
 import 'package:serverpod_calendar_server/src/generated/calendar_invitation_apply_request.dart'
@@ -155,6 +161,7 @@ import '../endpoints/calendar_diagnostics_endpoint.dart' as _icr8drn5;
 import '../endpoints/calendar_endpoint.dart' as _inx4l1vp;
 import '../endpoints/calendar_event_endpoint.dart' as _ibwv0suj;
 import '../endpoints/calendar_free_busy_exchange_endpoint.dart' as _ihk21zy9;
+import '../endpoints/calendar_incoming_publication_endpoint.dart' as _i5ugt0hi;
 import '../endpoints/calendar_invitation_endpoint.dart' as _iolttv0d;
 import '../endpoints/calendar_task_endpoint.dart' as _i4tukef9;
 
@@ -204,6 +211,12 @@ class Endpoints extends _is.EndpointDispatch {
           'calendarFreeBusyExchange',
           'serverpod_calendar',
         ),
+      'calendarIncomingPublication':
+          _i5ugt0hi.CalendarIncomingPublicationEndpoint()..initialize(
+            server,
+            'calendarIncomingPublication',
+            'serverpod_calendar',
+          ),
       'calendarInvitation': _iolttv0d.CalendarInvitationEndpoint()
         ..initialize(
           server,
@@ -2066,6 +2079,173 @@ class Endpoints extends _is.EndpointDispatch {
                       .withdrawFreeBusyCommand(
                         session,
                         params['commandId'],
+                      ),
+        ),
+      },
+    );
+    connectors['calendarIncomingPublication'] = _is.EndpointConnector(
+      name: 'calendarIncomingPublication',
+      endpoint: endpoints['calendarIncomingPublication']!,
+      methodConnectors: {
+        'list': _is.MethodConnector(
+          name: 'list',
+          params: {
+            'query': _is.ParameterDescription(
+              name: 'query',
+              type: _is.getType<_ixepoeah.CalendarIncomingPublicationQuery>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarIncomingPublication']
+                          as _i5ugt0hi.CalendarIncomingPublicationEndpoint)
+                      .list(
+                        session,
+                        params['query'],
+                      ),
+        ),
+        'getEntry': _is.MethodConnector(
+          name: 'getEntry',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarIncomingPublication']
+                          as _i5ugt0hi.CalendarIncomingPublicationEndpoint)
+                      .getEntry(
+                        session,
+                        params['id'],
+                      ),
+        ),
+        'getSource': _is.MethodConnector(
+          name: 'getSource',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'sourceId': _is.ParameterDescription(
+              name: 'sourceId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarIncomingPublication']
+                          as _i5ugt0hi.CalendarIncomingPublicationEndpoint)
+                      .getSource(
+                        session,
+                        params['id'],
+                        params['sourceId'],
+                      ),
+        ),
+        'dismiss': _is.MethodConnector(
+          name: 'dismiss',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'expectedRevision': _is.ParameterDescription(
+              name: 'expectedRevision',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarIncomingPublication']
+                          as _i5ugt0hi.CalendarIncomingPublicationEndpoint)
+                      .dismiss(
+                        session,
+                        params['id'],
+                        params['expectedRevision'],
+                      ),
+        ),
+        'getLink': _is.MethodConnector(
+          name: 'getLink',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarIncomingPublication']
+                          as _i5ugt0hi.CalendarIncomingPublicationEndpoint)
+                      .getLink(
+                        session,
+                        params['id'],
+                      ),
+        ),
+        'addToCalendar': _is.MethodConnector(
+          name: 'addToCalendar',
+          params: {
+            'input': _is.ParameterDescription(
+              name: 'input',
+              type: _is
+                  .getType<_ixdjc3o1.CalendarIncomingPublicationAddRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarIncomingPublication']
+                          as _i5ugt0hi.CalendarIncomingPublicationEndpoint)
+                      .addToCalendar(
+                        session,
+                        params['input'],
+                      ),
+        ),
+        'applySource': _is.MethodConnector(
+          name: 'applySource',
+          params: {
+            'input': _is.ParameterDescription(
+              name: 'input',
+              type: _is
+                  .getType<_inbibr77.CalendarIncomingPublicationApplyRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarIncomingPublication']
+                          as _i5ugt0hi.CalendarIncomingPublicationEndpoint)
+                      .applySource(
+                        session,
+                        params['input'],
                       ),
         ),
       },
