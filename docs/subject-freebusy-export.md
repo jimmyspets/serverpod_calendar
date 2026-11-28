@@ -1,0 +1,29 @@
+# Subject and common-free VFREEBUSY downloads
+
+Accepted [ADR 0181](adr/0181-subject-common-freebusy-export.md) adds `calendarAvailabilitySearch.exportSubjectFreeBusy` to the generated client. It returns a standalone VCALENDAR snapshot using the complete subject availability calculation. It is independent of HTTP subscriptions, imported availability, and the durable [VFREEBUSY mail exchange](authenticated-freebusy-exchanges.md). No SQL, stored snapshot, worker or mail operation is added.
+
+The immutable `CalendarSubjectFreeBusyExportRequest` contains selected opaque host targets, explicit UTC bounds and `perTarget` or `commonFree`. It has no minimum-duration filter. Per-target mode emits one anonymous VFREEBUSY component per distinct target in first-selection order. Common mode emits one complete aggregate: free requires every selected target to be free. Both preserve busy, tentative and unavailable classification. Duplicate references are exact/case-sensitive. A caller maps ordered components to its own normalized selection; external calendar applications are not promised to retain that mapping.
+
+Every selected target must have complete authorized contributor coverage. A missing/denied/cross-scope/changed/over-budget contributor rejects the whole file. No components are omitted and no partial file is returned. An empty FREEBUSY set is valid only after complete all-free coverage is proved. The implementation uses full partitions, never the complement of duration-filtered search slots. Existing search keeps its complete/unknown and minimum-duration behavior.
+
+## Authorization and consistency
+
+Each selected target requires independent `exportSubjectFreeBusy` and `readSubjectAvailability`, plus each actual contributing calendar's `projectCalendarAvailability` and every required event/rule projection. Direct calendar-detail or per-calendar export permissions are not implied or required by these separate summary rights. Hosts receive the frozen complete query/target and actual parent/source snapshots. The private demo host grants only its signed-in user target; production hosts supply their own complete person/resource resolution and rules.
+
+The service freezes input collections before its first host callback and performs resolution, calculation and serialization in one active scope transaction. One shared budget spans every target/contributor. It retains the exact authorization batches separately, so overlapping contributors never collapse checks for different target contexts. After candidate serialization it rechecks all subject/export/source rights, every complete resolved set and resolution revision, and actor/scope/policy context before returning bytes. Unknown or unavailable checks fail closed. The operation preserves its initial declared guarantee and rejects a coordinated-to-fresh downgrade across callbacks. Coordinated versus external fresh-check guarantees remain explicit; a final external check leaves its documented after-check revocation race. A snapshot is not an exclusive reservation.
+
+## Wire and limits
+
+Snapshots use fresh independent UUID UIDs and one actual whole-second database UTC DTSTAMP. They expose no native calendar/event/rule IDs, private labels, titles, contributor counts, host resolution revisions, participants, organizer, URLs or source UIDs. Per-target component count reflects only the caller's selected distinct targets. No METHOD or scheduling claim is emitted; there is no delivery or remote retrieval.
+
+Native bounds remain whole-second UTC, at most 31 days in [1970-01-01,2100-01-01), with the existing explicit exclusive-midnight end exception. The native calculation is half-open; VFREEBUSY uses the same enclosing bounds without subtracting a second or claiming coverage outside that native window. DATE, zoned, recurrence, cancellation, working-hours and fallback meanings come from the existing complete pipeline; recurrence rules and VTIMEZONE are not emitted.
+
+Admission allows at most 32 raw target inputs, eight distinct targets, eight raw contributor references per target and 16 total calendar evaluations. Existing shared raw event/rule/opening/projection/recurrence limits remain in force. Each partition retains the 1,000-interval bound; the file has an additional 1,000 emitted-period aggregate limit and 262,144-byte ceiling. Exhaustion rejects without clipping or returning partial success. These are application limits, not universal RFC limits. The pure packaging helper can lower its output ceilings for a stricter caller but cannot widen them.
+
+## Example and validation
+
+The example availability screen offers explicit export using the current target selection and mode. It explains that minimum duration affects search only, displays the server's inert snapshot text, clears stale output when selection changes, and returns no file on an unauthorized/unknown target. It sends nothing. Per-target ordering, caller-known mapping and ephemeral identities are distinct from stable feed publication identities.
+
+Focused tests cover geometry/ordering/privacy/whole-file limits, independent source/export permissions, changed contributor/policy state after candidate serialization, input immutability, duplicate target contexts, complete all-free versus unknown, working hours, DATE/DST and the 2100 boundary. Real generated JWT clients use two hosts to observe committed event/rule/association changes; connected Flutter exercises both modes, minimum-filter independence, duplicate targets and failure recovery. See [development commands](development.md) and [actual validation](scaffold-validation.md).
+
+Subject/common-free scheduling mail still needs a separate mailbox/owner/retention/dispatch design. Larger or cross-scope queries, exclusive bookings, real provider trust and external-client release evidence remain separate. Standalone VFREEBUSY import stays deferred; this download does not claim blanket calendar-client compatibility.
