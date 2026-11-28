@@ -168,6 +168,13 @@ import '../endpoints/calendar_task_endpoint.dart' as _i4tukef9;
 class Endpoints extends _is.EndpointDispatch {
   @override
   void initializeEndpoints(_is.Server server) {
+    initializeOwnEndpoints(server);
+    modules['serverpod_notifications'] = _ik9lwgjh.Endpoints()
+      ..initializeOwnEndpoints(server);
+  }
+
+  @override
+  void initializeOwnEndpoints(_is.Server server) {
     var endpoints = <String, _is.Endpoint>{
       'calendarAlarm': _ifkkyj2z.CalendarAlarmEndpoint()
         ..initialize(
@@ -3475,7 +3482,5 @@ class Endpoints extends _is.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_notifications'] = _ik9lwgjh.Endpoints()
-      ..initializeEndpoints(server);
   }
 }

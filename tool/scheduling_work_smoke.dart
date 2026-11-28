@@ -238,27 +238,72 @@ Future<void> main(List<String> args) async {
     }
     if (args.isEmpty ||
         args.contains('--range-commands') ||
-        args.contains('--range-group')) {
-      for (final restore in [false, true]) {
-        for (final pause in ['before', 'after']) {
-          final fixture = (await b.command({
-            'command': 'seed',
-            'method': 'REQUEST',
-          })) as Map<String, dynamic>;
-          fixtures.add(fixture);
-          await drainPublication(b, fixture);
-          if (restore) {
-            final cancellation = (await b.command({
+        args.contains('--range-group') ||
+        args.contains('--exceptional-range') ||
+        args.contains('--exceptional-race-only')) {
+      if (!args.contains('--exceptional-race-only')) {
+        for (final restore in [false, true]) {
+          for (final pause in ['before', 'after']) {
+            final fixture = (await b.command({
+              'command': 'seed',
+              'method': 'REQUEST',
+              'exceptionalRange': args.contains('--exceptional-range'),
+            })) as Map<String, dynamic>;
+            fixtures.add(fixture);
+            await drainPublication(b, fixture);
+            if (restore) {
+              final cancellation = (await b.command({
+                'command': 'range-command',
+                ...fixture,
+                'key': Uuid().v4(),
+                'revision': 2,
+              })) as Map<String, dynamic>;
+              await drainPublication(b, {
+                ...fixture,
+                'publicationId': cancellation['publicationId'],
+              });
+            }
+            final command = {
               'command': 'range-command',
               ...fixture,
+              'restore': restore,
+              'revision': restore ? 3 : 2,
               'key': Uuid().v4(),
-              'revision': 2,
-            })) as Map<String, dynamic>;
+            };
+            a.submitted = Completer<void>();
+            final lost = a
+                .command({...command, 'pause': pause})
+                .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+            await a.submitted!.future.timeout(const Duration(seconds: 30));
+            await a.stop();
+            await lost;
+            final recovered =
+                (await b.command(command)) as Map<String, dynamic>;
+            if (recovered['publications'] != (restore ? 3 : 2) ||
+                recovered['unchanged'] != (pause == 'after') ||
+                recovered['revision'] != (restore ? 4 : 3)) {
+              throw StateError(
+                'Range command loss failed atomic receipt recovery',
+              );
+            }
             await drainPublication(b, {
               ...fixture,
-              'publicationId': cancellation['publicationId'],
+              'publicationId': recovered['publicationId'],
             });
+            a = await start('a-range-command-$restore-$pause', 18580);
           }
+        }
+      }
+      if (args.contains('--exceptional-range') ||
+          args.contains('--exceptional-race-only')) {
+        final fixture = (await b.command({
+          'command': 'seed',
+          'method': 'REQUEST',
+          'exceptionalRange': true,
+        })) as Map<String, dynamic>;
+        fixtures.add(fixture);
+        await drainPublication(b, fixture);
+        for (final restore in [false, true]) {
           final command = {
             'command': 'range-command',
             ...fixture,
@@ -266,32 +311,79 @@ Future<void> main(List<String> args) async {
             'revision': restore ? 3 : 2,
             'key': Uuid().v4(),
           };
-          a.submitted = Completer<void>();
-          final lost = a
-              .command({...command, 'pause': pause})
-              .then<void>((_) {}, onError: (Object _, StackTrace _) {});
-          await a.submitted!.future.timeout(const Duration(seconds: 30));
-          await a.stop();
-          await lost;
-          final recovered = (await b.command(command)) as Map<String, dynamic>;
-          if (recovered['publications'] != (restore ? 3 : 2) ||
-              recovered['unchanged'] != (pause == 'after') ||
-              recovered['revision'] != (restore ? 4 : 3)) {
-            throw StateError(
-              'Range command loss failed atomic receipt recovery',
-            );
+          final results = await Future.wait([
+            a.command(command),
+            b.command(command),
+          ]);
+          final first = results[0] as Map, second = results[1] as Map;
+          if (first['publicationId'] != second['publicationId'] ||
+              first['unchanged'] == second['unchanged'] ||
+              first['publications'] != (restore ? 3 : 2) ||
+              second['publications'] != (restore ? 3 : 2)) {
+            throw StateError('Exceptional range race duplicated publication');
           }
           await drainPublication(b, {
             ...fixture,
-            'publicationId': recovered['publicationId'],
+            'publicationId': first['publicationId'],
           });
-          a = await start('a-range-command-$restore-$pause', 18580);
         }
+        stdout.writeln(
+          'PASS: exceptional range cancellation and restoration share one receipt across competing hosts.',
+        );
+        final competing = (await b.command({
+          'command': 'seed',
+          'method': 'REQUEST',
+          'exceptionalRange': true,
+        })) as Map<String, dynamic>;
+        fixtures.add(competing);
+        await drainPublication(b, competing);
+        for (final restore in [false, true]) {
+          final base = {
+            'command': 'range-command',
+            ...competing,
+            'restore': restore,
+            'revision': restore ? 3 : 2,
+            'allowConflict': true,
+          };
+          final results = await Future.wait([
+            a.command({...base, 'key': Uuid().v4()}),
+            b.command({...base, 'key': Uuid().v4()}),
+          ]);
+          final rows = results.cast<Map>();
+          final winners = rows
+              .where((row) => row['publicationId'] != null)
+              .toList();
+          final losers = rows.where((row) => row['error'] != null).toList();
+          if (winners.length != 1 ||
+              losers.length != 1 ||
+              !{
+                'staleRevision',
+                'dependencyConflict',
+              }.contains(losers.single['error']) ||
+              winners.single['publications'] != (restore ? 3 : 2)) {
+            throw StateError(
+              'Competing exceptional range commands were not fenced',
+            );
+          }
+          await drainPublication(b, {
+            ...competing,
+            'publicationId': winners.single['publicationId'],
+          });
+        }
+        stdout.writeln(
+          'PASS: different exceptional range commands are fenced across competing hosts.',
+        );
       }
-      stdout.writeln(
-        'PASS: outgoing range cancel/restore actual process loss before transaction commit and after commit, exact receipt recovery and atomic single-intent writes.',
-      );
-      if (args.contains('--range-commands')) return;
+      if (!args.contains('--exceptional-race-only')) {
+        stdout.writeln(
+          'PASS: outgoing range cancel/restore actual process loss before transaction commit and after commit, exact receipt recovery and atomic single-intent writes.',
+        );
+      }
+      if (args.contains('--range-commands') ||
+          args.contains('--exceptional-range') ||
+          args.contains('--exceptional-race-only')) {
+        return;
+      }
     }
     final methods = args.contains('--information') || informationOccurrences
         ? ['INFORMATION', 'INFORMATION_CANCEL', 'INFORMATION_REOPEN']
@@ -388,14 +480,17 @@ Future<void> main(List<String> args) async {
       'PASS: ${methods.join(', ')} on two independent scheduling workers, competing claims, actual loss before/after synthetic acceptance, fenced stable-key recovery and byte-identical MIME/decoded payloads.',
     );
   } finally {
-    final live = probes.where((p) => !p.stopped).toList();
-    if (live.isNotEmpty) {
-      for (final fixture in fixtures) {
-        await live.first.command({'command': 'cleanup', ...fixture});
+    try {
+      final live = probes.where((p) => !p.stopped).toList();
+      if (live.isNotEmpty) {
+        for (final fixture in fixtures) {
+          await live.first.command({'command': 'cleanup', ...fixture});
+        }
       }
-    }
-    for (final probe in probes) {
-      if (!probe.stopped) await probe.stop();
+    } finally {
+      for (final probe in probes) {
+        if (!probe.stopped) await probe.stop();
+      }
     }
   }
 }

@@ -64,7 +64,11 @@ final class SchedulingHost implements CalendarSchedulingHost {
     onCheck?.call(context);
     return unavailable
         ? CalendarAuthorizationVerdict.unavailable
-        : denied || denyFinal && phase == CalendarAuthorizationPhase.finalWrite
+        : denied ||
+              denyFinal && phase == CalendarAuthorizationPhase.finalWrite ||
+              badRoutes &&
+                  context.actor == null &&
+                  context.recipient?.routeRef != 'same'
         ? CalendarAuthorizationVerdict.deny
         : CalendarAuthorizationVerdict.allow;
   }
@@ -4844,6 +4848,1131 @@ void main() {
         (await publication(restored.publicationId)).payload,
         isNot(contains('STATUS:CANCELLED')),
       );
+    });
+    test(
+      'durable exceptional range preserves several individual cancellations',
+      () async {
+        final content = masterContent().copyWith(
+          description: 'Details',
+          location: 'Room',
+        );
+        final id = await masterEvent(content);
+        await service.saveAndNotify(masterRequest(id, content));
+        await CalendarModule.runSchedulingMaintenance(session);
+        final first = masterTiming(day: 28).copyWith(duration: null);
+        final second = masterTiming(day: 29).copyWith(duration: null);
+        await service.cancelOccurrenceAndNotify(
+          await instanceCommand(id, first),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        final individual = await service.cancelOccurrenceAndNotify(
+          await instanceCommand(id, second),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        final cancelled = await service.cancelFutureAndNotify(
+          CalendarSchedulingFutureCancelRequest(
+            eventId: id,
+            expectedRevision: individual.eventRevision,
+            commandId: Uuid().v4obj(),
+            originalStart: first,
+          ),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        final restored = await service.restoreFutureAndNotify(
+          CalendarSchedulingFutureRestoreRequest(
+            eventId: id,
+            expectedRevision: cancelled.eventRevision,
+            commandId: Uuid().v4obj(),
+            originalStart: first,
+          ),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        final message = await messageFor(restored);
+        final master = message.events.singleWhere((event) => !event.isOverride);
+        expect(
+          master.recurrence!.dateSet!.exclusions.map((date) => date.day),
+          containsAll([28, 29]),
+        );
+        expect(
+          (await service.schedulingStatus(id)).hasOccurrenceCancellations,
+          true,
+        );
+        await service.restoreOccurrenceAndNotify(
+          await restoreCommand(id, first),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        await service.restoreOccurrenceAndNotify(
+          await restoreCommand(id, second),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        expect(
+          (await service.schedulingStatus(id)).hasOccurrenceCancellations,
+          false,
+        );
+      },
+    );
+    test(
+      'durable exceptional range preserves an individually cancelled anchor',
+      () async {
+        final content = masterContent().copyWith(
+          description: 'Details',
+          location: 'Room',
+        );
+        final id = await masterEvent(content);
+        await service.saveAndNotify(masterRequest(id, content));
+        await CalendarModule.runSchedulingMaintenance(session);
+        final point = masterTiming(day: 28).copyWith(duration: null);
+        final individual = await service.cancelOccurrenceAndNotify(
+          await instanceCommand(id, point),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        final cancelled = await service.cancelFutureAndNotify(
+          CalendarSchedulingFutureCancelRequest(
+            eventId: id,
+            expectedRevision: individual.eventRevision,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          ),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        final restored = await service.restoreFutureAndNotify(
+          CalendarSchedulingFutureRestoreRequest(
+            eventId: id,
+            expectedRevision: cancelled.eventRevision,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          ),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        expect(
+          (await publication(restored.publicationId)).payload,
+          contains('EXDATE'),
+        );
+        expect(
+          (await service.schedulingStatus(id)).hasOccurrenceCancellations,
+          true,
+        );
+        final single = await service.restoreOccurrenceAndNotify(
+          await restoreCommand(id, point),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        await service.saveAndNotify(
+          masterRequest(id, content, revision: single.eventRevision),
+        );
+      },
+    );
+    for (final kind in [
+      CalendarEventTimeKind.utc,
+      CalendarEventTimeKind.zoned,
+    ]) {
+      test(
+        'durable exceptional range preserves $kind moved anchor and exact retry',
+        () async {
+          final content = masterContent(kind: kind)
+              .copyWith(description: 'Details', location: 'Room');
+          final id = await masterEvent(content);
+          await moveOccurrence(id, kind, 28);
+          await notifyCurrent(id, content);
+          await CalendarModule.runSchedulingMaintenance(session);
+          final point = masterTiming(
+            kind: kind,
+            day: 28,
+          ).copyWith(duration: null);
+          final revision = (await service.getEvent(
+            id,
+            CalendarEventFieldGroup.values,
+          )).revision;
+          final request = CalendarSchedulingFutureCancelRequest(
+            eventId: id,
+            expectedRevision: revision,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          );
+          final cancelled = await service.cancelFutureAndNotify(request);
+          expect(
+            (await service.cancelFutureAndNotify(request)).publicationId,
+            cancelled.publicationId,
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          final restored = await service.restoreFutureAndNotify(
+            CalendarSchedulingFutureRestoreRequest(
+              eventId: id,
+              expectedRevision: cancelled.eventRevision,
+              commandId: Uuid().v4obj(),
+              originalStart: point,
+            ),
+          );
+          final message = await messageFor(restored);
+          expect(
+            message.events.any(
+              (v) => v.isThisAndFuture && v.originalTime?.civil.date.day == 29,
+            ),
+            true,
+          );
+          expect(
+            (await eventData(id)).timingOverrides!.singles.single.originalStart
+                .toJson(),
+            point.toJson(),
+          );
+        },
+      );
+    }
+    test('durable exceptional range rejects a source-only exclusion', () async {
+      final point = masterTiming(day: 28).copyWith(duration: null);
+      final base = masterContent().copyWith(
+        description: 'Details',
+        location: 'Room',
+      );
+      final content = base.copyWith(
+        recurrence: base.recurrence!.copyWith(exclusions: [point]),
+      );
+      final id = await masterEvent(content);
+      await service.saveAndNotify(masterRequest(id, content));
+      await CalendarModule.runSchedulingMaintenance(session);
+      await expectLater(
+        service.cancelFutureAndNotify(
+          CalendarSchedulingFutureCancelRequest(
+            eventId: id,
+            expectedRevision: 2,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+    });
+    test(
+      'durable exceptional range preserves a moved published anchor',
+      () async {
+        final content = masterContent().copyWith(
+              description: 'Details',
+              location: 'Room',
+            ),
+            id = await masterEvent(content);
+        await moveOccurrence(id, CalendarEventTimeKind.date, 28);
+        await notifyCurrent(id, content);
+        await CalendarModule.runSchedulingMaintenance(session);
+        final before = (await eventData(id)).timingOverrides!.singles.single
+            .toJson();
+        final point = masterTiming(day: 28).copyWith(duration: null);
+        final revision = (await service.getEvent(
+          id,
+          CalendarEventFieldGroup.values,
+        )).revision;
+        final cancelled = await service.cancelFutureAndNotify(
+          CalendarSchedulingFutureCancelRequest(
+            eventId: id,
+            expectedRevision: revision,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          ),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        final restored = await service.restoreFutureAndNotify(
+          CalendarSchedulingFutureRestoreRequest(
+            eventId: id,
+            expectedRevision: cancelled.eventRevision,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          ),
+        );
+        final message = await messageFor(restored);
+        expect(
+          message.events.any(
+            (v) =>
+                v.isOverride && !v.isThisAndFuture && v.originalDate?.day == 28,
+          ),
+          true,
+        );
+        expect(
+          message.events.any(
+            (v) => v.isThisAndFuture && v.originalDate?.day == 29,
+          ),
+          true,
+        );
+        expect(
+          (await eventData(id)).timingOverrides!.singles.single.toJson(),
+          before,
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        final next = await notifyCurrent(
+          id,
+          content.copyWith(summary: 'Updated draft'),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        final again = await service.cancelFutureAndNotify(
+          CalendarSchedulingFutureCancelRequest(
+            eventId: id,
+            expectedRevision: next.eventRevision,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          ),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        await service.restoreFutureAndNotify(
+          CalendarSchedulingFutureRestoreRequest(
+            eventId: id,
+            expectedRevision: again.eventRevision,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          ),
+        );
+        expect(
+          (await eventData(id)).timingOverrides!.singles.single.toJson(),
+          before,
+        );
+      },
+    );
+    test('durable exceptional range restores published values without overwriting drafts', () async {
+      final content = masterContent().copyWith(
+        description: 'Details',
+        location: 'Room',
+      );
+      final id = await masterEvent(content);
+      await moveOccurrence(id, CalendarEventTimeKind.date, 28);
+      await notifyCurrent(id, content);
+      await CalendarModule.runSchedulingMaintenance(session);
+      final point = masterTiming(day: 28).copyWith(duration: null);
+      final revision = (await service.getEvent(
+        id,
+        CalendarEventFieldGroup.values,
+      )).revision;
+      final cancelled = await service.cancelFutureAndNotify(
+        CalendarSchedulingFutureCancelRequest(
+          eventId: id,
+          expectedRevision: revision,
+          commandId: Uuid().v4obj(),
+          originalStart: point,
+        ),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      await service.updateEvent(
+        CalendarEventUpdateRequest(
+          eventId: id,
+          expectedRevision: cancelled.eventRevision,
+          content: content.copyWith(summary: 'Private exceptional draft'),
+        ),
+      );
+      final draft = await eventData(id);
+      final draftRevision = (await service.getEvent(
+        id,
+        CalendarEventFieldGroup.values,
+      )).revision;
+      final restored = await service.restoreFutureAndNotify(
+        CalendarSchedulingFutureRestoreRequest(
+          eventId: id,
+          expectedRevision: draftRevision,
+          commandId: Uuid().v4obj(),
+          originalStart: point,
+        ),
+      );
+      expect((await eventData(id)).content.toJson(), draft.content.toJson());
+      expect(
+        (await eventData(id)).timingOverrides!.toJson(),
+        draft.timingOverrides!.toJson(),
+      );
+      expect(
+        (await publication(restored.publicationId)).payload,
+        isNot(contains('Private exceptional draft')),
+      );
+      expect((await service.schedulingStatus(id)).hasLocalChanges, true);
+    });
+    test(
+      'durable exceptional range reauthorizes and rolls back final denial',
+      () async {
+        final content = masterContent().copyWith(
+          description: 'Details',
+          location: 'Room',
+        );
+        final id = await masterEvent(content);
+        await moveOccurrence(id, CalendarEventTimeKind.date, 28);
+        await notifyCurrent(id, content);
+        await CalendarModule.runSchedulingMaintenance(session);
+        final point = masterTiming(day: 28).copyWith(duration: null);
+        final revision = (await service.getEvent(
+          id,
+          CalendarEventFieldGroup.values,
+        )).revision;
+        final command = CalendarSchedulingFutureCancelRequest(
+          eventId: id,
+          expectedRevision: revision,
+          commandId: Uuid().v4obj(),
+          originalStart: point,
+        );
+        final before = (await eventData(id)).toJson();
+        final publicationCount = (await publications()).length;
+        host.denyFinal = true;
+        await expectLater(
+          service.cancelFutureAndNotify(command),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        host.denyFinal = false;
+        expect((await eventData(id)).toJson(), before);
+        expect((await publications()).length, publicationCount);
+        final cancelled = await service.cancelFutureAndNotify(command);
+        host.denied = true;
+        await expectLater(
+          service.cancelFutureAndNotify(command),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        host.denied = false;
+        expect((await publications()).length, publicationCount + 1);
+        expect(
+          (await service.cancelFutureAndNotify(command)).publicationId,
+          cancelled.publicationId,
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        final restore = CalendarSchedulingFutureRestoreRequest(
+          eventId: id,
+          expectedRevision: cancelled.eventRevision,
+          commandId: Uuid().v4obj(),
+          originalStart: point,
+        );
+        final afterCancel = (await eventData(id)).toJson();
+        host.denyFinal = true;
+        await expectLater(
+          service.restoreFutureAndNotify(restore),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        host.denyFinal = false;
+        expect((await eventData(id)).toJson(), afterCancel);
+        expect((await publications()).length, publicationCount + 1);
+        final restored = await service.restoreFutureAndNotify(restore);
+        host.denied = true;
+        await expectLater(
+          service.restoreFutureAndNotify(restore),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        host.denied = false;
+        expect(
+          (await service.restoreFutureAndNotify(restore)).publicationId,
+          restored.publicationId,
+        );
+      },
+    );
+    test(
+      'durable exceptional range rejects tampered active and restored proof',
+      () async {
+        final content = masterContent().copyWith(
+          description: 'Details',
+          location: 'Room',
+        );
+        final id = await masterEvent(content);
+        await moveOccurrence(id, CalendarEventTimeKind.date, 28);
+        await notifyCurrent(id, content);
+        await CalendarModule.runSchedulingMaintenance(session);
+        final point = masterTiming(day: 28).copyWith(duration: null);
+        final revision = (await service.getEvent(
+          id,
+          CalendarEventFieldGroup.values,
+        )).revision;
+        final cancelled = await service.cancelFutureAndNotify(
+          CalendarSchedulingFutureCancelRequest(
+            eventId: id,
+            expectedRevision: revision,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          ),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        final row = await publication(cancelled.publicationId);
+        final good = row.snapshot;
+        final damaged = jsonDecode(good) as Map<String, dynamic>;
+        final proof = jsonDecode(
+          damaged['exceptionalProof'] as String,
+        ) as Map<String, dynamic>;
+        proof['candidateDigest'] = '0' * 64;
+        damaged['exceptionalProof'] = jsonEncode(proof);
+        row.snapshot = jsonEncode(damaged);
+        await CalendarSchedulingPublicationRecord.db.updateRow(session, row);
+        await expectLater(
+          service.schedulingStatus(id),
+          failure(CalendarFailureCode.unavailable),
+        );
+        row.snapshot = good;
+        await CalendarSchedulingPublicationRecord.db.updateRow(session, row);
+        final restored = await service.restoreFutureAndNotify(
+          CalendarSchedulingFutureRestoreRequest(
+            eventId: id,
+            expectedRevision: cancelled.eventRevision,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          ),
+        );
+        final restoredRow = await publication(restored.publicationId);
+        final state = jsonDecode(restoredRow.snapshot) as Map<String, dynamic>;
+        final frozen = state['exceptionalFrozen'] as Map<String, dynamic>;
+        frozen['sequence'] = (frozen['sequence'] as int) + 1;
+        restoredRow.snapshot = jsonEncode(state);
+        await CalendarSchedulingPublicationRecord.db.updateRow(
+          session,
+          restoredRow,
+        );
+        await expectLater(
+          service.schedulingStatus(id),
+          failure(CalendarFailureCode.unavailable),
+        );
+      },
+    );
+    test('durable exceptional range retains proof after earlier publication pruning', () async {
+      install(
+        options: CalendarSchedulingOptions(
+          retention: const Duration(seconds: 1),
+        ),
+      );
+      final content = masterContent().copyWith(
+        description: 'Details',
+        location: 'Room',
+      );
+      final id = await masterEvent(content);
+      await moveOccurrence(id, CalendarEventTimeKind.date, 28);
+      await notifyCurrent(id, content);
+      await CalendarModule.runSchedulingMaintenance(session);
+      final point = masterTiming(day: 28).copyWith(duration: null);
+      final revision = (await service.getEvent(
+        id,
+        CalendarEventFieldGroup.values,
+      )).revision;
+      final cancelled = await service.cancelFutureAndNotify(
+        CalendarSchedulingFutureCancelRequest(
+          eventId: id,
+          expectedRevision: revision,
+          commandId: Uuid().v4obj(),
+          originalStart: point,
+        ),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      await session.db.unsafeExecute(
+        'UPDATE serverpod_calendar_scheduling_publication SET "completedAt"=timestamp \'2000-01-01\'',
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      expect((await publications()).length, 1);
+      expect((await publications()).single.id, cancelled.publicationId);
+      final restored = await service.restoreFutureAndNotify(
+        CalendarSchedulingFutureRestoreRequest(
+          eventId: id,
+          expectedRevision: cancelled.eventRevision,
+          commandId: Uuid().v4obj(),
+          originalStart: point,
+        ),
+      );
+      expect(
+        (await messageFor(restored)).events
+            .any((event) => event.isThisAndFuture),
+        true,
+      );
+    });
+    test(
+      'durable exceptional range rejects unbounded series without mutation',
+      () async {
+        final base = masterContent().copyWith(
+          description: 'Details',
+          location: 'Room',
+        );
+        final content = base.copyWith(
+          recurrence: base.recurrence!.copyWith(
+            rule: base.recurrence!.rule!.copyWith(count: null),
+          ),
+        );
+        final id = await masterEvent(content);
+        await moveOccurrence(id, CalendarEventTimeKind.date, 28);
+        await notifyCurrent(id, content);
+        await CalendarModule.runSchedulingMaintenance(session);
+        final before = (await eventData(id)).toJson();
+        final count = (await publications()).length;
+        final revision = (await service.getEvent(
+          id,
+          CalendarEventFieldGroup.values,
+        )).revision;
+        await expectLater(
+          service.cancelFutureAndNotify(
+            CalendarSchedulingFutureCancelRequest(
+              eventId: id,
+              expectedRevision: revision,
+              commandId: Uuid().v4obj(),
+              originalStart: masterTiming(day: 28).copyWith(duration: null),
+            ),
+          ),
+          failure(CalendarFailureCode.validation),
+        );
+        expect((await eventData(id)).toJson(), before);
+        expect((await publications()).length, count);
+      },
+    );
+    for (final restoring in [false, true]) {
+      for (final permission in [
+        CalendarPermission.readScheduling,
+        CalendarPermission.readEvent,
+        CalendarPermission.readEventSource,
+        CalendarPermission.changeEventStatus,
+        restoring
+            ? CalendarPermission.restoreFutureScheduling
+            : CalendarPermission.cancelFutureScheduling,
+      ]) {
+        test(
+          'durable exceptional range $restoring independently gates ${permission.name}',
+          () async {
+            final content = masterContent().copyWith(
+              description: 'Details',
+              location: 'Room',
+            );
+            final id = await masterEvent(content);
+            await moveOccurrence(id, CalendarEventTimeKind.date, 28);
+            await notifyCurrent(id, content);
+            await CalendarModule.runSchedulingMaintenance(session);
+            final point = masterTiming(day: 28).copyWith(duration: null);
+            var revision = (await service.getEvent(
+              id,
+              CalendarEventFieldGroup.values,
+            )).revision;
+            if (restoring) {
+              revision = (await service.cancelFutureAndNotify(
+                CalendarSchedulingFutureCancelRequest(
+                  eventId: id,
+                  expectedRevision: revision,
+                  commandId: Uuid().v4obj(),
+                  originalStart: point,
+                ),
+              )).eventRevision;
+              await CalendarModule.runSchedulingMaintenance(session);
+            }
+            final before = (await eventData(id)).toJson();
+            final count = (await publications()).length;
+            policy.denied.add(permission);
+            await expectLater(
+              restoring
+                  ? service.restoreFutureAndNotify(
+                      CalendarSchedulingFutureRestoreRequest(
+                        eventId: id,
+                        expectedRevision: revision,
+                        commandId: Uuid().v4obj(),
+                        originalStart: point,
+                      ),
+                    )
+                  : service.cancelFutureAndNotify(
+                      CalendarSchedulingFutureCancelRequest(
+                        eventId: id,
+                        expectedRevision: revision,
+                        commandId: Uuid().v4obj(),
+                        originalStart: point,
+                      ),
+                    ),
+              failure(CalendarFailureCode.accessDenied),
+            );
+            expect((await eventData(id)).toJson(), before);
+            expect((await publications()).length, count);
+          },
+        );
+      }
+    }
+    test(
+      'durable exceptional range preserves exact named-zone aliases',
+      () async {
+        const zone = 'US/Eastern';
+        final base = masterContent(kind: CalendarEventTimeKind.zoned);
+        final content = base.copyWith(
+          timing: base.timing.copyWith(zoneId: zone),
+          description: 'Details',
+          location: 'Room',
+        );
+        final id = await masterEvent(content);
+        final point = masterTiming(
+          kind: CalendarEventTimeKind.zoned,
+          day: 28,
+        ).copyWith(zoneId: zone, duration: null);
+        await service.changeOccurrence(
+          CalendarEventOccurrenceChange(
+            eventId: id,
+            expectedRevision: 1,
+            originalStart: point,
+            action: CalendarEventOccurrenceAction.replaceSingleTiming,
+            replacement: masterTiming(
+              kind: CalendarEventTimeKind.zoned,
+              day: 29,
+            ).copyWith(zoneId: zone),
+          ),
+        );
+        await notifyCurrent(id, content);
+        await CalendarModule.runSchedulingMaintenance(session);
+        final revision = (await service.getEvent(
+          id,
+          CalendarEventFieldGroup.values,
+        )).revision;
+        final cancelled = await service.cancelFutureAndNotify(
+          CalendarSchedulingFutureCancelRequest(
+            eventId: id,
+            expectedRevision: revision,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          ),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        final restored = await service.restoreFutureAndNotify(
+          CalendarSchedulingFutureRestoreRequest(
+            eventId: id,
+            expectedRevision: cancelled.eventRevision,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          ),
+        );
+        final message = await messageFor(restored);
+        expect(
+          message.events
+              .where((event) => event.isOverride)
+              .map((event) => event.originalTime!.zoneId),
+          everyElement(zone),
+        );
+        expect(
+          (await eventData(id))
+              .timingOverrides!
+              .singles
+              .single
+              .originalStart
+              .zoneId,
+          zone,
+        );
+      },
+    );
+    test(
+      'durable exceptional range handles a finite UNTIL last original',
+      () async {
+        final base = masterContent().copyWith(
+          description: 'Details',
+          location: 'Room',
+        );
+        final content = base.copyWith(
+          recurrence: base.recurrence!.copyWith(
+            rule: masterRule(
+              count: null,
+              untilDate: CalendarEventCivil(year: 2026, month: 3, day: 30),
+            ),
+          ),
+        );
+        final id = await masterEvent(content);
+        await moveOccurrence(id, CalendarEventTimeKind.date, 30);
+        await notifyCurrent(id, content);
+        await CalendarModule.runSchedulingMaintenance(session);
+        final point = masterTiming(day: 30).copyWith(duration: null);
+        final revision = (await service.getEvent(
+          id,
+          CalendarEventFieldGroup.values,
+        )).revision;
+        final cancelled = await service.cancelFutureAndNotify(
+          CalendarSchedulingFutureCancelRequest(
+            eventId: id,
+            expectedRevision: revision,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          ),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        final restored = await service.restoreFutureAndNotify(
+          CalendarSchedulingFutureRestoreRequest(
+            eventId: id,
+            expectedRevision: cancelled.eventRevision,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          ),
+        );
+        final message = await messageFor(restored);
+        expect(
+          message.events.any(
+            (event) => event.isOverride && event.originalDate?.day == 30,
+          ),
+          true,
+        );
+        expect(
+          (await eventData(id)).timingOverrides!.singles.single.originalStart
+              .toJson(),
+          point.toJson(),
+        );
+      },
+    );
+    test('durable exceptional range retains later PERIOD additions', () async {
+      final base = masterContent(kind: CalendarEventTimeKind.utc);
+      final content = base.copyWith(
+        description: 'Details',
+        location: 'Room',
+        periods: [
+          masterTiming(
+            kind: CalendarEventTimeKind.utc,
+            day: 31,
+          ).copyWith(duration: CalendarEventDuration(hours: 2)),
+        ],
+      );
+      final id = await masterEvent(content);
+      await moveOccurrence(id, CalendarEventTimeKind.utc, 28);
+      await notifyCurrent(id, content);
+      await CalendarModule.runSchedulingMaintenance(session);
+      final point = masterTiming(
+        kind: CalendarEventTimeKind.utc,
+        day: 28,
+      ).copyWith(duration: null);
+      final revision = (await service.getEvent(
+        id,
+        CalendarEventFieldGroup.values,
+      )).revision;
+      final cancelled = await service.cancelFutureAndNotify(
+        CalendarSchedulingFutureCancelRequest(
+          eventId: id,
+          expectedRevision: revision,
+          commandId: Uuid().v4obj(),
+          originalStart: point,
+        ),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      final restored = await service.restoreFutureAndNotify(
+        CalendarSchedulingFutureRestoreRequest(
+          eventId: id,
+          expectedRevision: cancelled.eventRevision,
+          commandId: Uuid().v4obj(),
+          originalStart: point,
+        ),
+      );
+      final message = await messageFor(restored);
+      final master = message.events.singleWhere((event) => !event.isOverride);
+      expect(
+        props(master, 'RDATE').single.value,
+        contains('20260331T090000Z/PT2H'),
+      );
+      expect((await eventData(id)).content.periods!.single.duration!.hours, 2);
+    });
+    test(
+      'durable exceptional range rejects sequence overflow without mutation',
+      () async {
+        final content = masterContent().copyWith(
+          description: 'Details',
+          location: 'Room',
+        );
+        final id = await masterEvent(content);
+        await moveOccurrence(id, CalendarEventTimeKind.date, 28);
+        await notifyCurrent(id, content);
+        await CalendarModule.runSchedulingMaintenance(session);
+        final data = await eventData(id);
+        data.protocolState = data.protocolState!.copyWith(
+          version: data.protocolState!.version.copyWith(sequence: 2147483647),
+        );
+        await CalendarEventDataRecord.db.updateRow(session, data);
+        final before = (await eventData(id)).toJson();
+        final count = (await publications()).length;
+        final revision = (await service.getEvent(
+          id,
+          CalendarEventFieldGroup.values,
+        )).revision;
+        await expectLater(
+          service.cancelFutureAndNotify(
+            CalendarSchedulingFutureCancelRequest(
+              eventId: id,
+              expectedRevision: revision,
+              commandId: Uuid().v4obj(),
+              originalStart: masterTiming(day: 28).copyWith(duration: null),
+            ),
+          ),
+          failure(CalendarFailureCode.limitExceeded),
+        );
+        expect((await eventData(id)).toJson(), before);
+        expect((await publications()).length, count);
+      },
+    );
+    test(
+      'durable exceptional range preserves a recurrence across a DST gap',
+      () async {
+        final base = masterContent(kind: CalendarEventTimeKind.zoned);
+        final start = CalendarEventCivil(
+          year: 2026,
+          month: 3,
+          day: 27,
+          hour: 2,
+          minute: 30,
+        );
+        final content = base.copyWith(
+          timing: base.timing.copyWith(start: start),
+          description: 'Details',
+          location: 'Room',
+        );
+        final id = await masterEvent(content);
+        final point = content.timing.copyWith(
+          start: CalendarEventCivil(
+            year: 2026,
+            month: 3,
+            day: 28,
+            hour: 2,
+            minute: 30,
+          ),
+          duration: null,
+        );
+        await service.changeOccurrence(
+          CalendarEventOccurrenceChange(
+            eventId: id,
+            expectedRevision: 1,
+            originalStart: point,
+            action: CalendarEventOccurrenceAction.replaceSingleTiming,
+            replacement: content.timing.copyWith(
+              start: CalendarEventCivil(
+                year: 2026,
+                month: 3,
+                day: 28,
+                hour: 3,
+                minute: 30,
+              ),
+            ),
+          ),
+        );
+        await notifyCurrent(id, content);
+        await CalendarModule.runSchedulingMaintenance(session);
+        final revision = (await service.getEvent(
+          id,
+          CalendarEventFieldGroup.values,
+        )).revision;
+        final cancelled = await service.cancelFutureAndNotify(
+          CalendarSchedulingFutureCancelRequest(
+            eventId: id,
+            expectedRevision: revision,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          ),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        final restored = await service.restoreFutureAndNotify(
+          CalendarSchedulingFutureRestoreRequest(
+            eventId: id,
+            expectedRevision: cancelled.eventRevision,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          ),
+        );
+        final message = await messageFor(restored);
+        expect(
+          message.events
+              .where((event) => event.isThisAndFuture)
+              .single
+              .originalTime!
+              .civil
+              .date
+              .day,
+          30,
+        );
+        expect(
+          (await eventData(id)).timingOverrides!.singles.single.originalStart
+              .toJson(),
+          point.toJson(),
+        );
+      },
+    );
+    test(
+      'durable exceptional range preserves a recurrence across a DST fold',
+      () async {
+        final base = masterContent(kind: CalendarEventTimeKind.zoned);
+        final start = CalendarEventCivil(
+          year: 2026,
+          month: 10,
+          day: 23,
+          hour: 2,
+          minute: 30,
+        );
+        final content = base.copyWith(
+          timing: base.timing.copyWith(start: start),
+          description: 'Details',
+          location: 'Room',
+        );
+        final id = await masterEvent(content);
+        final point = content.timing.copyWith(
+          start: CalendarEventCivil(
+            year: 2026,
+            month: 10,
+            day: 24,
+            hour: 2,
+            minute: 30,
+          ),
+          duration: null,
+        );
+        await service.changeOccurrence(
+          CalendarEventOccurrenceChange(
+            eventId: id,
+            expectedRevision: 1,
+            originalStart: point,
+            action: CalendarEventOccurrenceAction.replaceSingleTiming,
+            replacement: content.timing.copyWith(
+              start: CalendarEventCivil(
+                year: 2026,
+                month: 10,
+                day: 24,
+                hour: 3,
+                minute: 30,
+              ),
+            ),
+          ),
+        );
+        await notifyCurrent(id, content);
+        await CalendarModule.runSchedulingMaintenance(session);
+        final revision = (await service.getEvent(
+          id,
+          CalendarEventFieldGroup.values,
+        )).revision;
+        final cancelled = await service.cancelFutureAndNotify(
+          CalendarSchedulingFutureCancelRequest(
+            eventId: id,
+            expectedRevision: revision,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          ),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        final restored = await service.restoreFutureAndNotify(
+          CalendarSchedulingFutureRestoreRequest(
+            eventId: id,
+            expectedRevision: cancelled.eventRevision,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          ),
+        );
+        final message = await messageFor(restored);
+        expect(
+          message.events
+              .where((event) => event.isThisAndFuture)
+              .single
+              .originalTime!
+              .civil
+              .date
+              .day,
+          25,
+        );
+        expect(
+          (await eventData(id)).timingOverrides!.singles.single.originalStart
+              .toJson(),
+          point.toJson(),
+        );
+      },
+    );
+    for (final restoring in [false, true]) {
+      for (final changedRoute in [false, true]) {
+        test(
+          'durable exceptional range $restoring blocks delivery after ${changedRoute ? 'route change' : 'authority withdrawal'}',
+          () async {
+            final content = masterContent().copyWith(
+              description: 'Details',
+              location: 'Room',
+            );
+            final id = await masterEvent(content);
+            await moveOccurrence(id, CalendarEventTimeKind.date, 28);
+            await notifyCurrent(id, content);
+            await CalendarModule.runSchedulingMaintenance(session);
+            final point = masterTiming(day: 28).copyWith(duration: null);
+            final revision = (await service.getEvent(
+              id,
+              CalendarEventFieldGroup.values,
+            )).revision;
+            final cancelled = await service.cancelFutureAndNotify(
+              CalendarSchedulingFutureCancelRequest(
+                eventId: id,
+                expectedRevision: revision,
+                commandId: Uuid().v4obj(),
+                originalStart: point,
+              ),
+            );
+            if (restoring) {
+              await CalendarModule.runSchedulingMaintenance(session);
+              await service.restoreFutureAndNotify(
+                CalendarSchedulingFutureRestoreRequest(
+                  eventId: id,
+                  expectedRevision: cancelled.eventRevision,
+                  commandId: Uuid().v4obj(),
+                  originalStart: point,
+                ),
+              );
+            }
+            final submissions = transport.submissions.length;
+            if (changedRoute) {
+              host.badRoutes = true;
+            } else {
+              host.denied = true;
+            }
+            await CalendarModule.runSchedulingMaintenance(session);
+            expect(transport.submissions.length, submissions);
+            expect(
+              (await service.schedulingStatus(id)).deliveries.single.state,
+              CalendarSchedulingDeliveryState.blocked,
+            );
+          },
+        );
+      }
+    }
+    test(
+      'durable exceptional range preserves an independent source exclusion',
+      () async {
+        final base = masterContent(count: 5)
+            .copyWith(description: 'Details', location: 'Room');
+        final excluded = masterTiming(day: 30).copyWith(duration: null);
+        final content = base.copyWith(
+          recurrence: base.recurrence!.copyWith(exclusions: [excluded]),
+        );
+        final id = await masterEvent(content);
+        await moveOccurrence(id, CalendarEventTimeKind.date, 28);
+        await notifyCurrent(id, content);
+        await CalendarModule.runSchedulingMaintenance(session);
+        final point = masterTiming(day: 28).copyWith(duration: null);
+        final revision = (await service.getEvent(
+          id,
+          CalendarEventFieldGroup.values,
+        )).revision;
+        final cancelled = await service.cancelFutureAndNotify(
+          CalendarSchedulingFutureCancelRequest(
+            eventId: id,
+            expectedRevision: revision,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          ),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        final restored = await service.restoreFutureAndNotify(
+          CalendarSchedulingFutureRestoreRequest(
+            eventId: id,
+            expectedRevision: cancelled.eventRevision,
+            commandId: Uuid().v4obj(),
+            originalStart: point,
+          ),
+        );
+        final message = await messageFor(restored);
+        final master = message.events.singleWhere((event) => !event.isOverride);
+        expect(
+          master.recurrence!.dateSet!.exclusions.map((date) => date.day),
+          contains(30),
+        );
+        expect(
+          (await eventData(id)).content.recurrence!.exclusions.single.toJson(),
+          excluded.toJson(),
+        );
+      },
+    );
+    test('durable exceptional range accepts absent optional text', () async {
+      final content = masterContent();
+      final id = await masterEvent(content);
+      await moveOccurrence(id, CalendarEventTimeKind.date, 28);
+      await notifyCurrent(id, content);
+      await CalendarModule.runSchedulingMaintenance(session);
+      final point = masterTiming(day: 28).copyWith(duration: null);
+      final revision = (await service.getEvent(
+        id,
+        CalendarEventFieldGroup.values,
+      )).revision;
+      final cancelled = await service.cancelFutureAndNotify(
+        CalendarSchedulingFutureCancelRequest(
+          eventId: id,
+          expectedRevision: revision,
+          commandId: Uuid().v4obj(),
+          originalStart: point,
+        ),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      final restored = await service.restoreFutureAndNotify(
+        CalendarSchedulingFutureRestoreRequest(
+          eventId: id,
+          expectedRevision: cancelled.eventRevision,
+          commandId: Uuid().v4obj(),
+          originalStart: point,
+        ),
+      );
+      expect((await messageFor(restored)).events, isNotEmpty);
     });
     test('durable outgoing range admits a published future anchor without changing its shift', () async {
       final content = masterContent(), id = await masterEvent(content);

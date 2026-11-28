@@ -38,6 +38,7 @@ import 'task_content_values.dart';
 import 'event_protocol_values.dart';
 import 'event_wire_storage.dart';
 import 'event_wire_output.dart';
+import 'exceptional_range_proof.dart';
 import 'published_range_cancellation_values.dart';
 import 'availability_values.dart';
 import 'availability_protocol_values.dart';
