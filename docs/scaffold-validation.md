@@ -1785,3 +1785,23 @@ The full `./tool/check.ps1`, unrelated worker/domain recovery profiles, complete
 ## ADR 0157 documentation proposal, 2026-11-01
 
 Documentation-only proposal follows completed ADR 0156 implementation PR #143. Inspected DATE/timed recurrence membership, timing ranges, explicit replacements, original civil comparison and aggregate/local budgets; checked primary RFC 5546 cancellation and RFC 5545 original-order/rescheduling context. The confirmed cancel-all/preserve-exceptions policy is distinguished from proposed cutoff APIs, caps and future durable integration. No runtime/generated/model/SQL/dependency change is included. Relative links/consecutive ADRs, scope, credential/UTF-8/whitespace and unchanged LICENSE checks are run before committing. Runtime tests are not rerun for this documentation proposal; ADR 0156 grouped evidence and pending hosted CI remain separate. Approval is required before implementation.
+
+
+## ADR 0157 focused implementation, 2026-11-01
+
+The maintainer explicitly approved PR #144 / ADR 0157's core batch. Added optional inclusive original-identity cutoffs to DATE and timed event series, with retained timing exceptions, original membership/profile validation, independent cutoff capacity and unchanged raw/work/base budgets. No module/generated/schema/dependency or Flutter files change.
+
+From `packages/serverpod_calendar_core`, `dart test test/event_future_cancellation_test.dart test/date_event_range_set_test.dart test/timed_event_series_test.dart --reporter expanded` passed all 78 cases: 34 new cancellation cases and all 44 existing range/timed regressions. New finite oracles independently enumerate expected original/actual pairs across every cutoff and narrow actual window. Other cases cover moved singles/later ranges, same-anchor capacity, retained single cancellation, earlier RDATE/PERIOD, rejected members/profiles, shared/individual budgets, equal-instant civil identities across a DST gap, spring/fall offsets and 1970/2100 boundaries.
+
+An initial formatter invocation used workspace-relative paths from the package directory and formatted no files; it was corrected from the workspace root. Early test fixtures omitted required CivilDateTime minutes and incorrectly expected a one-result membership query to exhaust a raw-output cap of one; corrected fixtures use explicit minutes and multiple validation anchors. The DATE overflow fixture now actually overlaps the query rather than already being excluded by the inverse range. Final focused results above include these corrections; no existing production budget or rejection rule was relaxed. Broader grouped evidence follows separately. Serverpod MCP hot reload was connected and completed successfully.
+
+
+## ADR 0157 grouped batch evidence, 2026-11-01
+
+Final-source changed-file formatting and full workspace `dart analyze --fatal-infos` passed. Complete core VM/Chrome suites passed 540/540, iCalendar VM/Chrome 629/629 and calendar module VM/Chrome 321/17. The first grouped attempt stopped on a null-aware collection style lint; corrected it without semantic changes and reran the complete grouped sequence successfully.
+
+After `./tool/reset-test.ps1`, from the example server `dart test --concurrency=1 test/integration/instance_invitation_application_test.dart test/integration/range_invitation_application_test.dart --reporter expanded` passed all 74 affected real database regressions. These use existing module adapters without a cutoff, proving scoped single/range application and composition still work. Pure cancellation itself is exercised by the 34 new core tests, not claimed as a new database/runtime feature. Test reset/seeding stayed in isolated synthetic storage; development data/app were preserved.
+
+The grouped run uses `dart test --reporter expanded` and `dart test --platform chrome --reporter expanded` from each pure package, then `dart test test/unit --reporter expanded` and its Chrome equivalent from the calendar server. Serverpod MCP was connected and hot reload succeeded after code changes. No UI/generated input/table/dependency changed; generation, migrations and new browser journeys are unnecessary for this pure increment. Full `./tool/check.ps1`, unrelated worker/process/client/browser checks and release build remain deferred to exact-head hosted CI. Keep the implementation PR draft until that readiness gate succeeds; this grouped run is not labelled a full repository check.
+
+Final repository-relative links/consecutive ADRs, UTF-8/whitespace, absence of 17 known local credential values and unchanged Apache 2.0 LICENSE are checked before the completed-batch commit. No durable cancellation/restoration, native alarm behavior or real transport is added.

@@ -691,10 +691,12 @@ Completed pure projection implementation is in PR #141; grouped local evidence p
 
 ## Event future-cancellation prerequisite
 
-ADR 0156 implementation is in PR #143; grouped checks passed and full hosted CI remains a separate gate. The maintainer confirmed cancellation of every original at/after the anchor, including later moved/edited exceptions, with their data preserved. [Proposed ADR 0157](adr/0157-pure-future-event-cancellation.md) is the next pure prerequisite; its mechanics are not approved or implemented.
+ADR 0156 implementation is in PR #143; grouped checks passed and full hosted CI remains a separate gate. The maintainer confirmed cancellation of every original at/after the anchor, including later moved/edited exceptions, with their data preserved. Accepted [ADR 0157](adr/0157-pure-future-event-cancellation.md) implements the [pure core prerequisite](event-future-cancellation-core.md); actual validation and broader integration remain separate.
 
 - [x] Inspect DATE/timed range expansion and original membership/work limits; verify primary RFC context.
 - [x] Confirm cancel-all/preserve-exceptions policy.
-- [ ] Obtain review of optional original-identity cutoffs, same-anchor coexistence, bounded validation/expansion and pure-only boundaries.
-- [ ] Implement and validate the approved pure DATE/UTC/named-zone batch before one code commit.
+- [x] Obtain review of optional original-identity cutoffs, same-anchor coexistence, bounded validation/expansion and pure-only boundaries.
+- [x] Implement the approved pure DATE/UTC/named-zone batch; focused tests passed.
+- [x] Complete grouped core/iCalendar/module VM+Chrome and affected DB checks before one code commit; all passed as recorded in validation.
+- [ ] Pass full exact-head hosted CI before readiness.
 - [ ] Review durable source/native/query/alarm/feed integration, explicit restoration and outgoing scheduling separately. Range CANCEL application and responses remain guarded.

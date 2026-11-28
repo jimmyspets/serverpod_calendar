@@ -10,13 +10,16 @@ import 'date_recurrence_rule.dart';
 
 /// Bounded native DATE timing ranges layered over single-occurrence exceptions.
 /// Anchors and subsequent order use original dates, never actual start order.
-/// No rule rewriting, range cancellation, tasks or wire/storage behavior.
+/// An optional cancellation cutoff suppresses all later original identities,
+/// including explicit replacements, without changing retained timing data.
+/// No rule rewriting, tasks or wire/storage behavior.
 final class DateEventRangeSet {
   /// Optional [sharedWorkBudget] charges range-anchor membership work across
   /// constructions; local validation caps remain active and work is not refunded.
   factory DateEventRangeSet({
     required DateEventExceptionSet base,
     required List<DateEventRangeChange> changes,
+    CalendarDate? cancelledFrom,
     required int maxRangeChanges,
     required int maxValidationCandidateDays,
     required int maxValidationRuleOccurrences,
@@ -27,18 +30,27 @@ final class DateEventRangeSet {
     _budget(maxValidationCandidateDays, 'maxValidationCandidateDays');
     _budget(maxValidationRuleOccurrences, 'maxValidationRuleOccurrences');
     _budget(maxValidationResults, 'maxValidationResults');
-    if (changes.length > maxRangeChanges) {
+    if (changes.length + (cancelledFrom == null ? 0 : 1) > maxRangeChanges) {
       throw const RecurrenceLimitException('maxRangeChanges');
     }
     final values = List<DateEventRangeChange>.of(changes)
       ..sort((a, b) => a.originalStart.compareTo(b.originalStart));
+    cancelledFrom?.requireOrdinary('cancelledFrom');
+    for (var i = 1; i < values.length; i++) {
+      if (values[i - 1].originalStart == values[i].originalStart) {
+        throw ArgumentError('Duplicate range anchor');
+      }
+    }
     // Reuse the same native effective-set membership/duplicate checks in one
     // shared expansion. These synthetic cancellations are validation only.
     DateEventExceptionSet(
       series: base.series,
       exceptions: [
-        for (final value in values)
-          DateEventException.cancel(originalStart: value.originalStart),
+        for (final original in {
+          for (final value in values) value.originalStart,
+          ?cancelledFrom,
+        })
+          DateEventException.cancel(originalStart: original),
       ],
       maxExceptions: maxRangeChanges,
       maxValidationCandidateDays: maxValidationCandidateDays,
@@ -50,13 +62,16 @@ final class DateEventRangeSet {
     if (values.any((value) => singles.contains(value.originalStart))) {
       throw ArgumentError('Range and single exception share an anchor');
     }
-    return DateEventRangeSet._(base, List.unmodifiable(values));
+    return DateEventRangeSet._(base, List.unmodifiable(values), cancelledFrom);
   }
 
-  const DateEventRangeSet._(this.base, this.changes);
+  const DateEventRangeSet._(this.base, this.changes, this.cancelledFrom);
 
   final DateEventExceptionSet base;
   final List<DateEventRangeChange> changes;
+
+  /// Inclusive original-date cutoff; never an actual moved start or history.
+  final CalendarDate? cancelledFrom;
 
   /// Queries complete occurrences in actual-start/original-date order.
   /// Each range uses an absolute shift from its original anchor until the next
@@ -141,6 +156,9 @@ final class DateEventRangeSet {
 
     var index = 0;
     for (final start in starts) {
+      if (cancelledFrom != null && start.compareTo(cancelledFrom!) >= 0) {
+        continue;
+      }
       if (singles.containsKey(start)) continue;
       final original = first.daysUntil(start);
       while (index + 1 < segments.length &&
@@ -161,6 +179,10 @@ final class DateEventRangeSet {
       );
     }
     for (final value in base.exceptions) {
+      if (cancelledFrom != null &&
+          value.originalStart.compareTo(cancelledFrom!) >= 0) {
+        continue;
+      }
       final replacement = value.replacement;
       if (replacement == null ||
           replacement.start.compareTo(until) >= 0 ||
@@ -193,6 +215,7 @@ final class DateEventRangeSet {
   bool operator ==(Object other) {
     if (other is! DateEventRangeSet ||
         base != other.base ||
+        cancelledFrom != other.cancelledFrom ||
         changes.length != other.changes.length) {
       return false;
     }
@@ -203,7 +226,7 @@ final class DateEventRangeSet {
   }
 
   @override
-  int get hashCode => Object.hash(base, Object.hashAll(changes));
+  int get hashCode => Object.hash(base, Object.hashAll(changes), cancelledFrom);
 }
 
 final class _RangeSegment {
