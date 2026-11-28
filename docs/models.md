@@ -947,3 +947,11 @@ ADR 0179 storage additions are server-only:
 | Existing `CalendarInvitationResponseRecord` | Nullable `selectionEvidenceId` relation; legacy deliveries remain null and retain their old hash/receipt interpretation. |
 
 `CalendarInvitationRecurringOccurrenceResponseView` and `CalendarInvitationRecurringOccurrenceResponseRequest` are immutable API carriers, not tables. Head/evidence/pin rows never appear in generated client schemas. See the accepted ADR for exact fields, limits and retention, and the [guide](durable-recurring-occurrence-responses.md) for canonical versus opened-entry command identities. Generated module/example migrations add the approved schema without inventing legacy history.
+
+
+## Proposed authenticated free/busy exchanges
+
+[Proposed ADR 0180](adr/0180-authenticated-bounded-freebusy-exchanges.md) groups trusted VFREEBUSY PUBLISH/REQUEST/REPLY intake, private review, explicit per-calendar publication/request/share/refusal, actor-free background source checks, immutable intent, synthetic MIME, migrations and client/Flutter/recovery validation. It proposes seven private tables plus one nullable typed state on the existing cursor table. Incoming reports remain informational and never establish native free coverage. The recommended source-deletion policy and complete schema/API/retention mechanics remain unapproved; no table source, migration, endpoint, worker or UI implementation follows from this proposal. Existing guarded runtime and the full selected release scope remain in force.
+
+
+The proposed ADR 0180 records are `CalendarFreeBusyRequestHeadRecord`, `CalendarFreeBusySourceRecord`, `CalendarFreeBusyIngressReceiptRecord`, `CalendarFreeBusyCommandRecord`, `CalendarFreeBusySourceReferenceRecord`, `CalendarFreeBusyDeliveryRecord` and `CalendarFreeBusyAttemptRecord`. Their field groups, ownership, indexed source references, quota/retention boundaries and removal order are review material in that ADR. The proposed `CalendarFreeBusyExchangeCursorState` is a server-only nested value on `CalendarCursorRecord.freeBusyExchangeState`, not another table. No model source is added before explicit agreement.

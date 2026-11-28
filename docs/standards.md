@@ -236,3 +236,8 @@ See [pure selection behavior and limits](recurring-response-source-selection.md)
 ## Durable ordinary recurring occurrence responses
 
 Accepted [ADR 0179](adr/0179-durable-shared-recurring-occurrence-responses.md) implements the scoped durable ordinary-recurring occurrence response profile: fresh-history enrollment, bounded source-only cancellation/restoration proof, one shared state per original across master/instance paths, independent host authority and synthetic delivery. See [the implementation guide](durable-recurring-occurrence-responses.md). Validation is recorded separately; real mail, RANGE participation, legacy-history adoption and broader reconciliation remain required separate work.
+
+
+## Proposed authenticated free/busy exchanges
+
+[Proposed ADR 0180](adr/0180-authenticated-bounded-freebusy-exchanges.md) groups trusted VFREEBUSY PUBLISH/REQUEST/REPLY intake, private review, explicit per-calendar publication/request/share/refusal, actor-free background source checks, immutable intent, synthetic MIME, migrations and client/Flutter/recovery validation. It proposes seven private tables plus one nullable typed state on the existing cursor table. Incoming reports remain informational and never establish native free coverage. The recommended source-deletion policy and complete schema/API/retention mechanics remain unapproved; no table source, migration, endpoint, worker or UI implementation follows from this proposal. Existing guarded runtime and the full selected release scope remain in force.
