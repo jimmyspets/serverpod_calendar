@@ -96,6 +96,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0090](0090-vtodo-occurrence-component-implementation.md) | VTODO occurrence component implementation | Scoped ADR 0089 linked source/projection implementation; mechanics under draft review |
 | [0091](0091-vtodo-text-and-link-metadata.md) | VTODO text and link metadata | Scoped confirmed metadata batch implementation; concrete representation/limits under draft review |
 | [0092](0092-vtodo-source-participants.md) | VTODO source participants | Scoped confirmed source/assignment separation implementation; concrete profile under draft review |
+| [0093](0093-vtodo-source-references.md) | VTODO source relationships and attachments | Scoped confirmed inert source-reference implementation; concrete profile under draft review |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

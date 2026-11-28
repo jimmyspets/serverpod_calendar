@@ -309,7 +309,7 @@ void main() {
     final mixed = file(
       events: [
         task(),
-        task(uid: 'other', properties: ['RELATED-TO:other']),
+        task(uid: 'other', properties: ['X-UNPROFILED:value']),
       ],
     );
     expect(
