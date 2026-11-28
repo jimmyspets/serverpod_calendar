@@ -76,6 +76,13 @@ Future<void> runFreeBusyExchangeJourney(
       scrollable: find.byType(Scrollable).first,
     );
     await tester.ensureVisible(finder);
+    // ensureVisible can schedule a scroll frame; hit-test only after it lands.
+    await tester.pumpAndSettle();
+    expect(
+      finder.hitTestable(),
+      findsOneWidget,
+      reason: 'Control is not tappable',
+    );
     final control = tester.widget<Widget>(finder);
     if (control is ButtonStyleButton) {
       expect(
@@ -84,7 +91,7 @@ Future<void> runFreeBusyExchangeJourney(
         reason: 'Command control is disabled',
       );
     }
-    await tester.tap(finder);
+    await tester.tap(finder.hitTestable());
     await tester.pump();
     await idle(allowError: allowError);
   }

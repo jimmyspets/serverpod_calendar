@@ -6,6 +6,6 @@ resolution: workspace
 environment:
   sdk: '>=3.14.0 <3.15.0'
 dependencies:
-  serverpod_client: 4.1.0
+  serverpod_client: 4.1.2
   serverpod_notifications_client:
     path: ../../serverpod_notifications/serverpod_notifications_client

@@ -99,6 +99,7 @@ Future<void> main(List<String> args) async {
         if (args.contains('--freebusy-only')) '--freebusy-only',
         if (args.contains('--subject-freebusy-only')) '--subject-freebusy-only',
         if (args.contains('--feeds')) '--feeds',
+        if (args.contains('--feeds-only')) '--feeds-only',
         if (args.contains('--replies-only')) '--replies-only',
         if (args.contains('--invitations-only')) '--invitations-only',
         if (args.contains('--occurrences-only')) '--occurrences-only',
@@ -137,7 +138,10 @@ Future<void> main(List<String> args) async {
       await out.cancel();
       await err.cancel();
       if (code != 0) throw StateError('Real-client smoke failed ($code).');
-      if (args.contains('--feeds') && !args.contains('--flutter')) return;
+      if ((args.contains('--feeds') || args.contains('--feeds-only')) &&
+          !args.contains('--flutter')) {
+        return;
+      }
       if (!args.contains('--incoming-publications-only') &&
           !args.contains('--information-only') &&
           !args.contains('--subject-freebusy-only') &&
@@ -197,6 +201,12 @@ Future<void> main(List<String> args) async {
       );
     }
     if (args.contains('--flutter')) {
+      final driverPort = int.tryParse(
+        Platform.environment['CALENDAR_TEST_CHROMEDRIVER_PORT'] ?? '18444',
+      );
+      if (driverPort == null || driverPort < 1 || driverPort > 65535) {
+        throw ArgumentError('Invalid ChromeDriver test port.');
+      }
       final driverPath =
           Platform.environment['CHROMEDRIVER'] ??
           '$root/.local/webdriver/chromedriver-win64/chromedriver.exe';
@@ -204,7 +214,7 @@ Future<void> main(List<String> args) async {
         throw StateError('Set CHROMEDRIVER or run tool/setup-webdriver.ps1.');
       }
       final driver = await Process.start(driverPath, [
-        '--port=18444',
+        '--port=$driverPort',
         '--allowed-ips=127.0.0.1',
       ]);
       hosts.add(driver);
@@ -223,7 +233,7 @@ Future<void> main(List<String> args) async {
         for (var i = 0; i < 50; i++) {
           try {
             final request = await http.getUrl(
-              Uri.parse('http://localhost:18444/status'),
+              Uri.parse('http://localhost:$driverPort/status'),
             );
             final response = await request.close();
             await response.drain<void>();
@@ -311,7 +321,7 @@ Future<void> main(List<String> args) async {
             : args.contains('--event-replacement')
             ? '--target=integration_test/event_replace_smoke_test.dart'
             : '--target=integration_test/connected_smoke_test.dart',
-        '--driver-port=18444',
+        '--driver-port=$driverPort',
         '--web-port=18380',
         '--web-hostname=localhost',
         '--headless',

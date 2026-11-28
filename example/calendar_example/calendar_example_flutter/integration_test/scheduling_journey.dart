@@ -546,10 +546,11 @@ Future<void> runSchedulingJourney(WidgetTester tester, Client client) async {
   await tester.enterText(recipients, 'mailto:bob@example.invalid');
   await _tap(tester, 'scheduling-publish');
   expect(find.byKey(const Key('scheduling-error')), findsNothing);
-  Future<void> rangeTerminal() async {
+  cal.UuidValue? exceptionalId;
+  Future<void> rangeTerminal([bool exceptional = false]) async {
     for (var i = 0; i < 150; i++) {
       final status = await api.calendarEvent.schedulingStatus(
-        rangeEvent.eventId,
+        exceptional ? exceptionalId! : rangeEvent.eventId,
       );
       if (status.deliveries.every(
         (d) => d.state == cal.CalendarSchedulingDeliveryState.accepted,
@@ -591,6 +592,71 @@ Future<void> runSchedulingJourney(WidgetTester tester, Client client) async {
     );
     await rangeTerminal();
   }
+  await tester.pageBack();
+  await tester.pumpAndSettle();
+  final exceptionalEvent = (await api.calendarEvent.create(
+    cal.CalendarEventCreateRequest(
+      calendarId: calendar.calendarId,
+      content: content('Flutter exceptional range'),
+    ),
+  ))!;
+  exceptionalId = exceptionalEvent.eventId;
+  await api.calendarEvent.changeOccurrence(
+    cal.CalendarEventOccurrenceChange(
+      eventId: exceptionalEvent.eventId,
+      expectedRevision: 1,
+      originalStart: cal.CalendarEventTiming(
+        kind: cal.CalendarEventTimeKind.date,
+        start: cal.CalendarEventCivil(year: 2026, month: 11, day: 3),
+      ),
+      action: cal.CalendarEventOccurrenceAction.replaceSingleTiming,
+      replacement: cal.CalendarEventTiming(
+        kind: cal.CalendarEventTimeKind.date,
+        start: cal.CalendarEventCivil(year: 2026, month: 11, day: 4),
+      ),
+    ),
+  );
+  final exceptionalEventView = await api.calendarEvent.getEvent(
+    exceptionalEvent.eventId,
+    cal.CalendarEventFieldGroup.values,
+  );
+  unawaited(
+    Navigator.of(tester.element(find.byType(Scaffold).first)).push<void>(
+      MaterialPageRoute(
+        builder: (_) => EventSchedulingScreen(
+          client: client,
+          event: exceptionalEventView,
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+  await _wait(
+    tester,
+    () =>
+        find.byKey(const Key('scheduling-status')).evaluate().isNotEmpty &&
+        find.byType(LinearProgressIndicator).evaluate().isEmpty,
+  );
+  await tester.enterText(
+    find.byKey(const Key('scheduling-recipients')),
+    'mailto:bob@example.invalid',
+  );
+  await _tap(tester, 'scheduling-publish');
+  expect(find.byKey(const Key('scheduling-error')), findsNothing);
+  await rangeTerminal(true);
+  await original('2026-11-03');
+  await _tap(tester, 'scheduling-cancel-future');
+  expect(find.byKey(const Key('scheduling-error')), findsNothing);
+  await rangeTerminal(true);
+  await _tap(tester, 'scheduling-restore-future');
+  expect(find.byKey(const Key('scheduling-error')), findsNothing);
+  final exceptionalView = await api.calendarEvent.getEvent(
+    exceptionalEvent.eventId,
+    cal.CalendarEventFieldGroup.values,
+  );
+  expect(exceptionalView.timingOverrides!.singles, hasLength(1));
+  expect(exceptionalView.timingOverrides!.cancelledFrom, isNull);
+  await rangeTerminal(true);
   await tester.pageBack();
   await tester.pumpAndSettle();
   // This profile deliberately has no binding deletion API. The root harness

@@ -103,6 +103,12 @@ class Protocol extends _is.DatabaseSerializationManager
       );
 
   static List<_isp.TableDefinition> get targetTableDefinitions => [
+    ..._ownTableDefinitions,
+    ..._ipn35bcd.Protocol().getOwnTableDefinitions(),
+    ..._ik9lwgjh.Protocol().getOwnTableDefinitions(),
+  ];
+
+  static List<_isp.TableDefinition> get _ownTableDefinitions => [
     _isp.TableDefinition(
       name: 'serverpod_calendar_feed_credential',
       dartName: 'CalendarFeedCredentialRecord',
@@ -448,8 +454,6 @@ class Protocol extends _is.DatabaseSerializationManager
       ],
       managed: true,
     ),
-    ..._ipn35bcd.Protocol.targetTableDefinitions,
-    ..._ik9lwgjh.Protocol.targetTableDefinitions,
   ];
 
   void registerHostProtocol(
@@ -816,6 +820,9 @@ class Protocol extends _is.DatabaseSerializationManager
   @override
   List<_isp.TableDefinition> getTargetTableDefinitions() =>
       targetTableDefinitions;
+
+  @override
+  List<_isp.TableDefinition> getOwnTableDefinitions() => _ownTableDefinitions;
 
   @override
   String getModuleName() => 'serverpod_calendar_feed';
