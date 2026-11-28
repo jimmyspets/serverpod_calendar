@@ -971,3 +971,13 @@ The maintainer confirmed selecting the effective separately received instance/ra
 - [ ] Review durable multi-source selection/evidence/retention and client integration separately.
 
 See [pure selection behavior and limits](recurring-response-source-selection.md). This does not enable a new response endpoint.
+
+
+## Durable ordinary recurring occurrence responses
+
+The maintainer confirmed effective-notice selection, restore-only reply eligibility independently of calendar Apply, and one shared personal response state per original across master/instance entry paths. [Proposed ADR 0179](adr/0179-durable-shared-recurring-occurrence-responses.md) groups source-history capture, immutable evidence versions, protected APIs/authority, synthetic delivery and migration/client/Flutter/recovery checks. It proposes three server-only proof tables (head, evidence and indexed source pins) and one nullable delivery-evidence relation, bounded proof storage and safe fresh-history enrollment. These mechanics are not yet approved or implemented; current response/runtime guards remain in force. RANGE participation and broader reconciliation remain separate required work.
+
+- [x] Confirm independent restore-only eligibility and shared per-original state.
+- [ ] Obtain explicit agreement on the complete storage/API/history/retention/authority contract.
+- [ ] Implement and validate the entire durable group before one code commit.
+- [ ] Inspect exact-head full hosted results before readiness.
