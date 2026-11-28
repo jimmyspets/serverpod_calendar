@@ -790,3 +790,6 @@ Accepted [ADR 0148](adr/0148-recurring-master-invitation-workflow.md) adds one n
 ## Proposed private instance targets
 
 Accepted [ADR 0149](adr/0149-trusted-single-instance-invitation-review.md) adds targetKey (default master) and nullable typed originalStart JSON to CalendarInvitationRecord, extends correlation uniqueness with targetKey, exposes a read-only original in the view and appends an instanceCancellation kind. Existing master rows retain master/null without invented targets. Private typed identities survive bounded marker/body pruning; no parent proof snapshot, new table or retention-cap expansion is added. Known-series admission, immutable host context and master-only native API rejection are implemented in the scoped batch; validation is recorded separately in the [review guide](single-instance-invitation-review.md) and validation record.
+
+
+Proposed [ADR 0150](adr/0150-pure-instance-invitation-projection.md) adds no table, generated model or endpoint. Its proposed pure immutable result keeps parsed source omissions separate from proposed canonical occurrence state; model fields must not be invented to bypass representability limits. Independent durable target checkpoints, retention and API mechanics require later review.

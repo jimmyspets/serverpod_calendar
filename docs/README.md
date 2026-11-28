@@ -297,3 +297,6 @@ Accepted [ADR 0148](adr/0148-recurring-master-invitation-workflow.md) adds the s
 
 
 Accepted [ADR 0149](adr/0149-trusted-single-instance-invitation-review.md) adds [single-instance invitation review](single-instance-invitation-review.md), separate typed targets, known-series membership and master-action guards. Instance application/replies remain separate; complete batch evidence is recorded independently.
+
+
+Proposed [ADR 0150](adr/0150-pure-instance-invitation-projection.md) defines a pure occurrence-application projection prerequisite before durable target checkpoints. The confirmed clean-entire-series policy remains required for later explicit writes; no instance application API is implemented by this proposal.

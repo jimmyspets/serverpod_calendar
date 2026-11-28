@@ -619,3 +619,14 @@ Accepted [ADR 0149](adr/0149-trusted-single-instance-invitation-review.md) follo
 - [x] Verify target/privacy/version/retry and populated upgrade boundaries, two hosts/process loss and complete grouped checks before one implementation commit.
 
 This scoped implementation retains the original remaining instance/range reconciliation and response requirements; receipt alone never changes calendars or participation. See the [review guide](single-instance-invitation-review.md) and separate complete-batch evidence.
+
+
+## Pure occurrence-application projection proposal
+
+Completed ADR 0149 implementation is in PR #129. The maintainer confirmed whole-series clean-baseline protection for later explicit occurrence writes. Proposed [ADR 0150](adr/0150-pure-instance-invitation-projection.md) validates faithful pure projection before reviewing durable target-checkpoint storage.
+
+- [ ] Review selected REQUEST replacement and CANCEL retain/reject rules, source/canonical separation and bounded pure result.
+- [ ] Implement and validate the approved pure projection with focused VM tests and complete grouped checks.
+- [ ] Separately review durable application/checkpoints, master-update composition and retry/retention mechanics.
+
+Instance mutation/replies and RANGE remain original-scope requirements; this prerequisite alone completes none of those runtime paths.
