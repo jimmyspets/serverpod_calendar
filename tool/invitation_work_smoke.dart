@@ -5,6 +5,10 @@ import 'dart:io';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
 
+bool _recurringResponseMode = false;
+// This is the test client's frozen command cache, surviving owned server loss.
+final _recurringCommands = <String, Map<String, dynamic>>{};
+
 final class _Probe {
   _Probe(this.process, this.lines, this.log) {
     unawaited(process.exitCode.then((_) => exited = true));
@@ -16,6 +20,27 @@ final class _Probe {
   bool busy = false, unusable = false;
   Completer<Map<String, dynamic>>? paused;
   Future<Object?> command(Map<String, Object?> input) async {
+    if (_recurringResponseMode && input['command'] == 'recurring-response') {
+      final key = jsonEncode([
+        input['request'],
+        input['originalStart'],
+        input['openedId'],
+      ]);
+      var frozen = _recurringCommands[key];
+      if (frozen == null) {
+        final result = await command({
+          ...input,
+          'command': 'recurring-response-freeze',
+          'pause': '',
+        });
+        if (result is! Map || result['request'] == null) {
+          return result;
+        }
+        frozen = Map<String, dynamic>.from(result);
+        _recurringCommands[key] = frozen;
+      }
+      input = {...input, 'selectionRequest': frozen};
+    }
     if (busy || unusable) {
       throw StateError('Probe cannot accept another command');
     }
@@ -66,6 +91,8 @@ void require(bool value, String message) {
 }
 
 Future<void> main(List<String> args) async {
+  final recurringResponses = args.contains('--recurring-responses');
+  _recurringResponseMode = recurringResponses;
   final bundles = args.contains('--bundles');
   final bundleResponses = args.contains('--bundle-responses');
   final bundleOccurrenceResponses = args.contains(
@@ -98,6 +125,7 @@ Future<void> main(List<String> args) async {
   final instance = args.contains('--instances') || ranges;
   final recurring =
       bundles ||
+      recurringResponses ||
       bundleResponses ||
       bundleOccurrenceResponses ||
       instanceResponses ||
@@ -115,6 +143,7 @@ Future<void> main(List<String> args) async {
           '$root/example/calendar_example/calendar_example_server',
       environment: {
         'CALENDAR_INVITATION_PROBE_RECURRING': '$recurring',
+        'CALENDAR_INVITATION_PROBE_RECURRING_RESPONSES': '$recurringResponses',
         'SERVERPOD_API_SERVER_PORT': '$port',
         'SERVERPOD_INSIGHTS_SERVER_PORT': '${port + 1}',
         'SERVERPOD_WEB_SERVER_PORT': '${port + 2}',
@@ -703,17 +732,138 @@ Future<void> main(List<String> args) async {
       );
       return;
     }
-    if (bundleResponses || bundleOccurrenceResponses) {
-      final responseCommand = bundleOccurrenceResponses
+    if (bundleResponses || bundleOccurrenceResponses || recurringResponses) {
+      final responseCommand = recurringResponses
+          ? 'recurring-response'
+          : bundleOccurrenceResponses
           ? 'bundle-occurrence-response'
           : 'bundle-response';
+      if (recurringResponses) {
+        for (final pause in ['before', 'after']) {
+          final id = nextCase();
+          final input = <String, Object?>{
+            'command': 'receive',
+            'caseId': id,
+            'key': 'initial',
+            'sequence': 2,
+          };
+          a.paused = Completer<Map<String, dynamic>>();
+          final lost = a
+              .command({...input, 'pause': pause})
+              .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+          final receipt = await a.paused!.future.timeout(
+            const Duration(seconds: 40),
+          );
+          final seen =
+              await b.command({'command': 'inspect', 'caseId': id}) as Map;
+          require(
+            seen['selectionHeads'] == (pause == 'after' ? 1 : 0) &&
+                seen['selectionEvidence'] == (pause == 'after' ? 1 : 0) &&
+                seen['selectionPins'] == (pause == 'after' ? 1 : 0),
+            'Partial or missing source-proof capture at process loss',
+          );
+          await a.stop();
+          await lost;
+          final retry = await b.command(input) as Map;
+          require(
+            (retry['id'] == receipt['id']) == (pause == 'after'),
+            'Source-proof capture retry changed committed identity',
+          );
+          final complete =
+              await b.command({'command': 'inspect', 'caseId': id}) as Map;
+          require(
+            complete['selectionHeads'] == 1 &&
+                complete['selectionEvidence'] == 1 &&
+                complete['selectionPins'] == 1,
+            'Source-proof capture recovery duplicated head/evidence/pins',
+          );
+          a = await start('a-recurring-proof-$pause', 18780);
+        }
+      }
+      if (recurringResponses) {
+        final id = nextCase();
+        final root = await a.command({
+          'command': 'receive',
+          'caseId': id,
+          'key': 'root',
+          'sequence': 2,
+        }) as Map;
+        final notices = await Future.wait([
+          a.command({
+            'command': 'receive',
+            'caseId': id,
+            'key': 'three',
+            'instance': true,
+            'sequence': 3,
+          }),
+          b.command({
+            'command': 'receive',
+            'caseId': id,
+            'key': 'five',
+            'instance': true,
+            'original': '20300105T090000Z',
+            'sequence': 4,
+          }),
+        ]);
+        final captured =
+            await b.command({'command': 'inspect', 'caseId': id}) as Map;
+        require(
+          captured['selectionHeads'] == 1 &&
+              captured['selectionEvidence'] == 3 &&
+              captured['selectionPins'] == 6,
+          'Concurrent notices lost or duplicated the combined source history',
+        );
+        final point = cal.CalendarEventTiming(
+          kind: cal.CalendarEventTimeKind.utc,
+          start: cal.CalendarEventCivil(year: 2030, month: 1, day: 3, hour: 9),
+        );
+        final base = cal.CalendarInvitationResponseRequest(
+          invitationId: cal.UuidValue.fromString(root['entryId'] as String),
+          sourceId: cal.UuidValue.fromString(root['sourceId'] as String),
+          expectedInvitationRevision: root['entryRevision'] as int,
+          expectedResponseRevision: 0,
+          commandId: const cal.Uuid().v4obj(),
+          choice: cal.CalendarInvitationResponseChoice.accepted,
+        );
+        final choices = await Future.wait([
+          a.command({
+            'command': responseCommand,
+            'caseId': id,
+            'request': base.toJson(),
+            'originalStart': point.toJson(),
+          }),
+          b.command({
+            'command': responseCommand,
+            'caseId': id,
+            'openedId': (notices.first as Map)['entryId'],
+            'originalStart': point.toJson(),
+            'request': base
+                .copyWith(
+                  commandId: const cal.Uuid().v4obj(),
+                  choice: cal.CalendarInvitationResponseChoice.declined,
+                )
+                .toJson(),
+          }),
+        ]);
+        require(
+          choices.where((v) => (v as Map)['id'] != null).length == 1 &&
+              choices
+                      .where((v) => (v as Map)['error'] == 'staleRevision')
+                      .length ==
+                  1,
+          'Master/instance routes queued contradictory choices for one original',
+        );
+        stdout.writeln(
+          'PASS: concurrent different-notice capture and cross-route competing choices share one original state.',
+        );
+      }
       for (final pause in ['response-before', 'response-after']) {
         final id = nextCase();
         final incoming = await b.command({
           'command': 'receive',
           'caseId': id,
           'key': 'bundle',
-          'bundle': true,
+          'bundle': !recurringResponses,
           'sequence': 2,
         }) as Map;
         final request = cal.CalendarInvitationResponseRequest(
@@ -800,7 +950,7 @@ Future<void> main(List<String> args) async {
           'command': 'receive',
           'caseId': id,
           'key': 'bundle',
-          'bundle': true,
+          'bundle': !recurringResponses,
           'sequence': 2,
         }) as Map;
         final request = cal.CalendarInvitationResponseRequest(
@@ -850,7 +1000,7 @@ Future<void> main(List<String> args) async {
           'command': 'receive',
           'caseId': id,
           'key': 'initial',
-          'bundle': true,
+          'bundle': !recurringResponses,
         }) as Map;
         var revision = source['entryRevision'] as int;
         if (changedSource) {
@@ -887,8 +1037,10 @@ Future<void> main(List<String> args) async {
             'command': 'receive',
             'caseId': id,
             'key': 'child-only',
-            'bundle': true,
+            'bundle': !recurringResponses,
             'bundleChild': 1,
+            if (recurringResponses) 'instance': true,
+            if (recurringResponses) 'sequence': 1,
           });
         } else {
           await a.command({'command': 'response-revoke', 'caseId': id});
@@ -920,7 +1072,7 @@ Future<void> main(List<String> args) async {
         'command': 'receive',
         'caseId': raceId,
         'key': 'bundle',
-        'bundle': true,
+        'bundle': !recurringResponses,
         'sequence': 2,
       }) as Map;
       final request = cal.CalendarInvitationResponseRequest(
@@ -956,13 +1108,13 @@ Future<void> main(List<String> args) async {
                 1,
         'Bundle master response choices bypassed revision fence',
       );
-      if (bundleOccurrenceResponses) {
+      if (bundleOccurrenceResponses || recurringResponses) {
         final id = nextCase();
         final source = await b.command({
           'command': 'receive',
           'caseId': id,
           'key': 'independent',
-          'bundle': true,
+          'bundle': !recurringResponses,
           'sequence': 2,
         }) as Map;
         final base = cal.CalendarInvitationResponseRequest(
@@ -1007,7 +1159,7 @@ Future<void> main(List<String> args) async {
           'Different original commands incorrectly share a state/revision',
         );
         await b.command({
-          'command': 'bundle-response',
+          'command': recurringResponses ? 'response' : 'bundle-response',
           'caseId': id,
           'request': base
               .copyWith(commandId: const cal.Uuid().v4obj())
@@ -1035,7 +1187,11 @@ Future<void> main(List<String> args) async {
         );
       }
       stdout.writeln(
-        'PASS: independent ${bundleOccurrenceResponses ? 'bundle occurrence' : 'bundle master'} response hosts, same-command and competing-choice races, command loss before/after commit, competing leases, actual loss before/after acceptance and stable retry key/bytes without adoption.',
+        'PASS: independent ${recurringResponses
+            ? 'ordinary recurring occurrence'
+            : bundleOccurrenceResponses
+            ? 'bundle occurrence'
+            : 'bundle master'} response hosts, same-command and competing-choice races, command loss before/after commit, competing leases, actual loss before/after acceptance and stable retry key/bytes without adoption.',
       );
       return;
     }

@@ -572,18 +572,21 @@ void main() {
         CalendarInvitationResponseDeliveryState.expired,
       );
     });
-    for (final (recurring, instance, bundled, targetDay) in [
-      (false, false, false, null),
-      (true, false, false, null),
-      (true, true, false, null),
-      (true, false, true, null),
-      (true, false, true, 29),
-      (true, false, true, 30),
-      (true, false, true, 31),
+    for (final (recurring, instance, bundled, targetDay, combined) in [
+      (false, false, false, null, false),
+      (true, false, false, null, false),
+      (true, true, false, null, false),
+      (true, false, true, null, false),
+      (true, false, true, 29, false),
+      (true, false, true, 30, false),
+      (true, false, true, 31, false),
+      (true, false, true, 29, true),
+      (true, false, true, 30, true),
+      (true, false, true, 31, true),
     ]) {
       test(
         'synthetic ${targetDay != null
-            ? 'bundle original $targetDay'
+            ? '${combined ? 'combined' : 'bundle'} original $targetDay'
             : bundled
             ? 'bundle-master'
             : instance
@@ -608,6 +611,11 @@ void main() {
               responses: CalendarInvitationResponseRuntime(
                 host: host,
                 transport: transport,
+                options: CalendarInvitationResponseOptions(
+                  recurringOccurrences: CalendarRecurringResponseOptions(
+                    enabled: combined,
+                  ),
+                ),
               ),
             ),
           );
@@ -691,13 +699,37 @@ void main() {
           );
           final publication = (await CalendarSchedulingPublicationRecord.db
               .findById(session, published.publicationId))!;
+          final publicationDocument = parseIcalendarSyntax(
+            utf8.encode(publication.payload),
+          );
+          final publicationRoot = publicationDocument.components.single;
+          final publicationEvents = publicationRoot.entries
+              .whereType<IcalendarSyntaxComponent>()
+              .where((c) => c.canonicalName == 'VEVENT')
+              .toList();
+          List<int> packet(IcalendarSyntaxComponent selected) =>
+              serializeIcalendarSyntax(
+                IcalendarSyntaxDocument([
+                  IcalendarSyntaxComponent('VCALENDAR', [
+                    for (final entry in publicationRoot.entries)
+                      if (entry is! IcalendarSyntaxComponent ||
+                          entry.canonicalName != 'VEVENT')
+                        entry,
+                    selected,
+                  ]),
+                ]),
+              );
           var received = await CalendarModule.receiveSchedulingInvitation(
             session,
             CalendarInvitationDelivery(
               namespace: 'loopback',
               deliveryKey: 'request',
               originReference: 'verified-alice',
-              bytes: Uint8List.fromList(utf8.encode(publication.payload)),
+              bytes: Uint8List.fromList(
+                combined
+                    ? packet(publicationEvents.first)
+                    : utf8.encode(publication.payload),
+              ),
             ),
           );
           expect(
@@ -759,7 +791,20 @@ void main() {
             );
           }
 
-          if (bundled) {
+          if (combined) {
+            for (var index = 1; index < publicationEvents.length; index++) {
+              await CalendarModule.receiveSchedulingInvitation(
+                session,
+                CalendarInvitationDelivery(
+                  namespace: 'loopback',
+                  deliveryKey: 'component-$index',
+                  originReference: 'verified-alice',
+                  bytes: Uint8List.fromList(packet(publicationEvents[index])),
+                ),
+              );
+            }
+          }
+          if (bundled && !combined) {
             expect(
               (await service.getInvitation(received.entryId)).kind,
               CalendarInvitationSourceKind.requestBundle,
@@ -777,16 +822,38 @@ void main() {
                 );
           Future<CalendarInvitationResponseReceipt> send(
             CalendarInvitationResponseRequest request,
-          ) => targetOriginal != null
-              ? service.sendInvitationBundleOccurrenceResponse(
-                  CalendarInvitationBundleOccurrenceResponseRequest(
-                    request: request,
-                    originalStart: targetOriginal,
+          ) async {
+            if (combined) {
+              final selected = await service.recurringOccurrenceResponse(
+                received.entryId,
+                targetOriginal!,
+              );
+              return service.sendRecurringOccurrenceResponse(
+                CalendarInvitationRecurringOccurrenceResponseRequest(
+                  request: request.copyWith(
+                    sourceId: selected.membershipSourceId!,
                   ),
-                )
-              : bundled
-              ? service.sendInvitationBundleResponse(request)
-              : service.sendInvitationResponse(request);
+                  openedInvitationId: received.entryId,
+                  originalStart: targetOriginal,
+                  selectionHeadId: selected.selectionHeadId,
+                  expectedSelectionRevision: selected.selectionRevision,
+                  selectionEvidenceId: selected.selectionEvidenceId!,
+                  selectionDigest: selected.selectionDigest!,
+                ),
+              );
+            }
+            return targetOriginal != null
+                ? service.sendInvitationBundleOccurrenceResponse(
+                    CalendarInvitationBundleOccurrenceResponseRequest(
+                      request: request,
+                      originalStart: targetOriginal,
+                    ),
+                  )
+                : bundled
+                ? service.sendInvitationBundleResponse(request)
+                : service.sendInvitationResponse(request);
+          }
+
           await send(
             CalendarInvitationResponseRequest(
               invitationId: received.entryId,

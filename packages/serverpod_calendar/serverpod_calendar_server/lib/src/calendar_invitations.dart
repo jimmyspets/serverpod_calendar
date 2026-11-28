@@ -456,6 +456,7 @@ extension CalendarInvitationOperations on CalendarService {
         transaction: tx,
       );
     }
+    await _rrCleanup(recipient, tx, now);
     // Retained personal responses pin their exact authorization evidence, even
     // when this particular host has not installed its optional response worker.
     final responsePins = await CalendarInvitationResponseRecord.db.find(
@@ -474,6 +475,7 @@ extension CalendarInvitationOperations on CalendarService {
         .map((r) => r.sourceId)
         .toSet();
     protectedSources.addAll(responsePins.map((r) => r.sourceId));
+    protectedSources.addAll(await _rrProtectedSources(recipient, tx));
     final sources = await _invSources(entries, tx);
     if (responsePins.any(
       (r) =>
@@ -524,6 +526,14 @@ extension CalendarInvitationOperations on CalendarService {
           )) {
         if (responsePins.any((r) => r.entryId == entry.id)) {
           throw _failure(CalendarFailureCode.unavailable);
+        }
+        final selectionHead = await _rrHead(
+          recipient,
+          entry.correlationDigest,
+          tx,
+        );
+        if (selectionHead?.masterEntryId == entry.id) {
+          continue;
         }
         await CalendarInvitationResponseStateRecord.db.deleteWhere(
           _session,
@@ -1093,6 +1103,22 @@ extension CalendarInvitationOperations on CalendarService {
           _session,
           entry,
           transaction: tx,
+        );
+      }
+      if (selected) {
+        await _rrCapture(
+          recipient,
+          entry,
+          source,
+          tx,
+          work: bundleWork,
+          enroll:
+              freshEntry &&
+              targetKey == 'master' &&
+              recurring &&
+              !_invBundle(message) &&
+              linked == null &&
+              !entries.any((e) => e.correlationDigest == correlation),
         );
       }
       final receipt = await CalendarInvitationReceiptRecord.db.insertRow(

@@ -1,0 +1,16 @@
+class: CalendarInvitationResponseSelectionEvidenceRecord
+serverOnly: true
+table: calendar_inv_response_selection_evidence
+fields:
+  id: UuidValue?, defaultPersist=random
+  headId: UuidValue, relation(parent=calendar_inv_response_selection_head)
+  revision: int
+  evidenceJson: String
+  digest: String
+  byteCount: int
+  createdAt: DateTime
+  retiredAt: DateTime?
+indexes:
+  inv_response_selection_evidence_unique:
+    fields: headId, revision
+    unique: true

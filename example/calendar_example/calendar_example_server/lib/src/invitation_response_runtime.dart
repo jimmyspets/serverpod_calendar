@@ -110,6 +110,8 @@ final class DemoInvitationResponseHost
           CalendarInvitationResponseOperation.dispatchOccurrence,
           CalendarInvitationResponseOperation.dispatchBundleMaster,
           CalendarInvitationResponseOperation.dispatchBundleOccurrence,
+          CalendarInvitationResponseOperation.dispatchRecurringOccurrence,
+          CalendarInvitationResponseOperation.maintainRecurringResponseEvidence,
         }.contains(c.operation)) {
       return false;
     }
@@ -117,6 +119,8 @@ final class DemoInvitationResponseHost
       CalendarInvitationResponseOperation.read,
       CalendarInvitationResponseOperation.readBundleMaster,
       CalendarInvitationResponseOperation.readBundleOccurrence,
+      CalendarInvitationResponseOperation.readRecurringOccurrence,
+      CalendarInvitationResponseOperation.maintainRecurringResponseEvidence,
     }.contains(c.operation)) {
       final source = c.sourceMessage,
           outgoing = c.outgoingMessage,

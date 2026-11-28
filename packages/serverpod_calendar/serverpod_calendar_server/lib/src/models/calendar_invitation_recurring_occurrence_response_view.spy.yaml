@@ -1,0 +1,20 @@
+class: CalendarInvitationRecurringOccurrenceResponseView
+immutable: true
+fields:
+  response: CalendarInvitationResponseView
+  openedInvitationId: UuidValue
+  openedInvitationRevision: int
+  masterInvitationId: UuidValue
+  masterInvitationRevision: int
+  membershipSourceId: UuidValue?
+  originalStart: CalendarEventTiming
+  selectionHeadId: UuidValue
+  selectionRevision: int
+  selectionEvidenceId: UuidValue?
+  selectionDigest: String?
+  canSend: bool
+  blockedReason: String?
+  controllingInvitationId: UuidValue?
+  controllingSourceId: UuidValue?
+  controllingRole: String?
+  componentVersion: CalendarInvitationBundleComponentVersion?

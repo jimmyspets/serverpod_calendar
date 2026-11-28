@@ -142,4 +142,24 @@ class CalendarInvitationEndpoint extends Endpoint {
   ) =>
       CalendarModule.service(session)
           .sendInvitationBundleOccurrenceResponse(request);
+  Future<CalendarInvitationRecurringOccurrenceResponseView>
+  recurringOccurrenceResponse(
+    Session session,
+    UuidValue id,
+    CalendarEventTiming originalStart,
+  ) =>
+      CalendarModule.service(session)
+          .recurringOccurrenceResponse(id, originalStart);
+  Future<List<CalendarInvitationResponseActivityView>>
+  recurringOccurrenceResponseActivity(
+    Session session,
+    UuidValue id,
+    CalendarEventTiming originalStart,
+  ) =>
+      CalendarModule.service(session)
+          .recurringOccurrenceResponseActivity(id, originalStart);
+  Future<CalendarInvitationResponseReceipt> sendRecurringOccurrenceResponse(
+    Session session,
+    CalendarInvitationRecurringOccurrenceResponseRequest request,
+  ) => CalendarModule.service(session).sendRecurringOccurrenceResponse(request);
 }

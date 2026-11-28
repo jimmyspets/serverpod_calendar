@@ -18,6 +18,10 @@ enum CalendarInvitationResponseOperation {
   readBundleOccurrence,
   sendBundleOccurrence,
   dispatchBundleOccurrence,
+  maintainRecurringResponseEvidence,
+  readRecurringOccurrence,
+  sendRecurringOccurrence,
+  dispatchRecurringOccurrence,
 }
 
 final class CalendarInvitationResponseAuthority {
@@ -52,6 +56,9 @@ final class CalendarInvitationResponsePolicyContext {
     this.isRetry = false,
     this.responseOriginalStart,
     this.responseComponentVersion,
+    this.recurringSelection,
+    this.proposedRecurringSelection,
+    this.recurringOpenedInvitation,
     this.occurrenceBasis,
     this.occurrenceBasisUnavailable = false,
   });
@@ -72,6 +79,9 @@ final class CalendarInvitationResponsePolicyContext {
   final bool isRetry;
   final CalendarEventTiming? responseOriginalStart;
   final CalendarInvitationBundleComponentVersion? responseComponentVersion;
+  final CalendarRecurringResponseEvidence? recurringSelection,
+      proposedRecurringSelection;
+  final CalendarInvitationView? recurringOpenedInvitation;
   final CalendarInvitationOccurrenceBasis? occurrenceBasis;
   final bool occurrenceBasisUnavailable;
 
@@ -100,6 +110,9 @@ final class CalendarInvitationResponsePolicyContext {
     isRetry: isRetry,
     responseOriginalStart: responseOriginalStart,
     responseComponentVersion: responseComponentVersion,
+    recurringSelection: recurringSelection,
+    proposedRecurringSelection: proposedRecurringSelection,
+    recurringOpenedInvitation: recurringOpenedInvitation,
     occurrenceBasis: basis,
     occurrenceBasisUnavailable: unavailable,
   );
@@ -149,6 +162,7 @@ abstract interface class CalendarInvitationResponseTransport {
 
 final class CalendarInvitationResponseOptions {
   CalendarInvitationResponseOptions({
+    CalendarRecurringResponseOptions? recurringOccurrences,
     this.maxStatesPerRecipient = 128,
     this.maxStatesPerScope = 4096,
     this.maxResponsesPerState = 32,
@@ -165,7 +179,8 @@ final class CalendarInvitationResponseOptions {
     this.retryBase = const Duration(seconds: 30),
     this.expiry = const Duration(days: 7),
     this.retention = const Duration(days: 30),
-  }) {
+  }) : recurringOccurrences =
+           recurringOccurrences ?? CalendarRecurringResponseOptions() {
     for (final (value, cap) in [
       (maxStatesPerRecipient, 128),
       (maxStatesPerScope, 4096),
@@ -196,6 +211,7 @@ final class CalendarInvitationResponseOptions {
       throw ArgumentError('Invalid response worker configuration');
     }
   }
+  final CalendarRecurringResponseOptions recurringOccurrences;
   final int maxStatesPerRecipient,
       maxStatesPerScope,
       maxResponsesPerState,
@@ -219,4 +235,62 @@ final class CalendarInvitationResponseRuntime {
   final CalendarInvitationResponseHost host;
   final CalendarInvitationResponseTransport transport;
   final CalendarInvitationResponseOptions options;
+}
+
+/// Explicitly opt in only for new, fully captured ordinary recurring histories.
+final class CalendarRecurringResponseOptions {
+  CalendarRecurringResponseOptions({
+    this.enabled = false,
+    this.maxHeadsPerRecipient = 128,
+    this.maxHeadsPerScope = 4096,
+    this.maxVersionsPerHead = 64,
+    this.maxHistorySlots = 64,
+    this.maxPinsPerRecipient = 16384,
+    this.maxPinsPerScope = 262144,
+    this.maxEvidenceBytesPerHead = 4194304,
+    this.maxEvidenceBytesPerRecipient = 16777216,
+    this.maxEvidenceBytesPerScope = 67108864,
+  }) {
+    for (final (value, cap) in [
+      (maxHeadsPerRecipient, 128),
+      (maxHeadsPerScope, 4096),
+      (maxVersionsPerHead, 64),
+      (maxHistorySlots, 64),
+      (maxPinsPerRecipient, 16384),
+      (maxPinsPerScope, 262144),
+      (maxEvidenceBytesPerHead, 4194304),
+      (maxEvidenceBytesPerRecipient, 16777216),
+      (maxEvidenceBytesPerScope, 67108864),
+    ]) {
+      if (value < 1 || value > cap) {
+        throw ArgumentError('Invalid selection limit');
+      }
+    }
+  }
+  final bool enabled;
+  final int maxHeadsPerRecipient,
+      maxHeadsPerScope,
+      maxVersionsPerHead,
+      maxHistorySlots,
+      maxPinsPerRecipient,
+      maxPinsPerScope,
+      maxEvidenceBytesPerHead,
+      maxEvidenceBytesPerRecipient,
+      maxEvidenceBytesPerScope;
+}
+
+/// Immutable actual source closure for trusted policy; no database row is exposed.
+final class CalendarRecurringResponseEvidence {
+  CalendarRecurringResponseEvidence({
+    required this.headId,
+    required this.evidenceId,
+    required this.revision,
+    required this.digest,
+    required this.snapshotJson,
+    required Map<String, IcalendarSchedulingMessage> packets,
+  }) : packets = Map.unmodifiable(packets);
+  final UuidValue headId, evidenceId;
+  final int revision;
+  final String digest, snapshotJson;
+  final Map<String, IcalendarSchedulingMessage> packets;
 }

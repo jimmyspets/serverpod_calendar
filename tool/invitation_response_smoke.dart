@@ -73,21 +73,36 @@ Future<void> instanceInvitationResponseSmoke(List<Client> clients) async {
     false,
   );
   try {
-    final view = await b.response(incoming.entryId);
-    if (!view.canSend || view.originalStart?.start.day != 5) {
+    final original = (await b.getInvitation(incoming.entryId)).originalStart!;
+    final selection = await b.recurringOccurrenceResponse(
+      incoming.entryId,
+      original,
+    );
+    final view = selection.response;
+    if (!selection.canSend || view.originalStart?.start.day != 5) {
       throw StateError('Wrong response original');
     }
     final request = cal.CalendarInvitationResponseRequest(
-      invitationId: incoming.entryId,
-      sourceId: incoming.sourceId,
-      expectedInvitationRevision: incoming.entryRevision,
+      invitationId: selection.masterInvitationId,
+      sourceId: selection.membershipSourceId!,
+      expectedInvitationRevision: selection.masterInvitationRevision,
       expectedResponseRevision: 0,
       commandId: const cal.Uuid().v4obj(),
       choice: cal.CalendarInvitationResponseChoice.declined,
     );
+    final selectedRequest =
+        cal.CalendarInvitationRecurringOccurrenceResponseRequest(
+          request: request,
+          openedInvitationId: incoming.entryId,
+          originalStart: original,
+          selectionHeadId: selection.selectionHeadId,
+          expectedSelectionRevision: selection.selectionRevision,
+          selectionEvidenceId: selection.selectionEvidenceId!,
+          selectionDigest: selection.selectionDigest!,
+        );
     final results = await Future.wait([
-      a.sendResponse(request),
-      b.sendResponse(request),
+      a.sendRecurringOccurrenceResponse(selectedRequest),
+      b.sendRecurringOccurrenceResponse(selectedRequest),
     ]);
     if (results.first.id != results.last.id ||
         (await a.response(master.entryId)).revision != 0 ||
@@ -102,9 +117,10 @@ Future<void> instanceInvitationResponseSmoke(List<Client> clients) async {
       21,
       'Independent master update',
     );
-    if (!(await b.response(incoming.entryId)).appliesToCurrentSource ||
-        (await a.sendResponse(request)).id != results.first.id) {
-      throw StateError('Master version replaced independent instance response');
+    if ((await b.response(incoming.entryId)).appliesToCurrentSource ||
+        (await a.sendRecurringOccurrenceResponse(selectedRequest)).id !=
+            results.first.id) {
+      throw StateError('Combined proof changed a retained instance receipt');
     }
     await clients.last.invitationDemo.simulateOccurrence(
       id,
@@ -113,7 +129,8 @@ Future<void> instanceInvitationResponseSmoke(List<Client> clients) async {
       false,
     );
     if ((await a.response(incoming.entryId)).appliesToCurrentSource ||
-        (await b.sendResponse(request)).id != results.first.id) {
+        (await b.sendRecurringOccurrenceResponse(selectedRequest)).id !=
+            results.first.id) {
       throw StateError('Instance historical retry changed intent');
     }
     await clients.last.invitationDemo.simulateOccurrence(

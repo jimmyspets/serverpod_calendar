@@ -42,3 +42,8 @@ Accepted [ADR 0153](adr/0153-explicit-single-instance-attendee-responses.md) sup
 
 
 Accepted [ADR 0176](adr/0176-bundled-master-attendee-responses.md) extends the response contract with [dedicated bundle master responses](bundled-master-attendee-responses.md). Existing response tables/caps are reused, with independent authority and source-derived digest families. A master REPLY does not acknowledge independently versioned exceptions. Grouped implementation validation is recorded separately; occurrence/range bundle replies and real transport remain required separate work.
+
+
+## Shared ordinary-recurring occurrence responses
+
+Accepted [ADR 0179](adr/0179-durable-shared-recurring-occurrence-responses.md) adds the opt-in fresh-history profile documented in [the durable guide](durable-recurring-occurrence-responses.md). Master and instance entry paths share one personal state per original; effective source history and restore-only eligibility remain independent of calendar Add/Apply. Old scalar single-instance sends stay unavailable for enrolled histories, and range entries require the new explicit-original API. Legacy/non-enrolled and complete-bundle behavior remains separate.

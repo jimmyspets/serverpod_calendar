@@ -18,14 +18,18 @@ extension CalendarInvitationResponseOccurrenceOperations on CalendarService {
     final responseOriginal = context.responseOriginalStart;
     if (responseOriginal != null) {
       try {
-        if (context.sourceMessage == null) {
+        if (context.sourceMessage == null &&
+            context.recurringSelection == null) {
           throw _failure(CalendarFailureCode.unavailable);
         }
-        final target = _irBundleTarget(
-          context.sourceMessage!,
-          responseOriginal,
-          work,
-        );
+        final target = context.recurringSelection == null
+            ? _irBundleTarget(context.sourceMessage!, responseOriginal, work)
+            : _rrTarget(
+                context.recurringSelection!,
+                responseOriginal,
+                context.recipient.calendarAddress,
+                work ?? RecurrenceWorkBudget(maxWork: eventMaxCandidateWork),
+              );
         componentVersion = target.componentVersion;
         if (target.cancelled) error = CalendarFailureCode.validation;
       } on CalendarException catch (e) {

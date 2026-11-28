@@ -1,3 +1,4 @@
+import 'recurring_occurrence_response_journey.dart';
 import 'bundle_occurrence_response_journey.dart';
 import 'invitation_cancellation_application_journey.dart';
 import 'invitation_adoption_journey.dart';
@@ -140,6 +141,7 @@ Future<void> runInvitationJourney(WidgetTester tester, Client client) async {
   await runInvitationResponseJourney(tester, client, instance: true);
   await runInvitationResponseJourney(tester, client, bundleMaster: true);
   await runBundleOccurrenceResponseJourney(tester, client);
+  await runRecurringOccurrenceResponseJourney(tester, client);
   await runInstanceInvitationJourney(tester, client);
   await runRangeInvitationJourney(tester, client);
   await runInstanceInvitationApplicationJourney(tester, client);

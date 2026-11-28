@@ -15,6 +15,8 @@ import 'scheduling_runtime.dart';
 import 'inbound_reply_runtime.dart';
 import 'invitation_runtime.dart';
 import 'invitation_bundle_values.dart';
+import 'recurring_invitation_response_values.dart';
+import 'recurring_response_history.dart';
 import 'invitation_bundle_response_values.dart';
 import 'invitation_bundle_update_values.dart';
 import 'invitation_occurrence_values.dart';
@@ -41,6 +43,8 @@ import 'availability_import_baseline.dart';
 
 part 'calendar_publication.dart';
 part 'calendar_invitations.dart';
+part 'calendar_recurring_response_evidence.dart';
+part 'calendar_recurring_responses.dart';
 part 'calendar_invitation_occurrences.dart';
 part 'calendar_invitation_responses.dart';
 part 'calendar_invitation_response_occurrences.dart';

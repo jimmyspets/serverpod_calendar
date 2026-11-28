@@ -53,9 +53,13 @@ Future<void> runInstanceInvitationJourney(
       find.byKey(ValueKey('invitation-response-${instance.id}')),
       findsOneWidget,
     );
-    final response = await api.response(instance.id);
+    expect((await api.response(instance.id)).canSend, isFalse);
+    final response = await api.recurringOccurrenceResponse(
+      instance.id,
+      instance.originalStart!,
+    );
     expect(response.canSend, isTrue);
-    expect(response.originalStart!.start.day, 5);
+    expect(response.originalStart.start.day, 5);
     expect(find.byKey(ValueKey('invitation-add-${instance.id}')), findsNothing);
     await tap(find.byKey(ValueKey('invitation-source-${instance.id}')));
     await tap(find.byKey(ValueKey('invitation-history-${instance.sourceId}')));

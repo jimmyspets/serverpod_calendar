@@ -1,0 +1,13 @@
+class: CalendarInvitationResponseSelectionSourcePinRecord
+serverOnly: true
+table: calendar_inv_response_selection_pin
+fields:
+  id: UuidValue?, defaultPersist=random
+  evidenceId: UuidValue, relation(parent=calendar_inv_response_selection_evidence)
+  sourceId: UuidValue, relation(parent=serverpod_calendar_invitation_source)
+indexes:
+  inv_response_selection_pin_unique:
+    fields: evidenceId, sourceId
+    unique: true
+  inv_response_selection_pin_source:
+    fields: sourceId

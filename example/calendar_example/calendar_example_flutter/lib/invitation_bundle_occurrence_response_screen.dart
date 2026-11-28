@@ -11,9 +11,11 @@ class InvitationBundleOccurrenceResponseScreen extends StatefulWidget {
     super.key,
     required this.client,
     required this.id,
+    this.recurring = false,
   });
   final Client client;
   final cal.UuidValue id;
+  final bool recurring;
   @override
   State<InvitationBundleOccurrenceResponseScreen> createState() =>
       _SelectorState();
@@ -25,6 +27,7 @@ class _SelectorState extends State<InvitationBundleOccurrenceResponseScreen> {
       _zone = TextEditingController();
   cal.CalendarEventTimeKind _kind = cal.CalendarEventTimeKind.utc;
   cal.CalendarInvitationBundleOccurrenceResponseView? _view;
+  cal.CalendarInvitationRecurringOccurrenceResponseView? _recurringView;
   cal.CalendarEventTiming? _original;
   String? _error;
   bool _busy = true;
@@ -71,7 +74,7 @@ class _SelectorState extends State<InvitationBundleOccurrenceResponseScreen> {
         .serverpod_calendar
         .calendarInvitation
         .getInvitation(widget.id);
-    final timing = invitation.timing;
+    final timing = invitation.originalStart ?? invitation.timing;
     if (mounted && timing != null) {
       String two(int n) => n.toString().padLeft(2, '0');
       final c = timing.start;
@@ -85,6 +88,7 @@ class _SelectorState extends State<InvitationBundleOccurrenceResponseScreen> {
   void _changed() {
     setState(() {
       _view = null;
+      _recurringView = null;
       _original = null;
       _error = null;
     });
@@ -117,16 +121,18 @@ class _SelectorState extends State<InvitationBundleOccurrenceResponseScreen> {
             : int.parse(time![3]!),
       ),
     );
-    final view = await widget
-        .client
-        .modules
-        .serverpod_calendar
-        .calendarInvitation
-        .bundleOccurrenceResponse(widget.id, original);
+    final api = widget.client.modules.serverpod_calendar.calendarInvitation;
+    final view = widget.recurring
+        ? null
+        : await api.bundleOccurrenceResponse(widget.id, original);
+    final recurringView = widget.recurring
+        ? await api.recurringOccurrenceResponse(widget.id, original)
+        : null;
     if (mounted) {
       setState(() {
         _original = original;
         _view = view;
+        _recurringView = recurringView;
       });
     }
   });
@@ -192,12 +198,13 @@ class _SelectorState extends State<InvitationBundleOccurrenceResponseScreen> {
           onPressed: _busy ? null : _check,
           child: const Text('Validate original'),
         ),
-        if (_original != null && _view != null) ...[
+        if (_original != null && (_view != null || _recurringView != null)) ...[
           Text(
             invitationTimingLabel(_original!),
             key: const Key('bundle-occurrence-original'),
           ),
-          if (_view!.componentVersion case final component?)
+          if ((_recurringView?.componentVersion ?? _view?.componentVersion)
+              case final component?)
             Text(
               'Effective invitation SEQUENCE: ${component.sequence?.toString() ?? 'omitted'}',
               key: const Key('bundle-occurrence-version'),
@@ -211,7 +218,8 @@ class _SelectorState extends State<InvitationBundleOccurrenceResponseScreen> {
                       builder: (_) => InvitationResponseScreen(
                         client: widget.client,
                         id: widget.id,
-                        bundleOriginal: _original!,
+                        bundleOriginal: widget.recurring ? null : _original!,
+                        recurringOriginal: widget.recurring ? _original! : null,
                       ),
                     ),
                   ),

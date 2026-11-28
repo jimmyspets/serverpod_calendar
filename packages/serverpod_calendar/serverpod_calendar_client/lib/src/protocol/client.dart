@@ -135,6 +135,10 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_occur
     as _irwikun7;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_occurrence_apply_request.dart'
     as _idv4uqrm;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_recurring_occurrence_response_request.dart'
+    as _i89hvuve;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_recurring_occurrence_response_view.dart'
+    as _iwll92kz;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_response_activity_view.dart'
     as _ihlye3x3;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_response_receipt.dart'
@@ -1167,6 +1171,47 @@ class EndpointCalendarInvitation extends _isc.EndpointRef {
   ) => caller.callServerEndpoint<_iepygmya.CalendarInvitationResponseReceipt>(
     'serverpod_calendar.calendarInvitation',
     'sendBundleOccurrenceResponse',
+    {'request': request},
+  );
+
+  _ida.Future<_iwll92kz.CalendarInvitationRecurringOccurrenceResponseView>
+  recurringOccurrenceResponse(
+    _isc.UuidValue id,
+    _i71qtqle.CalendarEventTiming originalStart,
+  ) =>
+      caller.callServerEndpoint<
+        _iwll92kz.CalendarInvitationRecurringOccurrenceResponseView
+      >(
+        'serverpod_calendar.calendarInvitation',
+        'recurringOccurrenceResponse',
+        {
+          'id': id,
+          'originalStart': originalStart,
+        },
+      );
+
+  _ida.Future<List<_ihlye3x3.CalendarInvitationResponseActivityView>>
+  recurringOccurrenceResponseActivity(
+    _isc.UuidValue id,
+    _i71qtqle.CalendarEventTiming originalStart,
+  ) =>
+      caller.callServerEndpoint<
+        List<_ihlye3x3.CalendarInvitationResponseActivityView>
+      >(
+        'serverpod_calendar.calendarInvitation',
+        'recurringOccurrenceResponseActivity',
+        {
+          'id': id,
+          'originalStart': originalStart,
+        },
+      );
+
+  _ida.Future<_iepygmya.CalendarInvitationResponseReceipt>
+  sendRecurringOccurrenceResponse(
+    _i89hvuve.CalendarInvitationRecurringOccurrenceResponseRequest request,
+  ) => caller.callServerEndpoint<_iepygmya.CalendarInvitationResponseReceipt>(
+    'serverpod_calendar.calendarInvitation',
+    'sendRecurringOccurrenceResponse',
     {'request': request},
   );
 }
