@@ -261,7 +261,7 @@ void main() {
       DateTime.utc(1970),
     );
   });
-  test('unsupported actions snooze proximity nested components and alarm recipients reject', () {
+  test('unsupported actions incomplete snooze proximity nested components and recipients reject', () {
     for (final extra in <List<String>>[
       ['RELATED-TO;RELTYPE=SNOOZE:parent'],
       ['PROXIMITY:ARRIVE'],
