@@ -96,8 +96,11 @@ final class InvitationTestHost implements CalendarInvitationHost {
     IcalendarSchedulingMessage message,
   ) async {
     if (delivery.originReference != 'trusted' ||
-        message.events.single.participants.organizer!.address !=
-            'mailto:organizer@example.invalid') {
+        message.events.any(
+          (part) =>
+              part.participants.organizer?.address !=
+              'mailto:organizer@example.invalid',
+        )) {
       throw CalendarException(
         code: CalendarFailureCode.accessDenied,
         message: 'Synthetic origin denied',

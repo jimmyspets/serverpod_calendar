@@ -100,7 +100,10 @@ class _InvitationAdoptionScreenState extends State<InvitationAdoptionScreen> {
       if (mounted) {
         setState(() => _entry = current);
       }
-      if (current.kind == cal.CalendarInvitationSourceKind.request) {
+      if ({
+        cal.CalendarInvitationSourceKind.request,
+        cal.CalendarInvitationSourceKind.requestBundle,
+      }.contains(current.kind)) {
         await _page();
       }
     }
@@ -157,7 +160,11 @@ class _InvitationAdoptionScreenState extends State<InvitationAdoptionScreen> {
             'Linked event: ${_link!.eventId}\nCalendar: ${_link!.calendarId}',
             key: const Key('invitation-linked-event'),
           ),
-        if (_link != null)
+        if (_link?.bundledRequest == true)
+          const Text(
+            'This link preserves the complete initial invitation. Source updates and participation responses are not supported for this profile yet.',
+          ),
+        if (_link != null && !_link!.bundledRequest)
           TextButton(
             key: const Key('invitation-review-update'),
             onPressed: _busy
@@ -173,7 +180,10 @@ class _InvitationAdoptionScreenState extends State<InvitationAdoptionScreen> {
             child: const Text('Review incoming update'),
           ),
         if (_checked && _link == null) ...[
-          if (_entry.kind != cal.CalendarInvitationSourceKind.request ||
+          if (!{
+                cal.CalendarInvitationSourceKind.request,
+                cal.CalendarInvitationSourceKind.requestBundle,
+              }.contains(_entry.kind) ||
               _entry.dismissedAt != null ||
               _entry.sourceId == null)
             const Text('This version is not available for calendar addition.')

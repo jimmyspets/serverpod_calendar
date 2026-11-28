@@ -9,8 +9,11 @@ Future<void> runInvitationAdoptionJourney(
   WidgetTester tester,
   Client client, {
   bool recurring = false,
+  bool bundle = false,
 }) async {
-  final simulate = recurring
+  final simulate = bundle
+      ? client.invitationDemo.simulateBundle
+      : recurring
       ? client.invitationDemo.simulateRecurring
       : client.invitationDemo.simulate;
   final module = client.modules.serverpod_calendar;
@@ -124,6 +127,24 @@ Future<void> runInvitationAdoptionJourney(
       (await module.calendarInvitation.getInvitation(entry.id)).dismissedAt,
       isNotNull,
     );
+    if (bundle) {
+      expect(link.bundledRequest, isTrue);
+      expect(find.byKey(const Key('invitation-review-update')), findsNothing);
+      final preview = await module.calendarEvent.preview(
+        cal.CalendarEventOccurrenceQuery(
+          eventId: link.eventId,
+          expectedRevision: 1,
+          fromUtc: DateTime.utc(2030),
+          untilUtc: DateTime.utc(2030, 1, 9),
+        ),
+      );
+      expect(preview.occurrences.length, 3);
+      await tap(find.byKey(const Key('invitation-adoption-refresh')));
+      expect(find.byKey(const Key('invitation-linked-event')), findsOneWidget);
+      navigator.pop();
+      await tester.pumpAndSettle();
+      return;
+    }
     await simulate(
       id,
       const cal.Uuid().v4obj(),

@@ -106,8 +106,11 @@ final class _Host implements CalendarInvitationHost {
   ) async {
     if (!scope.startsWith('invitation-probe:') ||
         d.originReference != 'verified-probe' ||
-        m.events.single.participants.organizer!.address !=
-            'mailto:organizer@example.invalid') {
+        m.events.any(
+          (part) =>
+              part.participants.organizer?.address !=
+              'mailto:organizer@example.invalid',
+        )) {
       throw StateError('Foreign fixture');
     }
     return recipient;
@@ -416,6 +419,20 @@ Future<void> main(List<String> args) async {
               'ORGANIZER:mailto:organizer@example.invalid',
               'ATTENDEE:mailto:recipient@example.invalid',
               'END:VEVENT',
+              if (input['bundle'] == true)
+                for (final future in [false, true]) ...[
+                  'BEGIN:VEVENT',
+                  'UID:invitation:$caseId',
+                  'DTSTAMP:20260102T000000Z',
+                  if (future) 'SEQUENCE:12',
+                  'RECURRENCE-ID${future ? ';RANGE=THISANDFUTURE' : ''}:2030010${future ? '5' : '3'}T090000Z',
+                  'DTSTART:2030010${future ? '5' : '3'}T110000Z',
+                  'DTEND:2030010${future ? '5' : '3'}T120000Z',
+                  'SUMMARY:Synthetic exception',
+                  'ORGANIZER:mailto:organizer@example.invalid',
+                  'ATTENDEE:mailto:recipient@example.invalid',
+                  'END:VEVENT',
+                ],
               'END:VCALENDAR',
               '',
             ].join('\r\n');
@@ -608,6 +625,16 @@ Future<void> main(List<String> args) async {
                   ),
               'acceptedKind': application?.kind.name,
               'eventStatus': eventRows.firstOrNull?.content.status.name,
+              'singleCount':
+                  eventRows.firstOrNull?.timingOverrides?.singles.length,
+              'futureCount':
+                  eventRows.firstOrNull?.timingOverrides?.future.length,
+              'bundledLinks': await CalendarInvitationLinkRecord.db.count(
+                session,
+                where: (t) =>
+                    t.scopeKey.equals(host.scope) &
+                    t.bundledRequest.equals(true),
+              ),
               'cutoff': eventRows.firstOrNull?.timingOverrides?.cancelledFrom
                   ?.toJson(),
               'checkpointVersion':

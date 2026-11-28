@@ -18,6 +18,7 @@ abstract class CalendarInvitationLinkRecord
     implements _is.TableRow<_is.UuidValue?>, _is.ProtocolSerialization {
   CalendarInvitationLinkRecord._({
     this.id,
+    bool? bundledRequest,
     required this.scopeKey,
     required this.recipientKey,
     required this.uid,
@@ -34,10 +35,11 @@ abstract class CalendarInvitationLinkRecord
     required this.eventRevision,
     required this.invitationRevision,
     required this.adoptedAt,
-  });
+  }) : bundledRequest = bundledRequest ?? false;
 
   factory CalendarInvitationLinkRecord({
     _is.UuidValue? id,
+    bool? bundledRequest,
     required String scopeKey,
     required String recipientKey,
     required String uid,
@@ -63,6 +65,9 @@ abstract class CalendarInvitationLinkRecord
       id: jsonSerialization['id'] == null
           ? null
           : _is.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
+      bundledRequest: jsonSerialization['bundledRequest'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(jsonSerialization['bundledRequest']),
       scopeKey: jsonSerialization['scopeKey'] as String,
       recipientKey: jsonSerialization['recipientKey'] as String,
       uid: jsonSerialization['uid'] as String,
@@ -98,6 +103,8 @@ abstract class CalendarInvitationLinkRecord
 
   @override
   _is.UuidValue? id;
+
+  bool bundledRequest;
 
   String scopeKey;
 
@@ -139,6 +146,7 @@ abstract class CalendarInvitationLinkRecord
   @_is.useResult
   CalendarInvitationLinkRecord copyWith({
     _is.UuidValue? id = const _is.$UndefinedUuidValue(),
+    bool? bundledRequest,
     String? scopeKey,
     String? recipientKey,
     String? uid,
@@ -161,6 +169,7 @@ abstract class CalendarInvitationLinkRecord
     return {
       '__className__': 'serverpod_calendar.CalendarInvitationLinkRecord',
       if (id != null) 'id': id?.toJson(),
+      'bundledRequest': bundledRequest,
       'scopeKey': scopeKey,
       'recipientKey': recipientKey,
       'uid': uid,
@@ -218,6 +227,7 @@ class _Undefined {}
 class _CalendarInvitationLinkRecordImpl extends CalendarInvitationLinkRecord {
   _CalendarInvitationLinkRecordImpl({
     _is.UuidValue? id,
+    bool? bundledRequest,
     required String scopeKey,
     required String recipientKey,
     required String uid,
@@ -236,6 +246,7 @@ class _CalendarInvitationLinkRecordImpl extends CalendarInvitationLinkRecord {
     required DateTime adoptedAt,
   }) : super._(
          id: id,
+         bundledRequest: bundledRequest,
          scopeKey: scopeKey,
          recipientKey: recipientKey,
          uid: uid,
@@ -260,6 +271,7 @@ class _CalendarInvitationLinkRecordImpl extends CalendarInvitationLinkRecord {
   @override
   CalendarInvitationLinkRecord copyWith({
     _is.UuidValue? id = const _is.$UndefinedUuidValue(),
+    bool? bundledRequest,
     String? scopeKey,
     String? recipientKey,
     String? uid,
@@ -279,6 +291,7 @@ class _CalendarInvitationLinkRecordImpl extends CalendarInvitationLinkRecord {
   }) {
     return CalendarInvitationLinkRecord(
       id: id is _is.UndefinedSentinel ? this.id : id,
+      bundledRequest: bundledRequest ?? this.bundledRequest,
       scopeKey: scopeKey ?? this.scopeKey,
       recipientKey: recipientKey ?? this.recipientKey,
       uid: uid ?? this.uid,
@@ -302,6 +315,11 @@ class _CalendarInvitationLinkRecordImpl extends CalendarInvitationLinkRecord {
 class CalendarInvitationLinkRecordUpdateTable
     extends _is.UpdateTable<CalendarInvitationLinkRecordTable> {
   CalendarInvitationLinkRecordUpdateTable(super.table);
+
+  _is.ColumnValue<bool, bool> bundledRequest(bool value) => _is.ColumnValue(
+    table.bundledRequest,
+    value,
+  );
 
   _is.ColumnValue<String, String> scopeKey(String value) => _is.ColumnValue(
     table.scopeKey,
@@ -397,6 +415,11 @@ class CalendarInvitationLinkRecordTable extends _is.Table<_is.UuidValue?> {
   CalendarInvitationLinkRecordTable({super.tableRelation})
     : super(tableName: 'serverpod_calendar_invitation_link') {
     updateTable = CalendarInvitationLinkRecordUpdateTable(this);
+    bundledRequest = _is.ColumnBool(
+      'bundledRequest',
+      this,
+      hasDefault: true,
+    );
     scopeKey = _is.ColumnString(
       'scopeKey',
       this,
@@ -465,6 +488,8 @@ class CalendarInvitationLinkRecordTable extends _is.Table<_is.UuidValue?> {
 
   late final CalendarInvitationLinkRecordUpdateTable updateTable;
 
+  late final _is.ColumnBool bundledRequest;
+
   late final _is.ColumnString scopeKey;
 
   late final _is.ColumnString recipientKey;
@@ -500,6 +525,7 @@ class CalendarInvitationLinkRecordTable extends _is.Table<_is.UuidValue?> {
   @override
   List<_is.Column> get columns => [
     id,
+    bundledRequest,
     scopeKey,
     recipientKey,
     uid,

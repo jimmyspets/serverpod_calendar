@@ -1,0 +1,27 @@
+# Initial bundled invitations
+
+[Accepted ADR 0173](adr/0173-initial-bundled-invitation-adoption.md) supports an initial authenticated REQUEST containing one recurring master and 1–64 supported occurrence components. Review retains the complete normalized source. Explicit Add to calendar creates one imported event series with its independent component versions, original identities, timing/content exceptions, PERIOD additions, annotations and inert source references. Receipt and dismissal change no calendar or participation state; Add sends no response.
+
+This is an initial-adoption profile. Different subsequent messages for the same recipient/organizer/UID, mode conversions, source updates/cancellations and participation responses reject before older scalar reconciliation or correlation fallback. Unrelated existing single-message workflows remain supported. Future bundle reconciliation needs a reviewed component-version contract.
+
+The maintainer explicitly confirmed retaining the existing [scheduling-message profile's](itip-message-profile.md) VALARM rejection for this batch. Alarm-bearing scheduling messages require a separate reviewed increment. Imported alarms from ordinary authenticated file import remain independent; no input alarm is silently stripped to manufacture an accepted invitation.
+
+## Authority and transaction boundaries
+
+Trusted host ingress verifies the actual recipient and provenance. All components must carry the same organizer and fixed attendee roster including that recipient. Participant addresses, MIME headers and resource labels grant no authority. Delegation and SENT-BY reject. Hosts approve the complete immutable message; `receiveBundle` supplements receive authority and `adoptBundle` supplements adoption, source-read, actual destination and native import/create authority. Preliminary/final checks retain the configured consistency guarantee and its documented external-check race.
+
+The module shares bounded work across parsing, validation and conversion. Existing 256 KiB source, 65-component/64-override, 200,000-work and private queue/source/link/retention limits remain. Lower configured bounds apply. Outgoing 512 KiB support does not enlarge receiving limits. Named zones use the pinned full-horizon profile; ordinary dates remain whole-second 1970–2099.
+
+One scope transaction commits event data, full private import baseline, immutable creation receipt, link and review state. `CalendarInvitationLinkRecord.bundledRequest` is the only new SQL column. It defaults false for previously supported single-component links; its value is exposed only through authorized link receipts and trusted link-source context. No caller chooses the profile or individual components.
+
+Exact retained retries reauthorize and return the original receipt without rewriting native edits or moving calendars. A surviving link preserves the profile after inbox/source pruning. Deleting the event scrubs active content and never lets a retry recreate it. Ordinary native edits remain local and do not enable source reconciliation. No alarm definition, delivery or participation history is created by adoption.
+
+## Example and checks
+
+The example supplies a development/test-only synthetic MIME bundle containing a recurring master, moved single occurrence, future-timing component and independent source versions. Flutter offers full source review and one-series addition; unsupported update/response controls are hidden with an explanation. The normal complete generated-client and Flutter journeys include this profile.
+
+Focused checks use `dart test test/unit/invitation_bundle_values_test.dart` in the module and `dart test --concurrency=1 test/integration/invitation_bundles_test.dart` in the example server. The module test is VM-only, like its server-side storage/export dependencies; portable temporal/iCalendar suites retain separate Chrome coverage. `dart run tool/invitation_work_smoke.dart --bundles` starts independent hosts and kills them before/after intake and adoption commits. The complete check script includes these tests and the populated generated-migration upgrade.
+
+Local validation passed: 579 module VM / 17 module Chrome, 540 core VM / 540 core Chrome, 631 iCalendar VM / 631 iCalendar Chrome and nine Flutter unit tests. The broader invitation/MIME SDK run passed 351 tests; the final 18-case bundle suite also passed, including every older application/participation guard. Generated-client/JWT and connected Flutter invitation journeys passed on two real hosts, as did populated generated-migration upgrade, fatal-info analysis, prescribed formatting and stable generation across all 12 generated roots. The final process-loss rerun after shared-budget review also passed all intake/adoption commit boundaries. Full exact-head hosted checks remain a readiness gate; no release or external-client compatibility is claimed here.
+
+The preceding outgoing range batch passed full exact-head hosted inspection/runtime at commit `8ae3f219468a7f4d443559e43946cd9312f8ffbf`: [run 41872667601](https://github.com/jimmyspets/serverpod_calendar/actions/runs/41872667601). That result does not establish hosted success for this batch.

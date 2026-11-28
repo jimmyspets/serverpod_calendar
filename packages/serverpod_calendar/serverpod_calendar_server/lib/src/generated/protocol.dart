@@ -3176,6 +3176,13 @@ class Protocol extends _is.DatabaseSerializationManager
           columnDefault: 'random',
         ),
         _isp.ColumnDefinition(
+          name: 'bundledRequest',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isp.ColumnDefinition(
           name: 'scopeKey',
           columnType: _isp.ColumnType.text,
           isNullable: false,

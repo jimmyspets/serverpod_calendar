@@ -44,6 +44,8 @@ enum CalendarInvitationOperation {
   receiveCancellation,
   receiveOccurrence,
   receiveRange,
+  receiveBundle,
+  adoptBundle,
   list,
   readSummary,
   readSource,
@@ -70,6 +72,7 @@ enum CalendarInvitationOperation {
 /// This is a trusted descriptor, never a reconstructed source document.
 final class CalendarInvitationLinkSource {
   const CalendarInvitationLinkSource({
+    this.bundledRequest = false,
     required this.invitationId,
     required this.sourceId,
     required this.uid,
@@ -78,6 +81,7 @@ final class CalendarInvitationLinkSource {
     required this.sequence,
     required this.stamp,
   });
+  final bool bundledRequest;
   final UuidValue invitationId, sourceId;
   final String uid, organizer, digest;
   final int? sequence;

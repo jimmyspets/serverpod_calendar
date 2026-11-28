@@ -4,3 +4,4 @@ values:
   - meetingCancellation
   - instanceCancellation
   - rangeCancellation
+  - requestBundle

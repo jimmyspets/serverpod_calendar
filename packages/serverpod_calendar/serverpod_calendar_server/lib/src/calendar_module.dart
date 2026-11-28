@@ -14,6 +14,7 @@ import 'alarm_runtime.dart';
 import 'scheduling_runtime.dart';
 import 'inbound_reply_runtime.dart';
 import 'invitation_runtime.dart';
+import 'invitation_bundle_values.dart';
 import 'invitation_occurrence_values.dart';
 import 'invitation_response_runtime.dart';
 import 'alarm_work_store.dart';

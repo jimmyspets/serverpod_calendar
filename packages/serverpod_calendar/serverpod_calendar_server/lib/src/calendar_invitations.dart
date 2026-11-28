@@ -10,8 +10,18 @@ String _invitationHash(Iterable<String> parts) {
   return sha256.convert(bytes.takeBytes()).toString();
 }
 
+bool _invBundle(IcalendarSchedulingMessage message) =>
+    message.events.length > 1;
+// Presentation/target selection only, after the whole message was validated.
+IcalendarSchedulingEvent _invHead(IcalendarSchedulingMessage message) =>
+    _invBundle(message)
+    ? message.events.singleWhere((e) => !e.isOverride)
+    : message.events.single;
+
 CalendarInvitationSourceKind _invKind(IcalendarSchedulingMessage message) =>
-    message.method == IcalendarSchedulingMethod.request
+    _invBundle(message)
+    ? CalendarInvitationSourceKind.requestBundle
+    : message.method == IcalendarSchedulingMethod.request
     ? CalendarInvitationSourceKind.request
     : message.events.single.isThisAndFuture
     ? CalendarInvitationSourceKind.rangeCancellation
@@ -76,12 +86,19 @@ bool _invRange(CalendarInvitationRecord entry) =>
 extension CalendarInvitationOperations on CalendarService {
   void _invNonRange(CalendarInvitationRecord entry) {
     _invTargetValid(entry);
-    if (_invRange(entry)) throw _failure(CalendarFailureCode.validation);
+    if (_invRange(entry) ||
+        entry.kind == CalendarInvitationSourceKind.requestBundle) {
+      throw _failure(CalendarFailureCode.validation);
+    }
   }
 
   void _invTargetValid(CalendarInvitationRecord entry) {
     try {
-      if (entry.targetKey !=
+      if (entry.kind == CalendarInvitationSourceKind.requestBundle &&
+              (entry.targetKey != 'master' ||
+                  entry.originalStart != null ||
+                  !entry.recurring) ||
+          entry.targetKey !=
               _invTargetKey(entry.originalStart, range: _invRange(entry)) ||
           _invRange(entry) && entry.originalStart == null ||
           entry.originalStart != null && !entry.recurring ||
@@ -98,8 +115,13 @@ extension CalendarInvitationOperations on CalendarService {
     }
   }
 
-  void _invMasterOnly(CalendarInvitationRecord? entry) {
-    if (entry?.originalStart != null) {
+  void _invMasterOnly(
+    CalendarInvitationRecord? entry, {
+    bool allowBundle = false,
+  }) {
+    if (entry?.originalStart != null ||
+        !allowBundle &&
+            entry?.kind == CalendarInvitationSourceKind.requestBundle) {
       throw _failure(CalendarFailureCode.validation);
     }
   }
@@ -155,13 +177,25 @@ extension CalendarInvitationOperations on CalendarService {
       );
     }
     if (request.operation == CalendarInvitationOperation.receive &&
-        request.message?.events.single.isOverride == true) {
+        (request.message == null
+                ? null
+                : _invHead(request.message!).isOverride) ==
+            true) {
       await _invAuthorize(
         request.forOperation(
-          request.message!.events.single.isThisAndFuture
+          _invHead(request.message!).isThisAndFuture
               ? CalendarInvitationOperation.receiveRange
               : CalendarInvitationOperation.receiveOccurrence,
         ),
+        tx,
+        phase,
+      );
+    }
+    if (request.operation == CalendarInvitationOperation.receive &&
+        request.message != null &&
+        _invBundle(request.message!)) {
+      await _invAuthorize(
+        request.forOperation(CalendarInvitationOperation.receiveBundle),
         tx,
         phase,
       );
@@ -174,9 +208,20 @@ extension CalendarInvitationOperations on CalendarService {
       if (bytes.length > (stored ? 262144 : _invOptions.maxSourceBytes)) {
         throw _failure(CalendarFailureCode.limitExceeded);
       }
+      final work = RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
       final message = _schedulingValue(
-        () => parseIcalendarSchedulingMessage(bytes),
+        () => parseIcalendarSchedulingMessage(bytes, sharedWorkBudget: work),
       );
+      if (_invBundle(message)) {
+        _schedulingValue(
+          () => invitationRequestBundleProposal(
+            message,
+            maxBytes: stored ? 262144 : _invOptions.maxSourceBytes,
+            sharedWorkBudget: work,
+          ),
+        );
+        return message;
+      }
       if (!{
             IcalendarSchedulingMethod.request,
             IcalendarSchedulingMethod.cancel,
@@ -184,7 +229,7 @@ extension CalendarInvitationOperations on CalendarService {
           message.events.length != 1) {
         throw _failure(CalendarFailureCode.validation);
       }
-      final event = message.events.single;
+      final event = _invHead(message);
       if (message.method == IcalendarSchedulingMethod.cancel &&
               event.status != IcalendarEventStatus.cancelled ||
           event.isOverride && event.recurrence != null ||
@@ -233,8 +278,7 @@ extension CalendarInvitationOperations on CalendarService {
         source.outcome == CalendarInvitationOutcome.duplicate) {
       throw _failure(CalendarFailureCode.unavailable);
     }
-    final message = _invParse(bytes, stored: true),
-        event = message.events.single;
+    final message = _invParse(bytes, stored: true), event = _invHead(message);
     if ((entry.currentSourceId == source.id &&
             _invKind(message) != entry.kind) ||
         event.isThisAndFuture != _invRange(entry) ||
@@ -242,7 +286,8 @@ extension CalendarInvitationOperations on CalendarService {
         message.uid != entry.uid ||
         message.method == IcalendarSchedulingMethod.request &&
             !event.isOverride &&
-            (event.recurrence != null) != entry.recurring ||
+            (_invBundle(message) || event.recurrence != null) !=
+                entry.recurring ||
         event.participants.organizer!.address != entry.organizer ||
         event.sequence != source.sequence ||
         event.stamp != source.stamp ||
@@ -271,7 +316,7 @@ extension CalendarInvitationOperations on CalendarService {
           source.digest != entry.digest) {
         throw _failure(CalendarFailureCode.unavailable);
       }
-      event = _invStored(source, entry).events.single;
+      event = _invHead(_invStored(source, entry));
     } else if (entry.dismissedAt == null) {
       throw _failure(CalendarFailureCode.unavailable);
     }
@@ -465,7 +510,7 @@ extension CalendarInvitationOperations on CalendarService {
     _opaque(delivery.deliveryKey);
     _opaque(delivery.originReference);
     _invGuarantee();
-    final message = _invParse(delivery.bytes), event = message.events.single;
+    final message = _invParse(delivery.bytes), event = _invHead(message);
     final normalized = utf8.decode(
       _schedulingValue(() => serializeIcalendarSchedulingMessage(message)),
     );
@@ -613,9 +658,36 @@ extension CalendarInvitationOperations on CalendarService {
         return null;
       }
 
+      final retained = await retainedReceipt();
+      if (retained != null) return retained;
+      final knownLink = await CalendarInvitationLinkRecord.db.findFirstRow(
+        _session,
+        where: (t) =>
+            t.scopeKey.equals(recipient.scopeKey) &
+            t.recipientKey.equals(recipient.key) &
+            t.correlationDigest.equals(correlation),
+        transaction: tx,
+      );
+      final knownBundle =
+          knownLink?.bundledRequest == true ||
+          entries.any(
+            (e) =>
+                e.correlationDigest == correlation &&
+                e.kind == CalendarInvitationSourceKind.requestBundle,
+          );
+      if (_invBundle(message) || knownBundle) {
+        final sameBundle =
+            _invBundle(message) &&
+            entry?.kind == CalendarInvitationSourceKind.requestBundle &&
+            entry?.digest == digest;
+        final known =
+            knownLink != null ||
+            entries.any((e) => e.correlationDigest == correlation);
+        if (known && !sameBundle || !_invBundle(message)) {
+          throw _failure(CalendarFailureCode.validation);
+        }
+      }
       if (original != null) {
-        final retry = await retainedReceipt();
-        if (retry != null) return retry;
         occurrenceBasis = await _invOccurrenceBasis(
           recipient,
           entries,
@@ -694,6 +766,7 @@ extension CalendarInvitationOperations on CalendarService {
           ? true
           : entry?.recurring ?? linkedRecurring;
       final recurring =
+          _invBundle(message) ||
           original != null ||
           (cancellation ? knownRecurring! : event.recurrence != null);
       if (knownRecurring != null && knownRecurring != recurring) {

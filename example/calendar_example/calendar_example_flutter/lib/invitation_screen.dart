@@ -21,6 +21,7 @@ class _InvitationScreenState extends State<InvitationScreen> {
   List<cal.CalendarInvitationView> _entries = [];
   bool _busy = true;
   bool? _simulationRecurring;
+  bool? _simulationBundle;
   String? _error;
   cal.UuidValue? _simulationId, _simulationCommand, _cancellationCommand;
   cal.CalendarInvitationView? _cancellationEntry;
@@ -76,36 +77,41 @@ class _InvitationScreenState extends State<InvitationScreen> {
         .list();
     if (mounted) setState(() => _entries = entries);
   });
-  Future<void> _simulate({bool recurring = false}) => _run(() async {
-    _simulationRecurring ??= recurring;
-    _simulationId ??= const cal.Uuid().v4obj();
-    _simulationCommand ??= const cal.Uuid().v4obj();
-    final simulate = _simulationRecurring!
-        ? widget.client.invitationDemo.simulateRecurring
-        : widget.client.invitationDemo.simulate;
-    await simulate(
-      _simulationId!,
-      _simulationCommand!,
-      null,
-      _simulationRecurring!
-          ? 'Synthetic recurring invitation'
-          : 'Synthetic invitation for review',
-    );
-    final entries = await widget
-        .client
-        .modules
-        .serverpod_calendar
-        .calendarInvitation
-        .list();
-    if (mounted) {
-      setState(() {
-        _entries = entries;
-        _simulationId = null;
-        _simulationCommand = null;
-        _simulationRecurring = null;
+  Future<void> _simulate({bool recurring = false, bool bundle = false}) =>
+      _run(() async {
+        _simulationRecurring ??= recurring;
+        _simulationBundle ??= bundle;
+        _simulationId ??= const cal.Uuid().v4obj();
+        _simulationCommand ??= const cal.Uuid().v4obj();
+        final simulate = _simulationBundle!
+            ? widget.client.invitationDemo.simulateBundle
+            : _simulationRecurring!
+            ? widget.client.invitationDemo.simulateRecurring
+            : widget.client.invitationDemo.simulate;
+        await simulate(
+          _simulationId!,
+          _simulationCommand!,
+          null,
+          _simulationRecurring!
+              ? 'Synthetic recurring invitation'
+              : 'Synthetic invitation for review',
+        );
+        final entries = await widget
+            .client
+            .modules
+            .serverpod_calendar
+            .calendarInvitation
+            .list();
+        if (mounted) {
+          setState(() {
+            _entries = entries;
+            _simulationId = null;
+            _simulationCommand = null;
+            _simulationRecurring = null;
+            _simulationBundle = null;
+          });
+        }
       });
-    }
-  });
   Future<void> _cancel(cal.CalendarInvitationView entry) => _run(() async {
     _cancellationEntry ??= entry;
     _cancellationCommand ??= const cal.Uuid().v4obj();
@@ -193,12 +199,22 @@ class _InvitationScreenState extends State<InvitationScreen> {
               : () => _simulate(recurring: true),
           child: const Text('Create synthetic recurring invitation'),
         ),
+        TextButton(
+          key: const Key('invitation-simulate-bundle'),
+          onPressed: _busy || _simulationId != null
+              ? null
+              : () => _simulate(recurring: true, bundle: true),
+          child: const Text('Create synthetic invitation with exceptions'),
+        ),
         if (_simulationId != null)
           TextButton(
             key: const Key('invitation-simulate-retry'),
             onPressed: _busy
                 ? null
-                : () => _simulate(recurring: _simulationRecurring!),
+                : () => _simulate(
+                    recurring: _simulationRecurring!,
+                    bundle: _simulationBundle!,
+                  ),
             child: const Text('Retry the same synthetic invitation'),
           ),
         if (_cancellationEntry != null)
@@ -278,7 +294,12 @@ class _InvitationScreenState extends State<InvitationScreen> {
                     const Text(
                       'Occurrence notice. Calendar application and participation responses are separate explicit actions.',
                     ),
-                  ] else if (entry.recurring)
+                  ] else if (entry.kind ==
+                      cal.CalendarInvitationSourceKind.requestBundle)
+                    const Text(
+                      'Complete recurring invitation with exceptions. Add preserves the whole series. Later source updates and participation responses are not supported yet.',
+                    )
+                  else if (entry.recurring)
                     const Text('Recurring series'),
                   if (entry.kind ==
                       cal.CalendarInvitationSourceKind.meetingCancellation)
@@ -344,7 +365,9 @@ class _InvitationScreenState extends State<InvitationScreen> {
                             'Preview / apply occurrence notice',
                           ),
                         ),
-                      if (!entry.isThisAndFuture)
+                      if (!entry.isThisAndFuture &&
+                          entry.kind !=
+                              cal.CalendarInvitationSourceKind.requestBundle)
                         TextButton(
                           key: ValueKey('invitation-response-${entry.id}'),
                           onPressed: _busy
@@ -389,8 +412,12 @@ class _InvitationScreenState extends State<InvitationScreen> {
                                   }
                                 },
                           child: Text(
-                            entry.kind ==
-                                    cal.CalendarInvitationSourceKind.request
+                            {
+                                  cal.CalendarInvitationSourceKind.request,
+                                  cal
+                                      .CalendarInvitationSourceKind
+                                      .requestBundle,
+                                }.contains(entry.kind)
                                 ? 'Add to calendar / view link'
                                 : 'View existing link',
                           ),

@@ -4,6 +4,7 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
   CalendarInvitationAdoptionReceipt _invLinkReceipt(
     CalendarInvitationLinkRecord r,
   ) => CalendarInvitationAdoptionReceipt(
+    bundledRequest: r.bundledRequest,
     id: r.id!,
     invitationId: r.invitationId,
     sourceId: r.sourceId,
@@ -16,6 +17,7 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
 
   CalendarInvitationLinkSource _invLinkSource(CalendarInvitationLinkRecord r) =>
       CalendarInvitationLinkSource(
+        bundledRequest: r.bundledRequest,
         invitationId: r.invitationId,
         sourceId: r.sourceId,
         uid: r.uid,
@@ -42,9 +44,10 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
     UuidValue id,
     CalendarInvitationRecord? entry,
     CalendarInvitationRecipient recipient,
-    Transaction tx,
-  ) async {
-    _invMasterOnly(entry);
+    Transaction tx, {
+    bool allowBundle = false,
+  }) async {
+    _invMasterOnly(entry, allowBundle: allowBundle);
     final original = await CalendarInvitationLinkRecord.db.findFirstRow(
       _session,
       where: (t) =>
@@ -65,6 +68,15 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
                     t.correlationDigest.equals(entry.correlationDigest),
                 transaction: tx,
               ));
+    if (link?.bundledRequest == true && !allowBundle) {
+      throw _failure(CalendarFailureCode.validation);
+    }
+    if (link != null &&
+        entry != null &&
+        (entry.kind == CalendarInvitationSourceKind.requestBundle) !=
+            link.bundledRequest) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
     if (link != null &&
         (link.scopeKey != recipient.scopeKey ||
             link.recipientKey != recipient.key ||
@@ -151,7 +163,14 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
     IcalendarSchedulingMessage message,
     UuidValue id,
   ) {
-    final proposal = _invRequestProposal(message);
+    final proposal = _invBundle(message)
+        ? _schedulingValue(
+            () => invitationRequestBundleProposal(
+              message,
+              maxBytes: _invOptions.maxSourceBytes,
+            ),
+          )
+        : _invRequestProposal(message);
     return CalendarEventImportMember(
       eventId: id,
       protocolUid: proposal.protocolUid,
@@ -268,6 +287,11 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
       CalendarInvitationOperation.readSummary,
       CalendarInvitationOperation.readSource,
       operation,
+      if (operation == CalendarInvitationOperation.adopt &&
+          (entry?.kind == CalendarInvitationSourceKind.requestBundle ||
+              receipt?.bundledRequest == true ||
+              linkSource?.bundledRequest == true))
+        CalendarInvitationOperation.adoptBundle,
     ]) {
       await _invAuthorize(
         CalendarInvitationPolicyContext(
@@ -321,7 +345,13 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
           entry: entry,
           lookupId: id,
         );
-        final link = await _invFindLink(id, entry, recipient, tx);
+        final link = await _invFindLink(
+          id,
+          entry,
+          recipient,
+          tx,
+          allowBundle: true,
+        );
         if (link == null) {
           if (entry == null) throw _failure(CalendarFailureCode.accessDenied);
           return null;
@@ -406,6 +436,7 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
         entry,
         recipient,
         tx,
+        allowBundle: true,
       );
       if (existing != null) {
         final event = await _invLinkedEvent(existing, actor, tx),
@@ -503,6 +534,7 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
         protocolState: member.protocolState,
       );
       final link = CalendarInvitationLinkRecord(
+        bundledRequest: _invBundle(message),
         id: const Uuid().v4obj(),
         scopeKey: recipient.scopeKey,
         recipientKey: recipient.key,

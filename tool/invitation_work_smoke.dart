@@ -54,6 +54,7 @@ void require(bool value, String message) {
 }
 
 Future<void> main(List<String> args) async {
+  final bundles = args.contains('--bundles');
   final nativeFuture = args.contains('--native-future');
   final rangeCycles = args.contains('--range-cycles');
   final restoredRanges = args.contains('--restored-ranges');
@@ -80,6 +81,7 @@ Future<void> main(List<String> args) async {
   final ranges = args.contains('--ranges');
   final instance = args.contains('--instances') || ranges;
   final recurring =
+      bundles ||
       instanceResponses ||
       occurrenceApply ||
       instance ||
@@ -123,6 +125,123 @@ Future<void> main(List<String> args) async {
   try {
     var a = await start('a', 18780);
     final b = await start('b', 18880);
+    if (bundles) {
+      Map<String, Object?> request(Map source, String parent) => {
+        'invitationId': source['entryId'],
+        'expectedRevision': 1,
+        'sourceId': source['sourceId'],
+        'calendarId': parent,
+        'expectedCalendarRevision': 1,
+      };
+      for (final pause in [
+        '',
+        'before',
+        'after',
+        'adopt-before',
+        'adopt-after',
+      ]) {
+        final id = nextCase();
+        final packet = <String, Object?>{
+          'command': 'receive',
+          'bundle': true,
+          'caseId': id,
+          'key': 'initial',
+        };
+        late Map source;
+        if (pause == 'before' || pause == 'after') {
+          a.paused = Completer<Map<String, dynamic>>();
+          final lost = a
+              .command({...packet, 'pause': pause})
+              .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+          final submitted = await a.paused!.future.timeout(
+            const Duration(seconds: 40),
+          );
+          final visible =
+              await b.command({'command': 'inspect', 'caseId': id}) as Map;
+          require(
+            visible['sources'] == (pause == 'after' ? 1 : 0),
+            'Partial bundle intake visible',
+          );
+          await a.stop();
+          await lost;
+          source = await b.command(packet) as Map;
+          require(
+            (source['id'] == submitted['id']) == (pause == 'after'),
+            'Bundle receipt recovery changed identity',
+          );
+          a = await start('a-bundle-intake-$pause', 18780);
+        } else {
+          source = await b.command(packet) as Map;
+        }
+        final parent =
+            await b.command({'command': 'calendar', 'caseId': id}) as String;
+        final body = request(source, parent);
+        Map result;
+        if (pause.startsWith('adopt-')) {
+          a.paused = Completer<Map<String, dynamic>>();
+          final lost = a
+              .command({
+                'command': 'adopt',
+                'caseId': id,
+                'request': body,
+                'pause': pause,
+              })
+              .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+          final submitted = await a.paused!.future.timeout(
+            const Duration(seconds: 40),
+          );
+          final visible =
+              await b.command({'command': 'inspect', 'caseId': id}) as Map;
+          require(
+            visible['events'] == (pause == 'adopt-after' ? 1 : 0) &&
+                visible['links'] == (pause == 'adopt-after' ? 1 : 0),
+            'Partial bundle adoption visible',
+          );
+          await a.stop();
+          await lost;
+          result = await b.command({
+            'command': 'adopt',
+            'caseId': id,
+            'request': body,
+          }) as Map;
+          require(
+            (result['id'] == submitted['id']) == (pause == 'adopt-after'),
+            'Bundle adoption receipt changed',
+          );
+          a = await start('a-bundle-$pause', 18780);
+        } else {
+          final raced = await Future.wait(
+            [a, b].map(
+              (p) => p.command({
+                'command': 'adopt',
+                'caseId': id,
+                'request': body,
+              }),
+            ),
+          );
+          result = raced.first as Map;
+          require(
+            result['id'] != null && result['id'] == (raced.last as Map)['id'],
+            'Bundle adoption race duplicated identity',
+          );
+        }
+        final state =
+            await b.command({'command': 'inspect', 'caseId': id}) as Map;
+        require(
+          result['bundledRequest'] == true &&
+              state['events'] == 1 &&
+              state['bundledLinks'] == 1 &&
+              state['singleCount'] == 1 &&
+              state['futureCount'] == 1 &&
+              (state['responses'] as List).isEmpty,
+          'Bundle recovery lost components or created participation state',
+        );
+      }
+      stdout.writeln(
+        'PASS: initial bundles preserve all components under two-host adoption races and actual process loss before/after intake and adoption commits.',
+      );
+      return;
+    }
     if (nativeFuture) {
       for (final restore in [false, true]) {
         for (final pause in ['native-before', 'native-after']) {

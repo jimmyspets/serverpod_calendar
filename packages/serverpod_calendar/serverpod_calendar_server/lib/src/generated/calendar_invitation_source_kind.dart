@@ -16,7 +16,8 @@ enum CalendarInvitationSourceKind implements _is.SerializableModel {
   request,
   meetingCancellation,
   instanceCancellation,
-  rangeCancellation;
+  rangeCancellation,
+  requestBundle;
 
   static CalendarInvitationSourceKind fromJson(String name) {
     switch (name) {
@@ -28,6 +29,8 @@ enum CalendarInvitationSourceKind implements _is.SerializableModel {
         return CalendarInvitationSourceKind.instanceCancellation;
       case 'rangeCancellation':
         return CalendarInvitationSourceKind.rangeCancellation;
+      case 'requestBundle':
+        return CalendarInvitationSourceKind.requestBundle;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "CalendarInvitationSourceKind"',

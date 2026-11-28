@@ -33,8 +33,14 @@ final class DemoInvitationHost implements CalendarInvitationHost {
     if (!{'development', 'test'}.contains(session.serverpod.runMode) ||
         delivery.namespace != 'example.invitation' ||
         delivery.originReference != 'synthetic:${recipient.key}' ||
-        message.events.single.participants.organizer?.address !=
-            'mailto:organizer@example.invalid' ||
+        message.events.any(
+          (part) =>
+              part.participants.organizer?.address !=
+                  'mailto:organizer@example.invalid' ||
+              !part.participants.attendees.any(
+                (a) => a.address == recipient.calendarAddress,
+              ),
+        ) ||
         !message.uid.startsWith('synthetic-invitation:${recipient.key}:')) {
       throw CalendarException(
         code: CalendarFailureCode.accessDenied,
@@ -68,6 +74,7 @@ final class DemoInvitationHost implements CalendarInvitationHost {
     }
     if ({
       CalendarInvitationOperation.receive,
+      CalendarInvitationOperation.receiveBundle,
       CalendarInvitationOperation.receiveCancellation,
       CalendarInvitationOperation.receiveOccurrence,
       CalendarInvitationOperation.receiveRange,
@@ -85,6 +92,7 @@ final class DemoInvitationHost implements CalendarInvitationHost {
       return CalendarAuthorizationVerdict.deny;
     }
     if (context.operation == CalendarInvitationOperation.adopt ||
+        context.operation == CalendarInvitationOperation.adoptBundle ||
         {
           CalendarInvitationOperation.readLink,
           CalendarInvitationOperation.apply,
@@ -104,13 +112,16 @@ final class DemoInvitationHost implements CalendarInvitationHost {
         }.contains(context.operation)) {
       final message = context.message;
       if (message != null &&
-          (message.events.single.participants.organizer?.address !=
-                  'mailto:organizer@example.invalid' ||
-              !message.uid.startsWith(
+          (!message.uid.startsWith(
                 'synthetic-invitation:${recipient.key}:',
               ) ||
-              !message.events.single.participants.attendees.any(
-                (a) => a.address == recipient.calendarAddress,
+              message.events.any(
+                (part) =>
+                    part.participants.organizer?.address !=
+                        'mailto:organizer@example.invalid' ||
+                    !part.participants.attendees.any(
+                      (a) => a.address == recipient.calendarAddress,
+                    ),
               ))) {
         return CalendarAuthorizationVerdict.deny;
       }
