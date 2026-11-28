@@ -74,6 +74,74 @@ extension CalendarFreeBusyOperations on CalendarService {
     });
   }
 
+  Future<ByteData> exportFreeBusy(CalendarFreeBusyQuery query) async {
+    final window = _busyWindow(query.fromUtc, query.untilUtc);
+    final c = await _context();
+    return _transaction(c, (tx, _) async {
+      final parent = await _active(c, query.calendarId, tx);
+      final authority = [
+        _er(parent, CalendarPermission.readFreeBusy, freeBusy: query),
+        _er(parent, CalendarPermission.exportFreeBusy, freeBusy: query),
+      ];
+      Future<void> authorize(
+        List<CalendarAuthorizationRequest> requests,
+      ) async {
+        for (var i = 0; i < requests.length; i += _options.policyBatchSize) {
+          await _decide(
+            c,
+            requests.sublist(
+              i,
+              min(i + _options.policyBatchSize, requests.length),
+            ),
+            tx,
+            CalendarAuthorizationPhase.read,
+          );
+        }
+        await _verifyContext(c);
+      }
+
+      await authorize(authority);
+      final sources = <CalendarAuthorizationRequest>[];
+      final result = await _calendarBusy(
+        c,
+        parent,
+        query,
+        window,
+        tx,
+        _BusyBudget(),
+        authorizedSources: sources,
+      );
+      if (result.coverage != CalendarFreeBusyCoverage.complete) {
+        throw _failure(CalendarFailureCode.unavailable);
+      }
+      late final Uint8List bytes;
+      try {
+        bytes = serializeIcalendarFreeBusy(
+          uid: const Uuid().v4(),
+          stamp: availabilityProtocolInstant(await _revisionTime(tx)),
+          window: window,
+          partition: [
+            for (final p in result.periods)
+              AvailabilityInterval(
+                window: UtcWindow(start: p.startUtc, end: p.endUtc),
+                kind: AvailabilityKind.values.byName(p.kind.name),
+              ),
+          ],
+        );
+      } on IcalendarComponentException catch (e) {
+        throw _failure(
+          e.kind == IcalendarComponentError.limitExceeded
+              ? CalendarFailureCode.limitExceeded
+              : CalendarFailureCode.validation,
+        );
+      }
+      // Serialization is not an authorization grant. Repeat every actual
+      // source projection and the independent parent rights before returning.
+      await authorize([...authority, ...sources]);
+      return ByteData.sublistView(bytes);
+    });
+  }
+
   Future<CalendarFreeBusyView> _calendarBusy(
     CalendarHostContext c,
     _Active parent,
@@ -83,6 +151,7 @@ extension CalendarFreeBusyOperations on CalendarService {
     _BusyBudget budget, {
     CalendarAvailabilitySearchQuery? search,
     CalendarAvailabilityTarget? target,
+    List<CalendarAuthorizationRequest>? authorizedSources,
   }) async {
     CalendarFreeBusyView response(
       CalendarFreeBusyCoverage coverage,
@@ -127,22 +196,19 @@ extension CalendarFreeBusyOperations on CalendarService {
           0,
           events.length,
         );
-        await _decide(
-          c,
-          [
-            for (final e in events.sublist(offset, end))
-              _er(
-                parent,
-                CalendarPermission.projectEventBusy,
-                event: e,
-                freeBusy: query,
-                search: search,
-                target: target,
-              ),
-          ],
-          tx,
-          CalendarAuthorizationPhase.read,
-        );
+        final requests = [
+          for (final e in events.sublist(offset, end))
+            _er(
+              parent,
+              CalendarPermission.projectEventBusy,
+              event: e,
+              freeBusy: query,
+              search: search,
+              target: target,
+            ),
+        ];
+        await _decide(c, requests, tx, CalendarAuthorizationPhase.read);
+        authorizedSources?.addAll(requests);
       }
       final bookings = <AvailabilityInterval>[];
       for (final e in events) {
@@ -186,21 +252,16 @@ extension CalendarFreeBusyOperations on CalendarService {
           parent: parent,
           identity: row,
         );
-        await _decide(
-          c,
-          [
-            _ar(
-              parent,
-              CalendarPermission.projectAvailability,
-              rule: rule,
-              query: query,
-              search: search,
-              target: target,
-            ),
-          ],
-          tx,
-          CalendarAuthorizationPhase.read,
+        final request = _ar(
+          parent,
+          CalendarPermission.projectAvailability,
+          rule: rule,
+          query: query,
+          search: search,
+          target: target,
         );
+        await _decide(c, [request], tx, CalendarAuthorizationPhase.read);
+        authorizedSources?.add(request);
         budget.openings(rule.data.content.openings.length);
         sourceOpenings += rule.data.content.openings.length;
         if (sourceOpenings > 64) {

@@ -721,6 +721,37 @@ class _CalendarEndpoint {
 
   final _is.SerializationManager _serializationManager;
 
+  _ida.Future<_idt.ByteData> exportFreeBusy(
+    _ist.TestSessionBuilder sessionBuilder,
+    _imwtl5fr.CalendarFreeBusyQuery query,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendar',
+            method: 'exportFreeBusy',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendar',
+          methodName: 'exportFreeBusy',
+          parameters: _ist.testObjectToJson({'query': query}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_idt.ByteData>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _ida.Future<_i3y4q8eh.CalendarFreeBusyView> freeBusy(
     _ist.TestSessionBuilder sessionBuilder,
     _imwtl5fr.CalendarFreeBusyQuery query,

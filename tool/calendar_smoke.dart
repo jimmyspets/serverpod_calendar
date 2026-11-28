@@ -658,6 +658,23 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
         fromUtc: DateTime.utc(2026, 4, 4),
         untilUtc: DateTime.utc(2026, 4, 5),
       );
+      String busyWire(ByteData bytes) => utf8.decode(
+        bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+      );
+      List<String> occupied(String text) => text
+          .split('\r\n')
+          .where((line) => line.startsWith('FREEBUSY;'))
+          .toList();
+      final localFile = busyWire(await a.exportFreeBusy(busyQuery));
+      final remoteFile = busyWire(await b.exportFreeBusy(busyQuery));
+      check(
+        jsonEncode(occupied(localFile)) == jsonEncode(occupied(remoteFile)) &&
+            remoteFile.contains('FBTYPE=BUSY-TENTATIVE:') &&
+            !remoteFile.contains('Synthetic private title') &&
+            !remoteFile.contains(privateBooking.eventId.toString()) &&
+            !remoteFile.contains(second.calendarId.toString()),
+        'Cross-host VFREEBUSY lost classification or disclosed identities/details',
+      );
       final localBusy = await a.freeBusy(busyQuery);
       final remoteBusy = await b.freeBusy(busyQuery);
       check(
@@ -685,6 +702,12 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
             cal.CalendarFreeBusyKind.busy,
         'Remote free/busy did not see committed lifecycle change',
       );
+      final changedFile = busyWire(await b.exportFreeBusy(busyQuery));
+      check(
+        changedFile.contains('FREEBUSY;FBTYPE=BUSY:') &&
+            !changedFile.contains('FBTYPE=BUSY-TENTATIVE:'),
+        'Remote VFREEBUSY ignored committed lifecycle change',
+      );
       final storedPrivate = await eb.getEvent(
         privateBooking.eventId,
         cal.CalendarEventFieldGroup.values,
@@ -703,6 +726,10 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
         (await b.freeBusy(busyQuery)).periods.single.kind ==
             cal.CalendarFreeBusyKind.free,
         'Transparent event continued blocking remote free/busy',
+      );
+      check(
+        occupied(busyWire(await b.exportFreeBusy(busyQuery))).isEmpty,
+        'Remote VFREEBUSY kept a newly transparent booking',
       );
       final aa = clients.first.modules.serverpod_calendar.calendarAvailability;
       final ab = clients.last.modules.serverpod_calendar.calendarAvailability;

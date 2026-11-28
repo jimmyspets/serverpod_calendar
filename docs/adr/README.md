@@ -80,6 +80,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0074](0074-authenticated-availability-export.md) | Authenticated current-state availability export | Accepted explicit selection/all-or-nothing; API/serialization mechanics under draft review |
 | [0075](0075-availability-update-reconciliation-contract.md) | Explicit availability replacement and conflict detection | Accepted scope/baseline/conflict/version/identity/no-op/permission/timestamp choices; implementation mechanics proposed |
 | [0076](0076-availability-replacement-implementation.md) | Baseline-aware availability replacement implementation | Accepted private active-row snapshot/raw-read choices; scoped implementation, concrete mechanics under draft review |
+| [0077](0077-privacy-safe-calendar-freebusy-export.md) | Privacy-safe per-calendar VFREEBUSY export | Accepted per-calendar-first and separate export authority; concrete mechanics under draft review |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

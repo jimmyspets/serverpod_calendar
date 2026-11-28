@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:serverpod/serverpod.dart';
 
 import '../calendar_module.dart';
@@ -7,6 +9,10 @@ import '../generated/protocol.dart';
 class CalendarEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
+  Future<ByteData> exportFreeBusy(
+    Session session,
+    CalendarFreeBusyQuery query,
+  ) => CalendarModule.service(session).exportFreeBusy(query);
   Future<CalendarFreeBusyView> freeBusy(
     Session session,
     CalendarFreeBusyQuery query,

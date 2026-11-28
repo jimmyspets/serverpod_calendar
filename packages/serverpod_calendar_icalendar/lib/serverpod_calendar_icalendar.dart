@@ -16,3 +16,5 @@ export 'src/icalendar_event_calendar.dart';
 export 'src/icalendar_event_recurrence.dart' show IcalendarEventRecurrence;
 export 'src/icalendar_time_zone.dart' show IcalendarValidatedTimeZone;
 export 'src/icalendar_time_zone_output.dart';
+
+export 'src/icalendar_free_busy_output.dart';

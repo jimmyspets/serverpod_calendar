@@ -3256,6 +3256,326 @@ void main() {
       expect(limited.periods, isEmpty);
     });
 
+    String busyText(ByteData bytes) => utf8.decode(
+      bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+    );
+    List<IcalendarSyntaxProperty> busyProperties(String text) =>
+        parseIcalendarSyntax(utf8.encode(text)).components.single.entries
+            .whereType<IcalendarSyntaxComponent>()
+            .single
+            .entries
+            .whereType<IcalendarSyntaxProperty>()
+            .toList();
+
+    test('free busy export includes classified UTC bookings and hours without details or identities', () async {
+      final calendar = (await service.create(createInput('Private calendar')))!
+          .calendarId;
+      final event = await booking(calendar, 9, 10);
+      await booking(calendar, 10, 11, status: CalendarEventStatus.tentative);
+      await booking(
+        calendar,
+        12,
+        13,
+        transparency: CalendarEventTransparency.transparent,
+      );
+      await booking(calendar, 14, 15, status: CalendarEventStatus.cancelled);
+      final rule = (await service.createAvailability(
+        CalendarAvailabilityCreateRequest(
+          calendarId: calendar,
+          content: hours(),
+        ),
+      ))!;
+      final before = (await service.get(calendar, groups)).toJson();
+      final eventBefore = (await service.getEvent(
+        event.eventId,
+        eventGroups,
+      )).toJson();
+      final ruleBefore = (await service.getAvailability(rule.availabilityId))
+          .toJson();
+      final scopeBefore = (await CalendarScopeRecord.db.find(session))
+          .map((r) => r.toJson())
+          .toList();
+      policy.denied.addAll([
+        CalendarPermission.read,
+        CalendarPermission.readEvent,
+        CalendarPermission.listEvents,
+        CalendarPermission.readAvailability,
+      ]);
+      policy.eventCandidates = {};
+      final text = busyText(await service.exportFreeBusy(busyQuery(calendar)));
+      final periods = busyProperties(text)
+          .where((p) => p.name == 'FREEBUSY')
+          .toList();
+      expect(periods.map((p) => p.parameters.single.values.single), [
+        'BUSY-UNAVAILABLE',
+        'BUSY',
+        'BUSY-TENTATIVE',
+        'BUSY-UNAVAILABLE',
+      ]);
+      expect(periods.map((p) => p.value), [
+        '20260329T000000Z/20260329T090000Z',
+        '20260329T090000Z/20260329T100000Z',
+        '20260329T100000Z/20260329T110000Z',
+        '20260329T170000Z/20260330T000000Z',
+      ]);
+      for (final private in [
+        'Private',
+        calendar.toString(),
+        event.eventId.toString(),
+        rule.availabilityId.toString(),
+        'Europe/Stockholm',
+        'SUMMARY:',
+        'LOCATION:',
+        'ORGANIZER:',
+        'ATTENDEE:',
+        'RRULE:',
+        'METHOD:',
+        'VTIMEZONE',
+      ]) {
+        expect(text, isNot(contains(private)));
+      }
+      policy.denied.clear();
+      expect((await service.get(calendar, groups)).toJson(), before);
+      expect(
+        (await service.getEvent(event.eventId, eventGroups)).toJson(),
+        eventBefore,
+      );
+      expect(
+        (await service.getAvailability(rule.availabilityId)).toJson(),
+        ruleBefore,
+      );
+      expect(
+        (await CalendarScopeRecord.db.find(session))
+            .map((r) => r.toJson())
+            .toList(),
+        scopeBefore,
+      );
+    });
+    test('free busy export all-free snapshots use unrelated fresh UIDs and database UTC stamps', () async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      final a = busyProperties(
+        busyText(await service.exportFreeBusy(busyQuery(calendar))),
+      );
+      final b = busyProperties(
+        busyText(await service.exportFreeBusy(busyQuery(calendar))),
+      );
+      String value(List<IcalendarSyntaxProperty> p, String name) =>
+          p.singleWhere((p) => p.name == name).value;
+      expect(value(a, 'UID'), isNot(value(b, 'UID')));
+      expect(value(a, 'UID'), isNot(calendar.toString()));
+      expect(a.where((p) => p.name == 'FREEBUSY'), isEmpty);
+      expect(value(a, 'DTSTAMP'), matches(RegExp(r'^\d{8}T\d{6}Z$')));
+    });
+    test(
+      'free busy export has independent export and query authority',
+      () async {
+        final calendar = (await service.create(createInput()))!.calendarId;
+        policy.denied.add(CalendarPermission.exportFreeBusy);
+        expect(
+          (await service.freeBusy(busyQuery(calendar))).coverage,
+          CalendarFreeBusyCoverage.complete,
+        );
+        await expectLater(
+          service.exportFreeBusy(busyQuery(calendar)),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        policy.denied
+          ..clear()
+          ..add(CalendarPermission.readFreeBusy);
+        await expectLater(
+          service.exportFreeBusy(busyQuery(calendar)),
+          failure(CalendarFailureCode.accessDenied),
+        );
+      },
+    );
+    test('free busy export rejects unknown source projections and cap without a partial file', () async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      final event = await booking(calendar, 9, 10);
+      await booking(calendar, 11, 12);
+      policy.busyDenied.add(event.eventId);
+      await expectLater(
+        service.exportFreeBusy(busyQuery(calendar)),
+        failure(CalendarFailureCode.unavailable),
+      );
+      policy.busyDenied.clear();
+      await service.createAvailability(
+        CalendarAvailabilityCreateRequest(
+          calendarId: calendar,
+          content: hours(),
+        ),
+      );
+      policy.denied.add(CalendarPermission.projectAvailability);
+      await expectLater(
+        service.exportFreeBusy(busyQuery(calendar)),
+        failure(CalendarFailureCode.unavailable),
+      );
+      policy.denied.clear();
+      CalendarModule.install(
+        session.serverpod,
+        policy: policy,
+        options: const CalendarModuleOptions(
+          requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+          maxScannedEvents: 1,
+        ),
+      );
+      service = CalendarModule.service(session);
+      await expectLater(
+        service.exportFreeBusy(busyQuery(calendar)),
+        failure(CalendarFailureCode.unavailable),
+      );
+    });
+    test('free busy export repeats parent authority and every source projection after serialization', () async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      await booking(calendar, 9, 10);
+      await service.createAvailability(
+        CalendarAvailabilityCreateRequest(
+          calendarId: calendar,
+          content: hours(),
+        ),
+      );
+      for (final operation in [
+        CalendarPermission.exportFreeBusy,
+        CalendarPermission.readFreeBusy,
+        CalendarPermission.projectEventBusy,
+        CalendarPermission.projectAvailability,
+      ]) {
+        var count = 0;
+        policy.denied.clear();
+        policy.onFreeBusyRequest = (r) {
+          expect(r.calendarId, calendar);
+          expect(r.freeBusyQuery!.fromUtc, busyQuery(calendar).fromUtc);
+          if (r.operation == operation && ++count == 2) {
+            policy.denied.add(operation);
+          }
+        };
+        await expectLater(
+          service.exportFreeBusy(busyQuery(calendar)),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        expect(count, 2);
+      }
+    });
+    test('free busy export final context change and unavailable policy fail closed', () async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      var count = 0;
+      policy.onFreeBusyRequest = (r) {
+        if (r.operation == CalendarPermission.exportFreeBusy && ++count == 2) {
+          policy.epoch = 'changed';
+        }
+      };
+      await expectLater(
+        service.exportFreeBusy(busyQuery(calendar)),
+        failure(CalendarFailureCode.unavailable),
+      );
+      policy.onFreeBusyRequest = null;
+      policy.unavailable = true;
+      await expectLater(
+        service.exportFreeBusy(busyQuery(calendar)),
+        failure(CalendarFailureCode.unavailable),
+      );
+    });
+    test('free busy export supports one-request policy batches and unavailable fallback', () async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      await service.updateSettings(
+        CalendarSettingsUpdateRequest(
+          calendarId: calendar,
+          expectedRevision: 1,
+          availabilityZoneId: 'UTC',
+          noRuleFallback: CalendarNoRuleFallback.unavailable,
+        ),
+      );
+      await booking(calendar, 9, 10);
+      CalendarModule.install(
+        session.serverpod,
+        policy: policy,
+        options: const CalendarModuleOptions(
+          requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+          policyBatchSize: 1,
+        ),
+      );
+      service = CalendarModule.service(session);
+      final periods = busyProperties(
+        busyText(await service.exportFreeBusy(busyQuery(calendar))),
+      ).where((p) => p.name == 'FREEBUSY').toList();
+      expect(
+        periods.single.parameters.single.values.single,
+        'BUSY-UNAVAILABLE',
+      );
+      expect(periods.single.value, '20260329T000000Z/20260330T000000Z');
+    });
+    test('free busy export expands DATE recurrence DST moves and cancellations without recurrence leakage', () async {
+      final id = await recurringEvent();
+      final event = await service.getEvent(id, eventGroups);
+      await service.changeOccurrence(
+        occurrenceChange(
+          id,
+          CalendarEventOccurrenceAction.replaceSingleTiming,
+          replacement: day(28),
+        ),
+      );
+      await service.changeOccurrence(
+        occurrenceChange(
+          id,
+          CalendarEventOccurrenceAction.cancelSingle,
+          revision: 2,
+          dayNumber: 31,
+        ),
+      );
+      final text = busyText(
+        await service.exportFreeBusy(
+          CalendarFreeBusyQuery(
+            calendarId: event.calendarId,
+            fromUtc: DateTime.utc(2026, 3, 28),
+            untilUtc: DateTime.utc(2026, 4, 1),
+          ),
+        ),
+      );
+      final periods = busyProperties(text)
+          .where((p) => p.name == 'FREEBUSY')
+          .toList();
+      expect(periods.single.value, '20260328T000000Z/20260329T220000Z');
+      expect(text, isNot(contains('RRULE')));
+      expect(text, isNot(contains(id.toString())));
+    });
+    test('free busy export validates UTC profile bounds and deleted or missing calendars', () async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      for (final query in [
+        busyQuery(calendar).copyWith(fromUtc: DateTime(2026)),
+        busyQuery(calendar).copyWith(untilUtc: DateTime.utc(2026, 5)),
+        busyQuery(calendar).copyWith(fromUtc: DateTime.utc(1969)),
+        busyQuery(calendar)
+            .copyWith(fromUtc: DateTime.utc(2026, 3, 29, 0, 0, 0, 1)),
+      ]) {
+        await expectLater(
+          service.exportFreeBusy(query),
+          failure(CalendarFailureCode.validation),
+        );
+      }
+      final edge = busyQuery(calendar).copyWith(
+        fromUtc: DateTime.utc(2099, 12, 31),
+        untilUtc: DateTime.utc(2100),
+      );
+      expect(
+        busyText(await service.exportFreeBusy(edge)),
+        contains('DTEND:21000101T000000Z'),
+      );
+      policy.scopeOverride = 'foreign';
+      await expectLater(
+        service.exportFreeBusy(busyQuery(calendar)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.scopeOverride = null;
+      await service.delete(calendar, 1);
+      await expectLater(
+        service.exportFreeBusy(busyQuery(calendar)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      await expectLater(
+        service.exportFreeBusy(busyQuery(const Uuid().v4obj())),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+
     test('free busy merges private overlapping bookings and retains tentative classification', () async {
       final calendar = (await service.create(createInput()))!.calendarId;
       final first = await booking(calendar, 9, 11);
@@ -5413,6 +5733,7 @@ final class TestPolicy implements CalendarHostPolicy {
   onReplacement;
   final deniedExportIds = <UuidValue>{};
   void Function(CalendarAuthorizationRequest)? onExportBatch;
+  void Function(CalendarAuthorizationRequest)? onFreeBusyRequest;
   String? denyImportUid, hideImportReceiptUid;
   bool hideImportBatchReceipt = false;
   Future<void> Function(
@@ -5532,6 +5853,7 @@ final class TestPolicy implements CalendarHostPolicy {
     CalendarAuthorizationPhase phase,
   ) async {
     for (final request in requests) {
+      if (request.freeBusyQuery != null) onFreeBusyRequest?.call(request);
       if (request.operation ==
           CalendarPermission.replaceAvailabilityFromImport) {
         onReplacement?.call(request, phase);
