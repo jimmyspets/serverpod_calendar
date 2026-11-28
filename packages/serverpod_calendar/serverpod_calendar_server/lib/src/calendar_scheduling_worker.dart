@@ -119,6 +119,10 @@ final class _SchedulingWorker {
     CalendarSchedulingMeetingRecord meeting,
     Transaction tx,
   ) async {
+    if (meeting.purpose ==
+        CalendarSchedulingBindingPurpose.informationPublication) {
+      return s._informationDispatchContext(d, p, meeting, tx);
+    }
     final e = await s._eventInScope(meeting.scopeKey, meeting.eventId, tx);
     if (d.scopeKey != meeting.scopeKey ||
         p.scopeKey != meeting.scopeKey ||

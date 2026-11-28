@@ -89,7 +89,17 @@ final class DemoSchedulingHost implements CalendarSchedulingHost {
         context.authority.routes.any(
           (r) => !_synthetic(r.address) || r.routeRef != r.address,
         ) ||
-        !{'REQUEST', 'CANCEL'}.contains(context.intent.method) ||
+        !(context.purpose ==
+                    CalendarSchedulingBindingPurpose.informationPublication
+                ? {'PUBLISH', 'CANCEL'}
+                : {'REQUEST', 'CANCEL'})
+            .contains(context.intent.method) ||
+        context.purpose != context.intent.purpose ||
+        context.purpose ==
+                CalendarSchedulingBindingPurpose.informationPublication &&
+            context.outgoingMessage.events.any(
+              (e) => e.participants.attendees.isNotEmpty,
+            ) ||
         context.intent.organizerAddress != context.authority.organizerAddress ||
         context.currentEvent.eventId != context.proposedEvent.eventId ||
         context.currentEvent.calendarId != context.proposedEvent.calendarId ||

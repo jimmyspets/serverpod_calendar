@@ -385,7 +385,8 @@ extension CalendarSchedulingReplies on CalendarService {
       final event = decoded.events.single;
       final attendee = event.participants.attendees.single;
       final participation = _replyParticipation(attendee.participationStatus);
-      if (source.id == null ||
+      if (meeting.purpose != CalendarSchedulingBindingPurpose.invitation ||
+          source.id == null ||
           source.scopeKey != meeting.scopeKey ||
           source.meetingId != meeting.id ||
           source.targetKey != _replyTargetKey(source.originalStart) ||

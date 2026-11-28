@@ -156,18 +156,27 @@ extension CalendarSchedulingOperations on CalendarService {
 
   Future<CalendarSchedulingMeetingRecord?> _meeting(
     UuidValue eventId,
-    Transaction tx,
-  ) => CalendarSchedulingMeetingRecord.db.findFirstRow(
-    _session,
-    where: (t) => t.eventId.equals(eventId),
-    transaction: tx,
-  );
+    Transaction tx, {
+    bool allowInformation = false,
+  }) async {
+    final meeting = await CalendarSchedulingMeetingRecord.db.findFirstRow(
+      _session,
+      where: (t) => t.eventId.equals(eventId),
+      transaction: tx,
+    );
+    if (!allowInformation &&
+        meeting?.purpose ==
+            CalendarSchedulingBindingPurpose.informationPublication) {
+      throw _failure(CalendarFailureCode.accessDenied);
+    }
+    return meeting;
+  }
 
   Future<void> _rejectSchedulingBinding(
     UuidValue eventId,
     Transaction tx,
   ) async {
-    if (await _meeting(eventId, tx) != null) {
+    if (await _meeting(eventId, tx, allowInformation: true) != null) {
       throw _failure(CalendarFailureCode.dependencyConflict);
     }
   }
@@ -177,10 +186,15 @@ extension CalendarSchedulingOperations on CalendarService {
     CalendarEventContent proposed,
     Transaction tx,
   ) async {
-    final meeting = await _meeting(eventId, tx);
+    final meeting = await _meeting(eventId, tx, allowInformation: true);
     if (meeting == null) return;
     final last = await _latest(meeting, tx);
-    if (_schedulingRecurring(_schedulingPublished(last!).content) !=
+    if (_schedulingRecurring(
+          meeting.purpose ==
+                  CalendarSchedulingBindingPurpose.informationPublication
+              ? _readInformationCheckpoint(last!).active.content
+              : _schedulingPublished(last!).content,
+        ) !=
         _schedulingRecurring(proposed)) {
       throw _failure(CalendarFailureCode.dependencyConflict);
     }
@@ -274,6 +288,27 @@ extension CalendarSchedulingOperations on CalendarService {
     Transaction tx,
     CalendarAuthorizationPhase phase,
   ) async {
+    if (value.purpose != value.intent.purpose ||
+        (value.purpose == CalendarSchedulingBindingPurpose.invitation &&
+            !{'REQUEST', 'CANCEL'}.contains(value.intent.method)) ||
+        (value.purpose ==
+                CalendarSchedulingBindingPurpose.informationPublication &&
+            !{
+              CalendarSchedulingPublicationKind.informationPublish,
+              CalendarSchedulingPublicationKind.informationCancel,
+              CalendarSchedulingPublicationKind.informationReopen,
+            }.contains(value.intent.publicationKind)) ||
+        (value.purpose ==
+                CalendarSchedulingBindingPurpose.informationPublication &&
+            value.intent.method !=
+                (value.intent.publicationKind ==
+                        CalendarSchedulingPublicationKind.informationCancel
+                    ? 'CANCEL'
+                    : 'PUBLISH')) ||
+        value.outgoingMessage.method.name.toUpperCase() !=
+            value.intent.method) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
     if (_options.requiredWriteGuarantee ==
             CalendarAuthorizationGuarantee.coordinated &&
         _scheduling.host.guarantee !=
@@ -283,6 +318,12 @@ extension CalendarSchedulingOperations on CalendarService {
     final verdict = await _bounded(
       () => _scheduling.host.authorizeMessage(_session, value, tx, phase),
     );
+    if (_options.requiredWriteGuarantee ==
+            CalendarAuthorizationGuarantee.coordinated &&
+        _scheduling.host.guarantee !=
+            CalendarAuthorizationGuarantee.coordinated) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
     if (verdict != CalendarAuthorizationVerdict.allow) {
       throw _failure(
         verdict == CalendarAuthorizationVerdict.deny
@@ -1082,6 +1123,7 @@ extension CalendarSchedulingOperations on CalendarService {
         throw _failure(CalendarFailureCode.unavailable);
       }
       return CalendarSchedulingView(
+        purpose: binding?.purpose,
         eventId: eventId,
         eventRevision: e.identity.revision,
         origin: e.data.origin,

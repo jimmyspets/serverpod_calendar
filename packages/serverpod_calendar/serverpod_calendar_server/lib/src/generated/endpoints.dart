@@ -1371,6 +1371,90 @@ class Endpoints extends _is.EndpointDispatch {
                         params['request'],
                       ),
         ),
+        'saveAndPublishInformation': _is.MethodConnector(
+          name: 'saveAndPublishInformation',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_igziosqt.CalendarSchedulingSaveRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .saveAndPublishInformation(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'cancelPublishedInformation': _is.MethodConnector(
+          name: 'cancelPublishedInformation',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_ih6si8n9.CalendarSchedulingCancelRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .cancelPublishedInformation(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'reopenPublishedInformation': _is.MethodConnector(
+          name: 'reopenPublishedInformation',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_idfk8xbx.CalendarSchedulingReopenRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .reopenPublishedInformation(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'informationPublicationStatus': _is.MethodConnector(
+          name: 'informationPublicationStatus',
+          params: {
+            'eventId': _is.ParameterDescription(
+              name: 'eventId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .informationPublicationStatus(
+                        session,
+                        params['eventId'],
+                      ),
+        ),
         'saveAndNotify': _is.MethodConnector(
           name: 'saveAndNotify',
           params: {

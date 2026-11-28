@@ -14,10 +14,13 @@ import 'dart:async' as _ida;
 
 import 'package:serverpod/serverpod.dart' as _is;
 
+import 'calendar_scheduling_binding_purpose.dart' as _igxtgzw0;
+
 abstract class CalendarSchedulingMeetingRecord
     implements _is.TableRow<_is.UuidValue?>, _is.ProtocolSerialization {
   CalendarSchedulingMeetingRecord._({
     this.id,
+    _igxtgzw0.CalendarSchedulingBindingPurpose? purpose,
     required this.scopeKey,
     required this.calendarId,
     required this.eventId,
@@ -28,10 +31,12 @@ abstract class CalendarSchedulingMeetingRecord
     this.latestPublicationId,
     required this.createdAt,
     required this.updatedAt,
-  });
+  }) : purpose =
+           purpose ?? _igxtgzw0.CalendarSchedulingBindingPurpose.invitation;
 
   factory CalendarSchedulingMeetingRecord({
     _is.UuidValue? id,
+    _igxtgzw0.CalendarSchedulingBindingPurpose? purpose,
     required String scopeKey,
     required _is.UuidValue calendarId,
     required _is.UuidValue eventId,
@@ -51,6 +56,11 @@ abstract class CalendarSchedulingMeetingRecord
       id: jsonSerialization['id'] == null
           ? null
           : _is.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
+      purpose: jsonSerialization['purpose'] == null
+          ? null
+          : _igxtgzw0.CalendarSchedulingBindingPurpose.fromJson(
+              (jsonSerialization['purpose'] as String),
+            ),
       scopeKey: jsonSerialization['scopeKey'] as String,
       calendarId: _is.UuidValueJsonExtension.fromJson(
         jsonSerialization['calendarId'],
@@ -83,6 +93,8 @@ abstract class CalendarSchedulingMeetingRecord
   @override
   _is.UuidValue? id;
 
+  _igxtgzw0.CalendarSchedulingBindingPurpose purpose;
+
   String scopeKey;
 
   _is.UuidValue calendarId;
@@ -111,6 +123,7 @@ abstract class CalendarSchedulingMeetingRecord
   @_is.useResult
   CalendarSchedulingMeetingRecord copyWith({
     _is.UuidValue? id = const _is.$UndefinedUuidValue(),
+    _igxtgzw0.CalendarSchedulingBindingPurpose? purpose,
     String? scopeKey,
     _is.UuidValue? calendarId,
     _is.UuidValue? eventId,
@@ -127,6 +140,7 @@ abstract class CalendarSchedulingMeetingRecord
     return {
       '__className__': 'serverpod_calendar.CalendarSchedulingMeetingRecord',
       if (id != null) 'id': id?.toJson(),
+      'purpose': purpose.toJson(),
       'scopeKey': scopeKey,
       'calendarId': calendarId.toJson(),
       'eventId': eventId.toJson(),
@@ -178,6 +192,7 @@ class _CalendarSchedulingMeetingRecordImpl
     extends CalendarSchedulingMeetingRecord {
   _CalendarSchedulingMeetingRecordImpl({
     _is.UuidValue? id,
+    _igxtgzw0.CalendarSchedulingBindingPurpose? purpose,
     required String scopeKey,
     required _is.UuidValue calendarId,
     required _is.UuidValue eventId,
@@ -190,6 +205,7 @@ class _CalendarSchedulingMeetingRecordImpl
     required DateTime updatedAt,
   }) : super._(
          id: id,
+         purpose: purpose,
          scopeKey: scopeKey,
          calendarId: calendarId,
          eventId: eventId,
@@ -208,6 +224,7 @@ class _CalendarSchedulingMeetingRecordImpl
   @override
   CalendarSchedulingMeetingRecord copyWith({
     _is.UuidValue? id = const _is.$UndefinedUuidValue(),
+    _igxtgzw0.CalendarSchedulingBindingPurpose? purpose,
     String? scopeKey,
     _is.UuidValue? calendarId,
     _is.UuidValue? eventId,
@@ -221,6 +238,7 @@ class _CalendarSchedulingMeetingRecordImpl
   }) {
     return CalendarSchedulingMeetingRecord(
       id: id is _is.UndefinedSentinel ? this.id : id,
+      purpose: purpose ?? this.purpose,
       scopeKey: scopeKey ?? this.scopeKey,
       calendarId: calendarId ?? this.calendarId,
       eventId: eventId ?? this.eventId,
@@ -240,6 +258,15 @@ class _CalendarSchedulingMeetingRecordImpl
 class CalendarSchedulingMeetingRecordUpdateTable
     extends _is.UpdateTable<CalendarSchedulingMeetingRecordTable> {
   CalendarSchedulingMeetingRecordUpdateTable(super.table);
+
+  _is.ColumnValue<
+    _igxtgzw0.CalendarSchedulingBindingPurpose,
+    _igxtgzw0.CalendarSchedulingBindingPurpose
+  >
+  purpose(_igxtgzw0.CalendarSchedulingBindingPurpose value) => _is.ColumnValue(
+    table.purpose,
+    value,
+  );
 
   _is.ColumnValue<String, String> scopeKey(String value) => _is.ColumnValue(
     table.scopeKey,
@@ -304,6 +331,12 @@ class CalendarSchedulingMeetingRecordTable extends _is.Table<_is.UuidValue?> {
   CalendarSchedulingMeetingRecordTable({super.tableRelation})
     : super(tableName: 'serverpod_calendar_scheduling_meeting') {
     updateTable = CalendarSchedulingMeetingRecordUpdateTable(this);
+    purpose = _is.ColumnEnum(
+      'purpose',
+      this,
+      _is.EnumSerialization.byName,
+      hasDefault: true,
+    );
     scopeKey = _is.ColumnString(
       'scopeKey',
       this,
@@ -348,6 +381,8 @@ class CalendarSchedulingMeetingRecordTable extends _is.Table<_is.UuidValue?> {
 
   late final CalendarSchedulingMeetingRecordUpdateTable updateTable;
 
+  late final _is.ColumnEnum<_igxtgzw0.CalendarSchedulingBindingPurpose> purpose;
+
   late final _is.ColumnString scopeKey;
 
   late final _is.ColumnUuid calendarId;
@@ -371,6 +406,7 @@ class CalendarSchedulingMeetingRecordTable extends _is.Table<_is.UuidValue?> {
   @override
   List<_is.Column> get columns => [
     id,
+    purpose,
     scopeKey,
     calendarId,
     eventId,

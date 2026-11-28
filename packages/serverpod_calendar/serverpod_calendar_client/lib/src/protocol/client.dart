@@ -760,6 +760,38 @@ class EndpointCalendarEvent extends _isc.EndpointRef {
     {'request': request},
   );
 
+  _ida.Future<_ip6y7si3.CalendarSchedulingReceipt> saveAndPublishInformation(
+    _ihl5k6te.CalendarSchedulingSaveRequest request,
+  ) => caller.callServerEndpoint<_ip6y7si3.CalendarSchedulingReceipt>(
+    'serverpod_calendar.calendarEvent',
+    'saveAndPublishInformation',
+    {'request': request},
+  );
+
+  _ida.Future<_ip6y7si3.CalendarSchedulingReceipt> cancelPublishedInformation(
+    _i9pzc99x.CalendarSchedulingCancelRequest request,
+  ) => caller.callServerEndpoint<_ip6y7si3.CalendarSchedulingReceipt>(
+    'serverpod_calendar.calendarEvent',
+    'cancelPublishedInformation',
+    {'request': request},
+  );
+
+  _ida.Future<_ip6y7si3.CalendarSchedulingReceipt> reopenPublishedInformation(
+    _ir74ejlb.CalendarSchedulingReopenRequest request,
+  ) => caller.callServerEndpoint<_ip6y7si3.CalendarSchedulingReceipt>(
+    'serverpod_calendar.calendarEvent',
+    'reopenPublishedInformation',
+    {'request': request},
+  );
+
+  _ida.Future<_i6q8if2a.CalendarSchedulingView> informationPublicationStatus(
+    _isc.UuidValue eventId,
+  ) => caller.callServerEndpoint<_i6q8if2a.CalendarSchedulingView>(
+    'serverpod_calendar.calendarEvent',
+    'informationPublicationStatus',
+    {'eventId': eventId},
+  );
+
   _ida.Future<_ip6y7si3.CalendarSchedulingReceipt> saveAndNotify(
     _ihl5k6te.CalendarSchedulingSaveRequest request,
   ) => caller.callServerEndpoint<_ip6y7si3.CalendarSchedulingReceipt>(

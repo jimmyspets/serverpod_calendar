@@ -52,6 +52,10 @@ calendarEvent:
   - cancelOccurrenceAndNotify:
   - cancelFutureAndNotify:
   - restoreFutureAndNotify:
+  - saveAndPublishInformation:
+  - cancelPublishedInformation:
+  - reopenPublishedInformation:
+  - informationPublicationStatus:
   - saveAndNotify:
   - cancelAndNotify:
   - schedulingStatus:

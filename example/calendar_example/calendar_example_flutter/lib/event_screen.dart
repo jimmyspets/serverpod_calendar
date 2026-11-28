@@ -3,6 +3,7 @@ import 'item_text_metadata_editor.dart';
 import 'event_descriptive_editor.dart';
 import 'personal_alarm_screen.dart';
 import 'event_scheduling_screen.dart';
+import 'event_information_screen.dart';
 
 import 'package:flutter/material.dart';
 
@@ -822,6 +823,24 @@ class _EventEditorState extends State<EventEditor> {
                         if (mounted) await _run(_reload);
                       },
                 child: const Text('Meeting invitations'),
+              ),
+            if (_view != null)
+              TextButton(
+                key: const Key('event-information'),
+                onPressed: locked || _dirty
+                    ? null
+                    : () async {
+                        await Navigator.of(context).push<void>(
+                          MaterialPageRoute(
+                            builder: (_) => EventInformationScreen(
+                              client: widget.client,
+                              event: _view!,
+                            ),
+                          ),
+                        );
+                        if (mounted) await _run(_reload);
+                      },
+                child: const Text('Information publication'),
               ),
             if (_view != null &&
                 _view!.disclosedGroups.contains(

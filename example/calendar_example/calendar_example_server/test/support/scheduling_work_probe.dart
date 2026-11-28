@@ -47,6 +47,8 @@ final class _Host implements CalendarSchedulingHost {
         {
           CalendarSchedulingPublicationKind.rangeCancel,
           CalendarSchedulingPublicationKind.rangeRestore,
+          CalendarSchedulingPublicationKind.informationCancel,
+          CalendarSchedulingPublicationKind.informationReopen,
         }.contains(c.intent.publicationKind)) {
       stdout.writeln('SCHEDULING_SUBMITTED');
       await Completer<void>().future;
@@ -197,6 +199,52 @@ Future<void> main(List<String> args) async {
       final input = jsonDecode(line) as Map<String, dynamic>;
       Object? result;
       switch (input['command']) {
+        case 'information-command':
+          final id = UuidValue.fromString(input['eventId'] as String);
+          final meeting = (await CalendarSchedulingMeetingRecord.db
+              .findFirstRow(s, where: (t) => t.eventId.equals(id)))!;
+          host.scope = meeting.scopeKey;
+          host.pause = input['pause'] as String? ?? '';
+          s.updateAuthenticated(
+            AuthenticationInfo(
+              'synthetic',
+              {},
+              authId: 'information-command-probe',
+            ),
+          );
+          try {
+            final service = CalendarModule.service(s);
+            final receipt = input['restore'] == true
+                ? await service.reopenPublishedInformation(
+                    CalendarSchedulingReopenRequest(
+                      eventId: id,
+                      expectedRevision: input['revision'] as int,
+                      commandId: UuidValue.fromString(input['key'] as String),
+                    ),
+                  )
+                : await service.cancelPublishedInformation(
+                    CalendarSchedulingCancelRequest(
+                      eventId: id,
+                      expectedRevision: input['revision'] as int,
+                      commandId: UuidValue.fromString(input['key'] as String),
+                    ),
+                  );
+            if (host.pause == 'after') {
+              stdout.writeln('SCHEDULING_SUBMITTED');
+              await Completer<void>().future;
+            }
+            result = {
+              'publicationId': receipt.publicationId.toString(),
+              'unchanged': receipt.unchanged,
+              'revision': receipt.eventRevision,
+              'publications': await CalendarSchedulingPublicationRecord.db
+                  .count(s, where: (t) => t.meetingId.equals(meeting.id!)),
+            };
+          } finally {
+            host.pause = '';
+            s.updateAuthenticated(null);
+          }
+          break;
         case 'range-command':
           final id = UuidValue.fromString(input['eventId'] as String);
           final meeting = (await CalendarSchedulingMeetingRecord.db
@@ -311,7 +359,9 @@ Future<void> main(List<String> args) async {
                 .count(s, where: (t) => t.meetingId.equals(meeting.id!)),
           };
         case 'seed':
-          result = await _seed(s, input['method'] as String? ?? 'REQUEST');
+          result = (input['method'] as String? ?? '').startsWith('INFORMATION')
+              ? await _informationSeed(s, host, input['method'] as String)
+              : await _seed(s, input['method'] as String? ?? 'REQUEST');
         case 'work':
           transport.pause = input['pause'] as String? ?? '';
           await CalendarModule.runSchedulingMaintenance(s);
@@ -1091,3 +1141,70 @@ Future<Map<String, String>> _seed(
   );
   return {'eventId': event.id.toString(), 'publicationId': p.id.toString()};
 });
+
+Future<Map<String, String>> _informationSeed(
+  Session s,
+  _Host host,
+  String method,
+) async {
+  host.scope = 'scheduling-work-probe:${Uuid().v4obj()}';
+  s.updateAuthenticated(
+    AuthenticationInfo('synthetic', {}, authId: 'information-probe'),
+  );
+  try {
+    final service = CalendarModule.service(s);
+    final calendar = (await service.create(
+      CalendarCreateRequest(
+        displayName: 'Synthetic information worker',
+        availabilityZoneId: 'Etc/UTC',
+        noRuleFallback: CalendarNoRuleFallback.free,
+      ),
+    ))!;
+    final content = CalendarEventContent(
+      summary: 'Information worker fixture',
+      timing: CalendarEventTiming(
+        kind: CalendarEventTimeKind.utc,
+        start: CalendarEventCivil(year: 2027, month: 1, day: 2, hour: 9),
+      ),
+    );
+    final event = (await service.createEvent(
+      CalendarEventCreateRequest(
+        calendarId: calendar.calendarId,
+        content: content,
+      ),
+    ))!;
+    var receipt = await service.saveAndPublishInformation(
+      CalendarSchedulingSaveRequest(
+        eventId: event.eventId,
+        expectedRevision: 1,
+        commandId: Uuid().v4obj(),
+        content: content,
+        recipients: ['mailto:guest@example.invalid'],
+      ),
+    );
+    if (method != 'INFORMATION') {
+      receipt = await service.cancelPublishedInformation(
+        CalendarSchedulingCancelRequest(
+          eventId: event.eventId,
+          expectedRevision: 2,
+          commandId: Uuid().v4obj(),
+        ),
+      );
+    }
+    if (method == 'INFORMATION_REOPEN') {
+      receipt = await service.reopenPublishedInformation(
+        CalendarSchedulingReopenRequest(
+          eventId: event.eventId,
+          expectedRevision: 3,
+          commandId: Uuid().v4obj(),
+        ),
+      );
+    }
+    return {
+      'eventId': event.eventId.toString(),
+      'publicationId': receipt.publicationId.toString(),
+    };
+  } finally {
+    s.updateAuthenticated(null);
+  }
+}

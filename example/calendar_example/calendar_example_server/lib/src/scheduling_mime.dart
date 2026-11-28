@@ -81,6 +81,7 @@ String composeSyntheticSchedulingMime(
     ).eventMessage!;
     if (!const {
       IcalendarSchedulingMethod.request,
+      IcalendarSchedulingMethod.publish,
       IcalendarSchedulingMethod.cancel,
     }.contains(message.method)) {
       _fail(SyntheticSchedulingMimeError.profile);

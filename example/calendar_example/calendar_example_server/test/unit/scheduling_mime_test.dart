@@ -19,7 +19,7 @@ List<String> fields(String method) => [
   if (method != 'CANCEL') ...[
     'DTSTART:20261031T120000Z',
     'SUMMARY:Möte\\, synthetic',
-    'ATTENDEE:$recipient',
+    if (method != 'PUBLISH') 'ATTENDEE:$recipient',
   ],
   if (method == 'CANCEL') ...['SEQUENCE:1', 'STATUS:CANCELLED'],
 ];
@@ -59,7 +59,7 @@ Matcher failure(SyntheticSchedulingMimeError kind) => throwsA(
 );
 
 void main() {
-  for (final method in ['REQUEST', 'CANCEL']) {
+  for (final method in ['REQUEST', 'CANCEL', 'PUBLISH']) {
     test(
       '$method MIME headers and independently decoded body match exact payload',
       () {
@@ -310,7 +310,12 @@ void main() {
     '',
     'private malformed calendar',
     calendar('REQUEST').replaceAll('\r\n', '\n'),
-    calendar('PUBLISH'),
+    calendar(
+      'PUBLISH',
+      events: [
+        [...fields('PUBLISH'), 'ATTENDEE:$recipient'],
+      ],
+    ),
     calendar('REQUEST').replaceFirst('METHOD:REQUEST\r\n', ''),
   ]) {
     test(
@@ -324,7 +329,6 @@ void main() {
     );
   }
   for (final method in [
-    'PUBLISH',
     'REPLY',
     'REFRESH',
     'COUNTER',

@@ -263,3 +263,6 @@ The scoped implementation is described in [published range controls](docs/publis
 ## Proposed bundle master attendee responses
 
 [Proposed ADR 0176](docs/adr/0176-bundled-master-attendee-responses.md) groups explicit master-only Accept/Tentative/Decline, protected state/activity, existing durable response tables, independent authority and synthetic MIME/Flutter/recovery checks for complete REQUEST bundles. It proposes dedicated APIs and digest-family binding with no new stored/model field, SQL or cap expansion. A master REPLY does not acknowledge independently versioned exceptions; source changes still withdraw unsent work. Calendar actions remain independent. Current bundle response guards stay in place until explicit maintainer agreement and implementation; occurrence/range replies and real transport remain separate required work.
+
+
+Accepted ADR 0182 adds [native information publication](docs/native-event-information-publication.md): explicit PUBLISH/update and whole cancellation/reopening for native events and recurring masters. Fixed routing recipients are not attendees; newer private drafts and exact retries are preserved. The example uses synthetic MIME only. Incoming PUBLISH, occurrence publication and real mail remain separate roadmap work.

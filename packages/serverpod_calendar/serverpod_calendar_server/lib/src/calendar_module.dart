@@ -69,6 +69,7 @@ part 'calendar_events.dart';
 part 'calendar_event_occurrence_queries.dart';
 part 'calendar_item_text_metadata.dart';
 part 'calendar_scheduling.dart';
+part 'calendar_information_publication.dart';
 part 'calendar_scheduling_replies.dart';
 part 'calendar_scheduling_reply_targets.dart';
 part 'calendar_scheduling_bundle.dart';
