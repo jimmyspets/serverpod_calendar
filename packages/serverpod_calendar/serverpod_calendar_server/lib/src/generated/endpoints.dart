@@ -75,6 +75,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_invitation_adop
     as _ia1wppub;
 import 'package:serverpod_calendar_server/src/generated/calendar_invitation_apply_request.dart'
     as _i3h34hei;
+import 'package:serverpod_calendar_server/src/generated/calendar_invitation_response_request.dart'
+    as _iemmwj8c;
 import 'package:serverpod_calendar_server/src/generated/calendar_metadata_update_request.dart'
     as _io29vhgw;
 import 'package:serverpod_calendar_server/src/generated/calendar_presentation_update_request.dart'
@@ -1823,6 +1825,69 @@ class Endpoints extends _is.EndpointDispatch {
                   (endpoints['calendarInvitation']
                           as _iolttv0d.CalendarInvitationEndpoint)
                       .applyCancellation(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'response': _is.MethodConnector(
+          name: 'response',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .response(
+                        session,
+                        params['id'],
+                      ),
+        ),
+        'responseActivity': _is.MethodConnector(
+          name: 'responseActivity',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .responseActivity(
+                        session,
+                        params['id'],
+                      ),
+        ),
+        'sendResponse': _is.MethodConnector(
+          name: 'sendResponse',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_iemmwj8c.CalendarInvitationResponseRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .sendResponse(
                         session,
                         params['request'],
                       ),

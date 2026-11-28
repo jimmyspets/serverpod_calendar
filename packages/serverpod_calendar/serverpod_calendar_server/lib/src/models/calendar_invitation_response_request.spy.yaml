@@ -1,0 +1,8 @@
+class: CalendarInvitationResponseRequest
+fields:
+  invitationId: UuidValue
+  expectedInvitationRevision: int
+  sourceId: UuidValue
+  expectedResponseRevision: int
+  commandId: UuidValue
+  choice: CalendarInvitationResponseChoice

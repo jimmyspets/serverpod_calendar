@@ -14,6 +14,7 @@ import 'alarm_runtime.dart';
 import 'scheduling_runtime.dart';
 import 'inbound_reply_runtime.dart';
 import 'invitation_runtime.dart';
+import 'invitation_response_runtime.dart';
 import 'alarm_work_store.dart';
 import 'generated/protocol.dart';
 import 'native_calendar_name.dart';
@@ -35,6 +36,8 @@ import 'availability_import_baseline.dart';
 
 part 'calendar_publication.dart';
 part 'calendar_invitations.dart';
+part 'calendar_invitation_responses.dart';
+part 'calendar_invitation_response_worker.dart';
 part 'calendar_invitation_adoption.dart';
 part 'calendar_invitation_application.dart';
 part 'calendar_alarms.dart';
@@ -155,6 +158,13 @@ abstract final class CalendarModule {
             CalendarAuthorizationGuarantee.coordinated) {
       throw ArgumentError('Invitation host cannot supply required guarantee');
     }
+    if (invitations?.responses != null &&
+        options.requiredWriteGuarantee ==
+            CalendarAuthorizationGuarantee.coordinated &&
+        invitations!.responses!.host.guarantee !=
+            CalendarAuthorizationGuarantee.coordinated) {
+      throw ArgumentError('Response host cannot supply required guarantee');
+    }
     final registry = <String, CalendarAvailabilityExtensionRegistration>{};
     if (availabilityExtensions.length > 32) {
       throw ArgumentError('Too many extension registrations');
@@ -201,6 +211,13 @@ abstract final class CalendarModule {
       throw _failure(CalendarFailureCode.unavailable);
     }
     return CalendarService._(session, runtime!)._receiveReply(delivery);
+  }
+
+  /// Trusted private attendee-response worker. Never fabricates a login.
+  static Future<void> runInvitationResponseMaintenance(Session session) async {
+    final runtime = _installed[session.serverpod];
+    if (runtime?.invitations?.responses == null) return;
+    await _InvitationResponseWorker(CalendarService._(session, runtime!)).run();
   }
 
   /// Trusted bounded scheduling worker; no client or fabricated login.

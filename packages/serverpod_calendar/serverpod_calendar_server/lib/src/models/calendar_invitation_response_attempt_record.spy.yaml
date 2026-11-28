@@ -1,0 +1,18 @@
+class: CalendarInvitationResponseAttemptRecord
+serverOnly: true
+table: serverpod_calendar_invitation_response_attempt
+fields:
+  id: UuidValue?, defaultPersist=random
+  responseId: UuidValue, relation(parent=serverpod_calendar_invitation_response)
+  attemptNumber: int
+  leaseToken: UuidValue
+  leaseFence: int
+  startedAt: DateTime
+  finishedAt: DateTime?
+  outcome: String
+  adapterReceipt: String?
+  resultCode: String?
+indexes:
+  calendar_invitation_response_attempt_number_unique:
+    fields: responseId, attemptNumber
+    unique: true

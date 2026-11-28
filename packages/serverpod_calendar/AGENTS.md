@@ -1,5 +1,7 @@
 # Serverpod module
 
+Accepted ADR 0146 adds optional private attendee-response runtime/API and three approved server-only tables. Keep state, retained command/delivery and attempts separate; preserve exact retries, actual database-second ordering, source pins and source/authority/generation/lease fencing. Background contexts carry no fabricated actor. Calendar adoption, source application, native drafts and canonical protocol state remain independent. See ../../docs/private-attendee-responses.md; recurring sending and real mail remain separate.
+
 This project is a Serverpod module: a reusable package with server code (`serverpod_calendar_server`) and client code (`serverpod_calendar_client`) that other Serverpod projects add as a dependency. A module is not a runnable server, so there is no `serverpod start` and no `serverpod` MCP here.
 
 Working loop, run from `serverpod_calendar_server`:

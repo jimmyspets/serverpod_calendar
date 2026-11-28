@@ -1,0 +1,13 @@
+class: CalendarInvitationResponseView
+fields:
+  invitationId: UuidValue
+  revision: int
+  responseId: UuidValue?
+  choice: CalendarInvitationResponseChoice?
+  stamp: DateTime?
+  sourceId: UuidValue?
+  sourceRevision: int?
+  sourceSequence: int?
+  sourceStamp: DateTime?
+  appliesToCurrentSource: bool
+  deliveryState: CalendarInvitationResponseDeliveryState?

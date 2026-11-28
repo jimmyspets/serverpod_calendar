@@ -1,0 +1,9 @@
+class: CalendarInvitationResponseReceipt
+fields:
+  id: UuidValue
+  invitationId: UuidValue
+  sourceId: UuidValue
+  stateRevision: int
+  choice: CalendarInvitationResponseChoice
+  stamp: DateTime
+  queuedAt: DateTime

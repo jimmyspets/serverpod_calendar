@@ -118,6 +118,14 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_apply
     as _ilrmykvj;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_document.dart'
     as _ig6t0ro8;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_response_activity_view.dart'
+    as _ihlye3x3;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_response_receipt.dart'
+    as _iepygmya;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_response_request.dart'
+    as _ifakw2kz;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_response_view.dart'
+    as _ikd0esaz;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_source_view.dart'
     as _i7zq6sue;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_view.dart'
@@ -909,6 +917,32 @@ class EndpointCalendarInvitation extends _isc.EndpointRef {
   ) => caller.callServerEndpoint<_iephig57.CalendarInvitationApplyReceipt>(
     'serverpod_calendar.calendarInvitation',
     'applyCancellation',
+    {'request': request},
+  );
+
+  _ida.Future<_ikd0esaz.CalendarInvitationResponseView> response(
+    _isc.UuidValue id,
+  ) => caller.callServerEndpoint<_ikd0esaz.CalendarInvitationResponseView>(
+    'serverpod_calendar.calendarInvitation',
+    'response',
+    {'id': id},
+  );
+
+  _ida.Future<List<_ihlye3x3.CalendarInvitationResponseActivityView>>
+  responseActivity(_isc.UuidValue id) =>
+      caller.callServerEndpoint<
+        List<_ihlye3x3.CalendarInvitationResponseActivityView>
+      >(
+        'serverpod_calendar.calendarInvitation',
+        'responseActivity',
+        {'id': id},
+      );
+
+  _ida.Future<_iepygmya.CalendarInvitationResponseReceipt> sendResponse(
+    _ifakw2kz.CalendarInvitationResponseRequest request,
+  ) => caller.callServerEndpoint<_iepygmya.CalendarInvitationResponseReceipt>(
+    'serverpod_calendar.calendarInvitation',
+    'sendResponse',
     {'request': request},
   );
 }

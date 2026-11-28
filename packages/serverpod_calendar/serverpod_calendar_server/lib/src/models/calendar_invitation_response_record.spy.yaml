@@ -1,0 +1,47 @@
+class: CalendarInvitationResponseRecord
+serverOnly: true
+table: serverpod_calendar_invitation_response
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  recipientKey: String
+  stateId: UuidValue, relation(parent=serverpod_calendar_invitation_response_state)
+  entryId: UuidValue, relation(parent=serverpod_calendar_invitation)
+  commandId: UuidValue
+  criteriaDigest: String
+  request: CalendarInvitationResponseRequest
+  receipt: CalendarInvitationResponseReceipt
+  sourceId: UuidValue, relation(parent=serverpod_calendar_invitation_source)
+  sourceRevision: int
+  sourceDigest: String
+  sourceSequence: int?
+  sourceStamp: DateTime
+  recipientAddress: String
+  organizerAddress: String
+  authorityRef: String
+  routeRef: String
+  generation: int
+  choice: CalendarInvitationResponseChoice
+  stamp: DateTime
+  payload: String
+  payloadDigest: String
+  byteCount: int
+  state: CalendarInvitationResponseDeliveryState, default=queued
+  attemptCount: int, default=0
+  createdAt: DateTime
+  expiresAt: DateTime
+  nextAttemptAt: DateTime
+  leaseOwner: UuidValue?
+  leaseToken: UuidValue?
+  leaseFence: int, default=0
+  leaseUntil: DateTime?
+  terminalAt: DateTime?
+  resultCode: String?
+indexes:
+  calendar_invitation_response_command_unique:
+    fields: scopeKey, recipientKey, commandId
+    unique: true
+  calendar_invitation_response_due_idx:
+    fields: terminalAt, nextAttemptAt, leaseUntil
+  calendar_invitation_response_recipient_idx:
+    fields: scopeKey, recipientKey, stateId

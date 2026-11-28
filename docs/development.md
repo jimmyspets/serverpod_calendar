@@ -214,3 +214,9 @@ For host MIME ingress work, run `dart test test/unit/imip_ingress_test.dart` and
 
 
 If Dart package-exploration MCP reports no registered roots, register this workspace through its roots tool before retrying read_package_uris/rip_grep_packages. The searchDir argument is a directory; select a file with ripgrep -g instead. This package-access registration is separate from the DTD/VM connection used for runtime reloads.
+
+## Private attendee responses
+
+See [the scoped guide](private-attendee-responses.md). With isolated test services available, run the example server's `dart test test/integration/invitation_responses_test.dart test/unit/invitation_response_mime_test.dart` for focused response work. `dart run tool/invitation_work_smoke.dart` additionally exercises independent hosts and actual response-worker loss before/after synthetic acceptance; fixture files under ignored `.local/` provide test control/evidence only.
+
+After rebuilding the owned example host bundle, `dart run tool/host_smoke.dart --invitations-only --flutter --invitations` exercises generated-client invitation/response behavior and the focused Flutter journey. The normal root check includes these response regressions, populated upgrade checks and the full connected journey. Keep configured host ports exclusive to each harness. No test sends real mail or resets development storage.

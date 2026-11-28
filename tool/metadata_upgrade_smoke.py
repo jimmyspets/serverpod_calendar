@@ -309,6 +309,39 @@ DROP TABLE cancellation_application_guard;
 """)
 
 
+def verify_invitation_response_upgrade(database):
+    sql(database, """
+CREATE TABLE response_upgrade_guard(table_name text, rows jsonb);
+DO $snapshot_responses$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+  AND (tablename LIKE 'serverpod_calendar_%' OR tablename LIKE 'serverpod_notifications_%') LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s', item.tablename) INTO contents;
+  INSERT INTO response_upgrade_guard VALUES(item.tablename, contents);
+ END LOOP;
+END;
+$snapshot_responses$;
+""")
+    sql(database, (SERVER / "migrations/20261030125640323/migration.sql").read_text(encoding="utf-8"))
+    sql(database, """
+DO $verify_responses$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT * FROM response_upgrade_guard LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s', item.table_name) INTO contents;
+  IF contents IS DISTINCT FROM item.rows THEN RAISE EXCEPTION 'Response migration changed %', item.table_name; END IF;
+ END LOOP;
+ IF (SELECT count(*) FROM serverpod_calendar_invitation_response_state)<>0
+ OR (SELECT count(*) FROM serverpod_calendar_invitation_response)<>0
+ OR (SELECT count(*) FROM serverpod_calendar_invitation_response_attempt)<>0
+ THEN RAISE EXCEPTION 'Upgrade invented personal responses or delivery history'; END IF;
+END;
+$verify_responses$;
+DROP TABLE response_upgrade_guard;
+""")
+
+
 def main():
     # Drop only a database this process successfully creates on the test service.
     database = f"calendar_metadata_upgrade_{os.getpid()}"
@@ -978,7 +1011,8 @@ DROP TABLE reply_upgrade_guard;
         verify_invitation_application_upgrade(database)
         verify_invitation_cancellation_upgrade(database)
         verify_cancellation_application_upgrade(database)
-        print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated master replies/receipts through the instance-target, invitation-review and stable-link adoption upgrades.")
+        verify_invitation_response_upgrade(database)
+        print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated replies/invitations/links/checkpoints through instance, adoption, cancellation and private attendee-response upgrades; no personal response history is invented.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")
 
