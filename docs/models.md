@@ -686,3 +686,7 @@ Accepted [ADR 0133](adr/0133-single-instance-attendee-replies.md) adds scoped tr
 ## Event descriptive fields
 
 Accepted ADR 0134 adds immutable geographic-position/resource-group/subset request DTOs and optional nested event source metadata. Views expose independently disclosed values; SQL layout is unchanged. See [the model/API guide](native-event-descriptive-fields.md).
+
+## Proposed native item text/link editors
+
+[ADR 0135](adr/0135-native-item-text-metadata-editors.md) proposes shared public category/comment DTOs, a bounded selected-field patch enum/model and separate revision-checked event/task requests. Existing private source containers and JSON storage stay separate; no SQL table/column/index change is expected. Verify generation/schema stability after approval.

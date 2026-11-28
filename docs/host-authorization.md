@@ -251,3 +251,7 @@ Accepted [ADR 0133](adr/0133-single-instance-attendee-replies.md) adds scoped tr
 ## Event descriptive fields
 
 Accepted ADR 0134 adds updateEventDescriptiveMetadata and independent priority/resources disclosure, with coordinates under location. Source replacement gates changed subsets; full export/scheduling/publication requires applicable complete authority. See [the authorization boundaries](native-event-descriptive-fields.md).
+
+## Proposed native item text/link editors
+
+[ADR 0135](adr/0135-native-item-text-metadata-editors.md) proposes separate event/task text-metadata write operations, independent URL/classification/categories/comments read groups and immutable selected-field context with complete actual current/final proposed state. Source replacements would derive affected fields across master and explicit occurrence metadata. No label grants authority; mechanics await approval.
