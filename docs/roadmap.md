@@ -794,3 +794,14 @@ The maintainer confirmed the next post-restoration master REQUEST policy: preser
 - [x] Implement/test the approved active-master REQUEST batch with focused/grouped checks, two-host recovery and Flutter before one code commit.
 - [ ] Pass full implementation-head repository CI before readiness.
 - [ ] Review whole-series lifecycle, new range transitions, further cycles and remaining scheduling separately.
+
+## Whole-master lifecycle after restoration
+
+[Proposed ADR 0166](adr/0166-master-lifecycle-after-source-range-restoration.md) follows PR #161. It reuses current frozen restoration evidence while proposing explicit cancellation/reopening and current-kind v9 binding.
+
+- [x] Inspect active-only v8 guards, historical restoration/current master/component versions, existing lifecycle projection and private retry bindings.
+- [x] Prepare preserved-clear-cutoff/individual-flag behavior, conservative source floor, v9 kind/status proof and existing API/authority mechanics for review.
+- [ ] Obtain explicit maintainer agreement on the lifecycle/version proposal.
+- [ ] Implement/test the approved batch with focused/grouped checks, two-host recovery and Flutter before one code commit.
+- [ ] Pass full implementation-head repository CI before readiness.
+- [ ] Review new range transitions, additional cycles and remaining scheduling separately.

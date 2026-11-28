@@ -25,3 +25,5 @@ One transaction updates the composed event, master acceptance and v8 checkpoint,
 The latest master command retains existing supersession and expected-occurrence-revision fencing. The original restoration remains the latest occurrence receipt across master updates: exact retries reauthorize and return its original result without changing a later master, local draft/cutoff, notice or generation. Older occurrence/cancellation commands stay superseded. Same-command races and process loss must produce one atomic effect with stable retry identity.
 
 This batch lifts only active master REQUEST composition. Whole lifecycle, new occurrence/range messages and repeated cancellation/restoration cycles still need their own contracts. See [actual validation](scaffold-validation.md); local synthetic success is separate from implementation-head CI and external-client interoperability.
+
+The next [whole-master lifecycle proposal](adr/0166-master-lifecycle-after-source-range-restoration.md) is under review. Its v9/source-floor mechanics do not lift current active-only guards.
