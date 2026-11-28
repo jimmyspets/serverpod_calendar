@@ -195,8 +195,128 @@ Future<void> schedulingSmoke(List<Client> clients) async {
       'REQUEST') {
     throw StateError('Explicit reopening did not publish REQUEST');
   }
+
+  Future<void> terminal() async {
+    for (var i = 0; i < 100; i++) {
+      final status = await b.calendarEvent.schedulingStatus(event.eventId);
+      if (status.deliveries.every(
+        (d) => d.state == cal.CalendarSchedulingDeliveryState.accepted,
+      )) {
+        return;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+    }
+    throw StateError('Prior scheduling deliveries did not terminate');
+  }
+
+  await terminal();
+  var state = await a.calendarEvent.schedulingStatus(event.eventId);
+  final oldPoint = cal.CalendarEventTiming(
+    kind: cal.CalendarEventTimeKind.utc,
+    start: cal.CalendarEventCivil(year: 2026, month: 11, day: 2, hour: 9),
+  );
+  final currentPoint = oldPoint.copyWith(
+    start: cal.CalendarEventCivil(year: 2026, month: 11, day: 3, hour: 9),
+  );
+  final privateContent = content('Private historical cancellation draft');
+  await a.calendarEvent.update(
+    cal.CalendarEventUpdateRequest(
+      eventId: event.eventId,
+      expectedRevision: state.eventRevision,
+      content: privateContent.copyWith(
+        recurrence: privateContent.recurrence!.copyWith(exclusions: [oldPoint]),
+      ),
+    ),
+  );
+  state = await b.calendarEvent.schedulingStatus(event.eventId);
+  final instance = cal.CalendarSchedulingOccurrenceCancelRequest(
+    eventId: event.eventId,
+    expectedRevision: state.eventRevision,
+    commandId: cal.Uuid().v4obj(),
+    originalStart: currentPoint,
+  );
+  final both = await Future.wait([
+    a.calendarEvent.cancelOccurrenceAndNotify(instance),
+    b.calendarEvent.cancelOccurrenceAndNotify(instance),
+  ]);
+  if (both[0].publicationId != both[1].publicationId ||
+      both.where((r) => !r.unchanged).length != 1) {
+    throw StateError(
+      'Cross-host instance cancellation lost command idempotency',
+    );
+  }
+  await terminal();
+  state = await b.calendarEvent.schedulingStatus(event.eventId);
+  final historical = instance.copyWith(
+    expectedRevision: state.eventRevision,
+    originalStart: oldPoint,
+  );
+  final raced = await Future.wait([
+    for (final api in [a, b])
+      () async {
+        try {
+          await api.calendarEvent.cancelOccurrenceAndNotify(
+            historical.copyWith(commandId: cal.Uuid().v4obj()),
+          );
+          return true;
+        } on cal.CalendarException catch (e) {
+          if (![
+            cal.CalendarFailureCode.staleRevision,
+            cal.CalendarFailureCode.dependencyConflict,
+          ].contains(e.code)) {
+            rethrow;
+          }
+          return false;
+        }
+      }(),
+  ]);
+  if (raced.where((v) => v).length != 1) {
+    throw StateError(
+      'Concurrent historical cancellations both changed the revision',
+    );
+  }
+  final saved = await b.calendarEvent.getEvent(
+    event.eventId,
+    cal.CalendarEventFieldGroup.values,
+  );
+  final current = await a.calendarEvent.schedulingStatus(event.eventId);
+  if (saved.summary != 'Private historical cancellation draft' ||
+      saved.timingOverrides!.singles.length != 1 ||
+      saved.timingOverrides!.singles.single.originalStart.start.day != 3 ||
+      current.publicationKind !=
+          cal.CalendarSchedulingPublicationKind.occurrenceCancel ||
+      current.originalStart!.start.day != 2 ||
+      !current.hasLocalChanges ||
+      !current.hasOccurrenceCancellations) {
+    throw StateError(
+      'Historical cancellation changed native drafts or confused status',
+    );
+  }
+  final oldRetry = await a.calendarEvent.cancelOccurrenceAndNotify(instance);
+  if (!oldRetry.unchanged ||
+      oldRetry.publicationId != both.first.publicationId) {
+    throw StateError('Retained cross-host retry changed bytes');
+  }
+  try {
+    await b.calendarEvent.saveAndNotify(
+      command.copyWith(
+        expectedRevision: current.eventRevision,
+        commandId: cal.Uuid().v4obj(),
+      ),
+    );
+    throw StateError('REQUEST silently reopened cancelled originals');
+  } on cal.CalendarException catch (e) {
+    if (e.code != cal.CalendarFailureCode.dependencyConflict) rethrow;
+  }
+  await a.calendarEvent.cancelAndNotify(
+    cal.CalendarSchedulingCancelRequest(
+      eventId: event.eventId,
+      expectedRevision: current.eventRevision,
+      commandId: cal.Uuid().v4obj(),
+    ),
+  );
   stdout.writeln(
-    'PASS: two-host recurring occurrence-bundle publication and retained resets, idempotency/revision races, local draft isolation, cancellation/reopening and synthetic acceptance.',
+    'PASS: two-host recurring occurrence-bundle publication and retained resets, idempotency/revision races, local draft isolation, cancellation/reopening, v4 current/historical instance cancellation races and synthetic acceptance.',
   );
   // Bindings deliberately reject deletion in the first profile. Isolated test
   // storage is reset by the root harness; no public cleanup backdoor is added.

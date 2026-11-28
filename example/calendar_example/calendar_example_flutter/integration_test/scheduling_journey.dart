@@ -33,7 +33,11 @@ Future<void> _tap(WidgetTester tester, String key) async {
   await tester.pump();
   await _wait(
     tester,
-    () => find.byType(LinearProgressIndicator).evaluate().isEmpty,
+    // The top progress bar can be outside the lazy list's viewport. The
+    // pressed action stays disabled until its server action and reload finish.
+    () =>
+        finder.evaluate().isNotEmpty &&
+        tester.widget<ButtonStyleButton>(finder).onPressed != null,
   );
 }
 
@@ -240,6 +244,134 @@ Future<void> runSchedulingJourney(WidgetTester tester, Client client) async {
         .day,
     3,
   );
+  await tester.pageBack();
+  await tester.pumpAndSettle();
+
+  final extra = (await api.calendarEvent.create(
+    cal.CalendarEventCreateRequest(
+      calendarId: calendar.calendarId,
+      content: content('Instance publication'),
+    ),
+  ))!;
+  await api.calendarEvent.saveAndNotify(
+    cal.CalendarSchedulingSaveRequest(
+      eventId: extra.eventId,
+      expectedRevision: 1,
+      commandId: cal.Uuid().v4obj(),
+      content: content('Instance publication'),
+      recipients: ['mailto:bob@example.invalid'],
+    ),
+  );
+  var delivered = false;
+  for (var i = 0; i < 100; i++) {
+    final status = await api.calendarEvent.schedulingStatus(extra.eventId);
+    if (status.deliveries.every(
+      (d) => d.state == cal.CalendarSchedulingDeliveryState.accepted,
+    )) {
+      delivered = true;
+      break;
+    }
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 200)),
+    );
+  }
+  expect(delivered, true);
+  final oldPoint = cal.CalendarEventTiming(
+    kind: cal.CalendarEventTimeKind.date,
+    start: cal.CalendarEventCivil(year: 2026, month: 11, day: 3),
+  );
+  final draft = content('Private Flutter historical draft');
+  await api.calendarEvent.update(
+    cal.CalendarEventUpdateRequest(
+      eventId: extra.eventId,
+      expectedRevision: 2,
+      content: draft.copyWith(
+        recurrence: draft.recurrence!.copyWith(exclusions: [oldPoint]),
+      ),
+    ),
+  );
+  final extraView = await api.calendarEvent.getEvent(
+    extra.eventId,
+    cal.CalendarEventFieldGroup.values,
+  );
+  unawaited(
+    Navigator.of(tester.element(find.byType(Scaffold).first)).push<void>(
+      MaterialPageRoute(
+        builder: (_) => EventSchedulingScreen(client: client, event: extraView),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+  await _wait(
+    tester,
+    () =>
+        find.byKey(const Key('scheduling-status')).evaluate().isNotEmpty &&
+        find.byType(LinearProgressIndicator).evaluate().isEmpty,
+  );
+  Future<void> original(String date) async {
+    final field = find.byKey(const Key('scheduling-original-date'));
+    if (field.evaluate().isEmpty) {
+      await tester.scrollUntilVisible(
+        field,
+        250,
+        scrollable: find.byType(Scrollable).last,
+        maxScrolls: 20,
+      );
+    }
+    await tester.ensureVisible(field);
+    await tester.enterText(field, date);
+  }
+
+  await original('2026-11-03');
+  await _tap(tester, 'scheduling-cancel-occurrence');
+  expect(find.byKey(const Key('scheduling-error')), findsNothing);
+  var instance = await api.calendarEvent.schedulingStatus(extra.eventId);
+  expect(
+    instance.publicationKind,
+    cal.CalendarSchedulingPublicationKind.occurrenceCancel,
+  );
+  expect(instance.originalStart!.start.day, 3);
+  expect(instance.hasOccurrenceCancellations, true);
+  final historicalView = await api.calendarEvent.getEvent(
+    extra.eventId,
+    cal.CalendarEventFieldGroup.values,
+  );
+  expect(historicalView.summary, 'Private Flutter historical draft');
+  expect(historicalView.timingOverrides, isNull);
+  for (var i = 0; i < 100; i++) {
+    instance = await api.calendarEvent.schedulingStatus(extra.eventId);
+    if (instance.deliveries.every(
+      (d) => d.state == cal.CalendarSchedulingDeliveryState.accepted,
+    )) {
+      break;
+    }
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 200)),
+    );
+  }
+  await original('2026-11-04');
+  await _tap(tester, 'scheduling-cancel-occurrence');
+  expect(find.byKey(const Key('scheduling-error')), findsNothing);
+  final currentView = await api.calendarEvent.getEvent(
+    extra.eventId,
+    cal.CalendarEventFieldGroup.values,
+  );
+  expect(
+    currentView.timingOverrides!.singles.single.originalStart.start.day,
+    4,
+  );
+  expect(currentView.timingOverrides!.singles.single.cancelled, true);
+  final publish = find.byKey(const Key('scheduling-publish'));
+  if (publish.evaluate().isEmpty) {
+    await tester.scrollUntilVisible(
+      publish,
+      -250,
+      scrollable: find.byType(Scrollable).last,
+      maxScrolls: 20,
+    );
+  }
+  await tester.ensureVisible(publish);
+  expect(tester.widget<FilledButton>(publish).onPressed, isNull);
   await tester.pageBack();
   await tester.pumpAndSettle();
   // This profile deliberately has no binding deletion API. The root harness

@@ -142,6 +142,8 @@ import 'calendar_refresh_hint.dart' as _ifsfk5xq;
 import 'calendar_scheduling_cancel_request.dart' as _i4uu6f5m;
 import 'calendar_scheduling_delivery_state.dart' as _it5jr5tm;
 import 'calendar_scheduling_delivery_view.dart' as _i63ky642;
+import 'calendar_scheduling_occurrence_cancel_request.dart' as _ia8x0otq;
+import 'calendar_scheduling_publication_kind.dart' as _il38fbb4;
 import 'calendar_scheduling_receipt.dart' as _izftntkw;
 import 'calendar_scheduling_save_request.dart' as _icabxeyo;
 import 'calendar_scheduling_view.dart' as _is73suzs;
@@ -307,6 +309,8 @@ export 'calendar_refresh_hint.dart';
 export 'calendar_scheduling_cancel_request.dart';
 export 'calendar_scheduling_delivery_state.dart';
 export 'calendar_scheduling_delivery_view.dart';
+export 'calendar_scheduling_occurrence_cancel_request.dart';
+export 'calendar_scheduling_publication_kind.dart';
 export 'calendar_scheduling_receipt.dart';
 export 'calendar_scheduling_save_request.dart';
 export 'calendar_scheduling_view.dart';
@@ -756,6 +760,13 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _i63ky642.CalendarSchedulingDeliveryView) {
       return _i63ky642.CalendarSchedulingDeliveryView.fromJson(data) as T;
+    }
+    if (t == _ia8x0otq.CalendarSchedulingOccurrenceCancelRequest) {
+      return _ia8x0otq.CalendarSchedulingOccurrenceCancelRequest.fromJson(data)
+          as T;
+    }
+    if (t == _il38fbb4.CalendarSchedulingPublicationKind) {
+      return _il38fbb4.CalendarSchedulingPublicationKind.fromJson(data) as T;
     }
     if (t == _izftntkw.CalendarSchedulingReceipt) {
       return _izftntkw.CalendarSchedulingReceipt.fromJson(data) as T;
@@ -1583,6 +1594,21 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_i63ky642.CalendarSchedulingDeliveryView?>()) {
       return (data != null
               ? _i63ky642.CalendarSchedulingDeliveryView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t ==
+        _isc.getType<_ia8x0otq.CalendarSchedulingOccurrenceCancelRequest?>()) {
+      return (data != null
+              ? _ia8x0otq.CalendarSchedulingOccurrenceCancelRequest.fromJson(
+                  data,
+                )
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_il38fbb4.CalendarSchedulingPublicationKind?>()) {
+      return (data != null
+              ? _il38fbb4.CalendarSchedulingPublicationKind.fromJson(data)
               : null)
           as T;
     }
@@ -2529,6 +2555,10 @@ class Protocol extends _isc.SerializationManager {
         'CalendarSchedulingDeliveryState',
       _i63ky642.CalendarSchedulingDeliveryView =>
         'CalendarSchedulingDeliveryView',
+      _ia8x0otq.CalendarSchedulingOccurrenceCancelRequest =>
+        'CalendarSchedulingOccurrenceCancelRequest',
+      _il38fbb4.CalendarSchedulingPublicationKind =>
+        'CalendarSchedulingPublicationKind',
       _izftntkw.CalendarSchedulingReceipt => 'CalendarSchedulingReceipt',
       _icabxeyo.CalendarSchedulingSaveRequest =>
         'CalendarSchedulingSaveRequest',
@@ -2837,6 +2867,10 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarSchedulingDeliveryState';
       case _i63ky642.CalendarSchedulingDeliveryView():
         return 'CalendarSchedulingDeliveryView';
+      case _ia8x0otq.CalendarSchedulingOccurrenceCancelRequest():
+        return 'CalendarSchedulingOccurrenceCancelRequest';
+      case _il38fbb4.CalendarSchedulingPublicationKind():
+        return 'CalendarSchedulingPublicationKind';
       case _izftntkw.CalendarSchedulingReceipt():
         return 'CalendarSchedulingReceipt';
       case _icabxeyo.CalendarSchedulingSaveRequest():
@@ -3354,6 +3388,16 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'CalendarSchedulingDeliveryView') {
       return deserialize<_i63ky642.CalendarSchedulingDeliveryView>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarSchedulingOccurrenceCancelRequest') {
+      return deserialize<_ia8x0otq.CalendarSchedulingOccurrenceCancelRequest>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarSchedulingPublicationKind') {
+      return deserialize<_il38fbb4.CalendarSchedulingPublicationKind>(
         data['data'],
       );
     }

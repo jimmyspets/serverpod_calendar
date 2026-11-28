@@ -189,6 +189,8 @@ Future<Map<String, String>> _seed(
   Session s,
   String method,
 ) => s.db.transaction((tx) async {
+  final instance = method == 'INSTANCE';
+  if (instance) method = 'REQUEST';
   if (!{'REQUEST', 'CANCEL'}.contains(method)) {
     throw StateError('Unsupported fixture method');
   }
@@ -325,7 +327,7 @@ Future<Map<String, String>> _seed(
     ),
   );
   final message = parseIcalendarSchedulingMessage(utf8.encode(payload));
-  final components = message.events.map((e) {
+  Map<String, dynamic> component(IcalendarSchedulingEvent e) {
     final rid = e.source.entries
         .whereType<IcalendarSyntaxProperty>()
         .where((p) => p.canonicalName == 'RECURRENCE-ID')
@@ -358,7 +360,9 @@ Future<Map<String, String>> _seed(
       'sequence': e.sequence ?? 0,
       'stamp': e.stamp.toIso8601String(),
     };
-  }).toList();
+  }
+
+  final components = message.events.map(component).toList();
   final checkpoint = {
     'eventId': event.id.toString(),
     'calendarId': calendar.id.toString(),
@@ -448,6 +452,116 @@ Future<Map<String, String>> _seed(
     ),
     transaction: tx,
   );
+
+  if (instance) {
+    final point = CalendarEventTiming(
+      kind: CalendarEventTimeKind.utc,
+      start: CalendarEventCivil(year: 2026, month: 11, day: 4, hour: 9),
+    );
+    final edits = changeEventOverrides(
+      content,
+      null,
+      CalendarEventOccurrenceChange(
+        eventId: event.id!,
+        expectedRevision: 2,
+        originalStart: point,
+        action: CalendarEventOccurrenceAction.cancelSingle,
+      ),
+    );
+    final nextState = advanceEventProtocol(
+      state,
+      content,
+      null,
+      content,
+      edits,
+      now,
+    );
+    final data = (await CalendarEventDataRecord.db.findFirstRow(
+      s,
+      where: (t) => t.eventId.equals(event.id!),
+      transaction: tx,
+    ))!;
+    data.timingOverrides = edits;
+    data.protocolState = nextState;
+    await CalendarEventDataRecord.db.updateRow(s, data, transaction: tx);
+    final basis = {
+      'snapshot': p.snapshot,
+      'projection': p.projection,
+      'payload': p.payload,
+      'method': p.method,
+      'sequence': p.sequence,
+      'stamp': p.stamp.toIso8601String(),
+    };
+    final writer = EventComponentWriter();
+    final payload = utf8.decode(
+      serializeIcalendarSchedulingMessage(
+        validateIcalendarSchedulingMessage(
+          IcalendarSyntaxDocument([
+            IcalendarSyntaxComponent('VCALENDAR', [
+              IcalendarSyntaxProperty('VERSION', '2.0'),
+              IcalendarSyntaxProperty(
+                'PRODID',
+                '-//Serverpod Calendar//Instance cancellation//EN',
+              ),
+              IcalendarSyntaxProperty('METHOD', 'CANCEL'),
+              IcalendarSyntaxComponent('VEVENT', [
+                for (final prop
+                    in message.events.first.source.entries
+                        .whereType<IcalendarSyntaxProperty>())
+                  if ({
+                    'UID',
+                    'ORGANIZER',
+                    'ATTENDEE',
+                  }.contains(prop.canonicalName))
+                    prop,
+                writer.time('RECURRENCE-ID', point),
+                IcalendarSyntaxProperty('SEQUENCE', '1'),
+                IcalendarSyntaxProperty(
+                  'DTSTAMP',
+                  writer.utc(state.version.stamp),
+                ),
+                IcalendarSyntaxProperty('STATUS', 'CANCELLED'),
+              ]),
+            ]),
+          ]),
+        ),
+      ),
+    );
+    final part = component(
+      parseIcalendarSchedulingMessage(utf8.encode(payload)).events.single,
+    );
+    p.snapshot = jsonEncode({
+      'version': 4,
+      'kind': 'occurrenceCancel',
+      'canonical': {
+        ...checkpoint,
+        'state': nextState.toJson(),
+        'overrides': edits!.toJson(),
+      },
+      'basis': basis,
+      'masterMessage': null,
+      'target': point.toJson(),
+      'nativeMatch': true,
+      'cancelled': [
+        {'point': point.toJson(), 'version': part},
+      ],
+    });
+    p.projection = jsonEncode({
+      'version': 4,
+      'kind': 'occurrenceCancel',
+      'target': point.toJson(),
+      'components': [part],
+    });
+    p.payload = payload;
+    p.payloadDigest = sha256.convert(utf8.encode(payload)).toString();
+    p.method = 'CANCEL';
+    p.sequence = 1;
+    await CalendarSchedulingPublicationRecord.db.updateRow(
+      s,
+      p,
+      transaction: tx,
+    );
+  }
   meeting.latestPublicationId = p.id;
   await CalendarSchedulingMeetingRecord.db.updateRow(
     s,

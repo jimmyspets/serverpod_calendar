@@ -151,7 +151,9 @@ final class _SchedulingWorker {
                 ? IcalendarSchedulingMethod.cancel
                 : IcalendarSchedulingMethod.request) ||
         p.method == 'CANCEL' &&
-            (published.content.status != CalendarEventStatus.cancelled ||
+            (checkpoint.kind ==
+                        CalendarSchedulingPublicationKind.seriesCancel &&
+                    published.content.status != CalendarEventStatus.cancelled ||
                 parsed.events.single.status !=
                     IcalendarEventStatus.cancelled) ||
         parsed.uid != p.protocolUid ||
@@ -194,11 +196,19 @@ final class _SchedulingWorker {
       currentEvent: e.snapshot,
       proposedEvent: e.snapshot,
       publicationEvent: checkpoint.canonical,
+      publishedRequest: checkpoint.basisRecord == null
+          ? null
+          : _schedulingReadCheckpoint(checkpoint.basisRecord!).outgoing,
+      exactNativeMatch: checkpoint.target == null
+          ? null
+          : eventSchedulingMember(e.data.content, checkpoint.target!),
       outgoingMessage: parsed,
       payloadDigest: p.payloadDigest,
       authority: authority,
       intent: CalendarSchedulingIntent(
         method: p.method,
+        publicationKind: checkpoint.kind,
+        originalStart: checkpoint.target,
         organizerAddress: meeting.organizerAddress,
         recipients: p.recipients,
         payload: p.payload,

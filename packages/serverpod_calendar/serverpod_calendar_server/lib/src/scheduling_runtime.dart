@@ -33,6 +33,8 @@ final class CalendarSchedulingPolicyContext {
     required this.intent,
     this.actor,
     this.recipient,
+    this.publishedRequest,
+    this.exactNativeMatch,
   });
   final String scopeKey;
   final CalendarHostContext? actor;
@@ -53,6 +55,12 @@ final class CalendarSchedulingPolicyContext {
   final CalendarSchedulingAuthority authority;
   final CalendarSchedulingIntent intent;
   final CalendarSchedulingRoute? recipient;
+
+  /// Historical authorized REQUEST basis, independent of current private drafts.
+  final CalendarEventPolicySnapshot? publishedRequest;
+
+  /// Exact current profile/membership result for an instance cancellation.
+  final bool? exactNativeMatch;
 }
 
 abstract interface class CalendarSchedulingHost {

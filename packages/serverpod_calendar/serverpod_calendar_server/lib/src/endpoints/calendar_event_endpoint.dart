@@ -6,6 +6,10 @@ import '../calendar_module.dart';
 import '../generated/protocol.dart';
 
 class CalendarEventEndpoint extends Endpoint {
+  Future<CalendarSchedulingReceipt> cancelOccurrenceAndNotify(
+    Session session,
+    CalendarSchedulingOccurrenceCancelRequest request,
+  ) => CalendarModule.service(session).cancelOccurrenceAndNotify(request);
   @override
   bool get requireLogin => true;
   Future<CalendarSchedulingReceipt> saveAndNotify(

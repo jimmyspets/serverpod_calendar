@@ -144,7 +144,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0125](0125-scheduling-occurrence-field-projection.md) | Scheduling-only occurrence field projection | Accepted inherited-field mapping and scoped pure candidate helper; native inheritance preserved, durable version/reset/bundle/storage designs unapproved |
 | [0126](0126-independent-occurrence-publication-versions.md) | Independent occurrence publication versions and bounded REQUEST bundles | Accepted complete REQUEST bundles, independent outgoing versions, bounded private checkpoints, lifecycle guards and full-message host approval; scoped implementation |
 | [0127](0127-retained-occurrence-reset-projections.md) | Retained original identities for occurrence resets | Accepted v3 checkpoints, bounded retained slots and current single/future reset projections preserving native inheritance; scoped implementation |
-| [0128](0128-explicit-single-occurrence-cancellation.md) | Explicit single-occurrence cancellation with preserved drafts | Historical cancellation policy confirmed; serialized-delivery gate, v4 checkpoint and DTO/host mechanics proposed, unimplemented |
+| [0128](0128-explicit-single-occurrence-cancellation.md) | Explicit single-occurrence cancellation with preserved drafts | Accepted 2026-10-27; scoped historical single-CANCEL runtime, delivery gate and v4/DTO/host changes; restoration remains separate |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

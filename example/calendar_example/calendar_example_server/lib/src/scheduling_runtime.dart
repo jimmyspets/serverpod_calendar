@@ -60,6 +60,19 @@ final class DemoSchedulingHost implements CalendarSchedulingHost {
     Transaction transaction,
     CalendarAuthorizationPhase phase,
   ) async {
+    if (context.intent.publicationKind ==
+            CalendarSchedulingPublicationKind.occurrenceCancel &&
+        (context.publishedRequest == null ||
+            context.exactNativeMatch == null ||
+            context.intent.originalStart == null ||
+            context.outgoingMessage.events.length != 1 ||
+            !context.outgoingMessage.events.single.isOverride ||
+            context.outgoingMessage.events.single.isThisAndFuture ||
+            context.currentEvent.eventId != context.publishedRequest!.eventId ||
+            context.currentEvent.calendarId !=
+                context.publishedRequest!.calendarId)) {
+      return CalendarAuthorizationVerdict.deny;
+    }
     if (!await _active(
           session,
           context.scopeKey,

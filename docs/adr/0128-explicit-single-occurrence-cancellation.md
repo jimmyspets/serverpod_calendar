@@ -1,6 +1,6 @@
 # ADR 0128: Explicit single-occurrence cancellation with preserved drafts
 
-Status: **Historical cancellation with preserved unpublished drafts confirmed by the maintainer on 2026-10-27. The concrete first batch, delivery gate, v4 checkpoint and API mechanics below are proposed for review; no runtime implementation is added.**
+Status: **Accepted by explicit maintainer approval on 2026-10-27, including the complete concrete batch and storage/API mechanics. Scoped implementation and verification are recorded in [the runtime guide](../native-organizer-scheduling.md) and [validation](../scaffold-validation.md).**
 
 ## Confirmed policy and source evidence
 
@@ -8,7 +8,7 @@ Allow explicit Cancel and notify for an original from the last published series 
 
 [RFC 5546 CANCEL](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.5) distinguishes complete-series cancellation from instance cancellation using RECURRENCE-ID, requires organizer/version/correlation data and permits omitted timing. [Message sequencing](https://www.rfc-editor.org/rfc/rfc5546.html#section-2.1.5) correlates an instance by UID and original identity, then its version. These references were checked on 2026-10-27. The storage, delivery and native-draft rules below are application policies, not extra RFC requirements or interoperability evidence. Ordinary native cancellation remains local; [ADRs 0126–0127](0127-retained-occurrence-reset-projections.md) retain their implemented REQUEST/reset profiles.
 
-## Proposed first batch and limits
+## Approved first batch and limits
 
 Add explicit `cancelOccurrenceAndNotify` for one original of an active native organizer meeting. Accept an implicit member of the last published recurring master as well as a previously emitted single/reset component. Prove exact original membership against the retained published REQUEST basis, including its rule, RDATE/PERIOD and exclusions, under the existing candidate/occurrence limits. Preserve DATE/UTC/named-zone identity and exact zone spelling. Client-supplied point fields establish no existence, authority or parentage.
 
@@ -16,7 +16,7 @@ The initial scope cancels one occurrence for the fixed verified recipient roster
 
 Emit a minimal one-component CANCEL containing the original protocol UID, exact RECURRENCE-ID without RANGE, newer SEQUENCE, whole-second UTC DTSTAMP, approved ORGANIZER/ATTENDEE roster and STATUS:CANCELLED. Include required pinned VTIMEZONE data for a named original. Omit SUMMARY, DESCRIPTION, LOCATION, DTSTART/end/duration, recurrence properties and alarms; no newer private fields or invented timing are sent. Validate the complete outgoing message with the existing pure adapter. No real mail is authorized.
 
-## Proposed delivery gate
+## Approved delivery gate
 
 The current binding has one latest-publication generation fence. Advancing it for a partial CANCEL would otherwise withdraw an unrelated pending master REQUEST or another original's cancellation. For this bounded first batch, require every prior recipient delivery for the binding to be terminal before queueing a new single-occurrence CANCEL. Check this transactionally under the existing scope lock after preliminary authorization; otherwise return a dependency conflict without saving or superseding anything. A terminal result does not prove receipt/display, and uncertain prior submissions may already have arrived.
 
@@ -24,7 +24,7 @@ Require the same gate before a different new single cancellation. Exact retained
 
 This is an explicit serialized-delivery profile, not a solution for overlapping partial messages. Dependency-aware multi-message coordination remains required separate design before relaxing the gate. Do not rely on process-local locks, waiting inside a transaction or silently ignoring older deliveries. The example should explain pending-delivery conflicts and allow refresh/retry.
 
-## Proposed native mutation and authorization
+## Approved native mutation and authorization
 
 Use immutable `CalendarSchedulingOccurrenceCancelRequest` with actual event UUID, expected event revision, command UUID and point-only `originalStart`; it accepts no proposed timing/content, sender or permission decision. Verify the actual calendar/event/binding/UID and trusted host scope. Native membership must be decided in the exact current kind/zone profile: a differing profile is not the same original merely because an instant matches. Budget/coverage failures reject the command rather than being treated as absence.
 
@@ -32,15 +32,15 @@ If the exact original is a valid current member, use the existing native single-
 
 Require a dedicated `cancelOccurrenceScheduling` permission, current full event detail/source and scheduling-read permissions, and lifecycle permission even when there is no native mutation. Whole-series cancellation permission and ordinary text-edit permission are not substitutes. Hosts may map them together explicitly. Preliminary authorization precedes historical membership validation. Final policy receives complete current/final native snapshots, the retained published REQUEST basis, the validated historical original, whether an exact native match exists, and exact outgoing message/bytes/digest for every recipient. Fresh/coordinated guarantees and the external-check race remain declared; source addresses grant no authority.
 
-## Proposed checkpoint and public status
+## Approved checkpoint and public status
 
-Reuse the existing four scheduling tables and string columns; add no table/column/migration. A version-4 checkpoint/comparison format distinguishes REQUEST, whole-series CANCEL and occurrence CANCEL. It retains the complete active published REQUEST basis, its projection markers and independent component ledger separately from the last actual outgoing message and current canonical snapshot. Add bounded `cancelledOriginals` entries with typed point identity and independent outgoing cancellation version; retain enough canonical comparison state to recognize synchronized cancellation flags without labelling preserved private draft fields published. Validate schema, UID/parent, profile/membership, message kind, versions and body correspondence. Unknown/corrupt formats fail unavailable without echoing content.
+Reuse the existing four scheduling tables and string columns; add no table/column/migration. The checkpoint union distinguishes REQUEST, whole-series CANCEL and occurrence CANCEL. Existing REQUEST checkpoints retain their validated v3 format; a version-4 cancellation envelope embeds that complete REQUEST basis and, for whole-series cancellation, its validated master-message checkpoint. Nested v4 envelopes reject, so repeated commands do not grow a recursive chain. It retains the complete active published REQUEST basis, its projection markers and independent component ledger separately from the last actual outgoing message and current canonical snapshot. Add bounded cancelled-original entries (`cancelled` in the v4 encoding) with typed point identity and independent outgoing cancellation version; retain enough canonical comparison state to recognize synchronized cancellation flags without labelling preserved private draft fields published. Validate schema, UID/parent, profile/membership, message kind, versions and body correspondence. Unknown/corrupt formats fail unavailable without echoing content.
 
 For a master message, the publication row's sequence/stamp describe the master as before. For an occurrence CANCEL, they describe its sole cancelled original, identified by the v4 kind/target. Do not run a master-only validator or treat the last minimal CANCEL as the full series basis. Legacy/v2/v3 rows remain readable; derive no earlier individual cancellation history. The latest v4 checkpoint is self-contained through cleanup, including the retained REQUEST basis and all cancellation versions. Snapshot/comparison limits stay 512 KiB each alongside the existing payload cap, and the union of published/reset/cancelled original identities stays at most 64. New implicit cancellations consume a slot; never evict an identity to fit. Existing retention periods and private-source protections stay unchanged.
 
 Add a generated publication-kind enum (`request`, `seriesCancel`, `occurrenceCancel`), optional target point and an individual-cancellation flag to the authorized scheduling view; unchanged receipts remain minimal. Extend trusted intent/policy context with the exact publication kind/target, retained REQUEST basis and explicit native-match result. These are unpublished generated DTO/host-interface changes, not new tables. Status must not label a single cancellation as a cancelled master or imply that unpublished drafts were sent.
 
-## Proposed versions, retries and remaining lifecycle
+## Approved versions, retries and remaining lifecycle
 
 Allocate the target's cancellation sequence above its last published version, prior cancellation version and relevant current native version floors, using the published master's version for an implicit original. Use nondecreasing whole-second database/source timestamp floors; reject overflow atomically. Unrelated master/occurrence versions remain unchanged. Whole-series cancellation advances beyond every retained active/cancelled component and preserves the ledger.
 
@@ -50,7 +50,7 @@ Individual restore/reopen messages are not in this first batch. Ordinary native 
 
 Workers revalidate the exact v4 kind/target/basis, current origin/parent/authority/routes, generation, expiry, fixed roster and payload digest. Historical source membership remains independent of newer native drafts. Keep database leases/fences, stable retry IDs and at-least-once uncertainty; no network I/O occurs under the scope lock.
 
-## Proposed acceptance
+## Approved acceptance
 
 Test implicit, explicit and reset originals; DATE/UTC/named-zone/DST identity; exclusions/PERIOD/range boundaries; changed/removed native originals with preserved drafts; native matching cancellation without timing/content loss; caps, overflow and timestamps. Cover independent permissions, complete host context, stale commands, no-ops, denial/rollback and nonterminal-delivery gating without accidental supersession. Verify legacy/v2/v3/v4 reads, malformed/oversized checkpoints, status kind/target, cleanup retaining the active basis and cancellation history, and guarded REQUEST/reopen behavior.
 
