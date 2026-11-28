@@ -163,6 +163,8 @@ class TestEndpoints {
 
   late final _RefreshJwtTokensEndpoint refreshJwtTokens;
 
+  late final _FreeBusyDemoEndpoint freeBusyDemo;
+
   late final _InvitationDemoEndpoint invitationDemo;
 
   late final _NotificationStreamEndpoint notificationStream;
@@ -184,6 +186,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     refreshJwtTokens = _RefreshJwtTokensEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    freeBusyDemo = _FreeBusyDemoEndpoint(
       endpoints,
       serializationManager,
     );
@@ -502,6 +508,89 @@ class _RefreshJwtTokensEndpoint {
           _localUniqueSession,
           _localCallContext.arguments,
         ) as _ida.Future<_iacs.AuthSuccess>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _FreeBusyDemoEndpoint {
+  _FreeBusyDemoEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_ipn35bcd.CalendarFreeBusyIngressReceipt> simulate(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue calendarId,
+    _is.UuidValue commandId,
+    DateTime fromUtc,
+    DateTime untilUtc, {
+    required bool publish,
+  }) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'freeBusyDemo',
+            method: 'simulate',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'freeBusyDemo',
+          methodName: 'simulate',
+          parameters: _ist.testObjectToJson({
+            'calendarId': calendarId,
+            'commandId': commandId,
+            'fromUtc': fromUtc,
+            'untilUtc': untilUtc,
+            'publish': publish,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ipn35bcd.CalendarFreeBusyIngressReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ipn35bcd.CalendarFreeBusyIngressReceipt> simulateReply(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue outgoingId,
+    _is.UuidValue commandId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'freeBusyDemo',
+            method: 'simulateReply',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'freeBusyDemo',
+          methodName: 'simulateReply',
+          parameters: _ist.testObjectToJson({
+            'outgoingId': outgoingId,
+            'commandId': commandId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ipn35bcd.CalendarFreeBusyIngressReceipt>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

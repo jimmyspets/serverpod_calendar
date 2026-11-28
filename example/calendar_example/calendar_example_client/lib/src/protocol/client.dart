@@ -251,6 +251,45 @@ class EndpointRefreshJwtTokens extends _iacc.EndpointRefreshJwtTokens {
       );
 }
 
+/// Synthetic fixtures only. Callers cannot supply sender proof or raw mail.
+/// {@category Endpoint}
+class EndpointFreeBusyDemo extends _isc.EndpointRef {
+  EndpointFreeBusyDemo(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'freeBusyDemo';
+
+  _ida.Future<_imrxcdin.CalendarFreeBusyIngressReceipt> simulate(
+    _isc.UuidValue calendarId,
+    _isc.UuidValue commandId,
+    DateTime fromUtc,
+    DateTime untilUtc, {
+    required bool publish,
+  }) => caller.callServerEndpoint<_imrxcdin.CalendarFreeBusyIngressReceipt>(
+    'freeBusyDemo',
+    'simulate',
+    {
+      'calendarId': calendarId,
+      'commandId': commandId,
+      'fromUtc': fromUtc,
+      'untilUtc': untilUtc,
+      'publish': publish,
+    },
+  );
+
+  _ida.Future<_imrxcdin.CalendarFreeBusyIngressReceipt> simulateReply(
+    _isc.UuidValue outgoingId,
+    _isc.UuidValue commandId,
+  ) => caller.callServerEndpoint<_imrxcdin.CalendarFreeBusyIngressReceipt>(
+    'freeBusyDemo',
+    'simulateReply',
+    {
+      'outgoingId': outgoingId,
+      'commandId': commandId,
+    },
+  );
+}
+
 /// Development/test simulator. No untrusted sender proof or bytes are accepted.
 /// {@category Endpoint}
 class EndpointInvitationDemo extends _isc.EndpointRef {
@@ -492,6 +531,7 @@ class Client extends _isc.ServerpodClientShared {
        ) {
     emailIdp = EndpointEmailIdp(this);
     refreshJwtTokens = EndpointRefreshJwtTokens(this);
+    freeBusyDemo = EndpointFreeBusyDemo(this);
     invitationDemo = EndpointInvitationDemo(this);
     notificationStream = EndpointNotificationStream(this);
     schedulingDemo = EndpointSchedulingDemo(this);
@@ -502,6 +542,8 @@ class Client extends _isc.ServerpodClientShared {
   late final EndpointEmailIdp emailIdp;
 
   late final EndpointRefreshJwtTokens refreshJwtTokens;
+
+  late final EndpointFreeBusyDemo freeBusyDemo;
 
   late final EndpointInvitationDemo invitationDemo;
 
@@ -517,6 +559,7 @@ class Client extends _isc.ServerpodClientShared {
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
     'emailIdp': emailIdp,
     'refreshJwtTokens': refreshJwtTokens,
+    'freeBusyDemo': freeBusyDemo,
     'invitationDemo': invitationDemo,
     'notificationStream': notificationStream,
     'schedulingDemo': schedulingDemo,

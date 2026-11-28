@@ -1,3 +1,5 @@
+import 'src/free_busy_runtime.dart';
+
 import 'dart:io';
 
 import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
@@ -71,6 +73,10 @@ Future<void> run(List<String> args) async {
     dependencies: [feedDependencies],
     publicationPolicy: DemoCalendarPublicationPolicy(),
     policy: DemoCalendarPolicy(),
+    freeBusyExchanges: CalendarFreeBusyExchangeRuntime(
+      host: DemoFreeBusyHost(),
+      transport: DemoFreeBusyTransport(),
+    ),
     invitations: CalendarInvitationRuntime(
       host: DemoInvitationHost(),
       responses: CalendarInvitationResponseRuntime(

@@ -1,0 +1,9 @@
+class: CalendarFreeBusyIngressReceipt
+immutable: true
+fields:
+  id: UuidValue
+  sourceId: UuidValue
+  headId: UuidValue?
+  outcome: String
+  sourceRevision: int?
+  receivedAt: DateTime

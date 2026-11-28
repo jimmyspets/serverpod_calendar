@@ -1,0 +1,9 @@
+class: CalendarFreeBusyOutgoingView
+immutable: true
+fields:
+  id: UuidValue
+  commandId: UuidValue
+  method: String
+  stamp: DateTime
+  expiresAt: DateTime
+  terminalAt: DateTime?

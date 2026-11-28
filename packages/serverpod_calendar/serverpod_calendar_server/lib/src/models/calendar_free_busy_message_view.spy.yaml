@@ -1,0 +1,14 @@
+class: CalendarFreeBusyMessageView
+immutable: true
+fields:
+  id: UuidValue
+  method: String
+  header: String
+  headId: UuidValue?
+  sourceRevision: int?
+  replyRevision: int?
+  isCurrent: bool
+  conflicted: bool
+  receivedAt: DateTime
+  expiresAt: DateTime
+  dismissedAt: DateTime?

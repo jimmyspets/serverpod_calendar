@@ -1,0 +1,5 @@
+class: CalendarFreeBusyOutgoingPage
+immutable: true
+fields:
+  items: List<CalendarFreeBusyOutgoingView>
+  cursor: String?

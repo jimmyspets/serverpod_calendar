@@ -66,6 +66,18 @@ calendarEvent:
   - changeOccurrence:
   - changeOccurrenceContent:
   - deleteEvent:
+calendarFreeBusyExchange:
+  - listFreeBusyInbox:
+  - getFreeBusyMessage:
+  - getFreeBusySource:
+  - dismissFreeBusyMessage:
+  - listFreeBusyOutgoing:
+  - freeBusyDeliveryActivity:
+  - publishFreeBusy:
+  - requestFreeBusy:
+  - replyFreeBusy:
+  - refuseFreeBusy:
+  - withdrawFreeBusyCommand:
 calendarInvitation:
   - list:
   - getInvitation:

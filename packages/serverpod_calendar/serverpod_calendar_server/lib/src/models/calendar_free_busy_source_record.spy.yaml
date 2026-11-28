@@ -1,0 +1,31 @@
+class: CalendarFreeBusySourceRecord
+serverOnly: true
+table: serverpod_calendar_fb_source
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  ownerKey: String
+  method: String
+  headId: UuidValue?, relation(parent=serverpod_calendar_fb_request_head)
+  requestCommandId: UuidValue?, relation(parent=serverpod_calendar_fb_command)
+  payloadDigest: String
+  byteCount: int
+  payload: String?
+  header: String?
+  originRef: String?
+  bindingRef: String?
+  mailboxAddress: String?
+  sourceStamp: DateTime
+  receivedAt: DateTime
+  expiresAt: DateTime
+  dismissedAt: DateTime?
+  purgedAt: DateTime?
+indexes:
+  calendar_fb_source_owner:
+    fields: scopeKey, ownerKey
+  calendar_fb_source_head:
+    fields: headId
+  calendar_fb_source_request:
+    fields: requestCommandId
+  calendar_fb_source_expiry:
+    fields: expiresAt

@@ -1,3 +1,4 @@
+import 'free_busy_exchange_journey.dart';
 import 'occurrence_query_journey.dart';
 import 'native_future_journey.dart';
 import 'invitation_journey.dart';
@@ -1301,6 +1302,7 @@ void main() {
     await runItemTextMetadataJourney(tester, client);
     await runItemCategorySearchJourney(tester, client);
     await runInvitationJourney(tester, client);
+    await runFreeBusyExchangeJourney(tester, client);
     await runOccurrenceQueryJourney(tester, client);
     await runNativeFutureJourney(tester, client);
     await _liveReminderJourney(tester, client);

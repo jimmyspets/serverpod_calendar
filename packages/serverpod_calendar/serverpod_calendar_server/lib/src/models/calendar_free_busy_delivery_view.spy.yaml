@@ -1,0 +1,9 @@
+class: CalendarFreeBusyDeliveryView
+immutable: true
+fields:
+  id: UuidValue
+  commandId: UuidValue
+  state: String
+  attemptCount: int
+  expiresAt: DateTime
+  terminalAt: DateTime?

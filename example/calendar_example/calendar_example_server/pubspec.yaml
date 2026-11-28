@@ -9,6 +9,8 @@ dependencies:
   serverpod: 4.1.0
   crypto: 3.0.7
   enough_mail: 3.0.0
+  serverpod_calendar_core:
+    path: ../../../packages/serverpod_calendar_core
   serverpod_calendar_icalendar:
     path: ../../../packages/serverpod_calendar_icalendar
   serverpod_auth_idp_server: 4.1.0

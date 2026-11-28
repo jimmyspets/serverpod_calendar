@@ -20,3 +20,7 @@ export 'src/invitation_bundle_response_values.dart';
 export 'src/invitation_bundle_update_values.dart';
 
 export 'src/recurring_invitation_response_values.dart';
+
+export 'src/free_busy_exchange_runtime.dart';
+
+export 'src/free_busy_exchange_values.dart';
