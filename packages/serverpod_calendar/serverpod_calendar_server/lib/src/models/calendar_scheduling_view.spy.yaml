@@ -11,5 +11,6 @@ fields:
   publicationKind: CalendarSchedulingPublicationKind?
   originalStart: CalendarEventTiming?
   hasOccurrenceCancellations: bool, default=false
+  usesPublicationExclusions: bool, default=false
   hasLocalChanges: bool
   deliveries: List<CalendarSchedulingDeliveryView>

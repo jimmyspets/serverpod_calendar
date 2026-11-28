@@ -399,6 +399,6 @@ Accepted [ADR 0128](adr/0128-explicit-single-occurrence-cancellation.md) adds sc
 
 Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) adds bounded durable individual restoration through detached REQUEST, preserving published source meaning and private native drafts. V5 state retains independent active/cancelled/restored versions; complete publication is permitted only after the remaining-cancellation and native-membership guards pass. This does not establish remote exception deletion, cancelled-master reopening, parallel partial coordination or external-client/mail compatibility.
 
-## Proposed retained-cancellation reopening
+## Retained-cancellation reopening
 
-No reopened-series cancellation-preservation interoperability is claimed. ADR 0130 proposes one complete REQUEST with separately tracked publication-only EXDATE masks and master-updating restoration; the policy is confirmed but mechanics are unapproved/unimplemented. Ordinary import/export/feed compatibility is unchanged. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).
+Accepted ADR 0130 adds scoped module behavior for reopening with publication-only EXDATE masks and complete REQUEST restoration. Synthetic tests validate the declared profile; no new external scheduling-client interoperability is claimed. Canonical import/export and subscription-feed profiles stay independent. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).

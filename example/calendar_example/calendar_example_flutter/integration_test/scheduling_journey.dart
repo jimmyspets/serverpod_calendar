@@ -33,11 +33,13 @@ Future<void> _tap(WidgetTester tester, String key) async {
   await tester.pump();
   await _wait(
     tester,
-    // The top progress bar can be outside the lazy list's viewport. The
-    // pressed action stays disabled until its server action and reload finish.
+    // The app-bar action stays mounted even when a successful operation
+    // disables the pressed button or the lazy list scrolls its row away.
     () =>
-        finder.evaluate().isNotEmpty &&
-        tester.widget<ButtonStyleButton>(finder).onPressed != null,
+        tester
+            .widget<TextButton>(find.byKey(const Key('scheduling-reload')))
+            .onPressed !=
+        null,
   );
 }
 
@@ -456,6 +458,57 @@ Future<void> runSchedulingJourney(WidgetTester tester, Client client) async {
     )).timingOverrides,
     isNull,
   );
+  await terminalExtra();
+  await original('2026-11-03');
+  await _tap(tester, 'scheduling-cancel-occurrence');
+  expect(find.byKey(const Key('scheduling-error')), findsNothing);
+  await terminalExtra();
+  await _tap(tester, 'scheduling-cancel');
+  expect(find.byKey(const Key('scheduling-error')), findsNothing);
+  await terminalExtra();
+  native = await api.calendarEvent.getEvent(
+    extra.eventId,
+    cal.CalendarEventFieldGroup.values,
+  );
+  await api.calendarEvent.update(
+    cal.CalendarEventUpdateRequest(
+      eventId: extra.eventId,
+      expectedRevision: native.revision,
+      content: content('Private masked reopening draft')
+          .copyWith(status: cal.CalendarEventStatus.cancelled),
+    ),
+  );
+  await _tap(tester, 'scheduling-reload');
+  await _tap(tester, 'scheduling-reopen-published');
+  expect(find.byKey(const Key('scheduling-error')), findsNothing);
+  var projected = await api.calendarEvent.schedulingStatus(extra.eventId);
+  expect(projected.usesPublicationExclusions, true);
+  expect(projected.hasOccurrenceCancellations, true);
+  native = await api.calendarEvent.getEvent(
+    extra.eventId,
+    cal.CalendarEventFieldGroup.values,
+  );
+  expect(native.summary, 'Private masked reopening draft');
+  expect(native.status, cal.CalendarEventStatus.confirmed);
+  expect(native.timingOverrides!.singles.single.cancelled, true);
+  expect(native.recurrence!.exclusions, isEmpty);
+  await terminalExtra();
+  await original('2026-11-03');
+  await _tap(tester, 'scheduling-restore-occurrence');
+  expect(find.byKey(const Key('scheduling-error')), findsNothing);
+  projected = await api.calendarEvent.schedulingStatus(extra.eventId);
+  expect(
+    projected.publicationKind,
+    cal.CalendarSchedulingPublicationKind.occurrenceRestoreWithMaster,
+  );
+  expect(projected.hasOccurrenceCancellations, false);
+  expect(projected.hasLocalChanges, true);
+  await terminalExtra();
+  await _tap(tester, 'scheduling-publish');
+  expect(find.byKey(const Key('scheduling-error')), findsNothing);
+  projected = await api.calendarEvent.schedulingStatus(extra.eventId);
+  expect(projected.usesPublicationExclusions, false);
+  expect(projected.hasLocalChanges, false);
   await tester.pageBack();
   await tester.pumpAndSettle();
   // This profile deliberately has no binding deletion API. The root harness

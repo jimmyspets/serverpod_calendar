@@ -406,15 +406,120 @@ Future<void> schedulingSmoke(List<Client> clients) async {
   if ((await b.calendarEvent.schedulingStatus(event.eventId)).hasLocalChanges) {
     throw StateError('Complete restored REQUEST stayed unsynchronized');
   }
-  await a.calendarEvent.cancelAndNotify(
-    cal.CalendarSchedulingCancelRequest(
+  await terminal();
+  await a.calendarEvent.cancelOccurrenceAndNotify(
+    cal.CalendarSchedulingOccurrenceCancelRequest(
       eventId: event.eventId,
       expectedRevision: complete.eventRevision,
       commandId: cal.Uuid().v4obj(),
+      originalStart: oldPoint,
     ),
   );
+  await terminal();
+  var projectedView = await b.calendarEvent.getEvent(
+    event.eventId,
+    cal.CalendarEventFieldGroup.values,
+  );
+  await a.calendarEvent.cancelAndNotify(
+    cal.CalendarSchedulingCancelRequest(
+      eventId: event.eventId,
+      expectedRevision: projectedView.revision,
+      commandId: cal.Uuid().v4obj(),
+    ),
+  );
+  await terminal();
+  projectedView = await b.calendarEvent.getEvent(
+    event.eventId,
+    cal.CalendarEventFieldGroup.values,
+  );
+  await b.calendarEvent.update(
+    cal.CalendarEventUpdateRequest(
+      eventId: event.eventId,
+      expectedRevision: projectedView.revision,
+      content: privateContent.copyWith(
+        summary: 'Private masked reopening draft',
+        status: cal.CalendarEventStatus.cancelled,
+      ),
+    ),
+  );
+  projectedView = await a.calendarEvent.getEvent(
+    event.eventId,
+    cal.CalendarEventFieldGroup.values,
+  );
+  final reopen = cal.CalendarSchedulingReopenRequest(
+    eventId: event.eventId,
+    expectedRevision: projectedView.revision,
+    commandId: cal.Uuid().v4obj(),
+  );
+  final reopens = await Future.wait([
+    a.calendarEvent.reopenPublishedAndNotify(reopen),
+    b.calendarEvent.reopenPublishedAndNotify(reopen),
+  ]);
+  if (reopens.map((r) => r.publicationId).toSet().length != 1 ||
+      reopens.where((r) => !r.unchanged).length != 1) {
+    throw StateError('Projected reopening race queued duplicate intent');
+  }
+  var projectedStatus = await b.calendarEvent.schedulingStatus(event.eventId);
+  projectedView = await a.calendarEvent.getEvent(
+    event.eventId,
+    cal.CalendarEventFieldGroup.values,
+  );
+  if (!projectedStatus.usesPublicationExclusions ||
+      !projectedStatus.hasOccurrenceCancellations ||
+      projectedView.summary != 'Private masked reopening draft' ||
+      projectedView.status != cal.CalendarEventStatus.confirmed ||
+      projectedView.timingOverrides!.singles.single.cancelled != true ||
+      projectedView.recurrence!.exclusions.isNotEmpty) {
+    throw StateError(
+      'Projected reopening lost private drafts or cancellation provenance',
+    );
+  }
+  await terminal();
+  final maskedRestore = cal.CalendarSchedulingOccurrenceRestoreRequest(
+    eventId: event.eventId,
+    expectedRevision: projectedStatus.eventRevision,
+    commandId: cal.Uuid().v4obj(),
+    originalStart: oldPoint,
+  );
+  final projectedRace = await Future.wait([
+    for (final client in [a, b])
+      (() async {
+        try {
+          await client.calendarEvent.restoreOccurrenceAndNotify(
+            maskedRestore.copyWith(commandId: cal.Uuid().v4obj()),
+          );
+          return true;
+        } on cal.CalendarException catch (e) {
+          if (e.code != cal.CalendarFailureCode.staleRevision) rethrow;
+          return false;
+        }
+      })(),
+  ]);
+  if (projectedRace.where((r) => r).length != 1) {
+    throw StateError('Projected restoration stale race accepted both writes');
+  }
+  projectedStatus = await a.calendarEvent.schedulingStatus(event.eventId);
+  if (projectedStatus.hasOccurrenceCancellations ||
+      projectedStatus.publicationKind !=
+          cal.CalendarSchedulingPublicationKind.occurrenceRestoreWithMaster) {
+    throw StateError('Projected restoration did not update the master');
+  }
+  await terminal();
+  await b.calendarEvent.saveAndNotify(
+    command.copyWith(
+      expectedRevision: projectedStatus.eventRevision,
+      commandId: cal.Uuid().v4obj(),
+      content: privateContent.copyWith(
+        summary: 'Private masked reopening draft',
+      ),
+    ),
+  );
+  if ((await a.calendarEvent.schedulingStatus(event.eventId))
+      .usesPublicationExclusions) {
+    throw StateError('Complete publication failed to leave projection mode');
+  }
   stdout.writeln(
-    'PASS: two-host recurring occurrence-bundle publication and retained resets, idempotency/revision races, local draft isolation, cancellation/reopening, v4 cancellation and v5 published-value restoration races, guarded complete REQUESTs and synthetic acceptance.',
+    'PASS: two-host recurring occurrence-bundle publication and retained resets, idempotency/revision races, local draft isolation, cancellation/reopening, v4 cancellation and v5 published-value restoration races, guarded complete REQUESTs, v6 preserved-cancellation reopening/master-restoration races and synthetic acceptance.',
   );
   // Bindings deliberately reject deletion in the first profile. Isolated test
   // storage is reset by the root harness; no public cleanup backdoor is added.

@@ -121,6 +121,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_occu
     as _ij9idrbi;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_receipt.dart'
     as _igqgquq7;
+import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_reopen_request.dart'
+    as _idfk8xbx;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_save_request.dart'
     as _igziosqt;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_view.dart'
@@ -1570,6 +1572,37 @@ class _CalendarEventEndpoint {
   final _is.EndpointDispatch _endpointDispatch;
 
   final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_igqgquq7.CalendarSchedulingReceipt> reopenPublishedAndNotify(
+    _ist.TestSessionBuilder sessionBuilder,
+    _idfk8xbx.CalendarSchedulingReopenRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarEvent',
+            method: 'reopenPublishedAndNotify',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarEvent',
+          methodName: 'reopenPublishedAndNotify',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_igqgquq7.CalendarSchedulingReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 
   _ida.Future<_igqgquq7.CalendarSchedulingReceipt> restoreOccurrenceAndNotify(
     _ist.TestSessionBuilder sessionBuilder,

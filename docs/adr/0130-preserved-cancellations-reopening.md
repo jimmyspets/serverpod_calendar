@@ -1,6 +1,6 @@
 # ADR 0130: Reopening the published series while retaining individual cancellations
 
-Status: **The maintainer confirmed on 2026-10-27 that explicit whole-series reopening preserves individually cancelled occurrences. The concrete projection, API and v6 mechanics below are proposed, not accepted or implemented.**
+Status: **Accepted by explicit maintainer approval on 2026-10-27, including the complete API/projection/v6/authority batch. Scoped implementation is described in the runtime guide; actual validation remains separate from approval and client compatibility.**
 
 ## Confirmed policy and source evidence
 
@@ -8,7 +8,7 @@ Reopening the published whole series must not restore its individually cancelled
 
 [RFC 5546 REQUEST](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.2) permits recurring updates with EXDATE and restricts REQUEST status to active states. [RFC 5545 EXDATE](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.5.1) removes original starts from the recurrence set, taking precedence over rule/inclusion dates while retaining DTSTART identity. Primary references were checked on 2026-10-27. Using exclusions as an explicit scheduling-publication projection, preserving private cancellation identity and choosing a reopening API are application policies, not additional RFC requirements or interoperability evidence.
 
-## Proposed bounded published-value reopening
+## Approved bounded published-value reopening
 
 Add `reopenPublishedAndNotify` with immutable event/revision/command UUIDs and no client-proposed text/timing/organizer/roster. The first profile requires an already published whole-series CANCEL, a native-created recurring organizer binding, known individual cancellation state and an explicit retained active REQUEST basis under ADRs 0128/0129. Older/unknown history must not be guessed. Existing ordinary reopening without individual cancellations stays unchanged.
 
@@ -18,7 +18,7 @@ Emit one complete METHOD:REQUEST. In an ephemeral outgoing copy, add EXDATE for 
 
 These extra EXDATE values are publication-only cancellation masks, not native recurrence exclusions or a loss of canonical cancellation state. Ordinary import/export and feeds retain their existing contracts. An untrusted external EXDATE never establishes module-created cancellation history, permission or restoration authority. No URL, alarm or source participant activates anything.
 
-The proposed flow keeps the published projection separate from private native drafts:
+The approved flow keeps the published projection separate from private native drafts:
 
 ```mermaid
 flowchart TD
@@ -28,7 +28,7 @@ flowchart TD
   D --> E[Later restore removes only its module-created mask in a complete REQUEST]
 ```
 
-## Proposed restoration after projected reopening
+## Approved restoration after projected reopening
 
 A standalone instance REQUEST cannot remove a master EXDATE. Therefore, while this publication mode is active, `restoreOccurrenceAndNotify` must atomically queue one complete published-series REQUEST that removes only the target's module-created mask, retains every other cancellation mask and includes the restored target's faithful published active values with a newer independent version. It clears only a matching current native single flag under ADR 0129; all other native drafts remain intact. Ordinary source EXDATE values are never removed or reclassified as module masks.
 
@@ -36,7 +36,7 @@ The unprojected retained basis and last-active component data remain the source 
 
 New explicit single cancellations can keep their minimal detached CANCEL profile. Preserve the last complete REQUEST's mask set separately from the latest cancellation state, since a later partial CANCEL need not have appeared as EXDATE yet. A subsequent complete restoration/reopening projects all remaining cancelled originals, so it cannot omit a later cancellation. Native flags and publication-only masks are never conflated.
 
-## Proposed authority, delivery and status
+## Approved authority, delivery and status
 
 Require independent `reopenScheduling`, scheduling-read, full event/source and lifecycle authority even when the native status already matches. Ordinary text editing and REQUEST publication are not substitutes for published-value reopening; hosts may map permissions together explicitly. The action accepts no proposed content. Existing restore/cancel permissions continue to govern their respective actions.
 
@@ -46,7 +46,7 @@ Require prior binding deliveries to be terminal before a new projected reopen or
 
 Add explicit generated publication kinds for published-series reopen and occurrence restoration that also updates the master, plus authorized status indicating publication-only exclusion mode. The row sequence/stamp describe the actual master for these complete REQUESTs; existing partial rows continue to describe their target. The UI clearly distinguishes reopening published values from publishing current drafts and retains exact uncertain commands.
 
-## Proposed v6 private checkpoint and version rules
+## Approved v6 private checkpoint and version rules
 
 Reuse the existing four tables/columns and retention. No table, index, column, migration, dependency or development reset is proposed. A bounded v6 envelope keeps the unprojected active REQUEST basis, native publication-time checkpoint, cancellation/restoration and last-active component versions, the last complete REQUEST's module mask identities and its actual master/component versions, separately from the latest outgoing message. Never recursively embed v6 envelopes. Read legacy through v5 without inventing projection provenance; only reviewed known history can enter this mode.
 
@@ -58,11 +58,11 @@ Once masks and cancellations are empty, build a validated non-recursive bridge t
 
 ## Alternatives and consequences
 
-Restoring every original contradicts the confirmed policy. Reopening with an unqualified master REQUEST can lose cancellations. A master REQUEST followed by multiple CANCELs would require grouped generations, dependency-aware deliveries, aggregate admission/retention and a separate uncertainty contract; merely advancing today's latest-publication pointer is unsafe. The proposed single-message exclusion projection keeps cancellations in the reopened recurrence set without that multi-message workflow, but requires explicit projection provenance and master-updating restoration. It does not claim ordinary canonical export equivalence or tested external-client behavior.
+Restoring every original contradicts the confirmed policy. Reopening with an unqualified master REQUEST can lose cancellations. A master REQUEST followed by multiple CANCELs would require grouped generations, dependency-aware deliveries, aggregate admission/retention and a separate uncertainty contract; merely advancing today's latest-publication pointer is unsafe. The approved single-message exclusion projection keeps cancellations in the reopened recurrence set without that multi-message workflow, but requires explicit projection provenance and master-updating restoration. It does not claim ordinary canonical export equivalence or tested external-client behavior.
 
 The bounded published-value API deliberately leaves native draft publication and broader overlapping workflows restricted. General full updates while cancellations remain, future cancellation, recipient changes, imported adoption, inbound reconciliation, MIME transport and binding cleanup remain separate required work. No real mail is authorized.
 
-## Proposed acceptance
+## Approved acceptance
 
 Test confirmed/tentative published status, private native field/profile/pattern/flag preservation, DTSTART cancellation, exact named aliases/DST, RDATE/PERIOD and earlier-range identities, multiple masks, ordinary versus generated EXDATE and no cancelled REQUEST components. Cover independent authority/full-message context, stale/no-op/retry behavior, pending gates, lower-version messages, overflow/caps/work budgets, malformed provenance, v4/v5/v6 reads and pruning.
 

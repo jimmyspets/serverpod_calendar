@@ -138,6 +138,6 @@ Accepted [ADR 0128](adr/0128-explicit-single-occurrence-cancellation.md) impleme
 
 Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) implements the bounded published-value individual-restoration profile with detached REQUEST and independent target versions. Native private timing/text remains unchanged except an exact current cancellation flag; no authority is inferred from source fields. Serialized delivery, v5 history and complete-publication guards are application choices, not blanket iTIP/iMIP or client interoperability claims.
 
-## Proposed retained-cancellation reopening
+## Retained-cancellation reopening
 
-RFC 5546 REQUEST permits EXDATE and active status; RFC 5545 exclusions apply to original recurrence identities. ADR 0130 proposes using that syntax as an explicit publication projection while retaining private cancellation provenance. This application mapping is not a new RFC rule, canonical import capability or verified client behavior. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).
+Accepted ADR 0130 uses permitted REQUEST/EXDATE syntax as an explicit scheduling-publication projection with retained private cancellation provenance. Restoring a masked original changes the complete master REQUEST. This application policy neither changes canonical EXDATE authority nor establishes full RFC/client/mail conformance. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).

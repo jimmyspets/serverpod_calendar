@@ -70,10 +70,12 @@ Future<void> main(List<String> args) async {
   try {
     var a = await start('a', 18580);
     final b = await start('b', 18680);
-    for (final method
-        in args.contains('--restore-only')
-            ? ['RESTORE']
-            : ['REQUEST', 'CANCEL', 'INSTANCE', 'RESTORE']) {
+    final methods = args.contains('--projected-only')
+        ? ['REOPEN', 'MASKRESTORE']
+        : args.contains('--restore-only')
+        ? ['RESTORE']
+        : ['REQUEST', 'CANCEL', 'INSTANCE', 'RESTORE', 'REOPEN', 'MASKRESTORE'];
+    for (final method in methods) {
       final first = (await a.command({
         'command': 'seed',
         'method': method,
@@ -131,13 +133,13 @@ Future<void> main(List<String> args) async {
             'Recovered $method submissions changed identity or bytes',
           );
         }
-        if (pause == 'before' || method != 'RESTORE') {
+        if (pause == 'before' || method != methods.last) {
           a = await start('a-recovered-$method-$pause', 18580);
         }
       }
     }
     stdout.writeln(
-      'PASS: ${args.contains('--restore-only') ? 'v5 RESTORE' : 'v3 REQUEST, legacy CANCEL, v4 INSTANCE and v5 RESTORE'} on two independent scheduling workers, competing claims, actual loss before/after synthetic acceptance and fenced stable-key recovery.',
+      'PASS: ${methods.join(', ')} on two independent scheduling workers, competing claims, actual loss before/after synthetic acceptance and fenced stable-key recovery.',
     );
   } finally {
     final live = probes.where((p) => !p.stopped).toList();

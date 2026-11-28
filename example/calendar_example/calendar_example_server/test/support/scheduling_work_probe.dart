@@ -189,8 +189,11 @@ Future<Map<String, String>> _seed(
   Session s,
   String method,
 ) => s.db.transaction((tx) async {
-  final restoring = method == 'RESTORE';
-  final instance = method == 'INSTANCE' || restoring;
+  final maskedRestore = method == 'MASKRESTORE';
+  final reopening = method == 'REOPEN';
+  final projectedMode = reopening || maskedRestore;
+  final restoring = method == 'RESTORE' || maskedRestore;
+  final instance = method == 'INSTANCE' || restoring || reopening;
   if (instance) method = 'REQUEST';
   if (!{'REQUEST', 'CANCEL'}.contains(method)) {
     throw StateError('Unsupported fixture method');
@@ -531,6 +534,7 @@ Future<Map<String, String>> _seed(
       ),
     );
 
+    IcalendarSchedulingMessage? restoredSource;
     if (restoring) {
       final projectedOriginals = [
         ...originals,
@@ -571,6 +575,7 @@ Future<Map<String, String>> _seed(
       final full = projectIcalendarRequestFields(
         parseIcalendarEventCalendar(eventExportBytes([projected])),
       );
+      restoredSource = full;
       final target = full.events
           .singleWhere((e) => e.originalTime?.civil.date.day == 4)
           .source;
@@ -587,7 +592,10 @@ Future<Map<String, String>> _seed(
                         e is! IcalendarSyntaxProperty ||
                         !{'SEQUENCE', 'DTSTAMP'}.contains(e.canonicalName),
                   ),
-                  IcalendarSyntaxProperty('SEQUENCE', '2'),
+                  IcalendarSyntaxProperty(
+                    'SEQUENCE',
+                    maskedRestore ? '4' : '2',
+                  ),
                   IcalendarSyntaxProperty(
                     'DTSTAMP',
                     writer.utc(state.version.stamp),
@@ -637,7 +645,84 @@ Future<Map<String, String>> _seed(
     p.payload = payload;
     p.payloadDigest = sha256.convert(utf8.encode(payload)).toString();
     p.method = restoring ? 'REQUEST' : 'CANCEL';
-    p.sequence = restoring ? 2 : 1;
+    p.sequence = restoring ? (maskedRestore ? 4 : 2) : 1;
+    if (projectedMode) {
+      final proof = {
+        'snapshot': p.snapshot,
+        'projection': p.projection,
+        'payload': p.payload,
+        'method': p.method,
+        'sequence': p.sequence,
+        'stamp': p.stamp.toIso8601String(),
+      };
+      final source = maskedRestore ? restoredSource! : message;
+      final unmaskedLedger = [
+        for (final e in source.events)
+          {
+            ...component(e),
+            'sequence': e.isOverride && e.originalTime!.civil.date.day == 4
+                ? 4
+                : 3,
+          },
+      ];
+      final fullPayload = utf8.decode(
+        serializeIcalendarSchedulingMessage(
+          validateIcalendarSchedulingMessage(
+            IcalendarSyntaxDocument([
+              IcalendarSyntaxComponent('VCALENDAR', [
+                ...source.source.components.single.entries
+                    .whereType<IcalendarSyntaxProperty>(),
+                for (var i = 0; i < source.events.length; i++)
+                  IcalendarSyntaxComponent('VEVENT', [
+                    ...source.events[i].source.entries.where(
+                      (e) =>
+                          e is! IcalendarSyntaxProperty ||
+                          !{'SEQUENCE', 'DTSTAMP'}.contains(e.canonicalName),
+                    ),
+                    if (reopening && !source.events[i].isOverride)
+                      writer.time('EXDATE', point),
+                    IcalendarSyntaxProperty(
+                      'SEQUENCE',
+                      '${unmaskedLedger[i]['sequence']}',
+                    ),
+                    IcalendarSyntaxProperty(
+                      'DTSTAMP',
+                      writer.utc(state.version.stamp),
+                    ),
+                  ]),
+              ]),
+            ]),
+          ),
+        ),
+      );
+      final kind = reopening ? 'seriesReopen' : 'occurrenceRestoreWithMaster';
+      p.snapshot = jsonEncode({
+        'version': 6,
+        'kind': kind,
+        'canonical': (jsonDecode(p.snapshot) as Map)['canonical'],
+        'state': proof,
+        'ledger': unmaskedLedger,
+        'masks': [if (reopening) point.toJson()],
+        'fullPayload': fullPayload,
+        'floor': [2, p.stamp.toIso8601String()],
+        'target': reopening ? null : point.toJson(),
+        'nativeMatch': reopening ? null : true,
+        'masterMessage': null,
+      });
+      final fullMessage = parseIcalendarSchedulingMessage(
+        utf8.encode(fullPayload),
+      );
+      p.projection = jsonEncode({
+        'version': 6,
+        'kind': kind,
+        'target': reopening ? null : point.toJson(),
+        'components': fullMessage.events.map(component).toList(),
+      });
+      p.payload = fullPayload;
+      p.payloadDigest = sha256.convert(utf8.encode(fullPayload)).toString();
+      p.method = 'REQUEST';
+      p.sequence = 3;
+    }
     await CalendarSchedulingPublicationRecord.db.updateRow(
       s,
       p,
