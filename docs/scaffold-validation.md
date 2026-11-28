@@ -1398,3 +1398,11 @@ The complete broader `./tool/check.ps1` exited successfully on the frozen final 
 
 
 Owned interactive development runners were restored without a database reset; example migration `20261029183508485-cancellation-application` applied successfully. The first Serverpod MCP reload was attempted before startup completed; retry after the server-ready marker succeeded. Actual Flutter MCP VM connection/hot reload succeeded and runtime-error inspection found none. Final static verification passed **2,959 relative links**, consecutive ADRs 0001–0141, **57 candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. The complete approved application/reopening batch is ready for its single implementation commit. The roadmap overview and supersession notes now distinguish current implementation from remaining mail/inbound/release requirements.
+
+
+## Decoded iMIP calendar-part proposal — ADR 0142 (2026-10-29)
+
+Documentation-only next prerequisite after completed ADR 0141. Current ADR 0015, pure scheduling codecs and RFC 6047 sections 2.3–2.6 informed the proposed decoded-part boundary; complete MIME/RFC 5322 syntax stays delegated to evaluated host libraries/providers. UTF-8, method/component and calendar-address evidence is distinguished from stricter proposed mailbox/protection/limit policy. The authenticated CLI checked every page of **110 open PRs** and **zero open standalone issues** before this proposal; no overlapping decoded-part work was found. The first large GitHub response exposed a local Windows default-decoding error; repeating the read-only check with explicit UTF-8 succeeded. No runtime/model/schema/dependency change belongs to this proposal, and runtime suites are not repeated; the completed ADR 0141 full-check/MCP evidence remains separate. Relative links, consecutive ADRs, changed-file scope, credentials/LICENSE and whitespace are checked before the documentation commit.
+
+
+Documentation validation passed **2,968 relative links**, consecutive ADRs 0001–0142, **nine Markdown-only candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. No runtime tests were repeated for this proposed protocol-only documentation change.
