@@ -111,6 +111,11 @@ extension CalendarAlarmOperations on CalendarService {
     CalendarAlarmView? current,
     CalendarAlarmDefinition? proposed,
     bool? armed,
+    CalendarAlarmFiringView? firing,
+    CalendarAlarmActionView? action,
+    proposedAction,
+    CalendarAlarmActionKind? actionKind,
+    CalendarAlarmActivityKind? activityKind,
   }) => CalendarAuthorizationRequest(
     key:
         '${operation.name}:${alarmId ?? parent.event?.identity.id ?? parent.task!.identity.id}',
@@ -126,6 +131,11 @@ extension CalendarAlarmOperations on CalendarService {
     currentAlarm: current,
     proposedAlarmDefinition: proposed,
     proposedAlarmArmed: armed,
+    currentAlarmFiring: firing,
+    currentAlarmAction: action,
+    proposedAlarmAction: proposedAction,
+    alarmActionKind: actionKind,
+    alarmActivityKind: activityKind,
   );
 
   Future<List<CalendarAlarmRecord>> _privateAlarms(
@@ -491,6 +501,12 @@ extension CalendarAlarmOperations on CalendarService {
   }
 
   Future<void> _deleteAlarmWork(UuidValue alarmId, Transaction tx) async {
+    await CalendarCursorRecord.db.deleteWhere(
+      _session,
+      where: (t) => t.alarmActivityId.equals(alarmId),
+      transaction: tx,
+      noReturn: true,
+    );
     for (final table in const [
       'serverpod_calendar_alarm_firing',
       'serverpod_calendar_alarm_action',
@@ -535,6 +551,17 @@ extension CalendarAlarmOperations on CalendarService {
     UuidValue parentId,
     Transaction tx,
   ) async {
+    await _session.db.unsafeExecute(
+      'DELETE FROM serverpod_calendar_cursor WHERE "alarmActivityId" IN '
+      '(SELECT id FROM serverpod_calendar_alarm WHERE "scopeKey"=@scope '
+      'AND "parentKind"=@kind AND "parentId"=CAST(@parent AS uuid))',
+      parameters: QueryParameters.named({
+        'scope': scopeKey,
+        'kind': kind.name,
+        'parent': parentId.toString(),
+      }),
+      transaction: tx,
+    );
     // Set-based deletion avoids a private per-recipient cap on shared deletion.
     for (final table in const [
       'serverpod_calendar_alarm_firing',

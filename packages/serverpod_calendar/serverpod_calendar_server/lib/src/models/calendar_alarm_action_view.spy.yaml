@@ -1,0 +1,12 @@
+class: CalendarAlarmActionView
+immutable: true
+fields:
+  id: UuidValue
+  alarmId: UuidValue
+  originalKey: String
+  revision: int
+  acknowledgedAt: DateTime?
+  dismissedAt: DateTime?
+  pendingSnoozeAt: DateTime?
+  resetAt: DateTime?
+  updatedAt: DateTime

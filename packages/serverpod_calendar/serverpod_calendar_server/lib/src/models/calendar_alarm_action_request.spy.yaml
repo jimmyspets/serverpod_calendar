@@ -1,0 +1,11 @@
+class: CalendarAlarmActionRequest
+immutable: true
+fields:
+  parent: CalendarAlarmParent
+  alarmId: UuidValue
+  expectedAlarmRevision: int
+  expectedActionRevision: int
+  kind: CalendarAlarmActionKind
+  firingId: UuidValue?
+  actionId: UuidValue?
+  snoozeAt: DateTime?

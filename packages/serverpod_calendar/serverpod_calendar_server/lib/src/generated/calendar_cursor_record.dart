@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+import 'calendar_alarm_activity_kind.dart' as _ik5ajwd4;
 import 'calendar_category_filter.dart' as _i9j129by;
 import 'calendar_event_field_group.dart' as _iftiwkuj;
 import 'calendar_field_group.dart' as _i73hgz1s;
@@ -35,6 +36,8 @@ abstract class CalendarCursorRecord
     this.eventCalendarId,
     this.eventFieldGroups,
     this.categoryFilter,
+    this.alarmActivityId,
+    this.alarmActivityKind,
     required this.expiresAt,
     this.taskHistoryTaskId,
     this.taskHistoryOriginalKey,
@@ -56,6 +59,8 @@ abstract class CalendarCursorRecord
     _is.UuidValue? eventCalendarId,
     List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups,
     _i9j129by.CalendarCategoryFilter? categoryFilter,
+    _is.UuidValue? alarmActivityId,
+    _ik5ajwd4.CalendarAlarmActivityKind? alarmActivityKind,
     required DateTime expiresAt,
     _is.UuidValue? taskHistoryTaskId,
     String? taskHistoryOriginalKey,
@@ -107,6 +112,16 @@ abstract class CalendarCursorRecord
           : _ix00hwbf.Protocol().deserialize<_i9j129by.CalendarCategoryFilter>(
               jsonSerialization['categoryFilter'],
             ),
+      alarmActivityId: jsonSerialization['alarmActivityId'] == null
+          ? null
+          : _is.UuidValueJsonExtension.fromJson(
+              jsonSerialization['alarmActivityId'],
+            ),
+      alarmActivityKind: jsonSerialization['alarmActivityKind'] == null
+          ? null
+          : _ik5ajwd4.CalendarAlarmActivityKind.fromJson(
+              (jsonSerialization['alarmActivityKind'] as String),
+            ),
       expiresAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['expiresAt'],
       ),
@@ -155,6 +170,10 @@ abstract class CalendarCursorRecord
 
   _i9j129by.CalendarCategoryFilter? categoryFilter;
 
+  _is.UuidValue? alarmActivityId;
+
+  _ik5ajwd4.CalendarAlarmActivityKind? alarmActivityKind;
+
   DateTime expiresAt;
 
   _is.UuidValue? taskHistoryTaskId;
@@ -184,6 +203,8 @@ abstract class CalendarCursorRecord
     _is.UuidValue? eventCalendarId,
     List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups,
     _i9j129by.CalendarCategoryFilter? categoryFilter,
+    _is.UuidValue? alarmActivityId,
+    _ik5ajwd4.CalendarAlarmActivityKind? alarmActivityKind,
     DateTime? expiresAt,
     _is.UuidValue? taskHistoryTaskId,
     String? taskHistoryOriginalKey,
@@ -213,6 +234,9 @@ abstract class CalendarCursorRecord
           valueToJson: (v) => v.toJson(),
         ),
       if (categoryFilter != null) 'categoryFilter': categoryFilter?.toJson(),
+      if (alarmActivityId != null) 'alarmActivityId': alarmActivityId?.toJson(),
+      if (alarmActivityKind != null)
+        'alarmActivityKind': alarmActivityKind?.toJson(),
       'expiresAt': expiresAt.toJson(),
       if (taskHistoryTaskId != null)
         'taskHistoryTaskId': taskHistoryTaskId?.toJson(),
@@ -274,6 +298,8 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
     _is.UuidValue? eventCalendarId,
     List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups,
     _i9j129by.CalendarCategoryFilter? categoryFilter,
+    _is.UuidValue? alarmActivityId,
+    _ik5ajwd4.CalendarAlarmActivityKind? alarmActivityKind,
     required DateTime expiresAt,
     _is.UuidValue? taskHistoryTaskId,
     String? taskHistoryOriginalKey,
@@ -293,6 +319,8 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
          eventCalendarId: eventCalendarId,
          eventFieldGroups: eventFieldGroups,
          categoryFilter: categoryFilter,
+         alarmActivityId: alarmActivityId,
+         alarmActivityKind: alarmActivityKind,
          expiresAt: expiresAt,
          taskHistoryTaskId: taskHistoryTaskId,
          taskHistoryOriginalKey: taskHistoryOriginalKey,
@@ -318,6 +346,8 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
     Object? eventCalendarId = _Undefined,
     Object? eventFieldGroups = _Undefined,
     Object? categoryFilter = _Undefined,
+    Object? alarmActivityId = _Undefined,
+    Object? alarmActivityKind = _Undefined,
     DateTime? expiresAt,
     Object? taskHistoryTaskId = _Undefined,
     Object? taskHistoryOriginalKey = _Undefined,
@@ -350,6 +380,13 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
       categoryFilter: categoryFilter is _i9j129by.CalendarCategoryFilter?
           ? categoryFilter
           : this.categoryFilter?.copyWith(),
+      alarmActivityId: alarmActivityId is _is.UuidValue?
+          ? alarmActivityId
+          : this.alarmActivityId,
+      alarmActivityKind:
+          alarmActivityKind is _ik5ajwd4.CalendarAlarmActivityKind?
+          ? alarmActivityKind
+          : this.alarmActivityKind,
       expiresAt: expiresAt ?? this.expiresAt,
       taskHistoryTaskId: taskHistoryTaskId is _is.UuidValue?
           ? taskHistoryTaskId
@@ -457,6 +494,23 @@ class CalendarCursorRecordUpdateTable
     value,
   );
 
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> alarmActivityId(
+    _is.UuidValue? value,
+  ) => _is.ColumnValue(
+    table.alarmActivityId,
+    value,
+  );
+
+  _is.ColumnValue<
+    _ik5ajwd4.CalendarAlarmActivityKind,
+    _ik5ajwd4.CalendarAlarmActivityKind
+  >
+  alarmActivityKind(_ik5ajwd4.CalendarAlarmActivityKind? value) =>
+      _is.ColumnValue(
+        table.alarmActivityKind,
+        value,
+      );
+
   _is.ColumnValue<DateTime, DateTime> expiresAt(DateTime value) =>
       _is.ColumnValue(
         table.expiresAt,
@@ -541,6 +595,15 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
       'categoryFilter',
       this,
     );
+    alarmActivityId = _is.ColumnUuid(
+      'alarmActivityId',
+      this,
+    );
+    alarmActivityKind = _is.ColumnEnum(
+      'alarmActivityKind',
+      this,
+      _is.EnumSerialization.byName,
+    );
     expiresAt = _is.ColumnDateTime(
       'expiresAt',
       this,
@@ -591,6 +654,11 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
   late final _is.ColumnSerializable<_i9j129by.CalendarCategoryFilter>
   categoryFilter;
 
+  late final _is.ColumnUuid alarmActivityId;
+
+  late final _is.ColumnEnum<_ik5ajwd4.CalendarAlarmActivityKind>
+  alarmActivityKind;
+
   late final _is.ColumnDateTime expiresAt;
 
   late final _is.ColumnUuid taskHistoryTaskId;
@@ -615,6 +683,8 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
     eventCalendarId,
     eventFieldGroups,
     categoryFilter,
+    alarmActivityId,
+    alarmActivityKind,
     expiresAt,
     taskHistoryTaskId,
     taskHistoryOriginalKey,

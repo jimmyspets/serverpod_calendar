@@ -12,6 +12,14 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
 import 'dart:typed_data' as _idt;
+import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_action_request.dart'
+    as _i5rmqzvd;
+import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_action_view.dart'
+    as _ibm8o8wt;
+import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_activity_kind.dart'
+    as _iyt94y9o;
+import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_activity_page.dart'
+    as _iyhgcf6b;
 import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_create_request.dart'
     as _i5ky5yg6;
 import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_parent.dart'
@@ -210,6 +218,32 @@ class EndpointCalendarAlarm extends _isc.EndpointRef {
       'parent': parent,
       'alarmId': alarmId,
       'expectedRevision': expectedRevision,
+    },
+  );
+
+  _ida.Future<_ibm8o8wt.CalendarAlarmActionView?> act(
+    _i5rmqzvd.CalendarAlarmActionRequest request,
+  ) => caller.callServerEndpoint<_ibm8o8wt.CalendarAlarmActionView?>(
+    'serverpod_calendar.calendarAlarm',
+    'act',
+    {'request': request},
+  );
+
+  _ida.Future<_iyhgcf6b.CalendarAlarmActivityPage> activity(
+    _ihgvrd5l.CalendarAlarmParent parent,
+    _isc.UuidValue alarmId,
+    _iyt94y9o.CalendarAlarmActivityKind kind,
+    int pageSize,
+    String? cursor,
+  ) => caller.callServerEndpoint<_iyhgcf6b.CalendarAlarmActivityPage>(
+    'serverpod_calendar.calendarAlarm',
+    'activity',
+    {
+      'parent': parent,
+      'alarmId': alarmId,
+      'kind': kind,
+      'pageSize': pageSize,
+      'cursor': cursor,
     },
   );
 }

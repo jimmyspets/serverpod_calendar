@@ -1,0 +1,6 @@
+enum: CalendarAlarmActionKind
+values:
+  - acknowledge
+  - dismiss
+  - snooze
+  - reset

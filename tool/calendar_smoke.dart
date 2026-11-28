@@ -3321,6 +3321,20 @@ Future<void> personalAlarmSmoke(List<Client> clients) async {
         1,
     'Private alarm writes changed shared event revision',
   );
+  final dueDefinition = await a.calendarAlarm.update(
+    cal.CalendarAlarmUpdateRequest(
+      parent: parent,
+      alarmId: rows.first.id,
+      expectedRevision: 2,
+      definition: cal.CalendarAlarmDefinition(
+        absoluteUtc: DateTime.fromMillisecondsSinceEpoch(
+          (DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000 - 60) * 1000,
+          isUtc: true,
+        ),
+      ),
+    ),
+  );
+  check(dueDefinition != null, 'Due alarm fixture did not save');
   final beforeArm = (await b.calendarAlarm.list(parent))
       .firstWhere((r) => r.id == rows.first.id);
   final armed = (await a.calendarAlarm.setArmed(
@@ -3346,6 +3360,67 @@ Future<void> personalAlarmSmoke(List<Client> clients) async {
   check(
     planned!.revision == armed.revision,
     'Background planning changed the private API revision',
+  );
+  final activity = await b.calendarAlarm.activity(
+    parent,
+    armed.id,
+    cal.CalendarAlarmActivityKind.firings,
+    20,
+    null,
+  );
+  check(
+    activity.firings.length == 1,
+    'Generated activity API did not return the due firing',
+  );
+  final firing = activity.firings.single;
+  Future<Object> actionRace(dynamic api) async {
+    try {
+      return await api.act(
+        cal.CalendarAlarmActionRequest(
+          parent: parent,
+          alarmId: armed.id,
+          expectedAlarmRevision: armed.revision,
+          expectedActionRevision: 0,
+          kind: cal.CalendarAlarmActionKind.acknowledge,
+          firingId: firing.id,
+        ),
+      ) as Object;
+    } on cal.CalendarException catch (e) {
+      return e;
+    }
+  }
+
+  final actions = await Future.wait([
+    actionRace(a.calendarAlarm),
+    actionRace(b.calendarAlarm),
+  ]);
+  check(
+    actions.whereType<cal.CalendarAlarmActionView>().length == 1 &&
+        actions.whereType<cal.CalendarException>().single.code ==
+            cal.CalendarFailureCode.staleRevision,
+    'Competing host action revisions did not serialize',
+  );
+  final persistent = await a.calendarAlarm.activity(
+    parent,
+    armed.id,
+    cal.CalendarAlarmActivityKind.actions,
+    20,
+    null,
+  );
+  final ack = persistent.actions.single;
+  final reset = await b.calendarAlarm.act(
+    cal.CalendarAlarmActionRequest(
+      parent: parent,
+      alarmId: armed.id,
+      expectedAlarmRevision: armed.revision,
+      expectedActionRevision: ack.revision,
+      kind: cal.CalendarAlarmActionKind.reset,
+      actionId: ack.id,
+    ),
+  );
+  check(
+    reset?.resetAt != null && reset?.acknowledgedAt == null,
+    'Cross-host reset lost its cutoff',
   );
   final disarmed = (await b.calendarAlarm.setArmed(
     parent,

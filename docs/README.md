@@ -196,3 +196,5 @@ See [standalone availability wire adaptation](icalendar-availability-adapter.md)
 ## Native personal alarm definitions, 2026-10-24
 
 [ADR 0111](adr/0111-native-personal-alarm-definitions.md) adds [private native event/task timing definitions and example editors](native-personal-alarms.md). The host resolves the current recipient; requests cannot select another. Independent alarm permissions, actual parent/current/proposed context, final recipient checks and revisions protect one bounded private table. Shared edits retain incompatible definitions as needing attention; parent deletion scrubs all recipients atomically. Private writes leave item/protocol versions, source baselines and public scope generation unchanged. All definitions remain unarmed; imported-alarm adoption, actions, planning and delivery remain required separate work. Concrete mechanics remain draft review material.
+
+- [Native personal alarm actions and private activity pages](native-alarm-actions.md)

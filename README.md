@@ -140,3 +140,5 @@ Read-only [event source metadata](docs/event-source-metadata.md) is implemented 
 ## Durable alarm planning increment, 2026-10-25
 
 [ADR 0112](docs/adr/0112-bounded-durable-alarm-planning.md) now adds [explicit arming, complete rolling plans and guarded durable handoff](docs/durable-alarm-planning.md), with separate background policy, database leases/fences, source/lifecycle checks, stable retry IDs and terminal-history pruning that preserves action state. This supersedes earlier unarmed-only/planner-pending wording for native definitions only. Imported alarms remain unarmed. Native action APIs, reusable notification delivery and connected streaming remain separate requirements; the example delivery port explicitly remains unconnected. First-release alarm requirements are not complete.
+
+Native [personal alarm actions and private activity pages](docs/native-alarm-actions.md) now extend the planner with acknowledgement/dismissal, bounded replacement snooze and future-only reset. Notification delivery and connected streaming remain separate required work.

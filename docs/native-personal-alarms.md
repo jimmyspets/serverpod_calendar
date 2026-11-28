@@ -57,3 +57,7 @@ The pure `AlarmPlan.complete` primitive validates a caller-supplied complete can
 ## Later execution increment — supersedes unarmed-only wording
 
 [Durable planning](durable-alarm-planning.md) under ADR 0112 now implements explicit separate-authority arm/disarm, private planning status, whole-window planning, fenced workers and guarded host handoff. Creation and imported source alarms remain unarmed. Calculation and task lifecycle suppression are implemented; native action commands and reusable notification/stream delivery remain pending. The example port does not claim acceptance or display. Earlier sections describe the initial definition-only batch; they no longer mean that every saved native definition must remain unarmed.
+
+## Native action extension
+
+[ADR 0113](adr/0113-native-alarm-actions.md) now adds [private activity pages and acknowledgement/dismiss/reset/snooze](native-alarm-actions.md). Snooze responds to a due/accepted automatic origin; reset cancels the selection and restores future automatic eligibility only. Action writes retain definition/public/protocol revisions and scrub private continuations on alarm/parent deletion. Notification delivery remains unconnected.

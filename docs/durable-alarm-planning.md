@@ -48,10 +48,14 @@ Revalidate actual parent, current recipient policy, generation, source digest, l
 
 A downstream queue **must** call `CalendarModule.validateAlarmDelivery(session, storedIntent)` before every dispatch/retry. It must preserve the source reference and idempotency key; a previously accepted intent grants no lasting authority. The current reference carries identities, recipient, original key and due/expiry only, with no automatic parent text disclosure.
 
-Terminal firing/delivery history has host-configurable retention, default 30 days, then bounded pruning. Pending/retryable work, active leases and records lacking a terminal timestamp do not qualify. Acknowledgement/dismissal is separate and remains until explicit reset/alarm deletion, even across timing/settings changes; removed originals are never retargeted. Pruning terminal history never deletes action rows. Native action/snooze commands remain a later increment; their confirmed policy is future whole-second UTC snooze within seven days of database time, replacing a pending snooze without chains.
+Terminal firing/delivery history has host-configurable retention, default 30 days, then bounded pruning. Pending/retryable work, active leases and records lacking a terminal timestamp do not qualify. Acknowledgement/dismissal is separate and remains until explicit reset/alarm deletion, even across timing/settings changes; removed originals are never retargeted. Pruning terminal history never deletes action rows. Native action/snooze commands now extend this under [ADR 0113](adr/0113-native-alarm-actions.md); their policy is future whole-second UTC snooze within seven days of database time, replacing a pending snooze without chains.
 
 ## Example and evidence boundary
 
 The example installs a private-user background policy that freshly checks the recipient's existing, unblocked auth account. Each host registers its own generated Serverpod recurring maintenance wake-up every 15 seconds. Wake-ups are not the durable work store; duplicate calls and lost instances are handled by module leases/fences. Hosts using another scheduler must arrange periodic bounded recovery themselves.
 
 The Flutter example has explicit arm/disarm and private planning status. Its delivery port deliberately returns false because reusable notification delivery is not connected yet. This preserves retry state rather than pretending a log/stream emission is durable acceptance. No OS notification, connected stream or notification-provider compatibility follows from this increment.
+
+## Next native action contract
+
+The maintainer confirmed snooze must respond to a due or accepted firing, and reset must cancel pending snooze and restore only future firing eligibility without overdue replay. [ADR 0113](adr/0113-native-alarm-actions.md) proposes the explicit replay cutoff, independent permissions, private activity pages and concurrency rules needed to implement these policies. Its additive model changes were approved on 2026-10-25; [the action guide](native-alarm-actions.md) records the scoped command/activity implementation and remaining delivery boundary.

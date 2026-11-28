@@ -1,0 +1,12 @@
+class: CalendarAlarmFiringView
+immutable: true
+fields:
+  id: UuidValue
+  alarmId: UuidValue
+  originalKey: String
+  kind: CalendarAlarmFiringKind
+  dueAt: DateTime
+  expiresAt: DateTime
+  state: CalendarAlarmFiringState
+  acceptedAt: DateTime?
+  action: CalendarAlarmActionView?

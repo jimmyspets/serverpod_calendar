@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import 'personal_alarm_activity_screen.dart';
+
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
@@ -175,6 +178,20 @@ class _PersonalAlarmScreenState extends State<PersonalAlarmScreen> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                IconButton(
+                  icon: const Icon(Icons.history),
+                  tooltip: 'Personal alarm activity',
+                  onPressed: _busy
+                      ? null
+                      : () => Navigator.of(context).push<void>(
+                          MaterialPageRoute(
+                            builder: (_) => PersonalAlarmActivityScreen(
+                              client: widget.client,
+                              alarm: alarm,
+                            ),
+                          ),
+                        ),
+                ),
                 IconButton(
                   icon: Icon(alarm.armed ? Icons.alarm_off : Icons.alarm_on),
                   tooltip: alarm.armed

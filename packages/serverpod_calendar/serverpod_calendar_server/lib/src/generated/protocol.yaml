@@ -4,6 +4,8 @@ calendarAlarm:
   - update:
   - setArmed:
   - delete:
+  - act:
+  - activity:
 calendarAvailability:
   - replaceFromImport:
   - exportCalendar:

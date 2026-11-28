@@ -214,6 +214,8 @@ final class _AlarmWorker {
     }
     final (snapshot, actions, clock) = captured;
     AlarmPlan plan;
+    AlarmPlan? snoozePlan;
+    final actionByKey = {for (final a in actions) a.originalKey: a};
     try {
       if (!snapshot.parent.compatible(snapshot.row.definition)) {
         throw ArgumentError('Current master anchor unavailable');
@@ -282,10 +284,38 @@ final class _AlarmWorker {
         grace: runtime.grace,
         maxFirings: runtime.options.maxFirings,
         suppressedOriginals: suppressed,
+        resetCutoffs: {
+          for (final a in actions)
+            if (a.resetAt != null) a.originalKey: a.resetAt!,
+        },
         lifecycleSuppressed:
             snapshot.parent.event?.data.content.status ==
             CalendarEventStatus.cancelled,
       );
+      snoozePlan = AlarmPlan.complete(
+        window: target,
+        now: clock,
+        grace: runtime.grace,
+        maxFirings: runtime.options.maxFirings,
+        candidates: [
+          for (final a in actions)
+            if (a.pendingSnoozeAt != null &&
+                _alarmOriginalActive(
+                  snapshot.parent,
+                  a.originalKey,
+                  snapshot.records,
+                ))
+              AlarmFiringCandidate(
+                originalKey: a.originalKey,
+                repeatOrdinal: 0,
+                dueAt: a.pendingSnoozeAt!,
+              ),
+        ],
+      );
+      if (plan.firings.length + snoozePlan.firings.length >
+          runtime.options.maxFirings) {
+        throw const AlarmPlanLimitException();
+      }
     } catch (_) {
       await _fail(
         lease,
@@ -351,7 +381,41 @@ final class _AlarmWorker {
             )),
           )
           .length;
-      if (existingCount + additions > runtime.options.maxRetainedFirings) {
+      // Accepted snooze revisions are one-shot across generation changes.
+      // Their old downstream reference may become stale, but a settings edit
+      // must not send a second transport intent for the same selected snooze.
+      final acceptedSnoozes = await CalendarAlarmFiringRecord.db.find(
+        session,
+        where: (t) =>
+            t.alarmId.equals(lease.alarmId) &
+            t.kind.equals(CalendarAlarmFiringKind.snooze) &
+            t.state.equals(CalendarAlarmFiringState.accepted),
+        limit: runtime.options.maxRetainedFirings + 1,
+        transaction: tx,
+      );
+      if (acceptedSnoozes.length > runtime.options.maxRetainedFirings) {
+        throw const AlarmPlanLimitException();
+      }
+      for (final f in acceptedSnoozes) {
+        keys.add((
+          f.originalKey,
+          0,
+          CalendarAlarmFiringKind.snooze,
+          f.snoozeRevision,
+        ));
+      }
+      final snoozeAdditions = snoozePlan!.firings
+          .where(
+            (f) => !keys.contains((
+              f.candidate.originalKey,
+              0,
+              CalendarAlarmFiringKind.snooze,
+              actionByKey[f.candidate.originalKey]!.snoozeRevision,
+            )),
+          )
+          .length;
+      if (existingCount + additions + snoozeAdditions >
+          runtime.options.maxRetainedFirings) {
         throw const AlarmPlanLimitException();
       }
       for (final firing in plan.firings) {
@@ -384,6 +448,43 @@ final class _AlarmWorker {
             reason: state == CalendarAlarmFiringState.pending
                 ? null
                 : 'initialClassification',
+            nextAttemptAt: c.dueAt,
+            terminalAt: state == CalendarAlarmFiringState.pending ? null : now,
+            createdAt: now,
+            updatedAt: now,
+          ),
+          transaction: tx,
+        );
+      }
+      for (final firing in snoozePlan!.firings) {
+        final c = firing.candidate;
+        final revision = actionByKey[c.originalKey]!.snoozeRevision;
+        if (keys.contains((
+          c.originalKey,
+          0,
+          CalendarAlarmFiringKind.snooze,
+          revision,
+        ))) {
+          continue;
+        }
+        final state = switch (firing.disposition) {
+          AlarmFiringDisposition.pending => CalendarAlarmFiringState.pending,
+          AlarmFiringDisposition.suppressed =>
+            CalendarAlarmFiringState.suppressed,
+          AlarmFiringDisposition.expired => CalendarAlarmFiringState.expired,
+        };
+        await CalendarAlarmFiringRecord.db.insertRow(
+          session,
+          CalendarAlarmFiringRecord(
+            alarmId: lease.alarmId,
+            generation: generation,
+            originalKey: c.originalKey,
+            kind: CalendarAlarmFiringKind.snooze,
+            repeatOrdinal: 0,
+            snoozeRevision: revision,
+            dueAt: c.dueAt,
+            expiresAt: firing.expiresAt,
+            state: state,
             nextAttemptAt: c.dueAt,
             terminalAt: state == CalendarAlarmFiringState.pending ? null : now,
             createdAt: now,
@@ -579,6 +680,48 @@ final class _AlarmWorker {
       if (pending.length > runtime.options.maxRetainedFirings) {
         throw const AlarmPlanLimitException();
       }
+      final actions = await CalendarAlarmActionRecord.db.find(
+        session,
+        where: (t) => t.alarmId.equals(alarm.id!),
+        limit: runtime.options.maxRetainedFirings + 1,
+        transaction: tx,
+      );
+      if (actions.length > runtime.options.maxRetainedFirings) {
+        throw const AlarmPlanLimitException();
+      }
+      final byKey = {for (final a in actions) a.originalKey: a};
+      final eligiblePending = <CalendarAlarmFiringRecord>[];
+      for (final f in pending) {
+        final a = byKey[f.originalKey];
+        final blocked = f.kind == CalendarAlarmFiringKind.automatic
+            ? a?.acknowledgedAt != null ||
+                  a?.dismissedAt != null ||
+                  (a?.resetAt != null && !f.dueAt.isAfter(a!.resetAt!))
+            : a?.snoozeRevision != f.snoozeRevision ||
+                  a?.pendingSnoozeAt != f.dueAt;
+        if (blocked) {
+          f.state = CalendarAlarmFiringState.suppressed;
+          f.reason = 'personalAction';
+          f.terminalAt = now;
+          f.updatedAt = now;
+          f.leaseOwner = null;
+          f.leaseUntil = null;
+          if (f.leaseFence >= CalendarService._maxRevision) {
+            throw const AlarmPlanLimitException();
+          }
+          f.leaseFence++;
+          await CalendarAlarmFiringRecord.db.updateRow(
+            session,
+            f,
+            transaction: tx,
+          );
+        } else {
+          eligiblePending.add(f);
+        }
+      }
+      pending
+        ..clear()
+        ..addAll(eligiblePending);
       pending.sort((a, b) {
         final due = a.dueAt.compareTo(b.dueAt);
         if (due != 0) return due;
@@ -683,12 +826,20 @@ final class _AlarmWorker {
           transaction: tx,
         );
         if (firing.kind == CalendarAlarmFiringKind.automatic &&
-            (action?.acknowledgedAt != null || action?.dismissedAt != null)) {
+            (action?.acknowledgedAt != null ||
+                action?.dismissedAt != null ||
+                (action?.resetAt != null &&
+                    !firing.dueAt.isAfter(action!.resetAt!)))) {
           return false;
         }
         if (firing.kind == CalendarAlarmFiringKind.snooze &&
             (action?.snoozeRevision != firing.snoozeRevision ||
-                action?.pendingSnoozeAt != firing.dueAt)) {
+                action?.pendingSnoozeAt != firing.dueAt ||
+                !_alarmOriginalActive(
+                  snapshot.parent,
+                  intent.originalKey,
+                  snapshot.records,
+                ))) {
           return false;
         }
         if (snapshot.parent.event?.data.content.status ==
