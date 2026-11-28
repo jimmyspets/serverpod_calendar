@@ -750,6 +750,51 @@ void main() {
     expect(taskExportText, isNot(contains(importedTask.id.toString())));
     await tester.pageBack();
     await _idle(tester);
+    await _tap(tester, 'task-replace-${importedTask.id}');
+    await _waitFor(tester, find.byKey(const Key('task-replace-submit')));
+    await _idle(tester);
+    await _tap(tester, 'task-replace-submit');
+    await _waitFor(tester, find.text('Identical source; nothing changed.'));
+    // Synthetic multiline typing must not compete with the browser's real IME.
+    tester.testTextInput.register();
+    addTearDown(tester.testTextInput.unregister);
+    await tester.enterText(
+      find.byKey(const Key('task-replace-source')),
+      taskExportText.replaceFirst(
+        'END:VTODO',
+        'DESCRIPTION:Replacement example\r\nEND:VTODO',
+      ),
+    );
+    await tester.pump();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('task-replace-source')))
+          .controller!
+          .text,
+      contains('DESCRIPTION:Replacement example'),
+    );
+    await _tap(tester, 'task-replace-submit');
+    final replacementError = find.byKey(const Key('task-replace-error'));
+    expect(
+      replacementError,
+      findsNothing,
+      reason: replacementError.evaluate().isEmpty
+          ? null
+          : tester.widget<Text>(replacementError).data,
+    );
+    expect(
+      tester.widget<Text>(find.byKey(const Key('task-replace-result'))).data,
+      'Task replaced.',
+    );
+    expect(
+      (await tasks.getTask(
+        importedTask.id,
+        cal.CalendarTaskFieldGroup.values,
+      )).description,
+      'Replacement example',
+    );
+    await tester.pageBack();
+    await _idle(tester);
     await _tap(tester, 'task-import');
     await _tap(tester, 'task-import-example');
     await _tap(tester, 'task-import-submit');

@@ -114,3 +114,5 @@ Authenticated [task export](docs/task-export.md) now complements create-only tas
 [Task future timing](docs/task-future-timing.md) now extends single timing across the core, storage, authenticated import/export and Flutter example. Timing alone propagates; progress/history stay attached to each original occurrence. See ADR 0102 for the bounded anchor-only VTODO progress profile and pending content/reconciliation/runtime scope.
 
 [Selected task occurrence content](docs/task-occurrence-content.md) adds independent summary/description/location/priority overrides with explicit clear or series inheritance and protected preview groups. Source v3 requires explicit recreation/reimport of older imported tasks; development data is not reset. Future content propagation and runtime services remain separate.
+
+[Explicit task source replacement](docs/task-source-replacement.md) now follows create-only import and export: replace selected imported series with baseline/local-conflict protection, preserved assignments and true no-op retries. Adoption/overwrite and broader synchronization remain separate.

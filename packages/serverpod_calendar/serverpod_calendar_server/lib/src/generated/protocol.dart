@@ -164,6 +164,9 @@ import 'calendar_task_progress_request.dart' as _in6zlsph;
 import 'calendar_task_protocol_version.dart' as _iz9t6x1i;
 import 'calendar_task_receipt.dart' as _im9usybn;
 import 'calendar_task_record.dart' as _irbiaacf;
+import 'calendar_task_replace_receipt.dart' as _ib5z6spp;
+import 'calendar_task_replace_request.dart' as _ibpx2vjc;
+import 'calendar_task_replace_result.dart' as _iyf2qeht;
 import 'calendar_task_source_alarm.dart' as _i00avof0;
 import 'calendar_task_source_attachment.dart' as _iuzk4pe3;
 import 'calendar_task_source_category_group.dart' as _iic8eifm;
@@ -321,6 +324,9 @@ export 'calendar_task_progress_request.dart';
 export 'calendar_task_protocol_version.dart';
 export 'calendar_task_receipt.dart';
 export 'calendar_task_record.dart';
+export 'calendar_task_replace_receipt.dart';
+export 'calendar_task_replace_request.dart';
+export 'calendar_task_replace_result.dart';
 export 'calendar_task_source_alarm.dart';
 export 'calendar_task_source_attachment.dart';
 export 'calendar_task_source_category_group.dart';
@@ -2060,6 +2066,15 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _irbiaacf.CalendarTaskRecord) {
       return _irbiaacf.CalendarTaskRecord.fromJson(data) as T;
     }
+    if (t == _ib5z6spp.CalendarTaskReplaceReceipt) {
+      return _ib5z6spp.CalendarTaskReplaceReceipt.fromJson(data) as T;
+    }
+    if (t == _ibpx2vjc.CalendarTaskReplaceRequest) {
+      return _ibpx2vjc.CalendarTaskReplaceRequest.fromJson(data) as T;
+    }
+    if (t == _iyf2qeht.CalendarTaskReplaceResult) {
+      return _iyf2qeht.CalendarTaskReplaceResult.fromJson(data) as T;
+    }
     if (t == _i00avof0.CalendarTaskSourceAlarm) {
       return _i00avof0.CalendarTaskSourceAlarm.fromJson(data) as T;
     }
@@ -2930,6 +2945,24 @@ class Protocol extends _is.DatabaseSerializationManager {
       return (data != null ? _irbiaacf.CalendarTaskRecord.fromJson(data) : null)
           as T;
     }
+    if (t == _is.getType<_ib5z6spp.CalendarTaskReplaceReceipt?>()) {
+      return (data != null
+              ? _ib5z6spp.CalendarTaskReplaceReceipt.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ibpx2vjc.CalendarTaskReplaceRequest?>()) {
+      return (data != null
+              ? _ibpx2vjc.CalendarTaskReplaceRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iyf2qeht.CalendarTaskReplaceResult?>()) {
+      return (data != null
+              ? _iyf2qeht.CalendarTaskReplaceResult.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _is.getType<_i00avof0.CalendarTaskSourceAlarm?>()) {
       return (data != null
               ? _i00avof0.CalendarTaskSourceAlarm.fromJson(data)
@@ -3442,6 +3475,12 @@ class Protocol extends _is.DatabaseSerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_ib5z6spp.CalendarTaskReplaceReceipt>) {
+      return (data as List)
+              .map((e) => deserialize<_ib5z6spp.CalendarTaskReplaceReceipt>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_iic8eifm.CalendarTaskSourceCategoryGroup>) {
       return (data as List)
               .map(
@@ -3731,6 +3770,9 @@ class Protocol extends _is.DatabaseSerializationManager {
       _iz9t6x1i.CalendarTaskProtocolVersion => 'CalendarTaskProtocolVersion',
       _im9usybn.CalendarTaskReceipt => 'CalendarTaskReceipt',
       _irbiaacf.CalendarTaskRecord => 'CalendarTaskRecord',
+      _ib5z6spp.CalendarTaskReplaceReceipt => 'CalendarTaskReplaceReceipt',
+      _ibpx2vjc.CalendarTaskReplaceRequest => 'CalendarTaskReplaceRequest',
+      _iyf2qeht.CalendarTaskReplaceResult => 'CalendarTaskReplaceResult',
       _i00avof0.CalendarTaskSourceAlarm => 'CalendarTaskSourceAlarm',
       _iuzk4pe3.CalendarTaskSourceAttachment => 'CalendarTaskSourceAttachment',
       _iic8eifm.CalendarTaskSourceCategoryGroup =>
@@ -4047,6 +4089,12 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarTaskReceipt';
       case _irbiaacf.CalendarTaskRecord():
         return 'CalendarTaskRecord';
+      case _ib5z6spp.CalendarTaskReplaceReceipt():
+        return 'CalendarTaskReplaceReceipt';
+      case _ibpx2vjc.CalendarTaskReplaceRequest():
+        return 'CalendarTaskReplaceRequest';
+      case _iyf2qeht.CalendarTaskReplaceResult():
+        return 'CalendarTaskReplaceResult';
       case _i00avof0.CalendarTaskSourceAlarm():
         return 'CalendarTaskSourceAlarm';
       case _iuzk4pe3.CalendarTaskSourceAttachment():
@@ -4583,6 +4631,15 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'CalendarTaskRecord') {
       return deserialize<_irbiaacf.CalendarTaskRecord>(data['data']);
+    }
+    if (dataClassName == 'CalendarTaskReplaceReceipt') {
+      return deserialize<_ib5z6spp.CalendarTaskReplaceReceipt>(data['data']);
+    }
+    if (dataClassName == 'CalendarTaskReplaceRequest') {
+      return deserialize<_ibpx2vjc.CalendarTaskReplaceRequest>(data['data']);
+    }
+    if (dataClassName == 'CalendarTaskReplaceResult') {
+      return deserialize<_iyf2qeht.CalendarTaskReplaceResult>(data['data']);
     }
     if (dataClassName == 'CalendarTaskSourceAlarm') {
       return deserialize<_i00avof0.CalendarTaskSourceAlarm>(data['data']);

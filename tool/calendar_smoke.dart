@@ -1823,6 +1823,7 @@ Future<void> eventImportSmoke(List<Client> clients) async {
 }
 
 Future<void> taskSmoke(List<Client> clients) async {
+  await taskReplacementSmoke(clients);
   await taskImportSmoke(clients);
   final calendars = clients.first.modules.serverpod_calendar.calendar;
   final tasks = clients.first.modules.serverpod_calendar.calendarTask;
@@ -2206,6 +2207,125 @@ Future<void> taskSmoke(List<Client> clients) async {
     for (final id in parents) {
       await calendars.delete(id, 1);
     }
+  }
+}
+
+Future<void> taskReplacementSmoke(List<Client> clients) async {
+  final calendar = clients.first.modules.serverpod_calendar.calendar;
+  final a = clients.first.modules.serverpod_calendar.calendarTask;
+  final b = clients.last.modules.serverpod_calendar.calendarTask;
+  final principal = await clients.first.smoke.whoAmI();
+  final parent = (await calendar.create(
+    cal.CalendarCreateRequest(
+      displayName: 'Task replacement smoke',
+      availabilityZoneId: 'UTC',
+      noRuleFallback: cal.CalendarNoRuleFallback.free,
+    ),
+  ))!.calendarId;
+  UuidValue? id;
+  ByteData source(String summary) => ByteData.sublistView(
+    Uint8List.fromList(
+      utf8.encode(
+        [
+          'BEGIN:VCALENDAR',
+          'VERSION:2.0',
+          'PRODID:Synthetic',
+          'BEGIN:VTODO',
+          'UID:replacement@example.invalid',
+          'DTSTAMP:20260301T000000Z',
+          'SUMMARY:$summary',
+          'END:VTODO',
+          'END:VCALENDAR',
+          '',
+        ].join('\r\n'),
+      ),
+    ),
+  );
+  try {
+    id = (await a.importTasks(
+      cal.CalendarTaskImportRequest(
+        calendarId: parent,
+        expectedRevision: 1,
+        bytes: source('Before'),
+      ),
+    )).receipts.single.taskId;
+    cal.CalendarTaskReplaceRequest replace(int revision) =>
+        cal.CalendarTaskReplaceRequest(
+          calendarId: parent,
+          expectedRevision: 1,
+          bytes: source('After'),
+          selection: [
+            cal.CalendarTaskExportSelection(
+              taskId: id!,
+              expectedRevision: revision,
+            ),
+          ],
+        );
+    final results = await Future.wait([
+      a
+          .replaceFromImport(replace(1))
+          .then<Object>((v) => v)
+          .catchError((Object e) => e),
+      b
+          .changeAssignments(
+            cal.CalendarTaskAssignmentsRequest(
+              taskId: id,
+              expectedRevision: 1,
+              assignees: [
+                cal.CalendarTaskAssignee(
+                  namespace: 'demo',
+                  kind: 'user',
+                  externalId: principal,
+                ),
+              ],
+            ),
+          )
+          .then<Object>((v) => v!)
+          .catchError((Object e) => e),
+    ]);
+    check(
+      results.whereType<cal.CalendarException>().length == 1 &&
+          results.whereType<cal.CalendarException>().single.code ==
+              cal.CalendarFailureCode.staleRevision,
+      'Cross-host task replacement/assignment race has one stale writer',
+    );
+    final current = await b.getTask(id, cal.CalendarTaskFieldGroup.values);
+    if (current.summary == 'Before') {
+      await a.replaceFromImport(replace(current.revision));
+    } else {
+      await b.changeAssignments(
+        cal.CalendarTaskAssignmentsRequest(
+          taskId: id,
+          expectedRevision: current.revision,
+          assignees: [
+            cal.CalendarTaskAssignee(
+              namespace: 'demo',
+              kind: 'user',
+              externalId: principal,
+            ),
+          ],
+        ),
+      );
+    }
+    final finalView = await b.getTask(id, cal.CalendarTaskFieldGroup.values);
+    check(
+      finalView.summary == 'After' &&
+          finalView.assignees!.single.externalId == principal &&
+          finalView.revision == 3,
+      'Explicit retry preserves assignments and replacement source across hosts',
+    );
+    final noOp = await b.replaceFromImport(replace(3));
+    check(
+      !noOp.receipts.single.changed &&
+          noOp.receipts.single.receipt.revision == 3,
+      'Cross-host identical replacement remains a true no-op',
+    );
+  } finally {
+    if (id != null) {
+      final current = await a.getTask(id, []);
+      await a.deleteTask(id, current.revision);
+    }
+    await calendar.delete(parent, 1);
   }
 }
 

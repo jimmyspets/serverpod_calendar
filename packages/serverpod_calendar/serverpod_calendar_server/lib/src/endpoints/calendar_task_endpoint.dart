@@ -8,6 +8,10 @@ import '../generated/protocol.dart';
 class CalendarTaskEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
+  Future<CalendarTaskReplaceResult> replaceFromImport(
+    Session session,
+    CalendarTaskReplaceRequest request,
+  ) => CalendarModule.service(session).replaceTasksFromImport(request);
   Future<ByteData> exportTasks(
     Session session,
     CalendarTaskExportRequest request,

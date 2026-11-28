@@ -112,6 +112,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0102](0102-task-future-timing.md) | Task this-and-future timing | Scoped implementation of confirmed range timing and anchor-only progress; concrete mechanics under draft review |
 | [0103](0103-single-task-content-overrides.md) | Selected single-task content overrides | Scoped implementation of confirmed per-field/anchor-local content; mechanics under draft review |
 
+| [0104](0104-task-source-replacements.md) | Explicit task source replacements | Confirmed reuse of baseline/conflict/no-op policy; concrete mechanics under draft review |
+
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
 Use the next consecutive number for a new ADR covering a material decision. Include context, proposal/decision, alternatives, consequences, and acceptance conditions. Preserve committed/accepted decision history; supersede accepted decisions with a linked ADR. Superseded uncommitted drafts may be removed under the maintainer-authorized cleanup. Mark an ADR accepted only after explicit maintainer agreement recorded in the PR or issue.

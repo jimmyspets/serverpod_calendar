@@ -313,6 +313,477 @@ void main() {
       ),
     );
 
+    Future<int> generation() async =>
+        (await CalendarScopeRecord.db.findFirstRow(
+          session,
+          where: (t) => t.scopeKey.equals('test:alice'),
+        ))!.revision;
+
+    CalendarTaskReplaceRequest taskReplacement(
+      UuidValue parent,
+      UuidValue id, {
+      int revision = 1,
+      String? text,
+      List<CalendarTaskExportSelection>? selection,
+    }) => CalendarTaskReplaceRequest(
+      calendarId: parent,
+      expectedRevision: 1,
+      selection:
+          selection ??
+          [CalendarTaskExportSelection(taskId: id, expectedRevision: revision)],
+      bytes: taskImportRequest(parent, text: text).bytes,
+    );
+    Future<CalendarTaskDataRecord> taskData(UuidValue id) async =>
+        (await CalendarTaskDataRecord.db.findFirstRow(
+          session,
+          where: (t) => t.taskId.equals(id),
+        ))!;
+
+    test('task replacement exact retry is a true no-op and changed source keeps assignments audit checkpoint and own identity', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      String source(String summary, {String stamp = '20260301T000000Z'}) =>
+          taskCalendar([
+            ...importedTask(
+              'imported@example.invalid',
+              properties: [
+                'RRULE:FREQ=DAILY;COUNT=3',
+                'SUMMARY:$summary',
+                'PERCENT-COMPLETE:25',
+              ],
+            ),
+            ...importedTask(
+              'imported@example.invalid',
+              timing: [],
+              properties: [
+                'RECURRENCE-ID;VALUE=DATE:20260329',
+                'PERCENT-COMPLETE:12',
+              ],
+            ),
+          ]).replaceAll('20260301T000000Z', stamp);
+      final id = (await service.importTasks(
+        taskImportRequest(parent, text: source('Before')),
+      )).receipts.single.taskId;
+      final row = (await CalendarTaskOccurrenceRecord.db.find(session)).single;
+      final before = await taskData(id);
+      final gen = await generation();
+      final noOp = await service.replaceTasksFromImport(
+        taskReplacement(parent, id, text: source('Before')),
+      );
+      expect(noOp.receipts.single.changed, isFalse);
+      expect((await taskData(id)).toJson(), before.toJson());
+      expect(await generation(), gen);
+      await service.changeTaskAssignments(
+        CalendarTaskAssignmentsRequest(
+          taskId: id,
+          expectedRevision: 1,
+          assignees: [
+            CalendarTaskAssignee(
+              namespace: 'test',
+              kind: 'person',
+              externalId: 'alice',
+            ),
+          ],
+        ),
+      );
+      final assigned = await taskData(id);
+      final replaced = await service.replaceTasksFromImport(
+        taskReplacement(
+          parent,
+          id,
+          revision: 2,
+          text: source('After', stamp: '20260201T000000Z'),
+        ),
+      );
+      expect(replaced.receipts.single.changed, isTrue);
+      expect(replaced.receipts.single.receipt.revision, 3);
+      final after = await taskData(id);
+      expect(after.assignees, assigned.assignees);
+      expect(after.hasRecordedProgress, isNull);
+      expect(after.createdAt, before.createdAt);
+      expect(after.protocolVersion.stamp, DateTime.utc(2026, 2));
+      expect(after.protocolVersion.sequence, isNull);
+      expect(after.content.summary, 'After');
+      expect(
+        (await CalendarTaskOccurrenceRecord.db.find(session)).single.id,
+        row.id,
+      );
+      expect(await CalendarTaskHistoryRecord.db.count(session), 0);
+      expect(
+        after.importBaseline!.canonicalValue,
+        taskImportBaseline(
+          after.protocolUid,
+          after.sourceState!,
+        ).canonicalValue,
+      );
+    });
+    for (final permission in [
+      CalendarPermission.importTasks,
+      CalendarPermission.replaceTasksFromImport,
+      CalendarPermission.readTask,
+      CalendarPermission.readTaskSource,
+      CalendarPermission.updateTask,
+      CalendarPermission.changeTaskProgress,
+    ]) {
+      test(
+        'task replacement independently requires ${permission.name} including removed progress',
+        () async {
+          final parent = (await service.create(createInput()))!.calendarId;
+          final id = (await service.importTasks(
+            taskImportRequest(
+              parent,
+              text: taskCalendar(
+                importedTask(
+                  'imported@example.invalid',
+                  properties: ['PERCENT-COMPLETE:25'],
+                ),
+              ),
+            ),
+          )).receipts.single.taskId;
+          final before = await taskData(id), gen = await generation();
+          policy.denied.add(permission);
+          await expectLater(
+            service.replaceTasksFromImport(taskReplacement(parent, id)),
+            failure(CalendarFailureCode.accessDenied),
+          );
+          expect((await taskData(id)).toJson(), before.toJson());
+          expect(await generation(), gen);
+        },
+      );
+    }
+    test('task replacement read groups and final denial protect no-ops and changed batches', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final id = (await service.importTasks(taskImportRequest(parent)))
+          .receipts
+          .single
+          .taskId;
+      policy.taskGrants = {CalendarTaskFieldGroup.summary};
+      await expectLater(
+        service.replaceTasksFromImport(taskReplacement(parent, id)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.taskGrants = CalendarTaskFieldGroup.values.toSet();
+      policy.denyFinal = true;
+      await expectLater(
+        service.replaceTasksFromImport(taskReplacement(parent, id)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect((await CalendarTaskRecord.db.findById(session, id))!.revision, 1);
+    });
+    test('task replacement rejects lower source sequence permits equal and preserves exact omissions', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final old = taskCalendar(
+        importedTask(
+          'imported@example.invalid',
+          properties: ['SEQUENCE:3', 'SUMMARY:Before'],
+        ),
+      );
+      final id = (await service.importTasks(
+        taskImportRequest(parent, text: old),
+      )).receipts.single.taskId;
+      await expectLater(
+        service.replaceTasksFromImport(
+          taskReplacement(
+            parent,
+            id,
+            text: old.replaceAll('SEQUENCE:3', 'SEQUENCE:2'),
+          ),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      final equal = await service.replaceTasksFromImport(
+        taskReplacement(
+          parent,
+          id,
+          text: old.replaceAll('SUMMARY:Before', 'SUMMARY:After'),
+        ),
+      );
+      expect(equal.receipts.single.changed, isTrue);
+      await expectLater(
+        service.replaceTasksFromImport(
+          taskReplacement(parent, id, revision: 2),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+    });
+    test('task replacement rejects local changes but identical local state does not adopt the baseline', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final id = (await service.importTasks(taskImportRequest(parent)))
+          .receipts
+          .single
+          .taskId;
+      final imported = await taskData(id);
+      await service.updateTask(
+        CalendarTaskUpdateRequest(
+          taskId: id,
+          expectedRevision: 1,
+          content: imported.content.copyWith(summary: 'Local'),
+        ),
+      );
+      final current = await taskData(id), gen = await generation();
+      await expectLater(
+        service.replaceTasksFromImport(
+          taskReplacement(parent, id, revision: 2),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      final bytes = await service.exportTasks(
+        CalendarTaskExportRequest(
+          calendarId: parent,
+          expectedRevision: 1,
+          selection: [
+            CalendarTaskExportSelection(taskId: id, expectedRevision: 2),
+          ],
+        ),
+      );
+      final result = await service.replaceTasksFromImport(
+        taskReplacement(parent, id, revision: 2).copyWith(bytes: bytes),
+      );
+      expect(result.receipts.single.changed, isFalse);
+      expect((await taskData(id)).toJson(), current.toJson());
+      expect((await taskData(id)).importBaseline, imported.importBaseline);
+      expect(await generation(), gen);
+    });
+    test('task replacement exact selection stale and missing baseline fail atomically', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final ids = (await service.importTasks(
+        taskImportRequest(
+          parent,
+          text: taskCalendar([
+            ...importedTask('one'),
+            ...importedTask('two'),
+          ]),
+        ),
+      )).receipts.map((r) => r.taskId).toList();
+      final selection = [
+        for (final id in ids)
+          CalendarTaskExportSelection(taskId: id, expectedRevision: 1),
+      ];
+      await expectLater(
+        service.replaceTasksFromImport(
+          taskReplacement(
+            parent,
+            ids.first,
+            selection: selection,
+            text: taskCalendar(importedTask('one')),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      await expectLater(
+        service.replaceTasksFromImport(
+          taskReplacement(
+            parent,
+            ids.first,
+            revision: 2,
+            text: taskCalendar(importedTask('one')),
+          ),
+        ),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      final data = await taskData(ids.last);
+      data.importBaseline = null;
+      await CalendarTaskDataRecord.db.updateRow(session, data);
+      final gen = await generation();
+      await expectLater(
+        service.replaceTasksFromImport(
+          taskReplacement(
+            parent,
+            ids.first,
+            selection: selection,
+            text: taskCalendar([
+              ...importedTask('one', properties: ['SUMMARY:Changed']),
+              ...importedTask('two'),
+            ]),
+          ),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      expect((await taskData(ids.first)).content.summary, isNull);
+      expect(await generation(), gen);
+    });
+    test('task replacement snapshots bytes selection and full trusted intent before callbacks', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final id = (await service.importTasks(taskImportRequest(parent)))
+          .receipts
+          .single
+          .taskId;
+      final request = taskReplacement(
+        parent,
+        id,
+        text: taskCalendar(
+          importedTask(
+            'imported@example.invalid',
+            properties: ['SUMMARY:Changed'],
+          ),
+        ),
+      );
+      var saw = false;
+      policy.onTaskReplacement = (r) {
+        if (r.taskReplacement == null) {
+          request.selection.clear();
+          request.bytes.buffer.asUint8List().fillRange(
+            0,
+            request.bytes.buffer.lengthInBytes,
+            0,
+          );
+        } else {
+          saw = true;
+          expect(r.taskReplacement!.members.single.current.taskId, id);
+          expect(
+            r
+                .taskReplacement!
+                .members
+                .single
+                .proposed
+                .sourceState
+                .master
+                .content
+                .summary,
+            'Changed',
+          );
+          expect(
+            () => r.taskReplacement!.members.clear(),
+            throwsUnsupportedError,
+          );
+        }
+      };
+      await service.replaceTasksFromImport(request);
+      expect(saw, isTrue);
+      expect((await taskData(id)).content.summary, 'Changed');
+    });
+
+    test('task replacement preserves local progress history and rejects changed replacement', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final source = taskCalendar(
+        importedTask(
+          'imported@example.invalid',
+          properties: ['RRULE:FREQ=DAILY;COUNT=3'],
+        ),
+      );
+      final id = (await service.importTasks(
+        taskImportRequest(parent, text: source),
+      )).receipts.single.taskId;
+      await service.changeTaskOccurrenceProgress(
+        CalendarTaskOccurrenceProgressRequest(
+          taskId: id,
+          expectedRevision: 1,
+          originalStart: day(28),
+          action: CalendarTaskProgressAction.complete,
+        ),
+      );
+      final history = (await CalendarTaskHistoryRecord.db.find(session))
+          .map((r) => r.toJson())
+          .toList();
+      final before = await taskData(id);
+      await expectLater(
+        service.replaceTasksFromImport(
+          taskReplacement(parent, id, revision: 2, text: source),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      final bytes = await service.exportTasks(
+        CalendarTaskExportRequest(
+          calendarId: parent,
+          expectedRevision: 1,
+          selection: [
+            CalendarTaskExportSelection(taskId: id, expectedRevision: 2),
+          ],
+        ),
+      );
+      expect(
+        (await service.replaceTasksFromImport(
+          taskReplacement(parent, id, revision: 2).copyWith(bytes: bytes),
+        )).receipts.single.changed,
+        isFalse,
+      );
+      expect((await taskData(id)).toJson(), before.toJson());
+      expect(
+        (await CalendarTaskHistoryRecord.db.find(session))
+            .map((r) => r.toJson())
+            .toList(),
+        history,
+      );
+    });
+    test('task replacement reconciles exact originals without retargeting removed own rows', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      String source(List<int> originals) => taskCalendar([
+        ...importedTask(
+          'imported@example.invalid',
+          properties: ['RRULE:FREQ=DAILY;COUNT=4'],
+        ),
+        for (final original in originals)
+          ...importedTask(
+            'imported@example.invalid',
+            timing: [],
+            properties: [
+              'RECURRENCE-ID;VALUE=DATE:202603$original',
+              'PERCENT-COMPLETE:25',
+            ],
+          ),
+      ]);
+      final id = (await service.importTasks(
+        taskImportRequest(parent, text: source([29, 30])),
+      )).receipts.single.taskId;
+      final old = await CalendarTaskOccurrenceRecord.db.find(session);
+      final retained = old.singleWhere((r) => r.originalStart.start.day == 30);
+      await service.replaceTasksFromImport(
+        taskReplacement(parent, id, text: source([30, 31])),
+      );
+      final rows = await CalendarTaskOccurrenceRecord.db.find(session);
+      expect(
+        rows.map((r) => r.originalStart.start.day),
+        unorderedEquals([30, 31]),
+      );
+      expect(
+        rows.singleWhere((r) => r.originalStart.start.day == 30).id,
+        retained.id,
+      );
+      expect(await CalendarTaskHistoryRecord.db.count(session), 0);
+    });
+    test('task replacement late scope overflow rolls back every payload revision and baseline', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final old = taskCalendar([
+        ...importedTask('one'),
+        ...importedTask('two'),
+      ]);
+      final ids = (await service.importTasks(
+        taskImportRequest(parent, text: old),
+      )).receipts.map((r) => r.taskId).toList();
+      final before = (await CalendarTaskDataRecord.db.find(session))
+          .map((r) => r.toJson())
+          .toList();
+      final scope = (await CalendarScopeRecord.db.find(session)).single;
+      scope.revision = 9007199254740991;
+      await CalendarScopeRecord.db.updateRow(session, scope);
+      await expectLater(
+        service.replaceTasksFromImport(
+          taskReplacement(
+            parent,
+            ids.first,
+            selection: [
+              for (final id in ids)
+                CalendarTaskExportSelection(taskId: id, expectedRevision: 1),
+            ],
+            text: taskCalendar([
+              ...importedTask('one', properties: ['SUMMARY:Changed']),
+              ...importedTask('two', properties: ['SUMMARY:Changed']),
+            ]),
+          ),
+        ),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      expect(
+        (await CalendarTaskDataRecord.db.find(session))
+            .map((r) => r.toJson())
+            .toList(),
+        before,
+      );
+      expect(
+        (await CalendarTaskRecord.db.find(session)).map((r) => r.revision),
+        everyElement(1),
+      );
+    });
+
     test('task import retains full source progress metadata baseline versions and no invented side effects', () async {
       final parent = (await service.create(createInput()))!.calendarId;
       final text = taskCalendar([
@@ -2823,11 +3294,6 @@ void main() {
       'END:VCALENDAR',
       '',
     ].join('\r\n');
-    Future<int> generation() async =>
-        (await CalendarScopeRecord.db.findFirstRow(
-          session,
-          where: (t) => t.scopeKey.equals('test:alice'),
-        ))!.revision;
 
     String eventSource(
       String uid, {
@@ -10599,6 +11065,7 @@ final class TestPolicy implements CalendarHostPolicy {
     CalendarAuthorizationPhase,
   )?
   onTaskImport;
+  void Function(CalendarAuthorizationRequest)? onTaskReplacement;
   String? denyEventImportUid, hideEventImportUid;
   bool hideEventImportBatch = false, hideEventLifecycleReceipt = false;
   final eventImportRequests =
@@ -10740,6 +11207,10 @@ final class TestPolicy implements CalendarHostPolicy {
     CalendarAuthorizationPhase phase,
   ) async {
     for (final request in requests) {
+      if (request.taskReplacement != null ||
+          request.operation == CalendarPermission.replaceTasksFromImport) {
+        onTaskReplacement?.call(request);
+      }
       if (request.taskExport != null) onTaskExport?.call(request);
       if (request.operation == CalendarPermission.exportEvents) {
         onEventExport?.call(request);

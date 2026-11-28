@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'task_occurrence_screen.dart';
 import 'task_import_screen.dart';
 import 'task_export_screen.dart';
+import 'task_replace_screen.dart';
 import 'task_progress_label.dart';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
@@ -141,18 +142,43 @@ class _TaskScreenState extends State<TaskScreen> {
                 : Text(
                     taskProgressLabel(task.progress!),
                   ),
-            trailing: IconButton(
-              key: ValueKey('task-export-${task.id}'),
-              tooltip: 'Export task series',
-              icon: const Icon(Icons.file_download_outlined),
-              onPressed: _busy
-                  ? null
-                  : () => Navigator.of(context).push<void>(
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            TaskExportScreen(client: widget.client, task: task),
-                      ),
-                    ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  key: ValueKey('task-replace-${task.id}'),
+                  tooltip: 'Replace task source',
+                  icon: const Icon(Icons.swap_horiz),
+                  onPressed: _busy
+                      ? null
+                      : () async {
+                          await Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (_) => TaskReplaceScreen(
+                                client: widget.client,
+                                task: task,
+                              ),
+                            ),
+                          );
+                          if (mounted) await _load();
+                        },
+                ),
+                IconButton(
+                  key: ValueKey('task-export-${task.id}'),
+                  tooltip: 'Export task series',
+                  icon: const Icon(Icons.file_download_outlined),
+                  onPressed: _busy
+                      ? null
+                      : () => Navigator.of(context).push<void>(
+                          MaterialPageRoute(
+                            builder: (_) => TaskExportScreen(
+                              client: widget.client,
+                              task: task,
+                            ),
+                          ),
+                        ),
+                ),
+              ],
             ),
             onTap: _busy ? null : () => _open(task),
           ),

@@ -10,6 +10,7 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  replaceTasksFromImport,
   exportTasks,
   readTaskSource,
   importTasks,
@@ -197,6 +198,7 @@ final class CalendarAuthorizationRequest {
     this.eventImport,
     this.taskImport,
     this.taskExport,
+    this.taskReplacement,
     this.eventExport,
     this.availabilityExport,
     this.availabilityReplacement,
@@ -250,6 +252,7 @@ final class CalendarAuthorizationRequest {
   final CalendarEventImportIntent? eventImport;
   final CalendarTaskImportIntent? taskImport;
   final CalendarTaskExportIntent? taskExport;
+  final CalendarTaskReplacementIntent? taskReplacement;
   final CalendarEventExportIntent? eventExport;
   final CalendarAvailabilityExportIntent? availabilityExport;
   final CalendarAvailabilityReplacementIntent? availabilityReplacement;
@@ -311,6 +314,29 @@ final class CalendarTaskImportIntent {
   CalendarTaskImportIntent(Iterable<CalendarTaskImportMember> members)
     : members = List.unmodifiable(members);
   final List<CalendarTaskImportMember> members;
+}
+
+/// Actual current/proposed objects, excluding historical baseline contents.
+final class CalendarTaskReplacementMember {
+  const CalendarTaskReplacementMember({
+    required this.current,
+    required this.proposed,
+    required this.baselineProfile,
+    required this.baselineSequence,
+    this.changed,
+    this.localChanges,
+  });
+  final CalendarTaskPolicySnapshot current;
+  final CalendarTaskImportMember proposed;
+  final String? baselineProfile;
+  final int? baselineSequence;
+  final bool? changed, localChanges;
+}
+
+final class CalendarTaskReplacementIntent {
+  CalendarTaskReplacementIntent(Iterable<CalendarTaskReplacementMember> members)
+    : members = List.unmodifiable(members);
+  final List<CalendarTaskReplacementMember> members;
 }
 
 final class CalendarEventImportMember {

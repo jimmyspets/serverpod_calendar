@@ -148,3 +148,7 @@ The [ADR 0056 per-calendar free/busy service](calendar-free-busy.md) requires `r
 ## Single task timing operation
 
 ADR 0101 uses `updateTask` for `changeOccurrenceTiming`, independently of progress and assignment gates. Host context includes actual original/current/final timing, unchanged progress, retained records and independent component version. No progress history is created; stale/final checks and receipt disclosure remain required. See [task timing](task-occurrence-timing.md).
+
+## Explicit task source replacement, 2026-10-24
+
+[ADR 0104](adr/0104-task-source-replacements.md) and [the replacement guide](task-source-replacement.md) extend create-only task import with explicit revision-matched, all-or-nothing existing-series replacements. Current v3 baselines protect local content/progress, native assignments survive, lower master SEQUENCE rejects, equal is allowed and exact source timestamps/omissions remain intact. Identical replacements are true no-ops without adopting local edits. Require independent import/replacement, full ordinary-detail and rich-source-read authority plus applicable update/progress gates; historical snapshots stay private and source alarms stay unarmed. Adoption/overwrite, mixed upsert, scheduling, feeds and runtime remain separate. This supersedes earlier task-replacement-pending statements only for this bounded slice.
