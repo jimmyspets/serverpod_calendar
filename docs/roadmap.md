@@ -452,3 +452,7 @@ Accepted ADR 0130 adds the separate published-value reopening action, publicatio
 ## Authenticated attendee replies
 
 Accepted ADR 0131 now adds the scoped non-recurring organizer-side attendee REPLY implementation: trusted host ingress, atomic private source/receipt/response state, protected review and synthetic examples. Broader batch validation is recorded separately. Next are recurring/instance reply reconciliation and attendee-side incoming invitations, followed by remaining inbound methods, RFC 6047 transport and release evidence. See [the reply guide](authenticated-attendee-replies.md) and [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
+
+## Proposed recurring master replies
+
+Next recommended batch: whole-series master REPLY for recurring native organizer bindings, reusing reply storage and resolving actual master versions through partial/v6 publications. Contract approval is pending. Instance/range response identity and presentation, attendee-side invitations, remaining inbound methods, mail and release evidence remain required follow-up work. See [ADR 0132](adr/0132-recurring-master-attendee-replies.md).

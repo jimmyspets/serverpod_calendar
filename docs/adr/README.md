@@ -148,6 +148,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0129](0129-explicit-occurrence-restoration.md) | Explicit restoration of published occurrence values | Accepted 2026-10-27; scoped published-value restoration, v5 active/history ledger and guarded complete REQUEST; broader reopening remains separate |
 | [0130](0130-preserved-cancellations-reopening.md) | Reopening published series with retained individual cancellations | Accepted 2026-10-27; scoped published-value reopening, publication-only masks and full-message restoration in existing columns |
 | [0131](0131-first-authenticated-attendee-replies.md) | First authenticated attendee replies | Accepted 2026-10-27; trusted non-recurring REPLY, three private tables, separate review authority and bounded retention |
+| [0132](0132-recurring-master-attendee-replies.md) | Recurring master attendee replies | Proposed; actual master resolution, whole-series response context and retention through partial/v6 publications; no new storage or implementation |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

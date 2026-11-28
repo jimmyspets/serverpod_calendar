@@ -406,3 +406,7 @@ Accepted ADR 0130 adds scoped module behavior for reopening with publication-onl
 ## Authenticated attendee replies
 
 Accepted ADR 0131 adds bounded authenticated non-recurring organizer-side REPLY intake and synthetic generated-client/Flutter review. Exact source identity/version validation and host approval do not establish real mailbox or client interoperability. Recurring replies, MIME and external-client evidence remain pending. See [the reply guide](authenticated-attendee-replies.md) and [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
+
+## Proposed recurring master replies
+
+Recurring master REPLY is proposed next, with no RECURRENCE-ID/RANGE and no inferred per-occurrence acceptance. This document adds no parser/runtime/client or mail compatibility evidence. The implemented authenticated runtime remains ADR 0131 non-recurring only. See [ADR 0132](adr/0132-recurring-master-attendee-replies.md).

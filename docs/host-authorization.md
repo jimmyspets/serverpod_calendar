@@ -239,3 +239,7 @@ Accepted ADR 0130 requires independent reopenScheduling plus scheduling-read, fu
 ## Authenticated attendee replies
 
 Accepted ADR 0131 requires a server-only trusted host adapter to verify the actual origin for an exact fixed-roster address and local binding/parent. Preliminary approval precedes private reply lookup; final approval inside the scope transaction can roll back every proposed write. Independent readSchedulingResponses/readSchedulingReplySource gates protect summary/review and raw source, alongside existing full event/scheduling/source authority. Payload identities, SMTP headers and client flags never prove origin. See [the reply guide](authenticated-attendee-replies.md) and [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
+
+## Proposed recurring master replies
+
+The proposed master extension preserves exact host origin, actual binding/parent, complete disclosure and preliminary/final checks. Trusted context would include both canonical published state and the exact current master wire message/kind through v6 publication masks. It grants no attendee authority from recurrence or source addresses and remains unapproved. See [ADR 0132](adr/0132-recurring-master-attendee-replies.md).

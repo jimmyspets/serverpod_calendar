@@ -420,3 +420,7 @@ Accepted ADR 0130 implements the selected preserve-cancellations reopening polic
 ## Authenticated attendee replies
 
 Accepted ADR 0131 adds the scoped FR-20/23 non-recurring organizer-side REPLY implementation: trusted host ingress, protected separate participation and retained stale/conflict review, without native draft or outbound-state changes. Recurring replies, other inbound methods and mail remain required separate work. See [the reply guide](authenticated-attendee-replies.md) and [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
+
+## Proposed recurring master replies
+
+The next FR-20/23 proposal extends only whole-series master REPLY to recurring native organizer bindings. Current-master version/active-state resolution and retention must account for independent partial occurrence messages. Instance/range replies, other inbound methods and mail remain required separate work; approval and implementation are pending. See [ADR 0132](adr/0132-recurring-master-attendee-replies.md).

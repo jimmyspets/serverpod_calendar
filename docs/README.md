@@ -236,3 +236,7 @@ Accepted ADR 0130 implements published-series reopening with retained individual
 ## Authenticated attendee replies
 
 Accepted ADR 0131 adds trusted non-recurring attendee REPLY ingress, separate response/source authority, three private tables, bounded retention and a synthetic example. Current/prior/unknown responses remain distinct and stale replies never apply automatically. Recurrence, other inbound methods, MIME and real-client evidence remain separate. See [the reply guide](authenticated-attendee-replies.md) and [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
+
+## Proposed recurring master replies
+
+Next review whole-series master replies to recurring native organizer meetings. The proposal reuses the three private reply tables, resolves complete master state through partial/v6 publications and retains independent authority and protected source review. It does not implement recurring or instance ingress. See [ADR 0132](adr/0132-recurring-master-attendee-replies.md).
