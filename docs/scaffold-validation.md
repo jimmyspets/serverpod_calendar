@@ -1416,3 +1416,11 @@ The maintainer explicitly approved the complete decoded-part/MIME/address/protec
 
 
 Final static verification passed **2,979 relative links**, consecutive ADRs 0001–0142, **16 candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. The complete approved pure batch is ready for its single implementation commit.
+
+
+## Synthetic outbound MIME composition proposal — ADR 0143 (2026-10-30)
+
+Documentation-only next prerequisite after completed ADR 0142. Published enough_mail 3.0.0, mime 2.1.0 and mailer 7.2.0 archives were SHA-256 verified and inspected in ignored scratch storage. Isolated enough_mail resolution on Dart 3.13.5 and a synthetic public-builder/binary-reparse probe passed exact Unicode/CRLF calendar-byte preservation and confirmed duplicate-parameter map loss. No SMTP client, repository dependency, source/model/schema or real delivery was introduced. All **113 open PRs** and **zero standalone open issues** were checked across pagination; only the completed pure iMIP proposal/implementation overlapped the topic. Relative-link, consecutive-ADR, Markdown-only scope, credential/LICENSE and whitespace checks follow before the documentation commit. Completed ADR 0142 pure-suite/MCP evidence remains separate; runtime suites are not repeated for this proposal.
+
+
+Documentation validation passed **2,994 relative links**, consecutive ADRs 0001–0143, **10 Markdown-only candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. No runtime test suite was repeated for this proposal; isolated dependency/probe evidence is explicitly narrower than host integration.

@@ -543,3 +543,13 @@ Accepted [ADR 0141](adr/0141-explicit-linked-cancellation-application.md) adds e
 - [ ] Separately select/evaluate host MIME/provider integration, complete message handling, trusted ingress/outbound authority and synthetic delivery before external mail evidence.
 
 This scoped pure prerequisite does not complete the RFC 6047 mail requirement or imply authority from parsed addresses. Existing event/free-busy iTIP payloads remain independent of mail binding. No real sending is authorized.
+
+
+## Synthetic outbound MIME composition
+
+- [x] Inspect published MIME candidates and run an isolated public-API/byte-preservation probe; this does not select a workspace dependency.
+- [ ] Review [ADR 0143](adr/0143-synthetic-host-outbound-imip-composition.md): example-host-only dependency, deterministic bounded MIME and recording.
+- [ ] Implement and validate the approved synthetic composition batch after explicit agreement.
+- [ ] Separately complete inbound MIME ambiguity/protection, multipart, trusted delivery/ingress, remaining scheduling lifecycle and external-client evidence.
+
+No real sending or complete mail conformance is authorized by this proposed batch.
