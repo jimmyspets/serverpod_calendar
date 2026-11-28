@@ -1462,3 +1462,11 @@ The complete broader `./tool/check.ps1` exited successfully on the frozen runtim
 
 
 Owned interactive server/Chrome runners were restored without a development reset; the latest existing migration was already applied. The actual IDE DTD and owned Chrome VM service connected successfully. Serverpod MCP hot reload and Flutter hot reload succeeded, with no runtime errors. Final static verification passed **3,028 relative links**, consecutive ADRs 0001–0144, **17 candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. All 116 open PRs and zero standalone issues were reviewed across pagination; only the own MIME stack overlapped. The complete approved raw MIME batch is ready for its single implementation commit.
+
+
+## Host MIME native-ingress proposal — ADR 0145 (2026-10-30)
+
+Documentation-only next batch after completed ADR 0144. Local source inspection verified the two server-only native entry points, invitation 256-KiB versus reply 512-KiB delivery caps, current host authorization contracts and server-built synthetic demo inputs. The proposal preserves exact decoded bytes, current native restrictions and stable receipt identity; no provider proof is inferred from MIME. All 116 open PRs and zero standalone issues were checked across pagination before this stack extension; only the own MIME prerequisite stack overlapped. Runtime remains unchanged and prior complete root/MCP evidence stays separate. Relative links, consecutive ADRs, Markdown-only scope, credential/LICENSE and whitespace checks are required before the proposal commit; runtime tests are not repeated for documentation.
+
+
+Documentation validation passed **3,037 relative links**, consecutive ADRs 0001–0145, **10 Markdown-only candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. Runtime suites were not repeated for this proposal; the completed ADR 0144 full-root/MCP evidence remains separate.
