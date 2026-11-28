@@ -1,0 +1,21 @@
+class: CalendarFeedDataRecord
+serverOnly: true
+table: serverpod_calendar_feed_data
+fields:
+  feedId: UuidValue, relation(parent=serverpod_calendar_feed_identity)
+  displayName: String
+  protocolUid: UuidValue, default=random
+  protocolMetadata: module:serverpod_calendar:CalendarProtocolMetadata?
+  supplementalMetadata: module:serverpod_calendar:CalendarSupplementalMetadata?
+  protocolModifiedAt: DateTime
+  authorityReference: String
+  profileVersion: int
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  calendar_feed_data_identity_unique:
+    fields: feedId
+    unique: true
+  calendar_feed_protocol_uid_unique:
+    fields: protocolUid
+    unique: true

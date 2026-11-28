@@ -7,6 +7,9 @@ try {
   Invoke-Checked dart @('run', 'tool/setup.dart')
   # Re-generation must leave the checked-in protocol/test tools unchanged.
   $generatedRoots = @(
+    'packages/serverpod_calendar_feed/serverpod_calendar_feed_server/lib/src/generated',
+    'packages/serverpod_calendar_feed/serverpod_calendar_feed_server/test/integration/test_tools',
+    'packages/serverpod_calendar_feed/serverpod_calendar_feed_client/lib',
     'packages/serverpod_notifications/serverpod_notifications_server/lib/src/generated',
     'packages/serverpod_notifications/serverpod_notifications_server/test/integration/test_tools',
     'packages/serverpod_notifications/serverpod_notifications_client/lib',
@@ -60,12 +63,15 @@ try {
     if (-not $SkipBrowser) { Invoke-Checked dart @('test', '--platform', 'chrome', 'test/unit') }
   }
   finally { Pop-Location }
+  Push-Location (Join-Path $WorkspaceRoot 'packages/serverpod_calendar_feed/serverpod_calendar_feed_server')
+  try { Invoke-Checked dart @('test', 'test/unit') }
+  finally { Pop-Location }
   Push-Location $ExampleFlutter
   try { Invoke-Checked flutter @('test', '--no-pub', 'test') }
   finally { Pop-Location }
   & "$PSScriptRoot/reset-test.ps1"
   Push-Location $ExampleServer
-  try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/calendar_test.dart', 'test/integration/notification_test.dart') }
+  try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/calendar_test.dart', 'test/integration/notification_test.dart', 'test/integration/feed_test.dart') }
   finally { Pop-Location }
   Invoke-Checked python @('tool/metadata_upgrade_smoke.py')
   Invoke-Checked dart @('run', 'tool/alarm_work_smoke.dart')

@@ -13,7 +13,7 @@ A reusable calendar module intended for Serverpod projects, providing calendar, 
 
 **Authorization:** the modules enforce access; hosts provide replaceable rules using trusted caller, operation and requested collection/object context. No fixed ownership/role model is required. See the [authorization contract](docs/host-authorization.md) and [first implemented CRUD slice](docs/calendar-crud-implementation.md).
 
-**HTTP subscriptions:** iCalendar feeds belong to a separate optional Serverpod module under [ADR 0042](docs/adr/0042-optional-http-feed-module.md). Hosts can use authenticated calendar APIs without installing feeds; the feed module itself is not implemented yet.
+**HTTP subscriptions:** iCalendar feeds belong to a separate optional Serverpod module under [ADR 0042](docs/adr/0042-optional-http-feed-module.md). Hosts can use authenticated calendar APIs without installing feeds. The first optional [event-subscription profile](docs/http-event-feeds.md) now has scoped implementation under ADR 0116; full batch validation and external-client evidence remain separate.
 
 **Platform target:** Serverpod 4.x and later. The initial scaffold pins Serverpod 4.0.4, Flutter 3.47.7 and Dart 3.13.5; additional supported versions require separate verification.
 
@@ -152,3 +152,7 @@ Native [personal alarm actions and private activity pages](docs/native-alarm-act
 ## Timing-only source alarm adoption, 2026-10-25
 
 [ADR 0115](docs/adr/0115-timing-only-source-alarm-adoption.md) implements [explicit master-timing copying](docs/imported-alarm-adoption.md) into new unarmed personal definitions, using current authorized item text. It reuses existing storage without a migration and enforces source-read/adopt/create rights, actual parent revisions and trusted recipients. This supersedes earlier adoption-pending wording only for this bounded flow. Source text/UID/acknowledgement/snooze state stays inert; broader profiles, private exports and release gates remain separate. Full local batch validation passed; see the validation record for exact evidence.
+
+## Optional event subscriptions, 2026-10-25
+
+[ADR 0116](docs/adr/0116-optional-event-subscription-contract.md) adds the [separate optional feed module](docs/http-event-feeds.md), with explicit multi-calendar selection, stable event publication UIDs, independently revocable digest-only bearer URLs and freshly authorized GET/HEAD/ETag responses. The example includes settings and URL management. All alarms are excluded; authenticated source exports remain independent. Full local batch validation passed. External subscription-client compatibility, production infrastructure and coordinated timezone upgrades remain separate release gates.

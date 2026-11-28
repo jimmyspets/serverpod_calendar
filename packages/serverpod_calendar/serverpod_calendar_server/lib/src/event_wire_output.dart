@@ -80,6 +80,74 @@ Uint8List eventExportBytes(List<CalendarEventPolicySnapshot> selection) {
   return serializeIcalendarEventCalendar(validated);
 }
 
+/// Publication profile: native identities, complete faithful series, no alarms.
+/// Authorization belongs to the publication transaction port.
+Uint8List eventPublicationBytes(List<CalendarEventPolicySnapshot> selection) {
+  final ordered = [...selection]
+    ..sort((a, b) => a.eventId.toString().compareTo(b.eventId.toString()));
+  if (ordered.length > const IcalendarComponentLimits().maxEvents ||
+      ordered.map((s) => s.eventId).toSet().length != ordered.length) {
+    throw ArgumentError('Invalid publication selection');
+  }
+  final zones = <String, IcalendarSyntaxComponent>{};
+  final events = <IcalendarSyntaxComponent>[];
+  for (final source in ordered) {
+    // Validate faithful source semantics before applying the explicit feed
+    // projection. Separate calls allow copied source UIDs in different calendars.
+    final document = parseIcalendarSyntax(eventExportBytes([source]));
+    for (final component
+        in document.components.single.entries
+            .whereType<IcalendarSyntaxComponent>()) {
+      if (component.canonicalName == 'VTIMEZONE') {
+        final id = component.entries
+            .whereType<IcalendarSyntaxProperty>()
+            .singleWhere((p) => p.canonicalName == 'TZID')
+            .value;
+        zones.putIfAbsent(id, () => component);
+      } else if (component.canonicalName == 'VEVENT') {
+        final entries = <IcalendarSyntaxEntry>[];
+        for (final entry in component.entries) {
+          if (entry is IcalendarSyntaxComponent &&
+              entry.canonicalName == 'VALARM') {
+            continue;
+          }
+          if (entry is IcalendarSyntaxProperty &&
+              entry.canonicalName == 'RELATED-TO') {
+            throw ArgumentError('Unprofiled publication source reference');
+          }
+          entries.add(
+            entry is IcalendarSyntaxProperty && entry.canonicalName == 'UID'
+                ? IcalendarSyntaxProperty(
+                    'UID',
+                    'urn:uuid:${source.eventId.toString().toLowerCase()}',
+                  )
+                : entry,
+          );
+        }
+        events.add(IcalendarSyntaxComponent('VEVENT', entries));
+      }
+    }
+  }
+  if (events.length > const IcalendarComponentLimits().maxEvents) {
+    throw const RecurrenceLimitException('publicationComponents');
+  }
+  final zoneNames = zones.keys.toList()..sort();
+  return serializeIcalendarSyntax(
+    IcalendarSyntaxDocument([
+      IcalendarSyntaxComponent('VCALENDAR', [
+        IcalendarSyntaxProperty('VERSION', '2.0'),
+        IcalendarSyntaxProperty(
+          'PRODID',
+          '-//Serverpod Calendar//Event subscription v1//EN',
+        ),
+        IcalendarSyntaxProperty('CALSCALE', 'GREGORIAN'),
+        for (final name in zoneNames) zones[name]!,
+        ...events,
+      ]),
+    ]),
+  );
+}
+
 final class EventComponentWriter {
   final zones = <String>{};
   IcalendarSyntaxProperty property(

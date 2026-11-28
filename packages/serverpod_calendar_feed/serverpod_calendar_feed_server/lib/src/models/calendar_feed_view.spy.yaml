@@ -1,0 +1,11 @@
+class: CalendarFeedView
+immutable: true
+fields:
+  id: UuidValue
+  revision: int
+  displayName: String
+  calendarIds: List<UuidValue>
+  protocolUid: UuidValue
+  protocolModifiedAt: DateTime
+  protocolMetadata: module:serverpod_calendar:CalendarProtocolMetadata?
+  supplementalMetadata: module:serverpod_calendar:CalendarSupplementalMetadata?

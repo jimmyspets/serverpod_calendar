@@ -11,7 +11,7 @@ Status: **walkthrough selections confirmed; initial executable scaffold locally 
 | iCalendar | `serverpod_calendar_icalendar`: explicit parsing/serialization adapter |
 | Calendar module | `serverpod_calendar`: Serverpod persistence/API module and template-generated client structure |
 | Host authorization | Replaceable host rules; module enforcement with trusted collection/object context under [ADR 0043](adr/0043-host-authorization-context.md); implementation contracts pending |
-| Optional HTTP feeds | Separate Serverpod subscription-feed module under [ADR 0042](adr/0042-optional-http-feed-module.md); implementation/naming pending, not part of the current nine-package scaffold |
+| Optional HTTP feeds | Separate Serverpod subscription-feed module under [ADR 0042](adr/0042-optional-http-feed-module.md) and [ADR 0116](adr/0116-optional-event-subscription-contract.md); scoped pair now adds two packages, with batch validation in progress |
 | Notifications | `serverpod_notifications`: reusable provider-independent notification module; example streaming transport under ADR 0020 |
 | Optional UI | `serverpod_calendar_flutter`: later extraction of widgets from the example; not a first-release publication gate |
 | SDK policy | Latest compatible stable Serverpod 4.x-or-later, Dart and Flutter, with exact versions pinned during scaffolding |
@@ -73,3 +73,7 @@ Before scaffold implementation, the connected GitHub issue and PR searches retur
 ## Reusable live notification increment, 2026-10-25
 
 [ADR 0114](adr/0114-reusable-notification-delivery.md) approves the generic three-table storage/defaults and live-reminder profile. The [delivery guide](reusable-notification-delivery.md) describes durable idempotent acceptance, fenced retry/publication, fresh authorized source projection and the example Redis/Flutter streaming path. This supersedes earlier unconnected-delivery/scaffold-only wording for this scoped increment; the full local batch checks passed, with actual evidence recorded in the validation guide. Imported alarms remain unarmed; provider delivery, adoption and the remaining first-release requirements stay separate.
+
+## Optional event-feed increment, 2026-10-25
+
+[ADR 0116](adr/0116-optional-event-subscription-contract.md) records the approved separate module, stable publication UIDs, exclusion of all alarms and four-table/default choices. The [feed guide](http-event-feeds.md) describes scoped management/publication/HTTP implementation and the required whole-host logging guard. This supersedes blanket feed-not-implemented wording only for that bounded profile. Native and authenticated source behavior remain independent; full batch validation is in progress and external subscription-client, scheduling and other release gates remain open.

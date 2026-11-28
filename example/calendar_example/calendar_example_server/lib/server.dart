@@ -14,6 +14,11 @@ import 'src/generated/serverpod.dart';
 import 'src/local_demo.dart';
 import 'src/calendar_policy.dart';
 import 'src/alarm_runtime.dart';
+import 'src/feed_policy.dart';
+import 'src/feed_transport_probe.dart';
+
+import 'package:serverpod_calendar_feed_server/serverpod_calendar_feed_server.dart'
+    as feed;
 
 Future<void> run(List<String> args) async {
   final pod = Serverpod(args);
@@ -57,8 +62,11 @@ Future<void> run(List<String> args) async {
     sources: [CalendarNotificationSource()],
     publication: DemoNotificationPublication(),
   );
+  const feedDependencies = feed.CalendarFeedDependencies();
   CalendarModule.install(
     pod,
+    dependencies: [feedDependencies],
+    publicationPolicy: DemoCalendarPublicationPolicy(),
     policy: DemoCalendarPolicy(),
     alarms: CalendarAlarmRuntime(
       policy: DemoAlarmBackgroundPolicy(),
@@ -78,6 +86,30 @@ Future<void> run(List<String> args) async {
       requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
     ),
   );
+  final web = pod.config.webServer!;
+  feed.CalendarFeedModule.install(
+    pod,
+    policy: DemoFeedPolicy(),
+    dependencies: feedDependencies,
+    options: feed.CalendarFeedOptions(
+      publicBaseUri: Uri(
+        scheme: web.publicScheme,
+        host: web.publicHost,
+        port: web.publicPort,
+        path: '/',
+      ),
+      allowInsecureLoopback: true,
+      requiredGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+    ),
+  );
+  pod.webServer.addRoute(feed.CalendarFeedRoute(pod), '/calendar-feed');
+  if (pod.runMode == 'test' &&
+      Platform.environment['CALENDAR_EXAMPLE_FEED_TRANSPORT_PROBE'] == 'true') {
+    pod.webServer.addRoute(
+      FeedTransportProbe(),
+      '/calendar-feed-transport-probe',
+    );
+  }
   await pod.start();
   // A distinct durable wake-up per host; cancellation never interrupts in-flight
   // module work. Duplicate executions remain guarded by module database fences.

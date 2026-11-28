@@ -1,0 +1,9 @@
+calendarFeed:
+  - list:
+  - read:
+  - create:
+  - update:
+  - delete:
+  - credentials:
+  - createCredential:
+  - revokeCredential:

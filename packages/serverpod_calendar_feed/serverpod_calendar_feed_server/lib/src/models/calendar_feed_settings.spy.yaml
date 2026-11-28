@@ -1,0 +1,7 @@
+class: CalendarFeedSettings
+immutable: true
+fields:
+  displayName: String
+  calendarIds: List<UuidValue>
+  protocolMetadata: module:serverpod_calendar:CalendarProtocolMetadata?
+  supplementalMetadata: module:serverpod_calendar:CalendarSupplementalMetadata?

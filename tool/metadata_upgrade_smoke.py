@@ -597,7 +597,38 @@ END;
 $verify_notification$;
 DROP TABLE notification_upgrade_guard;
 """)
-        print("PASS: populated schema upgrades preserve prior rows, add unarmed generation defaults and create no alarm work or actions.")
+        sql(database, """
+CREATE TABLE feed_upgrade_guard (table_name text PRIMARY KEY, rows jsonb NOT NULL);
+DO $snapshot_feed$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+   AND tablename NOT IN ('serverpod_migrations', 'feed_upgrade_guard') LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s', item.tablename) INTO contents;
+  INSERT INTO feed_upgrade_guard VALUES (item.tablename, contents);
+ END LOOP;
+END;
+$snapshot_feed$;
+""")
+        sql(database, (SERVER / "migrations/20261025165457443/migration.sql").read_text(encoding="utf-8"))
+        sql(database, """
+DO $verify_feed$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT * FROM feed_upgrade_guard LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s', item.table_name) INTO contents;
+  IF contents IS DISTINCT FROM item.rows THEN RAISE EXCEPTION 'Feed migration changed %', item.table_name; END IF;
+ END LOOP;
+ IF (SELECT count(*) FROM serverpod_calendar_feed_identity)<>0
+ OR (SELECT count(*) FROM serverpod_calendar_feed_data)<>0
+ OR (SELECT count(*) FROM serverpod_calendar_feed_selection)<>0
+ OR (SELECT count(*) FROM serverpod_calendar_feed_credential)<>0
+ THEN RAISE EXCEPTION 'Feed migration invented publication or credential state'; END IF;
+END;
+$verify_feed$;
+DROP TABLE feed_upgrade_guard;
+""")
+        print("PASS: populated schema upgrades preserve prior rows, create no alarm work/actions and add four empty feed tables.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")
 

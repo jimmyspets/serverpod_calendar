@@ -17,6 +17,8 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _iacs;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _iais;
+import 'package:serverpod_calendar_feed_server/serverpod_calendar_feed_server.dart'
+    as _i3lfs3vf;
 import 'package:serverpod_calendar_server/serverpod_calendar_server.dart'
     as _ipn35bcd;
 import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
@@ -32,6 +34,7 @@ class Protocol extends _is.DatabaseSerializationManager {
   static List<_isp.TableDefinition> get targetTableDefinitions => [
     ..._iais.Protocol.targetTableDefinitions,
     ..._ipn35bcd.Protocol.targetTableDefinitions,
+    ..._i3lfs3vf.Protocol.targetTableDefinitions,
     ..._ik9lwgjh.Protocol.targetTableDefinitions,
     ..._iacs.Protocol.targetTableDefinitions,
     ..._isp.Protocol.targetTableDefinitions,
@@ -69,6 +72,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     } on _is.DeserializationTypeNotFoundException catch (_) {}
     try {
       return _ipn35bcd.Protocol().deserialize<T>(data, t);
+    } on _is.DeserializationTypeNotFoundException catch (_) {}
+    try {
+      return _i3lfs3vf.Protocol().deserialize<T>(data, t);
     } on _is.DeserializationTypeNotFoundException catch (_) {}
     try {
       return _ik9lwgjh.Protocol().deserialize<T>(data, t);
@@ -112,6 +118,12 @@ class Protocol extends _is.DatabaseSerializationManager {
           ? className
           : 'serverpod_calendar.$className';
     }
+    className = _i3lfs3vf.Protocol().getClassNameForObject(data);
+    if (className != null) {
+      return className.contains('.')
+          ? className
+          : 'serverpod_calendar_feed.$className';
+    }
     className = _ik9lwgjh.Protocol().getClassNameForObject(data);
     if (className != null) {
       return className.contains('.')
@@ -145,6 +157,10 @@ class Protocol extends _is.DatabaseSerializationManager {
       data['className'] = dataClassName.substring(19);
       return _ipn35bcd.Protocol().deserializeByClassName(data);
     }
+    if (dataClassName.startsWith('serverpod_calendar_feed.')) {
+      data['className'] = dataClassName.substring(24);
+      return _i3lfs3vf.Protocol().deserializeByClassName(data);
+    }
     if (dataClassName.startsWith('serverpod_notifications.')) {
       data['className'] = dataClassName.substring(24);
       return _ik9lwgjh.Protocol().deserializeByClassName(data);
@@ -163,6 +179,7 @@ class Protocol extends _is.DatabaseSerializationManager {
   void _registerHostProtocols() {
     _iais.Protocol().registerHostProtocol('calendar_example', this);
     _ipn35bcd.Protocol().registerHostProtocol('calendar_example', this);
+    _i3lfs3vf.Protocol().registerHostProtocol('calendar_example', this);
     _ik9lwgjh.Protocol().registerHostProtocol('calendar_example', this);
     _iacs.Protocol().registerHostProtocol('calendar_example', this);
   }
@@ -177,6 +194,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     {
       var table = _ipn35bcd.Protocol().getTableForType(t);
+      if (table != null) {
+        return table;
+      }
+    }
+    {
+      var table = _i3lfs3vf.Protocol().getTableForType(t);
       if (table != null) {
         return table;
       }
@@ -223,6 +246,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     } catch (_) {}
     try {
       return _ipn35bcd.Protocol().mapRecordToJson(record);
+    } catch (_) {}
+    try {
+      return _i3lfs3vf.Protocol().mapRecordToJson(record);
     } catch (_) {}
     try {
       return _ik9lwgjh.Protocol().mapRecordToJson(record);

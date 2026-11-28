@@ -17,6 +17,8 @@ import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _iaic;
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as _imrxcdin;
+import 'package:serverpod_calendar_feed_client/serverpod_calendar_feed_client.dart'
+    as _ithfap9s;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_notifications_client/serverpod_notifications_client.dart'
     as _i9wvmat7;
@@ -63,6 +65,9 @@ class Protocol extends _isc.SerializationManager {
       return _imrxcdin.Protocol().deserialize<T>(data, t);
     } on _isc.DeserializationTypeNotFoundException catch (_) {}
     try {
+      return _ithfap9s.Protocol().deserialize<T>(data, t);
+    } on _isc.DeserializationTypeNotFoundException catch (_) {}
+    try {
       return _i9wvmat7.Protocol().deserialize<T>(data, t);
     } on _isc.DeserializationTypeNotFoundException catch (_) {}
     try {
@@ -101,6 +106,12 @@ class Protocol extends _isc.SerializationManager {
           ? className
           : 'serverpod_calendar.$className';
     }
+    className = _ithfap9s.Protocol().getClassNameForObject(data);
+    if (className != null) {
+      return className.contains('.')
+          ? className
+          : 'serverpod_calendar_feed.$className';
+    }
     className = _i9wvmat7.Protocol().getClassNameForObject(data);
     if (className != null) {
       return className.contains('.')
@@ -130,6 +141,10 @@ class Protocol extends _isc.SerializationManager {
       data['className'] = dataClassName.substring(19);
       return _imrxcdin.Protocol().deserializeByClassName(data);
     }
+    if (dataClassName.startsWith('serverpod_calendar_feed.')) {
+      data['className'] = dataClassName.substring(24);
+      return _ithfap9s.Protocol().deserializeByClassName(data);
+    }
     if (dataClassName.startsWith('serverpod_notifications.')) {
       data['className'] = dataClassName.substring(24);
       return _i9wvmat7.Protocol().deserializeByClassName(data);
@@ -144,6 +159,7 @@ class Protocol extends _isc.SerializationManager {
   void _registerHostProtocols() {
     _iaic.Protocol().registerHostProtocol('calendar_example', this);
     _imrxcdin.Protocol().registerHostProtocol('calendar_example', this);
+    _ithfap9s.Protocol().registerHostProtocol('calendar_example', this);
     _i9wvmat7.Protocol().registerHostProtocol('calendar_example', this);
     _iacc.Protocol().registerHostProtocol('calendar_example', this);
   }
@@ -165,6 +181,9 @@ class Protocol extends _isc.SerializationManager {
     } catch (_) {}
     try {
       return _imrxcdin.Protocol().mapRecordToJson(record);
+    } catch (_) {}
+    try {
+      return _ithfap9s.Protocol().mapRecordToJson(record);
     } catch (_) {}
     try {
       return _i9wvmat7.Protocol().mapRecordToJson(record);

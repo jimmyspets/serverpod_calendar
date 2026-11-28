@@ -17,6 +17,8 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _iacs;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _iais;
+import 'package:serverpod_calendar_feed_server/serverpod_calendar_feed_server.dart'
+    as _i3lfs3vf;
 import 'package:serverpod_calendar_server/serverpod_calendar_server.dart'
     as _ipn35bcd;
 import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
@@ -304,6 +306,8 @@ class Endpoints extends _is.EndpointDispatch {
     modules['serverpod_auth_idp'] = _iais.Endpoints()
       ..initializeEndpoints(server);
     modules['serverpod_calendar'] = _ipn35bcd.Endpoints()
+      ..initializeEndpoints(server);
+    modules['serverpod_calendar_feed'] = _i3lfs3vf.Endpoints()
       ..initializeEndpoints(server);
     modules['serverpod_notifications'] = _ik9lwgjh.Endpoints()
       ..initializeEndpoints(server);

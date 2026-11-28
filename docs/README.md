@@ -21,6 +21,7 @@ The maintainer has specified first-release capabilities in [requirements](requir
 | [ISO weeks and recurrence WKST](week-conventions.md) | Confirmed native ISO presentation, explicit RFC week starts and week-number examples |
 | [Temporal core](temporal-core.md) | Implemented temporal foundations and bounded named-zone resolver, remaining temporal scope and validation |
 | [Model catalog](models.md) | Proposed fields, relationships, storage/API boundaries, invariants and requirement coverage for all model areas |
+| [Optional event feeds](http-event-feeds.md) | Approved optional module, publication policy/storage, secret URL lifecycle and HTTP profile |
 | [Local development](development.md) | Pinned workspace, local setup/run/check commands and example boundaries |
 | [Scaffold validation](scaffold-validation.md) | Commands actually run and limits of the initial milestone evidence |
 | [Scaffolding plan](scaffolding-plan.md) | Confirmed walkthrough choices, installed-tool evidence and the first buildable milestone |

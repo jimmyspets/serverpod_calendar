@@ -130,16 +130,27 @@ extension CalendarEventOperations on CalendarService {
     Transaction tx, {
     CalendarEventRecord? identity,
     _Active? parent,
+  }) => _eventInScope(c.scopeKey, id, tx, identity: identity, parent: parent);
+  Future<_Event> _eventInScope(
+    String scopeKey,
+    UuidValue id,
+    Transaction tx, {
+    CalendarEventRecord? identity,
+    _Active? parent,
   }) async {
     identity ??= await CalendarEventRecord.db.findById(
       _session,
       id,
       transaction: tx,
     );
-    if (identity == null || identity.deletedAt != null) {
+    if (identity == null || identity.id != id || identity.deletedAt != null) {
       throw _failure(CalendarFailureCode.accessDenied);
     }
-    parent ??= await _active(c, identity.calendarId, tx);
+    parent ??= await _activeInScope(scopeKey, identity.calendarId, tx);
+    if (parent.identity.scopeKey != scopeKey ||
+        parent.identity.id != identity.calendarId) {
+      throw _failure(CalendarFailureCode.accessDenied);
+    }
     final data = await CalendarEventDataRecord.db.findFirstRow(
       _session,
       where: (t) => t.eventId.equals(id),
@@ -342,7 +353,7 @@ extension CalendarEventOperations on CalendarService {
         ),
         transaction: tx,
       );
-      await _bump(scope, tx);
+      await _bump(scope, tx, publishedEventCalendar: input.calendarId);
       return _eventReceipt(_Event(identity, data, parent), decisions.values);
     });
   }
@@ -498,6 +509,9 @@ extension CalendarEventOperations on CalendarService {
         CalendarAuthorizationPhase.preliminaryWrite,
       );
       final decisions = await _final(c, requests(state), tx);
+      final publicationChanged =
+          jsonEncode(e.data.protocolState!.toJson()) !=
+          jsonEncode(state.toJson());
       e.data.protocolState = state;
       e.data.timingOverrides = overrides;
       e.data.content = value;
@@ -513,7 +527,13 @@ extension CalendarEventOperations on CalendarService {
         e.identity,
         transaction: tx,
       );
-      await _bump(scope, tx);
+      await _bump(
+        scope,
+        tx,
+        publishedEventCalendar: publicationChanged
+            ? e.identity.calendarId
+            : null,
+      );
       return _eventReceipt(e, decisions.values);
     });
   }
@@ -581,6 +601,9 @@ extension CalendarEventOperations on CalendarService {
         CalendarAuthorizationPhase.preliminaryWrite,
       );
       final decisions = await _final(c, [request(proposed, state)], tx);
+      final publicationChanged =
+          jsonEncode(e.data.protocolState!.toJson()) !=
+          jsonEncode(state.toJson());
       e.data.protocolState = state;
       e.data.timingOverrides = proposed;
       e.data.updatedAt = now;
@@ -595,7 +618,13 @@ extension CalendarEventOperations on CalendarService {
         e.identity,
         transaction: tx,
       );
-      await _bump(scope, tx);
+      await _bump(
+        scope,
+        tx,
+        publishedEventCalendar: publicationChanged
+            ? e.identity.calendarId
+            : null,
+      );
       return _eventReceipt(e, decisions.values);
     });
   }
@@ -633,7 +662,7 @@ extension CalendarEventOperations on CalendarService {
         e.identity,
         transaction: tx,
       );
-      await _bump(scope, tx);
+      await _bump(scope, tx, publishedEventCalendar: e.identity.calendarId);
       return _eventReceipt(e, decisions.values, deleted: true);
     });
   }

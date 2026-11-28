@@ -209,6 +209,8 @@ Rules are not fake bookings. RFC priority/range composition runs within each cal
 
 ## Feed records and HTTP projection
 
+The physical four-table boundary and generated transport types are now approved/implemented in the scoped [ADR 0116 profile](http-event-feeds.md#models-and-limits). The older candidates below remain design context for broader surfaces; they do not override that approved identity/active/selection/credential layout.
+
 | Model | Candidate fields | Contract |
 | --- | --- | --- |
 | `FeedRecord` | `id`, description metadata, `publicationAuthorityRef`, `projectionProfileVersion`, `contentLanguage?`, lifecycle state | Host authority reference, not membership snapshot. Aggregate metadata belongs to feed, not one selected calendar or credential. |
@@ -634,3 +636,7 @@ The maintainer approved the [ADR 0112](adr/0112-bounded-durable-alarm-planning.m
 ## Timing-only source alarm adoption, 2026-10-25
 
 [ADR 0115](adr/0115-timing-only-source-alarm-adoption.md) implements [explicit master-timing copying](imported-alarm-adoption.md) into new unarmed personal definitions, using current authorized item text. It reuses existing storage without a migration and enforces source-read/adopt/create rights, actual parent revisions and trusted recipients. This supersedes earlier adoption-pending wording only for this bounded flow. Source text/UID/acknowledgement/snooze state stays inert; broader profiles, private exports and release gates remain separate. Full local batch validation passed; see the validation record for exact evidence.
+
+## Optional event-feed increment, 2026-10-25
+
+[ADR 0116](adr/0116-optional-event-subscription-contract.md) records the approved separate module, stable publication UIDs, exclusion of all alarms and four-table/default choices. The [feed guide](http-event-feeds.md) describes scoped management/publication/HTTP implementation and the required whole-host logging guard. This supersedes blanket feed-not-implemented wording only for that bounded profile. Native and authenticated source behavior remain independent; full batch validation is in progress and external subscription-client, scheduling and other release gates remain open.

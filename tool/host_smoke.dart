@@ -41,6 +41,7 @@ Future<void> main(List<String> args) async {
       workingDirectory: server,
       environment: {
         'CALENDAR_EXAMPLE_SEED_DEMO': 'true',
+        'CALENDAR_EXAMPLE_FEED_TRANSPORT_PROBE': 'true',
         'SERVERPOD_API_SERVER_PORT': '$port',
         'SERVERPOD_INSIGHTS_SERVER_PORT': '${port + 1}',
         'SERVERPOD_WEB_SERVER_PORT': '${port + 2}',
@@ -83,13 +84,14 @@ Future<void> main(List<String> args) async {
     final client = await Process.start(Platform.resolvedExecutable, [
       'run',
       'tool/client_smoke.dart',
+      if (args.contains('--feeds')) '--feeds',
       'http://localhost:18180/',
       'http://localhost:18280/',
     ], workingDirectory: root);
     final out = client.stdout.transform(utf8.decoder).listen(stdout.write);
     final err = client.stderr.transform(utf8.decoder).listen(stderr.write);
     final code = await client.exitCode.timeout(
-      const Duration(seconds: 150),
+      const Duration(seconds: 180),
       onTimeout: () {
         unawaited(stop(client));
         throw TimeoutException('Generated-client smoke timed out.');
@@ -102,48 +104,51 @@ Future<void> main(List<String> args) async {
         (jsonDecode(await File('.local/credentials.json').readAsString())
                 as Map)['test']
             as Map;
-    final recoveryClients = [
-      for (final port in [18180, 18280])
-        Client('http://localhost:$port/')
-          ..authSessionManager = ClientAuthSessionManager(
-            storage: _RecoveryStorage(),
-          ),
-    ];
-    try {
-      final auth = await recoveryClients.first.emailIdp.login(
-        email: 'alice@example.invalid',
-        password: settings['demoAlicePassword'] as String,
-      );
-      for (final c in recoveryClients) {
-        await c.auth.updateSignedInUser(auth);
+    if (args.contains('--feeds') && !args.contains('--flutter')) return;
+    if (!args.contains('--feeds')) {
+      final recoveryClients = [
+        for (final port in [18180, 18280])
+          Client('http://localhost:$port/')
+            ..authSessionManager = ClientAuthSessionManager(
+              storage: _RecoveryStorage(),
+            ),
+      ];
+      try {
+        final auth = await recoveryClients.first.emailIdp.login(
+          email: 'alice@example.invalid',
+          password: settings['demoAlicePassword'] as String,
+        );
+        for (final c in recoveryClients) {
+          await c.auth.updateSignedInUser(auth);
+        }
+        await notificationSmoke(
+          recoveryClients,
+          setRecipientBlocked: (blocked) async {
+            final result = await Process.run('python', [
+              'tool/notification_access_probe.py',
+              '${auth.authUserId}',
+              blocked ? 'block' : 'unblock',
+            ], workingDirectory: root);
+            if (result.exitCode != 0) {
+              throw StateError('Synthetic access fixture failed');
+            }
+          },
+          loseProducer: () async {
+            await stop(hosts.first);
+            await hosts.first.exitCode;
+          },
+        );
+        stdout.writeln(
+          'PASS: producer host actually terminated; survivor reauthorized and recovered the same live notification.',
+        );
+      } finally {
+        for (final c in recoveryClients) {
+          c.close();
+        }
       }
-      await notificationSmoke(
-        recoveryClients,
-        setRecipientBlocked: (blocked) async {
-          final result = await Process.run('python', [
-            'tool/notification_access_probe.py',
-            '${auth.authUserId}',
-            blocked ? 'block' : 'unblock',
-          ], workingDirectory: root);
-          if (result.exitCode != 0) {
-            throw StateError('Synthetic access fixture failed');
-          }
-        },
-        loseProducer: () async {
-          await stop(hosts.first);
-          await hosts.first.exitCode;
-        },
-      );
-      stdout.writeln(
-        'PASS: producer host actually terminated; survivor reauthorized and recovered the same live notification.',
-      );
-    } finally {
-      for (final c in recoveryClients) {
-        c.close();
-      }
+      // Restore the owned host so the complete Flutter journey still uses A/B.
+      await start('smoke-a-recovered', 18180);
     }
-    // Restore the owned host so the complete Flutter journey still uses A/B.
-    await start('smoke-a-recovered', 18180);
     if (args.contains('--flutter')) {
       final driverPath =
           Platform.environment['CHROMEDRIVER'] ??
@@ -210,7 +215,9 @@ Future<void> main(List<String> args) async {
         '-d',
         'web-server',
         '--driver=test_driver/integration_test.dart',
-        args.contains('--event-content')
+        args.contains('--feeds')
+            ? '--target=integration_test/feed_smoke_test.dart'
+            : args.contains('--event-content')
             ? '--target=integration_test/event_content_smoke_test.dart'
             : args.contains('--task-replacement')
             ? '--target=integration_test/task_replace_smoke_test.dart'
@@ -231,6 +238,7 @@ Future<void> main(List<String> args) async {
       final output = result.stdout.transform(utf8.decoder).listen(stdout.write);
       final error = result.stderr.transform(utf8.decoder).listen(stderr.write);
       final focused =
+          args.contains('--feeds') ||
           args.contains('--task-replacement') ||
           args.contains('--event-replacement') ||
           args.contains('--event-content');

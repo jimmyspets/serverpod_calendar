@@ -203,7 +203,7 @@ extension CalendarEventImportOperations on CalendarService {
           receipts.add(receipt);
         }
       }
-      await _bump(scope, tx);
+      await _bump(scope, tx, publishedEventCalendar: input.calendarId);
       return CalendarEventImportResult(receipts: List.unmodifiable(receipts));
     });
   }
