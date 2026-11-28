@@ -284,3 +284,6 @@ Accepted ADR 0137 implements bounded trusted non-recurring REQUEST intake and pr
 
 
 [Host MIME ingress into existing invitation/reply handlers](host-imip-ingress.md) implements the accepted ADR 0145 example bridge, with native authority/receipts preserved and production provider verification still separate.
+
+
+The next proposal is [explicit private attendee responses](adr/0146-explicit-private-attendee-responses.md). Calendar/response separation is confirmed; the concrete native state/outbox/worker batch still requires review.

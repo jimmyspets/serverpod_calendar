@@ -1494,3 +1494,11 @@ The complete broader `./tool/check.ps1` exited successfully on the frozen runtim
 
 
 Owned interactive server/Chrome runners were restored without a development reset; the latest existing migration was already applied. The actual IDE DTD and owned Chrome VM service connected successfully. Serverpod MCP and Flutter hot reload succeeded, with no runtime errors. Package browsing/search had already been repaired by workspace root registration. Final static verification passed **3,050 relative links**, consecutive ADRs 0001–0145, **24 candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. All 118 open PRs and zero standalone issues were checked across pagination; existing attendee-reply PRs cover organizer-side intake, with no competing outgoing response implementation. The complete approved host ingress batch is ready for its single implementation commit.
+
+
+## Explicit private attendee response proposal — ADR 0146 (2026-10-30)
+
+Documentation-only next contract after completed ADR 0145. The maintainer confirmed independent response/calendar actions. Read primary RFC 5546 sections 3.2.3/2.1.5 and inspected existing invitation/source cleanup, host identity contracts and organizer-only publication transport before proposing dedicated attendee state and three tables. The stricter database-clock rule, source pin/retention and capacity behavior are explicit project proposals, not implemented or blanket RFC requirements. Existing native reply PRs cover organizer-side intake, not this new attendee sender; open work was checked across pagination. No model/schema/source/dependency or real transport change belongs to the proposal. Relative-link, consecutive-ADR, Markdown-only, credential/LICENSE and whitespace checks are required; runtime checks are not repeated and completed ADR 0145 evidence remains separate.
+
+
+Documentation validation passed **3,060 relative links**, consecutive ADRs 0001–0146, **11 Markdown-only candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. Runtime suites were not repeated for this proposal; completed ADR 0145 full-root/MCP evidence remains separate.

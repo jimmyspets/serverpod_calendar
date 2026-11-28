@@ -466,3 +466,8 @@ Accepted [ADR 0144](adr/0144-bounded-host-raw-imip-mime.md) implements host-only
 ## Scoped MIME-to-native ingress bridge
 
 Accepted [ADR 0145](adr/0145-host-mime-native-ingress.md) implements two example-host wrappers into existing invitation REQUEST/CANCEL and attendee REPLY handlers. Exact decoded bytes, native limits, explicit target/origin references, installed host authorization and native receipt identity are preserved. See [the API/profile guide](host-imip-ingress.md). Production provider/sender verification, broader native lifecycle and real transport remain separate. No table, generated endpoint or new dependency is added.
+
+
+## Proposed explicit attendee response sending
+
+The maintainer confirmed that Accept/Tentative/Decline responses remain separate from calendar addition/application. [ADR 0146](adr/0146-explicit-private-attendee-responses.md) proposes the complete next non-recurring batch: dedicated host-approved minimal REPLYs, three private state/delivery/attempt tables, exact retries, database-clock ordering, source pins/retention, fenced workers and synthetic MIME/Flutter controls. This storage/workflow is not approved or implemented. Current invitation receipt, ordinary edits, adoption and Apply remain send-free; provider authentication, real transport and broader lifecycle stay separate.

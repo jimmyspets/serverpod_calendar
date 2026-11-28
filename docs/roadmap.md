@@ -577,3 +577,13 @@ This scoped extraction group grants no authority, applies no native state and se
 - [x] Complete route/auth/limit/retry, two-host/process-loss, Flutter and broader batch checks before one code commit.
 
 The raw MIME/parser and explicit-wrapper boundaries do not establish production provider trust. The scoped native bridge is implemented; complete provider ingress, real transport and remaining scheduling/mail/release requirements retain their existing scope. See [the guide](host-imip-ingress.md).
+
+
+## Proposed private attendee response sending
+
+- [x] Confirm response actions are separate from Add to calendar/Apply; declining requires no event.
+- [ ] Review [ADR 0146](adr/0146-explicit-private-attendee-responses.md): minimal non-recurring REPLY, explicit authority, three private tables, clocks/retries/source pins and bounded synthetic delivery.
+- [ ] Implement only after explicit model/workflow agreement.
+- [ ] Validate privacy, atomicity, ordering/retention, fresh/populated upgrades, independent workers/loss, generated clients, Flutter and complete batch checks before one code commit.
+
+The confirmed product policy does not approve the concrete persistence/worker contract. Recurring attendee sending, wider scheduling/provider work and external interoperability retain their existing required scope.
