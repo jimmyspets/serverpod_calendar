@@ -16,6 +16,7 @@ import 'package:serverpod_calendar_server/src/generated/protocol.dart'
 import 'calendar_alarm_activity_kind.dart' as _ik5ajwd4;
 import 'calendar_category_filter.dart' as _i9j129by;
 import 'calendar_event_field_group.dart' as _iftiwkuj;
+import 'calendar_event_occurrence_cursor_state.dart' as _ij33d3qn;
 import 'calendar_field_group.dart' as _i73hgz1s;
 import 'calendar_task_field_group.dart' as _isemqyyv;
 
@@ -35,6 +36,7 @@ abstract class CalendarCursorRecord
     this.taskFieldGroups,
     this.eventCalendarId,
     this.eventFieldGroups,
+    this.eventOccurrenceState,
     this.categoryFilter,
     this.alarmActivityId,
     this.alarmActivityKind,
@@ -58,6 +60,7 @@ abstract class CalendarCursorRecord
     List<_isemqyyv.CalendarTaskFieldGroup>? taskFieldGroups,
     _is.UuidValue? eventCalendarId,
     List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups,
+    _ij33d3qn.CalendarEventOccurrenceCursorState? eventOccurrenceState,
     _i9j129by.CalendarCategoryFilter? categoryFilter,
     _is.UuidValue? alarmActivityId,
     _ik5ajwd4.CalendarAlarmActivityKind? alarmActivityKind,
@@ -106,6 +109,12 @@ abstract class CalendarCursorRecord
           : _ix00hwbf.Protocol()
                 .deserialize<List<_iftiwkuj.CalendarEventFieldGroup>>(
                   jsonSerialization['eventFieldGroups'],
+                ),
+      eventOccurrenceState: jsonSerialization['eventOccurrenceState'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_ij33d3qn.CalendarEventOccurrenceCursorState>(
+                  jsonSerialization['eventOccurrenceState'],
                 ),
       categoryFilter: jsonSerialization['categoryFilter'] == null
           ? null
@@ -168,6 +177,8 @@ abstract class CalendarCursorRecord
 
   List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups;
 
+  _ij33d3qn.CalendarEventOccurrenceCursorState? eventOccurrenceState;
+
   _i9j129by.CalendarCategoryFilter? categoryFilter;
 
   _is.UuidValue? alarmActivityId;
@@ -202,6 +213,7 @@ abstract class CalendarCursorRecord
     List<_isemqyyv.CalendarTaskFieldGroup>? taskFieldGroups,
     _is.UuidValue? eventCalendarId,
     List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups,
+    _ij33d3qn.CalendarEventOccurrenceCursorState? eventOccurrenceState,
     _i9j129by.CalendarCategoryFilter? categoryFilter,
     _is.UuidValue? alarmActivityId,
     _ik5ajwd4.CalendarAlarmActivityKind? alarmActivityKind,
@@ -233,6 +245,8 @@ abstract class CalendarCursorRecord
         'eventFieldGroups': eventFieldGroups?.toJson(
           valueToJson: (v) => v.toJson(),
         ),
+      if (eventOccurrenceState != null)
+        'eventOccurrenceState': eventOccurrenceState?.toJson(),
       if (categoryFilter != null) 'categoryFilter': categoryFilter?.toJson(),
       if (alarmActivityId != null) 'alarmActivityId': alarmActivityId?.toJson(),
       if (alarmActivityKind != null)
@@ -297,6 +311,7 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
     List<_isemqyyv.CalendarTaskFieldGroup>? taskFieldGroups,
     _is.UuidValue? eventCalendarId,
     List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups,
+    _ij33d3qn.CalendarEventOccurrenceCursorState? eventOccurrenceState,
     _i9j129by.CalendarCategoryFilter? categoryFilter,
     _is.UuidValue? alarmActivityId,
     _ik5ajwd4.CalendarAlarmActivityKind? alarmActivityKind,
@@ -318,6 +333,7 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
          taskFieldGroups: taskFieldGroups,
          eventCalendarId: eventCalendarId,
          eventFieldGroups: eventFieldGroups,
+         eventOccurrenceState: eventOccurrenceState,
          categoryFilter: categoryFilter,
          alarmActivityId: alarmActivityId,
          alarmActivityKind: alarmActivityKind,
@@ -345,6 +361,7 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
     Object? taskFieldGroups = _Undefined,
     Object? eventCalendarId = _Undefined,
     Object? eventFieldGroups = _Undefined,
+    Object? eventOccurrenceState = _Undefined,
     Object? categoryFilter = _Undefined,
     Object? alarmActivityId = _Undefined,
     Object? alarmActivityKind = _Undefined,
@@ -377,6 +394,10 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
           eventFieldGroups is List<_iftiwkuj.CalendarEventFieldGroup>?
           ? eventFieldGroups
           : this.eventFieldGroups?.map((e0) => e0).toList(),
+      eventOccurrenceState:
+          eventOccurrenceState is _ij33d3qn.CalendarEventOccurrenceCursorState?
+          ? eventOccurrenceState
+          : this.eventOccurrenceState?.copyWith(),
       categoryFilter: categoryFilter is _i9j129by.CalendarCategoryFilter?
           ? categoryFilter
           : this.categoryFilter?.copyWith(),
@@ -486,6 +507,16 @@ class CalendarCursorRecordUpdateTable
       );
 
   _is.ColumnValue<
+    _ij33d3qn.CalendarEventOccurrenceCursorState,
+    _ij33d3qn.CalendarEventOccurrenceCursorState
+  >
+  eventOccurrenceState(_ij33d3qn.CalendarEventOccurrenceCursorState? value) =>
+      _is.ColumnValue(
+        table.eventOccurrenceState,
+        value,
+      );
+
+  _is.ColumnValue<
     _i9j129by.CalendarCategoryFilter,
     _i9j129by.CalendarCategoryFilter
   >
@@ -591,6 +622,11 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
           'eventFieldGroups',
           this,
         );
+    eventOccurrenceState =
+        _is.ColumnSerializable<_ij33d3qn.CalendarEventOccurrenceCursorState>(
+          'eventOccurrenceState',
+          this,
+        );
     categoryFilter = _is.ColumnSerializable<_i9j129by.CalendarCategoryFilter>(
       'categoryFilter',
       this,
@@ -651,6 +687,11 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
   late final _is.ColumnSerializable<List<_iftiwkuj.CalendarEventFieldGroup>>
   eventFieldGroups;
 
+  late final _is.ColumnSerializable<
+    _ij33d3qn.CalendarEventOccurrenceCursorState
+  >
+  eventOccurrenceState;
+
   late final _is.ColumnSerializable<_i9j129by.CalendarCategoryFilter>
   categoryFilter;
 
@@ -682,6 +723,7 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
     taskFieldGroups,
     eventCalendarId,
     eventFieldGroups,
+    eventOccurrenceState,
     categoryFilter,
     alarmActivityId,
     alarmActivityKind,

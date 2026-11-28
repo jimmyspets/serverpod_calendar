@@ -65,6 +65,7 @@ enum CalendarPermission {
   projectEventBusy,
   previewEventOccurrences,
   listEvents,
+  listEventOccurrences,
   readEvent,
   createEvent,
   updateEvent,
@@ -227,6 +228,7 @@ final class CalendarAuthorizationRequest {
     this.proposedEventProtocolState,
     this.itemTextMetadataPatch,
     this.occurrenceQuery,
+    this.occurrenceListQuery,
     this.freeBusyQuery,
     this.availabilitySearchQuery,
     this.availabilityTarget,
@@ -302,6 +304,7 @@ final class CalendarAuthorizationRequest {
   final CalendarEventProtocolState? proposedEventProtocolState;
   final CalendarItemTextMetadataPatch? itemTextMetadataPatch;
   final CalendarEventOccurrenceQuery? occurrenceQuery;
+  final CalendarEventOccurrenceListQuery? occurrenceListQuery;
   final CalendarFreeBusyQuery? freeBusyQuery;
   final CalendarAvailabilitySearchQuery? availabilitySearchQuery;
   final CalendarAvailabilityTarget? availabilityTarget;
@@ -577,6 +580,17 @@ abstract interface class CalendarHostPolicy {
     CalendarCategoryQuery? categoryFilter,
   });
 
+  /// Complete trusted query eligibility, not a partial optimization hint.
+  /// Use this transaction for coordinated candidate/membership policy reads.
+  Future<CalendarEventCandidatePlan> planEventOccurrenceQuery(
+    Session session,
+    CalendarHostContext context,
+    CalendarPolicySnapshot calendar,
+    CalendarEventOccurrenceListQuery query,
+    Set<CalendarEventFieldGroup> requestedGroups,
+    Transaction transaction,
+  );
+
   Future<CalendarEventCandidatePlan> planEventQuery(
     Session session,
     CalendarHostContext context,
@@ -633,6 +647,9 @@ final class CalendarModuleOptions {
   const CalendarModuleOptions({
     required this.requiredWriteGuarantee,
     this.maxPageSize = 100,
+    this.maxOccurrenceQueryDays = 366,
+    this.maxOccurrenceCandidateWork = 100000,
+    this.maxOccurrenceResults = 10000,
     this.maxScannedCalendars = 1000,
     this.maxScannedEvents = 1000,
     this.maxScannedTasks = 1000,
@@ -643,6 +660,9 @@ final class CalendarModuleOptions {
     this.policyTimeout = const Duration(seconds: 5),
   });
   final CalendarAuthorizationGuarantee requiredWriteGuarantee;
+  final int maxOccurrenceQueryDays,
+      maxOccurrenceCandidateWork,
+      maxOccurrenceResults;
   final int maxPageSize,
       maxScannedCalendars,
       maxScannedEvents,

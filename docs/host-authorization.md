@@ -287,3 +287,7 @@ Accepted [ADR 0140](adr/0140-trusted-cancellation-intake-and-review.md) adds sco
 ## Linked cancellation application
 
 Accepted [ADR 0141](adr/0141-explicit-linked-cancellation-application.md) adds explicit clean-baseline cancellation application and later explicit newer REQUEST reopening. The existing checkpoint/latest result now records accepted kind, with legacy REQUEST digests preserved and cancellation actions separated. See [the projection, permissions and retry limits](linked-invitation-cancellation.md) and separate batch validation. Receipt still changes nothing; local changes reject and no participation message is sent.
+
+## Calendar-wide occurrence queries
+
+Accepted [ADR 0147](adr/0147-bounded-calendar-occurrence-queries.md) adds a separate collection permission and transaction-aware candidate planning. Each returned series also requires read/preview authority and mandatory timing/state disclosure; optional text uses the intersection of both decisions. Actual calendar/event/overrides and immutable normalized criteria are provided, with no client-claimed scope or parentage. See [the query integration guide](calendar-occurrence-queries.md) for callback fields, cursor freshness, complete eligibility and per-series policy limits. A detail result never authorizes an availability conclusion.

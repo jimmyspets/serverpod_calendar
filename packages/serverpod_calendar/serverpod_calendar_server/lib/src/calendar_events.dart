@@ -38,16 +38,38 @@ CalendarEventTimingOverrides? _validatedOverrides(
 }
 
 final class _Event {
-  _Event(this.identity, this.data, this.parent) {
+  _Event(
+    this.identity,
+    this.data,
+    this.parent, {
+    RecurrenceWorkBudget? sharedWorkBudget,
+    bool validateImportBaseline = true,
+  }) {
+    if (sharedWorkBudget != null) {
+      final count =
+          1 +
+          (data.content.recurrence?.inclusions.length ?? 0) +
+          (data.content.recurrence?.exclusions.length ?? 0) +
+          (data.content.periods?.length ?? 0) +
+          (data.timingOverrides?.singles.length ?? 0) * 2 +
+          (data.timingOverrides?.future.length ?? 0) * 2;
+      for (var i = 0; i < count; i++) {
+        sharedWorkBudget.charge();
+      }
+    }
     try {
       validateEventUid(data.protocolUid);
       if (data.calendarId != identity.calendarId) {
         throw ArgumentError('Wrong active parent');
       }
-      data.content = validateEventContent(data.content);
+      data.content = validateEventContent(
+        data.content,
+        sharedWorkBudget: sharedWorkBudget,
+      );
       data.timingOverrides = validateEventOverrides(
         data.content,
         data.timingOverrides,
+        sharedWorkBudget: sharedWorkBudget,
       );
       data.protocolState = validateEventProtocolState(
         data.protocolState ??
@@ -61,9 +83,12 @@ final class _Event {
         data.content,
         data.timingOverrides,
       );
-      if (data.importBaseline != null) {
+      if (validateImportBaseline && data.importBaseline != null) {
         validateEventImportBaseline(data.importBaseline!, data.protocolUid);
       }
+    } on RecurrenceLimitException {
+      if (sharedWorkBudget != null) rethrow;
+      throw _failure(CalendarFailureCode.unavailable);
     } catch (_) {
       throw _failure(CalendarFailureCode.unavailable);
     }
@@ -101,6 +126,7 @@ extension CalendarEventOperations on CalendarService {
     CalendarItemTextMetadataPatch? textMetadataPatch,
     CalendarCategoryQuery? categoryFilter,
     CalendarEventOccurrenceQuery? query,
+    CalendarEventOccurrenceListQuery? listQuery,
     CalendarFreeBusyQuery? freeBusy,
     CalendarAvailabilitySearchQuery? search,
     CalendarAvailabilityTarget? target,
@@ -120,6 +146,7 @@ extension CalendarEventOperations on CalendarService {
     itemTextMetadataPatch: textMetadataPatch,
     categoryFilter: categoryFilter,
     occurrenceQuery: query,
+    occurrenceListQuery: listQuery,
     freeBusyQuery: freeBusy,
     availabilitySearchQuery: search,
     availabilityTarget: target,
@@ -135,13 +162,25 @@ extension CalendarEventOperations on CalendarService {
     Transaction tx, {
     CalendarEventRecord? identity,
     _Active? parent,
-  }) => _eventInScope(c.scopeKey, id, tx, identity: identity, parent: parent);
+    RecurrenceWorkBudget? sharedWorkBudget,
+    bool validateImportBaseline = true,
+  }) => _eventInScope(
+    c.scopeKey,
+    id,
+    tx,
+    identity: identity,
+    parent: parent,
+    sharedWorkBudget: sharedWorkBudget,
+    validateImportBaseline: validateImportBaseline,
+  );
   Future<_Event> _eventInScope(
     String scopeKey,
     UuidValue id,
     Transaction tx, {
     CalendarEventRecord? identity,
     _Active? parent,
+    RecurrenceWorkBudget? sharedWorkBudget,
+    bool validateImportBaseline = true,
   }) async {
     identity ??= await CalendarEventRecord.db.findById(
       _session,
@@ -162,7 +201,13 @@ extension CalendarEventOperations on CalendarService {
       transaction: tx,
     );
     if (data == null) throw _failure(CalendarFailureCode.unavailable);
-    return _Event(identity, data, parent);
+    return _Event(
+      identity,
+      data,
+      parent,
+      sharedWorkBudget: sharedWorkBudget,
+      validateImportBaseline: validateImportBaseline,
+    );
   }
 
   void _eventRevision(_Event e, int expected) {
@@ -920,6 +965,7 @@ extension CalendarEventOperations on CalendarService {
           transaction: tx,
         );
         if (saved == null ||
+            saved.eventOccurrenceState != null ||
             saved.alarmActivityId != null ||
             saved.alarmActivityKind != null ||
             saved.taskHistoryTaskId != null ||

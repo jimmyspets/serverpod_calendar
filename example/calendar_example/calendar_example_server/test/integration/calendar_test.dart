@@ -14894,6 +14894,13 @@ final class TestPolicy implements CalendarHostPolicy {
       .toSet();
   CalendarAuthorizationRequest? lastTaskRequest;
   Set<UuidValue>? eventCandidates;
+  final hiddenEvents = <UuidValue>{};
+  final eventGrantsById = <UuidValue, Set<CalendarEventFieldGroup>>{};
+  final eventGrantsByOperation =
+      <CalendarPermission, Set<CalendarEventFieldGroup>>{};
+  void Function(CalendarAuthorizationRequest)? onOccurrenceRequest;
+  void Function(CalendarEventOccurrenceListQuery)? onOccurrenceQueryPlan;
+  Transaction? lastOccurrenceQueryTransaction;
   CalendarAuthorizationRequest? lastEventRequest;
   CalendarAuthorizationRequest? lastAvailabilityRequest;
   final busyDenied = <UuidValue>{};
@@ -14991,6 +14998,20 @@ final class TestPolicy implements CalendarHostPolicy {
   }
 
   @override
+  Future<CalendarEventCandidatePlan> planEventOccurrenceQuery(
+    Session s,
+    CalendarHostContext c,
+    CalendarPolicySnapshot calendar,
+    CalendarEventOccurrenceListQuery query,
+    Set<CalendarEventFieldGroup> groups,
+    Transaction transaction,
+  ) async {
+    lastOccurrenceQueryTransaction = transaction;
+    onOccurrenceQueryPlan?.call(query);
+    return CalendarEventCandidatePlan(eventIds: eventCandidates);
+  }
+
+  @override
   Future<CalendarEventCandidatePlan> planEventQuery(
     Session s,
     CalendarHostContext c,
@@ -15018,6 +15039,9 @@ final class TestPolicy implements CalendarHostPolicy {
     CalendarAuthorizationPhase phase,
   ) async {
     for (final request in requests) {
+      if (request.occurrenceListQuery != null) {
+        onOccurrenceRequest?.call(request);
+      }
       if (request.categoryFilter != null) {
         onCategoryRequest?.call(request);
       }
@@ -15159,13 +15183,17 @@ final class TestPolicy implements CalendarHostPolicy {
                   deniedSubjects.contains(r.availabilityTarget?.externalId)) ||
               (r.operation == CalendarPermission.projectEventBusy &&
                   busyDenied.contains(r.eventId)) ||
+              hiddenEvents.contains(r.eventId) ||
               hidden.contains(r.calendarId) ||
               (denyFinal && phase == CalendarAuthorizationPhase.finalWrite)
           ? CalendarAuthorizationVerdict.deny
           : CalendarAuthorizationVerdict.allow,
       disclosedGroups: grants,
       taskDisclosedGroups: taskGrants,
-      eventDisclosedGroups: eventGrants,
+      eventDisclosedGroups:
+          eventGrantsById[r.eventId] ??
+          eventGrantsByOperation[r.operation] ??
+          eventGrants,
       discloseMutationReceipt:
           !hideAlarmReceipt &&
           !(r.taskImport != null &&

@@ -1,6 +1,6 @@
 # ADR 0147: Bounded calendar-wide event occurrence queries
 
-Status: **Proposed. No query API, model source or cursor-schema change is approved or implemented by this document.**
+Status: **Accepted by explicit maintainer approval on 2026-10-30 for the complete query, disclosure, limits and nullable cursor-storage batch. The scoped implementation and complete feature-batch validation finished on 2026-10-30; see the implementation guide and validation record.**
 
 ## Context and inspected evidence
 
@@ -52,4 +52,4 @@ Test boundary/point/multi-day/DST cases, all temporal profiles, moved-in/out and
 
 ## Decision gate and remaining scope
 
-AGENTS.md requires: “Proposed ADRs become accepted only after explicit maintainer agreement.” This proposal needs approval of the concrete query/disclosure/cancellation, bounds and one-field cursor storage mechanics before implementation. It does not change the original release scope or approve subsequent multi-calendar/task queries, indexed scale, timezone-upgrade coordination or broader scheduling work.
+The maintainer explicitly approved the complete query/disclosure/cancellation, bounds and one-field cursor storage batch on 2026-10-30, satisfying the AGENTS.md model/ADR gate. Implementation and validation remain separate from approval. This does not change the original release scope or approve subsequent multi-calendar/task queries, indexed scale, timezone-upgrade coordination or broader scheduling work.

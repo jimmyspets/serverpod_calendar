@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'protocol_metadata_editor.dart';
 import 'event_screen.dart';
 import 'calendar_free_busy_screen.dart';
+import 'calendar_occurrences_screen.dart';
 import 'availability_screen.dart';
 import 'availability_search_screen.dart';
 import 'supplemental_metadata_editor.dart';
@@ -505,6 +506,21 @@ class _CalendarEditorState extends State<CalendarEditor> {
                             ),
                           ),
                     child: const Text('Events'),
+                  ),
+                if (existing)
+                  OutlinedButton(
+                    key: const Key('calendar-occurrences'),
+                    onPressed: locked
+                        ? null
+                        : () => Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (_) => CalendarOccurrencesScreen(
+                                client: widget.client,
+                                calendarId: _calendar!.id,
+                              ),
+                            ),
+                          ),
+                    child: const Text('Calendar occurrences'),
                   ),
                 if (existing)
                   OutlinedButton(

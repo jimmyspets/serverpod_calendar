@@ -78,6 +78,10 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_event_occurrence
     as _ir37u2ww;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_occurrence_content_request.dart'
     as _ifjtl7wd;
+import 'package:serverpod_calendar_client/src/protocol/calendar_event_occurrence_list_query.dart'
+    as _i8mlm4xn;
+import 'package:serverpod_calendar_client/src/protocol/calendar_event_occurrence_page.dart'
+    as _ilw191qa;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_occurrence_preview.dart'
     as _iz6iah5n;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_occurrence_query.dart'
@@ -604,6 +608,14 @@ class EndpointCalendarEvent extends _isc.EndpointRef {
 
   @override
   String get name => 'serverpod_calendar.calendarEvent';
+
+  _ida.Future<_ilw191qa.CalendarEventOccurrencePage> listOccurrences(
+    _i8mlm4xn.CalendarEventOccurrenceListQuery query,
+  ) => caller.callServerEndpoint<_ilw191qa.CalendarEventOccurrencePage>(
+    'serverpod_calendar.calendarEvent',
+    'listOccurrences',
+    {'query': query},
+  );
 
   _ida.Future<_ieh64e0q.CalendarEventReceipt?> updateTextMetadata(
     _iqxo05uf.CalendarEventTextMetadataRequest request,

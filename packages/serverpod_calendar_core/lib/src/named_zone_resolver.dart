@@ -101,6 +101,12 @@ final class NamedZoneResolver {
   NamedZoneResolver();
 
   static const dataVersion = boundedTimezoneVersion;
+
+  /// Opaque immutable identity material for the exact pinned database/profile.
+  /// Adapters may hash it before storing cache/cursor identities. This is not
+  /// a timezone serialization format or permission to edit generated data.
+  static String get dataIdentityMaterial =>
+      '$boundedTimezoneVersion:$boundedTimezoneData';
   static final Map<String, _Rules> _rules = _loadRules();
 
   /// Exact database keys, including aliases, excluding unknown-only placeholders.
@@ -273,6 +279,7 @@ final class NamedZoneResolver {
     required String zoneId,
     required UtcWindow horizon,
     required int maxTransitions,
+    RecurrenceWorkBudget? sharedWorkBudget,
   }) {
     RangeError.checkValueInInterval(
       maxTransitions,
@@ -288,6 +295,7 @@ final class NamedZoneResolver {
     final initial = rules.at(first);
     final changes = <ZoneOffsetChange>[];
     for (var i = 0; i < rules.transitions.length; i++) {
+      sharedWorkBudget?.charge();
       final instant = rules.transitions[i];
       if (instant <= first || instant >= last) continue;
       if (!rules.covers(instant) || !rules.after[i].known) {

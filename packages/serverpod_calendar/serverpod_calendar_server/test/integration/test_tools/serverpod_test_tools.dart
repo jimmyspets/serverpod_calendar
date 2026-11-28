@@ -81,6 +81,10 @@ import 'package:serverpod_calendar_server/src/generated/calendar_event_occurrenc
     as _ixyxs14v;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_occurrence_content_request.dart'
     as _is52sdtb;
+import 'package:serverpod_calendar_server/src/generated/calendar_event_occurrence_list_query.dart'
+    as _i4otvlq0;
+import 'package:serverpod_calendar_server/src/generated/calendar_event_occurrence_page.dart'
+    as _ifhgp6vp;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_occurrence_preview.dart'
     as _i2qqvmw2;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_occurrence_query.dart'
@@ -1618,6 +1622,37 @@ class _CalendarEventEndpoint {
   final _is.EndpointDispatch _endpointDispatch;
 
   final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_ifhgp6vp.CalendarEventOccurrencePage> listOccurrences(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i4otvlq0.CalendarEventOccurrenceListQuery query,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarEvent',
+            method: 'listOccurrences',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarEvent',
+          methodName: 'listOccurrences',
+          parameters: _ist.testObjectToJson({'query': query}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ifhgp6vp.CalendarEventOccurrencePage>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 
   _ida.Future<_irjxy316.CalendarEventReceipt?> updateTextMetadata(
     _ist.TestSessionBuilder sessionBuilder,

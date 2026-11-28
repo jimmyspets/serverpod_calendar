@@ -55,6 +55,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_event_occurrenc
     as _ixyxs14v;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_occurrence_content_request.dart'
     as _is52sdtb;
+import 'package:serverpod_calendar_server/src/generated/calendar_event_occurrence_list_query.dart'
+    as _i4otvlq0;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_occurrence_query.dart'
     as _i7o3kzld;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_replace_request.dart'
@@ -1051,6 +1053,27 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'calendarEvent',
       endpoint: endpoints['calendarEvent']!,
       methodConnectors: {
+        'listOccurrences': _is.MethodConnector(
+          name: 'listOccurrences',
+          params: {
+            'query': _is.ParameterDescription(
+              name: 'query',
+              type: _is.getType<_i4otvlq0.CalendarEventOccurrenceListQuery>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .listOccurrences(
+                        session,
+                        params['query'],
+                      ),
+        ),
         'updateTextMetadata': _is.MethodConnector(
           name: 'updateTextMetadata',
           params: {

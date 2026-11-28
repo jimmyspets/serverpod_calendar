@@ -95,6 +95,7 @@ Future<void> main(List<String> args) async {
         if (args.contains('--feeds')) '--feeds',
         if (args.contains('--replies-only')) '--replies-only',
         if (args.contains('--invitations-only')) '--invitations-only',
+        if (args.contains('--occurrences-only')) '--occurrences-only',
         if (args.contains('--scheduling-only')) '--scheduling-only',
         'http://localhost:18180/',
         'http://localhost:18280/',
@@ -106,7 +107,8 @@ Future<void> main(List<String> args) async {
       final code = await client.exitCode.timeout(
         Duration(
           seconds:
-              args.contains('--replies-only') ||
+              args.contains('--occurrences-only') ||
+                  args.contains('--replies-only') ||
                   args.contains('--invitations-only') ||
                   args.contains('--scheduling-only')
               ? 180
@@ -121,7 +123,8 @@ Future<void> main(List<String> args) async {
       await err.cancel();
       if (code != 0) throw StateError('Real-client smoke failed ($code).');
       if (args.contains('--feeds') && !args.contains('--flutter')) return;
-      if (!args.contains('--feeds') &&
+      if (!args.contains('--occurrences-only') &&
+          !args.contains('--feeds') &&
           !args.contains('--replies-only') &&
           !args.contains('--invitations-only') &&
           !args.contains('--scheduling-only')) {
@@ -239,7 +242,9 @@ Future<void> main(List<String> args) async {
         '-d',
         'web-server',
         '--driver=test_driver/integration_test.dart',
-        args.contains('--invitations')
+        args.contains('--occurrences')
+            ? '--target=integration_test/occurrence_query_smoke_test.dart'
+            : args.contains('--invitations')
             ? '--target=integration_test/invitation_smoke_test.dart'
             : args.contains('--categories')
             ? '--target=integration_test/item_category_search_smoke_test.dart'
@@ -274,6 +279,7 @@ Future<void> main(List<String> args) async {
       final output = result.stdout.transform(utf8.decoder).listen(stdout.write);
       final error = result.stderr.transform(utf8.decoder).listen(stderr.write);
       final focused =
+          args.contains('--occurrences') ||
           args.contains('--invitations') ||
           args.contains('--categories') ||
           args.contains('--text-metadata') ||

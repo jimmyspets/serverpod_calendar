@@ -45,6 +45,7 @@ part 'calendar_alarm_adoption.dart';
 part 'calendar_alarm_actions.dart';
 part 'calendar_alarm_worker.dart';
 part 'calendar_events.dart';
+part 'calendar_event_occurrence_queries.dart';
 part 'calendar_item_text_metadata.dart';
 part 'calendar_scheduling.dart';
 part 'calendar_scheduling_replies.dart';
@@ -97,6 +98,14 @@ abstract final class CalendarModule {
     List<CalendarAvailabilityExtensionRegistration> availabilityExtensions =
         const [],
   }) {
+    if (options.maxOccurrenceQueryDays < 1 ||
+        options.maxOccurrenceQueryDays > 366 ||
+        options.maxOccurrenceCandidateWork < 1 ||
+        options.maxOccurrenceCandidateWork > 100000 ||
+        options.maxOccurrenceResults < 1 ||
+        options.maxOccurrenceResults > 10000) {
+      throw ArgumentError('Invalid occurrence query limit');
+    }
     for (final n in [
       options.maxPageSize,
       options.maxScannedCalendars,
@@ -1164,6 +1173,7 @@ final class CalendarService {
           transaction: tx,
         );
         if (saved == null ||
+            saved.eventOccurrenceState != null ||
             saved.alarmActivityId != null ||
             saved.alarmActivityKind != null ||
             saved.taskHistoryTaskId != null ||

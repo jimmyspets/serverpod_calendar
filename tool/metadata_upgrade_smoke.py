@@ -342,12 +342,54 @@ DROP TABLE response_upgrade_guard;
 """)
 
 
+def verify_occurrence_cursor_upgrade(database):
+    sql(database, """
+INSERT INTO serverpod_calendar_cursor
+ (token,"scopeKey","principalId","policyRevision","dataRevision","afterId","pageSize","fieldGroups","expiresAt")
+ VALUES ('synthetic-occurrence-upgrade','occurrence-upgrade','actor','v1',1,
+ 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',1,'[]','2030-01-01');
+CREATE TABLE occurrence_upgrade_guard(table_name text, rows jsonb);
+DO $snapshot_occurrences$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+  AND (tablename LIKE 'serverpod_calendar_%' OR tablename LIKE 'serverpod_notifications_%') LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s', item.tablename) INTO contents;
+  INSERT INTO occurrence_upgrade_guard VALUES(item.tablename, contents);
+ END LOOP;
+END;
+$snapshot_occurrences$;
+""")
+    sql(database, (SERVER / "migrations/20261030180336464/migration.sql").read_text(encoding="utf-8"))
+    sql(database, """
+DO $verify_occurrences$
+DECLARE item record; contents jsonb; projection text;
+BEGIN
+ FOR item IN SELECT * FROM occurrence_upgrade_guard LOOP
+  projection := CASE WHEN item.table_name='serverpod_calendar_cursor'
+    THEN 'to_jsonb(t)-''eventOccurrenceState''' ELSE 'to_jsonb(t)' END;
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT %s AS v FROM %I t) s', projection,item.table_name) INTO contents;
+  IF contents IS DISTINCT FROM item.rows THEN RAISE EXCEPTION 'Occurrence migration changed %',item.table_name; END IF;
+ END LOOP;
+ IF EXISTS (SELECT 1 FROM serverpod_calendar_cursor WHERE "eventOccurrenceState" IS NOT NULL)
+ THEN RAISE EXCEPTION 'Upgrade invented occurrence cursor state'; END IF;
+END;
+$verify_occurrences$;
+DROP TABLE occurrence_upgrade_guard;
+""")
+
+
 def main():
     # Drop only a database this process successfully creates on the test service.
     database = f"calendar_metadata_upgrade_{os.getpid()}"
     assert re.fullmatch(r"calendar_metadata_upgrade_[0-9]+", database)
     sql("postgres", f"CREATE DATABASE {database};")
     try:
+        if "--occurrence-cursors-only" in __import__("sys").argv:
+            sql(database, (SERVER / "migrations/20261030125640323/definition.sql").read_text(encoding="utf-8"))
+            verify_occurrence_cursor_upgrade(database)
+            print("PASS: populated ordinary cursors and prior domain rows survive the additive occurrence cursor upgrade without invented state.")
+            return
         if any(arg in __import__("sys").argv for arg in ["--instance-replies-only", "--invitations-only", "--adoption-only", "--applications-only", "--cancellations-only", "--cancellation-applications-only"]):
             sql(database, (SERVER / "migrations/20261027194429192-attendee-replies/definition.sql").read_text(encoding="utf-8"))
             verify_instance_reply_upgrade(database)
@@ -1012,7 +1054,8 @@ DROP TABLE reply_upgrade_guard;
         verify_invitation_cancellation_upgrade(database)
         verify_cancellation_application_upgrade(database)
         verify_invitation_response_upgrade(database)
-        print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated replies/invitations/links/checkpoints through instance, adoption, cancellation and private attendee-response upgrades; no personal response history is invented.")
+        verify_occurrence_cursor_upgrade(database)
+        print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated replies/invitations/links/checkpoints through instance, adoption, cancellation and private attendee-response upgrades; no personal response history is invented and ordinary cursor rows survive the occurrence-state addition without invented query state.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")
 

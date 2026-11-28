@@ -110,6 +110,9 @@ import 'calendar_event_occurrence_change.dart' as _i7imxrlz;
 import 'calendar_event_occurrence_content.dart' as _io4uvjqi;
 import 'calendar_event_occurrence_content_change.dart' as _iikl1ga8;
 import 'calendar_event_occurrence_content_request.dart' as _iaip8d0d;
+import 'calendar_event_occurrence_list_item.dart' as _i6x6hm0f;
+import 'calendar_event_occurrence_list_query.dart' as _iayv5gu3;
+import 'calendar_event_occurrence_page.dart' as _ifm4sinz;
 import 'calendar_event_occurrence_preview.dart' as _i1a4s0rt;
 import 'calendar_event_occurrence_protocol_version.dart' as _im5iu6ju;
 import 'calendar_event_occurrence_query.dart' as _ivs4ir3j;
@@ -314,6 +317,9 @@ export 'calendar_event_occurrence_change.dart';
 export 'calendar_event_occurrence_content.dart';
 export 'calendar_event_occurrence_content_change.dart';
 export 'calendar_event_occurrence_content_request.dart';
+export 'calendar_event_occurrence_list_item.dart';
+export 'calendar_event_occurrence_list_query.dart';
+export 'calendar_event_occurrence_page.dart';
 export 'calendar_event_occurrence_preview.dart';
 export 'calendar_event_occurrence_protocol_version.dart';
 export 'calendar_event_occurrence_query.dart';
@@ -720,6 +726,15 @@ class Protocol extends _isc.SerializationManager {
     if (t == _iaip8d0d.CalendarEventOccurrenceContentRequest) {
       return _iaip8d0d.CalendarEventOccurrenceContentRequest.fromJson(data)
           as T;
+    }
+    if (t == _i6x6hm0f.CalendarEventOccurrenceListItem) {
+      return _i6x6hm0f.CalendarEventOccurrenceListItem.fromJson(data) as T;
+    }
+    if (t == _iayv5gu3.CalendarEventOccurrenceListQuery) {
+      return _iayv5gu3.CalendarEventOccurrenceListQuery.fromJson(data) as T;
+    }
+    if (t == _ifm4sinz.CalendarEventOccurrencePage) {
+      return _ifm4sinz.CalendarEventOccurrencePage.fromJson(data) as T;
     }
     if (t == _i1a4s0rt.CalendarEventOccurrencePreview) {
       return _i1a4s0rt.CalendarEventOccurrencePreview.fromJson(data) as T;
@@ -1566,6 +1581,24 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_iaip8d0d.CalendarEventOccurrenceContentRequest?>()) {
       return (data != null
               ? _iaip8d0d.CalendarEventOccurrenceContentRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_i6x6hm0f.CalendarEventOccurrenceListItem?>()) {
+      return (data != null
+              ? _i6x6hm0f.CalendarEventOccurrenceListItem.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_iayv5gu3.CalendarEventOccurrenceListQuery?>()) {
+      return (data != null
+              ? _iayv5gu3.CalendarEventOccurrenceListQuery.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ifm4sinz.CalendarEventOccurrencePage?>()) {
+      return (data != null
+              ? _ifm4sinz.CalendarEventOccurrencePage.fromJson(data)
               : null)
           as T;
     }
@@ -2599,6 +2632,15 @@ class Protocol extends _isc.SerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_i6x6hm0f.CalendarEventOccurrenceListItem>) {
+      return (data as List)
+              .map(
+                (e) =>
+                    deserialize<_i6x6hm0f.CalendarEventOccurrenceListItem>(e),
+              )
+              .toList()
+          as T;
+    }
     if (t == _isc.getType<List<_iftiwkuj.CalendarEventFieldGroup>?>()) {
       return (data != null
               ? (data as List)
@@ -3038,6 +3080,11 @@ class Protocol extends _isc.SerializationManager {
         'CalendarEventOccurrenceContentChange',
       _iaip8d0d.CalendarEventOccurrenceContentRequest =>
         'CalendarEventOccurrenceContentRequest',
+      _i6x6hm0f.CalendarEventOccurrenceListItem =>
+        'CalendarEventOccurrenceListItem',
+      _iayv5gu3.CalendarEventOccurrenceListQuery =>
+        'CalendarEventOccurrenceListQuery',
+      _ifm4sinz.CalendarEventOccurrencePage => 'CalendarEventOccurrencePage',
       _i1a4s0rt.CalendarEventOccurrencePreview =>
         'CalendarEventOccurrencePreview',
       _im5iu6ju.CalendarEventOccurrenceProtocolVersion =>
@@ -3380,6 +3427,12 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarEventOccurrenceContentChange';
       case _iaip8d0d.CalendarEventOccurrenceContentRequest():
         return 'CalendarEventOccurrenceContentRequest';
+      case _i6x6hm0f.CalendarEventOccurrenceListItem():
+        return 'CalendarEventOccurrenceListItem';
+      case _iayv5gu3.CalendarEventOccurrenceListQuery():
+        return 'CalendarEventOccurrenceListQuery';
+      case _ifm4sinz.CalendarEventOccurrencePage():
+        return 'CalendarEventOccurrencePage';
       case _i1a4s0rt.CalendarEventOccurrencePreview():
         return 'CalendarEventOccurrencePreview';
       case _im5iu6ju.CalendarEventOccurrenceProtocolVersion():
@@ -3929,6 +3982,19 @@ class Protocol extends _isc.SerializationManager {
       return deserialize<_iaip8d0d.CalendarEventOccurrenceContentRequest>(
         data['data'],
       );
+    }
+    if (dataClassName == 'CalendarEventOccurrenceListItem') {
+      return deserialize<_i6x6hm0f.CalendarEventOccurrenceListItem>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarEventOccurrenceListQuery') {
+      return deserialize<_iayv5gu3.CalendarEventOccurrenceListQuery>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarEventOccurrencePage') {
+      return deserialize<_ifm4sinz.CalendarEventOccurrencePage>(data['data']);
     }
     if (dataClassName == 'CalendarEventOccurrencePreview') {
       return deserialize<_i1a4s0rt.CalendarEventOccurrencePreview>(
