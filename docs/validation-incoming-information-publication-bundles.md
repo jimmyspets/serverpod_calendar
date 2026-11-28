@@ -31,3 +31,5 @@ The preceding repair commit d692fa5 passed hosted inspect and runtime in run 435
 Final whole-workspace analysis passed after the UI fixes. The full repository check and hosted checks for this feature commit remain required before PR readiness.
 
 After the final feed form change, all nine Flutter widget tests and the release web build, including its Wasm dry run, passed (`.local/185-widgets-final3.log`, `.local/185-release-final3.log`). The complete fresh-storage connected browser journey passed (`.local/185-full-browser-fresh-final.log`).
+
+The hosted **Repository checks** run [43720462846](https://github.com/jimmyspets/serverpod_calendar/actions/runs/43720462846) subsequently completed successfully for commit `c1535c0ca710ffb1166d6dee714b6a798011427a`, which was verified as the head of draft PR #202. This supersedes the earlier pending-hosted statements above; it does not imply that the draft PR was merged or that external client interoperability was tested.
