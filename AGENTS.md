@@ -324,3 +324,6 @@ The maintainer confirmed incoming range CANCEL requires SEQUENCE newer than all 
 
 
 Accepted ADR 0160 implements first durable range-CANCEL acceptance: separate private v4 cancellation/source binding and expected-native comparison, cutoff-free ordinary baselines, independent authority/API, protected view state and temporary new-command guards. The maintainer explicitly approved these model/API mechanics. Do not infer accepted source cancellation from a native cutoff or overwrite component versions; composition/restoration remains separate.
+
+
+Proposed ADR 0161 records the confirmed preserve-cutoff/reject-orphan master-update policy and a concrete master REQUEST composition design. Its v5 frozen original basis/current composition binding, additional retained source content, independent authority and protected master-view flag require explicit agreement before implementation. Do not lift ADR 0160 guards or reinterpret a higher master version/native local restoration as source reopening. No runtime/model/SQL changes follow from this documentation proposal.

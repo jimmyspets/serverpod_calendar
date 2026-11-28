@@ -735,3 +735,13 @@ Pure projection implementation is in PR #149; grouped local and full exact-head 
 - [ ] Design subsequent cancellation replacement/multiple anchors, accepted-mask master composition and explicit source restoration next. Outgoing range CANCEL, wire mapping and replies remain separate requirements.
 
 The maintainer confirmed the next master-composition policy: preserve the accepted cutoff and reject updates that remove its original anchor. A higher master SEQUENCE alone must not reopen the range. Concrete storage/version/API mechanics remain subject to separate ADR review.
+
+
+## Master updates preserving accepted range cancellation
+
+The maintainer confirmed preserve-cutoff/reject-orphan behavior. [Proposed ADR 0161](adr/0161-master-updates-with-accepted-range-cancellation.md) defines a bounded master REQUEST composition batch after PR #151. Historical cancellation validation uses its frozen original basis; current composition has its own verified binding. This avoids incorrectly comparing an already accepted cancellation with a later master version. Concrete JSON/API/authority mechanics remain unapproved and unimplemented.
+
+- [x] Confirm preservation policy and inspect v4 source/basis/native/receipt and master-composition boundaries.
+- [ ] Obtain explicit review of v5 frozen/current bindings, retained content, independent composition authority, stable retries and protected master-view flag.
+- [ ] Implement/test the approved batch with existing byte/work limits, two-host recovery and Flutter; run grouped checks before one code commit and full CI before readiness.
+- [ ] Review source restoration, cancellation replacement/whole-series lifecycle and remaining range scheduling separately.

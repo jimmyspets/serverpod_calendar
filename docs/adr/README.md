@@ -176,6 +176,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0159](0159-pure-range-cancellation-projection.md) | Pure incoming range CANCEL projection | Accepted 2026-11-02; scoped pure CANCEL cutoff/source-version result and conservative floor; no durable application |
 
 | [0160](0160-first-range-cancellation-acceptance.md) | First durable incoming range cancellation | Accepted; v4 private cancellation layer and explicit first-acceptance command; composition/source restoration remain separate |
+| [0161](0161-master-updates-with-accepted-range-cancellation.md) | Master updates with accepted range cancellation | Proposed; frozen cancellation basis, v5 composition binding, independent authority and protected view |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
