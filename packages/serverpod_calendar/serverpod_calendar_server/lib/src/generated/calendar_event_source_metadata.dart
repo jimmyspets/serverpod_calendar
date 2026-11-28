@@ -14,6 +14,8 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+import 'calendar_event_geographic_position.dart' as _iloy79hd;
+import 'calendar_event_resource_group.dart' as _iiajf89w;
 import 'calendar_event_source_alarm.dart' as _i4dai4jt;
 import 'calendar_event_source_attachment.dart' as _i20i9qxn;
 import 'calendar_event_source_category_group.dart' as _iui013s0;
@@ -35,6 +37,9 @@ abstract class CalendarEventSourceMetadata
     this.relationships,
     this.attachments,
     this.alarms,
+    this.priority,
+    this.geographicPosition,
+    this.resourceGroups,
   });
 
   const factory CalendarEventSourceMetadata({
@@ -48,6 +53,9 @@ abstract class CalendarEventSourceMetadata
     List<_iksc4ly9.CalendarEventSourceRelationship>? relationships,
     List<_i20i9qxn.CalendarEventSourceAttachment>? attachments,
     List<_i4dai4jt.CalendarEventSourceAlarm>? alarms,
+    int? priority,
+    _iloy79hd.CalendarEventGeographicPosition? geographicPosition,
+    List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups,
   }) = _CalendarEventSourceMetadataImpl;
 
   factory CalendarEventSourceMetadata.fromJson(
@@ -98,6 +106,19 @@ abstract class CalendarEventSourceMetadata
                 .deserialize<List<_i4dai4jt.CalendarEventSourceAlarm>>(
                   jsonSerialization['alarms'],
                 ),
+      priority: jsonSerialization['priority'] as int?,
+      geographicPosition: jsonSerialization['geographicPosition'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_iloy79hd.CalendarEventGeographicPosition>(
+                  jsonSerialization['geographicPosition'],
+                ),
+      resourceGroups: jsonSerialization['resourceGroups'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<List<_iiajf89w.CalendarEventResourceGroup>>(
+                  jsonSerialization['resourceGroups'],
+                ),
     );
   }
 
@@ -121,6 +142,12 @@ abstract class CalendarEventSourceMetadata
 
   final List<_i4dai4jt.CalendarEventSourceAlarm>? alarms;
 
+  final int? priority;
+
+  final _iloy79hd.CalendarEventGeographicPosition? geographicPosition;
+
+  final List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups;
+
   /// Returns a shallow copy of this [CalendarEventSourceMetadata]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -135,6 +162,9 @@ abstract class CalendarEventSourceMetadata
     List<_iksc4ly9.CalendarEventSourceRelationship>? relationships,
     List<_i20i9qxn.CalendarEventSourceAttachment>? attachments,
     List<_i4dai4jt.CalendarEventSourceAlarm>? alarms,
+    int? priority,
+    _iloy79hd.CalendarEventGeographicPosition? geographicPosition,
+    List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups,
   });
   @override
   bool operator ==(Object other) {
@@ -186,6 +216,20 @@ abstract class CalendarEventSourceMetadata
             const _iss.DeepCollectionEquality().equals(
               other.alarms,
               alarms,
+            ) &&
+            (identical(
+                  other.priority,
+                  priority,
+                ) ||
+                other.priority == priority) &&
+            (identical(
+                  other.geographicPosition,
+                  geographicPosition,
+                ) ||
+                other.geographicPosition == geographicPosition) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.resourceGroups,
+              resourceGroups,
             );
   }
 
@@ -203,6 +247,9 @@ abstract class CalendarEventSourceMetadata
       const _iss.DeepCollectionEquality().hash(relationships),
       const _iss.DeepCollectionEquality().hash(attachments),
       const _iss.DeepCollectionEquality().hash(alarms),
+      priority,
+      geographicPosition,
+      const _iss.DeepCollectionEquality().hash(resourceGroups),
     );
   }
 
@@ -224,6 +271,13 @@ abstract class CalendarEventSourceMetadata
         'attachments': attachments?.toJson(valueToJson: (v) => v.toJson()),
       if (alarms != null)
         'alarms': alarms?.toJson(valueToJson: (v) => v.toJson()),
+      if (priority != null) 'priority': priority,
+      if (geographicPosition != null)
+        'geographicPosition': geographicPosition?.toJson(),
+      if (resourceGroups != null)
+        'resourceGroups': resourceGroups?.toJson(
+          valueToJson: (v) => v.toJson(),
+        ),
     };
   }
 
@@ -252,6 +306,9 @@ class _CalendarEventSourceMetadataImpl extends CalendarEventSourceMetadata {
     List<_iksc4ly9.CalendarEventSourceRelationship>? relationships,
     List<_i20i9qxn.CalendarEventSourceAttachment>? attachments,
     List<_i4dai4jt.CalendarEventSourceAlarm>? alarms,
+    int? priority,
+    _iloy79hd.CalendarEventGeographicPosition? geographicPosition,
+    List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups,
   }) : super._(
          url: url,
          classification: classification,
@@ -263,6 +320,9 @@ class _CalendarEventSourceMetadataImpl extends CalendarEventSourceMetadata {
          relationships: relationships,
          attachments: attachments,
          alarms: alarms,
+         priority: priority,
+         geographicPosition: geographicPosition,
+         resourceGroups: resourceGroups,
        );
 
   /// Returns a shallow copy of this [CalendarEventSourceMetadata]
@@ -280,6 +340,9 @@ class _CalendarEventSourceMetadataImpl extends CalendarEventSourceMetadata {
     Object? relationships = _Undefined,
     Object? attachments = _Undefined,
     Object? alarms = _Undefined,
+    Object? priority = _Undefined,
+    Object? geographicPosition = _Undefined,
+    Object? resourceGroups = _Undefined,
   }) {
     return CalendarEventSourceMetadata(
       url: url is String? ? url : this.url,
@@ -307,6 +370,15 @@ class _CalendarEventSourceMetadataImpl extends CalendarEventSourceMetadata {
       alarms: alarms is List<_i4dai4jt.CalendarEventSourceAlarm>?
           ? alarms
           : this.alarms?.map((e0) => e0.copyWith()).toList(),
+      priority: priority is int? ? priority : this.priority,
+      geographicPosition:
+          geographicPosition is _iloy79hd.CalendarEventGeographicPosition?
+          ? geographicPosition
+          : this.geographicPosition?.copyWith(),
+      resourceGroups:
+          resourceGroups is List<_iiajf89w.CalendarEventResourceGroup>?
+          ? resourceGroups
+          : this.resourceGroups?.map((e0) => e0.copyWith()).toList(),
     );
   }
 }

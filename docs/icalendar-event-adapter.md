@@ -63,3 +63,7 @@ The later [source metadata](event-source-metadata.md) and [inert participant](ev
 ### Inert event source references — ADR 0109
 
 [The bounded source-reference profile](event-source-references.md) preserves unresolved RELATED-TO UIDs and URI-only ATTACH values through storage, native edits and authenticated import/export/replacement. Existing source-read authority protects disclosure; no native graph, target/file access, fetching, mail copying or scheduling follows. Extended relationships and native editors remain separate. Nullable source JSON adds no table columns/migration and preserves prior v2 snapshots; a narrow decoder correction handles omitted empty participant parameter maps without changing canonical bytes.
+
+## Descriptive-field extension
+
+Accepted [ADR 0134](adr/0134-native-event-descriptive-fields.md) independently extends ordinary VEVENT/native storage with optional PRIORITY, exact decimal-string GEO and repeated grouped RESOURCES. The [descriptive-field guide](native-event-descriptive-fields.md) specifies the subset editor, disclosure, strict occurrence compatibility and source/scheduling/feed preservation. Other source metadata/participant editors remain separate.

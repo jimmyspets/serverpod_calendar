@@ -6387,6 +6387,379 @@ void main() {
       'RELATED-TO;RELTYPE=SNOOZE:event-source-alarm',
       'END:VALARM',
     ];
+    CalendarEventDescriptiveMetadata descriptive({
+      int? priority = 0,
+      String latitude = '+090.000000000000000000',
+      String longitude = '-000.000',
+    }) => CalendarEventDescriptiveMetadata(
+      priority: priority,
+      geographicPosition: CalendarEventGeographicPosition(
+        latitudeText: latitude,
+        longitudeText: longitude,
+      ),
+      resourceGroups: [
+        CalendarEventResourceGroup(
+          values: ['Rum, ett', '', 'Rum'],
+          language: 'sv',
+          alternativeUri: 'cid:labels@example.invalid',
+        ),
+        CalendarEventResourceGroup(values: ['Room', 'Room']),
+      ],
+    );
+    const wireDescriptive = [
+      'PRIORITY:0',
+      'GEO:+090.000000000000000000;-000.000',
+      r'RESOURCES;LANGUAGE=sv;ALTREP="cid:labels@example.invalid":Rum\, ett,,Rum',
+      'RESOURCES:Room,Room',
+    ];
+    test('event descriptive native edit preserves unrelated source, exact decimals and protocol no-op', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final id = (await service.importEvents(
+        eventImport(parent, [
+          eventSource(
+            'descriptive',
+            extra: ['CONTACT:PRIVATE-DESK', 'SUMMARY:Original'],
+          ),
+        ]),
+      )).receipts.single.eventId;
+      final baseline = (await eventData(id)).importBaseline!.canonicalValue;
+      await service.updateEventDescriptiveMetadata(
+        CalendarEventDescriptiveRequest(
+          eventId: id,
+          expectedRevision: 1,
+          metadata: descriptive(),
+        ),
+      );
+      final row = await eventData(id), version = row.protocolState!.version;
+      expect(version.sequence, 1);
+      expect(
+        row.protocolState!.sourceMetadata!.contacts.single.value,
+        'PRIVATE-DESK',
+      );
+      expect(row.importBaseline!.canonicalValue, baseline);
+      final view = await service.getEvent(id, eventGroups);
+      expect(view.priority, 0);
+      expect(view.geographicPosition!.latitudeText, '+090.000000000000000000');
+      expect(view.resourceGroups!.first.values, ['Rum, ett', '', 'Rum']);
+      expect(
+        jsonEncode(view.toJsonForProtocol()),
+        isNot(contains('PRIVATE-DESK')),
+      );
+      final exported = await service.exportEvents(
+        eventExport([
+          CalendarEventReceipt(
+            eventId: id,
+            calendarId: parent,
+            revision: 2,
+            deleted: false,
+          ),
+        ]),
+      );
+      expect(
+        parseIcalendarEventCalendar(
+          exported.buffer.asUint8List(
+            exported.offsetInBytes,
+            exported.lengthInBytes,
+          ),
+        ).events.single.metadata.resources.length,
+        2,
+      );
+      await service.updateEventDescriptiveMetadata(
+        CalendarEventDescriptiveRequest(
+          eventId: id,
+          expectedRevision: 2,
+          metadata: descriptive(),
+        ),
+      );
+      expect((await eventData(id)).protocolState!.version, version);
+      expect((await service.getEvent(id, eventGroups)).revision, 3);
+      await service.updateEvent(
+        CalendarEventUpdateRequest(
+          eventId: id,
+          expectedRevision: 3,
+          content: row.content.copyWith(summary: 'Native edit'),
+        ),
+      );
+      final after = await eventData(id);
+      expect(
+        after.protocolState!.sourceMetadata!.geographicPosition!.longitudeText,
+        '-000.000',
+      );
+      expect(after.importBaseline!.canonicalValue, baseline);
+      await service.updateEventDescriptiveMetadata(
+        CalendarEventDescriptiveRequest(
+          eventId: id,
+          expectedRevision: 4,
+          metadata: CalendarEventDescriptiveMetadata(resourceGroups: []),
+        ),
+      );
+      final cleared = await eventData(id);
+      expect(cleared.protocolState!.sourceMetadata!.priority, isNull);
+      expect(cleared.protocolState!.sourceMetadata!.geographicPosition, isNull);
+      expect(cleared.protocolState!.sourceMetadata!.resourceGroups, isNull);
+      expect(
+        cleared.protocolState!.sourceMetadata!.contacts.single.value,
+        'PRIVATE-DESK',
+      );
+    });
+    test('event descriptive import preserves matching occurrence presence and omitted inheritance', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final id = (await service.importEvents(
+        eventImport(parent, [
+          eventSource(
+            'descriptive',
+            extra: ['RRULE:FREQ=DAILY;COUNT=3', ...wireDescriptive],
+          ),
+          eventSource(
+            'descriptive',
+            timing: 'DTSTART:20260330T100000Z',
+            extra: ['RECURRENCE-ID:20260330T090000Z'],
+          ),
+          eventSource(
+            'descriptive',
+            timing: 'DTSTART:20260331T100000Z',
+            extra: ['RECURRENCE-ID:20260331T090000Z', ...wireDescriptive],
+          ),
+        ]),
+      )).receipts.single.eventId;
+      final row = await eventData(id), gen = await generation();
+      expect(row.timingOverrides!.singles.first.sourceMetadata, isNull);
+      expect(row.timingOverrides!.singles.last.sourceMetadata!.priority, 0);
+      final bytes = await service.exportEvents(
+        eventExport([
+          CalendarEventReceipt(
+            eventId: id,
+            calendarId: parent,
+            revision: 1,
+            deleted: false,
+          ),
+        ]),
+      );
+      final round = eventStorageProposal(
+        parseIcalendarEventCalendar(
+          bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+        ).series.single,
+      );
+      expect(
+        round.importBaseline.canonicalValue,
+        row.importBaseline!.canonicalValue,
+      );
+      await expectLater(
+        service.updateEventDescriptiveMetadata(
+          CalendarEventDescriptiveRequest(
+            eventId: id,
+            expectedRevision: 1,
+            metadata: descriptive(priority: 1),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      expect((await eventData(id)).toJson(), row.toJson());
+      expect(await generation(), gen);
+      policy.denied.add(CalendarPermission.updateEventDescriptiveMetadata);
+      await expectLater(
+        service.updateEventDescriptiveMetadata(
+          CalendarEventDescriptiveRequest(
+            eventId: id,
+            expectedRevision: 1,
+            metadata: descriptive(priority: 1),
+          ),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+    test('event descriptive groups independently disclose fields and protect full export', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final receipt = (await service.importEvents(
+        eventImport(parent, [
+          eventSource('descriptive', extra: wireDescriptive),
+        ]),
+      )).receipts.single;
+      for (final group in [
+        CalendarEventFieldGroup.location,
+        CalendarEventFieldGroup.priority,
+        CalendarEventFieldGroup.resources,
+      ]) {
+        policy.eventGrants = {group};
+        final view = await service.getEvent(receipt.eventId, eventGroups);
+        expect(
+          view.priority,
+          group == CalendarEventFieldGroup.priority ? 0 : null,
+        );
+        expect(
+          view.geographicPosition != null,
+          group == CalendarEventFieldGroup.location,
+        );
+        expect(
+          view.resourceGroups != null,
+          group == CalendarEventFieldGroup.resources,
+        );
+        final listed = (await service.listEvents(
+          parent,
+          pageSize: 10,
+          fieldGroups: eventGroups,
+        )).events.single;
+        expect(listed.toJson(), view.toJson());
+        await expectLater(
+          service.exportEvents(eventExport([receipt])),
+          failure(CalendarFailureCode.accessDenied),
+        );
+      }
+    });
+    test(
+      'event descriptive validation stale denial and final rollback are atomic',
+      () async {
+        final parent = (await service.create(createInput()))!.calendarId;
+        final receipt = (await service.createEvent(
+          CalendarEventCreateRequest(calendarId: parent, content: eventInput()),
+        ))!;
+        final id = receipt.eventId,
+            before = await eventData(receipt.eventId),
+            gen = await generation();
+        Future<CalendarEventReceipt?> write(
+          CalendarEventDescriptiveMetadata value, {
+          int revision = 1,
+        }) => service.updateEventDescriptiveMetadata(
+          CalendarEventDescriptiveRequest(
+            eventId: id,
+            expectedRevision: revision,
+            metadata: value,
+          ),
+        );
+        await expectLater(
+          write(descriptive(latitude: '90.000000000000000001')),
+          failure(CalendarFailureCode.validation),
+        );
+        await expectLater(
+          write(descriptive(priority: 10)),
+          failure(CalendarFailureCode.validation),
+        );
+        await expectLater(
+          write(
+            CalendarEventDescriptiveMetadata(
+              resourceGroups: [CalendarEventResourceGroup(values: [])],
+            ),
+          ),
+          failure(CalendarFailureCode.validation),
+        );
+        await expectLater(
+          write(descriptive(), revision: 2),
+          failure(CalendarFailureCode.staleRevision),
+        );
+        policy.denied.add(CalendarPermission.updateEventDescriptiveMetadata);
+        await expectLater(
+          write(descriptive()),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        policy.denied.clear();
+        policy.denyFinal = true;
+        await expectLater(
+          write(descriptive()),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        expect((await eventData(id)).toJson(), before.toJson());
+        expect(await generation(), gen);
+      },
+    );
+    test('event descriptive replacement gates metadata changes and preserves no-op baseline', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final original = [eventSource('descriptive', extra: wireDescriptive)];
+      final id = (await service.importEvents(eventImport(parent, original)))
+          .receipts
+          .single
+          .eventId;
+      final changed = [
+        eventSource(
+          'descriptive',
+          extra: [
+            ...wireDescriptive.where((s) => !s.startsWith('PRIORITY:')),
+            'PRIORITY:4',
+          ],
+        ),
+      ];
+      final before = await eventData(id), gen = await generation();
+      policy.denied.add(CalendarPermission.updateEventDescriptiveMetadata);
+      await expectLater(
+        service.replaceEventsFromImport(eventReplacement(parent, id, changed)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect((await eventData(id)).toJson(), before.toJson());
+      expect(await generation(), gen);
+      policy.denied.clear();
+      await service.replaceEventsFromImport(
+        eventReplacement(parent, id, changed),
+      );
+      expect((await service.getEvent(id, eventGroups)).priority, 4);
+      final clean = await eventData(id), after = await generation();
+      expect(
+        (await service.replaceEventsFromImport(
+          eventReplacement(parent, id, changed, revision: 2),
+        )).receipts.single.changed,
+        isFalse,
+      );
+      expect((await eventData(id)).toJson(), clean.toJson());
+      expect(await generation(), after);
+      await service.updateEventDescriptiveMetadata(
+        CalendarEventDescriptiveRequest(
+          eventId: id,
+          expectedRevision: 2,
+          metadata: descriptive(priority: 2),
+        ),
+      );
+      await expectLater(
+        service.replaceEventsFromImport(
+          eventReplacement(parent, id, changed, revision: 3),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+    });
+    test('event descriptive replacement gates occurrence pinning and unpinning independently of master values', () async {
+      for (final future in [false, true]) {
+        final parent = (await service.create(createInput()))!.calendarId;
+        List<String> source(bool own) => [
+          eventSource(
+            'descriptive-presence',
+            extra: ['RRULE:FREQ=DAILY;COUNT=3', ...wireDescriptive],
+          ),
+          eventSource(
+            'descriptive-presence',
+            timing: 'DTSTART:20260330T100000Z',
+            extra: [
+              'RECURRENCE-ID${future ? ';RANGE=THISANDFUTURE' : ''}:20260330T090000Z',
+              if (own) ...wireDescriptive,
+            ],
+          ),
+        ];
+        final id = (await service.importEvents(
+          eventImport(parent, source(false)),
+        )).receipts.single.eventId;
+        final before = await eventData(id), gen = await generation();
+        policy.denied.add(CalendarPermission.updateEventDescriptiveMetadata);
+        await expectLater(
+          service.replaceEventsFromImport(
+            eventReplacement(parent, id, source(true)),
+          ),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        expect((await eventData(id)).toJson(), before.toJson());
+        expect(await generation(), gen);
+        policy.denied.clear();
+        await service.replaceEventsFromImport(
+          eventReplacement(parent, id, source(true)),
+        );
+        final pinned = await eventData(id), after = await generation();
+        policy.denied.add(CalendarPermission.updateEventDescriptiveMetadata);
+        await expectLater(
+          service.replaceEventsFromImport(
+            eventReplacement(parent, id, source(false), revision: 2),
+          ),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        expect((await eventData(id)).toJson(), pinned.toJson());
+        expect(await generation(), after);
+        policy.denied.clear();
+      }
+    });
     const richEventMetadata = [
       'RELATED-TO:SOURCE-RELATED',
       'ATTACH;VALUE=URI;FMTTYPE=application/pdf:urn:source:file',

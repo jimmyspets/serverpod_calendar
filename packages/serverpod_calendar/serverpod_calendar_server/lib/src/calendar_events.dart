@@ -213,6 +213,15 @@ extension CalendarEventOperations on CalendarService {
       calendarId: e.identity.calendarId,
       revision: e.identity.revision,
       disclosedGroups: groups,
+      priority: has(CalendarEventFieldGroup.priority)
+          ? e.data.protocolState!.sourceMetadata?.priority
+          : null,
+      geographicPosition: has(CalendarEventFieldGroup.location)
+          ? e.data.protocolState!.sourceMetadata?.geographicPosition
+          : null,
+      resourceGroups: has(CalendarEventFieldGroup.resources)
+          ? e.data.protocolState!.sourceMetadata?.resourceGroups ?? []
+          : null,
       summary: has(CalendarEventFieldGroup.summary) ? v.summary : null,
       description: has(CalendarEventFieldGroup.description)
           ? v.description
@@ -382,6 +391,98 @@ extension CalendarEventOperations on CalendarService {
       );
       await _verifyContext(c);
       return _eventView(e, groups, decisions[request.key]!);
+    });
+  }
+
+  Future<CalendarEventReceipt?> updateEventDescriptiveMetadata(
+    CalendarEventDescriptiveRequest input,
+  ) async {
+    final metadata = _eventProtocolValue(
+      () => validateEventDescriptiveMetadata(input.metadata),
+    );
+    final c = await _context();
+    return _transaction(c, (tx, scope) async {
+      final e = await _event(c, input.eventId, tx);
+      await _decide(
+        c,
+        [
+          _er(
+            e.parent,
+            CalendarPermission.updateEventDescriptiveMetadata,
+            event: e,
+          ),
+        ],
+        tx,
+        CalendarAuthorizationPhase.preliminaryWrite,
+      );
+      _eventRevision(e, input.expectedRevision);
+      final old = e.data.protocolState!;
+      final empty =
+          old.sourceMetadata ??
+          CalendarEventSourceMetadata(
+            categoryGroups: [],
+            comments: [],
+            contacts: [],
+          );
+      final proposed = _eventProtocolValue(
+        () => validateEventSourceMetadata(
+          empty.copyWith(
+            priority: metadata.priority,
+            geographicPosition: metadata.geographicPosition,
+            resourceGroups: metadata.resourceGroups,
+          ),
+        ),
+      );
+      // Validate compatibility before exposing a final proposal to the host.
+      final now = await _revisionTime(tx, previous: e.data.updatedAt);
+      final state = _eventProtocolValue(
+        () => advanceEventProtocol(
+          old,
+          e.data.content,
+          e.data.timingOverrides,
+          e.data.content,
+          e.data.timingOverrides,
+          now,
+          replaceSourceMetadata: true,
+          sourceMetadata: proposed,
+        ),
+      );
+      final request = _er(
+        e.parent,
+        CalendarPermission.updateEventDescriptiveMetadata,
+        event: e,
+        proposed: e.data.content,
+        proposedState: state,
+        proposedOverrides: e.data.timingOverrides,
+      );
+      await _decide(
+        c,
+        [request],
+        tx,
+        CalendarAuthorizationPhase.preliminaryWrite,
+      );
+      _eventRevision(e, input.expectedRevision);
+      final decisions = await _final(c, [request], tx);
+      final changed = jsonEncode(old.toJson()) != jsonEncode(state.toJson());
+      e.data.protocolState = state;
+      e.data.updatedAt = now;
+      e.identity.revision++;
+      await CalendarEventDataRecord.db.updateRow(
+        _session,
+        e.data,
+        transaction: tx,
+      );
+      await CalendarEventRecord.db.updateRow(
+        _session,
+        e.identity,
+        transaction: tx,
+      );
+      await _bump(
+        scope,
+        tx,
+        publishedEventCalendar: changed ? e.identity.calendarId : null,
+      );
+      return _eventReceipt(e, decisions.values);
     });
   }
 

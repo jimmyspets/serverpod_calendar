@@ -19,6 +19,7 @@ final class FeedPolicy
     implements feed.CalendarFeedHostPolicy, cal.CalendarPublicationPolicy {
   final denied = <feed.CalendarFeedOperation>{};
   final hidden = <UuidValue>{};
+  final deniedPublicationGroups = <cal.CalendarEventFieldGroup>{};
   bool finalDeny = false,
       publicationAllowed = true,
       publicationFinalDeny = false;
@@ -67,7 +68,11 @@ final class FeedPolicy
     required bool finalCheck,
   }) async {
     publicationRequests.add(request);
-    return publicationAllowed && !(finalCheck && publicationFinalDeny);
+    return publicationAllowed &&
+        !(finalCheck && publicationFinalDeny) &&
+        request.requiredEventGroups
+            .intersection(deniedPublicationGroups)
+            .isEmpty;
   }
 }
 
@@ -531,6 +536,76 @@ void main() {
         ),
         fixtures.failure(cal.CalendarFailureCode.accessDenied),
       );
+    });
+    test('event descriptive publication requires complete groups and preserves no-op generation', () async {
+      final value = await feeds.create(settings());
+      final event = (await calendars.createEvent(
+        cal.CalendarEventCreateRequest(
+          calendarId: calendar,
+          content: fixtures.eventInput(),
+        ),
+      ))!;
+      final metadata = cal.CalendarEventDescriptiveMetadata(
+        priority: 0,
+        geographicPosition: cal.CalendarEventGeographicPosition(
+          latitudeText: '+000.000',
+          longitudeText: '-180.000',
+        ),
+        resourceGroups: [
+          cal.CalendarEventResourceGroup(values: ['Room', '', 'Room']),
+        ],
+      );
+      Future<List<int>> bytes() => cal.CalendarModule.publicationTransaction(
+        session,
+        'test:alice',
+        (port) => port.eventBytes([calendar], 'reference:alice'),
+      );
+      await calendars.updateEventDescriptiveMetadata(
+        cal.CalendarEventDescriptiveRequest(
+          eventId: event.eventId,
+          expectedRevision: 1,
+          metadata: metadata,
+        ),
+      );
+      final first = await bytes();
+      expect(utf8.decode(first), contains('GEO:+000.000;-180.000'));
+      expect(
+        policy.publicationRequests.last.requiredEventGroups,
+        containsAll([
+          cal.CalendarEventFieldGroup.location,
+          cal.CalendarEventFieldGroup.priority,
+          cal.CalendarEventFieldGroup.resources,
+        ]),
+      );
+      final record = (await feed.CalendarFeedDataRecord.db.find(session))
+          .single;
+      final old = DateTime.utc(2000);
+      await feed.CalendarFeedDataRecord.db.updateRow(
+        session,
+        record.copyWith(protocolModifiedAt: old),
+      );
+      await calendars.updateEventDescriptiveMetadata(
+        cal.CalendarEventDescriptiveRequest(
+          eventId: event.eventId,
+          expectedRevision: 2,
+          metadata: metadata,
+        ),
+      );
+      expect((await feeds.read(value.id)).protocolModifiedAt, old);
+      expect(await bytes(), first);
+      for (final group in [
+        cal.CalendarEventFieldGroup.location,
+        cal.CalendarEventFieldGroup.priority,
+        cal.CalendarEventFieldGroup.resources,
+      ]) {
+        policy.deniedPublicationGroups
+          ..clear()
+          ..add(group);
+        await expectLater(
+          bytes(),
+          fixtures.failure(cal.CalendarFailureCode.accessDenied),
+        );
+      }
     });
     test('event changes track selected feeds; native no-op and unrelated calendars do not', () async {
       final value = await feeds.create(settings());

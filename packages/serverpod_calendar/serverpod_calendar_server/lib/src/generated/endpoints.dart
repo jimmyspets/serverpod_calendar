@@ -43,6 +43,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_create_request.
     as _i287wpc6;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_create_request.dart'
     as _ixcfd9h0;
+import 'package:serverpod_calendar_server/src/generated/calendar_event_descriptive_request.dart'
+    as _irn5q4mc;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_export_request.dart'
     as _i6dxskz2;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_field_group.dart'
@@ -1032,6 +1034,27 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'calendarEvent',
       endpoint: endpoints['calendarEvent']!,
       methodConnectors: {
+        'updateDescriptiveMetadata': _is.MethodConnector(
+          name: 'updateDescriptiveMetadata',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_irn5q4mc.CalendarEventDescriptiveRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .updateDescriptiveMetadata(
+                        session,
+                        params['request'],
+                      ),
+        ),
         'schedulingInstanceResponses': _is.MethodConnector(
           name: 'schedulingInstanceResponses',
           params: {

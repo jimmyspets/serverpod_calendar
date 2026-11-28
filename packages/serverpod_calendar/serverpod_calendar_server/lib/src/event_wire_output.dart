@@ -340,6 +340,7 @@ final class EventComponentWriter {
   List<IcalendarSyntaxEntry> sourceMetadata(
     CalendarEventSourceMetadata? value,
   ) => [
+    ...eventDescriptiveSyntax(eventDescriptiveMetadata(value)),
     if (value?.organizer != null) participant('ORGANIZER', value!.organizer!),
     for (final p in value?.attendees ?? <CalendarEventSourceParticipant>[])
       participant('ATTENDEE', p),

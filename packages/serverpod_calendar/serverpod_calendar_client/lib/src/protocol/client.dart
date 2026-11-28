@@ -64,6 +64,8 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_create_request.d
     as _i3j5a5bv;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_create_request.dart'
     as _iwlxheag;
+import 'package:serverpod_calendar_client/src/protocol/calendar_event_descriptive_request.dart'
+    as _icyzf4uz;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_export_request.dart'
     as _ietvbrxp;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_field_group.dart'
@@ -574,6 +576,14 @@ class EndpointCalendarEvent extends _isc.EndpointRef {
 
   @override
   String get name => 'serverpod_calendar.calendarEvent';
+
+  _ida.Future<_ieh64e0q.CalendarEventReceipt?> updateDescriptiveMetadata(
+    _icyzf4uz.CalendarEventDescriptiveRequest request,
+  ) => caller.callServerEndpoint<_ieh64e0q.CalendarEventReceipt?>(
+    'serverpod_calendar.calendarEvent',
+    'updateDescriptiveMetadata',
+    {'request': request},
+  );
 
   _ida.Future<_io5teeym.CalendarSchedulingInstanceResponsesView>
   schedulingInstanceResponses(

@@ -49,7 +49,7 @@ Scheduling zone observances additionally enforce the common iTIP restriction cla
 
 ## Reply results and payload metadata
 
-ADR 0118 first added REQUEST-STATUS in REPLY and independently optional PRIORITY/GEO/grouped RESOURCES. ADR 0120 also permits source results in COUNTER/DECLINECOUNTER; REFRESH forbids those payload properties. These codecs do not widen ordinary event/task import or native storage.
+ADR 0118 first added REQUEST-STATUS in REPLY and independently optional PRIORITY/GEO/grouped RESOURCES. ADR 0120 also permits source results in COUNTER/DECLINECOUNTER; REFRESH forbids those payload properties. Those original codecs did not widen ordinary event/task import or native storage. Accepted [ADR 0134](adr/0134-native-event-descriptive-fields.md) subsequently adds a separate [native/ordinary VEVENT descriptive profile](native-event-descriptive-fields.md); general VTODO GEO/resource support remains separate.
 
 Each component's `requestStatuses` retains up to 32 reported results in source order where the method permits them. Each keeps its original numeric code spelling, immutable two/three integer levels, decoded description, optional extra data and LANGUAGE. Missing extra data differs from an explicitly empty third field. Escaped commas, semicolons, backslashes and text newlines remain text. Code spelling is capped at 32 characters, numeric levels at 2,147,483,647 and each decoded text component at 4,096 code points. Unknown numeric codes remain data; no success/retry decision or automatic response follows.
 

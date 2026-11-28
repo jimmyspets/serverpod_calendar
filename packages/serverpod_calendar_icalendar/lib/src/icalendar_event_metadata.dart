@@ -15,20 +15,38 @@ final class IcalendarEventCategoryGroup {
 final class IcalendarEventMetadata {
   IcalendarEventMetadata._({
     this.url,
+    this.priority,
+    this.geographicPosition,
+    required Iterable<IcalendarSchedulingResourceGroup> resources,
     this.classification,
     required Iterable<IcalendarEventCategoryGroup> categoryGroups,
     required Iterable<IcalendarEventText> comments,
     required Iterable<IcalendarEventText> contacts,
-  }) : categoryGroups = List.unmodifiable(categoryGroups),
+  }) : resources = List.unmodifiable(resources),
+       categoryGroups = List.unmodifiable(categoryGroups),
        comments = List.unmodifiable(comments),
        contacts = List.unmodifiable(contacts);
   final String? url, classification;
+  final int? priority;
+  final IcalendarSchedulingGeographicPosition? geographicPosition;
+  final List<IcalendarSchedulingResourceGroup> resources;
   final List<IcalendarEventCategoryGroup> categoryGroups;
   final List<IcalendarEventText> comments, contacts;
 }
 
-const _eventRepeatedMetadata = {'CATEGORIES', 'COMMENT', 'CONTACT'};
-const _eventMetadataProperties = {'URL', 'CLASS', ..._eventRepeatedMetadata};
+const _eventRepeatedMetadata = {
+  'CATEGORIES',
+  'COMMENT',
+  'CONTACT',
+  'RESOURCES',
+};
+const _eventMetadataProperties = {
+  'URL',
+  'CLASS',
+  'GEO',
+  'PRIORITY',
+  ..._eventRepeatedMetadata,
+};
 
 IcalendarEventMetadata _eventMetadata(
   IcalendarSyntaxComponent source,
@@ -38,6 +56,12 @@ IcalendarEventMetadata _eventMetadata(
     if (value != null) budget.eventMetadata(value.runes.length);
   }
 
+  final descriptive = _eventDescriptiveMetadata(
+    source.entries.whereType<IcalendarSyntaxProperty>().where(
+      (p) => {'GEO', 'PRIORITY', 'RESOURCES'}.contains(p.canonicalName),
+    ),
+    budget,
+  );
   final groups = <IcalendarEventCategoryGroup>[];
   final comments = <IcalendarEventText>[], contacts = <IcalendarEventText>[];
   String? url, classification;
@@ -88,6 +112,9 @@ IcalendarEventMetadata _eventMetadata(
   }
   return IcalendarEventMetadata._(
     url: url,
+    priority: descriptive.priority,
+    geographicPosition: descriptive.geographicPosition,
+    resources: descriptive.resources,
     classification: classification,
     categoryGroups: groups,
     comments: comments,
@@ -107,7 +134,25 @@ void _matchingEventMetadata(
       a.isEmpty ||
       (a.length == b.length &&
           List.generate(a.length, (i) => same(a[i], b[i])).every((v) => v));
-  if ((override.url != null && override.url != master.url) ||
+  if ((override.priority != null && override.priority != master.priority) ||
+      (override.geographicPosition != null &&
+          (override.geographicPosition!.latitudeText !=
+                  master.geographicPosition?.latitudeText ||
+              override.geographicPosition!.longitudeText !=
+                  master.geographicPosition?.longitudeText)) ||
+      !sameList(
+        override.resources,
+        master.resources,
+        (a, b) =>
+            a.language == b.language &&
+            a.alternativeUri == b.alternativeUri &&
+            a.values.length == b.values.length &&
+            List.generate(
+              a.values.length,
+              (i) => a.values[i] == b.values[i],
+            ).every((v) => v),
+      ) ||
+      (override.url != null && override.url != master.url) ||
       (override.classification != null &&
           override.classification != (master.classification ?? 'PUBLIC')) ||
       !sameList(
@@ -132,6 +177,9 @@ IcalendarEventMetadata _inheritedEventMetadata(
   IcalendarEventMetadata own,
 ) => IcalendarEventMetadata._(
   url: own.url ?? master.url,
+  priority: own.priority ?? master.priority,
+  geographicPosition: own.geographicPosition ?? master.geographicPosition,
+  resources: own.resources.isEmpty ? master.resources : own.resources,
   classification: own.classification ?? master.classification,
   categoryGroups: own.categoryGroups.isEmpty
       ? master.categoryGroups

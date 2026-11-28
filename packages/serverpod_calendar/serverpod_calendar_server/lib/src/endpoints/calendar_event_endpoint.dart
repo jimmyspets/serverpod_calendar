@@ -6,6 +6,11 @@ import '../calendar_module.dart';
 import '../generated/protocol.dart';
 
 class CalendarEventEndpoint extends Endpoint {
+  Future<CalendarEventReceipt?> updateDescriptiveMetadata(
+    Session session,
+    CalendarEventDescriptiveRequest request,
+  ) => CalendarModule.service(session).updateEventDescriptiveMetadata(request);
+
   Future<CalendarSchedulingInstanceResponsesView> schedulingInstanceResponses(
     Session session,
     UuidValue eventId,

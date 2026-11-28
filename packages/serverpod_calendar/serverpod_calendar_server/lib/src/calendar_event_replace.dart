@@ -258,6 +258,20 @@ extension CalendarEventReplacementOperations on CalendarService {
         for (var i = 0; i < events.length; i++)
           if (changed[i]) ...[
             request(CalendarPermission.updateEvent, events[i]),
+            if (eventDescriptiveState(
+                  events[i].data.protocolState!.sourceMetadata,
+                  events[i].data.timingOverrides,
+                ) !=
+                eventDescriptiveState(
+                  proposals[events[i].data.protocolUid]!
+                      .protocolState
+                      .sourceMetadata,
+                  proposals[events[i].data.protocolUid]!.edits,
+                ))
+              request(
+                CalendarPermission.updateEventDescriptiveMetadata,
+                events[i],
+              ),
             if (lifecycle(events[i], members[i]))
               request(CalendarPermission.changeEventStatus, events[i]),
           ],

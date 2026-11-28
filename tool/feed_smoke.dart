@@ -250,14 +250,73 @@ Future<void> feedSmoke(
       (await _fetch(otherUrl)).etag == get.etag,
       'Revocation changed another credential representation',
     );
+    final metadata = cal.CalendarEventDescriptiveMetadata(
+      priority: 0,
+      geographicPosition: cal.CalendarEventGeographicPosition(
+        latitudeText: '+090.000000000000000000',
+        longitudeText: '-000.000',
+      ),
+      resourceGroups: [
+        cal.CalendarEventResourceGroup(
+          values: ['Room', '', 'Room'],
+          language: 'en',
+          alternativeUri: 'cid:labels@example.invalid',
+        ),
+      ],
+    );
+    final results = await Future.wait([
+      for (final api in [a, b])
+        () async {
+          try {
+            await api.calendarEvent.updateDescriptiveMetadata(
+              cal.CalendarEventDescriptiveRequest(
+                eventId: events.first.eventId,
+                expectedRevision: 1,
+                metadata: metadata,
+              ),
+            );
+            return true;
+          } on cal.CalendarException catch (e) {
+            if (e.code != cal.CalendarFailureCode.staleRevision) rethrow;
+            return false;
+          }
+        }(),
+    ]);
+    _require(
+      results.where((v) => v).length == 1,
+      'Descriptive metadata race did not fence one stale write',
+    );
+    final descriptive = await _fetch(
+      otherUrl.replace(port: 18282),
+      headers: {'If-None-Match': get.etag!},
+    );
+    final descriptiveText = utf8.decode(descriptive.bytes);
+    _require(
+      descriptive.code == 200 &&
+          descriptive.etag != get.etag &&
+          descriptiveText.contains('GEO:+090.000000000000000000;-000.000') &&
+          descriptiveText.contains('PRIORITY:0') &&
+          descriptiveText.contains(
+            'RESOURCES;LANGUAGE=en;ALTREP="cid:labels@example.invalid":Room,,Room',
+          ),
+      'Cross-host descriptive feed projection or ETag failed',
+    );
+    _require(
+      (await _fetch(
+            otherUrl,
+            headers: {'If-None-Match': descriptive.etag!},
+          )).code ==
+          304,
+      'Stable descriptive feed did not return 304',
+    );
     await b.calendarEvent.changeStatus(
       cal.CalendarEventStatusRequest(
         eventId: events.first.eventId,
-        expectedRevision: 1,
+        expectedRevision: 2,
         status: cal.CalendarEventStatus.cancelled,
       ),
     );
-    events[0] = events[0].copyWith(revision: 2);
+    events[0] = events[0].copyWith(revision: 3);
     final changed = await _fetch(
       otherUrl.replace(port: 18282),
       headers: {'If-None-Match': get.etag!},

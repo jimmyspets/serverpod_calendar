@@ -67,6 +67,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_create_request.
     as _i287wpc6;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_create_request.dart'
     as _ixcfd9h0;
+import 'package:serverpod_calendar_server/src/generated/calendar_event_descriptive_request.dart'
+    as _irn5q4mc;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_export_request.dart'
     as _i6dxskz2;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_field_group.dart'
@@ -1582,6 +1584,37 @@ class _CalendarEventEndpoint {
   final _is.EndpointDispatch _endpointDispatch;
 
   final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_irjxy316.CalendarEventReceipt?> updateDescriptiveMetadata(
+    _ist.TestSessionBuilder sessionBuilder,
+    _irn5q4mc.CalendarEventDescriptiveRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarEvent',
+            method: 'updateDescriptiveMetadata',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarEvent',
+          methodName: 'updateDescriptiveMetadata',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_irjxy316.CalendarEventReceipt?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 
   _ida.Future<_isrkk9n1.CalendarSchedulingInstanceResponsesView>
   schedulingInstanceResponses(

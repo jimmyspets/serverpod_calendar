@@ -177,3 +177,50 @@ List<IcalendarSchedulingResourceGroup> _schedulingResources(
   }
   return result;
 }
+
+/// Bounded descriptive event metadata shared by wire and native adapters.
+/// Claims remain inert; this decoder grants no host/resource authority.
+({
+  int? priority,
+  IcalendarSchedulingGeographicPosition? geographicPosition,
+  List<IcalendarSchedulingResourceGroup> resources,
+})
+decodeIcalendarEventDescriptiveMetadata(
+  Iterable<IcalendarSyntaxProperty> properties, {
+  IcalendarComponentLimits limits = const IcalendarComponentLimits(),
+}) => componentGuard(
+  () => _eventDescriptiveMetadata(properties, ComponentBudget(limits)),
+);
+
+({
+  int? priority,
+  IcalendarSchedulingGeographicPosition? geographicPosition,
+  List<IcalendarSchedulingResourceGroup> resources,
+})
+_eventDescriptiveMetadata(
+  Iterable<IcalendarSyntaxProperty> properties,
+  ComponentBudget budget,
+) {
+  final singles = <String, IcalendarSyntaxProperty>{};
+  final resources = <IcalendarSyntaxProperty>[];
+  for (final p in properties) {
+    if (p.canonicalName == 'RESOURCES') {
+      if (resources.length >= 32) {
+        componentFail(IcalendarComponentError.limitExceeded);
+      }
+      resources.add(p);
+    } else if ({'GEO', 'PRIORITY'}.contains(p.canonicalName)) {
+      if (singles.containsKey(p.canonicalName)) {
+        componentFail(IcalendarComponentError.duplicate);
+      }
+      singles[p.canonicalName] = p;
+    } else {
+      componentFail(IcalendarComponentError.unsupportedProperty);
+    }
+  }
+  return (
+    priority: _componentInteger(singles['PRIORITY'], maximum: 9),
+    geographicPosition: _schedulingGeographicPosition(singles['GEO'], budget),
+    resources: List.unmodifiable(_schedulingResources(resources, budget)),
+  );
+}

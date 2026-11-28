@@ -340,19 +340,24 @@ void main() {
       }
     },
   );
-  test(
-    'standalone event profile is not silently widened by scheduling payload',
-    () {
-      for (final property in ['PRIORITY:1', 'GEO:1;2', 'RESOURCES:Room']) {
-        final source = message('REQUEST', [
-          ...minimal('REQUEST'),
-          property,
-        ]).replaceFirst('METHOD:REQUEST\r\n', '');
-        expect(
-          () => parseIcalendarEventCalendar(utf8.encode(source)),
-          rejects(IcalendarComponentError.unsupportedProperty),
-        );
-      }
-    },
-  );
+  test('standalone event descriptive profile is explicit; result codes stay scheduling-only', () {
+    for (final property in ['PRIORITY:1', 'GEO:1;2', 'RESOURCES:Room']) {
+      final source = message('REQUEST', [
+        ...minimal('REQUEST'),
+        property,
+      ]).replaceFirst('METHOD:REQUEST\r\n', '');
+      expect(
+        parseIcalendarEventCalendar(utf8.encode(source)).events,
+        hasLength(1),
+      );
+    }
+    final source = message('REPLY', [
+      ...minimal('REPLY'),
+      'REQUEST-STATUS:2.0;Success',
+    ]).replaceFirst('METHOD:REPLY\r\n', '');
+    expect(
+      () => parseIcalendarEventCalendar(utf8.encode(source)),
+      rejects(IcalendarComponentError.unsupportedProperty),
+    );
+  });
 }

@@ -18,6 +18,122 @@ final class EventMetadataBudget {
   }
 }
 
+/// Shared strict wire/native validation, with detached immutable request lists.
+CalendarEventDescriptiveMetadata validateEventDescriptiveMetadata(
+  CalendarEventDescriptiveMetadata value,
+) {
+  try {
+    final decoded = decodeIcalendarEventDescriptiveMetadata(
+      eventDescriptiveSyntax(value),
+    );
+    return CalendarEventDescriptiveMetadata(
+      priority: decoded.priority,
+      geographicPosition: decoded.geographicPosition == null
+          ? null
+          : CalendarEventGeographicPosition(
+              latitudeText: decoded.geographicPosition!.latitudeText,
+              longitudeText: decoded.geographicPosition!.longitudeText,
+            ),
+      resourceGroups: List.unmodifiable(
+        decoded.resources.map(
+          (g) => CalendarEventResourceGroup(
+            values: List.unmodifiable(g.values),
+            language: g.language,
+            alternativeUri: g.alternativeUri,
+          ),
+        ),
+      ),
+    );
+  } on IcalendarComponentException catch (e) {
+    if (e.kind == IcalendarComponentError.limitExceeded) {
+      throw const RecurrenceLimitException('eventDescriptiveMetadata');
+    }
+    throw ArgumentError('Invalid event descriptive metadata');
+  }
+}
+
+Iterable<IcalendarSyntaxProperty> eventDescriptiveSyntax(
+  CalendarEventDescriptiveMetadata value,
+) sync* {
+  if (value.priority != null) {
+    yield IcalendarSyntaxProperty('PRIORITY', value.priority.toString());
+  }
+  final geo = value.geographicPosition;
+  if (geo != null) {
+    if (geo.latitudeText.length > 64 || geo.longitudeText.length > 64) {
+      throw const RecurrenceLimitException('eventCoordinate');
+    }
+    yield IcalendarSyntaxProperty(
+      'GEO',
+      '${geo.latitudeText};${geo.longitudeText}',
+    );
+  }
+  // Bound raw lists before allocating/encoding potentially large caller data.
+  if (value.resourceGroups.length > 32) {
+    throw const RecurrenceLimitException('eventResourceGroups');
+  }
+  var count = 0;
+  for (final g in value.resourceGroups) {
+    if (g.values.isEmpty) throw ArgumentError('Empty resource group');
+    count += g.values.length;
+    if (count > 64) throw const RecurrenceLimitException('eventResourceValues');
+    for (final v in g.values) {
+      validateCalendarPlainText(v, maxCodePoints: 4096);
+    }
+    yield IcalendarSyntaxProperty(
+      'RESOURCES',
+      g.values.map(encodeIcalendarText).join(','),
+      parameters: [
+        if (g.language != null)
+          IcalendarSyntaxParameter('LANGUAGE', [g.language!]),
+        if (g.alternativeUri != null)
+          IcalendarSyntaxParameter('ALTREP', [g.alternativeUri!]),
+      ],
+    );
+  }
+}
+
+CalendarEventDescriptiveMetadata eventDescriptiveMetadata(
+  CalendarEventSourceMetadata? value,
+) => CalendarEventDescriptiveMetadata(
+  priority: value?.priority,
+  geographicPosition: value?.geographicPosition,
+  resourceGroups: value?.resourceGroups ?? const [],
+);
+
+/// Compare both master values and explicit occurrence presence. An importer
+/// cannot pin/unpin matching source metadata without the subset-write gate.
+String eventDescriptiveState(
+  CalendarEventSourceMetadata? master,
+  CalendarEventTimingOverrides? overrides,
+) {
+  final own = <String, Object>{};
+  void add(
+    CalendarEventTiming point,
+    bool future,
+    CalendarEventSourceMetadata? metadata,
+  ) {
+    final value = eventDescriptiveMetadata(metadata);
+    if (value.priority == null &&
+        value.geographicPosition == null &&
+        value.resourceGroups.isEmpty) {
+      return;
+    }
+    own[jsonEncode([future, point.toJson()])] = value.toJson();
+  }
+
+  for (final v in overrides?.singles ?? <CalendarEventSingleOverride>[]) {
+    add(v.originalStart, false, v.sourceMetadata);
+  }
+  for (final v in overrides?.future ?? <CalendarEventFutureOverride>[]) {
+    add(v.originalStart, true, v.sourceMetadata);
+  }
+  return jsonEncode({
+    'master': eventDescriptiveMetadata(master).toJson(),
+    'components': {for (final key in own.keys.toList()..sort()) key: own[key]},
+  });
+}
+
 CalendarEventSourceMetadata? eventComponentMetadata(Object value) =>
     value is CalendarEventSingleOverride
     ? value.sourceMetadata
@@ -28,6 +144,18 @@ CalendarEventSourceMetadata? validateEventSourceMetadata(
 }) {
   if (value == null) return null;
   budget ??= EventMetadataBudget();
+  final descriptive = validateEventDescriptiveMetadata(
+    eventDescriptiveMetadata(value),
+  );
+  budget.charge(descriptive.geographicPosition?.latitudeText);
+  budget.charge(descriptive.geographicPosition?.longitudeText);
+  for (final g in descriptive.resourceGroups) {
+    budget.charge(g.language);
+    budget.charge(g.alternativeUri);
+    for (final v in g.values) {
+      budget.charge(v);
+    }
+  }
   if (value.url != null) {
     validateCalendarHttpUri(value.url!);
     budget.charge(value.url);
@@ -143,6 +271,11 @@ CalendarEventSourceMetadata? validateEventSourceMetadata(
     budget.charge(a.snoozeTargetUid);
   }
   final result = value.copyWith(
+    priority: descriptive.priority,
+    geographicPosition: descriptive.geographicPosition,
+    resourceGroups: descriptive.resourceGroups.isEmpty
+        ? null
+        : descriptive.resourceGroups,
     alarms: alarms.isEmpty
         ? null
         : List.unmodifiable(alarms.map(eventSourceAlarm)),
@@ -179,7 +312,10 @@ CalendarEventSourceMetadata? validateEventSourceMetadata(
     comments: texts(value.comments),
     contacts: texts(value.contacts),
   );
-  return result.url == null &&
+  return result.priority == null &&
+          result.geographicPosition == null &&
+          result.resourceGroups == null &&
+          result.url == null &&
           result.classification == null &&
           result.categoryGroups.isEmpty &&
           result.comments.isEmpty &&
@@ -267,7 +403,22 @@ void validateEventMetadataInheritance(
     return true;
   }
 
-  if (!sameAlarms(own.alarms, master?.alarms) ||
+  if ((own.priority != null && own.priority != master?.priority) ||
+      (own.geographicPosition != null &&
+          own.geographicPosition != master?.geographicPosition) ||
+      !sameReferences<CalendarEventResourceGroup>(
+        own.resourceGroups,
+        master?.resourceGroups,
+        (a, b) =>
+            a.language == b.language &&
+            a.alternativeUri == b.alternativeUri &&
+            a.values.length == b.values.length &&
+            List.generate(
+              a.values.length,
+              (i) => a.values[i] == b.values[i],
+            ).every((v) => v),
+      ) ||
+      !sameAlarms(own.alarms, master?.alarms) ||
       !sameReferences<CalendarEventSourceRelationship>(
         own.relationships,
         master?.relationships,

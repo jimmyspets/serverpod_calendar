@@ -2349,6 +2349,81 @@ void main() {
       );
     }
 
+    test('event descriptive inherited fields advance outgoing single and range versions without pinning native metadata', () async {
+      final content = masterContent(kind: CalendarEventTimeKind.utc),
+          id = await masterEvent(
+            masterContent(kind: CalendarEventTimeKind.utc),
+          );
+      await moveOccurrence(id, CalendarEventTimeKind.utc, 28);
+      await moveOccurrence(id, CalendarEventTimeKind.utc, 29, future: true);
+      var last = await messageFor(await notifyCurrent(id, content));
+      final native = (await eventData(id)).protocolState!.overrides;
+      for (var n = 0; n < 4; n++) {
+        final meta = CalendarEventDescriptiveMetadata(
+          priority: n == 0 ? null : 0,
+          geographicPosition: n < 2
+              ? null
+              : CalendarEventGeographicPosition(
+                  latitudeText: '+000.0001',
+                  longitudeText: '-000.000',
+                ),
+          resourceGroups: n < 3
+              ? []
+              : [
+                  CalendarEventResourceGroup(
+                    values: ['Room', '', 'Room'],
+                    language: 'en',
+                  ),
+                ],
+        );
+        final revision = (await service.getEvent(
+          id,
+          CalendarEventFieldGroup.values,
+        )).revision;
+        await service.updateEventDescriptiveMetadata(
+          CalendarEventDescriptiveRequest(
+            eventId: id,
+            expectedRevision: revision,
+            metadata: meta,
+          ),
+        );
+        final receipt = await notifyCurrent(id, content),
+            next = await messageFor(receipt);
+        for (var i = 1; i < next.events.length; i++) {
+          expect(
+            next.events[i].sequence,
+            n == 0
+                ? last.events[i].sequence
+                : greaterThan(last.events[i].sequence!),
+          );
+          expect(props(next.events[i], 'PRIORITY'), isEmpty);
+          expect(props(next.events[i], 'GEO'), isEmpty);
+          expect(props(next.events[i], 'RESOURCES'), isEmpty);
+        }
+        expect(next.events.first.priority, meta.priority);
+        expect(
+          next.events.first.geographicPosition?.latitudeText,
+          meta.geographicPosition?.latitudeText,
+        );
+        expect(next.events.first.resources.length, meta.resourceGroups.length);
+        final row = await eventData(id);
+        expect(
+          row.protocolState!.overrides.map((s) => s.version.toJson()).toList(),
+          native.map((s) => s.version.toJson()).toList(),
+        );
+        expect(row.timingOverrides!.singles.single.sourceMetadata, isNull);
+        expect(row.timingOverrides!.future.single.sourceMetadata, isNull);
+        expect((await notifyCurrent(id, content)).unchanged, isTrue);
+        last = next;
+      }
+      policy.eventGrants = CalendarEventFieldGroup.values.toSet()
+        ..remove(CalendarEventFieldGroup.resources);
+      await expectLater(
+        notifyCurrent(id, content),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+
     test('own occurrence summary retains its version across unrelated inherited summary changes', () async {
       final content = masterContent(), id = await masterEvent(masterContent());
       await moveOccurrence(id, CalendarEventTimeKind.date, 28);

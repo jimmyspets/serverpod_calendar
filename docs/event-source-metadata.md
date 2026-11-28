@@ -29,3 +29,7 @@ The synthetic example file includes these properties. Its import screen explains
 ## Unarmed event source alarms, 2026-10-24
 
 [ADR 0110](adr/0110-unarmed-event-source-alarms.md) now extends the supported source profile with [unarmed VEVENT DISPLAY alarms and bounded sibling snoozes](event-source-alarms.md). Nullable immutable server-only alarm/duration DTOs use existing metadata JSON, without table changes or a migration. Existing event-source-v2 baselines remain compatible. Separate `readEventSource` authority protects export/replacement and final/no-op checks; ordinary projections hide this data. Native edits preserve definitions and reject incompatible explicit-END anchor changes atomically. Source UID/ACKNOWLEDGED/SNOOZE are unverified data, never recipients, authority or native actions. This supersedes earlier event-alarm rejection/pending wording only for this source-preservation slice. Native personal definitions/editors, adoption, planning, delivery, feeds and client interoperability remain separate requirements.
+
+## Descriptive-field extension
+
+Accepted [ADR 0134](adr/0134-native-event-descriptive-fields.md) independently extends ordinary VEVENT/native storage with optional PRIORITY, exact decimal-string GEO and repeated grouped RESOURCES. The [descriptive-field guide](native-event-descriptive-fields.md) specifies the subset editor, disclosure, strict occurrence compatibility and source/scheduling/feed preservation. Other source metadata/participant editors remain separate.
