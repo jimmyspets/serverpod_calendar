@@ -1284,6 +1284,84 @@ void main() {
       );
     });
 
+    test('alarm notification projection requires separate authority and uses current text', () async {
+      installAlarmRuntime();
+      final alarm = await armedDueAlarm();
+      await CalendarModule.runAlarmMaintenance(session);
+      final intent = alarmDelivery.accepted.values.single;
+      final data = (await CalendarEventDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.eventId.equals(alarm.parent.id),
+      ))!;
+      await service.updateEvent(
+        CalendarEventUpdateRequest(
+          eventId: alarm.parent.id,
+          expectedRevision: 1,
+          content: data.content.copyWith(summary: 'Fresh authorized title'),
+        ),
+      );
+      await CalendarModule.runAlarmMaintenance(session);
+      final view = await CalendarModule.projectAlarmNotification(
+        session,
+        intent,
+      );
+      expect(view!.summary, 'Fresh authorized title');
+      expect(view.snoozeAllowed, isTrue);
+      alarmPolicy.deniedOperations.add(
+        CalendarAlarmBackgroundOperation.project,
+      );
+      expect(
+        await CalendarModule.checkAlarmDelivery(session, intent),
+        CalendarAlarmDeliveryCheck.eligible,
+      );
+      expect(
+        await CalendarModule.projectAlarmNotification(session, intent),
+        isNull,
+      );
+      expect(
+        await CalendarModule.checkAlarmDelivery(
+          session,
+          intent,
+          forProjection: true,
+        ),
+        CalendarAlarmDeliveryCheck.withdrawn,
+      );
+    });
+
+    test(
+      'alarm notification distinguishes a dirty plan from withdrawn source',
+      () async {
+        installAlarmRuntime();
+        final alarm = await armedDueAlarm();
+        await CalendarModule.runAlarmMaintenance(session);
+        final intent = alarmDelivery.accepted.values.single;
+        final plan = (await CalendarAlarmPlanRecord.db.findFirstRow(session))!;
+        plan.dirty = true;
+        await CalendarAlarmPlanRecord.db.updateRow(session, plan);
+        expect(
+          await CalendarModule.checkAlarmDelivery(session, intent),
+          CalendarAlarmDeliveryCheck.unavailable,
+        );
+        plan.dirty = false;
+        await CalendarAlarmPlanRecord.db.updateRow(session, plan);
+        final firing = (await CalendarAlarmFiringRecord.db.findById(
+          session,
+          intent.firingId,
+        ))!;
+        await service.actOnPersonalAlarm(
+          actionInput(alarm, firing, CalendarAlarmActionKind.acknowledge),
+        );
+        expect(
+          await CalendarModule.checkAlarmDelivery(session, intent),
+          CalendarAlarmDeliveryCheck.withdrawn,
+        );
+        expect(
+          await CalendarModule.projectAlarmNotification(session, intent),
+          isNull,
+        );
+      },
+    );
+
     test('alarm planner identical private writes and parent text edits never replay accepted firings', () async {
       installAlarmRuntime();
       final alarm = await armedDueAlarm();

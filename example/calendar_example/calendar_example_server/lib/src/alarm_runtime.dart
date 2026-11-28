@@ -28,13 +28,3 @@ final class DemoAlarmBackgroundPolicy implements CalendarAlarmBackgroundPolicy {
         : CalendarAuthorizationVerdict.deny;
   }
 }
-
-/// Explicitly unconnected delivery. Returning false preserves durable retries;
-/// never pretend a log, process-local map or stream emission is durable acceptance.
-final class UnconnectedAlarmDeliveryPort implements CalendarAlarmDeliveryPort {
-  @override
-  Future<bool> accept(
-    Session session,
-    CalendarAlarmDeliveryIntent intent,
-  ) async => false;
-}

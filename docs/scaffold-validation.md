@@ -813,3 +813,24 @@ Validation actually run:
 - `.local/alarm-actions-browser-final.ps1` completed **exit 0**: `dart run tool/host_smoke.dart --flutter` passed all generated-client/JWT checks and the full browser journey, including snooze/acknowledge/dismiss/reset and persistent action state. `flutter build web --no-pub` passed, including the **Wasm compile dry run**. No Wasm runtime, external-client, OS display or provider-delivery compatibility is claimed.
 
 These are corrected/resumed validation phases, not a claim that one uninterrupted root invocation exited successfully. Passed unrelated suites were not repeated after review changes. Static checks verify changed-file relative links, consecutive ADRs, unchanged Apache LICENSE and no local credential matches. The owned development watch runner and headless Flutter Chrome runner were restored after builds, with existing development data retained. Connected Serverpod MCP reported migrations applied, hot reload completed and successful maintenance calls. The new Flutter DTD connection reported hot reload succeeded and no runtime errors. Old generated kernel cache files were backed up under ignored `.local/`; no development reset or migration repair was used.
+
+
+## Reusable live notification delivery batch, 2026-10-25
+
+ADR 0114's live profile, three-table storage and defaults were explicitly approved. This batch adds generic source-reference acceptance/retry/recovery and an example calendar/Redis/Flutter adapter, without copied content, provider credentials or imported-alarm activation.
+
+Completed evidence so far:
+
+- Focused generic database tests initially passed 15 cases, then 17 after explicit expiry/timeout checks. The final broad database phase passed **415 combined calendar/notification cases**, including independent projection authority, dirty-plan versus withdrawn-source classification and corrupted-reference rejection.
+- `./tool/check.ps1` generation, formatting, fatal-info analysis, **502 core VM + 502 Chrome**, **353 wire VM + 353 Chrome**, **201 calendar module VM + 17 Chrome**, and **3 Flutter widgets** passed. The successful full run is `.local/notification-batch-check4.log` (exit 0).
+- Populated migration verification preserves all preceding rows and creates empty notification scope/delivery/cursor tables. The generated module and example migrations were not hand-edited.
+- Both independent-process worker probes passed. The notification probe additionally races idempotent acceptance, kills the actual lease holder, recovers on the survivor and rejects the old owner/fence.
+- Real two-host generated clients observed a Redis UUID hint, durable stable-ID recovery, current source text after edits, reconnect and acknowledgement withdrawal. The producer host was actually terminated; its survivor recovered and reauthorized the same live reference. A synthetic test account block denied recovery, and unblocking restored access. JWT refresh/logout behavior remains unchanged.
+- A separate generated-client negative probe against the running test host rejected both anonymous recovery and anonymous streaming. Its source/log remain ignored under `.local/notification-auth-check.*`.
+- Earlier broad attempts stopped on new brace/format findings and on two database files binding the same test ports. These were corrected; database files now run with `--concurrency=1`. Those earlier attempts are not reported as successful full runs.
+
+The full connected Flutter browser journey passed, including live presentation, pause/resume recovery, acknowledgement withdrawal and logout cleanup. The release Web build passed, with a successful Wasm compilation dry run (not a deployed Wasm-runtime claim). Final analysis/focused checks and restored interactive MCP evidence are recorded separately below. This is not a first-release, scheduling, HTTP-feed, mobile-provider or external-client interoperability completion claim.
+
+The full check script now serializes the two database files because they use the same configured test ports. Unrelated local development data was never reset. Static review found no credential-pattern matches, no changed LICENSE, consecutive ADRs through 0114 and no missing relative link targets.
+
+Final checks: `dart analyze --fatal-infos` passed on the final sources; the final focused `test/integration/notification_test.dart` run passed **18 cases** on separate synthetic test ports. The interactive development host and headless Flutter app were restored without resetting development data. The generated notification migration applied successfully; connected Serverpod MCP log, apply-migrations and hot-reload calls succeeded. Dart MCP connected to the restored Flutter app, hot reload succeeded and reported no runtime errors. Ignored logs include `notification-final-analysis.log`, `notification-final-focused.log`, `notification-delivery-development.log` and `notification-delivery-chrome.log` under `.local/`.

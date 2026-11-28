@@ -103,3 +103,8 @@ The maintainer selected the timing/composition-first slice and positive opening 
 ## Native alarm actions remain separate from interchange
 
 [ADR 0113](adr/0113-native-alarm-actions.md) adds scoped private acknowledgement/dismiss/reset/snooze commands and activity pages. These commands neither interpret imported ACKNOWLEDGED/SNOOZE as trusted user actions nor publish private state into source exports. Source RFC 9074 preservation, native actions, generic notification delivery and actual client display remain distinct validation boundaries. See [the native contract](native-alarm-actions.md).
+
+
+## Reusable live notification increment, 2026-10-25
+
+[ADR 0114](adr/0114-reusable-notification-delivery.md) approves the generic three-table storage/defaults and live-reminder profile. The [delivery guide](reusable-notification-delivery.md) describes durable idempotent acceptance, fenced retry/publication, fresh authorized source projection and the example Redis/Flutter streaming path. This supersedes earlier unconnected-delivery/scaffold-only wording for this scoped increment; the full local batch checks passed, with actual evidence recorded in the validation guide. Imported alarms remain unarmed; provider delivery, adoption and the remaining first-release requirements stay separate.

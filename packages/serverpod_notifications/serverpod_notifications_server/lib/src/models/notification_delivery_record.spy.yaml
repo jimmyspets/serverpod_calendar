@@ -1,0 +1,36 @@
+class: NotificationDeliveryRecord
+serverOnly: true
+table: serverpod_notifications_delivery
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  recipientNamespace: String
+  recipientKey: String
+  sourceNamespace: String
+  sourceVersion: int
+  sourceRequestId: String
+  requestDigest: String
+  sourceReference: String
+  dueAt: DateTime
+  expiresAt: DateTime
+  state: NotificationDeliveryState, default=queued
+  reason: String?
+  nextAttemptAt: DateTime
+  attemptCount: int, default=0
+  leaseOwner: UuidValue?
+  leaseUntil: DateTime?
+  leaseFence: int, default=0
+  publishedAt: DateTime?
+  terminalAt: DateTime?
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  notification_request_unique:
+    fields: scopeKey, sourceNamespace, sourceRequestId
+    unique: true
+  notification_due_idx:
+    fields: state, nextAttemptAt, leaseUntil
+  notification_recipient_idx:
+    fields: scopeKey, recipientNamespace, recipientKey, expiresAt, id
+  notification_terminal_idx:
+    fields: terminalAt, expiresAt

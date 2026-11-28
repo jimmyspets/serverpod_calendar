@@ -1,2 +1,4 @@
+notification:
+  - recover:
 notificationDiagnostics:
   - check:

@@ -23,6 +23,7 @@ import 'package:serverpod_notifications_server/serverpod_notifications_server.da
     as _ik9lwgjh;
 import '../auth/email_idp_endpoint.dart' as _iuc1hd5t;
 import '../auth/refresh_jwt_tokens_endpoint.dart' as _ih79u0oj;
+import '../endpoints/notification_stream_endpoint.dart' as _ixiz6tz4;
 import '../endpoints/smoke_endpoint.dart' as _ivabzmjp;
 export 'future_calls.dart' show ServerpodFutureCallsGetter;
 
@@ -40,6 +41,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'refreshJwtTokens',
+          null,
+        ),
+      'notificationStream': _ixiz6tz4.NotificationStreamEndpoint()
+        ..initialize(
+          server,
+          'notificationStream',
           null,
         ),
       'smoke': _ivabzmjp.SmokeEndpoint()
@@ -253,6 +260,27 @@ class Endpoints extends _is.EndpointDispatch {
                         session,
                         refreshToken: params['refreshToken'],
                       ),
+        ),
+      },
+    );
+    connectors['notificationStream'] = _is.EndpointConnector(
+      name: 'notificationStream',
+      endpoint: endpoints['notificationStream']!,
+      methodConnectors: {
+        'watch': _is.MethodStreamConnector(
+          name: 'watch',
+          params: {},
+          streamParams: {},
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) =>
+                  (endpoints['notificationStream']
+                          as _ixiz6tz4.NotificationStreamEndpoint)
+                      .watch(session),
         ),
       },
     );

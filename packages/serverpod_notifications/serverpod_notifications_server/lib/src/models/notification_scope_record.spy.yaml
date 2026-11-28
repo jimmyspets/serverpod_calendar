@@ -1,0 +1,10 @@
+class: NotificationScopeRecord
+serverOnly: true
+table: serverpod_notifications_scope
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+indexes:
+  notification_scope_key_unique:
+    fields: scopeKey
+    unique: true

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'calendar_smoke.dart';
+import 'notification_smoke.dart';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart';
@@ -51,6 +52,8 @@ Future<void> main(List<String> args) async {
       () => first.modules.serverpod_calendar.calendarDiagnostics.check(),
       () =>
           first.modules.serverpod_notifications.notificationDiagnostics.check(),
+      () =>
+          first.modules.serverpod_notifications.notification.recover(10, null),
     ]) {
       rejected = false;
       try {
@@ -92,6 +95,7 @@ Future<void> main(List<String> args) async {
       throw StateError('Expected JWT access and refresh credentials.');
     }
     await calendarSmoke(clients, values['demoBobPassword'] as String);
+    if (clients.length > 1) await notificationSmoke(clients);
     final verifier = clients.length > 1 ? clients.last : first;
     // Exercise real refresh/rotation on another host before revoking the pair.
     final refreshed = await verifier.refreshJwtTokens.refreshAccessToken(

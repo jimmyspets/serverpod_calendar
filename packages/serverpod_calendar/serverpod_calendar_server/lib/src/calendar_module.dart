@@ -134,6 +134,33 @@ abstract final class CalendarModule {
         .validateDelivery(intent);
   }
 
+  static Future<CalendarAlarmDeliveryCheck> checkAlarmDelivery(
+    Session session,
+    CalendarAlarmDeliveryIntent intent, {
+    bool forProjection = false,
+  }) async {
+    final runtime = _installed[session.serverpod];
+    if (runtime?.alarms == null) return CalendarAlarmDeliveryCheck.unavailable;
+    return _AlarmWorker(CalendarService._(session, runtime!)).checkDelivery(
+      intent,
+      operation: forProjection
+          ? CalendarAlarmBackgroundOperation.project
+          : CalendarAlarmBackgroundOperation.dispatch,
+    );
+  }
+
+  /// Explicit recipient projection authority is additional to dispatch authority.
+  static Future<CalendarAlarmNotificationPresentation?>
+  projectAlarmNotification(
+    Session session,
+    CalendarAlarmDeliveryIntent intent,
+  ) async {
+    final runtime = _installed[session.serverpod];
+    if (runtime?.alarms == null) return null;
+    return _AlarmWorker(CalendarService._(session, runtime!))
+        .projectNotification(intent);
+  }
+
   static CalendarService service(Session session) {
     final runtime = _installed[session.serverpod];
     if (runtime == null || session.authenticated == null) {

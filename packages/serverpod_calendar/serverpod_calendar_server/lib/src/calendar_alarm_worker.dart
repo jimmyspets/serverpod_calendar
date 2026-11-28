@@ -114,29 +114,37 @@ final class _AlarmWorker {
     );
   }
 
+  Future<CalendarAuthorizationVerdict> _authorization(
+    _AlarmSnapshot snapshot,
+    Transaction tx,
+    CalendarAuthorizationPhase phase,
+    CalendarAlarmBackgroundOperation operation,
+  ) async {
+    bool supported() =>
+        service._options.requiredWriteGuarantee !=
+            CalendarAuthorizationGuarantee.coordinated ||
+        runtime.policy.guarantee == CalendarAuthorizationGuarantee.coordinated;
+    if (!supported()) return CalendarAuthorizationVerdict.unavailable;
+    final verdict = await service._bounded(
+      () => runtime.policy.authorize(
+        session,
+        snapshot.context.forOperation(operation),
+        tx,
+        phase,
+      ),
+    );
+    return supported() ? verdict : CalendarAuthorizationVerdict.unavailable;
+  }
+
   Future<bool> _authorized(
     _AlarmSnapshot snapshot,
     Transaction tx,
     CalendarAuthorizationPhase phase, {
     CalendarAlarmBackgroundOperation operation =
         CalendarAlarmBackgroundOperation.plan,
-  }) async {
-    if (service._options.requiredWriteGuarantee ==
-            CalendarAuthorizationGuarantee.coordinated &&
-        runtime.policy.guarantee !=
-            CalendarAuthorizationGuarantee.coordinated) {
-      return false;
-    }
-    return await service._bounded(
-          () => runtime.policy.authorize(
-            session,
-            snapshot.context.forOperation(operation),
-            tx,
-            phase,
-          ),
-        ) ==
-        CalendarAuthorizationVerdict.allow;
-  }
+  }) async =>
+      await _authorization(snapshot, tx, phase, operation) ==
+      CalendarAuthorizationVerdict.allow;
 
   Future<void> run() async {
     await store.pruneTerminalHistory();
@@ -776,105 +784,214 @@ final class _AlarmWorker {
     });
   }
 
-  Future<bool> validateDelivery(CalendarAlarmDeliveryIntent intent) async {
+  Future<bool> validateDelivery(CalendarAlarmDeliveryIntent intent) async =>
+      await checkDelivery(intent) == CalendarAlarmDeliveryCheck.eligible;
+
+  Future<CalendarAlarmDeliveryCheck> checkDelivery(
+    CalendarAlarmDeliveryIntent intent, {
+    CalendarAlarmBackgroundOperation operation =
+        CalendarAlarmBackgroundOperation.dispatch,
+  }) async {
     try {
       final alarm = await CalendarAlarmRecord.db.findById(
         session,
         intent.alarmId,
       );
-      if (alarm == null) return false;
-      return await _scope(alarm.scopeKey, (tx) async {
-        final snapshot = await _snapshot(intent.alarmId, tx);
-        if (snapshot == null ||
-            snapshot.row.generation != intent.generation ||
-            snapshot.row.parentId != intent.parent.id ||
-            snapshot.row.parentKind != intent.parent.kind ||
-            snapshot.row.recipientNamespace != intent.recipient.namespace ||
-            snapshot.row.recipientKey != intent.recipient.key) {
-          return false;
-        }
-        final firing = await CalendarAlarmFiringRecord.db.findById(
-          session,
-          intent.firingId,
-          transaction: tx,
-        );
-        final plan = await CalendarAlarmPlanRecord.db.findFirstRow(
-          session,
-          where: (t) => t.alarmId.equals(intent.alarmId),
-          transaction: tx,
-        );
-        if (firing == null ||
-            firing.alarmId != intent.alarmId ||
-            firing.generation != intent.generation ||
-            firing.originalKey != intent.originalKey ||
-            firing.dueAt != intent.dueAt ||
-            firing.expiresAt != intent.expiresAt ||
-            (firing.state != CalendarAlarmFiringState.pending &&
-                firing.state != CalendarAlarmFiringState.accepted) ||
-            plan == null ||
-            plan.dirty ||
-            plan.status != CalendarAlarmPlanStatus.ready ||
-            plan.generation != intent.generation ||
-            plan.timingDigest != snapshot.digest) {
-          return false;
-        }
-        final action = await CalendarAlarmActionRecord.db.findFirstRow(
-          session,
-          where: (t) =>
-              t.alarmId.equals(intent.alarmId) &
-              t.originalKey.equals(intent.originalKey),
-          transaction: tx,
-        );
-        if (firing.kind == CalendarAlarmFiringKind.automatic &&
-            (action?.acknowledgedAt != null ||
-                action?.dismissedAt != null ||
-                (action?.resetAt != null &&
-                    !firing.dueAt.isAfter(action!.resetAt!)))) {
-          return false;
-        }
-        if (firing.kind == CalendarAlarmFiringKind.snooze &&
-            (action?.snoozeRevision != firing.snoozeRevision ||
-                action?.pendingSnoozeAt != firing.dueAt ||
-                !_alarmOriginalActive(
-                  snapshot.parent,
-                  intent.originalKey,
-                  snapshot.records,
-                ))) {
-          return false;
-        }
-        if (snapshot.parent.event?.data.content.status ==
-            CalendarEventStatus.cancelled) {
-          return false;
-        }
-        final task = snapshot.parent.task;
-        if (task != null) {
-          final own = snapshot.records
-              .where(
-                (r) => taskOriginalKey(r.originalStart) == intent.originalKey,
-              )
-              .firstOrNull;
-          final progress = own?.progress ?? task.data.progress;
-          if (progress.status == CalendarTaskStatus.completed ||
-              progress.status == CalendarTaskStatus.cancelled ||
-              progress.percentComplete == 100 ||
-              progress.completedAt != null) {
-            return false;
+      if (alarm == null) return CalendarAlarmDeliveryCheck.withdrawn;
+      return await _scope(
+        alarm.scopeKey,
+        (tx) => _checkDelivery(intent, tx, operation),
+      );
+    } catch (_) {
+      return CalendarAlarmDeliveryCheck.unavailable;
+    }
+  }
+
+  Future<CalendarAlarmDeliveryCheck> _checkDelivery(
+    CalendarAlarmDeliveryIntent intent,
+    Transaction tx,
+    CalendarAlarmBackgroundOperation operation,
+  ) async {
+    final snapshot = await _snapshot(intent.alarmId, tx);
+    if (snapshot == null ||
+        snapshot.row.generation != intent.generation ||
+        snapshot.row.parentId != intent.parent.id ||
+        snapshot.row.parentKind != intent.parent.kind ||
+        snapshot.row.recipientNamespace != intent.recipient.namespace ||
+        snapshot.row.recipientKey != intent.recipient.key) {
+      return CalendarAlarmDeliveryCheck.withdrawn;
+    }
+    final firing = await CalendarAlarmFiringRecord.db.findById(
+      session,
+      intent.firingId,
+      transaction: tx,
+    );
+    if (firing == null ||
+        firing.alarmId != intent.alarmId ||
+        firing.generation != intent.generation ||
+        firing.originalKey != intent.originalKey ||
+        firing.dueAt != intent.dueAt ||
+        firing.expiresAt != intent.expiresAt ||
+        (firing.state != CalendarAlarmFiringState.pending &&
+            firing.state != CalendarAlarmFiringState.accepted)) {
+      return CalendarAlarmDeliveryCheck.withdrawn;
+    }
+    final action = await CalendarAlarmActionRecord.db.findFirstRow(
+      session,
+      where: (t) =>
+          t.alarmId.equals(intent.alarmId) &
+          t.originalKey.equals(intent.originalKey),
+      transaction: tx,
+    );
+    if (firing.kind == CalendarAlarmFiringKind.automatic &&
+        (action?.acknowledgedAt != null ||
+            action?.dismissedAt != null ||
+            (action?.resetAt != null &&
+                !firing.dueAt.isAfter(action!.resetAt!)))) {
+      return CalendarAlarmDeliveryCheck.withdrawn;
+    }
+    if (firing.kind == CalendarAlarmFiringKind.snooze &&
+        (action?.snoozeRevision != firing.snoozeRevision ||
+            action?.pendingSnoozeAt != firing.dueAt ||
+            !_alarmOriginalActive(
+              snapshot.parent,
+              intent.originalKey,
+              snapshot.records,
+            ))) {
+      return CalendarAlarmDeliveryCheck.withdrawn;
+    }
+    if (snapshot.parent.event?.data.content.status ==
+        CalendarEventStatus.cancelled) {
+      return CalendarAlarmDeliveryCheck.withdrawn;
+    }
+    final task = snapshot.parent.task;
+    if (task != null) {
+      final own = snapshot.records
+          .where((r) => taskOriginalKey(r.originalStart) == intent.originalKey)
+          .firstOrNull;
+      final p = own?.progress ?? task.data.progress;
+      if (p.status == CalendarTaskStatus.completed ||
+          p.status == CalendarTaskStatus.cancelled ||
+          p.percentComplete == 100 ||
+          p.completedAt != null) {
+        return CalendarAlarmDeliveryCheck.withdrawn;
+      }
+    }
+    final plan = await CalendarAlarmPlanRecord.db.findFirstRow(
+      session,
+      where: (t) => t.alarmId.equals(intent.alarmId),
+      transaction: tx,
+    );
+    if (plan == null ||
+        plan.dirty ||
+        plan.status != CalendarAlarmPlanStatus.ready ||
+        plan.generation != intent.generation ||
+        plan.timingDigest != snapshot.digest) {
+      return CalendarAlarmDeliveryCheck.unavailable;
+    }
+    for (final op in {CalendarAlarmBackgroundOperation.dispatch, operation}) {
+      final verdict = await _authorization(
+        snapshot,
+        tx,
+        CalendarAuthorizationPhase.finalWrite,
+        op,
+      );
+      if (verdict == CalendarAuthorizationVerdict.unavailable) {
+        return CalendarAlarmDeliveryCheck.unavailable;
+      }
+      if (verdict == CalendarAuthorizationVerdict.deny) {
+        return CalendarAlarmDeliveryCheck.withdrawn;
+      }
+    }
+    final now = await store.databaseTime(tx);
+    return !firing.dueAt.isAfter(now) && firing.expiresAt.isAfter(now)
+        ? CalendarAlarmDeliveryCheck.eligible
+        : CalendarAlarmDeliveryCheck.withdrawn;
+  }
+
+  Future<CalendarAlarmNotificationPresentation?> projectNotification(
+    CalendarAlarmDeliveryIntent intent,
+  ) async {
+    final alarm = await CalendarAlarmRecord.db.findById(
+      session,
+      intent.alarmId,
+    );
+    if (alarm == null) return null;
+    return _scope(alarm.scopeKey, (tx) async {
+      if (await _checkDelivery(
+            intent,
+            tx,
+            CalendarAlarmBackgroundOperation.project,
+          ) !=
+          CalendarAlarmDeliveryCheck.eligible) {
+        return null;
+      }
+      final snapshot = (await _snapshot(intent.alarmId, tx))!;
+      String? summary;
+      final event = snapshot.parent.event;
+      if (event != null) {
+        CalendarEventOccurrenceContent? own;
+        for (final s
+            in event.data.timingOverrides?.singles ??
+                <CalendarEventSingleOverride>[]) {
+          if (taskOriginalKey(s.originalStart) == intent.originalKey) {
+            own = s.contentOverrides;
           }
         }
-        if (!await _authorized(
-          snapshot,
-          tx,
-          CalendarAuthorizationPhase.finalWrite,
-          operation: CalendarAlarmBackgroundOperation.dispatch,
-        )) {
-          return false;
+        for (final s
+            in event.data.timingOverrides?.future ??
+                <CalendarEventFutureOverride>[]) {
+          if (taskOriginalKey(s.originalStart) == intent.originalKey) {
+            own = s.contentOverrides;
+          }
         }
-        // Authorization may be external/slow; check shared time after it returns.
-        final now = await store.databaseTime(tx);
-        return !firing.dueAt.isAfter(now) && firing.expiresAt.isAfter(now);
-      });
-    } catch (_) {
-      return false;
-    }
+        summary = eventEffectiveOccurrenceContent(
+          event.data.content,
+          own,
+        ).summary;
+      } else {
+        final task = snapshot.parent.task!;
+        final own = snapshot.records
+            .where(
+              (r) => taskOriginalKey(r.originalStart) == intent.originalKey,
+            )
+            .firstOrNull;
+        summary = taskEffectiveOccurrenceContent(
+          task.data.content,
+          own?.contentOverrides,
+        ).summary;
+      }
+      final action = await CalendarAlarmActionRecord.db.findFirstRow(
+        session,
+        where: (t) =>
+            t.alarmId.equals(intent.alarmId) &
+            t.originalKey.equals(intent.originalKey),
+        transaction: tx,
+      );
+      if (await _checkDelivery(
+            intent,
+            tx,
+            CalendarAlarmBackgroundOperation.project,
+          ) !=
+          CalendarAlarmDeliveryCheck.eligible) {
+        return null;
+      }
+      return CalendarAlarmNotificationPresentation(
+        scopeKey: alarm.scopeKey,
+        parent: intent.parent,
+        alarmId: intent.alarmId,
+        firingId: intent.firingId,
+        alarmRevision: snapshot.row.revision,
+        actionRevision: action?.revision ?? 0,
+        summary: summary,
+        snoozeAllowed:
+            (await CalendarAlarmFiringRecord.db.findById(
+              session,
+              intent.firingId,
+              transaction: tx,
+            ))?.kind ==
+            CalendarAlarmFiringKind.automatic,
+      );
+    });
   }
 }

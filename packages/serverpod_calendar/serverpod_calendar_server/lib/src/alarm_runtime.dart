@@ -6,7 +6,30 @@ import 'generated/protocol.dart';
 
 export 'alarm_work_store.dart' show CalendarAlarmWorkOptions;
 
-enum CalendarAlarmBackgroundOperation { plan, dispatch }
+enum CalendarAlarmBackgroundOperation { plan, dispatch, project }
+
+/// Unavailability must remain retryable rather than becoming a permanent withdrawal.
+enum CalendarAlarmDeliveryCheck { eligible, withdrawn, unavailable }
+
+/// Fresh basic notification projection; never stored by the calendar module.
+final class CalendarAlarmNotificationPresentation {
+  CalendarAlarmNotificationPresentation({
+    required this.scopeKey,
+    required this.parent,
+    required this.alarmId,
+    required this.firingId,
+    required this.alarmRevision,
+    required this.actionRevision,
+    required this.summary,
+    required this.snoozeAllowed,
+  });
+  final String scopeKey;
+  final CalendarAlarmParent parent;
+  final UuidValue alarmId, firingId;
+  final int alarmRevision, actionRevision;
+  final String? summary;
+  final bool snoozeAllowed;
+}
 
 /// Dedicated background policy input; no request login is impersonated.
 final class CalendarAlarmBackgroundContext {

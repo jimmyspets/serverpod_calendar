@@ -18,4 +18,9 @@ Migrations are a narrow exception: the `migration.sql` of a generated migration 
 
 Projects that depend on this module reference its types as `module:serverpod_notifications:MyType`, where `serverpod_notifications` is the `nickname` in `config/generator.yaml`.
 
-This is the serverpod_notifications scaffold. Only an authenticated diagnostic endpoint exists. Domain behavior, persistence and delivery semantics are pending; follow the root requirements and model review gates.
+The approved ADR 0114 increment now contains generic scope/delivery/cursor storage, trusted acceptance, fenced publication/retry and authenticated live recovery. Follow the root delivery guide and actual validation record. Keep calendar/Flutter/provider dependencies out of this module and retain all root model-review gates.
+
+
+## Reusable live notification increment, 2026-10-25
+
+[ADR 0114](../../docs/adr/0114-reusable-notification-delivery.md) approves the generic three-table storage/defaults and live-reminder profile. The [delivery guide](../../docs/reusable-notification-delivery.md) describes durable idempotent acceptance, fenced retry/publication, fresh authorized source projection and the example Redis/Flutter streaming path. This supersedes earlier unconnected-delivery/scaffold-only wording for this scoped increment; the full local batch checks passed, with actual evidence recorded in the validation guide. Imported alarms remain unarmed; provider delivery, adoption and the remaining first-release requirements stay separate.

@@ -52,7 +52,7 @@ The example host/Flutter app is also the automated integration-test application,
 | FR-28 | Authorized callers manage event/task alarm definitions and recipient-scoped state | Multiple/time-based trigger forms and private action baseline selected in the RFC tables, with detailed constraints under ADR 0009; no device/provider credentials in calendar tables; imported alarms not automatically armed |
 | FR-29 | Execute due alarms durably and invalidate obsolete occurrences | Bounded recurrence/DST planning, recovery/retry, revision/generation checks, edits/cancellations/task completion/access loss, duplicate workers and missed/expiry policy |
 | FR-30 | Integrate alarm delivery through a reusable notification module with host-supplied delivery adapters | Connected Flutter example using Serverpod server events/streaming; authorized recipient routing, disconnection/reconnection and multi-instance tests; no direct FCM/APNs/platform push implementation required under ADR 0020 |
-| FR-31 | Authorized Flutter clients can observe and perform selected alarm actions | Planned acknowledgement/snooze, with dismissal behavior still to specify; idempotent occurrence/recipient checks and multi-device consistency; provider acceptance distinguished from display/action |
+| FR-31 | Authorized Flutter clients can observe and perform selected alarm actions | Scoped native acknowledgement/dismiss/reset/snooze under ADR 0113; live authorized recovery and connected example under ADR 0114, with completed local batch evidence tracked separately. Preserve exact occurrence/recipient checks, stale-action rejection and multi-device consistency; provider acceptance differs from display/action |
 
 ## Non-functional requirements
 
@@ -379,3 +379,8 @@ The maintainer selected the timing/composition-first slice and positive opening 
 ## Scoped native personal actions, 2026-10-25
 
 [ADR 0113](adr/0113-native-alarm-actions.md) now adds [private native acknowledgement/dismiss/reset/snooze and activity pages](native-alarm-actions.md). Additive action cutoff/cursor fields were explicitly approved. Snooze requires a due/accepted automatic origin and active current original; future-only reset cancels the selection and prevents overdue replay across replanning/pruning. Independent permissions, actual object/recipient context, revisions and final database-time checks protect commands. This supersedes earlier native-action-pending wording only for this scoped increment. Imported alarm state remains inert; reusable notification delivery/streaming, adoption and external-client evidence remain separate requirements.
+
+
+## Reusable live notification increment, 2026-10-25
+
+[ADR 0114](adr/0114-reusable-notification-delivery.md) approves the generic three-table storage/defaults and live-reminder profile. The [delivery guide](reusable-notification-delivery.md) describes durable idempotent acceptance, fenced retry/publication, fresh authorized source projection and the example Redis/Flutter streaming path. This supersedes earlier unconnected-delivery/scaffold-only wording for this scoped increment; the full local batch checks passed, with actual evidence recorded in the validation guide. Imported alarms remain unarmed; provider delivery, adoption and the remaining first-release requirements stay separate.

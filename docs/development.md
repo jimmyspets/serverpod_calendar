@@ -1,6 +1,6 @@
 # Local example development
 
-Status: **scoped native calendar/event/availability implementation plus pure iCalendar foundations**. See [the roadmap](roadmap.md) and [validation evidence](scaffold-validation.md) for implemented native increments, and [temporal core](temporal-core.md) for pure date/time/recurrence semantics. The iCalendar package has [generic syntax](icalendar-syntax.md) and [typed temporal value codecs](icalendar-temporal-values.md); a [first non-recurring event/zone adapter](icalendar-event-adapter.md) now adds scoped wire-to-core mapping. Complete component coverage, authorized database import/export, tasks, HTTP feeds, scheduling and alarm/notification delivery remain pending. The example exercises host-owned authentication, generated clients and scoped native journeys. CI configuration and the optional Flutter GUI package follow later.
+Status: **scoped native calendar/event/availability implementation plus pure iCalendar foundations**. See [the roadmap](roadmap.md) and [validation evidence](scaffold-validation.md) for implemented native increments, and [temporal core](temporal-core.md) for pure date/time/recurrence semantics. The iCalendar package has [generic syntax](icalendar-syntax.md) and [typed temporal value codecs](icalendar-temporal-values.md); a [first non-recurring event/zone adapter](icalendar-event-adapter.md) now adds scoped wire-to-core mapping. Scoped authenticated event/task/availability interchange and native tasks/alarms now extend that baseline. Remaining component profiles, HTTP feeds, scheduling and release evidence remain pending; see the current roadmap and live notification guide. The example exercises host-owned authentication, generated clients and scoped native journeys. CI configuration and the optional Flutter GUI package follow later.
 
 ## Pinned tools and packages
 
@@ -37,7 +37,7 @@ Start Flutter Web in another terminal:
 ./tool/start-flutter.ps1
 ```
 
-Sign in with a local demo account, select **Check connection**, then **Sign out**. The check calls the real host and both modules through generated clients. There is no calendar UI or notification delivery demo yet. Module diagnostic endpoints require authentication and return only the current caller's identifier. Future calendar operations still require host policy checks beyond being signed in.
+Sign in with a local demo account. **Check connection** calls the host and both modules through generated clients. The calendar/event/task screens expose the implemented scoped services; private personal alarm editors create unarmed definitions and require explicit arming. The home screen presents live reminders through the authorized notification stream and fresh recovery. Pause/resume controls the connection without disarming definitions. **Sign out** clears projections and local credentials. Module diagnostics and all domain operations require their respective server-side authorization; sign-in alone does not grant calendar access.
 
 Development API/Insights/web ports are **18080–18082**, and the Flutter development origin is **http://localhost:18083**. PostgreSQL/Redis bind only to loopback at **18090/18091**. Test services use **19090/19091**; test host A uses **18180–18182**, and host B **18280–18282**. Use dedicated test storage, not development data, for tests. Services remain available between local runs; stop them without removing data using:
 
@@ -159,3 +159,8 @@ The full Flutter journey has a six-minute outer process guard, including compila
 ## Alarm worker process check
 
 `dart run tool/alarm_work_smoke.dart` starts two real isolated Serverpod test hosts on ports 18380–18382 and 18480–18482. Each verifies `calendar_example_test` before applying generated migrations. The harness creates only synthetic namespaced rows, races committed leases, kills the winning owned process, waits for its short test lease, and verifies takeover/stale fencing before cleanup. Test-control files/logs stay under ignored `.local/`; file communication is only harness control, never work ownership. Root `tool/check.ps1` runs this once per broad batch after database checks. Keep these ports free and do not run competing local check harnesses against the same synthetic database.
+
+
+## Reusable live notification increment, 2026-10-25
+
+[ADR 0114](adr/0114-reusable-notification-delivery.md) approves the generic three-table storage/defaults and live-reminder profile. The [delivery guide](reusable-notification-delivery.md) describes durable idempotent acceptance, fenced retry/publication, fresh authorized source projection and the example Redis/Flutter streaming path. This supersedes earlier unconnected-delivery/scaffold-only wording for this scoped increment; the full local batch checks passed, with actual evidence recorded in the validation guide. Imported alarms remain unarmed; provider delivery, adoption and the remaining first-release requirements stay separate.

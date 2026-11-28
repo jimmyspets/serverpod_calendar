@@ -65,10 +65,11 @@ try {
   finally { Pop-Location }
   & "$PSScriptRoot/reset-test.ps1"
   Push-Location $ExampleServer
-  try { Invoke-Checked dart @('test', 'test/integration/calendar_test.dart') }
+  try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/calendar_test.dart', 'test/integration/notification_test.dart') }
   finally { Pop-Location }
   Invoke-Checked python @('tool/metadata_upgrade_smoke.py')
   Invoke-Checked dart @('run', 'tool/alarm_work_smoke.dart')
+  Invoke-Checked dart @('run', 'tool/notification_work_smoke.dart')
   & "$PSScriptRoot/build-host.ps1"
   $smokeArgs = @('run', 'tool/host_smoke.dart')
   if (-not $SkipBrowser) { $smokeArgs += '--flutter' }

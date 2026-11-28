@@ -567,6 +567,36 @@ END;
 $verify_actions$;
 DROP TABLE action_upgrade_guard;
 """)
+        sql(database, """
+CREATE TABLE notification_upgrade_guard (table_name text PRIMARY KEY, rows jsonb NOT NULL);
+DO $snapshot_notification$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+   AND tablename NOT IN ('serverpod_migrations', 'notification_upgrade_guard') LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s', item.tablename) INTO contents;
+  INSERT INTO notification_upgrade_guard VALUES (item.tablename, contents);
+ END LOOP;
+END;
+$snapshot_notification$;
+""")
+        sql(database, (SERVER / "migrations/20261025122511973-live-notifications/migration.sql").read_text(encoding="utf-8"))
+        sql(database, """
+DO $verify_notification$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT * FROM notification_upgrade_guard LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s', item.table_name) INTO contents;
+  IF contents IS DISTINCT FROM item.rows THEN RAISE EXCEPTION 'Notification migration changed %', item.table_name; END IF;
+ END LOOP;
+ IF (SELECT count(*) FROM serverpod_notifications_delivery)<>0
+ OR (SELECT count(*) FROM serverpod_notifications_scope)<>0
+ OR (SELECT count(*) FROM serverpod_notifications_cursor)<>0
+ THEN RAISE EXCEPTION 'Notification migration invented deliveries or identities'; END IF;
+END;
+$verify_notification$;
+DROP TABLE notification_upgrade_guard;
+""")
         print("PASS: populated schema upgrades preserve prior rows, add unarmed generation defaults and create no alarm work or actions.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

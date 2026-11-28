@@ -12,6 +12,28 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import 'package:serverpod_notifications_client/src/protocol/notification_page.dart'
+    as _i64e4x8k;
+
+/// {@category Endpoint}
+class EndpointNotification extends _isc.EndpointRef {
+  EndpointNotification(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'serverpod_notifications.notification';
+
+  _ida.Future<_i64e4x8k.NotificationPage> recover(
+    int pageSize,
+    String? cursor,
+  ) => caller.callServerEndpoint<_i64e4x8k.NotificationPage>(
+    'serverpod_notifications.notification',
+    'recover',
+    {
+      'pageSize': pageSize,
+      'cursor': cursor,
+    },
+  );
+}
 
 /// Authenticated module wiring check; no calendar/notification domain behavior.
 /// {@category Endpoint}
@@ -30,13 +52,17 @@ class EndpointNotificationDiagnostics extends _isc.EndpointRef {
 
 class Caller extends _isc.ModuleEndpointCaller {
   Caller(_isc.ServerpodClientShared client) : super(client) {
+    notification = EndpointNotification(this);
     notificationDiagnostics = EndpointNotificationDiagnostics(this);
   }
+
+  late final EndpointNotification notification;
 
   late final EndpointNotificationDiagnostics notificationDiagnostics;
 
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
+    'serverpod_notifications.notification': notification,
     'serverpod_notifications.notificationDiagnostics': notificationDiagnostics,
   };
 }

@@ -2,6 +2,7 @@ import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:flutter/material.dart';
 
 import 'calendar_screen.dart';
+import 'live_notifications.dart';
 
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:serverpod_flutter/serverpod_flutter.dart';
@@ -208,6 +209,7 @@ class _ConnectionScreenState extends State<_ConnectionScreen> {
                     child: LinearProgressIndicator(),
                   ),
                 if (_error != null) Text(_error!, key: const Key('error')),
+                if (signedIn) LiveNotifications(client: widget.client),
                 if (_result != null)
                   SelectableText(_result!, key: const Key('result')),
               ],

@@ -247,6 +247,26 @@ class EndpointRefreshJwtTokens extends _iacc.EndpointRefreshJwtTokens {
       );
 }
 
+/// Transient authorized hints only. Recovery reads the durable generic module.
+/// {@category Endpoint}
+class EndpointNotificationStream extends _isc.EndpointRef {
+  EndpointNotificationStream(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'notificationStream';
+
+  _ida.Stream<_i9wvmat7.NotificationHint> watch() =>
+      caller.callStreamingServerEndpoint<
+        _ida.Stream<_i9wvmat7.NotificationHint>,
+        _i9wvmat7.NotificationHint
+      >(
+        'notificationStream',
+        'watch',
+        {},
+        {},
+      );
+}
+
 /// Host-side authenticated identity check, separate from calendar storage.
 /// {@category Endpoint}
 class EndpointSmoke extends _isc.EndpointRef {
@@ -308,6 +328,7 @@ class Client extends _isc.ServerpodClientShared {
        ) {
     emailIdp = EndpointEmailIdp(this);
     refreshJwtTokens = EndpointRefreshJwtTokens(this);
+    notificationStream = EndpointNotificationStream(this);
     smoke = EndpointSmoke(this);
     modules = Modules(this);
   }
@@ -315,6 +336,8 @@ class Client extends _isc.ServerpodClientShared {
   late final EndpointEmailIdp emailIdp;
 
   late final EndpointRefreshJwtTokens refreshJwtTokens;
+
+  late final EndpointNotificationStream notificationStream;
 
   late final EndpointSmoke smoke;
 
@@ -324,6 +347,7 @@ class Client extends _isc.ServerpodClientShared {
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
     'emailIdp': emailIdp,
     'refreshJwtTokens': refreshJwtTokens,
+    'notificationStream': notificationStream,
     'smoke': smoke,
   };
 

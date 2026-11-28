@@ -1,0 +1,7 @@
+enum: NotificationDeliveryState
+serialized: byName
+values:
+  - queued
+  - published
+  - suppressed
+  - expired

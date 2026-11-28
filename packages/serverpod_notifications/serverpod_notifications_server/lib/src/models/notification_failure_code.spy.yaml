@@ -1,0 +1,9 @@
+enum: NotificationFailureCode
+serialized: byName
+values:
+  - accessDenied
+  - unavailable
+  - validation
+  - conflict
+  - invalidCursor
+  - limitExceeded

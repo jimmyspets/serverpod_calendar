@@ -2,6 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:calendar_example_client/calendar_example_client.dart';
+import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart';
+
+import 'notification_smoke.dart';
+
 /// Runs real, independent example hosts against isolated shared test storage.
 /// Compose test services must already be healthy. All child processes are owned
 /// by this harness and are stopped in finally, including on test failure.
@@ -84,7 +89,7 @@ Future<void> main(List<String> args) async {
     final out = client.stdout.transform(utf8.decoder).listen(stdout.write);
     final err = client.stderr.transform(utf8.decoder).listen(stderr.write);
     final code = await client.exitCode.timeout(
-      const Duration(seconds: 90),
+      const Duration(seconds: 150),
       onTimeout: () {
         unawaited(stop(client));
         throw TimeoutException('Generated-client smoke timed out.');
@@ -93,6 +98,52 @@ Future<void> main(List<String> args) async {
     await out.cancel();
     await err.cancel();
     if (code != 0) throw StateError('Real-client smoke failed ($code).');
+    final settings =
+        (jsonDecode(await File('.local/credentials.json').readAsString())
+                as Map)['test']
+            as Map;
+    final recoveryClients = [
+      for (final port in [18180, 18280])
+        Client('http://localhost:$port/')
+          ..authSessionManager = ClientAuthSessionManager(
+            storage: _RecoveryStorage(),
+          ),
+    ];
+    try {
+      final auth = await recoveryClients.first.emailIdp.login(
+        email: 'alice@example.invalid',
+        password: settings['demoAlicePassword'] as String,
+      );
+      for (final c in recoveryClients) {
+        await c.auth.updateSignedInUser(auth);
+      }
+      await notificationSmoke(
+        recoveryClients,
+        setRecipientBlocked: (blocked) async {
+          final result = await Process.run('python', [
+            'tool/notification_access_probe.py',
+            '${auth.authUserId}',
+            blocked ? 'block' : 'unblock',
+          ], workingDirectory: root);
+          if (result.exitCode != 0) {
+            throw StateError('Synthetic access fixture failed');
+          }
+        },
+        loseProducer: () async {
+          await stop(hosts.first);
+          await hosts.first.exitCode;
+        },
+      );
+      stdout.writeln(
+        'PASS: producer host actually terminated; survivor reauthorized and recovered the same live notification.',
+      );
+    } finally {
+      for (final c in recoveryClients) {
+        c.close();
+      }
+    }
+    // Restore the owned host so the complete Flutter journey still uses A/B.
+    await start('smoke-a-recovered', 18180);
     if (args.contains('--flutter')) {
       final driverPath =
           Platform.environment['CHROMEDRIVER'] ??
@@ -214,5 +265,15 @@ Future<void> main(List<String> args) async {
     for (final sink in logSinks) {
       await sink.close();
     }
+  }
+}
+
+final class _RecoveryStorage implements ClientAuthSuccessStorage {
+  AuthSuccess? value;
+  @override
+  Future<AuthSuccess?> get() async => value;
+  @override
+  Future<void> set(AuthSuccess? data) async {
+    value = data;
   }
 }

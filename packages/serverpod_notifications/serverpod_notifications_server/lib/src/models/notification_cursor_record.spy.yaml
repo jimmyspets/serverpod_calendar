@@ -1,0 +1,19 @@
+class: NotificationCursorRecord
+serverOnly: true
+table: serverpod_notifications_cursor
+fields:
+  token: String
+  scopeKey: String
+  principalId: String
+  policyRevision: String
+  recipientNamespace: String
+  recipientKey: String
+  afterId: UuidValue
+  pageSize: int
+  expiresAt: DateTime
+indexes:
+  notification_cursor_token_unique:
+    fields: token
+    unique: true
+  notification_cursor_expiry_idx:
+    fields: expiresAt
