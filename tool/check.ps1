@@ -83,7 +83,7 @@ try {
   try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/occurrence_queries_test.dart', 'test/integration/event_future_cancellation_test.dart') }
   finally { Pop-Location }
   Push-Location $ExampleServer
-  try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/recurring_invitations_test.dart', 'test/integration/instance_invitations_test.dart', 'test/integration/instance_invitation_application_test.dart', 'test/integration/instance_invitation_responses_test.dart', 'test/integration/range_invitations_test.dart', 'test/integration/range_invitation_application_test.dart', 'test/integration/range_cancellation_application_test.dart', 'test/integration/range_cancellation_composition_test.dart', 'test/integration/range_cancellation_lifecycle_test.dart', 'test/integration/range_restoration_application_test.dart', 'test/integration/restoration_master_composition_test.dart', 'test/integration/restoration_master_lifecycle_test.dart', 'test/integration/restoration_single_application_test.dart') }
+  try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/recurring_invitations_test.dart', 'test/integration/instance_invitations_test.dart', 'test/integration/instance_invitation_application_test.dart', 'test/integration/instance_invitation_responses_test.dart', 'test/integration/range_invitations_test.dart', 'test/integration/range_invitation_application_test.dart', 'test/integration/range_cancellation_application_test.dart', 'test/integration/range_cancellation_composition_test.dart', 'test/integration/range_cancellation_lifecycle_test.dart', 'test/integration/range_restoration_application_test.dart', 'test/integration/restoration_master_composition_test.dart', 'test/integration/restoration_master_lifecycle_test.dart', 'test/integration/restoration_single_application_test.dart', 'test/integration/restoration_range_application_test.dart') }
   finally { Pop-Location }
   Invoke-Checked python @('tool/metadata_upgrade_smoke.py')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart')
@@ -99,6 +99,7 @@ try {
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--restoration-compositions')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--restored-lifecycle')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--restored-singles')
+  Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--restored-ranges')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--native-future')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--instance-responses')
   Invoke-Checked dart @('run', 'tool/alarm_work_smoke.dart')

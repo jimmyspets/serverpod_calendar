@@ -4,7 +4,9 @@ String _occRestoredTargetsDigest(
   CalendarInvitationLinkRecord link,
   Map<String, dynamic> state,
 ) => _invitationHash([
-  'restored-target-composition-v10',
+  state['version'] == 11
+      ? 'restored-target-composition-v11'
+      : 'restored-target-composition-v10',
   link.scopeKey,
   link.recipientKey,
   link.id.toString(),
@@ -23,13 +25,29 @@ String _occRestoredTargetsDigest(
 
 String _occRestoredTargetsReceipt(Map<String, dynamic> state) =>
     _invitationHash([
-      'restored-target-receipt-v10',
+      state['version'] == 11
+          ? 'restored-target-receipt-v11'
+          : 'restored-target-receipt-v10',
       state['compositionDigest'] as String,
       state['latestTargetKey'] as String,
       state['requestDigest'] as String,
       jsonEncode(_occOrdered(state['receipt'])),
       _occLatestTarget(state)['digest'] as String,
     ]);
+
+int _occRestoredRangeFloor(
+  _OccurrenceAccepted accepted,
+  Map<String, dynamic> state,
+  CalendarEventTiming original,
+) {
+  final effective = _occFloor(accepted, original).sequence ?? 0;
+  final historical =
+      CalendarEventProtocolVersion.fromJson(
+        (state['restoration'] as Map)['version'],
+      ).sequence ??
+      0;
+  return effective > historical ? effective : historical;
+}
 
 extension CalendarInvitationRestorationTargets on CalendarService {
   Map<String, dynamic> _occRestoredTargetsState({
@@ -60,8 +78,13 @@ extension CalendarInvitationRestorationTargets on CalendarService {
       state,
       allowCancelled: kind == CalendarInvitationSourceKind.meetingCancellation,
     );
+    final selected = targets.singleWhere(
+      (t) => t['sourceId'] == receipt.sourceId.toString(),
+    );
+    final latestKey = selected['key'] as String;
+    final range = latestKey.startsWith('range-v1:');
     final next = <String, dynamic>{
-      'version': 10,
+      'version': state['version'] == 11 || range ? 11 : 10,
       'masterKind': kind.name,
       'frozenRestoration':
           state['frozenRestoration'] ??
@@ -85,7 +108,7 @@ extension CalendarInvitationRestorationTargets on CalendarService {
         protocol: member.protocolState,
       )),
       'targets': targets,
-      'latestTargetKey': _invTargetKey(receipt.originalStart),
+      'latestTargetKey': latestKey,
       'requestDigest': requestDigest,
       'receipt': receipt.toJson(),
     };
@@ -127,10 +150,44 @@ extension CalendarInvitationRestorationTargets on CalendarService {
         }.contains(master?.kind ?? CalendarInvitationSourceKind.request) ||
         (state['targets'] as List).isEmpty ||
         (state['targets'] as List).length + 1 > 128 ||
-        (state['latestTargetKey'] as String).startsWith('range-v1:')) {
+        state['version'] == 10 &&
+            (state['latestTargetKey'] as String).startsWith('range-v1:')) {
       throw StateError('Invalid restored targets');
     }
     final history = _occFrozenRestoration(link, event, row, state);
+    if (state['version'] == 11) {
+      final historicalFloor =
+          CalendarEventProtocolVersion.fromJson(
+            (history.state['restoration'] as Map)['version'],
+          ).sequence ??
+          0;
+      final historicalTargets = (history.state['targets'] as List)
+          .cast<Map<String, dynamic>>();
+      for (final target
+          in (state['targets'] as List).cast<Map<String, dynamic>>()) {
+        final range = (target['key'] as String).startsWith('range-v1:');
+        final inherited = historicalTargets.any(
+          (old) =>
+              jsonEncode(_occOrdered(old)) == jsonEncode(_occOrdered(target)),
+        );
+        if (range && !inherited) {
+          final floor = target['requiredAfterSequence'];
+          final version = CalendarEventProtocolVersion.fromJson(
+            target['version'],
+          );
+          if (floor is! int ||
+              floor < historicalFloor ||
+              floor < 0 ||
+              floor > 2147483647 ||
+              version.sequence == null ||
+              version.sequence! <= floor) {
+            throw StateError('Invalid restored range floor');
+          }
+        } else if (target.containsKey('requiredAfterSequence')) {
+          throw StateError('Unexpected range floor');
+        }
+      }
+    }
     final masterBaseline = CalendarEventImportBaseline.fromJson(
       state['masterBaseline'],
     );

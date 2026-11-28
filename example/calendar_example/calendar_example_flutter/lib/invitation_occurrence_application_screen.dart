@@ -146,7 +146,7 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
           if (v != null) ...[
             if (v.hasAcceptedRangeRestoration)
               const Text(
-                'Source restoration history is retained and its cutoff stays clear. Eligible single-occurrence updates/cancellations can be applied explicitly; a new occurrence command supersedes the previous retry receipt. Master changes preserve the latest receipt. Further range source actions remain blocked.',
+                'Source restoration history is retained and its cutoff stays clear. Eligible single-occurrence updates/cancellations can be applied explicitly; a new occurrence command supersedes the previous retry receipt. Master changes preserve the latest receipt. New range timing updates require SEQUENCE above both the effective anchor and historical restoration. Range cancellation/restoration cycles remain blocked.',
               ),
             if (v.hasAcceptedRangeCancellation &&
                 !v.hasAcceptedRangeRestoration)

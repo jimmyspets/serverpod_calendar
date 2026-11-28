@@ -1,13 +1,13 @@
 part of 'calendar_module.dart';
 
 bool _occHasRangeCancellation(Map<String, dynamic>? state) =>
-    {4, 5, 6, 7, 8, 9, 10}.contains(state?['version']);
+    {4, 5, 6, 7, 8, 9, 10, 11}.contains(state?['version']);
 
 Map<String, dynamic> _occLatestTarget(Map<String, dynamic> state) {
-  if (_occHasRangeRestoration(state) && state['version'] != 10) {
+  if (_occHasRangeRestoration(state) && !{10, 11}.contains(state['version'])) {
     return state['restoration'] as Map<String, dynamic>;
   }
-  if (_occHasRangeCancellation(state) && state['version'] != 10) {
+  if (_occHasRangeCancellation(state) && !{10, 11}.contains(state['version'])) {
     return state['rangeCancellation'] as Map<String, dynamic>;
   }
   final receipt = CalendarInvitationOccurrenceApplyReceipt.fromJson(
@@ -302,7 +302,7 @@ extension CalendarInvitationRangeCancellationOperations on CalendarService {
         row,
         {'version': 4, 'rangeCancellation': state['restoration']},
       );
-      if (state['version'] == 10) {
+      if ({10, 11}.contains(state['version'])) {
         for (final target
             in (state['targets'] as List).cast<Map<String, dynamic>>()) {
           await _occAuthorizeCancellation(

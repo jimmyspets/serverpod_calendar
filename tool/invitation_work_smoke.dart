@@ -55,12 +55,14 @@ void require(bool value, String message) {
 
 Future<void> main(List<String> args) async {
   final nativeFuture = args.contains('--native-future');
+  final restoredRanges = args.contains('--restored-ranges');
   final restoredSingles = args.contains('--restored-singles');
   final restoredLifecycle = args.contains('--restored-lifecycle');
   final restoredCompose =
       args.contains('--restoration-compositions') ||
       restoredLifecycle ||
-      restoredSingles;
+      restoredSingles ||
+      restoredRanges;
   final rangeRestoration =
       args.contains('--range-restorations') || restoredCompose;
   final rangeLifecycle = args.contains('--range-lifecycle');
@@ -563,6 +565,167 @@ Future<void> main(List<String> args) async {
                   result = await restore(b, id, request);
               require(result['id'] != null, 'Restored seed failed');
               return {'request': request, 'id': result['id']};
+            }
+
+            if (restoredRanges) {
+              Future<Map<String, dynamic>> input(
+                String id,
+                int sequence, {
+                bool single = false,
+              }) async {
+                final received = await b.command({
+                  'command': 'receive',
+                  'caseId': id,
+                  'key': '${single ? 'one' : 'range'}-$sequence',
+                  'instance': true,
+                  'range': !single,
+                  'sequence': sequence,
+                }) as Map;
+                final v = await b.command({
+                  'command': 'occurrence-view',
+                  'caseId': id,
+                  'entryId': received['entryId'],
+                  'range': !single,
+                }) as Map;
+                require(
+                  v['canApply'] == true,
+                  'Restored range/single preview blocked',
+                );
+                return {
+                  'invitationId': v['invitationId'],
+                  'sourceId': v['incomingSourceId'],
+                  'linkId': v['linkId'],
+                  'expectedInvitationRevision': v['invitationRevision'],
+                  'expectedEventRevision': v['eventRevision'],
+                  'expectedCalendarRevision': v['calendarRevision'],
+                  'expectedApplicationRevision': v['applicationRevision'],
+                  'expectedOccurrenceRevision': v['occurrenceRevision'],
+                };
+              }
+
+              Future<Map> change(
+                _Probe p,
+                String id,
+                Map request, {
+                bool single = false,
+                String? pause,
+              }) async => await p.command({
+                'command': 'occurrence-apply',
+                'caseId': id,
+                'range': !single,
+                'request': request,
+                'pause': pause,
+              }) as Map;
+              Future<void> checked(String id, Map saved) async {
+                require(
+                  (await restore(b, id, saved['request'] as Map))['error'] ==
+                      'dependencyConflict',
+                  'Range failed to supersede restoration receipt',
+                );
+                final state = await b.command({
+                  'command': 'inspect',
+                  'caseId': id,
+                }) as Map;
+                require(
+                  state['checkpointVersion'] == 11 && state['cutoff'] == null,
+                  'Range lost current/frozen state',
+                );
+              }
+
+              final id = nextCase(),
+                  saved = await seed(id),
+                  request = await input(id, 4);
+              final same = await Future.wait([
+                change(a, id, request),
+                change(b, id, request),
+              ]);
+              require(
+                same.first['id'] != null && same.first['id'] == same.last['id'],
+                'Range same-command race duplicated effect',
+              );
+              await checked(id, saved);
+              await apply(b, id, await masterInput(id, 6));
+              await apply(
+                b,
+                id,
+                await masterInput(id, 8, cancel: true),
+                cancel: true,
+              );
+              await apply(b, id, await masterInput(id, 9));
+              require(
+                (await change(b, id, request))['id'] == same.first['id'],
+                'Master lifecycle lost current range receipt',
+              );
+              for (final other in ['range', 'single', 'master']) {
+                final id = nextCase();
+                await seed(id);
+                final older = await input(id, 4),
+                    newer = other == 'master'
+                        ? await masterInput(id, 6)
+                        : await input(id, 5, single: other == 'single');
+                final raced = await Future.wait([
+                  change(a, id, older),
+                  other == 'master'
+                      ? apply(b, id, newer)
+                      : change(b, id, newer, single: other == 'single'),
+                ]);
+                require(
+                  raced.where((r) => r['id'] != null).length == 1 &&
+                      raced
+                              .where((r) => r['error'] == 'staleRevision')
+                              .length ==
+                          1,
+                  'Range/$other bypassed revision fencing',
+                );
+              }
+              for (final continued in [false, true]) {
+                for (final stage in ['before', 'after']) {
+                  final id = nextCase(), saved = await seed(id);
+                  if (continued) {
+                    await change(b, id, await input(id, 4));
+                  }
+                  final request = await input(id, continued ? 5 : 4);
+                  a.paused = Completer<Map<String, dynamic>>();
+                  final lost = change(
+                    a,
+                    id,
+                    request,
+                    pause: 'occurrence-$stage',
+                  ).then<void>((_) {}, onError: (Object _, StackTrace _) {});
+                  final proposed = await a.paused!.future.timeout(
+                    const Duration(seconds: 40),
+                  );
+                  final visible = await b.command({
+                    'command': 'inspect',
+                    'caseId': id,
+                  }) as Map;
+                  require(
+                    visible['checkpointVersion'] ==
+                            (continued || stage == 'after' ? 11 : 7) &&
+                        visible['cutoff'] == null &&
+                        visible['eventRevision'] ==
+                            3 +
+                                (continued ? 1 : 0) +
+                                (stage == 'after' ? 1 : 0),
+                    'Range commit partially visible',
+                  );
+                  await a.stop();
+                  await lost;
+                  final recovered = await change(b, id, request);
+                  require(
+                    recovered['id'] != null &&
+                        ((stage == 'after') ==
+                            (recovered['id'] == proposed['id'])),
+                    'Range recovery lost receipt identity',
+                  );
+                  await checked(id, saved);
+                  a = await start('a-restored-range-$continued-$stage', 18780);
+                }
+              }
+              stdout.writeln(
+                'PASS: restored range same/competing/single/master races, v7/v11 visibility, master lifecycle receipts, restoration supersession and actual loss before/after first and continued commits.',
+              );
+              return;
             }
 
             if (restoredSingles) {

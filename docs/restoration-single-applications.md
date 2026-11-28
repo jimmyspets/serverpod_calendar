@@ -18,4 +18,4 @@ Native component/baseline/checkpoint changes, revision/time, selected notice dis
 
 The example's fixed single fixture now selects its PERIOD original on January 5, independently of the January 3 range anchor. Endpoint signatures are unchanged; module tests retain same-anchor collision coverage. Existing Flutter controls expose explicit single application and explain latest-only retries versus retained history. New range transitions, other scheduling methods and real mail remain separate. See [actual validation](scaffold-validation.md).
 
-The next [range REQUEST proposal](adr/0168-range-request-applications-after-source-restoration.md) uses the confirmed dual strict sequence floors. Its v11 mechanics remain under review and do not lift current range guards.
+[ADR 0168](adr/0168-range-request-applications-after-source-restoration.md) now adds the separately approved [range REQUEST profile](restoration-range-applications.md) with both strict sequence floors. New cancellation/restoration cycles remain separate.

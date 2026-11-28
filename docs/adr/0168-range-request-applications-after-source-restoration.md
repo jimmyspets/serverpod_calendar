@@ -1,6 +1,6 @@
 # ADR 0168: Range REQUEST application after source restoration
 
-Status: **Proposed. The maintainer confirmed that a new THISANDFUTURE timing update must have SEQUENCE greater than both the effective anchor component and the historical restoration. The v11, authority, retry and composition mechanics below require explicit agreement before implementation.**
+Status: **Accepted by explicit maintainer agreement on 2026-11-03, including the v11, authority, retry and composition mechanics.**
 
 ## Context and bounded scope
 
@@ -26,7 +26,7 @@ Replacing a current range descriptor replaces that target in place; unrelated ta
 
 Later single commands after v11 retain v11 and their ADR 0167 freshness rules. Master REQUEST/CANCEL/reopening also retain v11, the current target ledger, clear cutoff and individual cancellations. Recompose against the verified current master and reject recurrence/profile changes that orphan a current target or the historical restoration original. Never reinstate the old cutoff because the latest target now names a range.
 
-Keep existing 4 MiB/link, 16 MiB/recipient and 64 MiB/scope hard ceilings and configurable lower limits; count all historical/current duplication. Current targets plus one retained range-history slot must remain within 128. Existing source/work limits and private deletion scrubbing apply. Reject capacity failures without dropping proof or raising caps. No SQL/table/column, generated model/endpoint signature, dependency or retention expansion is proposed.
+Keep existing 4 MiB/link, 16 MiB/recipient and 64 MiB/scope hard ceilings and configurable lower limits; count all historical/current duplication. Current targets plus one retained range-history slot must remain within 128. Existing source/work limits and private deletion scrubbing apply. Reject capacity failures without dropping proof or raising caps. No SQL/table/column, generated model/endpoint signature, dependency or retention expansion is added.
 
 ## Authority, views and atomicity
 
@@ -51,3 +51,8 @@ Keeping the current guard leaves selected range reconciliation incomplete. Effec
 After explicit approval cover direct v7/v8/v9 and current v10 to v11, continuing single/range/master lifecycle, DATE/UTC/named zones/DST, PERIOD originals, unchanged later exceptions/versions and exact original/profile/orphan protection. Test each floor independently: below/equal/above effective and historical versions, later timestamp with equal sequence, missing sequence, zero/maximum bounds, and the contrasting retained single freshness policy.
 
 Cover read/preliminary/final/native/action/composition authority, legacy retry permissions, latest-only supersession and current retries after drafts/newer notices, every frozen/current/kind/range-key/source/receipt binding, unknown/nested formats, byte/work/slot limits, pruning/deletion and unchanged old reads. Exercise actual two-host same/competing single-range-master commands, atomic visibility and process loss before/after commit; generated clients/Flutter; busy/query/feed validators and reminder suppression/actions/deduplication. Use focused tests during development, grouped checks before one complete-batch code commit and full implementation-head repository CI before readiness.
+
+
+## Scoped implementation
+
+See [the implemented profile](../restoration-range-applications.md) and [actual validation](../scaffold-validation.md). New cancellation/restoration cycles, replies and real mail remain separate.
