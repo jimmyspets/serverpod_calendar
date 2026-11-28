@@ -1113,3 +1113,13 @@ Accepted [ADR 0182](adr/0182-native-event-information-publication.md) authorizes
 - [x] Implement the finite-cutoff lifecycle, prove exact v7/v8 restoration after pruning and validate two-host process-loss recovery. See the [implementation and validation record](published-range-controls.md#adr-0189-validation).
 - [x] Verify the connected Flutter scheduling journey against the freshly built example.
 - [ ] Verify full exact-head hosted inspection and runtime results before readiness.
+
+## Authenticated organizer handling of VEVENT REFRESH
+
+[Proposed ADR 0190](adr/0190-authenticated-event-refresh.md) advances the
+independent scheduling-method lane. It groups trusted private intake,
+organizer review and explicit single-recipient resend from the current
+non-recurring published REQUEST.
+
+- [ ] Obtain maintainer agreement on the first profile and its permission, storage and retention contract.
+- [ ] Implement and validate approved ingress, review and durable synthetic resend across the generated client, two hosts and Flutter.
