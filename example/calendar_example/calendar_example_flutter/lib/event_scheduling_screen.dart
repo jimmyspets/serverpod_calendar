@@ -200,6 +200,9 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
             'Ordinary event edits remain local. Save and notify publishes the content below with the currently saved timing.',
           ),
           const Text(
+            'Published originals stay in the publication history. After following the series again, Save and notify sends their current series values without creating native exceptions.',
+          ),
+          const Text(
             'This workflow supports native events and representable recurring exceptions with fixed recipients. Cancel and notify uses the last published version and keeps saved local fields. It does not save unsaved form edits; reloading discards those edits.',
           ),
           if (_busy) const LinearProgressIndicator(),
@@ -229,7 +232,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
           ],
           if (hasExceptions)
             const Text(
-              'Saved exceptions are included when representable. Follow-series content without explicit timing and individual cancellations cannot be published yet. Removing a previously published exception requires a future reset workflow. A rejected publication keeps your saved edits.',
+              'Saved exceptions are included when representable. Previously published originals can follow the series again; their current values are sent explicitly. New content-only exceptions without timing and individual cancellations remain unsupported. A rejected publication keeps your saved edits.',
               key: Key('scheduling-exception-limit'),
             ),
           TextField(

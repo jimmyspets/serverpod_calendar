@@ -102,7 +102,39 @@ Future<void> schedulingSmoke(List<Client> clients) async {
   if (writes.where((v) => v).length != 1) {
     throw StateError('Expected revision race accepted both publications');
   }
-  final before = await a.calendarEvent.schedulingStatus(event.eventId);
+  var before = await a.calendarEvent.schedulingStatus(event.eventId);
+  await b.calendarEvent.changeOccurrence(
+    cal.CalendarEventOccurrenceChange(
+      eventId: event.eventId,
+      expectedRevision: before.eventRevision,
+      originalStart: cal.CalendarEventTiming(
+        kind: cal.CalendarEventTimeKind.utc,
+        start: cal.CalendarEventCivil(year: 2026, month: 11, day: 2, hour: 9),
+      ),
+      action: cal.CalendarEventOccurrenceAction.clearSingleTiming,
+    ),
+  );
+  final reset = command.copyWith(
+    expectedRevision: before.eventRevision + 1,
+    commandId: cal.Uuid().v4obj(),
+    content: content('Reset across hosts'),
+  );
+  final resetReceipts = await Future.wait([
+    a.calendarEvent.saveAndNotify(reset),
+    b.calendarEvent.saveAndNotify(reset),
+  ]);
+  if (resetReceipts[0].publicationId != resetReceipts[1].publicationId ||
+      resetReceipts.where((r) => !r.unchanged).length != 1 ||
+      (await a.calendarEvent.getEvent(
+            event.eventId,
+            cal.CalendarEventFieldGroup.values,
+          )).timingOverrides !=
+          null) {
+    throw StateError(
+      'Cross-host reset changed native inheritance or lost idempotency',
+    );
+  }
+  before = await a.calendarEvent.schedulingStatus(event.eventId);
   await a.calendarEvent.update(
     cal.CalendarEventUpdateRequest(
       eventId: event.eventId,
@@ -164,7 +196,7 @@ Future<void> schedulingSmoke(List<Client> clients) async {
     throw StateError('Explicit reopening did not publish REQUEST');
   }
   stdout.writeln(
-    'PASS: two-host recurring occurrence-bundle publication, idempotency/revision races, local draft isolation, cancellation/reopening and synthetic acceptance.',
+    'PASS: two-host recurring occurrence-bundle publication and retained resets, idempotency/revision races, local draft isolation, cancellation/reopening and synthetic acceptance.',
   );
   // Bindings deliberately reject deletion in the first profile. Isolated test
   // storage is reset by the root harness; no public cleanup backdoor is added.

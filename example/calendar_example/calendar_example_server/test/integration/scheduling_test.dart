@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_calendar_server/serverpod_calendar_server.dart';
+import 'package:serverpod_calendar_server/src/event_wire_output.dart';
 import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 import 'package:test/test.dart';
 
@@ -727,7 +728,185 @@ void main() {
       expect(reopened.events.last.originalDate!.day, 28);
     });
 
-    test('published occurrence removal rejects atomically while saved local edits survive', () async {
+    Future<void> clearTiming(
+      UuidValue id,
+      CalendarEventTiming original, {
+      bool future = false,
+    }) async {
+      await service.changeOccurrence(
+        CalendarEventOccurrenceChange(
+          eventId: id,
+          expectedRevision: (await service.getEvent(
+            id,
+            CalendarEventFieldGroup.values,
+          )).revision,
+          originalStart: original,
+          action: future
+              ? CalendarEventOccurrenceAction.clearFutureTiming
+              : CalendarEventOccurrenceAction.clearSingleTiming,
+        ),
+      );
+    }
+
+    for (final kind in [
+      CalendarEventTimeKind.date,
+      CalendarEventTimeKind.utc,
+      CalendarEventTimeKind.zoned,
+    ]) {
+      test(
+        'retained reset ${kind.name} follows later series changes and ordinary export stays canonical',
+        () async {
+          final content = masterContent(kind: kind, count: 6),
+              id = await masterEvent(masterContent(kind: kind, count: 6));
+          await moveOccurrence(id, kind, 28);
+          await moveOccurrence(id, kind, 30, future: true);
+          final first = await notifyCurrent(id, content);
+          CalendarEventTiming original(int day) => CalendarEventTiming(
+            kind: kind,
+            start: masterTiming(kind: kind, day: day).start,
+            zoneId: content.timing.zoneId,
+          );
+          await clearTiming(id, original(28));
+          await clearTiming(id, original(30), future: true);
+          final before = (await eventData(id)).protocolState!.toJson();
+          final reset = await notifyCurrent(id, content),
+              wire = await messageFor(reset);
+          expect(reset.publicationId, isNot(first.publicationId));
+          expect(wire.events.length, 3);
+          expect(wire.events.where((e) => e.isThisAndFuture).length, 1);
+          for (final e in wire.events.where((e) => e.isOverride)) {
+            expect(props(e, 'DESCRIPTION').single.value, '');
+            expect(props(e, 'LOCATION').single.value, '');
+            expect(e.summary!.value, content.summary);
+          }
+          final row = await eventData(id);
+          expect(row.timingOverrides, isNull);
+          expect(row.protocolState!.toJson(), before);
+          final canonical = parseIcalendarEventCalendar(
+            eventExportBytes([
+              CalendarEventPolicySnapshot(
+                id,
+                row.calendarId,
+                reset.eventRevision,
+                row.content,
+                row.protocolUid,
+                row.updatedAt,
+                origin: row.origin,
+                timingOverrides: row.timingOverrides,
+                protocolState: row.protocolState,
+              ),
+            ]),
+          );
+          expect(canonical.series.single.overrides, isEmpty);
+          final snapshot = jsonDecode(
+            (await publication(reset.publicationId)).snapshot,
+          );
+          expect(snapshot['version'], 3);
+          expect(snapshot['projectionOriginals'].length, 2);
+          final noop = await notifyCurrent(id, content);
+          expect(noop.unchanged, true);
+          expect(noop.publicationId, reset.publicationId);
+          final changed = content.copyWith(
+            summary: 'Following live series',
+            timing: content.timing.copyWith(
+              duration: CalendarEventDuration(days: 2),
+            ),
+          );
+          final updated = await messageFor(await notifyCurrent(id, changed));
+          expect(
+            updated.events
+                .where((e) => e.isOverride)
+                .every((e) => e.summary!.value == 'Following live series'),
+            true,
+          );
+          expect((await eventData(id)).timingOverrides, isNull);
+          for (final e in updated.events.where((e) => e.isOverride)) {
+            expect(props(e, 'DURATION').single.value, 'P2D');
+            final prior = wire.events.singleWhere(
+              (v) =>
+                  v.isOverride &&
+                  v.originalDate == e.originalDate &&
+                  v.originalTime == e.originalTime,
+            );
+            expect(e.sequence, greaterThan(prior.sequence!));
+          }
+          final cancel = await service.cancelAndNotify(
+            cancelRequest(
+              id,
+              revision: (await service.getEvent(
+                id,
+                CalendarEventFieldGroup.values,
+              )).revision,
+            ),
+          );
+          final floor = (await messageFor(cancel)).events.single.sequence!;
+          final reopened = await messageFor(await notifyCurrent(id, changed));
+          expect(reopened.events.length, 3);
+          expect(reopened.events.every((e) => e.sequence! > floor), true);
+        },
+      );
+    }
+    test('retained reset rejects excluded membership and kind changes without partial writes', () async {
+      final content = masterContent(), id = await masterEvent(masterContent());
+      await moveOccurrence(id, CalendarEventTimeKind.date, 28);
+      await notifyCurrent(id, content);
+      await clearTiming(id, originalDay(28));
+      final before = jsonEncode((await eventData(id)).toJson());
+      await expectLater(
+        notifyCurrent(
+          id,
+          content.copyWith(
+            recurrence: content.recurrence!.copyWith(
+              exclusions: [originalDay(28)],
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      expect(jsonEncode((await eventData(id)).toJson()), before);
+      await service.changeOccurrence(
+        CalendarEventOccurrenceChange(
+          eventId: id,
+          expectedRevision: (await service.getEvent(
+            id,
+            CalendarEventFieldGroup.values,
+          )).revision,
+          originalStart: originalDay(28),
+          action: CalendarEventOccurrenceAction.replaceFutureTiming,
+          replacement: originalDay(29),
+        ),
+      );
+      await expectLater(
+        notifyCurrent(id, content),
+        failure(CalendarFailureCode.validation),
+      );
+      expect((await publications()).length, 1);
+    });
+    test('retained reset upgrades a validated v2 occurrence ledger without rewriting old bytes', () async {
+      final content = masterContent(), id = await masterEvent(masterContent());
+      await moveOccurrence(id, CalendarEventTimeKind.date, 28);
+      final first = await notifyCurrent(id, content),
+          row = await publication(first.publicationId);
+      final decoded = jsonDecode(row.snapshot)..['version'] = 2;
+      decoded.remove('projectionOriginals');
+      row.snapshot = jsonEncode(decoded);
+      final projection = jsonDecode(row.projection)..['version'] = 2;
+      row.projection = jsonEncode(projection);
+      await CalendarSchedulingPublicationRecord.db.updateRow(session, row);
+      final payload = row.payload;
+      await clearTiming(id, originalDay(28));
+      final reset = await notifyCurrent(id, content);
+      expect((await messageFor(reset)).events.length, 2);
+      expect((await publication(first.publicationId)).payload, payload);
+      expect(
+        jsonDecode(
+          (await publication(reset.publicationId)).snapshot,
+        )['version'],
+        3,
+      );
+    });
+
+    test('published occurrence reset retains identity without creating native timing or text', () async {
       final content = masterContent(), id = await masterEvent(masterContent());
       await moveOccurrence(id, CalendarEventTimeKind.date, 28);
       final first = await notifyCurrent(id, content);
@@ -739,14 +918,117 @@ void main() {
           action: CalendarEventOccurrenceAction.clearSingleTiming,
         ),
       );
+      final before = (await eventData(id)).protocolState!.toJson();
+      final reset = await notifyCurrent(id, content),
+          wire = await messageFor(reset);
+      expect(wire.events.length, 2);
+      expect(wire.events.last.originalDate!.day, 28);
+      expect(wire.events.last.startDate!.day, 28);
+      expect((await eventData(id)).timingOverrides, isNull);
+      expect((await eventData(id)).protocolState!.overrides, isEmpty);
+      expect((await eventData(id)).protocolState!.toJson(), before);
+      expect((await service.schedulingStatus(id)).hasLocalChanges, false);
+      expect((await publications()).length, 2);
+    });
+
+    test('retained reset clears own text with full policy context and rejects corrupt v3 slots', () async {
+      final content = masterContent(), id = await masterEvent(masterContent());
+      await moveOccurrence(id, CalendarEventTimeKind.date, 28);
+      await service.changeOccurrenceContent(
+        CalendarEventOccurrenceContentRequest(
+          eventId: id,
+          expectedRevision: 2,
+          originalStart: originalDay(28),
+          changes: [
+            CalendarEventOccurrenceContentChange(
+              field: CalendarEventContentField.summary,
+              action: CalendarEventContentAction.setValue,
+              text: 'Own title',
+            ),
+            CalendarEventOccurrenceContentChange(
+              field: CalendarEventContentField.description,
+              action: CalendarEventContentAction.setValue,
+              text: 'Own description',
+            ),
+          ],
+        ),
+      );
+      final first = await notifyCurrent(id, content);
+      await service.changeOccurrenceContent(
+        CalendarEventOccurrenceContentRequest(
+          eventId: id,
+          expectedRevision: first.eventRevision,
+          originalStart: originalDay(28),
+          changes: [
+            CalendarEventOccurrenceContentChange(
+              field: CalendarEventContentField.summary,
+              action: CalendarEventContentAction.inheritSeries,
+            ),
+            CalendarEventOccurrenceContentChange(
+              field: CalendarEventContentField.description,
+              action: CalendarEventContentAction.inheritSeries,
+            ),
+          ],
+        ),
+      );
       final before = jsonEncode((await eventData(id)).toJson());
+      host.onCheck = (context) {
+        expect(
+          context
+              .proposedEvent
+              .timingOverrides!
+              .singles
+              .single
+              .contentOverrides,
+          isNull,
+        );
+        expect(
+          context
+              .publicationEvent
+              .timingOverrides!
+              .singles
+              .single
+              .contentOverrides,
+          isNull,
+        );
+        expect(
+          context.outgoingMessage.events.last.summary!.value,
+          content.summary,
+        );
+        expect(
+          props(
+            context.outgoingMessage.events.last,
+            'DESCRIPTION',
+          ).single.value,
+          '',
+        );
+        host.denyFinal = true;
+      };
       await expectLater(
         notifyCurrent(id, content),
-        failure(CalendarFailureCode.validation),
+        failure(CalendarFailureCode.accessDenied),
       );
       expect(jsonEncode((await eventData(id)).toJson()), before);
-      expect((await service.schedulingStatus(id)).hasLocalChanges, true);
       expect((await publications()).length, 1);
+      host.onCheck = null;
+      host.denyFinal = false;
+      final reset = await notifyCurrent(id, content),
+          wire = await messageFor(reset);
+      expect(props(wire.events.last, 'DESCRIPTION').single.parameters, isEmpty);
+      expect(
+        (await eventData(id)).protocolState!.overrides.single.summaryPresent,
+        false,
+      );
+      final row = await publication(reset.publicationId),
+          value = jsonDecode((await publication(reset.publicationId)).snapshot);
+      value['projectionOriginals'][0]['originalStart']['end'] =
+          value['projectionOriginals'][0]['originalStart']['start'];
+      row.snapshot = jsonEncode(value);
+      await CalendarSchedulingPublicationRecord.db.updateRow(session, row);
+      await expectLater(
+        service.schedulingStatus(id),
+        failure(CalendarFailureCode.unavailable),
+      );
     });
 
     test(
@@ -794,7 +1076,7 @@ void main() {
           jsonDecode(
             (await publication(next.publicationId)).snapshot,
           )['version'],
-          2,
+          3,
         );
       },
     );

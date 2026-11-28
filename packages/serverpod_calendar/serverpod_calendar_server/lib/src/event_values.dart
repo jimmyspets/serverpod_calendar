@@ -10,6 +10,7 @@ part 'event_alarm_candidates.dart';
 part 'event_occurrence_content_values.dart';
 part 'event_source_metadata_values.dart';
 part 'event_source_alarm_values.dart';
+part 'event_scheduling_projection_values.dart';
 
 /// Native DTO conversion only; temporal rules remain in the independent core.
 (DateEventSpan?, TimedEventSpan?) validateEventTiming(CalendarEventTiming v) {
