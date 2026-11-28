@@ -485,3 +485,8 @@ New generated-client checks compare identical export bytes from two independent 
 Relative links, consecutive ADR numbering through 0074, credential-value scanning, final changed-file scope, `git diff --check` and unchanged Apache 2.0 LICENSE were checked. The implementation is one completed batch, with concrete API/serialization mechanics retained for draft PR review.
 
 Interactive restoration: the owned example started successfully against the existing development schema. Serverpod MCP log access and hot reload succeeded. The configured Flutter example launched, its DTD/app were discovered and connected through Dart MCP, and Flutter hot reload succeeded. These checks supplement the passing automated browser journey.
+
+
+## Availability replacement contract, 2026-10-22
+
+ADR 0075 records eight directly confirmed product choices and distinguishes proposed comparison-baseline, schema/API, authorization, identity-remapping and transaction/receipt mechanics from implemented behavior. The documentation batch updates the roadmap, requirements/RFC/disclosure guidance and active import/storage notes. No Dart/model/schema/migration or runtime implementation changes were made; no database reset, runtime tests, generation or interactive reload was needed or claimed. Validation covers relative links, consecutive ADR numbering, selected decision consistency, changed-file scope, credential-value scanning and unchanged Apache 2.0 LICENSE. Future implementation evidence and review gates are listed in docs/availability-update.md.

@@ -1,6 +1,6 @@
 # Source-preserving availability storage
 
-[ADR 0072](adr/0072-source-preserving-availability-storage.md) implements the storage prerequisites selected in [ADR 0071](adr/0071-create-only-availability-import.md). This extends native storage, validation, protocol lifecycle and calculation. Authenticated create-only import now uses this representation under [ADR 0073](adr/0073-authenticated-create-only-availability-import.md) and [the import guide](availability-import.md). Authorized export, reconciliation and publication remain pending.
+[ADR 0072](adr/0072-source-preserving-availability-storage.md) implements the storage prerequisites selected in [ADR 0071](adr/0071-create-only-availability-import.md). This extends native storage, validation, protocol lifecycle and calculation. Authenticated create-only import now uses this representation under [ADR 0073](adr/0073-authenticated-create-only-availability-import.md) and [the import guide](availability-import.md). Authenticated export now follows ADR 0074; source replacement/reconciliation and publication remain pending.
 
 ## Native identity and source UID
 
@@ -46,7 +46,7 @@ Native changes to previously tracked timing edits preserve unknown creation: the
 
 The server-internal availabilityStorageProposal helper converts a successfully validated pure IcalendarAvailabilityDefinition into frozen native content, opening UUIDs, retained timing edits and source protocol state. It preserves optional bounds/duration, basic and grouped metadata, contacts, periods, original identities and component omissions. It does not write records, select a destination, authorize imports, approve an organizer, reconcile UIDs or grant current registry approval.
 
-Future authenticated import must independently check the actual destination and revision, separate import/create permissions, all current extension registrations and dedicated organizer approval, then commit the whole file atomically under the declared host-policy guarantee. Existing native content writes continue their preliminary/final host and organizer checks with the full validated proposed content/protocol state. External fresh-check policy still has its documented after-check revocation race.
+Authenticated import under ADR 0073 independently checks the actual destination and revision, separate import/create permissions, all current extension registrations and dedicated organizer approval, then commits the whole file atomically under the declared host-policy guarantee. Existing native content writes continue their preliminary/final host and organizer checks with the full validated proposed content/protocol state. External fresh-check policy still has its documented after-check revocation race.
 
 ## Migration and dependency evidence
 
@@ -55,3 +55,8 @@ Pinned CLI generation produced module migration 20261022150826628-availability-i
 New nested JSON fields are optional, so old category/comment/protocol representations remain decodable. Generation sources, clients and metadata are CLI-generated; migration metadata and definition.sql were not hand-edited. The generated final schema defines the same fields/indexes/constraints as the transformed upgrade. Populated upgrade fixtures check retained content/identity plus text type, absent old default and replacement index semantics; fresh database integration checks exercise the resulting schema. crypto 3.0.7 is now a pinned direct server dependency for digest calculation, reusing the existing workspace resolution; the example adds a test-only direct dependency on the wire package.
 
 [Validation evidence](scaffold-validation.md) records actual focused and broader commands/results. Tests cover no-loss mapping, source dates/sequence, groups/CONTACT, periods and native edits, injected candidate-index digest collisions, long Unicode UIDs, independent destination copies, policy/stale rollback, deletion and populated upgrades. Two-host generated-client smoke checks exercise new groups, opening UID and PERIOD projections. These are storage/native tests, not authenticated import or external-client interoperability evidence.
+
+
+## Proposed replacement baseline
+
+[ADR 0075](adr/0075-availability-update-reconciliation-contract.md) proposes server-owned comparison baselines for explicit replacements. Current storage has no such baseline; source versions and database audit times alone do not establish one. Older/native-created rows must not be silently adopted. Proposed snapshot retention, canonicalization and deletion scrubbing require review before models change. No schema or migration is introduced by that documentation batch.
