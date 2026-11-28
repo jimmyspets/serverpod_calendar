@@ -219,4 +219,4 @@ The approved [native organizer cancellation increment](adr/0123-explicit-native-
 Accepted [recurring organizer masters and whole-series cancellation](adr/0124-recurring-organizer-masters.md) now extend [the runtime](native-organizer-scheduling.md#recurring-masters) using existing native patterns, source codecs and delivery storage. Occurrence-component publication remains a separate required increment; see validation for actual evidence.
 
 
-Next occurrence-design question: [scheduling-only field projection](adr/0125-scheduling-occurrence-field-projection.md). The proposal would make required inherited values explicit in outgoing messages while retaining native inheritance. Version/reset/bundle/storage mechanics remain separate and unapproved; no occurrence-publication runtime is added.
+Accepted [scheduling-only field projection](adr/0125-scheduling-occurrence-field-projection.md) has a pure candidate helper that makes missing required inherited values explicit while retaining source state and native inheritance. Version/reset/bundle/storage mechanics remain separate and unapproved; durable occurrence publication remains unavailable.

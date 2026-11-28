@@ -388,3 +388,5 @@ Accepted [ADR 0123](adr/0123-explicit-native-organizer-cancellation.md) extends 
 
 
 Accepted [ADR 0124](adr/0124-recurring-organizer-masters.md) now adds recurring-master REQUEST/whole-series CANCEL over the existing RRULE/RDATE/EXDATE/PERIOD profile. Native pattern/text/timing drafts and single/future/content/cancellation exceptions remain preserved. A new REQUEST with stored occurrence components rejects explicitly; whole-series cancellation and authorized retained retries preserve those states. This supersedes recurring-master-runtime-pending wording only for this synthetic-transport increment. Occurrence/instance/range and inbound/email interoperability remain separate; local browser tests do not establish external scheduling-client behavior.
+
+Accepted [ADR 0125](adr/0125-scheduling-occurrence-field-projection.md) adds a pure field-projection helper for REQUEST candidates. It preserves native inheritance and source versions, establishes no participant authority and enables no durable occurrence delivery. The declared master-only service boundary and remaining external-client/mail evidence remain unchanged.
