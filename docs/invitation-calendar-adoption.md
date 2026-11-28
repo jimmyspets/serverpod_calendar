@@ -43,3 +43,8 @@ The default limit is 1,024 links per recipient, including deleted-event markers.
 The invitation screen opens a protected calendar-addition/link view. It requires an explicit calendar choice, supports further authorized pages, retains a frozen request for retry and requires explicit refresh after stale state. An existing link replaces the creation controls. A newer incoming invitation reopens review but cannot silently update or duplicate the local copy.
 
 The synthetic example and tests send no mail. Participation responses, updates to linked events, source adoption as organizer, moving/copying/relinking, recurring/CANCEL intake, link purge and external client/mail interoperability remain separate required work.
+
+
+## Next proposed update profile
+
+The maintainer confirmed explicit Apply update with rejection of local content conflicts. [ADR 0139](adr/0139-explicit-linked-invitation-updates.md) proposes one current accepted-source checkpoint per stable link, atomic source replacement/review writes, independent authority and a latest-result retry contract. The original creation receipt remains immutable. Earlier update commands would become stale after a later different application; the checkpoint/API/retention mechanics await explicit review and are not implemented. Receiving a newer invitation still only reopens review; participation replies and reviewed overwrite/merge remain separate.
