@@ -235,6 +235,7 @@ The [pure event adapter](itip-message-profile.md) now covers all eight selected 
 - [x] Implement [bounded native organizer publication](native-organizer-scheduling.md), source-generated migrations, independent authorization, atomic publication, fenced synthetic delivery and the example editor. See validation evidence for the exact checked scope.
 - [x] Implement scoped recurring REQUEST bundles, retained single/future resets and historical single-CANCEL and published-value individual restoration under ADRs 0124–0129.
 - [x] Implement explicit published-value whole-series reopening with retained individual cancellations and complete master-restoration under ADR 0130.
+- [x] Implement the accepted ADR 0131 non-recurring organizer-side REPLY slice with trusted host ingress, private response/source/receipt storage, protected stale review and synthetic example; recurring/instance replies and other inbound methods remain open.
 - [ ] Complete range cancellation, recipient/lifecycle/resend flows, parallel partial coordination, authenticated inbound reconciliation and RFC 6047 mail; scoped outbound runtime does not complete scheduling.
 - [ ] Implement all selected VEVENT and VFREEBUSY methods from [RFC 5546](rfc/rfc-5546.md), with exact roles/properties, host-verified address/delegate/SENT-BY authority and resource acceptance policy. Imported metadata, DNS checks or feed credentials never authorize scheduling.
 - [ ] Separate protocol UID/SEQUENCE/DTSTAMP/RECURRENCE-ID from app revisions and publication/mail identities. Reconcile updates/replies/cancellations, range/instance changes and counter proposals; deduplicate/reject stale or replayed messages without resurrecting cancelled invitations.
@@ -448,6 +449,6 @@ Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) now implements 
 
 Accepted ADR 0130 adds the separate published-value reopening action, publication-only exclusion masks and complete master-updating restoration. Newer native drafts remain local; ordinary complete publication stays guarded while cancellations remain. Next are broader lifecycle/participant coordination, inbound reconciliation, RFC 6047 transport and release evidence. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).
 
-## Proposed authenticated attendee replies
+## Authenticated attendee replies
 
-Next review organizer-side non-recurring attendee REPLY. The maintainer selected retaining stale older-version replies without automatic application. Three-table trusted ingress and response/review mechanics remain proposed; recurrence, other methods and mail follow separately. See [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
+Accepted ADR 0131 now adds the scoped non-recurring organizer-side attendee REPLY implementation: trusted host ingress, atomic private source/receipt/response state, protected review and synthetic examples. Broader batch validation is recorded separately. Next are recurring/instance reply reconciliation and attendee-side incoming invitations, followed by remaining inbound methods, RFC 6047 transport and release evidence. See [the reply guide](authenticated-attendee-replies.md) and [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).

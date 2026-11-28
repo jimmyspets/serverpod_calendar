@@ -403,6 +403,6 @@ Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) adds bounded du
 
 Accepted ADR 0130 adds scoped module behavior for reopening with publication-only EXDATE masks and complete REQUEST restoration. Synthetic tests validate the declared profile; no new external scheduling-client interoperability is claimed. Canonical import/export and subscription-feed profiles stay independent. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).
 
-## Proposed authenticated attendee replies
+## Authenticated attendee replies
 
-No authenticated inbound REPLY capability is implemented by this proposal. ADR 0131 separates the confirmed stale-retention policy from proposed non-recurring source association/version ordering, private response storage and synthetic examples. MIME, recurring replies and external-client evidence remain pending. See [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
+Accepted ADR 0131 adds bounded authenticated non-recurring organizer-side REPLY intake and synthetic generated-client/Flutter review. Exact source identity/version validation and host approval do not establish real mailbox or client interoperability. Recurring replies, MIME and external-client evidence remain pending. See [the reply guide](authenticated-attendee-replies.md) and [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).

@@ -943,6 +943,7 @@ extension CalendarSchedulingOperations on CalendarService {
       savedMeeting.revision++;
       savedMeeting.latestPublicationId = publication.id;
       savedMeeting.updatedAt = now;
+      await _inactivateReplySources(savedMeeting, publication, tx, queuedAt);
       await CalendarSchedulingMeetingRecord.db.updateRow(
         _session,
         savedMeeting,

@@ -671,6 +671,6 @@ Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) adds immutable 
 
 Accepted ADR 0130 uses bounded v6 JSON in existing scheduling columns: one non-recursive v4/v5 individual-state proof with its ordinary active REQUEST basis, current active versions, publication masks, last complete REQUEST and reopening floors. No table, column, migration or reset is added. Canonical/current snapshots remain distinct from published source values. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).
 
-## Proposed authenticated attendee replies
+## Authenticated attendee replies
 
-ADR 0131 proposes server-only normalized reply-source, host-ingress-receipt and attendee-response tables, bounded retained idempotency and protected stale review. Current source remains while referenced; other source/receipts default to 30 days. No table sources/migration are added before model/ADR approval. See [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
+Accepted ADR 0131 adds server-only CalendarSchedulingReplySourceRecord, CalendarSchedulingReplyReceiptRecord and CalendarSchedulingAttendeeResponseRecord with generated additive module/example migrations. Exact source identity and ingress-key idempotency are distinct; current ordering and unexpired references retain source, with configurable 30-day inactive/receipt retention and bounded cleanup. Generated review DTOs contain no transport key; the source document has its own authority gate. Existing data is preserved without a development reset. See [the reply guide](authenticated-attendee-replies.md) and [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).

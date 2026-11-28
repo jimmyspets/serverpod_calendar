@@ -1,0 +1,25 @@
+class: CalendarSchedulingReplySourceRecord
+serverOnly: true
+table: serverpod_calendar_scheduling_reply_source
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  meetingId: UuidValue, relation(parent=serverpod_calendar_scheduling_meeting)
+  attendeeAddress: String
+  digest: String
+  normalizedSource: String
+  sequence: int?
+  stamp: DateTime
+  sourceParticipation: CalendarSchedulingParticipation?
+  effectiveParticipation: CalendarSchedulingParticipation
+  outcome: CalendarSchedulingReplyOutcome
+  publishedSequence: int
+  publishedCancelled: bool
+  receivedAt: DateTime
+  inactiveAt: DateTime?
+indexes:
+  calendar_reply_source_message_unique:
+    fields: meetingId, attendeeAddress, digest
+    unique: true
+  calendar_reply_source_scope_inactive_idx:
+    fields: scopeKey, inactiveAt

@@ -269,6 +269,37 @@ class EndpointNotificationStream extends _isc.EndpointRef {
       );
 }
 
+/// Synthetic private-owner test ingress, deliberately unavailable in production.
+/// {@category Endpoint}
+class EndpointSchedulingDemo extends _isc.EndpointRef {
+  EndpointSchedulingDemo(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'schedulingDemo';
+
+  _ida.Future<_imrxcdin.CalendarSchedulingReplyReceipt> simulateReply(
+    _isc.UuidValue eventId,
+    _isc.UuidValue commandId,
+    String attendeeAddress,
+    _imrxcdin.CalendarSchedulingParticipation participation,
+    int? sequence,
+    DateTime sourceStamp,
+    String? comment,
+  ) => caller.callServerEndpoint<_imrxcdin.CalendarSchedulingReplyReceipt>(
+    'schedulingDemo',
+    'simulateReply',
+    {
+      'eventId': eventId,
+      'commandId': commandId,
+      'attendeeAddress': attendeeAddress,
+      'participation': participation,
+      'sequence': sequence,
+      'sourceStamp': sourceStamp,
+      'comment': comment,
+    },
+  );
+}
+
 /// Host-side authenticated identity check, separate from calendar storage.
 /// {@category Endpoint}
 class EndpointSmoke extends _isc.EndpointRef {
@@ -334,6 +365,7 @@ class Client extends _isc.ServerpodClientShared {
     emailIdp = EndpointEmailIdp(this);
     refreshJwtTokens = EndpointRefreshJwtTokens(this);
     notificationStream = EndpointNotificationStream(this);
+    schedulingDemo = EndpointSchedulingDemo(this);
     smoke = EndpointSmoke(this);
     modules = Modules(this);
   }
@@ -344,6 +376,8 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointNotificationStream notificationStream;
 
+  late final EndpointSchedulingDemo schedulingDemo;
+
   late final EndpointSmoke smoke;
 
   late final Modules modules;
@@ -353,6 +387,7 @@ class Client extends _isc.ServerpodClientShared {
     'emailIdp': emailIdp,
     'refreshJwtTokens': refreshJwtTokens,
     'notificationStream': notificationStream,
+    'schedulingDemo': schedulingDemo,
     'smoke': smoke,
   };
 

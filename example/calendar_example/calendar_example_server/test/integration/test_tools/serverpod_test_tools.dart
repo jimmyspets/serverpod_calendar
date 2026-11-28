@@ -18,6 +18,8 @@ import 'package:calendar_example_server/src/generated/future_calls.dart'
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _iacs;
+import 'package:serverpod_calendar_server/serverpod_calendar_server.dart'
+    as _ipn35bcd;
 import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
     as _ik9lwgjh;
 import 'package:serverpod_test/serverpod_test.dart' as _ist;
@@ -162,6 +164,8 @@ class TestEndpoints {
 
   late final _NotificationStreamEndpoint notificationStream;
 
+  late final _SchedulingDemoEndpoint schedulingDemo;
+
   late final _SmokeEndpoint smoke;
 }
 
@@ -181,6 +185,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     notificationStream = _NotificationStreamEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    schedulingDemo = _SchedulingDemoEndpoint(
       endpoints,
       serializationManager,
     );
@@ -553,6 +561,62 @@ class _NotificationStreamEndpoint {
       _localTestStreamManager.outputStreamController,
     );
     return _localTestStreamManager.outputStreamController.stream;
+  }
+}
+
+class _SchedulingDemoEndpoint {
+  _SchedulingDemoEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_ipn35bcd.CalendarSchedulingReplyReceipt> simulateReply(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue eventId,
+    _is.UuidValue commandId,
+    String attendeeAddress,
+    _ipn35bcd.CalendarSchedulingParticipation participation,
+    int? sequence,
+    DateTime sourceStamp,
+    String? comment,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'schedulingDemo',
+            method: 'simulateReply',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'schedulingDemo',
+          methodName: 'simulateReply',
+          parameters: _ist.testObjectToJson({
+            'eventId': eventId,
+            'commandId': commandId,
+            'attendeeAddress': attendeeAddress,
+            'participation': participation,
+            'sequence': sequence,
+            'sourceStamp': sourceStamp,
+            'comment': comment,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ipn35bcd.CalendarSchedulingReplyReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
   }
 }
 

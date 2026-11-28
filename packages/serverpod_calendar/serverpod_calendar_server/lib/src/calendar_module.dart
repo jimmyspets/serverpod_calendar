@@ -12,6 +12,7 @@ import 'calendar_authorization.dart';
 import 'alarm_values.dart';
 import 'alarm_runtime.dart';
 import 'scheduling_runtime.dart';
+import 'inbound_reply_runtime.dart';
 import 'alarm_work_store.dart';
 import 'generated/protocol.dart';
 import 'native_calendar_name.dart';
@@ -37,6 +38,7 @@ part 'calendar_alarm_actions.dart';
 part 'calendar_alarm_worker.dart';
 part 'calendar_events.dart';
 part 'calendar_scheduling.dart';
+part 'calendar_scheduling_replies.dart';
 part 'calendar_scheduling_bundle.dart';
 part 'calendar_scheduling_occurrence.dart';
 part 'calendar_scheduling_checkpoint_v4.dart';
@@ -131,6 +133,13 @@ abstract final class CalendarModule {
             CalendarAuthorizationGuarantee.coordinated) {
       throw ArgumentError('Scheduling host cannot supply required guarantee');
     }
+    if (scheduling?.replies != null &&
+        options.requiredWriteGuarantee ==
+            CalendarAuthorizationGuarantee.coordinated &&
+        scheduling!.replies!.host.guarantee !=
+            CalendarAuthorizationGuarantee.coordinated) {
+      throw ArgumentError('Reply host cannot supply required guarantee');
+    }
     final registry = <String, CalendarAvailabilityExtensionRegistration>{};
     if (availabilityExtensions.length > 32) {
       throw ArgumentError('Too many extension registrations');
@@ -152,6 +161,18 @@ abstract final class CalendarModule {
       publicationPolicy,
       scheduling,
     );
+  }
+
+  /// Trusted inbound receipt; the installed host must verify exact origin.
+  static Future<CalendarSchedulingReplyReceipt> receiveSchedulingReply(
+    Session session,
+    CalendarSchedulingReplyDelivery delivery,
+  ) async {
+    final runtime = _installed[session.serverpod];
+    if (runtime?.scheduling?.replies == null) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
+    return CalendarService._(session, runtime!)._receiveReply(delivery);
   }
 
   /// Trusted bounded scheduling worker; no client or fabricated login.

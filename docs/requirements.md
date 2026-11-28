@@ -417,6 +417,6 @@ Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) implements the 
 
 Accepted ADR 0130 implements the selected preserve-cancellations reopening policy through an explicit published-value action and separate master-updating restoration. Current native drafts and source exclusions stay independent of publication masks. This scoped lifecycle increment does not complete scheduling reconciliation, mail or external-client release requirements. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).
 
-## Proposed authenticated attendee replies
+## Authenticated attendee replies
 
-The next FR-20/23 proposal preserves verified stale replies for review without applying them to the current invitation or editing newer native drafts. ADR 0131 proposes trusted non-recurring REPLY ingress first; source authority, model and retention details await explicit approval. See [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
+Accepted ADR 0131 adds the scoped FR-20/23 non-recurring organizer-side REPLY implementation: trusted host ingress, protected separate participation and retained stale/conflict review, without native draft or outbound-state changes. Recurring replies, other inbound methods and mail remain required separate work. See [the reply guide](authenticated-attendee-replies.md) and [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).

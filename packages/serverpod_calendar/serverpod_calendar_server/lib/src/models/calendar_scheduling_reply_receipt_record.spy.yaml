@@ -1,0 +1,19 @@
+class: CalendarSchedulingReplyReceiptRecord
+serverOnly: true
+table: serverpod_calendar_scheduling_reply_receipt
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  meetingId: UuidValue, relation(parent=serverpod_calendar_scheduling_meeting)
+  sourceId: UuidValue, relation(parent=serverpod_calendar_scheduling_reply_source)
+  ingressDigest: String
+  outcome: CalendarSchedulingReplyOutcome
+  receivedAt: DateTime
+indexes:
+  calendar_reply_receipt_key_unique:
+    fields: scopeKey, meetingId, ingressDigest
+    unique: true
+  calendar_reply_receipt_source_idx:
+    fields: sourceId
+  calendar_reply_receipt_scope_time_idx:
+    fields: scopeKey, receivedAt

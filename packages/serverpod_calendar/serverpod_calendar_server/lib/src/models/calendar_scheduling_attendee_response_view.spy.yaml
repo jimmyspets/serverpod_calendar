@@ -1,0 +1,13 @@
+class: CalendarSchedulingAttendeeResponseView
+immutable: true
+fields:
+  attendeeAddress: String
+  sourceId: UuidValue?
+  revision: int?
+  invitationSequence: int?
+  sourceSequence: int?
+  stamp: DateTime?
+  sourceParticipation: CalendarSchedulingParticipation?
+  effectiveParticipation: CalendarSchedulingParticipation?
+  receivedAt: DateTime?
+  isCurrent: bool

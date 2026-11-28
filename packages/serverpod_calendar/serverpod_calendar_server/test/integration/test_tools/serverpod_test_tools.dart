@@ -123,6 +123,12 @@ import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_rece
     as _igqgquq7;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_reopen_request.dart'
     as _idfk8xbx;
+import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_reply_document.dart'
+    as _iafjnu1c;
+import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_reply_source_view.dart'
+    as _ivnk0jd2;
+import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_responses_view.dart'
+    as _iorx7nwv;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_save_request.dart'
     as _igziosqt;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_view.dart'
@@ -1572,6 +1578,106 @@ class _CalendarEventEndpoint {
   final _is.EndpointDispatch _endpointDispatch;
 
   final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_iorx7nwv.CalendarSchedulingResponsesView> schedulingResponses(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue eventId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarEvent',
+            method: 'schedulingResponses',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarEvent',
+          methodName: 'schedulingResponses',
+          parameters: _ist.testObjectToJson({'eventId': eventId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iorx7nwv.CalendarSchedulingResponsesView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<List<_ivnk0jd2.CalendarSchedulingReplySourceView>>
+  schedulingReplySources(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue eventId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarEvent',
+            method: 'schedulingReplySources',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarEvent',
+          methodName: 'schedulingReplySources',
+          parameters: _ist.testObjectToJson({'eventId': eventId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<
+                  List<_ivnk0jd2.CalendarSchedulingReplySourceView>
+                >);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_iafjnu1c.CalendarSchedulingReplyDocument> schedulingReplySource(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue eventId,
+    _is.UuidValue sourceId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarEvent',
+            method: 'schedulingReplySource',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarEvent',
+          methodName: 'schedulingReplySource',
+          parameters: _ist.testObjectToJson({
+            'eventId': eventId,
+            'sourceId': sourceId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iafjnu1c.CalendarSchedulingReplyDocument>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 
   _ida.Future<_igqgquq7.CalendarSchedulingReceipt> reopenPublishedAndNotify(
     _ist.TestSessionBuilder sessionBuilder,

@@ -645,7 +645,23 @@ END;
 $verify_scheduling$;
 DROP TABLE scheduling_upgrade_guard;
 """)
-        print("PASS: populated schema upgrades preserve prior rows, create no alarm work/actions and add empty feed/scheduling tables with unknown legacy event provenance.")
+        sql(database, "CREATE TABLE reply_upgrade_guard AS SELECT id, to_jsonb(t) AS payload FROM serverpod_calendar_event_data t;")
+        sql(database, (SERVER / "migrations/20261027194429192-attendee-replies/migration.sql").read_text(encoding="utf-8"))
+        sql(database, """
+DO $verify_replies$
+BEGIN
+ IF EXISTS (SELECT 1 FROM reply_upgrade_guard g LEFT JOIN serverpod_calendar_event_data e USING(id)
+   WHERE e.id IS NULL OR to_jsonb(e) IS DISTINCT FROM g.payload)
+ THEN RAISE EXCEPTION 'Reply migration changed event data'; END IF;
+ IF (SELECT count(*) FROM serverpod_calendar_scheduling_reply_source) <> 0
+ OR (SELECT count(*) FROM serverpod_calendar_scheduling_reply_receipt) <> 0
+ OR (SELECT count(*) FROM serverpod_calendar_scheduling_attendee_response) <> 0
+ THEN RAISE EXCEPTION 'Reply migration invented attendee state'; END IF;
+END;
+$verify_replies$;
+DROP TABLE reply_upgrade_guard;
+""")
+        print("PASS: populated schema upgrades preserve prior rows, create no alarm work/actions and add empty feed/scheduling/reply tables with unknown legacy event provenance.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")
 

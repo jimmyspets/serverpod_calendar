@@ -49,6 +49,7 @@ final class _SchedulingWorker {
       await _finish(claim, result);
     }
     await _cleanup();
+    if (s._scheduling.replies != null) await s._cleanupReplies();
   }
 
   Future<CalendarSchedulingDeliveryRecord?> _delivery(

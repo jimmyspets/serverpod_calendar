@@ -120,6 +120,12 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_recei
     as _ip6y7si3;
 import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_reopen_request.dart'
     as _ir74ejlb;
+import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_reply_document.dart'
+    as _i9qkji17;
+import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_reply_source_view.dart'
+    as _ibmpwk5c;
+import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_responses_view.dart'
+    as _ikx44dyb;
 import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_save_request.dart'
     as _ihl5k6te;
 import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_view.dart'
@@ -564,6 +570,34 @@ class EndpointCalendarEvent extends _isc.EndpointRef {
 
   @override
   String get name => 'serverpod_calendar.calendarEvent';
+
+  _ida.Future<_ikx44dyb.CalendarSchedulingResponsesView> schedulingResponses(
+    _isc.UuidValue eventId,
+  ) => caller.callServerEndpoint<_ikx44dyb.CalendarSchedulingResponsesView>(
+    'serverpod_calendar.calendarEvent',
+    'schedulingResponses',
+    {'eventId': eventId},
+  );
+
+  _ida.Future<List<_ibmpwk5c.CalendarSchedulingReplySourceView>>
+  schedulingReplySources(_isc.UuidValue eventId) => caller
+      .callServerEndpoint<List<_ibmpwk5c.CalendarSchedulingReplySourceView>>(
+        'serverpod_calendar.calendarEvent',
+        'schedulingReplySources',
+        {'eventId': eventId},
+      );
+
+  _ida.Future<_i9qkji17.CalendarSchedulingReplyDocument> schedulingReplySource(
+    _isc.UuidValue eventId,
+    _isc.UuidValue sourceId,
+  ) => caller.callServerEndpoint<_i9qkji17.CalendarSchedulingReplyDocument>(
+    'serverpod_calendar.calendarEvent',
+    'schedulingReplySource',
+    {
+      'eventId': eventId,
+      'sourceId': sourceId,
+    },
+  );
 
   _ida.Future<_ip6y7si3.CalendarSchedulingReceipt> reopenPublishedAndNotify(
     _ir74ejlb.CalendarSchedulingReopenRequest request,

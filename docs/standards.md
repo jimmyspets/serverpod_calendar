@@ -142,6 +142,6 @@ Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) implements the 
 
 Accepted ADR 0130 uses permitted REQUEST/EXDATE syntax as an explicit scheduling-publication projection with retained private cancellation provenance. Restoring a masked original changes the complete master REQUEST. This application policy neither changes canonical EXDATE authority nor establishes full RFC/client/mail conformance. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).
 
-## Proposed authenticated attendee replies
+## Authenticated attendee replies
 
-The next ADR 0131 proposal uses RFC 5546 SEQUENCE/DTSTAMP ordering while retaining optional source values and stale records. Attendee replies change separate response state only, never event status or native participant authority. Source comments/result codes do not generate mail or retries. See [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).
+Accepted ADR 0131 applies RFC 5546 SEQUENCE/DTSTAMP ordering with independently optional source values and stale retention. Reply state is separate from event status and participant authority. Source comments/results initiate no mail or retries; RFC 6047 transport and recurring reconciliation remain separate. See [the reply guide](authenticated-attendee-replies.md) and [ADR 0131](adr/0131-first-authenticated-attendee-replies.md).

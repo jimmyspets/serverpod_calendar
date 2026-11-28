@@ -6,6 +6,21 @@ import '../calendar_module.dart';
 import '../generated/protocol.dart';
 
 class CalendarEventEndpoint extends Endpoint {
+  Future<CalendarSchedulingResponsesView> schedulingResponses(
+    Session session,
+    UuidValue eventId,
+  ) => CalendarModule.service(session).schedulingResponses(eventId);
+
+  Future<List<CalendarSchedulingReplySourceView>> schedulingReplySources(
+    Session session,
+    UuidValue eventId,
+  ) => CalendarModule.service(session).schedulingReplySources(eventId);
+
+  Future<CalendarSchedulingReplyDocument> schedulingReplySource(
+    Session session,
+    UuidValue eventId,
+    UuidValue sourceId,
+  ) => CalendarModule.service(session).schedulingReplySource(eventId, sourceId);
   Future<CalendarSchedulingReceipt> reopenPublishedAndNotify(
     Session session,
     CalendarSchedulingReopenRequest request,

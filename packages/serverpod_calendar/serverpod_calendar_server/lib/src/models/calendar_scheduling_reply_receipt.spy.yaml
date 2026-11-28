@@ -1,0 +1,10 @@
+class: CalendarSchedulingReplyReceipt
+immutable: true
+fields:
+  receiptId: UuidValue
+  sourceId: UuidValue
+  outcome: CalendarSchedulingReplyOutcome
+  invitationSequence: int
+  sourceSequence: int?
+  sourceStamp: DateTime
+  unchanged: bool

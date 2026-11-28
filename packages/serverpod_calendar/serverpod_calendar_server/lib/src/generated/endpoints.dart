@@ -1030,6 +1030,75 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'calendarEvent',
       endpoint: endpoints['calendarEvent']!,
       methodConnectors: {
+        'schedulingResponses': _is.MethodConnector(
+          name: 'schedulingResponses',
+          params: {
+            'eventId': _is.ParameterDescription(
+              name: 'eventId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .schedulingResponses(
+                        session,
+                        params['eventId'],
+                      ),
+        ),
+        'schedulingReplySources': _is.MethodConnector(
+          name: 'schedulingReplySources',
+          params: {
+            'eventId': _is.ParameterDescription(
+              name: 'eventId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .schedulingReplySources(
+                        session,
+                        params['eventId'],
+                      ),
+        ),
+        'schedulingReplySource': _is.MethodConnector(
+          name: 'schedulingReplySource',
+          params: {
+            'eventId': _is.ParameterDescription(
+              name: 'eventId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'sourceId': _is.ParameterDescription(
+              name: 'sourceId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .schedulingReplySource(
+                        session,
+                        params['eventId'],
+                        params['sourceId'],
+                      ),
+        ),
         'reopenPublishedAndNotify': _is.MethodConnector(
           name: 'reopenPublishedAndNotify',
           params: {
