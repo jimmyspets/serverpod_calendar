@@ -35,7 +35,7 @@ from `a683145`.
 [Upgrade PR](https://github.com/jimmyspets/serverpod_calendar/pull/210) ·
 [Hosted run 46058419488](https://github.com/jimmyspets/serverpod_calendar/actions/runs/46058419488)
 
-On 2026-11-28, a manual dispatch started the full repository check on main
-at `f6c2994a803b22f3033e7e368dc626e7777a51e5`. Inspection passed and runtime
-was in progress when checked.
+On 2026-11-28, the manually dispatched full repository check on main
+at `f6c2994a803b22f3033e7e368dc626e7777a51e5` passed both inspection and
+runtime with the approved feed-test exception.
 [Hosted run 46131904608](https://github.com/jimmyspets/serverpod_calendar/actions/runs/46131904608)

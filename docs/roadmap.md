@@ -18,8 +18,8 @@ Checked items describe only the stated implemented slice or explicitly selected 
 Serverpod 4.1.2. The upgrade PR's hosted inspection and runtime jobs passed
 with the maintainer-approved feed-test exception. The run records PR head
 `a683145`. The eventual merged tree includes later changes. The follow-up
-repository check at merge commit `f6c2994` passed inspection and its runtime
-job was still running when checked. See the [upgrade validation
+repository check at merge commit `f6c2994` passed inspection and runtime
+with the approved feed-test exception. See the [upgrade validation
 record](serverpod-4.1-upgrade.md#serverpod-412).
 The [feed 304 wire defect](feed-304-compatibility.md) remains open.
 
@@ -1104,7 +1104,7 @@ Accepted [ADR 0182](adr/0182-native-event-information-publication.md) authorizes
 - [x] Implement the scoped durable feature group and record its focused, database, two-host and Flutter validation.
 - [x] Verify the 4.1.2 upgrade PR's inspection and runtime jobs with the approved test exception.
 - [x] Validate a narrow Relic I/O patch against the strict two-host feed smoke in an isolated checkout. See [the candidate and actual result](feed-304-compatibility.md#adapter-candidate-and-local-validation).
-- [ ] Obtain full hosted inspection/runtime results for the merged stack.
+- [x] Verify full hosted inspection and runtime on the merged stack at `f6c2994` in [run 46131904608](https://github.com/jimmyspets/serverpod_calendar/actions/runs/46131904608).
 - [ ] Adopt a compatible fix for [Relic issue #454](https://github.com/serverpod/relic/issues/454), remove the exception and pass the strict two-host smoke test and full repository checks.
 
 ## Whole-series lifecycle with a published cutoff
