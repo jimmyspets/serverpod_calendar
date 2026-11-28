@@ -962,3 +962,10 @@ The restarted `./tool/check.ps1` passed generation stability, formatting, analys
 
 
 A final clock review separated raw database queue creation/eligibility/expiry from nondecreasing native audit/protocol floors. This prevents a future native audit timestamp from postponing REQUEST/CANCEL delivery or extending expiry after clock correction. The final `dart test --concurrency=1 test/integration/scheduling_test.dart` passed all 50 cases, including both future-audit delivery-clock regressions, and `dart analyze --fatal-infos` passed. The final source differs from the earlier broad invocation only in these focused, subsequently verified clock/context corrections; results remain phased evidence. The owned interactive Serverpod/Chrome example was restored against retained development storage; no new migration or reset was needed. Serverpod MCP tail logs and hot reload succeeded. Dart MCP connected to the actual Chrome VM, hot reload succeeded and runtime errors were empty.
+
+
+## Recurring organizer master contract — 2026-10-26
+
+[ADR 0124](adr/0124-recurring-organizer-masters.md) proposes the next recurring-master publication/whole-series cancellation batch. It remains unapproved and unimplemented. No models, migrations, endpoints, workers or Flutter behavior changed in this documentation-only batch. Complete recurring scheduling remains required separately from this first proposed master profile.
+
+`.local/organizer-contract-static.py` checked relative links, consecutive ADR numbering through 0124, unchanged Apache 2.0 LICENSE, changed file types and absence of local credential values. `git diff --check` passed. Requirements, roadmap and RFC 5546 notes distinguish the proposal from the implemented non-recurring runtime. No runtime tests were rerun; the preceding cancellation implementation evidence remains separate.

@@ -423,3 +423,8 @@ The first [event-feed module](http-event-feeds.md) under ADR 0116 is implemented
 ## Native organizer cancellation increment
 
 The maintainer explicitly approved [ADR 0123](adr/0123-explicit-native-organizer-cancellation.md). [The implementation](native-organizer-scheduling.md#explicit-cancellation-and-reopening) adds non-recurring Cancel and notify using the last published snapshot, preserved local drafts, distinct native/outgoing authorization context and existing bounded delivery storage. Explicit reopening publishes a newer REQUEST; local reopen sends nothing. See validation for focused and broader evidence. Recurring scheduling, recipient changes, binding deletion, manual resend, inbound reconciliation and real mail remain separate.
+
+
+## Next recurring organizer proposal
+
+[ADR 0124](adr/0124-recurring-organizer-masters.md) proposes recurring-master REQUEST and whole-series CANCEL using existing patterns and delivery storage. Native local exception state would be retained; REQUEST occurrence-component publication would follow separately and reject explicitly meanwhile. Existing bound mode-conversion restrictions remain. This is pending review and unimplemented, without removing full recurring scheduling from the first-release requirements.

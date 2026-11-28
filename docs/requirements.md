@@ -398,3 +398,6 @@ The maintainer selected the timing/composition-first slice and positive opening 
 
 
 Accepted [ADR 0123](adr/0123-explicit-native-organizer-cancellation.md) adds a [scoped FR-20 lifecycle implementation](native-organizer-scheduling.md#explicit-cancellation-and-reopening): explicit whole-event cancellation for existing non-recurring native organizer meetings, retained local draft fields, distinct final native/outgoing policy context and the approved delivery tables. Explicit newer REQUEST publication can reopen. Focused tests passed; see validation for broader batch results. This does not complete FR-20 or authorize real mail.
+
+
+[ADR 0124](adr/0124-recurring-organizer-masters.md) proposes the next bounded FR-20 extension: recurring-master REQUEST and whole-series CANCEL, with stored native exceptions preserved but their REQUEST component publication remaining separate. The scope and bound-mode rules require review; no new implementation or interoperability evidence is supplied by this proposal. Complete recurring/instance scheduling remains required.
