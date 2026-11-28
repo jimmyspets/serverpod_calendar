@@ -124,3 +124,5 @@ Selected event occurrence content is implemented under [ADR 0106](docs/adr/0106-
 Read-only [event source metadata](docs/event-source-metadata.md) is implemented under ADR 0107, with independent source-read authorization; native metadata editors remain separate.
 
 [Event source participants](docs/event-source-participants.md) now preserve bounded ORGANIZER/ATTENDEE claims through interchange and storage, without host identity mapping, authority or invitations. Native participant editing and scheduling remain separate.
+
+[Event source relationships and URI attachments](docs/event-source-references.md) now round-trip as inert read-only data. They create no native links, fetch no files and grant no target access. Native graph/file editors and extended relationships remain separate.

@@ -129,6 +129,8 @@ void main() {
         ),
       );
       expect(metadata, contains('CLASS:PRIVATE'));
+      expect(metadata, contains('urn:source:file'));
+      expect(metadata, contains('unresolved-source@example.invalid'));
       expect(metadata, contains('source-attendee@example.invalid'));
       expect(metadata, contains('Synthetic event desk'));
       expect(metadata, contains('CATEGORIES;LANGUAGE=en:Demo,Demo'));

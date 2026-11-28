@@ -171,7 +171,7 @@ void main() {
   );
   test('unsupported properties never disappear from a semantic import', () {
     for (final line in [
-      'RELATED-TO:unprofiled-event',
+      'CONFERENCE:https://example.invalid/unprofiled',
       'X-PRIVATE:Unregistered',
       'COLOR:red',
     ]) {

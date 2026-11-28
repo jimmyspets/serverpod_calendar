@@ -18,6 +18,8 @@ import 'event_overrides_test.dart' as g;
 import 'event_wire_output_test.dart' show snapshot;
 
 const metadata = [
+  'RELATED-TO:not-a-uuid@example.invalid',
+  'ATTACH;VALUE=URI;FMTTYPE=application/pdf:urn:source:file',
   'ORGANIZER;CN=Source organizer:mailto:source-organizer@example.invalid',
   'ATTENDEE;PARTSTAT=ACCEPTED;MEMBER="urn:group:source":mailto:source-attendee@example.invalid',
   'URL:https://example.invalid/event',

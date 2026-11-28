@@ -265,6 +265,15 @@ final class EventComponentWriter {
     if (value?.organizer != null) participant('ORGANIZER', value!.organizer!),
     for (final p in value?.attendees ?? <CalendarEventSourceParticipant>[])
       participant('ATTENDEE', p),
+    for (final r in value?.relationships ?? <CalendarEventSourceRelationship>[])
+      property('RELATED-TO', encodeIcalendarText(r.targetUid), [
+        if (r.relationType != null) parameter('RELTYPE', r.relationType!),
+      ]),
+    for (final a in value?.attachments ?? <CalendarEventSourceAttachment>[])
+      property('ATTACH', a.uri, [
+        if (a.explicitUri) parameter('VALUE', 'URI'),
+        if (a.mediaType != null) parameter('FMTTYPE', a.mediaType!),
+      ]),
     if (value?.url != null) property('URL', value!.url!),
     if (value?.classification != null)
       property('CLASS', value!.classification!),

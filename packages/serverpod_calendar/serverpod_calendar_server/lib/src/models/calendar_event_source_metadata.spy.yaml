@@ -9,3 +9,5 @@ fields:
   contacts: List<CalendarEventSourceText>
   organizer: CalendarEventSourceParticipant?
   attendees: List<CalendarEventSourceParticipant>?
+  relationships: List<CalendarEventSourceRelationship>?
+  attachments: List<CalendarEventSourceAttachment>?

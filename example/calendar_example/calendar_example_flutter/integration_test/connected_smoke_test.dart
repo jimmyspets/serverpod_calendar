@@ -1129,6 +1129,8 @@ void main() {
         .data!;
     expect(exportedEvent, contains('UID:example-event@example.invalid'));
     expect(exportedEvent, contains('CLASS:PRIVATE'));
+    expect(exportedEvent, contains('urn:source:file'));
+    expect(exportedEvent, contains('unresolved-source@example.invalid'));
     expect(exportedEvent, contains('source-attendee@example.invalid'));
     expect(exportedEvent, contains('CATEGORIES;LANGUAGE=en:Demo,Demo'));
     expect(exportedEvent, contains('Synthetic event desk'));

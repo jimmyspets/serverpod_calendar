@@ -331,6 +331,38 @@ void validateEventImportBaseline(
       jsonEncode(_ordered(decoded)) != value.canonicalValue) {
     throw StateError('Invalid event baseline');
   }
+  // Canonical v2 snapshots omit empty maps. Reconstruct only the known
+  // required participant parameter maps before generated DTO decoding.
+  // Do not change snapshot bytes or invent any address/parameter claims.
+  void restoreParameters(Object? metadata) {
+    if (metadata is! Map) return;
+    void participant(Object? value) {
+      if (value is Map && !value.containsKey('parameters')) {
+        value['parameters'] = <String, dynamic>{};
+      }
+    }
+
+    participant(metadata['organizer']);
+    final attendees = metadata['attendees'];
+    if (attendees is List) {
+      for (final value in attendees) {
+        participant(value);
+      }
+    }
+  }
+
+  restoreParameters(decoded['protocol']['sourceMetadata']);
+  final edits = decoded['edits'];
+  if (edits is Map) {
+    for (final name in ['singles', 'future']) {
+      final components = edits[name];
+      if (components is List) {
+        for (final component in components) {
+          if (component is Map) restoreParameters(component['sourceMetadata']);
+        }
+      }
+    }
+  }
   final expected = eventImportBaseline(
     uid,
     CalendarEventContent.fromJson(decoded['content'] as Map<String, dynamic>),
