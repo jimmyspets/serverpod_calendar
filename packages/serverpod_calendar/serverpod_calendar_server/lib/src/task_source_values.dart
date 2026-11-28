@@ -12,7 +12,7 @@ import 'task_recurrence_values.dart';
 
 const taskBaselineMaxBytes = 2097152;
 String get taskBaselineProfile =>
-    'task-source-v1/${NamedZoneResolver.dataVersion}';
+    'task-source-v2/${NamedZoneResolver.dataVersion}';
 
 /// A pure, validated proposal. It grants no authority and persists nothing.
 final class TaskStorageProposal {
@@ -492,7 +492,7 @@ final class _TaskWriter {
 }
 
 /// Retains explicit component content and annotations when a master is edited.
-/// Timing that no longer matches the supported progress-only profile rejects.
+/// Explicit timing replacements stay independent; invalid anchors/metadata reject.
 CalendarTaskSourceState changeTaskSourceMaster(
   String uid,
   CalendarTaskSourceState before,
@@ -618,4 +618,46 @@ List<int> taskExportBytes(
     }
   }
   return serializeIcalendarTaskCalendar(parsed);
+}
+
+CalendarTaskTiming? taskSourceReplacement(CalendarTaskSourceComponent c) =>
+    c.content.timing.start == null ? null : c.content.timing;
+
+CalendarTaskSourceState changeTaskSourceTiming(
+  String uid,
+  CalendarTaskSourceState before,
+  CalendarEventTiming original,
+  CalendarTaskTiming? replacement,
+  CalendarTaskProgress progress,
+  CalendarTaskProtocolVersion version,
+) {
+  final key = taskOriginalKey(original);
+  final existing = before.occurrences
+      .where((o) => taskOriginalKey(o.originalStart!) == key)
+      .firstOrNull;
+  final timing =
+      replacement ?? CalendarTaskTiming(kind: CalendarTaskTimeKind.undated);
+  final next = existing == null
+      ? CalendarTaskSourceComponent(
+          originalStart: original,
+          version: version,
+          content: CalendarTaskContent(timing: timing),
+          progress: progress,
+          textParameters: CalendarEventTextParameters(),
+          metadata: emptyTaskSourceMetadata(),
+        )
+      : existing.copyWith(
+          version: version,
+          content: existing.content.copyWith(timing: timing),
+        );
+  return validateTaskSourceState(
+    uid,
+    before.copyWith(
+      occurrences: [
+        for (final o in before.occurrences)
+          if (taskOriginalKey(o.originalStart!) != key) o,
+        next,
+      ],
+    ),
+  );
 }

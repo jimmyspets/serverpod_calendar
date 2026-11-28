@@ -58,9 +58,11 @@ extension CalendarTaskExportOperations on CalendarService {
                         row.protocolVersion ??
                         (throw _failure(CalendarFailureCode.validation)),
                     content: CalendarTaskContent(
-                      timing: CalendarTaskTiming(
-                        kind: CalendarTaskTimeKind.undated,
-                      ),
+                      timing:
+                          row.replacementTiming ??
+                          CalendarTaskTiming(
+                            kind: CalendarTaskTimeKind.undated,
+                          ),
                     ),
                     progress: row.progress,
                     textParameters: CalendarEventTextParameters(),

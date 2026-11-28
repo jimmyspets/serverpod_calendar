@@ -29,6 +29,49 @@ IcalendarTaskCalendar series(
 const original = 'RECURRENCE-ID;VALUE=DATE:20261023';
 
 void main() {
+  test('explicit DATE and UTC starts move complete timing and round-trip no deadline', () {
+    final c = series([
+      master,
+      [original, 'DTSTART;VALUE=DATE:20261026'],
+    ]);
+    final again = parseIcalendarTaskCalendar(serializeIcalendarTaskCalendar(c))
+        .series
+        .single
+        .overrides
+        .single;
+    expect(again.dateTiming!.start!.day, 26);
+    expect(again.dateTiming!.effectiveDue, isNull);
+    expect(again.component.recurrenceDate!.day, 23);
+    final utc = series([
+      ['DTSTART:20261022T120000Z', 'DURATION:PT2H', 'RRULE:FREQ=DAILY;COUNT=3'],
+      [
+        'RECURRENCE-ID:20261023T120000Z',
+        'DTSTART:20261024T090000Z',
+        'DUE:20261024T100000Z',
+      ],
+    ]).series.single.overrides.single;
+    expect(utc.timedProjection!.start.instant, DateTime.utc(2026, 10, 24, 9));
+    expect(utc.timedProjection!.dueInstant, DateTime.utc(2026, 10, 24, 10));
+  });
+  test(
+    'clearing deadline rejects inherited END alarms without dropping them',
+    () {
+      expect(
+        () => series([
+          [
+            ...master,
+            'BEGIN:VALARM',
+            'ACTION:DISPLAY',
+            'DESCRIPTION:Due',
+            'TRIGGER;RELATED=END:-PT5M',
+            'END:VALARM',
+          ],
+          [original, 'DTSTART;VALUE=DATE:20261023'],
+        ]),
+        rejects(IcalendarComponentError.missing),
+      );
+    },
+  );
   test('raw omissions survive while timing text and priority inherit', () {
     final c = series([
       master,
@@ -128,7 +171,7 @@ void main() {
       final o = c.series.single.overrides.single;
       expect(o.component.dateTiming!.duration, isNotNull);
       expect(o.component.dateTiming!.due, isNull);
-      expect(o.dateTiming!.due!.day, 24);
+      expect(o.dateTiming!.effectiveDue!.day, 24);
       expect(
         parseIcalendarTaskCalendar(serializeIcalendarTaskCalendar(c))
             .series
@@ -149,7 +192,7 @@ void main() {
       );
     },
   );
-  test('due-only and start-only repetitions inherit the other milestone', () {
+  test('due-only inherits; explicit start supplies complete timing', () {
     for (final p in [
       'DTSTART;VALUE=DATE:20261023',
       'DUE;VALUE=DATE:20261024',
@@ -159,7 +202,10 @@ void main() {
         [original, p],
       ]).series.single.overrides.single;
       expect(o.dateTiming!.start!.day, 23);
-      expect(o.dateTiming!.effectiveDue!.day, 24);
+      expect(
+        o.dateTiming!.effectiveDue?.day,
+        p.startsWith('DTSTART') ? null : 24,
+      );
     }
   });
   test('UTC projected deadlines validate explicit repetitions', () {
@@ -328,7 +374,6 @@ void main() {
       'DESCRIPTION:Added',
       'LOCATION:Room',
       'PRIORITY:4',
-      'DTSTART;VALUE=DATE:20261024',
       'DUE;VALUE=DATE:20261025',
     ]) {
       expect(

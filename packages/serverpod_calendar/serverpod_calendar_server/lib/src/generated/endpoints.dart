@@ -79,6 +79,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_task_occurrence
     as _ingyryea;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_occurrence_query.dart'
     as _i3q14sij;
+import 'package:serverpod_calendar_server/src/generated/calendar_task_occurrence_timing_request.dart'
+    as _i4pulpcp;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_progress_request.dart'
     as _ilb9fjz5;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_update_request.dart'
@@ -1194,6 +1196,27 @@ class Endpoints extends _is.EndpointDispatch {
                       .previewOccurrences(
                         session,
                         params['query'],
+                      ),
+        ),
+        'changeOccurrenceTiming': _is.MethodConnector(
+          name: 'changeOccurrenceTiming',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is
+                  .getType<_i4pulpcp.CalendarTaskOccurrenceTimingRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarTask'] as _i4tukef9.CalendarTaskEndpoint)
+                      .changeOccurrenceTiming(
+                        session,
+                        params['request'],
                       ),
         ),
         'changeOccurrenceProgress': _is.MethodConnector(

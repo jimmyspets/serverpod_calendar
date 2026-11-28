@@ -119,6 +119,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_task_occurrence
     as _ingyryea;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_occurrence_query.dart'
     as _i3q14sij;
+import 'package:serverpod_calendar_server/src/generated/calendar_task_occurrence_timing_request.dart'
+    as _i4pulpcp;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_page.dart'
     as _ig64r97r;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_progress_request.dart'
@@ -1851,6 +1853,37 @@ class _CalendarTaskEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_i8v6r7o6.CalendarTaskOccurrencePreview>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ix5y5076.CalendarTaskReceipt?> changeOccurrenceTiming(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i4pulpcp.CalendarTaskOccurrenceTimingRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarTask',
+            method: 'changeOccurrenceTiming',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarTask',
+          methodName: 'changeOccurrenceTiming',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

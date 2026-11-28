@@ -5,6 +5,7 @@ import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
 
 import 'task_screen.dart' show taskError;
 import 'task_progress_label.dart';
+import 'task_timing_editor.dart';
 
 class TaskOccurrenceScreen extends StatefulWidget {
   const TaskOccurrenceScreen({
@@ -179,6 +180,44 @@ class _TaskOccurrenceScreenState extends State<TaskOccurrenceScreen> {
     _task = fresh;
     await _load();
   });
+  Future<void> _editTiming(cal.CalendarTaskOccurrence occurrence) async {
+    final replacement = await showDialog<cal.CalendarTaskTiming>(
+      context: context,
+      builder: (_) =>
+          TaskTimingEditor(master: _task.timing!, occurrence: occurrence),
+    );
+    if (replacement != null && mounted) {
+      await _timing(occurrence, replacement);
+    }
+  }
+
+  Future<void> _timing(
+    cal.CalendarTaskOccurrence occurrence,
+    cal.CalendarTaskTiming? replacement,
+  ) => _run(() async {
+    final expected = _task.revision;
+    await widget.client.modules.serverpod_calendar.calendarTask
+        .changeOccurrenceTiming(
+          cal.CalendarTaskOccurrenceTimingRequest(
+            taskId: _task.id,
+            expectedRevision: expected,
+            originalStart: occurrence.originalStart,
+            replacement: replacement,
+          ),
+        );
+    final fresh = await widget.client.modules.serverpod_calendar.calendarTask
+        .getTask(_task.id, cal.CalendarTaskFieldGroup.values);
+    if (fresh.revision != expected + 1) {
+      if (mounted) {
+        setState(() => _stale = true);
+      }
+      throw const FormatException(
+        'Another change was observed; reload before editing.',
+      );
+    }
+    _task = fresh;
+    await _load();
+  });
   Future<void> _readHistory(
     cal.CalendarEventTiming original, {
     bool more = false,
@@ -260,12 +299,31 @@ class _TaskOccurrenceScreenState extends State<TaskOccurrenceScreen> {
               taskProgressLabel(_preview!.occurrences[i].progress),
               key: ValueKey('task-occurrence-state-$i'),
             ),
+            Text(
+              'Actual start: ${_civil((_preview!.occurrences[i].actualStart ?? _preview!.occurrences[i].originalStart).start)}',
+              key: ValueKey('task-occurrence-actual-$i'),
+            ),
             if (_preview!.occurrences[i].dueDate != null)
               Text('Due: ${_civil(_preview!.occurrences[i].dueDate!)}'),
             if (_preview!.occurrences[i].dueUtc != null)
               Text('Due UTC: ${_preview!.occurrences[i].dueUtc}'),
             Wrap(
               children: [
+                TextButton(
+                  key: ValueKey('task-occurrence-$i-timing'),
+                  onPressed: _busy || _stale
+                      ? null
+                      : () => _editTiming(_preview!.occurrences[i]),
+                  child: const Text('Move/resize'),
+                ),
+                if (_preview!.occurrences[i].replacementTiming != null)
+                  TextButton(
+                    key: ValueKey('task-occurrence-$i-clear-timing'),
+                    onPressed: _busy || _stale
+                        ? null
+                        : () => _timing(_preview!.occurrences[i], null),
+                    child: const Text('Follow series timing'),
+                  ),
                 for (final a in cal.CalendarTaskProgressAction.values)
                   TextButton(
                     key: ValueKey('task-occurrence-$i-${a.name}'),

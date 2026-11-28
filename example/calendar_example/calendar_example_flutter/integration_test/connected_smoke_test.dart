@@ -592,6 +592,31 @@ void main() {
           .data,
       'needsAction; 0%',
     );
+    await _tap(tester, 'task-occurrence-0-timing');
+    await tester.enterText(
+      find.byKey(const Key('task-timing-start')),
+      '2026-03-31',
+    );
+    await _tap(tester, 'task-timing-save');
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('task-occurrence-state-2')))
+          .data,
+      startsWith('completed; 100%; completion '),
+    );
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('task-occurrence-actual-2')))
+          .data,
+      contains('2026-03-31'),
+    );
+    await _tap(tester, 'task-occurrence-2-clear-timing');
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('task-occurrence-state-0')))
+          .data,
+      startsWith('completed; 100%; completion '),
+    );
     await _tap(tester, 'task-occurrence-1-complete');
     await _tap(tester, 'task-occurrence-0-history');
     expect(find.byKey(const Key('task-history-2')), findsOneWidget);

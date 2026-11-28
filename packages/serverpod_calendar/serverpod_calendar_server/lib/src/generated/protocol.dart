@@ -151,6 +151,7 @@ import 'calendar_task_occurrence_preview.dart' as _id9j5e7y;
 import 'calendar_task_occurrence_progress_request.dart' as _irw24ank;
 import 'calendar_task_occurrence_query.dart' as _ixy579wj;
 import 'calendar_task_occurrence_record.dart' as _i3t5ry4r;
+import 'calendar_task_occurrence_timing_request.dart' as _ii9v7kdj;
 import 'calendar_task_page.dart' as _i276ujfk;
 import 'calendar_task_progress.dart' as _ikcsq95s;
 import 'calendar_task_progress_action.dart' as _i6s7yrua;
@@ -302,6 +303,7 @@ export 'calendar_task_occurrence_preview.dart';
 export 'calendar_task_occurrence_progress_request.dart';
 export 'calendar_task_occurrence_query.dart';
 export 'calendar_task_occurrence_record.dart';
+export 'calendar_task_occurrence_timing_request.dart';
 export 'calendar_task_page.dart';
 export 'calendar_task_progress.dart';
 export 'calendar_task_progress_action.dart';
@@ -1522,6 +1524,12 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'protocol:CalendarEventTiming',
         ),
         _isp.ColumnDefinition(
+          name: 'replacementTiming',
+          columnType: _isp.ColumnType.json,
+          isNullable: true,
+          dartType: 'protocol:CalendarTaskTiming?',
+        ),
+        _isp.ColumnDefinition(
           name: 'progress',
           columnType: _isp.ColumnType.json,
           isNullable: false,
@@ -1990,6 +1998,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _i3t5ry4r.CalendarTaskOccurrenceRecord) {
       return _i3t5ry4r.CalendarTaskOccurrenceRecord.fromJson(data) as T;
+    }
+    if (t == _ii9v7kdj.CalendarTaskOccurrenceTimingRequest) {
+      return _ii9v7kdj.CalendarTaskOccurrenceTimingRequest.fromJson(data) as T;
     }
     if (t == _i276ujfk.CalendarTaskPage) {
       return _i276ujfk.CalendarTaskPage.fromJson(data) as T;
@@ -2808,6 +2819,12 @@ class Protocol extends _is.DatabaseSerializationManager {
               : null)
           as T;
     }
+    if (t == _is.getType<_ii9v7kdj.CalendarTaskOccurrenceTimingRequest?>()) {
+      return (data != null
+              ? _ii9v7kdj.CalendarTaskOccurrenceTimingRequest.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _is.getType<_i276ujfk.CalendarTaskPage?>()) {
       return (data != null ? _i276ujfk.CalendarTaskPage.fromJson(data) : null)
           as T;
@@ -3619,6 +3636,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         'CalendarTaskOccurrenceProgressRequest',
       _ixy579wj.CalendarTaskOccurrenceQuery => 'CalendarTaskOccurrenceQuery',
       _i3t5ry4r.CalendarTaskOccurrenceRecord => 'CalendarTaskOccurrenceRecord',
+      _ii9v7kdj.CalendarTaskOccurrenceTimingRequest =>
+        'CalendarTaskOccurrenceTimingRequest',
       _i276ujfk.CalendarTaskPage => 'CalendarTaskPage',
       _ikcsq95s.CalendarTaskProgress => 'CalendarTaskProgress',
       _i6s7yrua.CalendarTaskProgressAction => 'CalendarTaskProgressAction',
@@ -3916,6 +3935,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarTaskOccurrenceQuery';
       case _i3t5ry4r.CalendarTaskOccurrenceRecord():
         return 'CalendarTaskOccurrenceRecord';
+      case _ii9v7kdj.CalendarTaskOccurrenceTimingRequest():
+        return 'CalendarTaskOccurrenceTimingRequest';
       case _i276ujfk.CalendarTaskPage():
         return 'CalendarTaskPage';
       case _ikcsq95s.CalendarTaskProgress():
@@ -4421,6 +4442,11 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'CalendarTaskOccurrenceRecord') {
       return deserialize<_i3t5ry4r.CalendarTaskOccurrenceRecord>(data['data']);
+    }
+    if (dataClassName == 'CalendarTaskOccurrenceTimingRequest') {
+      return deserialize<_ii9v7kdj.CalendarTaskOccurrenceTimingRequest>(
+        data['data'],
+      );
     }
     if (dataClassName == 'CalendarTaskPage') {
       return deserialize<_i276ujfk.CalendarTaskPage>(data['data']);

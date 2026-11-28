@@ -133,6 +133,7 @@ import 'calendar_task_occurrence.dart' as _isgg83d3;
 import 'calendar_task_occurrence_preview.dart' as _id9j5e7y;
 import 'calendar_task_occurrence_progress_request.dart' as _irw24ank;
 import 'calendar_task_occurrence_query.dart' as _ixy579wj;
+import 'calendar_task_occurrence_timing_request.dart' as _ii9v7kdj;
 import 'calendar_task_page.dart' as _i276ujfk;
 import 'calendar_task_progress.dart' as _ikcsq95s;
 import 'calendar_task_progress_action.dart' as _i6s7yrua;
@@ -256,6 +257,7 @@ export 'calendar_task_occurrence.dart';
 export 'calendar_task_occurrence_preview.dart';
 export 'calendar_task_occurrence_progress_request.dart';
 export 'calendar_task_occurrence_query.dart';
+export 'calendar_task_occurrence_timing_request.dart';
 export 'calendar_task_page.dart';
 export 'calendar_task_progress.dart';
 export 'calendar_task_progress_action.dart';
@@ -650,6 +652,9 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _ixy579wj.CalendarTaskOccurrenceQuery) {
       return _ixy579wj.CalendarTaskOccurrenceQuery.fromJson(data) as T;
+    }
+    if (t == _ii9v7kdj.CalendarTaskOccurrenceTimingRequest) {
+      return _ii9v7kdj.CalendarTaskOccurrenceTimingRequest.fromJson(data) as T;
     }
     if (t == _i276ujfk.CalendarTaskPage) {
       return _i276ujfk.CalendarTaskPage.fromJson(data) as T;
@@ -1336,6 +1341,12 @@ class Protocol extends _isc.SerializationManager {
               : null)
           as T;
     }
+    if (t == _isc.getType<_ii9v7kdj.CalendarTaskOccurrenceTimingRequest?>()) {
+      return (data != null
+              ? _ii9v7kdj.CalendarTaskOccurrenceTimingRequest.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _isc.getType<_i276ujfk.CalendarTaskPage?>()) {
       return (data != null ? _i276ujfk.CalendarTaskPage.fromJson(data) : null)
           as T;
@@ -1972,6 +1983,8 @@ class Protocol extends _isc.SerializationManager {
       _irw24ank.CalendarTaskOccurrenceProgressRequest =>
         'CalendarTaskOccurrenceProgressRequest',
       _ixy579wj.CalendarTaskOccurrenceQuery => 'CalendarTaskOccurrenceQuery',
+      _ii9v7kdj.CalendarTaskOccurrenceTimingRequest =>
+        'CalendarTaskOccurrenceTimingRequest',
       _i276ujfk.CalendarTaskPage => 'CalendarTaskPage',
       _ikcsq95s.CalendarTaskProgress => 'CalendarTaskProgress',
       _i6s7yrua.CalendarTaskProgressAction => 'CalendarTaskProgressAction',
@@ -2221,6 +2234,8 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarTaskOccurrenceProgressRequest';
       case _ixy579wj.CalendarTaskOccurrenceQuery():
         return 'CalendarTaskOccurrenceQuery';
+      case _ii9v7kdj.CalendarTaskOccurrenceTimingRequest():
+        return 'CalendarTaskOccurrenceTimingRequest';
       case _i276ujfk.CalendarTaskPage():
         return 'CalendarTaskPage';
       case _ikcsq95s.CalendarTaskProgress():
@@ -2643,6 +2658,11 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'CalendarTaskOccurrenceQuery') {
       return deserialize<_ixy579wj.CalendarTaskOccurrenceQuery>(data['data']);
+    }
+    if (dataClassName == 'CalendarTaskOccurrenceTimingRequest') {
+      return deserialize<_ii9v7kdj.CalendarTaskOccurrenceTimingRequest>(
+        data['data'],
+      );
     }
     if (dataClassName == 'CalendarTaskPage') {
       return deserialize<_i276ujfk.CalendarTaskPage>(data['data']);

@@ -203,6 +203,7 @@ extension CalendarTaskImportOperations on CalendarService {
               taskId: m.taskId,
               originalStart: o.originalStart!,
               originalKey: taskOriginalKey(o.originalStart!),
+              replacementTiming: taskSourceReplacement(o),
               progress: o.progress,
               protocolVersion: o.version,
             ),

@@ -1,0 +1,7 @@
+class: CalendarTaskOccurrenceTimingRequest
+immutable: true
+fields:
+  taskId: UuidValue
+  expectedRevision: int
+  originalStart: CalendarEventTiming
+  replacement: CalendarTaskTiming?

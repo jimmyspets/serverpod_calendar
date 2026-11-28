@@ -5,6 +5,7 @@ fields:
   taskId: UuidValue, relation(parent=serverpod_calendar_task)
   originalKey: String
   originalStart: CalendarEventTiming
+  replacementTiming: CalendarTaskTiming?
   progress: CalendarTaskProgress
   protocolVersion: CalendarTaskProtocolVersion?
 indexes:

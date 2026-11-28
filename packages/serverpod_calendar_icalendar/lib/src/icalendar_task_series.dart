@@ -94,14 +94,22 @@ IcalendarTaskSeries _taskSeries(
       componentFail(IcalendarComponentError.invalidValue);
     }
     for (final o in overrides) {
-      final projected = master.dateTiming!.at(o.recurrenceDate!);
-      if ((supplied(o, 'DTSTART') && o.dateTiming?.start != projected.start) ||
-          ((supplied(o, 'DUE') || supplied(o, 'DURATION')) &&
-              o.dateTiming?.effectiveDue != projected.effectiveDue)) {
+      final projected = supplied(o, 'DTSTART')
+          ? o.dateTiming!
+          : master.dateTiming!.at(o.recurrenceDate!);
+      final explicit = o.dateTiming;
+      if (!supplied(o, 'DTSTART') &&
+          (supplied(o, 'DUE') || supplied(o, 'DURATION')) &&
+          explicit?.effectiveDue != projected.effectiveDue) {
         componentFail(IcalendarComponentError.unsupportedProperty);
       }
       linked.add(
-        IcalendarTaskOccurrenceComponent._(master, o, projected, null),
+        IcalendarTaskOccurrenceComponent._(
+          master,
+          o,
+          supplied(o, 'DTSTART') ? explicit! : projected,
+          null,
+        ),
       );
     }
   } else {
@@ -132,20 +140,41 @@ IcalendarTaskSeries _taskSeries(
       componentFail(IcalendarComponentError.invalidValue);
     }
     for (final o in overrides) {
-      final projected = master.timedTiming!.at(o.recurrenceTime!);
+      final projected = supplied(o, 'DTSTART')
+          ? TimedTaskProjection(
+              o.timedTiming!.start!,
+              o.timedTiming!.effectiveDue,
+            )
+          : master.timedTiming!.at(o.recurrenceTime!);
       final explicit = o.timedTiming;
       if ((explicit?.start != null && !start.sameProfile(explicit!.start!)) ||
           (explicit?.due != null && !start.sameProfile(explicit!.due!))) {
         componentFail(IcalendarComponentError.invalidValue);
       }
-      if ((supplied(o, 'DTSTART') && explicit?.start != projected.start) ||
-          ((supplied(o, 'DUE') || supplied(o, 'DURATION')) &&
-              explicit?.effectiveDue != projected.dueInstant)) {
+      if (!supplied(o, 'DTSTART') &&
+          (supplied(o, 'DUE') || supplied(o, 'DURATION')) &&
+          explicit?.effectiveDue != projected.dueInstant) {
         componentFail(IcalendarComponentError.unsupportedProperty);
       }
       linked.add(
-        IcalendarTaskOccurrenceComponent._(master, o, null, projected),
+        IcalendarTaskOccurrenceComponent._(
+          master,
+          o,
+          null,
+          supplied(o, 'DTSTART')
+              ? TimedTaskProjection(explicit!.start!, explicit.effectiveDue)
+              : projected,
+        ),
       );
+    }
+  }
+  for (final o in linked) {
+    for (final alarm in o.alarms) {
+      if (alarm.trigger.effectiveRelated == 'END' &&
+          o.dateTiming?.effectiveDue == null &&
+          o.timedProjection?.dueInstant == null) {
+        componentFail(IcalendarComponentError.missing);
+      }
     }
   }
   return IcalendarTaskSeries._(master, linked);

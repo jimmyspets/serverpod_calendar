@@ -116,6 +116,8 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_task_occurrence_
     as _ibp8yihf;
 import 'package:serverpod_calendar_client/src/protocol/calendar_task_occurrence_query.dart'
     as _iu7ssbk5;
+import 'package:serverpod_calendar_client/src/protocol/calendar_task_occurrence_timing_request.dart'
+    as _iini2o17;
 import 'package:serverpod_calendar_client/src/protocol/calendar_task_page.dart'
     as _il0k8fyg;
 import 'package:serverpod_calendar_client/src/protocol/calendar_task_progress_request.dart'
@@ -601,6 +603,14 @@ class EndpointCalendarTask extends _isc.EndpointRef {
     'serverpod_calendar.calendarTask',
     'previewOccurrences',
     {'query': query},
+  );
+
+  _ida.Future<_igkgk3pi.CalendarTaskReceipt?> changeOccurrenceTiming(
+    _iini2o17.CalendarTaskOccurrenceTimingRequest request,
+  ) => caller.callServerEndpoint<_igkgk3pi.CalendarTaskReceipt?>(
+    'serverpod_calendar.calendarTask',
+    'changeOccurrenceTiming',
+    {'request': request},
   );
 
   _ida.Future<_igkgk3pi.CalendarTaskReceipt?> changeOccurrenceProgress(

@@ -144,3 +144,7 @@ The [ADR 0056 per-calendar free/busy service](calendar-free-busy.md) requires `r
 ## Current task export operations
 
 [ADR 0100](adr/0100-authenticated-current-task-export.md) requires `exportTasks` on actual parent and members, `readTask` with every task group, and independent `readTaskSource` on each member. Full immutable `taskExport` intent contains current source components, never historical baseline payloads. Recheck trusted context and every gate after serialization; fail the whole selection without partial bytes. See [task export](task-export.md).
+
+## Single task timing operation
+
+ADR 0101 uses `updateTask` for `changeOccurrenceTiming`, independently of progress and assignment gates. Host context includes actual original/current/final timing, unchanged progress, retained records and independent component version. No progress history is created; stale/final checks and receipt disclosure remain required. See [task timing](task-occurrence-timing.md).
