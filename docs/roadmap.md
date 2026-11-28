@@ -1,6 +1,6 @@
 # Delivery roadmap
 
-Status reconciled **2026-10-23**, through authenticated current-state VEVENT export under ADR 0082 following create-only import/storage. Source replacement remains separate; native tasks are the next major implementation area. The bounded temporal core and scoped native calendar/event services have local validation evidence; the full first release remains incomplete. The [RFC tables](rfc/README.md) are the latest feature-scope source. [Requirements](requirements.md) define stable FR/NFR acceptance targets; [ADRs](adr/README.md) distinguish confirmed scope from proposed implementation details.
+Status reconciled **2026-10-23**, through non-recurring native task CRUD, assignments and current progress under ADR 0084, following authenticated VEVENT export/import. Recurring task lifecycle/history is the next area; source replacement remains separate. The bounded temporal core and scoped native calendar/event services have local validation evidence; the full first release remains incomplete. The [RFC tables](rfc/README.md) are the latest feature-scope source. [Requirements](requirements.md) define stable FR/NFR acceptance targets; [ADRs](adr/README.md) distinguish confirmed scope from proposed implementation details.
 
 This roadmap tracks the implementation represented by the current branch, including stacked draft PRs; an implemented checkbox does not mean the change is merged into main, released, or that every ADR mechanic is accepted. Check existing GitHub work before filing issues, and link each implementation issue to the relevant requirements and roadmap section.
 
@@ -14,7 +14,7 @@ Checked items describe only the stated implemented slice or explicitly selected 
 | Temporal core | Selected bounded Gregorian/ISO, timezone, duration, recurrence, exception/range timing and task-timing calculations | Durable upgrade/recalculation integration; pure full-horizon wire-zone validation is implemented under ADR 0065 |
 | Calendars and authorization | CRUD/associations, native/protocol metadata separation, UID/time, host policy, disclosure, revisions and cursors | Retention/cleanup, production coordinated-policy evidence and enforcement for remaining services |
 | Events | DATE/UTC/zoned CRUD, separate lifecycle rights, recurrence storage, bounded previews and single/future timing edits/cancellation, stored PERIODs/annotations and independent component versions | Per-occurrence content, future cancellation, richer metadata and calendar-wide occurrence queries |
-| Tasks | Pure-core timing/recurrence projections | Durable CRUD, assignments, occurrence completion/history and Flutter journeys |
+| Tasks | Pure-core timing/recurrence projections; durable non-recurring CRUD, assignments, current progress and Flutter example | Durable recurrence, occurrence completion/history, richer queries and VTODO interchange |
 | Availability | Per-calendar complete/unknown free/busy; scoped rule CRUD, recurring openings, priority/range/fallback composition, explicit opening zones, scoped subject/common-free search, opening edits/metadata, duration envelopes and source-preserving UID/group/CONTACT/PERIOD/component-version storage | Indexed larger calendars and cross-scope/group-expansion coordination; scoped create/export/replacement APIs exist under ADRs 0073-0076 |
 | iCalendar and HTTP feeds | Bounded strict syntax/value codecs; scoped VEVENT recurrence/PERIOD/timing components and VTIMEZONE validation; availability timing/composition/publication metadata adapters and scoped authenticated import/export; optional feed-module boundary selected | Remaining selected wire properties/components, remaining component imports/exports (create-only VEVENT import now exists), feed module and external-client evidence |
 | Scheduling and alarms | Selected scope; notification package scaffold | Scheduling/mail state and outbox; alarm workers/actions and connected Flutter delivery |
@@ -146,11 +146,13 @@ Native metadata editing is partial evidence for FR-24, not ICS interoperability.
 
 ## Tasks
 
-Pure-core task timing and recurrence projections are complete. [ADR 0083](adr/0083-first-native-task-contract.md) now confirms non-recurring task CRUD/assignments first, completion at 100 percent with server UTC time, reopening at 0 percent, and cancellation preserving percentage while clearing active completion time. Durable task implementation, recurrence/history and VTODO interchange remain pending.
+Pure-core task timing and recurrence projections are complete. [ADR 0083](adr/0083-first-native-task-contract.md) now confirms non-recurring task CRUD/assignments first, completion at 100 percent with server UTC time, reopening at 0 percent, and cancellation preserving percentage while clearing active completion time. [Non-recurring durable tasks](native-tasks.md) now implement CRUD, assignments and current progress under ADR 0084; recurrence/history and VTODO interchange remain pending. [ADR 0085](adr/0085-recurring-task-progress-and-history.md) confirms independent occurrence progress and preserving history, rejecting orphaning rule edits; implementation mechanics remain proposed.
 
-- [ ] Implement authorized durable recurring/non-recurring task CRUD, external assignment, filtering/pagination, optional typed dates, progress/priority/completion and expected revisions.
+- [x] Implement authorized non-recurring task CRUD, external assignment, opaque pagination, optional typed dates, progress/priority/current completion and expected revisions under ADR 0084.
+- [ ] Extend durable tasks with recurrence, disclosure-safe task-specific filtering and occurrence lifecycle/history.
 - [ ] Define and test per-occurrence completion/history, exceptions, original occurrence identity, series edits, due/duration semantics, bounded queries, restart and alarm invalidation. Support valid undated tasks and no-loss standalone VTODO interchange using known zones.
-- [ ] Expose generated-client task management in Flutter. Task dates do not automatically block availability; explicit event reservations need the approved booking policy. Reject all VTODO iTIP/mail scheduling without mutation, automatic replies or outbound queueing; native assignment/interchange/alarms remain required.
+- [x] Expose the first non-recurring generated-client task management in Flutter under ADR 0084.
+- [ ] Extend Flutter with recurring task/history/interchange. Task dates do not automatically block availability; explicit event reservations need the approved booking policy. Reject all VTODO iTIP/mail scheduling without mutation, automatic replies or outbound queueing; native assignment/interchange/alarms remain required.
 
 ## Feeds
 

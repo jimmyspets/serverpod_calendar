@@ -87,6 +87,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0081](0081-authenticated-event-export-contract.md) | Authenticated event export contract | Accepted explicit selection/full-series/all-or-nothing/separate export and full disclosure; API/adapter mechanics proposed |
 | [0082](0082-authenticated-current-event-export.md) | Authenticated current-state event export | Scoped ADR 0081 implementation; accepted rejection of unrepresentable cancellation; mechanics under draft review |
 | [0083](0083-first-native-task-contract.md) | First durable native task contract | Accepted non-recurring CRUD/assignments first and completion/reopen/cancellation rules; schema/API/query mechanics proposed |
+| [0084](0084-first-native-task-implementation.md) | First native task implementation | Scoped ADR 0083 choices; concrete schema/API/query mechanics under draft review |
+| [0085](0085-recurring-task-progress-and-history.md) | Recurring task progress and history | Accepted independent original-occurrence progress and preservation/rejection of orphaning rule edits; mechanics proposed |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

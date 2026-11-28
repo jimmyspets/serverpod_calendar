@@ -1,0 +1,5 @@
+class: CalendarTaskPage
+immutable: true
+fields:
+  tasks: List<CalendarTaskView>
+  nextCursor: String?

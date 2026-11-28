@@ -63,6 +63,16 @@ import 'package:serverpod_calendar_server/src/generated/calendar_subject_change_
     as _ib1wmljm;
 import 'package:serverpod_calendar_server/src/generated/calendar_supplemental_metadata_update_request.dart'
     as _ito4h8gf;
+import 'package:serverpod_calendar_server/src/generated/calendar_task_assignments_request.dart'
+    as _iuliypfa;
+import 'package:serverpod_calendar_server/src/generated/calendar_task_create_request.dart'
+    as _i9cxsmu8;
+import 'package:serverpod_calendar_server/src/generated/calendar_task_field_group.dart'
+    as _ik0gz7r1;
+import 'package:serverpod_calendar_server/src/generated/calendar_task_progress_request.dart'
+    as _ilb9fjz5;
+import 'package:serverpod_calendar_server/src/generated/calendar_task_update_request.dart'
+    as _ifljty0a;
 import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
     as _ik9lwgjh;
 import '../endpoints/calendar_availability_endpoint.dart' as _imcvujmp;
@@ -70,6 +80,7 @@ import '../endpoints/calendar_availability_search_endpoint.dart' as _icfitiep;
 import '../endpoints/calendar_diagnostics_endpoint.dart' as _icr8drn5;
 import '../endpoints/calendar_endpoint.dart' as _inx4l1vp;
 import '../endpoints/calendar_event_endpoint.dart' as _ibwv0suj;
+import '../endpoints/calendar_task_endpoint.dart' as _i4tukef9;
 
 class Endpoints extends _is.EndpointDispatch {
   @override
@@ -103,6 +114,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'calendarEvent',
+          'serverpod_calendar',
+        ),
+      'calendarTask': _i4tukef9.CalendarTaskEndpoint()
+        ..initialize(
+          server,
+          'calendarTask',
           'serverpod_calendar',
         ),
     };
@@ -930,6 +947,182 @@ class Endpoints extends _is.EndpointDispatch {
                       .deleteEvent(
                         session,
                         params['eventId'],
+                        params['expectedRevision'],
+                      ),
+        ),
+      },
+    );
+    connectors['calendarTask'] = _is.EndpointConnector(
+      name: 'calendarTask',
+      endpoint: endpoints['calendarTask']!,
+      methodConnectors: {
+        'create': _is.MethodConnector(
+          name: 'create',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i9cxsmu8.CalendarTaskCreateRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarTask'] as _i4tukef9.CalendarTaskEndpoint)
+                      .create(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'getTask': _is.MethodConnector(
+          name: 'getTask',
+          params: {
+            'taskId': _is.ParameterDescription(
+              name: 'taskId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'groups': _is.ParameterDescription(
+              name: 'groups',
+              type: _is.getType<List<_ik0gz7r1.CalendarTaskFieldGroup>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarTask'] as _i4tukef9.CalendarTaskEndpoint)
+                      .getTask(
+                        session,
+                        params['taskId'],
+                        params['groups'],
+                      ),
+        ),
+        'list': _is.MethodConnector(
+          name: 'list',
+          params: {
+            'calendarId': _is.ParameterDescription(
+              name: 'calendarId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'pageSize': _is.ParameterDescription(
+              name: 'pageSize',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'fieldGroups': _is.ParameterDescription(
+              name: 'fieldGroups',
+              type: _is.getType<List<_ik0gz7r1.CalendarTaskFieldGroup>>(),
+              nullable: false,
+            ),
+            'cursor': _is.ParameterDescription(
+              name: 'cursor',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarTask'] as _i4tukef9.CalendarTaskEndpoint)
+                      .list(
+                        session,
+                        params['calendarId'],
+                        pageSize: params['pageSize'],
+                        fieldGroups: params['fieldGroups'],
+                        cursor: params['cursor'],
+                      ),
+        ),
+        'update': _is.MethodConnector(
+          name: 'update',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_ifljty0a.CalendarTaskUpdateRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarTask'] as _i4tukef9.CalendarTaskEndpoint)
+                      .update(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'changeProgress': _is.MethodConnector(
+          name: 'changeProgress',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_ilb9fjz5.CalendarTaskProgressRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarTask'] as _i4tukef9.CalendarTaskEndpoint)
+                      .changeProgress(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'changeAssignments': _is.MethodConnector(
+          name: 'changeAssignments',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_iuliypfa.CalendarTaskAssignmentsRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarTask'] as _i4tukef9.CalendarTaskEndpoint)
+                      .changeAssignments(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'deleteTask': _is.MethodConnector(
+          name: 'deleteTask',
+          params: {
+            'taskId': _is.ParameterDescription(
+              name: 'taskId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'expectedRevision': _is.ParameterDescription(
+              name: 'expectedRevision',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarTask'] as _i4tukef9.CalendarTaskEndpoint)
+                      .deleteTask(
+                        session,
+                        params['taskId'],
                         params['expectedRevision'],
                       ),
         ),

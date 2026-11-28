@@ -1,0 +1,6 @@
+class: CalendarTaskAssignmentsRequest
+immutable: true
+fields:
+  taskId: UuidValue
+  expectedRevision: int
+  assignees: List<CalendarTaskAssignee>

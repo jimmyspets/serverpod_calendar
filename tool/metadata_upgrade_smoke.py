@@ -320,6 +320,34 @@ END;
 $event_storage$;
 DROP TABLE event_before_storage;
 """)
+        preserved = ["serverpod_calendar_identity", "serverpod_calendar_data", "serverpod_calendar_event", "serverpod_calendar_event_data", "serverpod_calendar_availability_data", "serverpod_calendar_cursor", "serverpod_calendar_scope"]
+        for table in preserved:
+            sql(database, f"CREATE TABLE {table}_before_tasks AS SELECT * FROM {table};")
+        sql(database, (SERVER / "migrations/20261023065425278-native-tasks/migration.sql").read_text(encoding="utf-8"))
+        for table in preserved:
+            strip = "-'taskCalendarId'-'taskFieldGroups'" if table == "serverpod_calendar_cursor" else ""
+            sql(database, f"""
+DO $tasks$
+BEGIN
+ IF (SELECT count(*) FROM {table}) <> (SELECT count(*) FROM {table}_before_tasks)
+ OR EXISTS (SELECT 1 FROM {table} current JOIN {table}_before_tasks old ON current.id=old.id
+   WHERE (to_jsonb(current){strip}) IS DISTINCT FROM to_jsonb(old))
+ THEN RAISE EXCEPTION 'Task upgrade changed existing {table} state'; END IF;
+END;
+$tasks$;
+DROP TABLE {table}_before_tasks;
+""")
+        sql(database, """
+DO $task_schema$
+BEGIN
+ IF EXISTS (SELECT 1 FROM serverpod_calendar_task) OR EXISTS (SELECT 1 FROM serverpod_calendar_task_data)
+ OR EXISTS (SELECT 1 FROM serverpod_calendar_cursor WHERE "taskCalendarId" IS NOT NULL OR "taskFieldGroups" IS NOT NULL)
+ OR NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname='calendar_task_data_identity_unique' AND indexdef LIKE 'CREATE UNIQUE%')
+ OR NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname='calendar_task_data_uid_candidates' AND indexdef NOT LIKE 'CREATE UNIQUE%')
+ THEN RAISE EXCEPTION 'Task upgrade invented tasks/history/cursor bindings or differs from generated indexes'; END IF;
+END;
+$task_schema$;
+""")
         print("PASS: populated schema upgrades preserve identity, revisions, content, associations, protocol UID strings and opening identities and old cursor bindings.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

@@ -11,6 +11,7 @@ import 'calendar_authorization.dart';
 import 'generated/protocol.dart';
 import 'native_calendar_name.dart';
 import 'event_values.dart';
+import 'task_values.dart';
 import 'event_protocol_values.dart';
 import 'event_wire_storage.dart';
 import 'event_wire_output.dart';
@@ -22,6 +23,7 @@ import 'availability_wire_output.dart';
 import 'availability_import_baseline.dart';
 
 part 'calendar_events.dart';
+part 'calendar_tasks.dart';
 part 'calendar_event_import.dart';
 part 'calendar_event_export.dart';
 part 'calendar_free_busy.dart';
@@ -46,6 +48,7 @@ abstract final class CalendarModule {
       options.maxPageSize,
       options.maxScannedCalendars,
       options.maxScannedEvents,
+      options.maxScannedTasks,
       options.policyBatchSize,
       options.maxAssociations,
       options.maxCursorsPerScope,
@@ -793,6 +796,14 @@ final class CalendarService {
                 limit: 1,
               ) >
               0 ||
+          await CalendarTaskRecord.db.count(
+                _session,
+                where: (t) =>
+                    t.calendarId.equals(id) & t.deletedAt.equals(null),
+                transaction: tx,
+                limit: 1,
+              ) >
+              0 ||
           await CalendarEventRecord.db.count(
                 _session,
                 where: (t) =>
@@ -889,6 +900,8 @@ final class CalendarService {
           transaction: tx,
         );
         if (saved == null ||
+            saved.taskCalendarId != null ||
+            saved.taskFieldGroups != null ||
             saved.eventCalendarId != null ||
             saved.eventFieldGroups != null ||
             !saved.expiresAt.isAfter(DateTime.now().toUtc()) ||

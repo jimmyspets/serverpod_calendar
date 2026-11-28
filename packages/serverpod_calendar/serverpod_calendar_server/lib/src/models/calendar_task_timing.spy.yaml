@@ -1,0 +1,8 @@
+class: CalendarTaskTiming
+immutable: true
+fields:
+  kind: CalendarTaskTimeKind
+  start: CalendarEventCivil?
+  due: CalendarEventCivil?
+  duration: CalendarEventDuration?
+  zoneId: String?

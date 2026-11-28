@@ -66,6 +66,13 @@ final class DemoCalendarPolicy implements CalendarHostPolicy {
   }
 
   @override
+  Future<CalendarTaskCandidatePlan> planTaskQuery(
+    Session s,
+    CalendarHostContext c,
+    CalendarPolicySnapshot calendar,
+    Set<CalendarTaskFieldGroup> groups,
+  ) async => CalendarTaskCandidatePlan();
+  @override
   Future<CalendarEventCandidatePlan> planEventQuery(
     Session s,
     CalendarHostContext c,
@@ -112,6 +119,7 @@ final class DemoCalendarPolicy implements CalendarHostPolicy {
             ? CalendarAuthorizationVerdict.allow
             : CalendarAuthorizationVerdict.deny,
         disclosedGroups: request.requestedGroups,
+        taskDisclosedGroups: request.taskGroups,
         eventDisclosedGroups: request.eventGroups,
         discloseMutationReceipt: true,
       ),
@@ -121,6 +129,16 @@ final class DemoCalendarPolicy implements CalendarHostPolicy {
     CalendarHostContext context,
     CalendarAuthorizationRequest request,
   ) {
+    final assignees = request.proposedTaskAssignees;
+    if (assignees != null &&
+        assignees.any(
+          (a) =>
+              a.namespace != 'demo' ||
+              a.kind != 'user' ||
+              a.externalId != context.principalId,
+        )) {
+      return false;
+    }
     final target = request.availabilityTarget;
     if (target != null &&
         (target.namespace != 'demo' ||

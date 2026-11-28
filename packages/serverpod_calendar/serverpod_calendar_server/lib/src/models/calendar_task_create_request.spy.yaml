@@ -1,0 +1,6 @@
+class: CalendarTaskCreateRequest
+immutable: true
+fields:
+  calendarId: UuidValue
+  content: CalendarTaskContent
+  assignees: List<CalendarTaskAssignee>

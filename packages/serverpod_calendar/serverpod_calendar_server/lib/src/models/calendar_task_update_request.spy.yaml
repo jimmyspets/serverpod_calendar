@@ -1,0 +1,6 @@
+class: CalendarTaskUpdateRequest
+immutable: true
+fields:
+  taskId: UuidValue
+  expectedRevision: int
+  content: CalendarTaskContent

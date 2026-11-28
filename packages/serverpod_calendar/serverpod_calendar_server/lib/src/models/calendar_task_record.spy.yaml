@@ -1,0 +1,11 @@
+class: CalendarTaskRecord
+serverOnly: true
+table: serverpod_calendar_task
+fields:
+  id: UuidValue?, defaultPersist=random
+  calendarId: UuidValue, relation(parent=serverpod_calendar_identity)
+  revision: int
+  deletedAt: DateTime?
+indexes:
+  calendar_task_parent_idx:
+    fields: calendarId, id

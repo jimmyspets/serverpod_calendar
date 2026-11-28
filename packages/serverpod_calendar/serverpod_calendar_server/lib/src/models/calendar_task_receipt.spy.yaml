@@ -1,0 +1,7 @@
+class: CalendarTaskReceipt
+immutable: true
+fields:
+  taskId: UuidValue
+  calendarId: UuidValue
+  revision: int
+  deleted: bool

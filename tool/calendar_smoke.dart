@@ -381,6 +381,7 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
       bob.close();
     }
     await eventImportSmoke(clients);
+    await taskSmoke(clients);
     final ea = clients.first.modules.serverpod_calendar.calendarEvent;
     final eb = clients.last.modules.serverpod_calendar.calendarEvent;
     final eventIds = <UuidValue>[];
@@ -1817,6 +1818,247 @@ Future<void> eventImportSmoke(List<Client> clients) async {
     }
     for (final id in parents) {
       await b.delete(id, 1);
+    }
+  }
+}
+
+Future<void> taskSmoke(List<Client> clients) async {
+  final calendars = clients.first.modules.serverpod_calendar.calendar;
+  final tasks = clients.first.modules.serverpod_calendar.calendarTask;
+  final remote = clients.last.modules.serverpod_calendar.calendarTask;
+  final parents = <UuidValue>[];
+  final ids = <UuidValue>[];
+  Future<UuidValue> parent() async {
+    final result = (await calendars.create(
+      cal.CalendarCreateRequest(
+        displayName: 'Task test',
+        availabilityZoneId: 'Europe/Stockholm',
+        noRuleFallback: cal.CalendarNoRuleFallback.free,
+      ),
+    ))!.calendarId;
+    parents.add(result);
+    return result;
+  }
+
+  cal.CalendarTaskContent content([String? title]) => cal.CalendarTaskContent(
+    summary: title,
+    timing: cal.CalendarTaskTiming(kind: cal.CalendarTaskTimeKind.undated),
+  );
+  Future<cal.CalendarTaskReceipt> create(UuidValue calendar) async {
+    final task = (await tasks.create(
+      cal.CalendarTaskCreateRequest(
+        calendarId: calendar,
+        content: content('Shared task'),
+        assignees: [],
+      ),
+    ))!;
+    ids.add(task.taskId);
+    return task;
+  }
+
+  Future<cal.CalendarTaskView> read(UuidValue id) =>
+      remote.getTask(id, cal.CalendarTaskFieldGroup.values);
+  try {
+    final calendar = await parent(),
+        task = await create(calendar),
+        second = await create(calendar);
+    final first = await read(task.taskId);
+    check(
+      first.progress!.percentComplete == 0 &&
+          first.protocolVersion!.sequence == 0,
+      'Native task initial progress/version',
+    );
+    final cursor = (await tasks.list(
+      calendar,
+      pageSize: 1,
+      fieldGroups: cal.CalendarTaskFieldGroup.values,
+    )).nextCursor!;
+    check(
+      (await remote.list(
+            calendar,
+            pageSize: 1,
+            fieldGroups: cal.CalendarTaskFieldGroup.values,
+            cursor: cursor,
+          )).tasks.length ==
+          1,
+      'Task continuation across independent hosts',
+    );
+    await rejects(
+      () => calendars.list(
+        pageSize: 1,
+        fieldGroups: cal.CalendarFieldGroup.values,
+        cursor: cursor,
+      ),
+      cal.CalendarFailureCode.invalidCursor,
+    );
+    final actor = await clients.first.smoke.whoAmI();
+    await remote.changeAssignments(
+      cal.CalendarTaskAssignmentsRequest(
+        taskId: task.taskId,
+        expectedRevision: 1,
+        assignees: [
+          cal.CalendarTaskAssignee(
+            namespace: 'demo',
+            kind: 'user',
+            externalId: actor,
+          ),
+        ],
+      ),
+    );
+    await rejects(
+      () => tasks.changeAssignments(
+        cal.CalendarTaskAssignmentsRequest(
+          taskId: task.taskId,
+          expectedRevision: 2,
+          assignees: [
+            cal.CalendarTaskAssignee(
+              namespace: 'demo',
+              kind: 'user',
+              externalId: 'untrusted',
+            ),
+          ],
+        ),
+      ),
+      cal.CalendarFailureCode.accessDenied,
+    );
+    await tasks.changeProgress(
+      cal.CalendarTaskProgressRequest(
+        taskId: task.taskId,
+        expectedRevision: 2,
+        action: cal.CalendarTaskProgressAction.setPercentage,
+        percentComplete: 65,
+      ),
+    );
+    await remote.changeProgress(
+      cal.CalendarTaskProgressRequest(
+        taskId: task.taskId,
+        expectedRevision: 3,
+        action: cal.CalendarTaskProgressAction.complete,
+      ),
+    );
+    var current = await read(task.taskId);
+    check(
+      current.progress!.percentComplete == 100 &&
+          current.progress!.completedAt!.isUtc &&
+          current.progress!.completedAt!.millisecond == 0,
+      'Completion server-recorded whole-second UTC',
+    );
+    await tasks.changeProgress(
+      cal.CalendarTaskProgressRequest(
+        taskId: task.taskId,
+        expectedRevision: 4,
+        action: cal.CalendarTaskProgressAction.cancel,
+      ),
+    );
+    current = await read(task.taskId);
+    check(
+      current.progress!.percentComplete == 100 &&
+          current.progress!.completedAt == null,
+      'Cancellation keeps percentage and clears completion',
+    );
+    await remote.changeProgress(
+      cal.CalendarTaskProgressRequest(
+        taskId: task.taskId,
+        expectedRevision: 5,
+        action: cal.CalendarTaskProgressAction.reopen,
+      ),
+    );
+    check(
+      (await read(task.taskId)).progress!.percentComplete == 0,
+      'Reopening resets percentage',
+    );
+    final outcomes = await Future.wait(
+      [tasks, remote].map((api) async {
+        try {
+          await api.update(
+            cal.CalendarTaskUpdateRequest(
+              taskId: task.taskId,
+              expectedRevision: 6,
+              content: content('Competing edit'),
+            ),
+          );
+          return true;
+        } on cal.CalendarException catch (e) {
+          if (e.code == cal.CalendarFailureCode.staleRevision) return false;
+          rethrow;
+        }
+      }),
+    );
+    check(
+      outcomes.where((v) => v).length == 1,
+      'Cross-host task revision race must have one winner',
+    );
+    await rejects(
+      () => calendars.delete(calendar, 1),
+      cal.CalendarFailureCode.dependencyConflict,
+    );
+    await rejects(
+      () => remote.list(
+        calendar,
+        pageSize: 1,
+        fieldGroups: cal.CalendarTaskFieldGroup.values,
+        cursor: cursor,
+      ),
+      cal.CalendarFailureCode.invalidCursor,
+    );
+    check(
+      (await read(task.taskId)).protocolUid == first.protocolUid,
+      'Task protocol UID is stable',
+    );
+    final busy = await calendars.freeBusy(
+      cal.CalendarFreeBusyQuery(
+        calendarId: calendar,
+        fromUtc: DateTime.utc(2026, 3, 29),
+        untilUtc: DateTime.utc(2026, 3, 30),
+      ),
+    );
+    check(
+      busy.periods.every((p) => p.kind == cal.CalendarFreeBusyKind.free),
+      'Tasks do not book time',
+    );
+    await remote.deleteTask(second.taskId, 1);
+    ids.remove(second.taskId);
+    final raceParent = await parent();
+    final race = await Future.wait([
+      () async {
+        try {
+          await create(raceParent);
+          return true;
+        } on cal.CalendarException catch (e) {
+          if (e.code == cal.CalendarFailureCode.accessDenied) return false;
+          rethrow;
+        }
+      }(),
+      () async {
+        try {
+          await clients.last.modules.serverpod_calendar.calendar.delete(
+            raceParent,
+            1,
+          );
+          parents.remove(raceParent);
+          return true;
+        } on cal.CalendarException catch (e) {
+          if (e.code == cal.CalendarFailureCode.dependencyConflict) {
+            return false;
+          }
+          rethrow;
+        }
+      }(),
+    ]);
+    check(
+      race.where((v) => v).length == 1,
+      'Task creation and parent deletion serialize across hosts',
+    );
+    print(
+      'PASS: native tasks across two hosts, assignments, progress, cancellation, revision/parent races and opaque continuations.',
+    );
+  } finally {
+    for (final id in ids) {
+      final current = await read(id);
+      await remote.deleteTask(id, current.revision);
+    }
+    for (final id in parents) {
+      await calendars.delete(id, 1);
     }
   }
 }

@@ -1,0 +1,7 @@
+class: CalendarTaskProgressRequest
+immutable: true
+fields:
+  taskId: UuidValue
+  expectedRevision: int
+  action: CalendarTaskProgressAction
+  percentComplete: int?

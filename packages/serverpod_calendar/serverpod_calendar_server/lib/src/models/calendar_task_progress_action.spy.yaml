@@ -1,0 +1,7 @@
+enum: CalendarTaskProgressAction
+serialized: byName
+values:
+  - setPercentage
+  - complete
+  - reopen
+  - cancel

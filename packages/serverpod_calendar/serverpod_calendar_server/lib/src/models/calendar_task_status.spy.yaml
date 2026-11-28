@@ -1,0 +1,7 @@
+enum: CalendarTaskStatus
+serialized: byName
+values:
+  - needsAction
+  - inProcess
+  - completed
+  - cancelled

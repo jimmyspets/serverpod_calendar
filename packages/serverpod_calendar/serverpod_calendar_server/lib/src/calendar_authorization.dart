@@ -9,6 +9,13 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  listTasks,
+  readTask,
+  createTask,
+  updateTask,
+  changeTaskProgress,
+  changeTaskAssignments,
+  deleteTask,
   exportEvents,
   importEvents,
   exportFreeBusy,
@@ -148,6 +155,13 @@ final class CalendarAuthorizationRequest {
     this.calendarId,
     this.categoryFilter,
     this.eventId,
+    this.currentTask,
+    this.taskId,
+    this.proposedTaskContent,
+    this.proposedTaskProgress,
+    this.proposedTaskAssignees,
+    this.proposedTaskVersion,
+    this.taskProgressChange,
     this.currentEvent,
     this.proposedEvent,
     this.proposedEventProtocolState,
@@ -170,13 +184,23 @@ final class CalendarAuthorizationRequest {
     this.availabilityReplacement,
     this.occurrenceChange,
     this.proposedTimingOverrides,
+    Iterable<CalendarTaskFieldGroup> taskGroups = const [],
     Iterable<CalendarEventFieldGroup> eventGroups = const [],
     Iterable<CalendarFieldGroup> requestedGroups = const [],
-  }) : requestedGroups = Set.unmodifiable(requestedGroups),
+  }) : taskGroups = Set.unmodifiable(taskGroups),
+       requestedGroups = Set.unmodifiable(requestedGroups),
        eventGroups = Set.unmodifiable(eventGroups);
   final String key;
   final CalendarPermission operation;
   final UuidValue? eventId;
+  final UuidValue? taskId;
+  final CalendarTaskPolicySnapshot? currentTask;
+  final CalendarTaskContent? proposedTaskContent;
+  final CalendarTaskProgress? proposedTaskProgress;
+  final List<CalendarTaskAssignee>? proposedTaskAssignees;
+  final CalendarTaskProtocolVersion? proposedTaskVersion;
+  final CalendarTaskProgressRequest? taskProgressChange;
+  final Set<CalendarTaskFieldGroup> taskGroups;
   final CalendarEventPolicySnapshot? currentEvent;
   final CalendarEventContent? proposedEvent;
   final CalendarEventProtocolState? proposedEventProtocolState;
@@ -303,13 +327,16 @@ final class CalendarAuthorizationDecision {
     required this.verdict,
     Iterable<CalendarFieldGroup> disclosedGroups = const [],
     this.discloseMutationReceipt = false,
+    Iterable<CalendarTaskFieldGroup> taskDisclosedGroups = const [],
     Iterable<CalendarEventFieldGroup> eventDisclosedGroups = const [],
-  }) : disclosedGroups = Set.unmodifiable(disclosedGroups),
+  }) : taskDisclosedGroups = Set.unmodifiable(taskDisclosedGroups),
+       disclosedGroups = Set.unmodifiable(disclosedGroups),
        eventDisclosedGroups = Set.unmodifiable(eventDisclosedGroups);
   final String key;
   final CalendarAuthorizationVerdict verdict;
   final Set<CalendarFieldGroup> disclosedGroups;
   final bool discloseMutationReceipt;
+  final Set<CalendarTaskFieldGroup> taskDisclosedGroups;
   final Set<CalendarEventFieldGroup> eventDisclosedGroups;
 }
 
@@ -337,6 +364,13 @@ abstract interface class CalendarHostPolicy {
     Set<CalendarFieldGroup> requestedGroups, {
     CalendarCategoryQuery? categoryFilter,
   });
+
+  Future<CalendarTaskCandidatePlan> planTaskQuery(
+    Session session,
+    CalendarHostContext context,
+    CalendarPolicySnapshot calendar,
+    Set<CalendarTaskFieldGroup> requestedGroups,
+  );
 
   Future<CalendarEventCandidatePlan> planEventQuery(
     Session session,
@@ -395,6 +429,7 @@ final class CalendarModuleOptions {
     this.maxPageSize = 100,
     this.maxScannedCalendars = 1000,
     this.maxScannedEvents = 1000,
+    this.maxScannedTasks = 1000,
     this.policyBatchSize = 64,
     this.maxAssociations = 64,
     this.maxCursorsPerScope = 64,
@@ -405,6 +440,7 @@ final class CalendarModuleOptions {
   final int maxPageSize,
       maxScannedCalendars,
       maxScannedEvents,
+      maxScannedTasks,
       policyBatchSize,
       maxAssociations,
       maxCursorsPerScope;
@@ -484,4 +520,32 @@ final class CalendarAvailabilityExtensionRegistration {
 
   /// Side-effect-free bounded validation of decoded TEXT, not content lines.
   final bool Function(String value) validate;
+}
+
+final class CalendarTaskCandidatePlan {
+  CalendarTaskCandidatePlan({Iterable<UuidValue>? taskIds})
+    : taskIds = taskIds == null ? null : Set.unmodifiable(taskIds);
+  final Set<UuidValue>? taskIds;
+}
+
+final class CalendarTaskPolicySnapshot {
+  CalendarTaskPolicySnapshot({
+    required this.taskId,
+    required this.calendarId,
+    required this.revision,
+    required this.content,
+    required this.progress,
+    required Iterable<CalendarTaskAssignee> assignees,
+    required this.protocolUid,
+    required this.protocolVersion,
+    required this.updatedAt,
+  }) : assignees = List.unmodifiable(assignees);
+  final UuidValue taskId, calendarId;
+  final int revision;
+  final CalendarTaskContent content;
+  final CalendarTaskProgress progress;
+  final List<CalendarTaskAssignee> assignees;
+  final String protocolUid;
+  final CalendarTaskProtocolVersion protocolVersion;
+  final DateTime updatedAt;
 }

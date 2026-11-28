@@ -1,0 +1,6 @@
+class: CalendarTaskAssignee
+immutable: true
+fields:
+  namespace: String
+  kind: String
+  externalId: String

@@ -1,0 +1,7 @@
+enum: CalendarTaskTimeKind
+serialized: byName
+values:
+  - undated
+  - date
+  - utc
+  - zoned

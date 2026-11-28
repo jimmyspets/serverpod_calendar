@@ -1,0 +1,20 @@
+class: CalendarTaskDataRecord
+serverOnly: true
+table: serverpod_calendar_task_data
+fields:
+  taskId: UuidValue, relation(parent=serverpod_calendar_task)
+  calendarId: UuidValue
+  protocolUid: String
+  uidDigest: String
+  protocolVersion: CalendarTaskProtocolVersion
+  content: CalendarTaskContent
+  progress: CalendarTaskProgress
+  assignees: List<CalendarTaskAssignee>
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  calendar_task_data_identity_unique:
+    fields: taskId
+    unique: true
+  calendar_task_data_uid_candidates:
+    fields: calendarId, uidDigest

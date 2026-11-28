@@ -188,6 +188,492 @@ void main() {
       return calendar;
     }
 
+    CalendarTaskContent taskContent([String? summary]) => CalendarTaskContent(
+      summary: summary,
+      timing: CalendarTaskTiming(kind: CalendarTaskTimeKind.undated),
+    );
+    Future<CalendarTaskReceipt> taskCreate(
+      UuidValue calendar, {
+      List<CalendarTaskAssignee> assignees = const [],
+    }) async => (await service.createTask(
+      CalendarTaskCreateRequest(
+        calendarId: calendar,
+        content: taskContent('Private task'),
+        assignees: assignees,
+      ),
+    ))!;
+    Future<CalendarTaskView> taskRead(UuidValue id) =>
+        service.getTask(id, CalendarTaskFieldGroup.values);
+    CalendarTaskProgressRequest progressRequest(
+      UuidValue id,
+      int revision,
+      CalendarTaskProgressAction action, [
+      int? percent,
+    ]) => CalendarTaskProgressRequest(
+      taskId: id,
+      expectedRevision: revision,
+      action: action,
+      percentComplete: percent,
+    );
+    const taskGroups = CalendarTaskFieldGroup.values;
+
+    test('task native lifecycle preserves chosen percentage and current completion semantics', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final before = await service.get(parent, groups);
+      final created = await taskCreate(parent), id = created.taskId;
+      final original = await taskRead(id);
+      expect(original.progress!.status, CalendarTaskStatus.needsAction);
+      expect(original.protocolVersion!.sequence, 0);
+      expect(original.protocolUid, isNot(id.toString()));
+      await service.changeTaskProgress(
+        progressRequest(id, 1, CalendarTaskProgressAction.setPercentage, 65),
+      );
+      await service.changeTaskProgress(
+        progressRequest(id, 2, CalendarTaskProgressAction.cancel),
+      );
+      var current = await taskRead(id);
+      expect(current.progress!.percentComplete, 65);
+      expect(current.progress!.completedAt, isNull);
+      expect(current.progress!.status, CalendarTaskStatus.cancelled);
+      await expectLater(
+        service.changeTaskProgress(
+          progressRequest(id, 3, CalendarTaskProgressAction.complete),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      await service.changeTaskProgress(
+        progressRequest(id, 3, CalendarTaskProgressAction.reopen),
+      );
+      expect((await taskRead(id)).progress!.percentComplete, 0);
+      await service.changeTaskProgress(
+        progressRequest(id, 4, CalendarTaskProgressAction.complete),
+      );
+      current = await taskRead(id);
+      final completed = current.progress!.completedAt!,
+          version = current.protocolVersion!.toJson();
+      expect(current.progress!.percentComplete, 100);
+      expect(completed.isUtc, isTrue);
+      expect(completed.millisecond, 0);
+      expect(completed.microsecond, 0);
+      await service.changeTaskProgress(
+        progressRequest(id, 5, CalendarTaskProgressAction.complete),
+      );
+      current = await taskRead(id);
+      expect(current.revision, 6);
+      expect(current.progress!.completedAt, completed);
+      expect(current.protocolVersion!.toJson(), version);
+      await service.changeTaskProgress(
+        progressRequest(id, 6, CalendarTaskProgressAction.cancel),
+      );
+      current = await taskRead(id);
+      expect(current.progress!.percentComplete, 100);
+      expect(current.progress!.completedAt, isNull);
+      expect(current.protocolUid, original.protocolUid);
+      final after = await service.get(parent, groups);
+      expect(after.revision, before.revision);
+      expect(
+        after.protocolIdentity!.toJson(),
+        before.protocolIdentity!.toJson(),
+      );
+    });
+
+    for (final permission in [
+      CalendarPermission.createTask,
+      CalendarPermission.changeTaskAssignments,
+    ]) {
+      test(
+        'task initial assignments independently require ${permission.name}',
+        () async {
+          final parent = (await service.create(createInput()))!.calendarId;
+          policy.denied.add(permission);
+          await expectLater(
+            taskCreate(
+              parent,
+              assignees: [
+                CalendarTaskAssignee(
+                  namespace: 'test',
+                  kind: 'user',
+                  externalId: 'alice',
+                ),
+              ],
+            ),
+            failure(CalendarFailureCode.accessDenied),
+          );
+          expect(await CalendarTaskRecord.db.count(session), 0);
+          expect(await CalendarTaskDataRecord.db.count(session), 0);
+        },
+      );
+    }
+    test('task assignment proposals are canonical immutable actual object context and support batch size one', () async {
+      CalendarModule.install(
+        session.serverpod,
+        policy: policy,
+        options: const CalendarModuleOptions(
+          requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+          policyBatchSize: 1,
+        ),
+      );
+      service = CalendarModule.service(session);
+      final parent = (await service.create(createInput()))!.calendarId;
+      final member = CalendarTaskAssignee(
+        namespace: 'test',
+        kind: 'user',
+        externalId: 'alice',
+      );
+      final created = await taskCreate(parent, assignees: [member, member]);
+      final request = policy.lastTaskRequest!;
+      expect(request.taskId, created.taskId);
+      expect(request.calendarId, parent);
+      expect(request.current!.calendarId, parent);
+      expect(request.proposedTaskAssignees, hasLength(1));
+      expect(
+        () => request.proposedTaskAssignees!.clear(),
+        throwsUnsupportedError,
+      );
+      policy.denied.add(CalendarPermission.updateTask);
+      await service.changeTaskAssignments(
+        CalendarTaskAssignmentsRequest(
+          taskId: created.taskId,
+          expectedRevision: 1,
+          assignees: [],
+        ),
+      );
+      expect(policy.lastTaskRequest!.currentTask!.assignees, hasLength(1));
+      expect((await taskRead(created.taskId)).assignees, isEmpty);
+    });
+    for (final op in [
+      CalendarPermission.updateTask,
+      CalendarPermission.changeTaskProgress,
+      CalendarPermission.changeTaskAssignments,
+      CalendarPermission.deleteTask,
+    ]) {
+      test(
+        'task ${op.name} is independently authorized and final denial rolls back',
+        () async {
+          final parent = (await service.create(createInput()))!.calendarId;
+          final task = await taskCreate(parent);
+          Future<dynamic> write() => switch (op) {
+            CalendarPermission.updateTask => service.updateTask(
+              CalendarTaskUpdateRequest(
+                taskId: task.taskId,
+                expectedRevision: 1,
+                content: taskContent('changed'),
+              ),
+            ),
+            CalendarPermission.changeTaskProgress => service.changeTaskProgress(
+              progressRequest(
+                task.taskId,
+                1,
+                CalendarTaskProgressAction.complete,
+              ),
+            ),
+            CalendarPermission.changeTaskAssignments =>
+              service.changeTaskAssignments(
+                CalendarTaskAssignmentsRequest(
+                  taskId: task.taskId,
+                  expectedRevision: 1,
+                  assignees: [],
+                ),
+              ),
+            _ => service.deleteTask(task.taskId, 1),
+          };
+          policy.denied.add(op);
+          await expectLater(write(), failure(CalendarFailureCode.accessDenied));
+          policy.denied.clear();
+          policy.denyFinal = true;
+          await expectLater(write(), failure(CalendarFailureCode.accessDenied));
+          policy.denyFinal = false;
+          final current = await taskRead(task.taskId);
+          expect(current.revision, 1);
+          expect(current.summary, 'Private task');
+          expect(current.progress!.status, CalendarTaskStatus.needsAction);
+          expect(current.protocolVersion!.sequence, 0);
+        },
+      );
+    }
+    test('task content cannot change progress or assignments and stale writes preserve state', () async {
+      final parent = (await service.create(createInput()))!.calendarId,
+          task = await taskCreate(parent);
+      await service.changeTaskProgress(
+        progressRequest(task.taskId, 1, CalendarTaskProgressAction.complete),
+      );
+      await expectLater(
+        service.updateTask(
+          CalendarTaskUpdateRequest(
+            taskId: task.taskId,
+            expectedRevision: 1,
+            content: taskContent('stale'),
+          ),
+        ),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      policy.denied.addAll([
+        CalendarPermission.changeTaskProgress,
+        CalendarPermission.changeTaskAssignments,
+      ]);
+      await service.updateTask(
+        CalendarTaskUpdateRequest(
+          taskId: task.taskId,
+          expectedRevision: 2,
+          content: taskContent('content only'),
+        ),
+      );
+      final current = await taskRead(task.taskId);
+      expect(current.progress!.status, CalendarTaskStatus.completed);
+      expect(current.assignees, isEmpty);
+      expect(policy.lastTaskRequest!.currentTask!.calendarId, parent);
+    });
+    test('task disclosure groups hide protected contents and denied reads/list do not expose identities', () async {
+      final parent = (await service.create(createInput()))!.calendarId,
+          task = await taskCreate(parent);
+      policy.taskGrants = {CalendarTaskFieldGroup.summary};
+      final current = await taskRead(task.taskId);
+      expect(current.disclosedGroups, [CalendarTaskFieldGroup.summary]);
+      expect(current.summary, 'Private task');
+      expect(current.timing, isNull);
+      expect(current.progress, isNull);
+      expect(current.assignees, isNull);
+      expect(current.protocolUid, isNull);
+      expect(current.protocolVersion, isNull);
+      policy.denied.add(CalendarPermission.readTask);
+      await expectLater(
+        taskRead(task.taskId),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(
+        (await service.listTasks(
+          parent,
+          pageSize: 5,
+          fieldGroups: taskGroups,
+        )).tasks,
+        isEmpty,
+      );
+      policy.denied.add(CalendarPermission.listTasks);
+      await expectLater(
+        service.listTasks(parent, pageSize: 5, fieldGroups: taskGroups),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+    test('task continuations bind query kind calendar fields policy generation and page size', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final other = (await service.create(createInput()))!.calendarId;
+      final first = await taskCreate(parent);
+      await taskCreate(parent);
+      await booking(parent, 10, 11);
+      await booking(parent, 12, 13);
+      Future<CalendarTaskPage> page({
+        int size = 1,
+        String? cursor,
+        List<CalendarTaskFieldGroup> fields = taskGroups,
+        UuidValue? calendar,
+      }) => service.listTasks(
+        calendar ?? parent,
+        pageSize: size,
+        fieldGroups: fields,
+        cursor: cursor,
+      );
+      final initial = await page(), cursor = initial.nextCursor!;
+      expect(initial.tasks, hasLength(1));
+      expect(
+        (await page(cursor: cursor)).tasks.single.id,
+        isNot(initial.tasks.single.id),
+      );
+      await expectLater(
+        page(size: 2, cursor: cursor),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+      await expectLater(
+        page(calendar: other, cursor: cursor),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+      await expectLater(
+        page(fields: [], cursor: cursor),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+      await expectLater(
+        service.list(pageSize: 1, fieldGroups: groups, cursor: cursor),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+      await expectLater(
+        service.listEvents(
+          parent,
+          pageSize: 1,
+          fieldGroups: eventGroups,
+          cursor: cursor,
+        ),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+      final eventCursor = (await service.listEvents(
+        parent,
+        pageSize: 1,
+        fieldGroups: eventGroups,
+      )).nextCursor!;
+      await expectLater(
+        page(cursor: eventCursor),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+      policy.epoch = 'v2';
+      await expectLater(
+        page(cursor: cursor),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+      policy.epoch = 'v1';
+      await service.changeTaskProgress(
+        progressRequest(first.taskId, 1, CalendarTaskProgressAction.complete),
+      );
+      await expectLater(
+        page(cursor: cursor),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+    });
+    test('task candidate plans constrain results without granting access and scan budgets fail closed', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final task = await taskCreate(parent);
+      await taskCreate(parent);
+      policy.taskCandidates = {task.taskId};
+      expect(
+        (await service.listTasks(
+          parent,
+          pageSize: 5,
+          fieldGroups: taskGroups,
+        )).tasks.single.id,
+        task.taskId,
+      );
+      policy.denied.add(CalendarPermission.readTask);
+      expect(
+        (await service.listTasks(
+          parent,
+          pageSize: 5,
+          fieldGroups: taskGroups,
+        )).tasks,
+        isEmpty,
+      );
+      policy.taskCandidates = null;
+      CalendarModule.install(
+        session.serverpod,
+        policy: policy,
+        options: const CalendarModuleOptions(
+          requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+          maxScannedTasks: 1,
+          policyBatchSize: 1,
+        ),
+      );
+      await expectLater(
+        CalendarModule.service(session)
+            .listTasks(parent, pageSize: 1, fieldGroups: taskGroups),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+    });
+    test('tasks never book time and deletion scrubs payload while blocking parent only when active', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final task = (await service.createTask(
+        CalendarTaskCreateRequest(
+          calendarId: parent,
+          content: taskContent().copyWith(
+            timing: CalendarTaskTiming(
+              kind: CalendarTaskTimeKind.zoned,
+              zoneId: 'Europe/Stockholm',
+              start: CalendarEventCivil(year: 2026, month: 3, day: 29, hour: 9),
+              duration: CalendarEventDuration(hours: 2),
+            ),
+          ),
+          assignees: [],
+        ),
+      ))!;
+      expect(
+        (await service.freeBusy(busyQuery(parent))).periods
+            .every((p) => p.kind == CalendarFreeBusyKind.free),
+        isTrue,
+      );
+      await expectLater(
+        service.delete(parent, 1),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      await service.deleteTask(task.taskId, 1);
+      expect(await CalendarTaskDataRecord.db.count(session), 0);
+      final marker = await CalendarTaskRecord.db.findById(session, task.taskId);
+      expect(marker!.calendarId, parent);
+      expect(marker.revision, 2);
+      expect(marker.deletedAt, isNotNull);
+      expect(marker.toJson().keys.toSet(), {
+        '__className__',
+        'id',
+        'calendarId',
+        'revision',
+        'deletedAt',
+      });
+      await expectLater(
+        taskRead(task.taskId),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(
+        (await service.listTasks(
+          parent,
+          pageSize: 5,
+          fieldGroups: taskGroups,
+        )).tasks,
+        isEmpty,
+      );
+      await service.delete(parent, 1);
+    });
+    test(
+      'task actual scope and inconsistent stored parent fail closed',
+      () async {
+        final parent = (await service.create(createInput()))!.calendarId,
+            task = await taskCreate(parent);
+        final bob = builder
+            .copyWith(
+              authentication: AuthenticationOverride.authenticationInfo(
+                'bob',
+                {},
+              ),
+            )
+            .build();
+        await expectLater(
+          CalendarModule.service(bob).getTask(task.taskId, taskGroups),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        final data = (await CalendarTaskDataRecord.db.find(session)).single;
+        data.calendarId = (await service.create(createInput()))!.calendarId;
+        await CalendarTaskDataRecord.db.updateRow(session, data);
+        await expectLater(
+          taskRead(task.taskId),
+          failure(CalendarFailureCode.unavailable),
+        );
+      },
+    );
+    test('task protocol overflow and scope generation overflow roll back active writes', () async {
+      final parent = (await service.create(createInput()))!.calendarId,
+          task = await taskCreate(parent);
+      final data = (await CalendarTaskDataRecord.db.find(session)).single;
+      data.protocolVersion = data.protocolVersion.copyWith(
+        sequence: 2147483647,
+      );
+      await CalendarTaskDataRecord.db.updateRow(session, data);
+      await expectLater(
+        service.changeTaskProgress(
+          progressRequest(task.taskId, 1, CalendarTaskProgressAction.complete),
+        ),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      expect((await taskRead(task.taskId)).revision, 1);
+      data.protocolVersion = data.protocolVersion.copyWith(sequence: 0);
+      await CalendarTaskDataRecord.db.updateRow(session, data);
+      final scope = (await CalendarScopeRecord.db.find(session)).single;
+      scope.revision = 9007199254740991;
+      await CalendarScopeRecord.db.updateRow(session, scope);
+      await expectLater(
+        service.changeTaskProgress(
+          progressRequest(task.taskId, 1, CalendarTaskProgressAction.complete),
+        ),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      final current = await taskRead(task.taskId);
+      expect(current.revision, 1);
+      expect(current.progress!.completedAt, isNull);
+      expect(current.protocolVersion!.sequence, 0);
+    });
+
     test('subject search unions bookings from complete contributors independently of direct calendar access', () async {
       final a = await contributor('alice'), b = await contributor('alice');
       final admin = await contributor('alice', contributes: false);
@@ -6777,6 +7263,10 @@ final class TestPolicy implements CalendarHostPolicy {
   final hidden = <UuidValue>{};
   Set<CalendarFieldGroup> grants = groups.toSet();
   Set<CalendarEventFieldGroup> eventGrants = eventGroups.toSet();
+  Set<UuidValue>? taskCandidates;
+  Set<CalendarTaskFieldGroup> taskGrants = CalendarTaskFieldGroup.values
+      .toSet();
+  CalendarAuthorizationRequest? lastTaskRequest;
   Set<UuidValue>? eventCandidates;
   CalendarAuthorizationRequest? lastEventRequest;
   CalendarAuthorizationRequest? lastAvailabilityRequest;
@@ -6861,6 +7351,13 @@ final class TestPolicy implements CalendarHostPolicy {
   }
 
   @override
+  Future<CalendarTaskCandidatePlan> planTaskQuery(
+    Session s,
+    CalendarHostContext c,
+    CalendarPolicySnapshot calendar,
+    Set<CalendarTaskFieldGroup> groups,
+  ) async => CalendarTaskCandidatePlan(taskIds: taskCandidates);
+  @override
   Future<CalendarEventCandidatePlan> planEventQuery(
     Session s,
     CalendarHostContext c,
@@ -6932,6 +7429,7 @@ final class TestPolicy implements CalendarHostPolicy {
         onSearchRead?.call(r);
       }
     }
+    if (r.taskId != null) lastTaskRequest = r;
     if (r.eventId != null) lastEventRequest = r;
     if (r.categoryFilter != null) {
       sawCategoryFilter = true;
@@ -6987,6 +7485,7 @@ final class TestPolicy implements CalendarHostPolicy {
           ? CalendarAuthorizationVerdict.deny
           : CalendarAuthorizationVerdict.allow,
       disclosedGroups: grants,
+      taskDisclosedGroups: taskGrants,
       eventDisclosedGroups: eventGrants,
       discloseMutationReceipt:
           !(r.operation == CalendarPermission.importEvents &&

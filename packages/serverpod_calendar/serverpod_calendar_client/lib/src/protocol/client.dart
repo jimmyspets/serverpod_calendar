@@ -94,6 +94,22 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_subject_view.dar
     as _iad1u4rm;
 import 'package:serverpod_calendar_client/src/protocol/calendar_supplemental_metadata_update_request.dart'
     as _i18zqkab;
+import 'package:serverpod_calendar_client/src/protocol/calendar_task_assignments_request.dart'
+    as _i5f9hv45;
+import 'package:serverpod_calendar_client/src/protocol/calendar_task_create_request.dart'
+    as _iy2jl335;
+import 'package:serverpod_calendar_client/src/protocol/calendar_task_field_group.dart'
+    as _i6s1er1y;
+import 'package:serverpod_calendar_client/src/protocol/calendar_task_page.dart'
+    as _il0k8fyg;
+import 'package:serverpod_calendar_client/src/protocol/calendar_task_progress_request.dart'
+    as _ic7kx71o;
+import 'package:serverpod_calendar_client/src/protocol/calendar_task_receipt.dart'
+    as _igkgk3pi;
+import 'package:serverpod_calendar_client/src/protocol/calendar_task_update_request.dart'
+    as _i3qqxpb2;
+import 'package:serverpod_calendar_client/src/protocol/calendar_task_view.dart'
+    as _iaetqlvx;
 import 'package:serverpod_calendar_client/src/protocol/calendar_view.dart'
     as _i6qyw4e7;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
@@ -468,6 +484,86 @@ class EndpointCalendarEvent extends _isc.EndpointRef {
   );
 }
 
+/// {@category Endpoint}
+class EndpointCalendarTask extends _isc.EndpointRef {
+  EndpointCalendarTask(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'serverpod_calendar.calendarTask';
+
+  _ida.Future<_igkgk3pi.CalendarTaskReceipt?> create(
+    _iy2jl335.CalendarTaskCreateRequest request,
+  ) => caller.callServerEndpoint<_igkgk3pi.CalendarTaskReceipt?>(
+    'serverpod_calendar.calendarTask',
+    'create',
+    {'request': request},
+  );
+
+  _ida.Future<_iaetqlvx.CalendarTaskView> getTask(
+    _isc.UuidValue taskId,
+    List<_i6s1er1y.CalendarTaskFieldGroup> groups,
+  ) => caller.callServerEndpoint<_iaetqlvx.CalendarTaskView>(
+    'serverpod_calendar.calendarTask',
+    'getTask',
+    {
+      'taskId': taskId,
+      'groups': groups,
+    },
+  );
+
+  _ida.Future<_il0k8fyg.CalendarTaskPage> list(
+    _isc.UuidValue calendarId, {
+    required int pageSize,
+    required List<_i6s1er1y.CalendarTaskFieldGroup> fieldGroups,
+    String? cursor,
+  }) => caller.callServerEndpoint<_il0k8fyg.CalendarTaskPage>(
+    'serverpod_calendar.calendarTask',
+    'list',
+    {
+      'calendarId': calendarId,
+      'pageSize': pageSize,
+      'fieldGroups': fieldGroups,
+      'cursor': cursor,
+    },
+  );
+
+  _ida.Future<_igkgk3pi.CalendarTaskReceipt?> update(
+    _i3qqxpb2.CalendarTaskUpdateRequest request,
+  ) => caller.callServerEndpoint<_igkgk3pi.CalendarTaskReceipt?>(
+    'serverpod_calendar.calendarTask',
+    'update',
+    {'request': request},
+  );
+
+  _ida.Future<_igkgk3pi.CalendarTaskReceipt?> changeProgress(
+    _ic7kx71o.CalendarTaskProgressRequest request,
+  ) => caller.callServerEndpoint<_igkgk3pi.CalendarTaskReceipt?>(
+    'serverpod_calendar.calendarTask',
+    'changeProgress',
+    {'request': request},
+  );
+
+  _ida.Future<_igkgk3pi.CalendarTaskReceipt?> changeAssignments(
+    _i5f9hv45.CalendarTaskAssignmentsRequest request,
+  ) => caller.callServerEndpoint<_igkgk3pi.CalendarTaskReceipt?>(
+    'serverpod_calendar.calendarTask',
+    'changeAssignments',
+    {'request': request},
+  );
+
+  _ida.Future<_igkgk3pi.CalendarTaskReceipt?> deleteTask(
+    _isc.UuidValue taskId,
+    int expectedRevision,
+  ) => caller.callServerEndpoint<_igkgk3pi.CalendarTaskReceipt?>(
+    'serverpod_calendar.calendarTask',
+    'deleteTask',
+    {
+      'taskId': taskId,
+      'expectedRevision': expectedRevision,
+    },
+  );
+}
+
 class Caller extends _isc.ModuleEndpointCaller {
   Caller(_isc.ServerpodClientShared client) : super(client) {
     calendarAvailability = EndpointCalendarAvailability(this);
@@ -475,6 +571,7 @@ class Caller extends _isc.ModuleEndpointCaller {
     calendarDiagnostics = EndpointCalendarDiagnostics(this);
     calendar = EndpointCalendar(this);
     calendarEvent = EndpointCalendarEvent(this);
+    calendarTask = EndpointCalendarTask(this);
   }
 
   late final EndpointCalendarAvailability calendarAvailability;
@@ -487,6 +584,8 @@ class Caller extends _isc.ModuleEndpointCaller {
 
   late final EndpointCalendarEvent calendarEvent;
 
+  late final EndpointCalendarTask calendarTask;
+
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
     'serverpod_calendar.calendarAvailability': calendarAvailability,
@@ -494,5 +593,6 @@ class Caller extends _isc.ModuleEndpointCaller {
     'serverpod_calendar.calendarDiagnostics': calendarDiagnostics,
     'serverpod_calendar.calendar': calendar,
     'serverpod_calendar.calendarEvent': calendarEvent,
+    'serverpod_calendar.calendarTask': calendarTask,
   };
 }
