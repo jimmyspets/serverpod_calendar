@@ -537,8 +537,9 @@ Accepted [ADR 0141](adr/0141-explicit-linked-cancellation-application.md) adds e
 
 ## Decoded iMIP calendar-part prerequisite
 
-- [ ] Review [ADR 0142](adr/0142-pure-decoded-imip-calendar-parts.md): pure carrier, method/component/charset checks, bounded mailbox subset, protection rejection and limits.
-- [ ] Implement and validate the approved pure profile; no source changes until explicit agreement.
+- [x] Review [ADR 0142](adr/0142-pure-decoded-imip-calendar-parts.md): pure carrier, method/component/charset checks, bounded mailbox subset, protection rejection and limits.
+- [x] Implement the approved pure profile.
+- [x] Complete pure batch validation before one implementation commit.
 - [ ] Separately select/evaluate host MIME/provider integration, complete message handling, trusted ingress/outbound authority and synthetic delivery before external mail evidence.
 
-This proposed prerequisite does not complete the RFC 6047 mail requirement or imply authority from parsed addresses. Existing event/free-busy iTIP payloads remain independent of mail binding. No real sending is authorized.
+This scoped pure prerequisite does not complete the RFC 6047 mail requirement or imply authority from parsed addresses. Existing event/free-busy iTIP payloads remain independent of mail binding. No real sending is authorized.

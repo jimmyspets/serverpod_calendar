@@ -1406,3 +1406,13 @@ Documentation-only next prerequisite after completed ADR 0141. Current ADR 0015,
 
 
 Documentation validation passed **2,968 relative links**, consecutive ADRs 0001–0142, **nine Markdown-only candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. No runtime tests were repeated for this proposed protocol-only documentation change.
+
+
+## Pure decoded iMIP calendar parts — ADR 0142 (2026-10-29)
+
+The maintainer explicitly approved the complete decoded-part/MIME/address/protection/limit profile before implementation. The new exported pure adapter adds immutable bounded carriers, existing VEVENT/VFREEBUSY payload validation, mail-specific address checks and revalidated decoded output; no dependency, table/model source, migration or endpoint changed. The first focused VM run passed **50** cases and failed one test fixture that attempted to clear the fixed-length UTF-8 input list. The fixture now mutates a byte instead; three brace-style analysis findings were also corrected. Expanded shared-budget/horizon/per-component/mailbox-bound cases brought focused coverage to **54**, all passing on VM and Chrome. Workspace `dart analyze --fatal-infos` passed; final changed-source formatting verification passed. No source changes occurred after these successful checks.
+
+`./.local/imip-part-batch.ps1` used the pinned root toolchain assertion and completed core **502 VM/502 Chrome**, iCalendar **620 VM/620 Chrome** and module unit **227 VM/17 Chrome** suites. Actual Serverpod MCP hot reload and Flutter MCP hot reload succeeded; Flutter runtime-error inspection found none. No standalone module host was started or development database reset. Database/upgrade, independent-process/client/Flutter journeys, feed/notification suites and release builds were not repeated for this pure prerequisite; completed ADR 0141 full-root evidence remains separate. Full repository checks are still required before marking the stacked PR ready. Whole-email MIME, trusted transport and real mail/external-client conformance are not claimed.
+
+
+Final static verification passed **2,979 relative links**, consecutive ADRs 0001–0142, **16 candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. The complete approved pure batch is ready for its single implementation commit.

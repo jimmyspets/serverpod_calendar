@@ -1,14 +1,14 @@
 # ADR 0142: Pure decoded iMIP calendar-part profile
 
-Status: **Proposed; concrete pure-protocol mechanics require explicit maintainer agreement before implementation.**
+Status: **Accepted by explicit maintainer approval on 2026-10-29 for the complete pure decoded-part/MIME/address/protection/limit batch. Scoped pure implementation and local batch validation are recorded separately.**
 
 ## Context, evidence and boundary
 
-[ADR 0015](0015-restricted-imip-profile.md) selects a restricted iMIP-compatible first-release profile, optional component hints and no module S/MIME capability. Existing pure event/free-busy scheduling adapters and durable native workflows still exchange calendar payloads through synthetic host transports. A common decoded calendar-part boundary is the next proposed mail prerequisite, before complete host MIME/transport integration. This proposal adds no database, endpoint, migration, email account, native mutation or real sending.
+[ADR 0015](0015-restricted-imip-profile.md) selects a restricted iMIP-compatible first-release profile, optional component hints and no module S/MIME capability. Existing pure event/free-busy scheduling adapters and durable native workflows still exchange calendar payloads through synthetic host transports. A common decoded calendar-part boundary is the next approved mail prerequisite, before complete host MIME/transport integration. This proposal adds no database, endpoint, migration, email account, native mutation or real sending.
 
 [RFC 6047 sections 2.3–2.6](https://www.rfc-editor.org/rfc/rfc6047.html#section-2.3) require text/calendar with a method matching the calendar METHOD ignoring case; UTF-8 declaration is required for non-ASCII calendar data. Its optional component parameter describes actual component type. Filename hints do not determine payload type. The bounded choices below are application profiles, not complete MIME/RFC 6047 conformance. [The current matrix](../rfc/rfc-6047.md) keeps host/library MIME, multipart, headers, transport and authority work separate.
 
-## Proposed pure carrier and API
+## Approved pure carrier and API
 
 Add immutable pure Dart types/functions in serverpod_calendar_icalendar, independent of Serverpod and Flutter. Input is one already transfer-decoded MIME part: media-type string, ordered decoded parameter name/value pairs, raw decoded calendar bytes and an explicit outer-protection marker (none, signed, encrypted or unknown). The host MIME library/provider owns RFC 5322/MIME syntax, header unfolding, quoted parameter decoding, transfer encoding and part extraction; passing a decoded String must not normalize calendar bytes/line endings.
 
@@ -18,7 +18,7 @@ Support all currently implemented pure VEVENT methods and the separate pure VFRE
 
 This API validates a single decoded calendar part. It does not parse/select a whole mail message, choose among multipart alternatives, claim to process every MIME part, resolve Content-ID references or preserve a complete RFC 5322 document. A later host/gateway contract must inspect all parts, enforce aggregate/transfer-decode budgets, reject unsupported ambiguity/protection and obtain trusted origin evidence before invoking any native ingress. Inert URI references remain source data; no fetching or embedding occurs.
 
-## Proposed MIME checks and canonical output
+## Approved MIME checks and canonical output
 
 Require media type text/calendar, compared as bounded ASCII case-insensitive tokens. Require exactly one method parameter and compare it case-insensitively with the validated calendar METHOD. Missing/mismatched method is not accepted as an iMIP part; no fallback to file import occurs. Accept component absence; when supplied, require exactly the actual VEVENT or VFREEBUSY hint, case-insensitively.
 
@@ -26,7 +26,7 @@ Accept declared UTF-8; absent charset or US-ASCII requires an entirely ASCII dec
 
 A serializer revalidates an existing typed pure scheduling payload and returns a canonical decoded calendar part with text/calendar, explicit UTF-8, actual method and actual component hint. It does not emit RFC 5322 headers, MIME boundaries, transfer-encoded wire bytes or a deliverable email. Source metadata remains available on parsed results; canonical output is not exact original-mail preservation. The host MIME provider must apply the selected transfer encoding before SMTP delivery, including non-ASCII payload handling.
 
-## Proposed calendar-address subset
+## Approved calendar-address subset
 
 For this first mail-specific profile, ORGANIZER/ATTENDEE and any corresponding SENT-BY/delegation calendar-address values must be a single proper mailto URI within an explicitly bounded ASCII dot-atom mailbox/DNS-domain subset. Validate percent escapes without repair and preserve supplied URI spelling. Reject empty/multiple mailboxes, URI headers/fragments, controls, quoted local parts, domain literals and non-ASCII mailbox strings. Allow ASCII punycode domains without guessing/converting Unicode domains; Unicode display text inside the UTF-8 calendar payload remains supported. These stricter mailbox exclusions need later explicit expansion if selected mail targets require them.
 
@@ -46,6 +46,6 @@ Building a new complete MIME parser would conflict with the host/library boundar
 
 Test missing/matching/mismatched method/component/charset, case and duplicate parameters, unknown types/parameters, ASCII/Swedish UTF-8, transfer-decoded malformed UTF-8/CRLF/BOM, proper/rejected mailto forms and no URI repair. Exercise all selected source methods and both primary kinds, existing recurrence/zones/omissions, bounds before normalization, immutable carriers and canonical revalidation. Reject protected/unknown sources and required-protection output; diagnostics must not echo synthetic private values. Run focused VM/Chrome tests, then complete core/iCalendar VM/Chrome, relevant module regressions, formatting/analysis and documentation checks before one batch commit. No schema/native/real-mail interoperability claim follows.
 
-## Decision requested
+## Accepted decision
 
-Approve this concrete pure decoded-part, MIME/address/protection/limit profile before implementation. Host MIME-library/provider selection, complete multipart/header/transfer integration, trusted ingress, durable participant responses/remaining reconciliation, actual mail delivery and external-client evidence remain separate required work. Existing RFC 6047 host/library and transport rows remain unimplemented until that integration exists.
+The maintainer explicitly approved the complete concrete profile before implementation on 2026-10-29. See [the implementation/API guide](../imip-calendar-parts.md) and the separate validation record. Host MIME-library/provider selection, complete multipart/header/transfer integration, trusted ingress, durable participant responses/remaining reconciliation, actual mail delivery and external-client evidence remain separate required work. Existing RFC 6047 host/library and transport rows remain unimplemented until that integration exists.
