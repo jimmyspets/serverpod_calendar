@@ -478,3 +478,6 @@ Accepted [ADR 0147](adr/0147-bounded-calendar-occurrence-queries.md) implements 
 
 
 Accepted [ADR 0148](adr/0148-recurring-master-invitation-workflow.md) extends the [recipient workflow](recurring-master-invitations.md) to one supported recurring master, explicit whole-series application/cancellation/reopening and independent synthetic master REPLYs. Source mode survives retained markers and is verified from accepted links after queue expiry. Separate validation records actual checks; detached/bundled instance and range reconciliation, delegation, provider transport and external-client evidence remain required.
+
+
+Proposed [ADR 0149](adr/0149-trusted-single-instance-invitation-review.md) describes bounded single-instance recipient intake/review, requiring known series evidence and preserving original identity. It is unimplemented; neither pure detached parsing nor the completed recurring-master workflow establishes native instance reconciliation or participant responses.
