@@ -495,6 +495,681 @@ void main() {
       originalStart: point,
     );
 
+    Future<CalendarSchedulingOccurrenceRestoreRequest> restoreCommand(
+      UuidValue id,
+      CalendarEventTiming point,
+    ) async => CalendarSchedulingOccurrenceRestoreRequest(
+      eventId: id,
+      expectedRevision: (await service.getEvent(
+        id,
+        CalendarEventFieldGroup.values,
+      )).revision,
+      commandId: Uuid().v4obj(),
+      originalStart: point,
+    );
+
+    test('instance RESTORE zoned nominal day across DST retains published text annotations', () async {
+      final content = masterContent(kind: CalendarEventTimeKind.zoned).copyWith(
+        timing: masterTiming(kind: CalendarEventTimeKind.zoned)
+            .copyWith(duration: CalendarEventDuration(days: 1)),
+        textParameters: CalendarEventTextParameters(
+          summary: CalendarTextParameters(
+            language: 'sv',
+            alternativeUri: 'https://example.invalid/summary',
+          ),
+        ),
+      );
+      final id = await masterEvent(content),
+          point = CalendarEventTiming(
+            kind: CalendarEventTimeKind.zoned,
+            start: masterTiming(
+              kind: CalendarEventTimeKind.zoned,
+              day: 28,
+            ).start,
+            zoneId: 'Europe/Stockholm',
+          );
+      await service.saveAndNotify(masterRequest(id, content));
+      await CalendarModule.runSchedulingMaintenance(session);
+      await service.cancelOccurrenceAndNotify(await instanceCommand(id, point));
+      await CalendarModule.runSchedulingMaintenance(session);
+      final restored = await service.restoreOccurrenceAndNotify(
+        await restoreCommand(id, point),
+      );
+      final event = (await messageFor(restored)).events.single;
+      expect(event.duration!.days, 1);
+      expect(event.duration!.hours, 0);
+      expect(
+        event.startTime!
+            .add(event.duration!)
+            .difference(event.startTime!.instant),
+        const Duration(hours: 23),
+      );
+      final summary = props(event, 'SUMMARY').single;
+      expect(
+        summary.parameters
+            .singleWhere((p) => p.canonicalName == 'LANGUAGE')
+            .values,
+        ['sv'],
+      );
+      expect(
+        summary.parameters
+            .singleWhere((p) => p.canonicalName == 'ALTREP')
+            .values,
+        ['https://example.invalid/summary'],
+      );
+    });
+    test(
+      'instance RESTORE implicit DATE end and two retained originals',
+      () async {
+        final content = masterContent().copyWith(
+          timing: CalendarEventTiming(
+            kind: CalendarEventTimeKind.date,
+            start: CalendarEventCivil(year: 2026, month: 3, day: 27),
+          ),
+        );
+        final id = await masterEvent(content);
+        await service.saveAndNotify(masterRequest(id, content));
+        await CalendarModule.runSchedulingMaintenance(session);
+        await service.updateEvent(
+          CalendarEventUpdateRequest(
+            eventId: id,
+            expectedRevision: 2,
+            content: content.copyWith(
+              summary: 'Private implicit-end draft',
+              recurrence: content.recurrence!.copyWith(
+                exclusions: [originalDay(28)],
+              ),
+            ),
+          ),
+        );
+        for (final day in [28, 29]) {
+          await service.cancelOccurrenceAndNotify(
+            await instanceCommand(id, originalDay(day)),
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+        }
+        for (final day in [28, 29]) {
+          await service.restoreOccurrenceAndNotify(
+            await restoreCommand(id, originalDay(day)),
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+        }
+        final current = await service.getEvent(
+          id,
+          CalendarEventFieldGroup.values,
+        );
+        final repaired = content.copyWith(
+          summary: 'Private implicit-end draft',
+        );
+        await service.updateEvent(
+          CalendarEventUpdateRequest(
+            eventId: id,
+            expectedRevision: current.revision,
+            content: repaired,
+            replaceRecurrenceDates: true,
+          ),
+        );
+        final view = await service.getEvent(id, CalendarEventFieldGroup.values);
+        expect(view.recurrence!.exclusions, isEmpty);
+        await notifyCurrent(
+          id,
+          CalendarEventContent(
+            summary: view.summary,
+            timing: view.timing!,
+            status: view.status!,
+            transparency: view.transparency!,
+            recurrence: view.recurrence,
+            periods: view.periods,
+            textParameters: view.textParameters,
+          ),
+        );
+      },
+    );
+    for (final kind in [
+      CalendarEventTimeKind.date,
+      CalendarEventTimeKind.utc,
+      CalendarEventTimeKind.zoned,
+    ]) {
+      test(
+        'instance RESTORE ${kind.name} versions and complete REQUEST transition',
+        () async {
+          final content = masterContent(kind: kind),
+              id = await masterEvent(masterContent(kind: kind));
+          final first = await service.saveAndNotify(masterRequest(id, content));
+          await CalendarModule.runSchedulingMaintenance(session);
+          final time = masterTiming(kind: kind, day: 28);
+          final point = CalendarEventTiming(
+            kind: kind,
+            start: time.start,
+            zoneId: time.zoneId,
+          );
+          final cancelled = await service.cancelOccurrenceAndNotify(
+            await instanceCommand(id, point),
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          final command = await restoreCommand(id, point),
+              contexts = <CalendarSchedulingPolicyContext>[];
+          host.onCheck = contexts.add;
+          final restored = await service.restoreOccurrenceAndNotify(command),
+              p = await publication(
+                (await service.schedulingStatus(id)).publicationId!,
+              );
+          final wire = await messageFor(restored);
+          expect(p.method, 'REQUEST');
+          expect(jsonDecode(p.snapshot)['version'], 5);
+          expect(wire.events.single.isOverride, true);
+          expect(wire.events.single.summary!.value, content.summary);
+          expect(props(wire.events.single, 'DTSTART').length, 1);
+          expect(
+            p.sequence,
+            greaterThan((await publication(cancelled.publicationId)).sequence),
+          );
+          expect((await eventData(id)).timingOverrides, isNull);
+          var view = await service.schedulingStatus(id);
+          expect(
+            view.publicationKind,
+            CalendarSchedulingPublicationKind.occurrenceRestore,
+          );
+          expect(view.hasOccurrenceCancellations, false);
+          expect(view.hasLocalChanges, false);
+          expect(
+            contexts.every(
+              (c) =>
+                  c.exactNativeMatch == true &&
+                  c.publishedRequest!.content.summary == content.summary,
+            ),
+            true,
+          );
+          final retry = await service.restoreOccurrenceAndNotify(command);
+          expect(retry.unchanged, true);
+          expect(retry.publicationId, restored.publicationId);
+          expect(
+            (await service.restoreOccurrenceAndNotify(
+              await restoreCommand(id, point),
+            )).unchanged,
+            true,
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          expect(transport.submissions.last.payload, p.payload);
+          final full = await notifyCurrent(id, content),
+              all = await messageFor(full);
+          expect(
+            all.events.singleWhere((e) => !e.isOverride).sequence,
+            (await publication(first.publicationId)).sequence,
+          );
+          expect(
+            all.events.singleWhere((e) => e.isOverride).sequence,
+            p.sequence,
+          );
+          expect((await eventData(id)).timingOverrides, isNull);
+          view = await service.schedulingStatus(id);
+          expect(view.hasLocalChanges, false);
+          expect((await notifyCurrent(id, content)).unchanged, true);
+          await CalendarModule.runSchedulingMaintenance(session);
+          final again = await service.cancelOccurrenceAndNotify(
+            await instanceCommand(id, point),
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          final twice = await service.restoreOccurrenceAndNotify(
+            await restoreCommand(id, point),
+          );
+          expect(
+            (await publication(twice.publicationId)).sequence,
+            greaterThan((await publication(again.publicationId)).sequence),
+          );
+          final global = await service.cancelAndNotify(
+            cancelRequest(id, revision: twice.eventRevision),
+          );
+          expect(
+            (await publication(global.publicationId)).sequence,
+            greaterThan((await publication(twice.publicationId)).sequence),
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          expect(
+            transport.submissions.last.publicationId,
+            global.publicationId,
+          );
+        },
+      );
+    }
+    for (final profileChange in [false, true]) {
+      test(
+        'instance RESTORE historical ${profileChange ? "profile" : "excluded member"} preserves drafts',
+        () async {
+          final content = masterContent(),
+              id = await masterEvent(masterContent());
+          await service.saveAndNotify(masterRequest(id, content));
+          await CalendarModule.runSchedulingMaintenance(session);
+          final draft = profileChange
+              ? masterContent(
+                  kind: CalendarEventTimeKind.utc,
+                  summary: 'Private restore draft',
+                )
+              : content.copyWith(
+                  summary: 'Private restore draft',
+                  recurrence: content.recurrence!.copyWith(
+                    exclusions: [originalDay(28)],
+                  ),
+                );
+          await service.updateEvent(
+            CalendarEventUpdateRequest(
+              eventId: id,
+              expectedRevision: 2,
+              content: draft,
+            ),
+          );
+          await service.cancelOccurrenceAndNotify(
+            await instanceCommand(id, originalDay(28)),
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          final before = await eventData(id),
+              contexts = <CalendarSchedulingPolicyContext>[];
+          host.onCheck = contexts.add;
+          final restored = await service.restoreOccurrenceAndNotify(
+            await restoreCommand(id, originalDay(28)),
+          );
+          final after = await eventData(id),
+              row = await publication(restored.publicationId);
+          expect(after.content.toJson(), before.content.toJson());
+          expect(after.protocolState!.toJson(), before.protocolState!.toJson());
+          expect(after.timingOverrides, isNull);
+          expect(row.payload, isNot(contains('Private restore draft')));
+          expect(
+            (await messageFor(restored)).events.single.summary!.value,
+            content.summary,
+          );
+          expect(contexts.every((c) => c.exactNativeMatch == false), true);
+          expect((await service.schedulingStatus(id)).hasLocalChanges, true);
+          await expectLater(
+            notifyCurrent(id, draft),
+            failure(CalendarFailureCode.validation),
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          expect(
+            transport.submissions.last.publicationId,
+            restored.publicationId,
+          );
+        },
+      );
+    }
+    test('instance RESTORE delivery gate and remaining cancellations stay enforced', () async {
+      final content = masterContent(), id = await masterEvent(masterContent());
+      await service.saveAndNotify(masterRequest(id, content));
+      await CalendarModule.runSchedulingMaintenance(session);
+      await service.cancelOccurrenceAndNotify(
+        await instanceCommand(id, originalDay(28)),
+      );
+      final command = await restoreCommand(id, originalDay(28));
+      await expectLater(
+        service.restoreOccurrenceAndNotify(command),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      await service.cancelOccurrenceAndNotify(
+        await instanceCommand(id, originalDay(29)),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      await service.restoreOccurrenceAndNotify(
+        await restoreCommand(id, originalDay(28)),
+      );
+      expect(
+        (await service.schedulingStatus(id)).hasOccurrenceCancellations,
+        true,
+      );
+      await expectLater(
+        notifyCurrent(id, content),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      await service.restoreOccurrenceAndNotify(
+        await restoreCommand(id, originalDay(29)),
+      );
+      await notifyCurrent(id, content);
+    });
+    for (final permission in [
+      CalendarPermission.restoreOccurrenceScheduling,
+      CalendarPermission.changeEventStatus,
+      CalendarPermission.readScheduling,
+      CalendarPermission.readEvent,
+      CalendarPermission.readEventSource,
+    ]) {
+      test(
+        'instance RESTORE independently requires ${permission.name}',
+        () async {
+          final content = masterContent(),
+              id = await masterEvent(masterContent());
+          await service.saveAndNotify(masterRequest(id, content));
+          await CalendarModule.runSchedulingMaintenance(session);
+          await service.cancelOccurrenceAndNotify(
+            await instanceCommand(id, originalDay(28)),
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          final command = await restoreCommand(id, originalDay(28));
+          policy.denied.add(permission);
+          await expectLater(
+            service.restoreOccurrenceAndNotify(command),
+            failure(CalendarFailureCode.accessDenied),
+          );
+          expect(
+            (await eventData(id)).timingOverrides!.singles.single.cancelled,
+            true,
+          );
+          expect((await publications()).length, 2);
+        },
+      );
+    }
+    test(
+      'instance RESTORE retained retry and final denial preserve native state',
+      () async {
+        final content = masterContent(),
+            id = await masterEvent(masterContent());
+        await service.saveAndNotify(masterRequest(id, content));
+        await CalendarModule.runSchedulingMaintenance(session);
+        await service.cancelOccurrenceAndNotify(
+          await instanceCommand(id, originalDay(28)),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        final command = await restoreCommand(id, originalDay(28));
+        host.denyFinal = true;
+        await expectLater(
+          service.restoreOccurrenceAndNotify(command),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        expect(
+          (await eventData(id)).timingOverrides!.singles.single.cancelled,
+          true,
+        );
+        host.denyFinal = false;
+        final restored = await service.restoreOccurrenceAndNotify(command);
+        await service.changeOccurrence(
+          CalendarEventOccurrenceChange(
+            eventId: id,
+            expectedRevision: restored.eventRevision,
+            originalStart: originalDay(28),
+            action: CalendarEventOccurrenceAction.cancelSingle,
+          ),
+        );
+        expect(
+          (await service.restoreOccurrenceAndNotify(command)).unchanged,
+          true,
+        );
+        expect(
+          (await eventData(id)).timingOverrides!.singles.single.cancelled,
+          true,
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        await service.restoreOccurrenceAndNotify(
+          await restoreCommand(id, originalDay(28)),
+        );
+        expect((await eventData(id)).timingOverrides, isNull);
+      },
+    );
+
+    test('instance RESTORE retains published own text/timing and preserves newer native replacements', () async {
+      final content = masterContent(), id = await masterEvent(masterContent());
+      await moveOccurrence(id, CalendarEventTimeKind.date, 28);
+      await service.changeOccurrenceContent(
+        CalendarEventOccurrenceContentRequest(
+          eventId: id,
+          expectedRevision: 2,
+          originalStart: originalDay(28),
+          changes: [
+            CalendarEventOccurrenceContentChange(
+              field: CalendarEventContentField.summary,
+              action: CalendarEventContentAction.setValue,
+              text: 'Published own title',
+            ),
+          ],
+        ),
+      );
+      await notifyCurrent(id, content);
+      await CalendarModule.runSchedulingMaintenance(session);
+      await service.cancelOccurrenceAndNotify(
+        await instanceCommand(id, originalDay(28)),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      var current = await service.getEvent(id, CalendarEventFieldGroup.values);
+      await service.changeOccurrence(
+        CalendarEventOccurrenceChange(
+          eventId: id,
+          expectedRevision: current.revision,
+          originalStart: originalDay(28),
+          action: CalendarEventOccurrenceAction.replaceSingleTiming,
+          replacement: masterTiming(day: 30),
+        ),
+      );
+      final restored = await service.restoreOccurrenceAndNotify(
+        await restoreCommand(id, originalDay(28)),
+      );
+      final wire = await messageFor(restored),
+          native = (await eventData(id)).timingOverrides!.singles.single;
+      expect(wire.events.single.summary!.value, 'Published own title');
+      expect(wire.events.single.startDate!.day, 29);
+      expect(native.replacement!.start.day, 30);
+      expect(native.contentOverrides!.summary, 'Published own title');
+      expect(native.cancelled, false);
+      expect((await service.schedulingStatus(id)).hasLocalChanges, true);
+    });
+    test('instance RESTORE derives later range timing and preserves current future anchors', () async {
+      final content = masterContent(count: 6),
+          id = await masterEvent(masterContent(count: 6));
+      await moveOccurrence(id, CalendarEventTimeKind.date, 28, future: true);
+      await notifyCurrent(id, content);
+      await CalendarModule.runSchedulingMaintenance(session);
+      await service.cancelOccurrenceAndNotify(
+        await instanceCommand(id, originalDay(29)),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      final restored = await service.restoreOccurrenceAndNotify(
+        await restoreCommand(id, originalDay(29)),
+      );
+      expect((await messageFor(restored)).events.single.startDate!.day, 30);
+      expect(
+        (await eventData(id))
+            .timingOverrides!
+            .future
+            .single
+            .originalStart
+            .start
+            .day,
+        28,
+      );
+      await notifyCurrent(id, content);
+    });
+    test('instance RESTORE preserves unpublished future at the target without creating a single', () async {
+      final content = masterContent(), id = await masterEvent(masterContent());
+      await service.saveAndNotify(masterRequest(id, content));
+      await CalendarModule.runSchedulingMaintenance(session);
+      final cancelled = await service.cancelOccurrenceAndNotify(
+        await instanceCommand(id, originalDay(28)),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      await service.changeOccurrence(
+        CalendarEventOccurrenceChange(
+          eventId: id,
+          expectedRevision: cancelled.eventRevision,
+          originalStart: originalDay(28),
+          action: CalendarEventOccurrenceAction.restoreSingle,
+        ),
+      );
+      await moveOccurrence(id, CalendarEventTimeKind.date, 28, future: true);
+      final before = (await eventData(id)).timingOverrides!.toJson();
+      await service.restoreOccurrenceAndNotify(
+        await restoreCommand(id, originalDay(28)),
+      );
+      expect((await eventData(id)).timingOverrides!.toJson(), before);
+      await expectLater(
+        notifyCurrent(id, content),
+        failure(CalendarFailureCode.validation),
+      );
+    });
+    test(
+      'instance RESTORE PERIOD original preserves the published nominal span',
+      () async {
+        final period = masterTiming(
+          kind: CalendarEventTimeKind.utc,
+          day: 26,
+        ).copyWith(duration: CalendarEventDuration(hours: 2));
+        final content = masterContent(kind: CalendarEventTimeKind.utc)
+            .copyWith(periods: [period]);
+        final id = await masterEvent(content),
+            point = period.copyWith(duration: null);
+        await service.saveAndNotify(masterRequest(id, content));
+        await CalendarModule.runSchedulingMaintenance(session);
+        await service.cancelOccurrenceAndNotify(
+          await instanceCommand(id, point),
+        );
+        await CalendarModule.runSchedulingMaintenance(session);
+        final restored = await service.restoreOccurrenceAndNotify(
+          await restoreCommand(id, point),
+        );
+        final wire = await messageFor(restored);
+        expect(props(wire.events.single, 'DURATION').single.value, 'PT2H');
+        expect(wire.events.single.startTime!.civil.date.day, 26);
+        await notifyCurrent(id, content);
+      },
+    );
+    test('instance RESTORE rejects cancelled masters, unknown state and cross-operation command reuse', () async {
+      final content = masterContent(), id = await masterEvent(masterContent());
+      await service.saveAndNotify(masterRequest(id, content));
+      await CalendarModule.runSchedulingMaintenance(session);
+      await expectLater(
+        service.restoreOccurrenceAndNotify(
+          await restoreCommand(id, originalDay(28)),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      final cancel = await instanceCommand(id, originalDay(28));
+      await service.cancelOccurrenceAndNotify(cancel);
+      await CalendarModule.runSchedulingMaintenance(session);
+      await expectLater(
+        service.restoreOccurrenceAndNotify(
+          (await restoreCommand(
+            id,
+            originalDay(28),
+          )).copyWith(commandId: cancel.commandId),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      var current = await service.getEvent(id, CalendarEventFieldGroup.values);
+      await service.changeEventStatus(
+        CalendarEventStatusRequest(
+          eventId: id,
+          expectedRevision: current.revision,
+          status: CalendarEventStatus.cancelled,
+        ),
+      );
+      await expectLater(
+        service.restoreOccurrenceAndNotify(
+          await restoreCommand(id, originalDay(28)),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      current = await service.getEvent(id, CalendarEventFieldGroup.values);
+      await service.cancelAndNotify(
+        cancelRequest(id, revision: current.revision),
+      );
+      await expectLater(
+        service.restoreOccurrenceAndNotify(
+          await restoreCommand(id, originalDay(28)),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+    });
+    test('instance RESTORE checks the removed native version floor and rolls back overflow', () async {
+      final content = masterContent(), id = await masterEvent(masterContent());
+      await service.saveAndNotify(masterRequest(id, content));
+      await CalendarModule.runSchedulingMaintenance(session);
+      await service.cancelOccurrenceAndNotify(
+        await instanceCommand(id, originalDay(28)),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      final data = await eventData(id),
+          own = data.protocolState!.overrides.single;
+      data.protocolState = data.protocolState!.copyWith(
+        overrides: [
+          own.copyWith(version: own.version.copyWith(sequence: 2147483647)),
+        ],
+      );
+      await CalendarEventDataRecord.db.updateRow(session, data);
+      await expectLater(
+        service.restoreOccurrenceAndNotify(
+          await restoreCommand(id, originalDay(28)),
+        ),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      expect(
+        (await eventData(id)).timingOverrides!.singles.single.cancelled,
+        true,
+      );
+      expect((await publications()).length, 2);
+    });
+    test('instance RESTORE v5 malformed state fails closed and pruned no-op retains active ledger', () async {
+      install(
+        options: CalendarSchedulingOptions(
+          retention: const Duration(seconds: 1),
+        ),
+      );
+      final content = masterContent(), id = await masterEvent(masterContent());
+      await service.saveAndNotify(masterRequest(id, content));
+      await CalendarModule.runSchedulingMaintenance(session);
+      await service.cancelOccurrenceAndNotify(
+        await instanceCommand(id, originalDay(28)),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      final restore = await service.restoreOccurrenceAndNotify(
+        await restoreCommand(id, originalDay(28)),
+      );
+      final p = await publication(restore.publicationId), snapshot = p.snapshot;
+      for (final field in ['individuals', 'target', 'kind', 'nativeMatch']) {
+        final v = jsonDecode(snapshot) as Map<String, dynamic>;
+        v[field] = field == 'kind' ? 'unknown' : null;
+        p.snapshot = jsonEncode(v);
+        await CalendarSchedulingPublicationRecord.db.updateRow(session, p);
+        await expectLater(
+          service.schedulingStatus(id),
+          failure(CalendarFailureCode.unavailable),
+        );
+      }
+      p.snapshot = snapshot;
+      await CalendarSchedulingPublicationRecord.db.updateRow(session, p);
+      await CalendarModule.runSchedulingMaintenance(session);
+      await notifyCurrent(id, content);
+      await CalendarModule.runSchedulingMaintenance(session);
+      await session.db.unsafeExecute(
+        'UPDATE serverpod_calendar_scheduling_publication SET "completedAt"=clock_timestamp()-interval \'2 seconds\' WHERE "completedAt" IS NOT NULL',
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      expect((await publications()).length, 1);
+      expect(
+        await CalendarSchedulingPublicationRecord.db.findById(
+          session,
+          restore.publicationId,
+        ),
+        isNull,
+      );
+      host.onCheck = (c) {
+        expect(c.intent.publicationId, isNull);
+        expect(
+          c.intent.publicationKind,
+          CalendarSchedulingPublicationKind.occurrenceRestore,
+        );
+      };
+      expect(
+        (await service.restoreOccurrenceAndNotify(
+          await restoreCommand(id, originalDay(28)),
+        )).unchanged,
+        true,
+      );
+      host.onCheck = null;
+      await service.cancelOccurrenceAndNotify(
+        await instanceCommand(id, originalDay(28)),
+      );
+      expect(
+        (await service.schedulingStatus(id)).hasOccurrenceCancellations,
+        true,
+      );
+    });
     for (final kind in [
       CalendarEventTimeKind.date,
       CalendarEventTimeKind.utc,

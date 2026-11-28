@@ -3,3 +3,4 @@ values:
   - request
   - seriesCancel
   - occurrenceCancel
+  - occurrenceRestore

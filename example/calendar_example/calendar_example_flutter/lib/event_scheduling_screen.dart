@@ -29,6 +29,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
   cal.CalendarSchedulingSaveRequest? _pending;
   cal.CalendarSchedulingCancelRequest? _pendingCancel;
   cal.CalendarSchedulingOccurrenceCancelRequest? _pendingOccurrenceCancel;
+  cal.CalendarSchedulingOccurrenceRestoreRequest? _pendingOccurrenceRestore;
   bool _busy = true;
   String? _error, _message;
   @override
@@ -87,6 +88,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
         _pending = null;
         _pendingCancel = null;
         _pendingOccurrenceCancel = null;
+        _pendingOccurrenceRestore = null;
         _summary.text = event.summary ?? '';
         _description.text = event.description ?? '';
         _location.text = event.location ?? '';
@@ -105,11 +107,77 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
 
   String _safe(Object error) => error is cal.CalendarException
       ? error.code == cal.CalendarFailureCode.dependencyConflict
-            ? 'Earlier delivery may still be pending, or this action needs a later restoration profile. Reload delivery state and retry after reviewing it.'
+            ? 'Review pending deliveries, remaining individual cancellations and master lifecycle, then reload before retrying.'
             : 'Scheduling failed: ${error.code.name}. Reload to review current state.'
       : error is FormatException
       ? error.message
       : 'Scheduling is unavailable. Retry the same action or reload.';
+
+  cal.CalendarEventTiming _originalPoint() {
+    final date = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$')
+        .firstMatch(_originalDate.text);
+    final time = RegExp(r'^(\d{2}):(\d{2}):(\d{2})$')
+        .firstMatch(_originalTime.text);
+    if (date == null ||
+        _originalKind != cal.CalendarEventTimeKind.date && time == null) {
+      throw const FormatException(
+        'Enter the original date as YYYY-MM-DD and time as HH:MM:SS.',
+      );
+    }
+    return cal.CalendarEventTiming(
+      kind: _originalKind,
+      start: cal.CalendarEventCivil(
+        year: int.parse(date[1]!),
+        month: int.parse(date[2]!),
+        day: int.parse(date[3]!),
+        hour: _originalKind == cal.CalendarEventTimeKind.date
+            ? 0
+            : int.parse(time![1]!),
+        minute: _originalKind == cal.CalendarEventTimeKind.date
+            ? 0
+            : int.parse(time![2]!),
+        second: _originalKind == cal.CalendarEventTimeKind.date
+            ? 0
+            : int.parse(time![3]!),
+      ),
+      zoneId: _originalKind == cal.CalendarEventTimeKind.zoned
+          ? _originalZone.text
+          : null,
+    );
+  }
+
+  Future<void> _restoreOccurrence() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+      _message = null;
+    });
+    try {
+      final input = _pendingOccurrenceRestore ??=
+          cal.CalendarSchedulingOccurrenceRestoreRequest(
+            eventId: _event.id,
+            expectedRevision: _event.revision,
+            commandId: cal.Uuid().v4obj(),
+            originalStart: _originalPoint(),
+          );
+      final result = await widget
+          .client
+          .modules
+          .serverpod_calendar
+          .calendarEvent
+          .restoreOccurrenceAndNotify(input);
+      if (!mounted) return;
+      setState(() {
+        _pendingOccurrenceRestore = null;
+        _message = result.unchanged ? 'Published occurrence already restored.' : 'Published occurrence restored and queued; newer drafts preserved.';
+      });
+      await _reload();
+    } catch (e) {
+      if (mounted) setState(() => _error = _safe(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   Future<void> _cancelOccurrence() async {
     setState(() {
@@ -118,44 +186,14 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
       _message = null;
     });
     try {
-      if (_pendingOccurrenceCancel == null) {
-        final date = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$')
-            .firstMatch(_originalDate.text);
-        final time = RegExp(r'^(\d{2}):(\d{2}):(\d{2})$')
-            .firstMatch(_originalTime.text);
-        if (date == null ||
-            (_originalKind != cal.CalendarEventTimeKind.date && time == null)) {
-          throw const FormatException(
-            'Enter the original date as YYYY-MM-DD and time as HH:MM:SS.',
+      _pendingOccurrenceCancel ??=
+          cal.CalendarSchedulingOccurrenceCancelRequest(
+            eventId: _event.id,
+            expectedRevision: _event.revision,
+            commandId: cal.Uuid().v4obj(),
+            originalStart: _originalPoint(),
           );
-        }
-        _pendingOccurrenceCancel =
-            cal.CalendarSchedulingOccurrenceCancelRequest(
-              eventId: _event.id,
-              expectedRevision: _event.revision,
-              commandId: cal.Uuid().v4obj(),
-              originalStart: cal.CalendarEventTiming(
-                kind: _originalKind,
-                start: cal.CalendarEventCivil(
-                  year: int.parse(date[1]!),
-                  month: int.parse(date[2]!),
-                  day: int.parse(date[3]!),
-                  hour: _originalKind == cal.CalendarEventTimeKind.date
-                      ? 0
-                      : int.parse(time![1]!),
-                  minute: _originalKind == cal.CalendarEventTimeKind.date
-                      ? 0
-                      : int.parse(time![2]!),
-                  second: _originalKind == cal.CalendarEventTimeKind.date
-                      ? 0
-                      : int.parse(time![3]!),
-                ),
-                zoneId: _originalKind == cal.CalendarEventTimeKind.zoned
-                    ? _originalZone.text
-                    : null,
-              ),
-            );
-      }
+
       final result = await widget
           .client
           .modules
@@ -273,6 +311,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
         _pending != null ||
         _pendingCancel != null ||
         _pendingOccurrenceCancel != null ||
+        _pendingOccurrenceRestore != null ||
         !eligible;
     return Scaffold(
       appBar: AppBar(
@@ -366,6 +405,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
                     !eligible ||
                     _pendingCancel != null ||
                     _pendingOccurrenceCancel != null ||
+                    _pendingOccurrenceRestore != null ||
                     (_status?.hasOccurrenceCancellations ?? false)
                 ? null
                 : _publish,
@@ -384,7 +424,8 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
                   _busy ||
                       !eligible ||
                       _pending != null ||
-                      _pendingOccurrenceCancel != null
+                      _pendingOccurrenceCancel != null ||
+                      _pendingOccurrenceRestore != null
                   ? null
                   : _cancel,
               child: Text(
@@ -395,11 +436,11 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
             ),
           if (_status?.hasOccurrenceCancellations ?? false)
             const Text(
-              'Individual cancellations are published. Save/Reopen and notify is blocked until the separate restoration workflow is available. Local restore sends nothing.',
+              'Individual cancellations are published. Restore each published occurrence before Save/Reopen and notify. Ordinary local restore sends nothing; cancelled-master reopening remains separate.',
             ),
           if (_status?.publicationId != null) ...[
             const Text(
-              'Cancel one original from the last published recurring series. Enter its original profile and date/time, even if local drafts changed it. Earlier deliveries must be terminal; range anchors are unsupported. Individual restore is not yet available.',
+              'Cancel one original from the last published recurring series. Enter its original profile and date/time, even if local drafts changed it. Earlier deliveries must be terminal; range anchors are unsupported. Restore sends the published occurrence values and preserves newer drafts. A cancelled master must be reopened separately.',
             ),
             DropdownButtonFormField<cal.CalendarEventTimeKind>(
               key: const Key('scheduling-original-kind'),
@@ -452,6 +493,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
                       !eligible ||
                       _pending != null ||
                       _pendingCancel != null ||
+                      _pendingOccurrenceRestore != null ||
                       _status?.publicationKind ==
                           cal.CalendarSchedulingPublicationKind.seriesCancel
                   ? null
@@ -460,6 +502,25 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
                 _pendingOccurrenceCancel == null
                     ? 'Cancel occurrence and notify'
                     : 'Retry occurrence cancellation',
+              ),
+            ),
+            OutlinedButton(
+              key: const Key('scheduling-restore-occurrence'),
+              onPressed:
+                  _busy ||
+                      !eligible ||
+                      _pending != null ||
+                      _pendingCancel != null ||
+                      _pendingOccurrenceCancel != null ||
+                      _event.status == cal.CalendarEventStatus.cancelled ||
+                      _status?.publicationKind ==
+                          cal.CalendarSchedulingPublicationKind.seriesCancel
+                  ? null
+                  : _restoreOccurrence,
+              child: Text(
+                _pendingOccurrenceRestore == null
+                    ? 'Restore published occurrence and notify'
+                    : 'Retry occurrence restoration',
               ),
             ),
           ],

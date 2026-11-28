@@ -15,7 +15,8 @@ import 'package:serverpod/serverpod.dart' as _is;
 enum CalendarSchedulingPublicationKind implements _is.SerializableModel {
   request,
   seriesCancel,
-  occurrenceCancel;
+  occurrenceCancel,
+  occurrenceRestore;
 
   static CalendarSchedulingPublicationKind fromJson(String name) {
     switch (name) {
@@ -25,6 +26,8 @@ enum CalendarSchedulingPublicationKind implements _is.SerializableModel {
         return CalendarSchedulingPublicationKind.seriesCancel;
       case 'occurrenceCancel':
         return CalendarSchedulingPublicationKind.occurrenceCancel;
+      case 'occurrenceRestore':
+        return CalendarSchedulingPublicationKind.occurrenceRestore;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "CalendarSchedulingPublicationKind"',

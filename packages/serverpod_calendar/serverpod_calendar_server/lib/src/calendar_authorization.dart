@@ -13,6 +13,7 @@ enum CalendarPermission {
   publishScheduling,
   cancelScheduling,
   cancelOccurrenceScheduling,
+  restoreOccurrenceScheduling,
   readScheduling,
   readPersonalAlarmActivity,
   acknowledgePersonalAlarm,

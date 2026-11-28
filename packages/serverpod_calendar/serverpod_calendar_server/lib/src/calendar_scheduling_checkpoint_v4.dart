@@ -1,9 +1,16 @@
 part of 'calendar_module.dart';
 
 final class _SchedulingCancellation {
-  const _SchedulingCancellation(this.point, this.version);
+  const _SchedulingCancellation(
+    this.point,
+    this.version, {
+    this.restored = false,
+    this.active,
+  });
   final CalendarEventTiming point;
   final _SchedulingComponentVersion version;
+  final bool restored;
+  final _SchedulingComponentVersion? active;
   Map<String, dynamic> toJson() => {
     'point': point.toJson(),
     'version': version.toJson(),
@@ -27,7 +34,7 @@ CalendarSchedulingPublicationRecord _schedulingBasisRecord(
 ) {
   final v = input as Map<String, dynamic>;
   final snapshot = v['snapshot'] as String;
-  if ((jsonDecode(snapshot) as Map)['version'] == 4) {
+  if ({4, 5}.contains((jsonDecode(snapshot) as Map)['version'])) {
     throw const FormatException();
   }
   final payload = v['payload'] as String;
@@ -85,10 +92,11 @@ String _schedulingInstancePayload(
 String _schedulingV4Projection(
   CalendarSchedulingPublicationKind kind,
   CalendarEventTiming? target,
-  List<_SchedulingComponentVersion> components,
-) => _schedulingBound(
+  List<_SchedulingComponentVersion> components, {
+  int version = 4,
+}) => _schedulingBound(
   jsonEncode({
-    'version': 4,
+    'version': version,
     'kind': kind.name,
     'target': target?.toJson(),
     'components': components.map((v) => v.toJson()).toList(),
@@ -146,7 +154,8 @@ _SchedulingCheckpoint _schedulingReadV4(
   final kind = CalendarSchedulingPublicationKind.values.byName(
     v['kind'] as String,
   );
-  if (kind == CalendarSchedulingPublicationKind.request) {
+  if (kind != CalendarSchedulingPublicationKind.occurrenceCancel &&
+      kind != CalendarSchedulingPublicationKind.seriesCancel) {
     throw const FormatException();
   }
   final basisRecord = _schedulingBasisRecord(p, v['basis']);
@@ -291,7 +300,7 @@ _SchedulingCheckpoint _schedulingReadV4(
 CalendarEventPolicySnapshot _schedulingExpectedState(
   _SchedulingCheckpoint checkpoint,
 ) {
-  if (checkpoint.cancelled.isEmpty) {
+  if (checkpoint.individuals.isEmpty) {
     return checkpoint.message.method == IcalendarSchedulingMethod.cancel
         ? checkpoint.outgoing
         : checkpoint.canonical;

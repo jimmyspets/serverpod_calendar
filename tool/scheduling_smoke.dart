@@ -308,15 +308,113 @@ Future<void> schedulingSmoke(List<Client> clients) async {
   } on cal.CalendarException catch (e) {
     if (e.code != cal.CalendarFailureCode.dependencyConflict) rethrow;
   }
+
+  await terminal();
+  var restorationState = await a.calendarEvent.schedulingStatus(event.eventId);
+  final restore = cal.CalendarSchedulingOccurrenceRestoreRequest(
+    eventId: event.eventId,
+    expectedRevision: restorationState.eventRevision,
+    commandId: cal.Uuid().v4obj(),
+    originalStart: oldPoint,
+  );
+  final restoredBoth = await Future.wait([
+    a.calendarEvent.restoreOccurrenceAndNotify(restore),
+    b.calendarEvent.restoreOccurrenceAndNotify(restore),
+  ]);
+  if (restoredBoth[0].publicationId != restoredBoth[1].publicationId ||
+      restoredBoth.where((r) => !r.unchanged).length != 1) {
+    throw StateError('Cross-host restoration lost exact command idempotency');
+  }
+  await terminal();
+  restorationState = await b.calendarEvent.schedulingStatus(event.eventId);
+  if (!restorationState.hasOccurrenceCancellations) {
+    throw StateError('Restoration reopened another cancelled original');
+  }
+  final nextRestore = restore.copyWith(
+    expectedRevision: restorationState.eventRevision,
+    originalStart: currentPoint,
+  );
+  final restoreRace = await Future.wait([
+    for (final api in [a, b])
+      () async {
+        try {
+          await api.calendarEvent.restoreOccurrenceAndNotify(
+            nextRestore.copyWith(commandId: cal.Uuid().v4obj()),
+          );
+          return true;
+        } on cal.CalendarException catch (e) {
+          if (e.code != cal.CalendarFailureCode.staleRevision) rethrow;
+          return false;
+        }
+      }(),
+  ]);
+  if (restoreRace.where((v) => v).length != 1) {
+    throw StateError('Restoration revision race accepted both commands');
+  }
+  var restoredView = await b.calendarEvent.getEvent(
+    event.eventId,
+    cal.CalendarEventFieldGroup.values,
+  );
+  restorationState = await a.calendarEvent.schedulingStatus(event.eventId);
+  if (restoredView.timingOverrides != null ||
+      restoredView.summary != 'Private historical cancellation draft' ||
+      restoredView.recurrence!.exclusions.single.start.day != 2 ||
+      restorationState.hasOccurrenceCancellations ||
+      !restorationState.hasLocalChanges) {
+    throw StateError(
+      'Restoration changed private fields or pinned native inheritance',
+    );
+  }
+  try {
+    await a.calendarEvent.saveAndNotify(
+      command.copyWith(
+        expectedRevision: restorationState.eventRevision,
+        commandId: cal.Uuid().v4obj(),
+        content: privateContent.copyWith(
+          recurrence: privateContent.recurrence!.copyWith(
+            exclusions: [oldPoint],
+          ),
+        ),
+      ),
+    );
+    throw StateError('Full REQUEST omitted a restored historical original');
+  } on cal.CalendarException catch (e) {
+    if (e.code != cal.CalendarFailureCode.validation) rethrow;
+  }
+  await b.calendarEvent.update(
+    cal.CalendarEventUpdateRequest(
+      eventId: event.eventId,
+      expectedRevision: restoredView.revision,
+      content: privateContent,
+      replaceRecurrenceDates: true,
+    ),
+  );
+  restoredView = await a.calendarEvent.getEvent(
+    event.eventId,
+    cal.CalendarEventFieldGroup.values,
+  );
+  if (restoredView.recurrence!.exclusions.isNotEmpty) {
+    throw StateError('Explicit repair retained an exclusion');
+  }
+  final complete = await a.calendarEvent.saveAndNotify(
+    command.copyWith(
+      expectedRevision: restoredView.revision,
+      commandId: cal.Uuid().v4obj(),
+      content: privateContent,
+    ),
+  );
+  if ((await b.calendarEvent.schedulingStatus(event.eventId)).hasLocalChanges) {
+    throw StateError('Complete restored REQUEST stayed unsynchronized');
+  }
   await a.calendarEvent.cancelAndNotify(
     cal.CalendarSchedulingCancelRequest(
       eventId: event.eventId,
-      expectedRevision: current.eventRevision,
+      expectedRevision: complete.eventRevision,
       commandId: cal.Uuid().v4obj(),
     ),
   );
   stdout.writeln(
-    'PASS: two-host recurring occurrence-bundle publication and retained resets, idempotency/revision races, local draft isolation, cancellation/reopening, v4 current/historical instance cancellation races and synthetic acceptance.',
+    'PASS: two-host recurring occurrence-bundle publication and retained resets, idempotency/revision races, local draft isolation, cancellation/reopening, v4 cancellation and v5 published-value restoration races, guarded complete REQUESTs and synthetic acceptance.',
   );
   // Bindings deliberately reject deletion in the first profile. Isolated test
   // storage is reset by the root harness; no public cleanup backdoor is added.

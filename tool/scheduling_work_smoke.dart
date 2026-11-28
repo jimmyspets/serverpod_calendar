@@ -38,7 +38,7 @@ final class _Probe {
 }
 
 /// Real independent Serverpod processes, leases, actual holder loss and takeover.
-Future<void> main() async {
+Future<void> main(List<String> args) async {
   final root = Directory.current.absolute.path, probes = <_Probe>[];
   final fixtures = <Map<String, dynamic>>[];
   Future<_Probe> start(String name, int port) async {
@@ -70,7 +70,10 @@ Future<void> main() async {
   try {
     var a = await start('a', 18580);
     final b = await start('b', 18680);
-    for (final method in ['REQUEST', 'CANCEL', 'INSTANCE']) {
+    for (final method
+        in args.contains('--restore-only')
+            ? ['RESTORE']
+            : ['REQUEST', 'CANCEL', 'INSTANCE', 'RESTORE']) {
       final first = (await a.command({
         'command': 'seed',
         'method': method,
@@ -128,13 +131,13 @@ Future<void> main() async {
             'Recovered $method submissions changed identity or bytes',
           );
         }
-        if (pause == 'before' || method != 'INSTANCE') {
+        if (pause == 'before' || method != 'RESTORE') {
           a = await start('a-recovered-$method-$pause', 18580);
         }
       }
     }
     stdout.writeln(
-      'PASS: v3 REQUEST, legacy series CANCEL and v4 instance CANCEL on two independent scheduling workers, competing claims, actual loss before/after synthetic acceptance and fenced stable-key recovery.',
+      'PASS: ${args.contains('--restore-only') ? 'v5 RESTORE' : 'v3 REQUEST, legacy CANCEL, v4 INSTANCE and v5 RESTORE'} on two independent scheduling workers, competing claims, actual loss before/after synthetic acceptance and fenced stable-key recovery.',
     );
   } finally {
     final live = probes.where((p) => !p.stopped).toList();

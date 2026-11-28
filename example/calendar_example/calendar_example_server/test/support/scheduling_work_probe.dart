@@ -189,7 +189,8 @@ Future<Map<String, String>> _seed(
   Session s,
   String method,
 ) => s.db.transaction((tx) async {
-  final instance = method == 'INSTANCE';
+  final restoring = method == 'RESTORE';
+  final instance = method == 'INSTANCE' || restoring;
   if (instance) method = 'REQUEST';
   if (!{'REQUEST', 'CANCEL'}.contains(method)) {
     throw StateError('Unsupported fixture method');
@@ -458,16 +459,18 @@ Future<Map<String, String>> _seed(
       kind: CalendarEventTimeKind.utc,
       start: CalendarEventCivil(year: 2026, month: 11, day: 4, hour: 9),
     );
-    final edits = changeEventOverrides(
-      content,
-      null,
-      CalendarEventOccurrenceChange(
-        eventId: event.id!,
-        expectedRevision: 2,
-        originalStart: point,
-        action: CalendarEventOccurrenceAction.cancelSingle,
-      ),
-    );
+    final edits = restoring
+        ? null
+        : changeEventOverrides(
+            content,
+            null,
+            CalendarEventOccurrenceChange(
+              eventId: event.id!,
+              expectedRevision: 2,
+              originalStart: point,
+              action: CalendarEventOccurrenceAction.cancelSingle,
+            ),
+          );
     final nextState = advanceEventProtocol(
       state,
       content,
@@ -493,7 +496,7 @@ Future<Map<String, String>> _seed(
       'stamp': p.stamp.toIso8601String(),
     };
     final writer = EventComponentWriter();
-    final payload = utf8.decode(
+    var payload = utf8.decode(
       serializeIcalendarSchedulingMessage(
         validateIcalendarSchedulingMessage(
           IcalendarSyntaxDocument([
@@ -527,35 +530,114 @@ Future<Map<String, String>> _seed(
         ),
       ),
     );
+
+    if (restoring) {
+      final projectedOriginals = [
+        ...originals,
+        EventSchedulingOriginal(point, false),
+      ];
+      final projection = eventSchedulingProjection(
+        content,
+        null,
+        projectedOriginals,
+      ).$1;
+      final projected = CalendarEventPolicySnapshot(
+        event.id!,
+        calendar.id!,
+        2,
+        content,
+        uid,
+        now,
+        origin: CalendarEventOrigin.native,
+        timingOverrides: projection,
+        protocolState: state.copyWith(
+          overrides: [
+            for (final original in projectedOriginals)
+              CalendarEventOverrideProtocolState(
+                originalStart: original.originalStart,
+                version: CalendarEventProtocolVersion(
+                  sequence: 0,
+                  stamp: state.version.stamp,
+                ),
+                summaryPresent: true,
+                descriptionPresent: true,
+                locationPresent: true,
+                statusPresent: true,
+                transparencyPresent: true,
+              ),
+          ],
+        ),
+      );
+      final full = projectIcalendarRequestFields(
+        parseIcalendarEventCalendar(eventExportBytes([projected])),
+      );
+      final target = full.events
+          .singleWhere((e) => e.originalTime?.civil.date.day == 4)
+          .source;
+      payload = utf8.decode(
+        serializeIcalendarSchedulingMessage(
+          validateIcalendarSchedulingMessage(
+            IcalendarSyntaxDocument([
+              IcalendarSyntaxComponent('VCALENDAR', [
+                ...full.source.components.single.entries
+                    .whereType<IcalendarSyntaxProperty>(),
+                IcalendarSyntaxComponent('VEVENT', [
+                  ...target.entries.where(
+                    (e) =>
+                        e is! IcalendarSyntaxProperty ||
+                        !{'SEQUENCE', 'DTSTAMP'}.contains(e.canonicalName),
+                  ),
+                  IcalendarSyntaxProperty('SEQUENCE', '2'),
+                  IcalendarSyntaxProperty(
+                    'DTSTAMP',
+                    writer.utc(state.version.stamp),
+                  ),
+                ]),
+              ]),
+            ]),
+          ),
+        ),
+      );
+    }
     final part = component(
       parseIcalendarSchedulingMessage(utf8.encode(payload)).events.single,
     );
     p.snapshot = jsonEncode({
-      'version': 4,
-      'kind': 'occurrenceCancel',
+      'version': restoring ? 5 : 4,
+      'kind': restoring ? 'occurrenceRestore' : 'occurrenceCancel',
       'canonical': {
         ...checkpoint,
         'state': nextState.toJson(),
-        'overrides': edits!.toJson(),
+        'overrides': edits?.toJson(),
       },
       'basis': basis,
       'masterMessage': null,
       'target': point.toJson(),
       'nativeMatch': true,
-      'cancelled': [
-        {'point': point.toJson(), 'version': part},
-      ],
+      if (restoring)
+        'individuals': [
+          {
+            'point': point.toJson(),
+            'version': part,
+            'restored': true,
+            'active': part,
+          },
+        ]
+      else
+        'cancelled': [
+          {'point': point.toJson(), 'version': part},
+        ],
     });
     p.projection = jsonEncode({
-      'version': 4,
-      'kind': 'occurrenceCancel',
+      'version': restoring ? 5 : 4,
+      'kind': restoring ? 'occurrenceRestore' : 'occurrenceCancel',
       'target': point.toJson(),
       'components': [part],
     });
     p.payload = payload;
     p.payloadDigest = sha256.convert(utf8.encode(payload)).toString();
-    p.method = 'CANCEL';
-    p.sequence = 1;
+    p.method = restoring ? 'REQUEST' : 'CANCEL';
+    p.sequence = restoring ? 2 : 1;
     await CalendarSchedulingPublicationRecord.db.updateRow(
       s,
       p,

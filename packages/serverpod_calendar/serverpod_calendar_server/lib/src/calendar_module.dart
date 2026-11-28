@@ -40,6 +40,7 @@ part 'calendar_scheduling.dart';
 part 'calendar_scheduling_bundle.dart';
 part 'calendar_scheduling_occurrence.dart';
 part 'calendar_scheduling_checkpoint_v4.dart';
+part 'calendar_scheduling_checkpoint_v5.dart';
 part 'calendar_scheduling_worker.dart';
 part 'calendar_event_occurrence_content.dart';
 part 'calendar_tasks.dart';

@@ -44,10 +44,13 @@ List<EventSchedulingOriginal> _schedulingResetOriginals(
         in value.timingOverrides?.future ?? <CalendarEventFutureOverride>[])
       eventComponentKey(s.originalStart, true): s.replacement,
   };
+  final publishedCanonical = previous.target == null
+      ? previous.canonical
+      : _schedulingReadCheckpoint(previous.basisRecord!).canonical;
   for (final original in previous.originals) {
     final key = _schedulingOriginalKey(original);
     final before = eventOriginalContent(
-      previous.canonical.timingOverrides,
+      publishedCanonical.timingOverrides,
       original.originalStart,
     );
     final after = eventOriginalContent(
@@ -321,6 +324,7 @@ final class _SchedulingCheckpoint {
     this.nativeMatch,
     this.basisRecord,
     this.cancelled = const [],
+    this.restored = const [],
   });
   final CalendarEventPolicySnapshot canonical, outgoing;
   final IcalendarSchedulingMessage message;
@@ -330,7 +334,8 @@ final class _SchedulingCheckpoint {
   final CalendarEventTiming? target;
   final bool? nativeMatch;
   final CalendarSchedulingPublicationRecord? basisRecord;
-  final List<_SchedulingCancellation> cancelled;
+  final List<_SchedulingCancellation> cancelled, restored;
+  List<_SchedulingCancellation> get individuals => [...cancelled, ...restored];
 }
 
 _SchedulingCheckpoint _schedulingReadCheckpoint(
@@ -341,6 +346,7 @@ _SchedulingCheckpoint _schedulingReadCheckpoint(
     _schedulingBound(p.projection);
     final header = jsonDecode(p.snapshot) as Map<String, dynamic>;
     if (header['version'] == 4) return _schedulingReadV4(p, header);
+    if (header['version'] == 5) return _schedulingReadV5(p, header);
     if (p.payload.length > _schedulingCheckpointBytes ||
         _schedulingDigest(p.payload) != p.payloadDigest) {
       throw const FormatException();

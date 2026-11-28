@@ -1,0 +1,7 @@
+class: CalendarSchedulingOccurrenceRestoreRequest
+immutable: true
+fields:
+  eventId: UuidValue
+  expectedRevision: int
+  commandId: UuidValue
+  originalStart: CalendarEventTiming

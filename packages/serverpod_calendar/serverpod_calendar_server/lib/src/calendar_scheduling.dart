@@ -464,6 +464,9 @@ extension CalendarSchedulingOperations on CalendarService {
       final unchanged =
           last != null &&
           last.method == method &&
+          (cancellation ||
+              previousCheckpoint!.kind ==
+                  CalendarSchedulingPublicationKind.request) &&
           (cancellation
               ? previousCheckpoint!.kind ==
                         CalendarSchedulingPublicationKind.seriesCancel &&
@@ -519,15 +522,20 @@ extension CalendarSchedulingOperations on CalendarService {
       final previousMaximum = previousCheckpoint == null
           ? -1
           : previousCheckpoint.ledger.fold(
-              previousCheckpoint.cancelled.fold(
+              previousCheckpoint.individuals.fold(
                 last!.sequence,
                 (int a, r) => max(a, r.version.sequence),
               ),
               (int a, v) => max(a, v.sequence),
             );
+      final publishedMaster = previousCheckpoint?.ledger.singleWhere(
+        (v) => v.key == 'master',
+      );
       final masterUnchanged =
           !cancellation &&
-          last?.method == 'REQUEST' &&
+          previousCheckpoint != null &&
+          previousCheckpoint.kind !=
+              CalendarSchedulingPublicationKind.seriesCancel &&
           _schedulingProjection(
                 previousPublished!.content,
                 previousPublished.protocolState!,
@@ -536,10 +544,14 @@ extension CalendarSchedulingOperations on CalendarService {
       final nextSequence = cancellation
           ? max(currentNativeMaximum, previousMaximum) + 1
           : masterUnchanged
-          ? last!.sequence
+          ? publishedMaster!.sequence
           : max(
               currentSequence + (componentChanged ? 1 : 0),
-              (last?.sequence ?? -1) + 1,
+              (previousCheckpoint?.kind ==
+                          CalendarSchedulingPublicationKind.seriesCancel
+                      ? last!.sequence
+                      : publishedMaster?.sequence ?? -1) +
+                  1,
             );
       if (retry == null && !unchanged && nextSequence > eventMaxSequence) {
         throw _failure(CalendarFailureCode.limitExceeded);
@@ -551,7 +563,7 @@ extension CalendarSchedulingOperations on CalendarService {
         previousPublished?.protocolState?.version.stamp,
       );
       for (final row
-          in previousCheckpoint?.cancelled ?? <_SchedulingCancellation>[]) {
+          in previousCheckpoint?.individuals ?? <_SchedulingCancellation>[]) {
         versionTime = latest(versionTime, row.version.stamp);
       }
       final modifiedTime = latest(
@@ -612,8 +624,8 @@ extension CalendarSchedulingOperations on CalendarService {
           : masterUnchanged && receiptPublication == null
           ? state.copyWith(
               version: state.version.copyWith(
-                sequence: last!.sequence,
-                stamp: last.stamp,
+                sequence: publishedMaster!.sequence,
+                stamp: publishedMaster.stamp,
               ),
             )
           : state;
@@ -684,28 +696,62 @@ extension CalendarSchedulingOperations on CalendarService {
           receiptPublication?.projection ??
           _schedulingBundleProjection(components);
       if (receiptPublication == null &&
-          cancellation &&
-          previousCheckpoint!.cancelled.isNotEmpty) {
+          (previousCheckpoint?.individuals.isNotEmpty ?? false)) {
+        final publicationKind = cancellation
+            ? CalendarSchedulingPublicationKind.seriesCancel
+            : CalendarSchedulingPublicationKind.request;
+        final master = components.singleWhere((v) => v.key == 'master');
         final masterRecord = last!.copyWith(
           snapshot: checkpoint,
           projection: bundleProjection,
           payload: payload,
           payloadDigest: _schedulingDigest(payload),
-          method: 'CANCEL',
-          sequence: components.single.sequence,
-          stamp: components.single.stamp,
+          method: method,
+          sequence: master.sequence,
+          stamp: master.stamp,
         );
-        checkpoint = _schedulingWriteV4(
-          canonical: proposed,
-          kind: CalendarSchedulingPublicationKind.seriesCancel,
-          basis: previousCheckpoint.basisRecord!,
-          cancelled: previousCheckpoint.cancelled,
-          masterMessage: masterRecord,
-        );
+        final v5 =
+            !cancellation ||
+            previousCheckpoint!.individuals.any((s) => s.active != null);
+        if (v5) {
+          final states = cancellation
+              ? previousCheckpoint!.individuals
+              : [
+                  for (final state in previousCheckpoint!.restored)
+                    _SchedulingCancellation(
+                      state.point,
+                      components.singleWhere(
+                        (v) => v.key == _schedulingWirePointKey(state.point),
+                      ),
+                      restored: true,
+                      active: components.singleWhere(
+                        (v) => v.key == _schedulingWirePointKey(state.point),
+                      ),
+                    ),
+                ];
+          checkpoint = _schedulingWriteV5(
+            canonical: proposed,
+            kind: publicationKind,
+            basis: cancellation
+                ? previousCheckpoint.basisRecord!
+                : masterRecord,
+            individuals: states,
+            masterMessage: cancellation ? masterRecord : null,
+          );
+        } else {
+          checkpoint = _schedulingWriteV4(
+            canonical: proposed,
+            kind: publicationKind,
+            basis: previousCheckpoint.basisRecord!,
+            cancelled: previousCheckpoint.cancelled,
+            masterMessage: masterRecord,
+          );
+        }
         bundleProjection = _schedulingV4Projection(
-          CalendarSchedulingPublicationKind.seriesCancel,
+          publicationKind,
           null,
           components,
+          version: v5 ? 5 : 4,
         );
       }
       final intent = CalendarSchedulingIntent(
@@ -861,6 +907,9 @@ extension CalendarSchedulingOperations on CalendarService {
             ),
             transaction: tx,
           );
+      if ((jsonDecode(checkpoint) as Map)['version'] == 5) {
+        _schedulingReadCheckpoint(publication);
+      }
       await CalendarSchedulingDeliveryRecord.db.insert(_session, [
         for (final route in authority.routes)
           CalendarSchedulingDeliveryRecord(
@@ -951,8 +1000,7 @@ extension CalendarSchedulingOperations on CalendarService {
       }
       await _verifyContext(c);
       final checkpoint = p == null ? null : _schedulingReadCheckpoint(p);
-      if (checkpoint?.kind ==
-          CalendarSchedulingPublicationKind.occurrenceCancel) {
+      if (checkpoint?.target != null) {
         await _schedulingAuthorize(
           c,
           _schedulingRequests(

@@ -195,3 +195,6 @@ Accepted [ADR 0124](adr/0124-recurring-organizer-masters.md) retains all existin
 
 
 Accepted [ADR 0128](adr/0128-explicit-single-occurrence-cancellation.md) adds `cancelOccurrenceScheduling`, plus independent `readScheduling`, full event/source read and `changeEventStatus`. Neither `updateEvent` nor whole-series `cancelScheduling` substitutes. Preliminary access precedes historical membership checks; final context contains actual native state, historical REQUEST basis, typed target/current exact-match result and immutable outgoing message/digest. Retained retries and no-ops reauthorize. Current dispatch checks remain necessary even for a historical original absent from the native draft.
+
+
+Accepted [ADR 0129](adr/0129-explicit-occurrence-restoration.md) adds independent `restoreOccurrenceScheduling`, scheduling read, full event/source and lifecycle gates, including historical originals without a native mutation. Ordinary publish/edit/cancel permissions do not substitute. Trusted context carries exact historical basis/target, current native membership and final state plus immutable outgoing REQUEST/digest. Current sender/routes/parent/origin/generation/expiry and the configured guarantee apply to commands and workers. Native and published cancelled masters are not implicitly reopened.

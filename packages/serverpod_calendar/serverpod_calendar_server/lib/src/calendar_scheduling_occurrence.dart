@@ -3,11 +3,32 @@ part of 'calendar_module.dart';
 extension CalendarSchedulingOccurrenceOperations on CalendarService {
   Future<CalendarSchedulingReceipt> cancelOccurrenceAndNotify(
     CalendarSchedulingOccurrenceCancelRequest input,
-  ) async {
+  ) => _changeSchedulingOccurrence(input, restore: false);
+
+  Future<CalendarSchedulingReceipt> restoreOccurrenceAndNotify(
+    CalendarSchedulingOccurrenceRestoreRequest input,
+  ) => _changeSchedulingOccurrence(
+    CalendarSchedulingOccurrenceCancelRequest(
+      eventId: input.eventId,
+      expectedRevision: input.expectedRevision,
+      commandId: input.commandId,
+      originalStart: input.originalStart,
+    ),
+    restore: true,
+  );
+
+  Future<CalendarSchedulingReceipt> _changeSchedulingOccurrence(
+    CalendarSchedulingOccurrenceCancelRequest input, {
+    required bool restore,
+  }) async {
+    final kind = restore
+        ? CalendarSchedulingPublicationKind.occurrenceRestore
+        : CalendarSchedulingPublicationKind.occurrenceCancel;
+    final method = restore ? 'REQUEST' : 'CANCEL';
     final point = input.originalStart;
     final digest = _schedulingDigest(
       jsonEncode([
-        'occurrenceCancel',
+        kind.name,
         input.eventId.toString(),
         input.expectedRevision,
         point.toJson(),
@@ -22,7 +43,9 @@ extension CalendarSchedulingOccurrenceOperations on CalendarService {
         CalendarEventPolicySnapshot proposed,
       ) => [
         for (final op in [
-          CalendarPermission.cancelOccurrenceScheduling,
+          restore
+              ? CalendarPermission.restoreOccurrenceScheduling
+              : CalendarPermission.cancelOccurrenceScheduling,
           CalendarPermission.readScheduling,
           CalendarPermission.readEvent,
           CalendarPermission.readEventSource,
@@ -72,8 +95,7 @@ extension CalendarSchedulingOccurrenceOperations on CalendarService {
           (retry.requestDigest != digest ||
               retry.actorId != c.principalId ||
               retry.meetingId != meeting.id ||
-              _schedulingReadCheckpoint(retry).kind !=
-                  CalendarSchedulingPublicationKind.occurrenceCancel)) {
+              _schedulingReadCheckpoint(retry).kind != kind)) {
         throw _failure(CalendarFailureCode.validation);
       }
       final receiptCheckpoint = retry == null
@@ -86,14 +108,24 @@ extension CalendarSchedulingOccurrenceOperations on CalendarService {
       // Never treat validation/work failures as an absent native occurrence.
       _schedulingValue(() => _schedulingHistoricalTarget(basis, point));
       if (retry == null &&
-          previous.kind == CalendarSchedulingPublicationKind.seriesCancel) {
+          (previous.kind == CalendarSchedulingPublicationKind.seriesCancel ||
+              restore &&
+                  e.data.content.status == CalendarEventStatus.cancelled)) {
         throw _failure(CalendarFailureCode.dependencyConflict);
       }
       if (retry == null) _eventRevision(e, input.expectedRevision);
       final matches = _schedulingValue(
         () => eventSchedulingMember(e.data.content, point),
       );
-      final edits = retry != null || !matches
+      final nativeCancelled =
+          e.data.timingOverrides?.singles.any(
+            (s) =>
+                s.cancelled &&
+                eventComponentKey(s.originalStart, false) ==
+                    eventComponentKey(point, false),
+          ) ??
+          false;
+      final edits = retry != null || !matches || restore && !nativeCancelled
           ? e.data.timingOverrides
           : _schedulingValue(
               () => changeEventOverrides(
@@ -103,22 +135,30 @@ extension CalendarSchedulingOccurrenceOperations on CalendarService {
                   eventId: e.identity.id!,
                   expectedRevision: e.identity.revision,
                   originalStart: point,
-                  action: CalendarEventOccurrenceAction.cancelSingle,
+                  action: restore
+                      ? CalendarEventOccurrenceAction.restoreSingle
+                      : CalendarEventOccurrenceAction.cancelSingle,
                 ),
               ),
             );
       final nativeChanged =
           jsonEncode(edits?.toJson()) !=
           jsonEncode(e.data.timingOverrides?.toJson());
-      final priorCancellation = previous.cancelled
+      final priorCancellation = previous.individuals
           .where(
             (r) =>
                 eventComponentKey(r.point, false) ==
                 eventComponentKey(point, false),
           )
           .firstOrNull;
+      if (restore && retry == null && priorCancellation == null) {
+        throw _failure(CalendarFailureCode.validation);
+      }
       final unchanged =
-          retry == null && priorCancellation != null && !nativeChanged;
+          retry == null &&
+          priorCancellation != null &&
+          priorCancellation.restored == restore &&
+          !nativeChanged;
       // A no-op targets the original's own immutable receipt, not another instance.
       CalendarSchedulingPublicationRecord? receipt = retry;
       var prunedNoopReceipt = false;
@@ -130,10 +170,9 @@ extension CalendarSchedulingOccurrenceOperations on CalendarService {
           limit: options.maxRetainedPublications + 1,
           transaction: tx,
         );
-        receipt = candidates.where((p) => p.method == 'CANCEL').where((p) {
+        receipt = candidates.where((p) => p.method == method).where((p) {
           final check = _schedulingReadCheckpoint(p);
-          return check.kind ==
-                  CalendarSchedulingPublicationKind.occurrenceCancel &&
+          return check.kind == kind &&
               eventComponentKey(check.target!, false) ==
                   eventComponentKey(point, false) &&
               p.sequence == priorCancellation.version.sequence;
@@ -195,17 +234,21 @@ extension CalendarSchedulingOccurrenceOperations on CalendarService {
         timingOverrides: receipt != null ? e.data.timingOverrides : edits,
         protocolState: state,
       );
+      final proposals = _schedulingAddresses(
+        last.recipients,
+        options.maxRecipients,
+      );
       final authority = _schedulingAuthority(
         await _bounded(
           () => _scheduling.host.resolve(
             _session,
             c,
             e.snapshot,
-            last.recipients,
+            proposals,
             tx,
           ),
         ),
-        last.recipients,
+        proposals,
       );
       if (meeting.scopeKey != c.scopeKey ||
           meeting.calendarId != e.identity.calendarId ||
@@ -213,38 +256,46 @@ extension CalendarSchedulingOccurrenceOperations on CalendarService {
           authority.authorityRef != meeting.authorityRef) {
         throw _failure(CalendarFailureCode.accessDenied);
       }
-      final history = [...previous.cancelled];
+      final history = [...previous.individuals];
       var sequence = 0;
       var stamp = eventProtocolInstant(now);
+      String buildPayload(int sequence, DateTime stamp) => restore
+          ? _schedulingRestorationPayload(
+              basis,
+              point,
+              sequence,
+              stamp,
+              options.maxPayloadBytes,
+            )
+          : _schedulingInstancePayload(
+              basis,
+              point,
+              sequence,
+              stamp,
+              options.maxPayloadBytes,
+            );
       String payload;
       if (receipt != null) {
         // A retained command retry uses its original exact bytes. A current
         // no-op whose old row was pruned authorizes the latest retained message.
         payload = prunedNoopReceipt
-            ? _schedulingInstancePayload(
-                basis,
-                point,
-                priorCancellation!.version.sequence,
-                priorCancellation.version.stamp,
-                options.maxPayloadBytes,
+            ? _schedulingValue(
+                () => buildPayload(
+                  priorCancellation!.version.sequence,
+                  priorCancellation.version.stamp,
+                ),
               )
             : receipt.payload;
       } else {
-        final sample = parseIcalendarSchedulingMessage(
-          utf8.encode(
-            _schedulingInstancePayload(
-              basis,
-              point,
-              0,
-              stamp,
-              options.maxPayloadBytes,
-            ),
+        final sample = _schedulingValue(
+          () => parseIcalendarSchedulingMessage(
+            utf8.encode(buildPayload(0, stamp)),
           ),
         );
         final key = _schedulingComponent(sample.events.single).key;
-        final floor = basis.ledger.firstWhere(
+        final floor = previous.ledger.firstWhere(
           (v) => v.key == key,
-          orElse: () => basis.ledger.singleWhere((v) => v.key == 'master'),
+          orElse: () => previous.ledger.singleWhere((v) => v.key == 'master'),
         );
         sequence = max(
           floor.sequence,
@@ -256,6 +307,14 @@ extension CalendarSchedulingOccurrenceOperations on CalendarService {
           stamp = priorCancellation.version.stamp;
         }
         for (final v in [
+          e.data.protocolState!.version,
+          ...e.data.protocolState!.overrides
+              .where(
+                (o) =>
+                    eventComponentKey(o.originalStart, false) ==
+                    eventComponentKey(point, false),
+              )
+              .map((o) => o.version),
           state.version,
           ...state.overrides
               .where(
@@ -275,15 +334,7 @@ extension CalendarSchedulingOccurrenceOperations on CalendarService {
         if (sequence > eventMaxSequence) {
           throw _failure(CalendarFailureCode.limitExceeded);
         }
-        payload = _schedulingValue(
-          () => _schedulingInstancePayload(
-            basis,
-            point,
-            sequence,
-            stamp,
-            options.maxPayloadBytes,
-          ),
-        );
+        payload = _schedulingValue(() => buildPayload(sequence, stamp));
         final version = _schedulingComponent(
           parseIcalendarSchedulingMessage(utf8.encode(payload)).events.single,
         );
@@ -292,7 +343,14 @@ extension CalendarSchedulingOccurrenceOperations on CalendarService {
               eventComponentKey(r.point, false) ==
               eventComponentKey(point, false),
         );
-        history.add(_SchedulingCancellation(point, version));
+        history.add(
+          _SchedulingCancellation(
+            point,
+            version,
+            restored: restore,
+            active: restore ? version : priorCancellation?.active,
+          ),
+        );
         final union = {
           ...basis.originals.map(
             (o) => eventComponentKey(o.originalStart, false),
@@ -315,13 +373,11 @@ extension CalendarSchedulingOccurrenceOperations on CalendarService {
           ? null
           : _schedulingReadCheckpoint(receipt);
       final intent = CalendarSchedulingIntent(
-        method: 'CANCEL',
-        publicationKind:
-            checkedReceipt?.kind ??
-            CalendarSchedulingPublicationKind.occurrenceCancel,
+        method: method,
+        publicationKind: checkedReceipt?.kind ?? kind,
         originalStart: checkedReceipt?.target ?? point,
         organizerAddress: authority.organizerAddress,
-        recipients: last.recipients,
+        recipients: proposals,
         payload: payload,
         // A pruned no-op reconstructs the requested target from the ledger; it
         // must not claim that another target's latest receipt owns those bytes.
@@ -362,11 +418,11 @@ extension CalendarSchedulingOccurrenceOperations on CalendarService {
             _session,
             c,
             e.snapshot,
-            last.recipients,
+            proposals,
             tx,
           ),
         ),
-        last.recipients,
+        proposals,
       );
       if (_schedulingAuthorityKey(checked) !=
           _schedulingAuthorityKey(authority)) {
@@ -406,36 +462,47 @@ extension CalendarSchedulingOccurrenceOperations on CalendarService {
         transaction: tx,
       );
       if (retained >= options.maxRetainedPublications ||
-          scopePending + last.recipients.length > options.maxScopeDeliveries) {
+          scopePending + proposals.length > options.maxScopeDeliveries) {
         throw _failure(CalendarFailureCode.limitExceeded);
       }
-      final snapshot = _schedulingWriteV4(
-        canonical: proposed,
-        kind: CalendarSchedulingPublicationKind.occurrenceCancel,
-        basis: basisRecord,
-        cancelled: history,
-        target: point,
-        nativeMatch: matches,
-      );
+      final v5 = restore || history.any((s) => s.active != null);
+      final snapshot = v5
+          ? _schedulingWriteV5(
+              canonical: proposed,
+              kind: kind,
+              basis: basisRecord,
+              individuals: history,
+              target: point,
+              nativeMatch: matches,
+            )
+          : _schedulingWriteV4(
+              canonical: proposed,
+              kind: kind,
+              basis: basisRecord,
+              cancelled: history,
+              target: point,
+              nativeMatch: matches,
+            );
       final p = await CalendarSchedulingPublicationRecord.db.insertRow(
         _session,
         CalendarSchedulingPublicationRecord(
           scopeKey: c.scopeKey,
           meetingId: meeting.id!,
           generation: meeting.generation + 1,
-          method: 'CANCEL',
+          method: method,
           protocolUid: e.data.protocolUid,
           sequence: sequence,
           stamp: stamp,
           snapshot: snapshot,
           projection: _schedulingV4Projection(
-            CalendarSchedulingPublicationKind.occurrenceCancel,
+            kind,
             point,
             [_schedulingComponent(outgoing.events.single)],
+            version: v5 ? 5 : 4,
           ),
           payload: payload,
           payloadDigest: _schedulingDigest(payload),
-          recipients: last.recipients,
+          recipients: proposals,
           commandId: input.commandId,
           actorId: c.principalId,
           requestDigest: digest,

@@ -372,6 +372,90 @@ Future<void> runSchedulingJourney(WidgetTester tester, Client client) async {
   }
   await tester.ensureVisible(publish);
   expect(tester.widget<FilledButton>(publish).onPressed, isNull);
+
+  Future<void> terminalExtra() async {
+    for (var i = 0; i < 100; i++) {
+      final view = await api.calendarEvent.schedulingStatus(extra.eventId);
+      if (view.deliveries.every(
+        (d) => d.state == cal.CalendarSchedulingDeliveryState.accepted,
+      )) {
+        return;
+      }
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 200)),
+      );
+    }
+    fail('Prior cancellation/restoration delivery did not become terminal');
+  }
+
+  await terminalExtra();
+  await original('2026-11-03');
+  await _tap(tester, 'scheduling-restore-occurrence');
+  expect(find.byKey(const Key('scheduling-error')), findsNothing);
+  var restored = await api.calendarEvent.schedulingStatus(extra.eventId);
+  expect(
+    restored.publicationKind,
+    cal.CalendarSchedulingPublicationKind.occurrenceRestore,
+  );
+  expect(restored.hasOccurrenceCancellations, true);
+  expect(
+    (await api.calendarEvent.getEvent(
+      extra.eventId,
+      cal.CalendarEventFieldGroup.values,
+    )).summary,
+    'Private Flutter historical draft',
+  );
+  await terminalExtra();
+  await original('2026-11-04');
+  await _tap(tester, 'scheduling-restore-occurrence');
+  expect(find.byKey(const Key('scheduling-error')), findsNothing);
+  restored = await api.calendarEvent.schedulingStatus(extra.eventId);
+  expect(restored.hasOccurrenceCancellations, false);
+  var native = await api.calendarEvent.getEvent(
+    extra.eventId,
+    cal.CalendarEventFieldGroup.values,
+  );
+  expect(native.timingOverrides, isNull);
+  expect(native.recurrence!.exclusions.single.start.day, 3);
+  // The historical original remains excluded from the private draft. Restoration
+  // must not silently remove that exclusion to make full publication possible.
+  await _tap(tester, 'scheduling-publish');
+  expect(find.byKey(const Key('scheduling-error')), findsOneWidget);
+  native = await api.calendarEvent.getEvent(
+    extra.eventId,
+    cal.CalendarEventFieldGroup.values,
+  );
+  await api.calendarEvent.update(
+    cal.CalendarEventUpdateRequest(
+      eventId: extra.eventId,
+      expectedRevision: native.revision,
+      content: content('Private Flutter historical draft'),
+      replaceRecurrenceDates: true,
+    ),
+  );
+  expect(
+    (await api.calendarEvent.getEvent(
+      extra.eventId,
+      cal.CalendarEventFieldGroup.values,
+    )).recurrence!.exclusions,
+    isEmpty,
+  );
+  await _tap(tester, 'scheduling-reload');
+  await _tap(tester, 'scheduling-publish');
+  expect(find.byKey(const Key('scheduling-error')), findsNothing);
+  final complete = await api.calendarEvent.schedulingStatus(extra.eventId);
+  expect(
+    complete.publicationKind,
+    cal.CalendarSchedulingPublicationKind.request,
+  );
+  expect(complete.hasLocalChanges, false);
+  expect(
+    (await api.calendarEvent.getEvent(
+      extra.eventId,
+      cal.CalendarEventFieldGroup.values,
+    )).timingOverrides,
+    isNull,
+  );
   await tester.pageBack();
   await tester.pumpAndSettle();
   // This profile deliberately has no binding deletion API. The root harness

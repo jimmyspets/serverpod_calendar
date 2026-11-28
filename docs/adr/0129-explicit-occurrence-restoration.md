@@ -1,14 +1,14 @@
 # ADR 0129: Explicit restoration of published occurrence values
 
-Status: **The maintainer confirmed on 2026-10-27 that individual Restore and notify uses the last published occurrence values and preserves newer unpublished drafts. The concrete batch below is proposed, not accepted or implemented.**
+Status: **Accepted by explicit maintainer approval on 2026-10-27, including the complete concrete restoration batch, v5 private state and API/authority/lifecycle mechanics. Scoped implementation and actual verification are recorded in [the runtime guide](../native-organizer-scheduling.md) and [validation](../scaffold-validation.md).**
 
 ## Confirmed policy
 
-Restore the previously published occurrence, not a newer local draft. Use the retained authorized REQUEST basis and original identity. Never disclose newer private text/timing or manufacture an occurrence in a draft that excluded it or changed its profile. This policy extends the historical separation in [ADR 0128](0128-explicit-single-occurrence-cancellation.md); it does not approve this ADR's checkpoint, version or lifecycle mechanics.
+Restore the previously published occurrence, not a newer local draft. Use the retained authorized REQUEST basis and original identity. Never disclose newer private text/timing or manufacture an occurrence in a draft that excluded it or changed its profile. This policy extends the historical separation in [ADR 0128](0128-explicit-single-occurrence-cancellation.md); the subsequent explicit maintainer approval covers this ADR's concrete mechanics.
 
 [RFC 5546 REQUEST](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.2) defines event invitation/update data and required correlation/participant fields; [recurrence processing](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.7.1) and [sequencing](https://www.rfc-editor.org/rfc/rfc5546.html#section-2.1.5) distinguish original identity and versions. These primary references were checked on 2026-10-27. The restore-values policy, native mutation, delivery gate and private checkpoint proposed here are application rules, not added RFC requirements or client interoperability evidence.
 
-## Proposed bounded action
+## Approved bounded action
 
 Add `restoreOccurrenceAndNotify` with immutable event/revision/command/original-point input for an existing native organizer binding. Require a currently published individual cancellation, or a retained already-restored state for an authorized no-op. The first scope requires both an active published master and a non-cancelled current native parent. Reject rather than silently reopen a locally cancelled master; its ordinary local reopening remains explicit. Whole-series cancelled bindings, range-anchor restoration, participant changes, imported adoption and future cancellation remain separate. Never send an instance REQUEST that silently reopens a cancelled master.
 
@@ -16,15 +16,15 @@ Reconstruct the target's effective timing and selected text/status/transparency 
 
 If the exact original still has a native single-cancellation flag, clear only that flag using the ordinary native semantics, retaining its own replacement timing/content. If the native profile/member no longer matches, or the local flag was already restored, leave native content untouched. An unpublished current range at the target is preserved when there is no single flag to clear; restoration must not create a single timing override to replace it. API revision/audit/scope generation advance for a new accepted command, while native protocol state advances only for an actual native change.
 
-## Proposed authority and delivery
+## Approved authority and delivery
 
 Add independent `restoreOccurrenceScheduling` plus scheduling-read, full event/source read and lifecycle authority even without native mutation. Keep preliminary access before historical decoding/membership. Complete current/final native state, retained published REQUEST basis, typed original/current exact-match result and exact outgoing bytes/digest go to both host phases and dispatch checks. Source participants grant no authority; current routes and the declared consistency guarantee remain required.
 
 Reuse ADR 0128's terminal-prior-delivery gate before every new partial restoration. Exact retained retries and synchronized no-ops reauthorize without queueing; old retries never clear a newer local cancellation. A new command after another local cancellation can clear its flag with a newer outgoing version. Keep immutable payloads, stable delivery keys, leases/fences, expiry and at-least-once uncertainty. The gate is not parallel partial-message coordination.
 
-## Proposed v5 checkpoint and public contract
+## Approved v5 checkpoint and public contract
 
-Reuse the existing four tables/columns, limits and retention. A bounded v5 envelope retains the complete original REQUEST basis plus each retained original's latest cancelled/restored publication state and independent outgoing version. Add `occurrenceRestore` to the generated publication-kind enum and a generated restore request/endpoint; status retains its typed target and reports currently cancelled originals through `hasOccurrenceCancellations`. No table, column, migration or development reset is proposed.
+Reuse the existing four tables/columns, limits and retention. A bounded v5 envelope retains the complete original REQUEST basis plus each retained original's latest cancelled/restored publication state and independent outgoing version. Each entry also retains its last active REQUEST component when present, separately from a later cancellation; this survives recancellation and pruning. Add `occurrenceRestore` to the generated publication-kind enum and a generated restore request/endpoint; status retains its typed target and reports currently cancelled originals through `hasOccurrenceCancellations`. No table, column, migration or development reset is proposed.
 
 Maintain a complete active REQUEST ledger by applying restored components over the retained basis. A restored implicit member consumes a retained single-original slot; full-value projection markers keep that identity explicit on subsequent complete REQUESTs. Restoring does not delete a recipient's exception record or pin native inheritance. All active/reset/cancelled/restored identities share 64 slots without eviction. Snapshot/comparison/payload limits remain 512 KiB each; embed only a validated legacy/v2/v3 basis, never recursively nest v4/v5 envelopes. Read existing formats without inventing restoration history. Cross-check UID/parent/kind/profile/membership, message/ledger bodies, target and native mutation state; malformed/unknown data fail unavailable.
 
@@ -38,7 +38,7 @@ Local-change comparison starts from published basis values and known cancellatio
 
 Publishing current native values would expose drafts through a restoration action; the maintainer selected published values instead. Clearing a native flag alone sends nothing and cannot restore the remote occurrence. Sending a new complete series immediately could reopen other cancelled originals, so it remains gated until the ledger proves none remain cancelled and all retained originals are representable. A new table or overlapping partial-message coordinator would expand this batch; the proposed bounded v5 encoding reuses the approved storage and serialized gate. It also retains original slots while the binding is active, so repeated cancellation/restoration does not free capacity. Cancelled-master reopening remains incomplete rather than silently weakening that boundary.
 
-## Proposed acceptance
+## Approved acceptance
 
 Cover implicit/explicit/reset targets, DATE/UTC/zoned/DST/PERIOD/range-derived spans, empty text and source annotations, current/historical native matching, preserved private fields, independent permissions/final denial, pending gates, stale commands, retries/no-ops and locally recancelled state. Verify sequence/stamp floors/overflow, shared budgets, 64-slot and byte limits, v3/v4/v5 reads, malformed data, cleanup retaining restoration history and complete REQUEST publication after the last cancellation is restored. Confirm other still-cancelled originals remain blocked and whole-series cancellation cannot lose version history.
 
