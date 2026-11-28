@@ -529,3 +529,8 @@ Accepted [ADR 0156](adr/0156-explicit-range-invitation-application.md) implement
 ## Pure future-cancellation prerequisite
 
 Accepted [ADR 0157](adr/0157-pure-future-event-cancellation.md) implements optional original-identity cutoffs on core DateEventRangeSet and TimedEventSeries, suppressing all originals at/after the cutoff including moved/edited timing exceptions while retaining their data. See [the core guide](event-future-cancellation-core.md) for membership, same-anchor coexistence, budget/equality and horizon behavior. Actual validation is recorded separately. This adds no native cancellation action, stored source state, restoration, free/busy/alarm/feed integration or scheduling reconciliation; existing range CANCEL guards remain.
+
+
+## Proposed native future cancellation/restoration
+
+The maintainer confirmed clearing the entire saved cutoff using current retained timing/content, preserving individually cancelled occurrences. [Proposed ADR 0158](adr/0158-native-event-future-cancellation.md) adds a nullable start-only cancelledFrom to existing override JSON and typed cancelFuture/restoreFuture actions, with lifecycle authority, protocol bookkeeping, complete query/free-busy/alarm integration and Flutter. It proposes rejecting masked export/feed/new REQUEST projections until faithful wire mapping exists. No new SQL table/column or history is proposed. These mechanics await approval and are unimplemented; incoming/outgoing range CANCEL and replies remain separate.

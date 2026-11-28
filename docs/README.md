@@ -317,3 +317,8 @@ Accepted [ADR 0156](adr/0156-explicit-range-invitation-application.md) implement
 
 
 [Accepted ADR 0157](adr/0157-pure-future-event-cancellation.md) implements the [pure event future-cancellation cutoff](event-future-cancellation-core.md), retaining timing exceptions and existing budgets. Durable range CANCEL/restoration and publication remain separate; actual validation is recorded independently.
+
+
+## Proposed native future cancellation/restoration
+
+The maintainer confirmed clearing the entire saved cutoff using current retained timing/content, preserving individually cancelled occurrences. [Proposed ADR 0158](adr/0158-native-event-future-cancellation.md) adds a nullable start-only cancelledFrom to existing override JSON and typed cancelFuture/restoreFuture actions, with lifecycle authority, protocol bookkeeping, complete query/free-busy/alarm integration and Flutter. It proposes rejecting masked export/feed/new REQUEST projections until faithful wire mapping exists. No new SQL table/column or history is proposed. These mechanics await approval and are unimplemented; incoming/outgoing range CANCEL and replies remain separate.

@@ -41,3 +41,8 @@ The core retains timing data; it contains no event content, authority, source ve
 Existing native free/busy, feeds, alarms, queries and range CANCEL guards are unchanged because no adapter supplies the new cutoff yet. Tasks and availability openings do not gain future cancellation through this batch. Durable storage/source composition, cancellation-aware views, permissions, delivery invalidation, export/feed representability and explicit restoration require separate reviewed work.
 
 Tests cover DATE/UTC/named zones, finite independent expected-result oracles, moved-in/out singles, later ranges, earlier RDATE/PERIODs, single cancellation, same-anchor capacity, invalid members/profiles, DST gaps/folds and horizon overflow. See [actual validation](scaffold-validation.md) for commands/results and [development checks](development.md). Pure tests are not evidence that an external subscription/scheduling client implements the same policy.
+
+
+## Proposed native future cancellation/restoration
+
+The maintainer confirmed clearing the entire saved cutoff using current retained timing/content, preserving individually cancelled occurrences. [Proposed ADR 0158](adr/0158-native-event-future-cancellation.md) adds a nullable start-only cancelledFrom to existing override JSON and typed cancelFuture/restoreFuture actions, with lifecycle authority, protocol bookkeeping, complete query/free-busy/alarm integration and Flutter. It proposes rejecting masked export/feed/new REQUEST projections until faithful wire mapping exists. No new SQL table/column or history is proposed. These mechanics await approval and are unimplemented; incoming/outgoing range CANCEL and replies remain separate.
