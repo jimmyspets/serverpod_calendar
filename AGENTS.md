@@ -18,6 +18,8 @@ Under accepted ADR 0124, native recurring masters can use the existing explicit 
 
 Under ADR 0125, the maintainer approved scheduling-only required-field projection while preserving native inheritance. The pure `projectIcalendarRequestFields` helper copies missing SUMMARY and master participant claims into a validated REQUEST candidate; it establishes no host authority and allocates no versions. Keep the durable service master-only until occurrence version/reset/bundle/storage mechanics are reviewed. Ordinary export and native source state remain unchanged; never strip cancellation or alarms to manufacture a supported REQUEST.
 
+Under ADR 0126, the maintainer selected independent outgoing occurrence versions, with unchanged occurrences retaining versions and native source versions separate. Its concrete REQUEST bundle/checkpoint, removal/cancellation/reopening guards and complete-message host interface remain proposed and unimplemented. Do not treat approval of that version policy as approval of the physical JSON layout or durable integration.
+
 ## Current state and sources
 
 This repository now contains an initial workspace/authentication scaffold; calendar domain features remain documentation-first. Read README.md, docs/discussion-migration.md, docs/requirements.md, and the relevant proposed ADRs before changes. The per-RFC tables in docs/rfc/ are the latest feature-scope source; explicit newer maintainer instructions take precedence. Reconcile older narrative text with the table statuses and notes without treating unapproved implementation detail as accepted. Architecture documents describe proposals, not implemented behavior. Do not invent earlier chat decisions or claim complete iCalendar, CalDAV, or client compatibility.
