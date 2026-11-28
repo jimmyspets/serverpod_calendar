@@ -1,4 +1,5 @@
 import 'invitation_update_screen.dart';
+import 'invitation_bundle_update_screen.dart';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
@@ -162,7 +163,22 @@ class _InvitationAdoptionScreenState extends State<InvitationAdoptionScreen> {
           ),
         if (_link?.bundledRequest == true)
           const Text(
-            'This link preserves the complete initial invitation. Source updates and participation responses are not supported for this profile yet.',
+            'This link preserves the complete invitation. Updates require a complete source bundle; participation responses are not supported yet.',
+          ),
+        if (_link?.bundledRequest == true)
+          TextButton(
+            key: const Key('invitation-review-bundle-update'),
+            onPressed: _busy
+                ? null
+                : () => Navigator.of(context).push<void>(
+                    MaterialPageRoute(
+                      builder: (_) => InvitationBundleUpdateScreen(
+                        client: widget.client,
+                        id: _entry.id,
+                      ),
+                    ),
+                  ),
+            child: const Text('Review complete incoming update'),
           ),
         if (_link != null && !_link!.bundledRequest)
           TextButton(

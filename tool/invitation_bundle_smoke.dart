@@ -89,20 +89,119 @@ Future<void> invitationBundleSmoke(List<Client> clients) async {
       retry.toJson().toString() == added.first.toJson().toString(),
       'Retained bundle adoption changed result',
     );
+    cal.CalendarInvitationApplyRequest updateCommand(
+      cal.CalendarInvitationBundleApplicationView view,
+    ) => cal.CalendarInvitationApplyRequest(
+      invitationId: view.invitationId,
+      sourceId: view.incomingSourceId!,
+      expectedInvitationRevision: view.invitationRevision!,
+      linkId: view.linkId,
+      expectedEventRevision: view.eventRevision,
+      expectedCalendarRevision: view.calendarRevision,
+      expectedApplicationRevision: view.applicationRevision,
+    );
+    await a.invitationDemo.simulateBundleUpdate(
+      uid,
+      const cal.Uuid().v4obj(),
+      1,
+      null,
+      'Synthetic complete invitation',
+    );
+    final firstView = await b.modules.serverpod_calendar.calendarInvitation
+        .bundleApplication(received.entryId);
+    final firstUpdate = updateCommand(firstView);
+    final applied = await Future.wait(
+      clients.map(
+        (c) => c.modules.serverpod_calendar.calendarInvitation
+            .applyBundleUpdate(firstUpdate),
+      ),
+    );
+    require(
+      applied.first.id == applied.last.id && applied.first.eventRevision == 2,
+      'Child-only bundle application lost atomic retry identity',
+    );
+    require(
+      (await api.calendarInvitation.bundleApplication(received.entryId))
+              .acceptedComponents
+              .singleWhere((v) => v.originalStart == null)
+              .sequence ==
+          null,
+      'Child-only update invented a master version',
+    );
+    await b.invitationDemo.simulateBundleUpdate(
+      uid,
+      const cal.Uuid().v4obj(),
+      2,
+      1,
+      'Synthetic updated invitation',
+    );
+    final secondView = await api.calendarInvitation.bundleApplication(
+      received.entryId,
+    );
+    final secondUpdate = updateCommand(secondView);
+    final second = await b.modules.serverpod_calendar.calendarInvitation
+        .applyBundleUpdate(secondUpdate);
+    require(
+      second.eventRevision == 3 && second.applicationRevision == 2,
+      'Complete bundle update did not advance once',
+    );
     var rejected = false;
     try {
-      await b.invitationDemo.simulateBundle(
+      await b.invitationDemo.simulateBundleUpdate(
         uid,
         const cal.Uuid().v4obj(),
-        30,
-        'Unsupported update',
+        1,
+        2,
+        'Synthetic updated invitation',
       );
     } on cal.CalendarException catch (e) {
       rejected = e.code == cal.CalendarFailureCode.validation;
     }
-    require(rejected, 'Known bundle entered scalar reconciliation');
+    require(rejected, 'Regressing bundle entered scalar reconciliation');
+    final current = await api.calendarEvent.getEvent(
+      event,
+      cal.CalendarEventFieldGroup.values,
+    );
+    await api.calendarEvent.update(
+      cal.CalendarEventUpdateRequest(
+        eventId: event,
+        expectedRevision: current.revision,
+        content: cal.CalendarEventContent(
+          timing: current.timing!,
+          summary: 'Private draft',
+          description: current.description,
+          location: current.location,
+          status: current.status!,
+          transparency: current.transparency!,
+          recurrence: current.recurrence,
+          periods: current.periods,
+          textParameters: current.textParameters,
+        ),
+      ),
+    );
+    await a.invitationDemo.simulateBundleUpdate(
+      uid,
+      const cal.Uuid().v4obj(),
+      3,
+      1,
+      'Synthetic updated invitation',
+    );
+    final dirty = await api.calendarInvitation.bundleApplication(
+      received.entryId,
+    );
+    require(
+      dirty.hasLocalChanges && !dirty.canApply,
+      'Local bundle edit did not block application',
+    );
+    require(
+      (await b.modules.serverpod_calendar.calendarInvitation.applyBundleUpdate(
+            secondUpdate,
+          )).id ==
+          second.id,
+      'Retained update retry rewrote a private draft',
+    );
     stdout.writeln(
-      'PASS: two JWT hosts, complete MIME bundle review, one-event adoption race, full preview and retained retries; unsupported update rejected.',
+      'PASS: two JWT hosts, complete MIME bundles, one-event adoption/application races, child-only and mixed versions, rejected regressions and draft-preserving latest retries.',
     );
   } finally {
     if (received != null) {

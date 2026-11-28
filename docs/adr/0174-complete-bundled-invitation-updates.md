@@ -1,6 +1,6 @@
 # ADR 0174: Complete bundled invitation updates
 
-Status: **Proposed, 2026-11-05.** The maintainer confirmed complete component sets and whole-message rejection of regressions. The grouped protocol, API, checkpoint and retry mechanics below require explicit agreement before implementation.
+Status: **Accepted by explicit maintainer agreement on 2026-11-05**, including the grouped protocol, API, checkpoint and retry mechanics below. Implementation and validation evidence remain separate.
 
 ## Context and verified baseline
 

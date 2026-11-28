@@ -15,6 +15,7 @@ invitationDemo:
   - simulate:
   - simulateRecurring:
   - simulateBundle:
+  - simulateBundleUpdate:
   - simulateCancellation:
 notificationStream:
   - watch:

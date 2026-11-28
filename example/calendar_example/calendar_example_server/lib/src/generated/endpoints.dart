@@ -479,6 +479,51 @@ class Endpoints extends _is.EndpointDispatch {
                         params['summary'],
                       ),
         ),
+        'simulateBundleUpdate': _is.MethodConnector(
+          name: 'simulateBundleUpdate',
+          params: {
+            'invitationId': _is.ParameterDescription(
+              name: 'invitationId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'commandId': _is.ParameterDescription(
+              name: 'commandId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'childSequence': _is.ParameterDescription(
+              name: 'childSequence',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'masterSequence': _is.ParameterDescription(
+              name: 'masterSequence',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+            'summary': _is.ParameterDescription(
+              name: 'summary',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['invitationDemo']
+                          as _i9j0zg07.InvitationDemoEndpoint)
+                      .simulateBundleUpdate(
+                        session,
+                        params['invitationId'],
+                        params['commandId'],
+                        params['childSequence'],
+                        params['masterSequence'],
+                        params['summary'],
+                      ),
+        ),
         'simulateCancellation': _is.MethodConnector(
           name: 'simulateCancellation',
           params: {

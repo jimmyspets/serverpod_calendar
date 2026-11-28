@@ -1,0 +1,26 @@
+class: CalendarInvitationBundleApplicationView
+immutable: true
+fields:
+  linkId: UuidValue
+  invitationId: UuidValue
+  calendarId: UuidValue
+  eventId: UuidValue
+  calendarRevision: int
+  eventRevision: int
+  applicationRevision: int
+  acceptedInvitationId: UuidValue
+  acceptedSourceId: UuidValue
+  acceptedAt: DateTime
+  acceptedComponents: List<CalendarInvitationBundleComponentVersion>
+  acceptedSourceUnavailable: bool
+  currentContent: CalendarEventContent
+  currentOverrides: CalendarEventTimingOverrides?
+  hasLocalChanges: bool
+  incomingSourceId: UuidValue?
+  invitationRevision: int?
+  incomingContent: CalendarEventContent?
+  incomingOverrides: CalendarEventTimingOverrides?
+  incomingSourceText: String?
+  incomingComponents: List<CalendarInvitationBundleComponentVersion>?
+  canApply: bool
+  latestResult: CalendarInvitationApplyReceipt?

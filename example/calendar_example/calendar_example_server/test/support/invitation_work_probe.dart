@@ -142,6 +142,14 @@ final class _Host implements CalendarInvitationHost {
       stdout.writeln('INVITATION_PAUSED ${jsonEncode(c.link!.toJson())}');
       await Completer<void>().future;
     }
+    if (pause == 'bundle-before' &&
+        c.operation == CalendarInvitationOperation.applyBundleUpdate &&
+        phase == CalendarAuthorizationPhase.finalWrite) {
+      stdout.writeln(
+        'INVITATION_PAUSED ${jsonEncode(c.applicationReceipt!.toJson())}',
+      );
+      await Completer<void>().future;
+    }
     if (pause == 'apply-before' &&
         c.operation == CalendarInvitationOperation.apply &&
         phase == CalendarAuthorizationPhase.finalWrite) {
@@ -424,11 +432,14 @@ Future<void> main(List<String> args) async {
                   'BEGIN:VEVENT',
                   'UID:invitation:$caseId',
                   'DTSTAMP:20260102T000000Z',
-                  if (future) 'SEQUENCE:12',
+                  if (future)
+                    'SEQUENCE:12'
+                  else if (input['bundleChild'] != null)
+                    'SEQUENCE:${input['bundleChild']}',
                   'RECURRENCE-ID${future ? ';RANGE=THISANDFUTURE' : ''}:2030010${future ? '5' : '3'}T090000Z',
                   'DTSTART:2030010${future ? '5' : '3'}T110000Z',
                   'DTEND:2030010${future ? '5' : '3'}T120000Z',
-                  'SUMMARY:Synthetic exception',
+                  'SUMMARY:${!future && input['bundleChild'] != null ? 'Synthetic exception ${input['bundleChild']}' : 'Synthetic exception'}',
                   'ORGANIZER:mailto:organizer@example.invalid',
                   'ATTENDEE:mailto:recipient@example.invalid',
                   'END:VEVENT',
@@ -483,6 +494,41 @@ Future<void> main(List<String> args) async {
                     ),
                   );
               if (host.pause == 'adopt-after') {
+                stdout.writeln(
+                  'INVITATION_PAUSED ${jsonEncode(receipt.toJson())}',
+                );
+                await Completer<void>().future;
+              }
+              result = receipt.toJson();
+            } finally {
+              session.updateAuthenticated(null);
+            }
+          case 'bundle-view':
+            session.updateAuthenticated(
+              AuthenticationInfo('recipient', {}, authId: 'invitation-probe'),
+            );
+            try {
+              result =
+                  (await CalendarModule.service(session)
+                          .invitationBundleApplication(
+                            UuidValue.fromString(input['entryId'] as String),
+                          ))
+                      .toJson();
+            } finally {
+              session.updateAuthenticated(null);
+            }
+          case 'bundle-apply':
+            session.updateAuthenticated(
+              AuthenticationInfo('recipient', {}, authId: 'invitation-probe'),
+            );
+            try {
+              final receipt = await CalendarModule.service(session)
+                  .applyInvitationBundleUpdate(
+                    CalendarInvitationApplyRequest.fromJson(
+                      input['request'] as Map<String, dynamic>,
+                    ),
+                  );
+              if (host.pause == 'bundle-after') {
                 stdout.writeln(
                   'INVITATION_PAUSED ${jsonEncode(receipt.toJson())}',
                 );
@@ -625,6 +671,9 @@ Future<void> main(List<String> args) async {
                   ),
               'acceptedKind': application?.kind.name,
               'eventStatus': eventRows.firstOrNull?.content.status.name,
+              'bundleVersions': eventRows.firstOrNull?.protocolState?.overrides
+                  .map((v) => v.version.sequence)
+                  .toList(),
               'singleCount':
                   eventRows.firstOrNull?.timingOverrides?.singles.length,
               'futureCount':

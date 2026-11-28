@@ -69,20 +69,11 @@ extension CalendarInvitationApplicationOperations on CalendarService {
     );
     if (link.bundledRequest) {
       final occurrence = await _occRow(link.id!, tx);
-      if (row != null || occurrence != null) {
+      if (occurrence != null) {
         throw _failure(CalendarFailureCode.unavailable);
       }
-      final baseline = event.data.importBaseline!;
-      final data = jsonDecode(baseline.canonicalValue) as Map<String, dynamic>;
-      final edits = data['edits'] as Map<String, dynamic>?;
-      if (edits == null ||
-          ((edits['singles'] as List?)?.length ?? 0) +
-                  ((edits['future'] as List?)?.length ?? 0) <
-              1) {
-        throw _failure(CalendarFailureCode.unavailable);
-      }
-      _invValidateMasterCheckpoint(link, event, null, baseline);
-      return null;
+      _bundleValidateCheckpoint(link, event, row);
+      return row;
     }
     final occurrence = await _occRow(link.id!, tx);
     final occurrenceState = occurrence == null
@@ -406,8 +397,9 @@ extension CalendarInvitationApplicationOperations on CalendarService {
     CalendarInvitationApplicationState state,
     CalendarInvitationLinkRecord link,
     CalendarInvitationRecipient recipient,
-    Transaction tx,
-  ) async {
+    Transaction tx, {
+    RecurrenceWorkBudget? sharedWorkBudget,
+  }) async {
     final source = await CalendarInvitationSourceRecord.db.findById(
       _session,
       state.sourceId,
@@ -423,7 +415,11 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         source.stamp != state.stamp) {
       throw _failure(CalendarFailureCode.unavailable);
     }
-    final message = _invStored(source, entry);
+    final message = _invStored(
+      source,
+      entry,
+      sharedWorkBudget: sharedWorkBudget,
+    );
     if (_invKind(message) != state.kind) {
       throw _failure(CalendarFailureCode.unavailable);
     }

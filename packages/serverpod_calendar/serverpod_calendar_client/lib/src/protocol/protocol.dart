@@ -152,6 +152,8 @@ import 'calendar_invitation_adoption_request.dart' as _imimov8l;
 import 'calendar_invitation_application_view.dart' as _i8svxjh1;
 import 'calendar_invitation_apply_receipt.dart' as _ic2yh4ry;
 import 'calendar_invitation_apply_request.dart' as _iivrx0vm;
+import 'calendar_invitation_bundle_application_view.dart' as _idg5aw79;
+import 'calendar_invitation_bundle_component_version.dart' as _iu3tvjvj;
 import 'calendar_invitation_document.dart' as _iwcng7rp;
 import 'calendar_invitation_occurrence_application_view.dart' as _i15b7t0e;
 import 'calendar_invitation_occurrence_apply_receipt.dart' as _iyajy5op;
@@ -364,6 +366,8 @@ export 'calendar_invitation_adoption_request.dart';
 export 'calendar_invitation_application_view.dart';
 export 'calendar_invitation_apply_receipt.dart';
 export 'calendar_invitation_apply_request.dart';
+export 'calendar_invitation_bundle_application_view.dart';
+export 'calendar_invitation_bundle_component_version.dart';
 export 'calendar_invitation_document.dart';
 export 'calendar_invitation_occurrence_application_view.dart';
 export 'calendar_invitation_occurrence_apply_receipt.dart';
@@ -593,6 +597,8 @@ class Protocol extends _isc.SerializationManager
       _isc.getType<_i8svxjh1.CalendarInvitationApplicationView>,
       _isc.getType<_ic2yh4ry.CalendarInvitationApplyReceipt>,
       _isc.getType<_iivrx0vm.CalendarInvitationApplyRequest>,
+      _isc.getType<_idg5aw79.CalendarInvitationBundleApplicationView>,
+      _isc.getType<_iu3tvjvj.CalendarInvitationBundleComponentVersion>,
       _isc.getType<_iwcng7rp.CalendarInvitationDocument>,
       _isc.getType<_i15b7t0e.CalendarInvitationOccurrenceApplicationView>,
       _isc.getType<_iyajy5op.CalendarInvitationOccurrenceApplyReceipt>,
@@ -805,6 +811,8 @@ class Protocol extends _isc.SerializationManager
       _isc.getType<_i8svxjh1.CalendarInvitationApplicationView?>,
       _isc.getType<_ic2yh4ry.CalendarInvitationApplyReceipt?>,
       _isc.getType<_iivrx0vm.CalendarInvitationApplyRequest?>,
+      _isc.getType<_idg5aw79.CalendarInvitationBundleApplicationView?>,
+      _isc.getType<_iu3tvjvj.CalendarInvitationBundleComponentVersion?>,
       _isc.getType<_iwcng7rp.CalendarInvitationDocument?>,
       _isc.getType<_i15b7t0e.CalendarInvitationOccurrenceApplicationView?>,
       _isc.getType<_iyajy5op.CalendarInvitationOccurrenceApplyReceipt?>,
@@ -949,6 +957,8 @@ class Protocol extends _isc.SerializationManager
       _isc.getType<List<_itx19m90.CalendarItemComment>>,
       _isc.getType<List<_itx19m90.CalendarItemComment>?>,
       _isc.getType<List<_i82zcrxb.CalendarFreeBusyPeriod>>,
+      _isc.getType<List<_iu3tvjvj.CalendarInvitationBundleComponentVersion>>,
+      _isc.getType<List<_iu3tvjvj.CalendarInvitationBundleComponentVersion>?>,
       _isc.getType<List<_i12tuyl5.CalendarItemTextMetadataField>>,
       _isc.getType<List<_ivspd2q7.CalendarView>>,
       _isc.getType<List<_itcy22f3.CalendarTextVariant>>,
@@ -1098,6 +1108,8 @@ class Protocol extends _isc.SerializationManager
       'CalendarInvitationApplicationView',
       'CalendarInvitationApplyReceipt',
       'CalendarInvitationApplyRequest',
+      'CalendarInvitationBundleApplicationView',
+      'CalendarInvitationBundleComponentVersion',
       'CalendarInvitationDocument',
       'CalendarInvitationOccurrenceApplicationView',
       'CalendarInvitationOccurrenceApplyReceipt',
@@ -1589,6 +1601,14 @@ class Protocol extends _isc.SerializationManager
     }
     if (t == _iivrx0vm.CalendarInvitationApplyRequest) {
       return _iivrx0vm.CalendarInvitationApplyRequest.fromJson(data) as T;
+    }
+    if (t == _idg5aw79.CalendarInvitationBundleApplicationView) {
+      return _idg5aw79.CalendarInvitationBundleApplicationView.fromJson(data)
+          as T;
+    }
+    if (t == _iu3tvjvj.CalendarInvitationBundleComponentVersion) {
+      return _iu3tvjvj.CalendarInvitationBundleComponentVersion.fromJson(data)
+          as T;
     }
     if (t == _iwcng7rp.CalendarInvitationDocument) {
       return _iwcng7rp.CalendarInvitationDocument.fromJson(data) as T;
@@ -2579,6 +2599,22 @@ class Protocol extends _isc.SerializationManager
               : null)
           as T;
     }
+    if (t ==
+        _isc.getType<_idg5aw79.CalendarInvitationBundleApplicationView?>()) {
+      return (data != null
+              ? _idg5aw79.CalendarInvitationBundleApplicationView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t ==
+        _isc.getType<_iu3tvjvj.CalendarInvitationBundleComponentVersion?>()) {
+      return (data != null
+              ? _iu3tvjvj.CalendarInvitationBundleComponentVersion.fromJson(
+                  data,
+                )
+              : null)
+          as T;
+    }
     if (t == _isc.getType<_iwcng7rp.CalendarInvitationDocument?>()) {
       return (data != null
               ? _iwcng7rp.CalendarInvitationDocument.fromJson(data)
@@ -3563,6 +3599,34 @@ class Protocol extends _isc.SerializationManager
               .toList()
           as T;
     }
+    if (t == List<_iu3tvjvj.CalendarInvitationBundleComponentVersion>) {
+      return (data as List)
+              .map(
+                (e) =>
+                    deserialize<
+                      _iu3tvjvj.CalendarInvitationBundleComponentVersion
+                    >(e),
+              )
+              .toList()
+          as T;
+    }
+    if (t ==
+        _isc
+            .getType<
+              List<_iu3tvjvj.CalendarInvitationBundleComponentVersion>?
+            >()) {
+      return (data != null
+              ? (data as List)
+                    .map(
+                      (e) =>
+                          deserialize<
+                            _iu3tvjvj.CalendarInvitationBundleComponentVersion
+                          >(e),
+                    )
+                    .toList()
+              : null)
+          as T;
+    }
     if (t == List<_i12tuyl5.CalendarItemTextMetadataField>) {
       return (data as List)
               .map(
@@ -3941,6 +4005,10 @@ class Protocol extends _isc.SerializationManager
         'CalendarInvitationApplyReceipt',
       _iivrx0vm.CalendarInvitationApplyRequest =>
         'CalendarInvitationApplyRequest',
+      _idg5aw79.CalendarInvitationBundleApplicationView =>
+        'CalendarInvitationBundleApplicationView',
+      _iu3tvjvj.CalendarInvitationBundleComponentVersion =>
+        'CalendarInvitationBundleComponentVersion',
       _iwcng7rp.CalendarInvitationDocument => 'CalendarInvitationDocument',
       _i15b7t0e.CalendarInvitationOccurrenceApplicationView =>
         'CalendarInvitationOccurrenceApplicationView',
@@ -4329,6 +4397,10 @@ class Protocol extends _isc.SerializationManager
         return 'CalendarInvitationApplyReceipt';
       case _iivrx0vm.CalendarInvitationApplyRequest():
         return 'CalendarInvitationApplyRequest';
+      case _idg5aw79.CalendarInvitationBundleApplicationView():
+        return 'CalendarInvitationBundleApplicationView';
+      case _iu3tvjvj.CalendarInvitationBundleComponentVersion():
+        return 'CalendarInvitationBundleComponentVersion';
       case _iwcng7rp.CalendarInvitationDocument():
         return 'CalendarInvitationDocument';
       case _i15b7t0e.CalendarInvitationOccurrenceApplicationView():
@@ -4953,6 +5025,16 @@ class Protocol extends _isc.SerializationManager
     }
     if (dataClassName == 'CalendarInvitationApplyRequest') {
       return deserialize<_iivrx0vm.CalendarInvitationApplyRequest>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarInvitationBundleApplicationView') {
+      return deserialize<_idg5aw79.CalendarInvitationBundleApplicationView>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarInvitationBundleComponentVersion') {
+      return deserialize<_iu3tvjvj.CalendarInvitationBundleComponentVersion>(
         data['data'],
       );
     }

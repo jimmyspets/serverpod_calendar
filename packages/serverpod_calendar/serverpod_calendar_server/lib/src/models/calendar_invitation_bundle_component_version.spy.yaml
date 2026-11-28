@@ -1,0 +1,7 @@
+class: CalendarInvitationBundleComponentVersion
+immutable: true
+fields:
+  originalStart: CalendarEventTiming?
+  isThisAndFuture: bool, default=false
+  sequence: int?
+  stamp: DateTime
