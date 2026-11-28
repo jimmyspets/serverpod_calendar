@@ -10,6 +10,7 @@ import 'scheduling_mime.dart';
 String composeSyntheticInvitationResponseMime(
   CalendarInvitationResponseSubmission submission, {
   required bool requireProtection,
+  bool refresh = false,
 }) {
   if (requireProtection) {
     throw const SyntheticSchedulingMimeException(
@@ -34,13 +35,14 @@ String composeSyntheticInvitationResponseMime(
         SyntheticSchedulingMimeError.limitExceeded,
       );
     }
+    final method = refresh ? 'REFRESH' : 'REPLY';
     final parsed = parseImipCalendarPart(
       ImipDecodedPart(
         mediaType: 'text/calendar',
-        parameters: const [
-          ImipParameter('method', 'REPLY'),
-          ImipParameter('charset', 'UTF-8'),
-          ImipParameter('component', 'VEVENT'),
+        parameters: [
+          ImipParameter('method', method),
+          const ImipParameter('charset', 'UTF-8'),
+          const ImipParameter('component', 'VEVENT'),
         ],
         body: bytes,
         protection: ImipProtection.none,
@@ -50,7 +52,10 @@ String composeSyntheticInvitationResponseMime(
     );
     final message = parsed.eventMessage;
     if (message == null ||
-        message.method != IcalendarSchedulingMethod.reply ||
+        message.method !=
+            (refresh
+                ? IcalendarSchedulingMethod.refresh
+                : IcalendarSchedulingMethod.reply) ||
         message.events.length != 1) {
       throw const SyntheticSchedulingMimeException(
         SyntheticSchedulingMimeError.profile,
@@ -59,6 +64,7 @@ String composeSyntheticInvitationResponseMime(
     final event = message.events.single;
     final zone = event.originalTime?.zoneId;
     if (event.isThisAndFuture ||
+        refresh && event.isOverride ||
         message.timeZones.length != (zone == null ? 0 : 1) ||
         zone != null && !message.timeZones.containsKey(zone)) {
       throw const SyntheticSchedulingMimeException(
@@ -69,11 +75,14 @@ String composeSyntheticInvitationResponseMime(
         event.participants.attendees.length != 1 ||
         event.participants.attendees.single.address !=
             submission.attendeeAddress ||
-        !{
-          'ACCEPTED',
-          'TENTATIVE',
-          'DECLINED',
-        }.contains(event.participants.attendees.single.participationStatus)) {
+        !refresh &&
+            !{
+              'ACCEPTED',
+              'TENTATIVE',
+              'DECLINED',
+            }.contains(
+              event.participants.attendees.single.participationStatus,
+            )) {
       throw const SyntheticSchedulingMimeException(
         SyntheticSchedulingMimeError.profile,
       );
@@ -97,23 +106,28 @@ String composeSyntheticInvitationResponseMime(
         }
         for (final field in entry.entries) {
           if (field is! IcalendarSyntaxProperty ||
-              !{
-                'UID',
-                'DTSTAMP',
-                'SEQUENCE',
-                'RECURRENCE-ID',
-                'ORGANIZER',
-                'ATTENDEE',
-              }.contains(field.canonicalName) ||
+              !(refresh
+                      ? {'UID', 'DTSTAMP', 'ORGANIZER', 'ATTENDEE'}
+                      : {
+                          'UID',
+                          'DTSTAMP',
+                          'SEQUENCE',
+                          'RECURRENCE-ID',
+                          'ORGANIZER',
+                          'ATTENDEE',
+                        })
+                  .contains(field.canonicalName) ||
               field.parameters.any(
-                (p) => switch (field.canonicalName) {
-                  'ATTENDEE' => p.canonicalName != 'PARTSTAT',
-                  'RECURRENCE-ID' => !{
-                    'VALUE',
-                    'TZID',
-                  }.contains(p.canonicalName),
-                  _ => true,
-                },
+                (p) =>
+                    refresh ||
+                    switch (field.canonicalName) {
+                      'ATTENDEE' => p.canonicalName != 'PARTSTAT',
+                      'RECURRENCE-ID' => !{
+                        'VALUE',
+                        'TZID',
+                      }.contains(p.canonicalName),
+                      _ => true,
+                    },
               )) {
             throw const SyntheticSchedulingMimeException(
               SyntheticSchedulingMimeError.profile,
@@ -130,14 +144,16 @@ String composeSyntheticInvitationResponseMime(
           )
           ..from = [MailAddress(null, submission.attendeeAddress.substring(7))]
           ..to = [MailAddress(null, submission.organizer.address.substring(7))]
-          ..subject = 'Calendar response'
+          ..subject = refresh
+              ? 'Request for current invitation'
+              : 'Calendar response'
           ..date = event.stamp
           ..messageId =
-              '<calendar-reply-${submission.deliveryKey}@example.invalid>';
+              '<calendar-${method.toLowerCase()}-${submission.deliveryKey}@example.invalid>';
     builder.setContentType(
       MediaType.fromText('text/calendar'),
       characterSet: CharacterSet.utf8,
-      parameters: {'method': 'REPLY', 'component': 'VEVENT'},
+      parameters: {'method': method, 'component': 'VEVENT'},
     );
     final output = builder.buildMimeMessage().renderMessage();
     if (output.length > 1048576) {

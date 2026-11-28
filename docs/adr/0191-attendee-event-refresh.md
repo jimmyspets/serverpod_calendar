@@ -1,6 +1,6 @@
 # ADR 0191: Explicit attendee VEVENT REFRESH
 
-Status: **Proposed for maintainer review.**
+Status: **Accepted by explicit maintainer agreement on 2026-11-28. Scoped runtime implemented.**
 
 ## Context
 
@@ -13,7 +13,7 @@ organizer review and explicit resend. The remaining direction needs an
 attendee identity, a verified source and a separate authorized delivery.
 [RFC 5546 sections 3.2.2 and 3.2.6](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.6)
 
-## Proposed command and source
+## Command and source
 
 Expose **Request current invitation** on the organizer invitation's private
 attendee view. An explicit command names the entry, its reviewed revision,
@@ -37,7 +37,7 @@ version, including missing versus zero SEQUENCE, in private proof so source
 changes are detected even though the wire message has no SEQUENCE. The
 stamp records the send request time and allocates no participation version.
 
-## Proposed durable delivery
+## Durable delivery
 
 Reuse the attendee-sender routing and disclosure patterns of
 [ADR 0146](0146-explicit-private-attendee-responses.md). Add independent
@@ -52,7 +52,7 @@ after-check race for external fresh-check hosts.
 
 Use two new private tables in the invitation module:
 
-| Proposed record | Contents and identity |
+| Record | Contents and identity |
 | --- | --- |
 | Attendee refresh delivery | Scope, recipient, entry, command UUID and actor, exact criteria and receipt identity, source ID/revision/digest and optional version, attendee/organizer, authority and route references, immutable payload/digest, database-timed queue/lease/expiry and terminal outcome. Unique scope/recipient/command identity. The record UUID is the transport delivery identity. |
 | Attendee refresh attempt | Delivery/attempt number, fenced lease token, start and completion times and bounded result. Unique delivery/attempt identity. |
@@ -91,8 +91,8 @@ send mail. Sharing the REPLY choice head would tie the refresh's lifetime
 to participation state. Separate explicit delivery preserves both lifecycles
 and allows verified organizer intake to exercise the method end to end.
 
-Before implementation, obtain agreement on the source profile, permissions,
-tables, quotas and retention. Validate unadopted and adopted source review,
+The maintainer explicitly accepted the source profile, permissions, tables,
+quotas and retention on 2026-11-28. Validate unadopted and adopted source review,
 stale/cancelled or recurring source rejection, independent authority,
 expired leases, pinned cleanup, cross-host races, process loss around commit
 and transport, and exact bytes and route on retry. In a synthetic loopback,

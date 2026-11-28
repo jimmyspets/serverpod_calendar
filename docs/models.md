@@ -993,3 +993,14 @@ uses its own delivery identity and fenced attempts. Review pages use the
 existing private cursor table with an operation-bound fingerprint. The
 generated review, resend command and receipt DTOs expose only protected
 review and delivery fields. See the [organizer guide](native-organizer-scheduling.md#invitation-refresh-requests).
+
+## Attendee REFRESH delivery
+
+[Accepted ADR 0191](adr/0191-attendee-event-refresh.md) adds private
+`CalendarAttendeeRefreshRecord` and `CalendarAttendeeRefreshAttemptRecord`
+tables with generated calendar and example host migrations. A delivery
+pins its invitation and exact source and owns its stable command, route,
+payload and lease. Attempts belong to one delivery and attempt number.
+The generated `CalendarAttendeeRefreshCommand` and
+`CalendarAttendeeRefreshView` carry reviewed command criteria and delivery
+status. See the [attendee guide](private-attendee-responses.md#requesting-a-current-invitation).

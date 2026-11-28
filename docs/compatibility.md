@@ -128,6 +128,11 @@ Test aggregation and URL lifecycle along with published temporal/metadata fixtur
 
 ## Scheduling, availability and extension evidence
 
+The non-recurring VEVENT REFRESH profile exercises attendee origination,
+authorized organizer resend and REQUEST intake through synthetic host
+transport. Compatibility testing with external scheduling clients remains
+pending. [Attendee profile and evidence](private-attendee-responses.md#requesting-a-current-invitation)
+
 Validate iTIP/iMIP methods independently from feeds with protocol fixtures, host Flutter scheduling journeys and trusted test mail adapters. Choose external scheduling client/account targets separately; the feed target list does not automatically require every listed client to implement all scheduling methods or task assignment. Record invitation/reply/update/cancellation and recurring-instance directions/results for selected targets, plus server tests for all supported methods. Include spoof/stale/duplicate messages, MIME variants/mismatches, provider retries and crash recovery.
 
 Free/busy calculation includes RFC 7953 rules and privacy. Native person/room/resource search must return complete/unknown coverage and never label unresolved data free. Standalone VFREEBUSY file import is confirmed deferred under [ADR 0017](adr/0017-profile-review-clarifications.md); authenticated per-calendar output now follows ADR 0077, while authorized iTIP exchanges remain planned. CalDAV scheduling/discovery remain deferred. RFC 7953 does not define VAVAILABILITY iTIP message semantics.

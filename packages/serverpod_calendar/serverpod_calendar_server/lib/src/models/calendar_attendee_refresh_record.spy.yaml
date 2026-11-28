@@ -1,0 +1,39 @@
+class: CalendarAttendeeRefreshRecord
+serverOnly: true
+table: serverpod_calendar_attendee_refresh
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  recipientKey: String
+  entryId: UuidValue, relation(parent=serverpod_calendar_invitation)
+  commandId: UuidValue
+  actorId: String
+  sourceId: UuidValue, relation(parent=serverpod_calendar_invitation_source)
+  sourceRevision: int
+  sourceDigest: String
+  sourceSequence: int?
+  sourceStamp: DateTime
+  attendeeAddress: String
+  organizerAddress: String
+  authorityRef: String
+  routeRef: String
+  payload: String
+  payloadDigest: String
+  stamp: DateTime
+  state: CalendarInvitationResponseDeliveryState, default=queued
+  attemptCount: int, default=0
+  createdAt: DateTime
+  expiresAt: DateTime
+  nextAttemptAt: DateTime
+  leaseToken: UuidValue?
+  leaseUntil: DateTime?
+  terminalAt: DateTime?
+  resultCode: String?
+indexes:
+  calendar_attendee_refresh_command_unique:
+    fields: scopeKey, recipientKey, commandId
+    unique: true
+  calendar_attendee_refresh_owner_idx:
+    fields: scopeKey, recipientKey, entryId
+  calendar_attendee_refresh_due_idx:
+    fields: terminalAt, nextAttemptAt, leaseUntil

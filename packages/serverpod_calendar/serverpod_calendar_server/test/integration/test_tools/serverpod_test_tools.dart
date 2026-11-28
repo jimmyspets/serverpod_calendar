@@ -34,6 +34,10 @@ import 'package:serverpod_calendar_server/src/generated/calendar_alarm_update_re
     as _ihgcomoc;
 import 'package:serverpod_calendar_server/src/generated/calendar_alarm_view.dart'
     as _izvxtiv8;
+import 'package:serverpod_calendar_server/src/generated/calendar_attendee_refresh_command.dart'
+    as _ivkavtfp;
+import 'package:serverpod_calendar_server/src/generated/calendar_attendee_refresh_view.dart'
+    as _i3fh5jln;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_create_request.dart'
     as _iys46g3v;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_export_request.dart'
@@ -3383,6 +3387,64 @@ class _CalendarInvitationEndpoint {
   final _is.EndpointDispatch _endpointDispatch;
 
   final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_i3fh5jln.CalendarAttendeeRefreshView> attendeeRefresh(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue id,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarInvitation',
+            method: 'attendeeRefresh',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarInvitation',
+          methodName: 'attendeeRefresh',
+          parameters: _ist.testObjectToJson({'id': id}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i3fh5jln.CalendarAttendeeRefreshView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i3fh5jln.CalendarAttendeeRefreshView> requestAttendeeRefresh(
+    _ist.TestSessionBuilder sessionBuilder,
+    _ivkavtfp.CalendarAttendeeRefreshCommand command,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarInvitation',
+            method: 'requestAttendeeRefresh',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarInvitation',
+          methodName: 'requestAttendeeRefresh',
+          parameters: _ist.testObjectToJson({'command': command}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i3fh5jln.CalendarAttendeeRefreshView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 
   _ida.Future<List<_ienzv1fd.CalendarInvitationView>> list(
     _ist.TestSessionBuilder sessionBuilder,

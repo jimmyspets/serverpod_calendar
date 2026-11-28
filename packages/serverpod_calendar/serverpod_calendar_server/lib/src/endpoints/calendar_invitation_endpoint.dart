@@ -6,6 +6,14 @@ import '../generated/protocol.dart';
 class CalendarInvitationEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
+  Future<CalendarAttendeeRefreshView> attendeeRefresh(
+    Session session,
+    UuidValue id,
+  ) => CalendarModule.service(session).attendeeRefresh(id);
+  Future<CalendarAttendeeRefreshView> requestAttendeeRefresh(
+    Session session,
+    CalendarAttendeeRefreshCommand command,
+  ) => CalendarModule.service(session).requestAttendeeRefresh(command);
   Future<List<CalendarInvitationView>> list(Session session) =>
       CalendarModule.service(session).listInvitations();
   Future<CalendarInvitationView> getInvitation(Session session, UuidValue id) =>

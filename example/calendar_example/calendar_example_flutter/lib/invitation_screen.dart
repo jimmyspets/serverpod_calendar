@@ -1,6 +1,7 @@
 import 'invitation_adoption_screen.dart';
 import 'invitation_occurrence_application_screen.dart';
 import 'invitation_bundle_occurrence_response_screen.dart';
+import 'attendee_refresh_screen.dart';
 import 'invitation_response_screen.dart';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
@@ -325,6 +326,28 @@ class _InvitationScreenState extends State<InvitationScreen> {
                     ),
                   Wrap(
                     children: [
+                      if (!entry.recurring &&
+                          entry.originalStart == null &&
+                          {
+                            cal.CalendarInvitationSourceKind.request,
+                            cal
+                                .CalendarInvitationSourceKind
+                                .meetingCancellation,
+                          }.contains(entry.kind))
+                        TextButton(
+                          key: ValueKey('invitation-refresh-${entry.id}'),
+                          onPressed: _busy
+                              ? null
+                              : () => Navigator.of(context).push<void>(
+                                  MaterialPageRoute(
+                                    builder: (_) => AttendeeRefreshScreen(
+                                      client: widget.client,
+                                      id: entry.id,
+                                    ),
+                                  ),
+                                ),
+                          child: const Text('Request current invitation'),
+                        ),
                       if (entry.isThisAndFuture)
                         TextButton(
                           key: ValueKey(

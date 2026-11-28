@@ -21,6 +21,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_alarm_parent.da
     as _i3f0y8iu;
 import 'package:serverpod_calendar_server/src/generated/calendar_alarm_update_request.dart'
     as _ihgcomoc;
+import 'package:serverpod_calendar_server/src/generated/calendar_attendee_refresh_command.dart'
+    as _ivkavtfp;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_create_request.dart'
     as _iys46g3v;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_export_request.dart'
@@ -2436,6 +2438,48 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'calendarInvitation',
       endpoint: endpoints['calendarInvitation']!,
       methodConnectors: {
+        'attendeeRefresh': _is.MethodConnector(
+          name: 'attendeeRefresh',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .attendeeRefresh(
+                        session,
+                        params['id'],
+                      ),
+        ),
+        'requestAttendeeRefresh': _is.MethodConnector(
+          name: 'requestAttendeeRefresh',
+          params: {
+            'command': _is.ParameterDescription(
+              name: 'command',
+              type: _is.getType<_ivkavtfp.CalendarAttendeeRefreshCommand>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .requestAttendeeRefresh(
+                        session,
+                        params['command'],
+                      ),
+        ),
         'list': _is.MethodConnector(
           name: 'list',
           params: {},

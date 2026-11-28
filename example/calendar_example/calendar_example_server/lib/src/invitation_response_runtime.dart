@@ -192,10 +192,122 @@ final class DemoInvitationResponseHost
       : CalendarAuthorizationVerdict.deny;
 }
 
-/// Synthetic attempt recording only. Stable reply identity survives retries;
+final class DemoAttendeeRefreshHost implements CalendarAttendeeRefreshHost {
+  @override
+  CalendarAuthorizationGuarantee get guarantee =>
+      CalendarAuthorizationGuarantee.freshCheck;
+
+  CalendarInvitationResponseAuthority _route(
+    CalendarAttendeeRefreshContext c,
+  ) => CalendarInvitationResponseAuthority(
+    attendeeAddress: c.recipient.calendarAddress,
+    authorityRef: 'demo-refresh-recipient:${c.recipient.key}',
+    organizer: CalendarSchedulingRoute(
+      c.invitation.organizer,
+      'demo-refresh-organizer:${c.recipient.key}',
+    ),
+  );
+
+  Future<bool> _recipientAllowed(
+    Session session,
+    CalendarAttendeeRefreshContext c,
+    Transaction transaction,
+  ) async {
+    final key = c.recipient.key;
+    if (!{'development', 'test'}.contains(session.serverpod.runMode) ||
+        c.recipient.scopeKey != 'demo:user:$key' ||
+        c.recipient.calendarAddress != 'mailto:demo-$key@example.invalid' ||
+        c.invitation.organizer != 'mailto:organizer@example.invalid' ||
+        !c.invitation.uid.startsWith('synthetic-invitation:$key:') ||
+        (c.actor == null) !=
+            (c.operation == CalendarAttendeeRefreshOperation.dispatch) ||
+        c.actor != null &&
+            (c.actor!.principalId != key ||
+                c.actor!.scopeKey != c.recipient.scopeKey)) {
+      return false;
+    }
+    final user = await AuthUser.db.findById(
+      session,
+      UuidValue.fromString(key),
+      transaction: transaction,
+    );
+    return user != null && !user.blocked;
+  }
+
+  bool _sourceAllowed(CalendarAttendeeRefreshContext c) {
+    final source = c.sourceMessage;
+    return c.sourceId != null &&
+        source != null &&
+        source.method == IcalendarSchedulingMethod.request &&
+        source.uid == c.invitation.uid &&
+        source.events.single.participants.organizer?.address ==
+            c.invitation.organizer &&
+        source.events.single.participants.attendees.any(
+          (a) => a.address == c.recipient.calendarAddress,
+        );
+  }
+
+  @override
+  Future<CalendarInvitationResponseAuthority> resolve(
+    Session session,
+    CalendarAttendeeRefreshContext context,
+    Transaction transaction,
+  ) async {
+    if (!await _recipientAllowed(session, context, transaction) ||
+        !_sourceAllowed(context)) {
+      throw CalendarException(
+        code: CalendarFailureCode.accessDenied,
+        message: 'Invitation request access denied.',
+      );
+    }
+    return _route(context);
+  }
+
+  @override
+  Future<CalendarAuthorizationVerdict> authorize(
+    Session session,
+    CalendarAttendeeRefreshContext c,
+    Transaction transaction,
+    CalendarAuthorizationPhase phase,
+  ) async {
+    if (!await _recipientAllowed(session, c, transaction)) {
+      return CalendarAuthorizationVerdict.deny;
+    }
+    if (c.operation == CalendarAttendeeRefreshOperation.read) {
+      return CalendarAuthorizationVerdict.allow;
+    }
+    final outgoing = c.outgoingMessage;
+    final route = _route(c);
+    final approved = c.authority;
+    return _sourceAllowed(c) &&
+            outgoing != null &&
+            outgoing.method == IcalendarSchedulingMethod.refresh &&
+            outgoing.uid == c.invitation.uid &&
+            outgoing.events.single.participants.organizer?.address ==
+                route.organizer.address &&
+            outgoing.events.single.participants.attendees.single.address ==
+                route.attendeeAddress &&
+            approved?.attendeeAddress == route.attendeeAddress &&
+            approved?.authorityRef == route.authorityRef &&
+            approved?.organizer.address == route.organizer.address &&
+            approved?.organizer.routeRef == route.organizer.routeRef &&
+            sha256
+                    .convert(serializeIcalendarSyntax(outgoing.source))
+                    .toString() ==
+                c.payloadDigest
+        ? CalendarAuthorizationVerdict.allow
+        : CalendarAuthorizationVerdict.deny;
+  }
+}
+
+/// Synthetic attempt recording only. Stable delivery identity survives retries;
 /// provider acceptance is not remote receipt or application.
 final class DemoInvitationResponseTransport
     implements CalendarInvitationResponseTransport {
+  DemoInvitationResponseTransport({this.refresh = false});
+
+  final bool refresh;
+
   @override
   Future<CalendarSchedulingTransportResult> submit(
     Session session,
@@ -213,6 +325,7 @@ final class DemoInvitationResponseTransport
       mime = composeSyntheticInvitationResponseMime(
         submission,
         requireProtection: false,
+        refresh: refresh,
       );
     } on SyntheticSchedulingMimeException catch (e) {
       return CalendarSchedulingTransportResult(
@@ -222,7 +335,7 @@ final class DemoInvitationResponseTransport
       );
     }
     final file = File(
-      '../../../.local/attendee-response-mail/${submission.deliveryKey}-${const Uuid().v4obj()}.json',
+      '../../../.local/attendee-${refresh ? 'refresh' : 'response'}-mail/${submission.deliveryKey}-${const Uuid().v4obj()}.json',
     );
     await file.parent.create(recursive: true);
     await file.writeAsString(
@@ -241,7 +354,8 @@ final class DemoInvitationResponseTransport
     );
     return CalendarSchedulingTransportResult(
       CalendarSchedulingTransportOutcome.accepted,
-      receipt: 'synthetic-reply:${submission.deliveryKey}',
+      receipt:
+          'synthetic-${refresh ? 'refresh' : 'reply'}:${submission.deliveryKey}',
     );
   }
 }

@@ -223,7 +223,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0188](0188-published-whole-series-lifecycle-with-active-range.md) | Published whole-series lifecycle with an active range cancellation | Approved pure projection merged; durable mechanics remain draft |
 | [0189](0189-whole-series-lifecycle-with-published-cutoff.md) | Whole-series lifecycle with a published cutoff | Accepted by explicit maintainer agreement; bounded v9 checkpoint and closed v7/v8 restoration bridge implemented, with hosted validation separate |
 | [0190](0190-authenticated-event-refresh.md) | Authenticated organizer handling of VEVENT REFRESH | Accepted by explicit maintainer agreement. Private receipt, organizer review and explicit current REQUEST resend passed local and exact-head hosted validation. |
-| [0191](0191-attendee-event-refresh.md) | Explicit attendee VEVENT REFRESH | Proposed explicit attendee request and fenced delivery from a retained non-recurring invitation source. |
+| [0191](0191-attendee-event-refresh.md) | Explicit attendee VEVENT REFRESH | Accepted by explicit maintainer agreement. Explicit attendee request and fenced delivery from a retained non-recurring invitation source. |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

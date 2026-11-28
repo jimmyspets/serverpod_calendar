@@ -31,6 +31,10 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_update_req
     as _iqdswnia;
 import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_view.dart'
     as _i39h9w7l;
+import 'package:serverpod_calendar_client/src/protocol/calendar_attendee_refresh_command.dart'
+    as _iisx3do1;
+import 'package:serverpod_calendar_client/src/protocol/calendar_attendee_refresh_view.dart'
+    as _in6v90vb;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_create_request.dart'
     as _i2zcamh9;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_export_request.dart'
@@ -1227,6 +1231,22 @@ class EndpointCalendarInvitation extends _isc.EndpointRef {
 
   @override
   String get name => 'serverpod_calendar.calendarInvitation';
+
+  _ida.Future<_in6v90vb.CalendarAttendeeRefreshView> attendeeRefresh(
+    _isc.UuidValue id,
+  ) => caller.callServerEndpoint<_in6v90vb.CalendarAttendeeRefreshView>(
+    'serverpod_calendar.calendarInvitation',
+    'attendeeRefresh',
+    {'id': id},
+  );
+
+  _ida.Future<_in6v90vb.CalendarAttendeeRefreshView> requestAttendeeRefresh(
+    _iisx3do1.CalendarAttendeeRefreshCommand command,
+  ) => caller.callServerEndpoint<_in6v90vb.CalendarAttendeeRefreshView>(
+    'serverpod_calendar.calendarInvitation',
+    'requestAttendeeRefresh',
+    {'command': command},
+  );
 
   _ida.Future<List<_igeeqe4z.CalendarInvitationView>> list() =>
       caller.callServerEndpoint<List<_igeeqe4z.CalendarInvitationView>>(

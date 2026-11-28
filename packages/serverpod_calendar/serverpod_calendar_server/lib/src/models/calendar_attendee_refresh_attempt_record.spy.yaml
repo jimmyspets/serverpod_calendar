@@ -1,0 +1,15 @@
+class: CalendarAttendeeRefreshAttemptRecord
+serverOnly: true
+table: serverpod_calendar_attendee_refresh_attempt
+fields:
+  id: UuidValue?, defaultPersist=random
+  deliveryId: UuidValue, relation(parent=serverpod_calendar_attendee_refresh)
+  attemptNumber: int
+  leaseToken: UuidValue
+  startedAt: DateTime
+  finishedAt: DateTime?
+  outcome: String
+indexes:
+  calendar_attendee_refresh_attempt_unique:
+    fields: deliveryId, attemptNumber
+    unique: true

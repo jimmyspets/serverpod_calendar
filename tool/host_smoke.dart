@@ -300,7 +300,8 @@ Future<void> main(List<String> args) async {
             ? '--target=integration_test/instance_invitation_response_smoke_test.dart'
             : args.contains('--occurrence-applications')
             ? '--target=integration_test/instance_invitation_application_smoke_test.dart'
-            : args.contains('--invitations')
+            : args.contains('--invitations') ||
+                  args.contains('--attendee-refresh')
             ? '--target=integration_test/invitation_smoke_test.dart'
             : args.contains('--categories')
             ? '--target=integration_test/item_category_search_smoke_test.dart'
@@ -327,6 +328,8 @@ Future<void> main(List<String> args) async {
         '--headless',
         '--dart-define-from-file=$root/.local/test_defines.json',
         if (args.contains('--refresh')) '--dart-define=REFRESH_ONLY=true',
+        if (args.contains('--attendee-refresh'))
+          '--dart-define=ATTENDEE_REFRESH_ONLY=true',
       ], workingDirectory: '$server/../calendar_example_flutter');
       unawaited(
         result.exitCode.then((_) {
@@ -351,6 +354,7 @@ Future<void> main(List<String> args) async {
           args.contains('--occurrence-applications') ||
           args.contains('--occurrences') ||
           args.contains('--invitations') ||
+          args.contains('--attendee-refresh') ||
           args.contains('--categories') ||
           args.contains('--text-metadata') ||
           args.contains('--descriptive') ||

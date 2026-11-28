@@ -4,6 +4,7 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 
 import 'calendar_authorization.dart';
+import 'attendee_refresh_runtime.dart';
 import 'invitation_response_runtime.dart';
 import 'generated/protocol.dart';
 
@@ -371,9 +372,11 @@ final class CalendarInvitationRuntime {
   CalendarInvitationRuntime({
     required this.host,
     this.responses,
+    this.attendeeRefresh,
     CalendarInvitationOptions? options,
   }) : options = options ?? CalendarInvitationOptions();
   final CalendarInvitationHost host;
   final CalendarInvitationResponseRuntime? responses;
+  final CalendarAttendeeRefreshRuntime? attendeeRefresh;
   final CalendarInvitationOptions options;
 }

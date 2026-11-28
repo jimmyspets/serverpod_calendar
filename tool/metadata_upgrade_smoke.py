@@ -927,12 +927,74 @@ $preserved$;
     print("PASS: REFRESH upgrade preserves the organizer binding and publication. Fresh and upgraded schemas start with three empty tables and their source references.")
 
 
+def verify_attendee_refresh_upgrade(database):
+    migrations = SERVER / "migrations"
+    prior = migrations / "20261128121233666-authenticated-event-refresh"
+    current = migrations / "20261128151901836-attendee-event-refresh"
+    verify = """
+DO $refresh$
+BEGIN
+ IF EXISTS (SELECT 1 FROM serverpod_calendar_attendee_refresh)
+ OR EXISTS (SELECT 1 FROM serverpod_calendar_attendee_refresh_attempt)
+ THEN RAISE EXCEPTION 'Migration invented attendee delivery work'; END IF;
+ IF (SELECT count(*) FROM pg_constraint WHERE contype='f'
+ AND conrelid IN ('serverpod_calendar_attendee_refresh'::regclass,
+                  'serverpod_calendar_attendee_refresh_attempt'::regclass)) <> 3
+ THEN RAISE EXCEPTION 'Attendee source or attempt references are missing'; END IF;
+END;
+$refresh$;
+"""
+    sql(database, (prior / "definition.sql").read_text(encoding="utf-8"))
+    sql(database, """
+INSERT INTO serverpod_calendar_invitation
+(id,"scopeKey","recipientKey","correlationDigest",uid,organizer,revision,
+ stamp,digest,"createdAt","updatedAt")
+VALUES ('19100000-0000-4000-8000-000000000001','attendee-upgrade','fixture',
+ repeat('1',64),'synthetic@example.invalid','mailto:organizer@example.invalid',
+ 1,'2026-11-28',repeat('2',64),'2026-11-28','2026-11-28');
+INSERT INTO serverpod_calendar_invitation_source
+(id,"entryId","normalizedSource","byteCount",digest,stamp,outcome,"receivedAt")
+VALUES ('19100000-0000-4000-8000-000000000002','19100000-0000-4000-8000-000000000001',
+ 'synthetic',9,repeat('2',64),'2026-11-28','applied','2026-11-28');
+UPDATE serverpod_calendar_invitation
+SET "currentSourceId"='19100000-0000-4000-8000-000000000002'
+WHERE id='19100000-0000-4000-8000-000000000001';
+CREATE TABLE previous_invitation AS SELECT to_jsonb(i) AS body FROM serverpod_calendar_invitation i;
+CREATE TABLE previous_source AS SELECT to_jsonb(s) AS body FROM serverpod_calendar_invitation_source s;
+""")
+    sql(database, (current / "migration.sql").read_text(encoding="utf-8"))
+    sql(database, verify)
+    sql(database, """
+DO $preserved$
+BEGIN
+ IF (SELECT body FROM previous_invitation) IS DISTINCT FROM
+    (SELECT to_jsonb(i) FROM serverpod_calendar_invitation i)
+ OR (SELECT body FROM previous_source) IS DISTINCT FROM
+    (SELECT to_jsonb(s) FROM serverpod_calendar_invitation_source s)
+ THEN RAISE EXCEPTION 'Attendee REFRESH upgrade changed invitation or source history'; END IF;
+END;
+$preserved$;
+""")
+    fresh = f"{database}_attendee_refresh_fresh"
+    assert re.fullmatch(r"calendar_metadata_upgrade_[0-9]+_attendee_refresh_fresh", fresh)
+    sql("postgres", f"CREATE DATABASE {fresh};")
+    try:
+        sql(fresh, (current / "definition.sql").read_text(encoding="utf-8"))
+        sql(fresh, verify)
+    finally:
+        sql("postgres", f"DROP DATABASE {fresh};")
+    print("PASS: attendee REFRESH fresh and populated upgrade schemas preserve invitation history and include both empty delivery tables with three references.")
+
+
 def main():
     # Drop only a database this process successfully creates on the test service.
     database = f"calendar_metadata_upgrade_{os.getpid()}"
     assert re.fullmatch(r"calendar_metadata_upgrade_[0-9]+", database)
     sql("postgres", f"CREATE DATABASE {database};")
     try:
+        if "--attendee-refresh-upgrade-only" in __import__("sys").argv:
+            verify_attendee_refresh_upgrade(database)
+            return
         if "--refresh-upgrade-only" in __import__("sys").argv:
             verify_refresh_upgrade(database)
             return

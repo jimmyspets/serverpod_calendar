@@ -1,0 +1,5 @@
+class: CalendarAttendeeRefreshCommand
+fields:
+  invitationId: UuidValue
+  expectedInvitationRevision: int
+  commandId: UuidValue
