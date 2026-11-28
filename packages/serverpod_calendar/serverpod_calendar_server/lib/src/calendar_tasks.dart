@@ -94,6 +94,7 @@ extension CalendarTaskOperations on CalendarService {
     CalendarTaskProtocolVersion? occurrenceVersion,
     CalendarTaskSourceState? sourceState,
     CalendarItemTextMetadataPatch? textMetadataPatch,
+    CalendarCategoryQuery? categoryFilter,
     CalendarTaskProgressRequest? change,
     CalendarTaskOccurrenceQuery? occurrenceQuery,
     CalendarTaskOccurrenceProgressRequest? occurrenceChange,
@@ -118,6 +119,7 @@ extension CalendarTaskOperations on CalendarService {
     proposedTaskOccurrenceVersion: occurrenceVersion,
     proposedTaskSourceState: sourceState,
     itemTextMetadataPatch: textMetadataPatch,
+    categoryFilter: categoryFilter,
     taskProgressChange: change,
     taskOccurrenceQuery: occurrenceQuery,
     taskOccurrenceProgressChange: occurrenceChange,
@@ -562,8 +564,23 @@ extension CalendarTaskOperations on CalendarService {
     required int pageSize,
     required List<CalendarTaskFieldGroup> fieldGroups,
     String? cursor,
+    CalendarCategoryFilter? categoryFilter,
   }) async {
     final groups = _tgroups(fieldGroups);
+    final filter = _itemCategoryFilter(categoryFilter);
+    final queryFilter = filter == null
+        ? null
+        : CalendarCategoryQuery(filter.value, filter.language);
+    final savedFilter = filter == null
+        ? null
+        : CalendarCategoryFilter(
+            value: filter.value,
+            language: filter.language,
+          );
+    final evaluationGroups = Set<CalendarTaskFieldGroup>.unmodifiable({
+      ...groups,
+      if (filter != null) CalendarTaskFieldGroup.categories,
+    });
     if (pageSize < 1 || pageSize > _options.maxPageSize) {
       throw _failure(CalendarFailureCode.validation);
     }
@@ -574,7 +591,14 @@ extension CalendarTaskOperations on CalendarService {
       final parent = await _active(c, calendarId, tx);
       await _decide(
         c,
-        [_tr(parent, CalendarPermission.listTasks, groups: groups)],
+        [
+          _tr(
+            parent,
+            CalendarPermission.listTasks,
+            groups: evaluationGroups,
+            categoryFilter: queryFilter,
+          ),
+        ],
         tx,
         CalendarAuthorizationPhase.read,
       );
@@ -583,7 +607,8 @@ extension CalendarTaskOperations on CalendarService {
           _session,
           c,
           parent.snapshot,
-          groups,
+          evaluationGroups,
+          categoryFilter: queryFilter,
         ),
       );
       if ((plan.taskIds?.length ?? 0) > _options.maxScannedTasks) {
@@ -613,6 +638,7 @@ extension CalendarTaskOperations on CalendarService {
             saved.policyRevision != c.policyRevision ||
             saved.dataRevision != scope.revision ||
             saved.pageSize != pageSize ||
+            !_sameCategoryFilter(saved.categoryFilter, filter) ||
             !saved.expiresAt.isAfter(DateTime.now().toUtc()) ||
             saved.taskFieldGroups == null ||
             saved.taskFieldGroups!.length != canonical.length ||
@@ -655,7 +681,8 @@ extension CalendarTaskOperations on CalendarService {
                 parent,
                 CalendarPermission.readTask,
                 task: e,
-                groups: groups,
+                groups: evaluationGroups,
+                categoryFilter: queryFilter,
               ),
           ];
           final decisions = await _decide(
@@ -668,7 +695,16 @@ extension CalendarTaskOperations on CalendarService {
           for (final e in active) {
             final key = '${CalendarPermission.readTask.name}:${e.identity.id}';
             final decision = decisions[key]!;
-            if (decision.verdict == CalendarAuthorizationVerdict.allow) {
+            if (decision.verdict == CalendarAuthorizationVerdict.allow &&
+                (filter == null ||
+                    (decision.taskDisclosedGroups.contains(
+                          CalendarTaskFieldGroup.categories,
+                        ) &&
+                        _itemCategoryMatches(
+                          taskTextMetadata(e.data.sourceState?.master.metadata)
+                              .categoryGroups!,
+                          filter,
+                        )))) {
               visible.add(_taskView(e, groups, decision));
             }
             if (visible.length > pageSize) break;
@@ -720,6 +756,7 @@ extension CalendarTaskOperations on CalendarService {
             fieldGroups: [],
             taskCalendarId: calendarId,
             taskFieldGroups: canonical,
+            categoryFilter: savedFilter,
             expiresAt: DateTime.now().toUtc().add(_options.cursorLifetime),
           ),
           transaction: tx,

@@ -78,15 +78,17 @@ final class DemoCalendarPolicy implements CalendarHostPolicy {
     Session s,
     CalendarHostContext c,
     CalendarPolicySnapshot calendar,
-    Set<CalendarTaskFieldGroup> groups,
-  ) async => CalendarTaskCandidatePlan();
+    Set<CalendarTaskFieldGroup> groups, {
+    CalendarCategoryQuery? categoryFilter,
+  }) async => CalendarTaskCandidatePlan();
   @override
   Future<CalendarEventCandidatePlan> planEventQuery(
     Session s,
     CalendarHostContext c,
     CalendarPolicySnapshot calendar,
-    Set<CalendarEventFieldGroup> groups,
-  ) async => CalendarEventCandidatePlan();
+    Set<CalendarEventFieldGroup> groups, {
+    CalendarCategoryQuery? categoryFilter,
+  }) async => CalendarEventCandidatePlan();
   @override
   Future<CalendarCandidatePlan> planQuery(
     Session session,

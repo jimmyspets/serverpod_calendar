@@ -1,3 +1,4 @@
+import 'item_category_search_journey.dart';
 import 'item_text_metadata_journey.dart';
 import 'event_descriptive_journey.dart';
 
@@ -1295,6 +1296,7 @@ void main() {
     await runAttendeeReplyJourney(tester, client);
     await runEventDescriptiveJourney(tester, client);
     await runItemTextMetadataJourney(tester, client);
+    await runItemCategorySearchJourney(tester, client);
     await _liveReminderJourney(tester, client);
     await tester.tap(find.byKey(const Key('sign-out')));
     await _waitFor(tester, find.byKey(const Key('sign-in')));

@@ -99,8 +99,10 @@ Future<void> main(List<String> args) async {
       ], workingDirectory: root);
       final out = client.stdout.transform(utf8.decoder).listen(stdout.write);
       final err = client.stderr.transform(utf8.decoder).listen(stderr.write);
+      // The complete sequence includes all feature probes plus category races.
+      // Keep the narrower reply-only probe on its existing budget.
       final code = await client.exitCode.timeout(
-        const Duration(seconds: 180),
+        Duration(seconds: args.contains('--replies-only') ? 180 : 240),
         onTimeout: () {
           unawaited(stop(client));
           throw TimeoutException('Generated-client smoke timed out.');
@@ -225,7 +227,9 @@ Future<void> main(List<String> args) async {
         '-d',
         'web-server',
         '--driver=test_driver/integration_test.dart',
-        args.contains('--text-metadata')
+        args.contains('--categories')
+            ? '--target=integration_test/item_category_search_smoke_test.dart'
+            : args.contains('--text-metadata')
             ? '--target=integration_test/item_text_metadata_smoke_test.dart'
             : args.contains('--descriptive')
             ? '--target=integration_test/event_descriptive_smoke_test.dart'
@@ -256,6 +260,7 @@ Future<void> main(List<String> args) async {
       final output = result.stdout.transform(utf8.decoder).listen(stdout.write);
       final error = result.stderr.transform(utf8.decoder).listen(stderr.write);
       final focused =
+          args.contains('--categories') ||
           args.contains('--text-metadata') ||
           args.contains('--descriptive') ||
           args.contains('--replies') ||

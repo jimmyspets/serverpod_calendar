@@ -691,6 +691,8 @@ Accepted ADR 0134 adds immutable geographic-position/resource-group/subset reque
 
 Accepted ADR 0135 adds shared immutable category/comment/field/patch DTOs, separate revision-checked event/task requests, read-group/view fields and private nullable nativeMetadataOnly on task sourceState. No SQL changes were detected. The flag keeps native rows independent from wire limits and never invents provenance, baselines or history. See [the model and API guide](native-item-text-metadata.md).
 
-## Proposed item category query integration
+## Item category query integration
 
-[ADR 0136](adr/0136-authorized-item-category-search.md) proposes reusing CalendarCategoryFilter and existing cursor categoryFilter JSON for event/task list APIs, with immutable host query context and family/criteria binding. No new SQL table/column/index is expected. These adapter/endpoint/cursor mechanics require explicit approval and implementation; existing metadata DTOs do not establish search support.
+Accepted [ADR 0136](adr/0136-authorized-item-category-search.md) reuses CalendarCategoryFilter and existing cursor categoryFilter JSON for event/task list APIs, with immutable host query context and family/criteria binding. Pinned migration generation detected no SQL changes. Generated endpoint/client and host query-adapter signatures change together.
+
+Accepted ADR 0136 implements scoped per-calendar event/task master-category filtering with authorized category disclosure, immutable host query context, criteria-bound opaque continuations and Flutter Apply/Clear. See [the matching/privacy/limit guide](item-category-search.md) and batch validation. This supersedes earlier search-pending statements only for this bounded profile; broader queries and external interoperability remain separate.

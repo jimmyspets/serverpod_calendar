@@ -2140,6 +2140,7 @@ class _CalendarEventEndpoint {
     required int pageSize,
     required List<_il5gdr09.CalendarEventFieldGroup> fieldGroups,
     String? cursor,
+    _ith8xeb5.CalendarCategoryFilter? categoryFilter,
   }) async {
     return _ist.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -2157,6 +2158,7 @@ class _CalendarEventEndpoint {
             'pageSize': pageSize,
             'fieldGroups': fieldGroups,
             'cursor': cursor,
+            'categoryFilter': categoryFilter,
           }),
           serializationManager: _serializationManager,
         );
@@ -2570,6 +2572,7 @@ class _CalendarTaskEndpoint {
     required int pageSize,
     required List<_ik0gz7r1.CalendarTaskFieldGroup> fieldGroups,
     String? cursor,
+    _ith8xeb5.CalendarCategoryFilter? categoryFilter,
   }) async {
     return _ist.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -2587,6 +2590,7 @@ class _CalendarTaskEndpoint {
             'pageSize': pageSize,
             'fieldGroups': fieldGroups,
             'cursor': cursor,
+            'categoryFilter': categoryFilter,
           }),
           serializationManager: _serializationManager,
         );

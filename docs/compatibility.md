@@ -422,3 +422,5 @@ Accepted ADR 0134 adds the scoped native/ordinary VEVENT descriptive-field incre
 ## Native item text/link metadata
 
 Accepted ADR 0135 adds selected-field native event/task URL, classification, category and comment editors with independent disclosure, retained source groups/baselines and effective outgoing versions. CONTACT remains import-only; category search remains separate. See [the implementation guide](native-item-text-metadata.md) and scoped validation evidence.
+
+Accepted ADR 0136 adds native per-calendar event/task master-category queries and Flutter Apply/Clear. Exact text and optional language matching require ordinary read plus category disclosure; criteria-bound opaque continuations have no totals. This is not external client search, occurrence expansion, full-text search or availability evidence. See [query limits](item-category-search.md).

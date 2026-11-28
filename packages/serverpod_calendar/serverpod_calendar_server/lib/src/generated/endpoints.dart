@@ -1442,6 +1442,11 @@ class Endpoints extends _is.EndpointDispatch {
               type: _is.getType<String?>(),
               nullable: true,
             ),
+            'categoryFilter': _is.ParameterDescription(
+              name: 'categoryFilter',
+              type: _is.getType<_ith8xeb5.CalendarCategoryFilter?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -1456,6 +1461,7 @@ class Endpoints extends _is.EndpointDispatch {
                         pageSize: params['pageSize'],
                         fieldGroups: params['fieldGroups'],
                         cursor: params['cursor'],
+                        categoryFilter: params['categoryFilter'],
                       ),
         ),
         'preview': _is.MethodConnector(
@@ -1746,6 +1752,11 @@ class Endpoints extends _is.EndpointDispatch {
               type: _is.getType<String?>(),
               nullable: true,
             ),
+            'categoryFilter': _is.ParameterDescription(
+              name: 'categoryFilter',
+              type: _is.getType<_ith8xeb5.CalendarCategoryFilter?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -1759,6 +1770,7 @@ class Endpoints extends _is.EndpointDispatch {
                         pageSize: params['pageSize'],
                         fieldGroups: params['fieldGroups'],
                         cursor: params['cursor'],
+                        categoryFilter: params['categoryFilter'],
                       ),
         ),
         'update': _is.MethodConnector(

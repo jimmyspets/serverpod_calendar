@@ -253,6 +253,8 @@ Accepted ADR 0134 adds the scoped native/ordinary VEVENT descriptive-field incre
 
 Accepted ADR 0135 adds selected-field native event/task URL, classification, category and comment editors with independent disclosure, retained source groups/baselines and effective outgoing versions. CONTACT remains import-only; category search remains separate. See [the implementation guide](native-item-text-metadata.md) and scoped validation evidence.
 
-## Event/task category search proposal
+## Event/task category search
 
-[ADR 0136](adr/0136-authorized-item-category-search.md) proposes exact per-calendar master-category filtering with independent disclosure and opaque criteria-bound continuation. Search remains unimplemented pending explicit contract review; the completed ADR 0135 editors remain separate.
+Accepted [ADR 0136](adr/0136-authorized-item-category-search.md) implements exact per-calendar master-category filtering with independent disclosure and opaque criteria-bound continuation. The ADR 0135 editors remain separately authorized.
+
+Accepted ADR 0136 implements scoped per-calendar event/task master-category filtering with authorized category disclosure, immutable host query context, criteria-bound opaque continuations and Flutter Apply/Clear. See [the matching/privacy/limit guide](item-category-search.md) and batch validation. This supersedes earlier search-pending statements only for this bounded profile; broader queries and external interoperability remain separate.

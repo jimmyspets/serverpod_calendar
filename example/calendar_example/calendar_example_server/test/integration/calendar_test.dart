@@ -14908,6 +14908,8 @@ final class TestPolicy implements CalendarHostPolicy {
   CalendarProposedChange? lastSupplementalIntent;
   bool sawCategoryFilter = false;
   void Function()? onPreliminary, onFinal;
+  void Function(CalendarAuthorizationRequest)? onCategoryRequest;
+  void Function(CalendarCategoryQuery?)? onItemQueryPlan;
   Duration delay = Duration.zero;
   CalendarAuthorizationGuarantee capability =
       CalendarAuthorizationGuarantee.freshCheck;
@@ -14981,15 +14983,25 @@ final class TestPolicy implements CalendarHostPolicy {
     Session s,
     CalendarHostContext c,
     CalendarPolicySnapshot calendar,
-    Set<CalendarTaskFieldGroup> groups,
-  ) async => CalendarTaskCandidatePlan(taskIds: taskCandidates);
+    Set<CalendarTaskFieldGroup> groups, {
+    CalendarCategoryQuery? categoryFilter,
+  }) async {
+    onItemQueryPlan?.call(categoryFilter);
+    return CalendarTaskCandidatePlan(taskIds: taskCandidates);
+  }
+
   @override
   Future<CalendarEventCandidatePlan> planEventQuery(
     Session s,
     CalendarHostContext c,
     CalendarPolicySnapshot calendar,
-    Set<CalendarEventFieldGroup> groups,
-  ) async => CalendarEventCandidatePlan(eventIds: eventCandidates);
+    Set<CalendarEventFieldGroup> groups, {
+    CalendarCategoryQuery? categoryFilter,
+  }) async {
+    onItemQueryPlan?.call(categoryFilter);
+    return CalendarEventCandidatePlan(eventIds: eventCandidates);
+  }
+
   @override
   Future<CalendarCandidatePlan> planQuery(
     Session s,
@@ -15006,6 +15018,9 @@ final class TestPolicy implements CalendarHostPolicy {
     CalendarAuthorizationPhase phase,
   ) async {
     for (final request in requests) {
+      if (request.categoryFilter != null) {
+        onCategoryRequest?.call(request);
+      }
       if (request.itemTextMetadataPatch != null) {
         onItemTextMetadata?.call(request, phase);
       }

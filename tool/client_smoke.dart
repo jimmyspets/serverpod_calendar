@@ -1,3 +1,5 @@
+import 'item_category_smoke.dart';
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -114,6 +116,11 @@ Future<void> main(List<String> args) async {
               }
             },
     );
+    if (mode == 'test' &&
+        clients.length == 2 &&
+        !args.contains('--replies-only')) {
+      await itemCategorySmoke(clients);
+    }
     if (mode == 'test' && !args.contains('--replies-only')) {
       await schedulingSmoke(clients);
     }

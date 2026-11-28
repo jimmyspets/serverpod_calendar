@@ -256,6 +256,8 @@ Accepted ADR 0134 adds updateEventDescriptiveMetadata and independent priority/r
 
 Accepted ADR 0135 adds independent event/task text metadata operations and URL/classification/categories/comments groups. Immutable itemTextMetadataPatch context accompanies actual current/final state; source replacements derive affected fields across master/explicit component presence. Hosts may map field-specific rules without trusting labels or client parentage. See [the boundaries](native-item-text-metadata.md).
 
-## Proposed item category search
+## Item category search
 
-[ADR 0136](adr/0136-authorized-item-category-search.md) proposes category disclosure plus ordinary item-read authority before a filtered candidate can qualify. Immutable exact text/language criteria accompany actual list/item contexts and candidate planning; response groups remain caller-selected. A hidden matching label must not disclose an item through search. This is proposed, not an implemented search-only permission or free/busy guarantee.
+Accepted [ADR 0136](adr/0136-authorized-item-category-search.md) requires category disclosure plus ordinary item-read authority before a filtered candidate can qualify. Immutable exact text/language criteria accompany actual list/item contexts and candidate planning; response groups remain caller-selected. A hidden matching label must not disclose an item through search. This provides no separate search-only permission or free/busy guarantee.
+
+Accepted ADR 0136 implements scoped per-calendar event/task master-category filtering with authorized category disclosure, immutable host query context, criteria-bound opaque continuations and Flutter Apply/Clear. See [the matching/privacy/limit guide](item-category-search.md) and batch validation. This supersedes earlier search-pending statements only for this bounded profile; broader queries and external interoperability remain separate.
