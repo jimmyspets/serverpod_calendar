@@ -11,6 +11,8 @@
 // ignore_for_file: dead_code, unnecessary_type_check
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:serverpod_calendar_client/src/protocol/calendar_alarm_view.dart'
+    as _i39h9w7l;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_view.dart'
     as _imwdhk62;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_field_group.dart'
@@ -24,6 +26,14 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_task_field_group
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_notifications_client/serverpod_notifications_client.dart'
     as _i9wvmat7;
+import 'calendar_alarm_anchor.dart' as _iv448ru6;
+import 'calendar_alarm_create_request.dart' as _iu47syqa;
+import 'calendar_alarm_definition.dart' as _irif99jb;
+import 'calendar_alarm_duration.dart' as _i1qnv8jf;
+import 'calendar_alarm_parent.dart' as _iiyuulin;
+import 'calendar_alarm_parent_kind.dart' as _ig3zti62;
+import 'calendar_alarm_update_request.dart' as _im2lo7e9;
+import 'calendar_alarm_view.dart' as _ie7u1nxa;
 import 'calendar_availability_category_group.dart' as _iywbqexh;
 import 'calendar_availability_class.dart' as _iucw7bzg;
 import 'calendar_availability_content.dart' as _ifxxil5c;
@@ -164,6 +174,14 @@ import 'calendar_task_view.dart' as _ii3yrr21;
 import 'calendar_text_parameters.dart' as _iffxqqc7;
 import 'calendar_text_variant.dart' as _itcy22f3;
 import 'calendar_view.dart' as _ivspd2q7;
+export 'calendar_alarm_anchor.dart';
+export 'calendar_alarm_create_request.dart';
+export 'calendar_alarm_definition.dart';
+export 'calendar_alarm_duration.dart';
+export 'calendar_alarm_parent.dart';
+export 'calendar_alarm_parent_kind.dart';
+export 'calendar_alarm_update_request.dart';
+export 'calendar_alarm_view.dart';
 export 'calendar_availability_category_group.dart';
 export 'calendar_availability_class.dart';
 export 'calendar_availability_content.dart';
@@ -351,6 +369,30 @@ class Protocol extends _isc.SerializationManager {
       }
     }
 
+    if (t == _iv448ru6.CalendarAlarmAnchor) {
+      return _iv448ru6.CalendarAlarmAnchor.fromJson(data) as T;
+    }
+    if (t == _iu47syqa.CalendarAlarmCreateRequest) {
+      return _iu47syqa.CalendarAlarmCreateRequest.fromJson(data) as T;
+    }
+    if (t == _irif99jb.CalendarAlarmDefinition) {
+      return _irif99jb.CalendarAlarmDefinition.fromJson(data) as T;
+    }
+    if (t == _i1qnv8jf.CalendarAlarmDuration) {
+      return _i1qnv8jf.CalendarAlarmDuration.fromJson(data) as T;
+    }
+    if (t == _iiyuulin.CalendarAlarmParent) {
+      return _iiyuulin.CalendarAlarmParent.fromJson(data) as T;
+    }
+    if (t == _ig3zti62.CalendarAlarmParentKind) {
+      return _ig3zti62.CalendarAlarmParentKind.fromJson(data) as T;
+    }
+    if (t == _im2lo7e9.CalendarAlarmUpdateRequest) {
+      return _im2lo7e9.CalendarAlarmUpdateRequest.fromJson(data) as T;
+    }
+    if (t == _ie7u1nxa.CalendarAlarmView) {
+      return _ie7u1nxa.CalendarAlarmView.fromJson(data) as T;
+    }
     if (t == _iywbqexh.CalendarAvailabilityCategoryGroup) {
       return _iywbqexh.CalendarAvailabilityCategoryGroup.fromJson(data) as T;
     }
@@ -778,6 +820,52 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _ivspd2q7.CalendarView) {
       return _ivspd2q7.CalendarView.fromJson(data) as T;
+    }
+    if (t == _isc.getType<_iv448ru6.CalendarAlarmAnchor?>()) {
+      return (data != null
+              ? _iv448ru6.CalendarAlarmAnchor.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_iu47syqa.CalendarAlarmCreateRequest?>()) {
+      return (data != null
+              ? _iu47syqa.CalendarAlarmCreateRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_irif99jb.CalendarAlarmDefinition?>()) {
+      return (data != null
+              ? _irif99jb.CalendarAlarmDefinition.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_i1qnv8jf.CalendarAlarmDuration?>()) {
+      return (data != null
+              ? _i1qnv8jf.CalendarAlarmDuration.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_iiyuulin.CalendarAlarmParent?>()) {
+      return (data != null
+              ? _iiyuulin.CalendarAlarmParent.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ig3zti62.CalendarAlarmParentKind?>()) {
+      return (data != null
+              ? _ig3zti62.CalendarAlarmParentKind.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_im2lo7e9.CalendarAlarmUpdateRequest?>()) {
+      return (data != null
+              ? _im2lo7e9.CalendarAlarmUpdateRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ie7u1nxa.CalendarAlarmView?>()) {
+      return (data != null ? _ie7u1nxa.CalendarAlarmView.fromJson(data) : null)
+          as T;
     }
     if (t == _isc.getType<_iywbqexh.CalendarAvailabilityCategoryGroup?>()) {
       return (data != null
@@ -2031,6 +2119,12 @@ class Protocol extends _isc.SerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_i39h9w7l.CalendarAlarmView>) {
+      return (data as List)
+              .map((e) => deserialize<_i39h9w7l.CalendarAlarmView>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_imwdhk62.CalendarAvailabilityView>) {
       return (data as List)
               .map((e) => deserialize<_imwdhk62.CalendarAvailabilityView>(e))
@@ -2069,6 +2163,14 @@ class Protocol extends _isc.SerializationManager {
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
+      _iv448ru6.CalendarAlarmAnchor => 'CalendarAlarmAnchor',
+      _iu47syqa.CalendarAlarmCreateRequest => 'CalendarAlarmCreateRequest',
+      _irif99jb.CalendarAlarmDefinition => 'CalendarAlarmDefinition',
+      _i1qnv8jf.CalendarAlarmDuration => 'CalendarAlarmDuration',
+      _iiyuulin.CalendarAlarmParent => 'CalendarAlarmParent',
+      _ig3zti62.CalendarAlarmParentKind => 'CalendarAlarmParentKind',
+      _im2lo7e9.CalendarAlarmUpdateRequest => 'CalendarAlarmUpdateRequest',
+      _ie7u1nxa.CalendarAlarmView => 'CalendarAlarmView',
       _iywbqexh.CalendarAvailabilityCategoryGroup =>
         'CalendarAvailabilityCategoryGroup',
       _iucw7bzg.CalendarAvailabilityClass => 'CalendarAvailabilityClass',
@@ -2269,6 +2371,22 @@ class Protocol extends _isc.SerializationManager {
     }
 
     switch (data) {
+      case _iv448ru6.CalendarAlarmAnchor():
+        return 'CalendarAlarmAnchor';
+      case _iu47syqa.CalendarAlarmCreateRequest():
+        return 'CalendarAlarmCreateRequest';
+      case _irif99jb.CalendarAlarmDefinition():
+        return 'CalendarAlarmDefinition';
+      case _i1qnv8jf.CalendarAlarmDuration():
+        return 'CalendarAlarmDuration';
+      case _iiyuulin.CalendarAlarmParent():
+        return 'CalendarAlarmParent';
+      case _ig3zti62.CalendarAlarmParentKind():
+        return 'CalendarAlarmParentKind';
+      case _im2lo7e9.CalendarAlarmUpdateRequest():
+        return 'CalendarAlarmUpdateRequest';
+      case _ie7u1nxa.CalendarAlarmView():
+        return 'CalendarAlarmView';
       case _iywbqexh.CalendarAvailabilityCategoryGroup():
         return 'CalendarAvailabilityCategoryGroup';
       case _iucw7bzg.CalendarAvailabilityClass():
@@ -2558,6 +2676,30 @@ class Protocol extends _isc.SerializationManager {
     var dataClassName = data['className'];
     if (dataClassName is! String) {
       return super.deserializeByClassName(data);
+    }
+    if (dataClassName == 'CalendarAlarmAnchor') {
+      return deserialize<_iv448ru6.CalendarAlarmAnchor>(data['data']);
+    }
+    if (dataClassName == 'CalendarAlarmCreateRequest') {
+      return deserialize<_iu47syqa.CalendarAlarmCreateRequest>(data['data']);
+    }
+    if (dataClassName == 'CalendarAlarmDefinition') {
+      return deserialize<_irif99jb.CalendarAlarmDefinition>(data['data']);
+    }
+    if (dataClassName == 'CalendarAlarmDuration') {
+      return deserialize<_i1qnv8jf.CalendarAlarmDuration>(data['data']);
+    }
+    if (dataClassName == 'CalendarAlarmParent') {
+      return deserialize<_iiyuulin.CalendarAlarmParent>(data['data']);
+    }
+    if (dataClassName == 'CalendarAlarmParentKind') {
+      return deserialize<_ig3zti62.CalendarAlarmParentKind>(data['data']);
+    }
+    if (dataClassName == 'CalendarAlarmUpdateRequest') {
+      return deserialize<_im2lo7e9.CalendarAlarmUpdateRequest>(data['data']);
+    }
+    if (dataClassName == 'CalendarAlarmView') {
+      return deserialize<_ie7u1nxa.CalendarAlarmView>(data['data']);
     }
     if (dataClassName == 'CalendarAvailabilityCategoryGroup') {
       return deserialize<_iywbqexh.CalendarAvailabilityCategoryGroup>(

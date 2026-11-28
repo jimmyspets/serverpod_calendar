@@ -15,6 +15,14 @@ import 'dart:async' as _ida;
 import 'dart:io' as _idi;
 import 'dart:typed_data' as _idt;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_calendar_server/src/generated/calendar_alarm_create_request.dart'
+    as _i8n3ncsd;
+import 'package:serverpod_calendar_server/src/generated/calendar_alarm_parent.dart'
+    as _i3f0y8iu;
+import 'package:serverpod_calendar_server/src/generated/calendar_alarm_update_request.dart'
+    as _ihgcomoc;
+import 'package:serverpod_calendar_server/src/generated/calendar_alarm_view.dart'
+    as _izvxtiv8;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_create_request.dart'
     as _iys46g3v;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_export_request.dart'
@@ -279,6 +287,8 @@ void withServerpod(
 }
 
 class TestEndpoints {
+  late final _CalendarAlarmEndpoint calendarAlarm;
+
   late final _CalendarAvailabilityEndpoint calendarAvailability;
 
   late final _CalendarAvailabilitySearchEndpoint calendarAvailabilitySearch;
@@ -299,6 +309,10 @@ class _InternalTestEndpoints extends TestEndpoints
     _is.SerializationManager serializationManager,
     _is.EndpointDispatch endpoints,
   ) {
+    calendarAlarm = _CalendarAlarmEndpoint(
+      endpoints,
+      serializationManager,
+    );
     calendarAvailability = _CalendarAvailabilityEndpoint(
       endpoints,
       serializationManager,
@@ -323,6 +337,147 @@ class _InternalTestEndpoints extends TestEndpoints
       endpoints,
       serializationManager,
     );
+  }
+}
+
+class _CalendarAlarmEndpoint {
+  _CalendarAlarmEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<List<_izvxtiv8.CalendarAlarmView>> list(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i3f0y8iu.CalendarAlarmParent parent,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarAlarm',
+            method: 'list',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarAlarm',
+          methodName: 'list',
+          parameters: _ist.testObjectToJson({'parent': parent}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<List<_izvxtiv8.CalendarAlarmView>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_izvxtiv8.CalendarAlarmView?> create(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i8n3ncsd.CalendarAlarmCreateRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarAlarm',
+            method: 'create',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarAlarm',
+          methodName: 'create',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_izvxtiv8.CalendarAlarmView?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_izvxtiv8.CalendarAlarmView?> update(
+    _ist.TestSessionBuilder sessionBuilder,
+    _ihgcomoc.CalendarAlarmUpdateRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarAlarm',
+            method: 'update',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarAlarm',
+          methodName: 'update',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_izvxtiv8.CalendarAlarmView?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<void> delete(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i3f0y8iu.CalendarAlarmParent parent,
+    _is.UuidValue alarmId,
+    int expectedRevision,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarAlarm',
+            method: 'delete',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarAlarm',
+          methodName: 'delete',
+          parameters: _ist.testObjectToJson({
+            'parent': parent,
+            'alarmId': alarmId,
+            'expectedRevision': expectedRevision,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
   }
 }
 

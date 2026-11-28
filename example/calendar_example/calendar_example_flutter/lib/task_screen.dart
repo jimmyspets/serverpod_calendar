@@ -1,3 +1,5 @@
+import 'personal_alarm_screen.dart';
+
 import 'package:flutter/material.dart';
 
 import 'task_occurrence_screen.dart';
@@ -145,6 +147,25 @@ class _TaskScreenState extends State<TaskScreen> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                IconButton(
+                  key: ValueKey('task-alarms-${task.id}'),
+                  tooltip: 'Personal alarms',
+                  icon: const Icon(Icons.alarm),
+                  onPressed: _busy
+                      ? null
+                      : () => Navigator.of(context).push<void>(
+                          MaterialPageRoute(
+                            builder: (_) => PersonalAlarmScreen(
+                              client: widget.client,
+                              parent: cal.CalendarAlarmParent(
+                                kind: cal.CalendarAlarmParentKind.task,
+                                id: task.id,
+                              ),
+                              initialZone: widget.initialZone,
+                            ),
+                          ),
+                        ),
+                ),
                 IconButton(
                   key: ValueKey('task-replace-${task.id}'),
                   tooltip: 'Replace task source',

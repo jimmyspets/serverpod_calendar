@@ -11,6 +11,12 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_calendar_server/src/generated/calendar_alarm_create_request.dart'
+    as _i8n3ncsd;
+import 'package:serverpod_calendar_server/src/generated/calendar_alarm_parent.dart'
+    as _i3f0y8iu;
+import 'package:serverpod_calendar_server/src/generated/calendar_alarm_update_request.dart'
+    as _ihgcomoc;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_create_request.dart'
     as _iys46g3v;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_export_request.dart'
@@ -95,6 +101,7 @@ import 'package:serverpod_calendar_server/src/generated/calendar_task_update_req
     as _ifljty0a;
 import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
     as _ik9lwgjh;
+import '../endpoints/calendar_alarm_endpoint.dart' as _ifkkyj2z;
 import '../endpoints/calendar_availability_endpoint.dart' as _imcvujmp;
 import '../endpoints/calendar_availability_search_endpoint.dart' as _icfitiep;
 import '../endpoints/calendar_diagnostics_endpoint.dart' as _icr8drn5;
@@ -106,6 +113,12 @@ class Endpoints extends _is.EndpointDispatch {
   @override
   void initializeEndpoints(_is.Server server) {
     var endpoints = <String, _is.Endpoint>{
+      'calendarAlarm': _ifkkyj2z.CalendarAlarmEndpoint()
+        ..initialize(
+          server,
+          'calendarAlarm',
+          'serverpod_calendar',
+        ),
       'calendarAvailability': _imcvujmp.CalendarAvailabilityEndpoint()
         ..initialize(
           server,
@@ -143,6 +156,108 @@ class Endpoints extends _is.EndpointDispatch {
           'serverpod_calendar',
         ),
     };
+    connectors['calendarAlarm'] = _is.EndpointConnector(
+      name: 'calendarAlarm',
+      endpoint: endpoints['calendarAlarm']!,
+      methodConnectors: {
+        'list': _is.MethodConnector(
+          name: 'list',
+          params: {
+            'parent': _is.ParameterDescription(
+              name: 'parent',
+              type: _is.getType<_i3f0y8iu.CalendarAlarmParent>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAlarm']
+                          as _ifkkyj2z.CalendarAlarmEndpoint)
+                      .list(
+                        session,
+                        params['parent'],
+                      ),
+        ),
+        'create': _is.MethodConnector(
+          name: 'create',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i8n3ncsd.CalendarAlarmCreateRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAlarm']
+                          as _ifkkyj2z.CalendarAlarmEndpoint)
+                      .create(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'update': _is.MethodConnector(
+          name: 'update',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_ihgcomoc.CalendarAlarmUpdateRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAlarm']
+                          as _ifkkyj2z.CalendarAlarmEndpoint)
+                      .update(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'delete': _is.MethodConnector(
+          name: 'delete',
+          params: {
+            'parent': _is.ParameterDescription(
+              name: 'parent',
+              type: _is.getType<_i3f0y8iu.CalendarAlarmParent>(),
+              nullable: false,
+            ),
+            'alarmId': _is.ParameterDescription(
+              name: 'alarmId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'expectedRevision': _is.ParameterDescription(
+              name: 'expectedRevision',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarAlarm']
+                          as _ifkkyj2z.CalendarAlarmEndpoint)
+                      .delete(
+                        session,
+                        params['parent'],
+                        params['alarmId'],
+                        params['expectedRevision'],
+                      ),
+        ),
+      },
+    );
     connectors['calendarAvailability'] = _is.EndpointConnector(
       name: 'calendarAvailability',
       endpoint: endpoints['calendarAvailability']!,

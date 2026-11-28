@@ -511,6 +511,12 @@ extension CalendarTaskOperations on CalendarService {
       );
       _taskRevision(task, expected);
       final decisions = await _final(c, [request], tx);
+      await _deleteParentAlarms(
+        c.scopeKey,
+        CalendarAlarmParentKind.task,
+        id,
+        tx,
+      );
       await CalendarTaskHistoryRecord.db.deleteWhere(
         _session,
         where: (t) => t.taskId.equals(id),

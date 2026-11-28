@@ -1,0 +1,5 @@
+class: CalendarAlarmParent
+immutable: true
+fields:
+  kind: CalendarAlarmParentKind
+  id: UuidValue

@@ -1,3 +1,5 @@
+import 'personal_alarm_screen.dart';
+
 import 'package:flutter/material.dart';
 
 import 'event_occurrence_screen.dart';
@@ -128,6 +130,25 @@ class _EventScreenState extends State<EventScreen> {
                   : 'Event',
             ),
             subtitle: e.status == null ? null : Text(e.status!.name),
+            trailing: IconButton(
+              key: ValueKey('event-alarms-${e.id}'),
+              tooltip: 'Personal alarms',
+              icon: const Icon(Icons.alarm),
+              onPressed: _busy
+                  ? null
+                  : () => Navigator.of(context).push<void>(
+                      MaterialPageRoute(
+                        builder: (_) => PersonalAlarmScreen(
+                          client: widget.client,
+                          parent: cal.CalendarAlarmParent(
+                            kind: cal.CalendarAlarmParentKind.event,
+                            id: e.id,
+                          ),
+                          initialZone: widget.initialZone,
+                        ),
+                      ),
+                    ),
+            ),
             onTap: _busy ? null : () => _open(e),
           ),
         if (_cursor != null)

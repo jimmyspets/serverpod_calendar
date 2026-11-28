@@ -615,6 +615,12 @@ extension CalendarEventOperations on CalendarService {
       );
       _eventRevision(e, expected);
       final decisions = await _final(c, requests, tx);
+      await _deleteParentAlarms(
+        c.scopeKey,
+        CalendarAlarmParentKind.event,
+        id,
+        tx,
+      );
       await CalendarEventDataRecord.db.deleteRow(
         _session,
         e.data,

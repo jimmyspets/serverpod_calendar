@@ -8,6 +8,7 @@ import 'package:serverpod_calendar_core/serverpod_calendar_core.dart';
 import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 
 import 'calendar_authorization.dart';
+import 'alarm_values.dart';
 import 'generated/protocol.dart';
 import 'native_calendar_name.dart';
 import 'event_values.dart';
@@ -25,6 +26,7 @@ import 'availability_wire_storage.dart';
 import 'availability_wire_output.dart';
 import 'availability_import_baseline.dart';
 
+part 'calendar_alarms.dart';
 part 'calendar_events.dart';
 part 'calendar_event_occurrence_content.dart';
 part 'calendar_tasks.dart';

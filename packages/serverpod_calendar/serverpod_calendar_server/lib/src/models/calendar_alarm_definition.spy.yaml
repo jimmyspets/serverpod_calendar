@@ -1,0 +1,9 @@
+class: CalendarAlarmDefinition
+immutable: true
+fields:
+  absoluteUtc: DateTime?
+  relativeDuration: CalendarAlarmDuration?
+  anchor: CalendarAlarmAnchor?
+  dateZoneId: String?
+  repeat: int?
+  repeatInterval: CalendarAlarmDuration?
