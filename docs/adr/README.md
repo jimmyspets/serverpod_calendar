@@ -133,7 +133,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0114](0114-reusable-notification-delivery.md) | Reusable notification delivery and connected recovery | Live profile, three tables and defaults approved; scoped implementation/batch validation under review |
 | [0115](0115-timing-only-source-alarm-adoption.md) | Timing-only source alarm adoption | Timing/current-text choice confirmed; API mechanics under draft review, no table changes |
 | [0116](0116-optional-event-subscription-contract.md) | Optional event subscriptions and storage | Stable publication UIDs, no alarms and four tables/defaults approved; scoped full local validation passed; integration mechanics under review |
-| [0117](0117-first-itip-message-profile.md) | First pure iTIP message profile | Proposed four-method non-recurring message boundary; no storage, authority or mail implementation |
+| [0117](0117-first-itip-message-profile.md) | First pure iTIP message profile | Four-method non-recurring pure boundary approved; scoped implementation passed selected broader checks; no storage, authority or mail implementation |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

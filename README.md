@@ -156,3 +156,7 @@ Native [personal alarm actions and private activity pages](docs/native-alarm-act
 ## Optional event subscriptions, 2026-10-25
 
 [ADR 0116](docs/adr/0116-optional-event-subscription-contract.md) adds the [separate optional feed module](docs/http-event-feeds.md), with explicit multi-calendar selection, stable event publication UIDs, independently revocable digest-only bearer URLs and freshly authorized GET/HEAD/ETag responses. The example includes settings and URL management. All alarms are excluded; authenticated source exports remain independent. Full local batch validation passed. External subscription-client compatibility, production infrastructure and coordinated timezone upgrades remain separate release gates.
+
+## Pure scheduling-message increment, 2026-10-25
+
+[ADR 0117](docs/adr/0117-first-itip-message-profile.md) adds a [bounded pure message adapter](docs/itip-message-profile.md) for PUBLISH, REQUEST, REPLY and CANCEL, with one non-recurring VEVENT, method-specific restrictions and preserved optional source timing/version fields. Focused tests passed; selected broader checks passed. Source participant claims remain untrusted. Reconciliation, recurring messages, the remaining selected methods/properties and email are still required separate work; parsing sends no messages and changes no stored event.

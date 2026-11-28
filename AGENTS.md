@@ -1,5 +1,7 @@
 # Repository guidance
 
+Under ADR 0117, the maintainer approved a pure four-method non-recurring iTIP batch. The scoped message adapter is independent of import/export, feeds, durable scheduling and email. Preserve independently optional source timing/version values and method-specific rules; never infer authority from participants or apply native defaults to minimal replies/cancellations. See docs/itip-message-profile.md for implemented/rejected data and actual validation. Recurrence, remaining methods/property/delegation profiles and reconciliation remain required separate work.
+
 ## Current state and sources
 
 This repository now contains an initial workspace/authentication scaffold; calendar domain features remain documentation-first. Read README.md, docs/discussion-migration.md, docs/requirements.md, and the relevant proposed ADRs before changes. The per-RFC tables in docs/rfc/ are the latest feature-scope source; explicit newer maintainer instructions take precedence. Reconcile older narrative text with the table statuses and notes without treating unapproved implementation detail as accepted. Architecture documents describe proposals, not implemented behavior. Do not invent earlier chat decisions or claim complete iCalendar, CalDAV, or client compatibility.

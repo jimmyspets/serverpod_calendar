@@ -1,5 +1,7 @@
 # Proposed model catalog
 
+The [ADR 0117 message profile](itip-message-profile.md) adds immutable pure `IcalendarSchedulingMessage` values, not database tables or generated endpoint DTOs. Optional source timing/version fields remain distinct from durable scheduling state, which still requires its own reviewed storage contract.
+
 [First native non-recurring event CRUD](native-single-events.md) now implements scoped event storage/commands/projections under [ADR 0053](adr/0053-first-native-single-events.md). Native recurrence, occurrence timing, free/busy and scoped working-hours composition are implemented in the increments linked below; wire/client interoperability remains pending.
 
 [Native protocol UID and modification time](calendar-protocol-identity.md) add read-only identity/time disclosure under [ADR 0052](adr/0052-calendar-protocol-identity-and-revision-time.md), without parsing/export or feed validators.
