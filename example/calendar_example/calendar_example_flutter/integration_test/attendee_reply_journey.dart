@@ -16,6 +16,22 @@ Future<void> runAttendeeReplyJourney(WidgetTester tester, Client client) async {
   ))!;
   final content = cal.CalendarEventContent(
     summary: 'Reply UI meeting',
+    recurrence: cal.CalendarEventRecurrence(
+      rule: cal.CalendarEventRule(
+        frequency: cal.CalendarEventFrequency.daily,
+        count: 4,
+        byDay: [],
+        byMonthDay: [],
+        byYearDay: [],
+        byWeekNo: [],
+        byMonth: [],
+        byHour: [],
+        byMinute: [],
+        bySetPosition: [],
+      ),
+      inclusions: [],
+      exclusions: [],
+    ),
     timing: cal.CalendarEventTiming(
       kind: cal.CalendarEventTimeKind.date,
       start: cal.CalendarEventCivil(year: 2026, month: 11, day: 2),
@@ -77,6 +93,12 @@ Future<void> runAttendeeReplyJourney(WidgetTester tester, Client client) async {
 
   await ready();
   expect(find.text('No recorded response'), findsOneWidget);
+  expect(
+    find.text(
+      'Whole-series master response; instance replies are not supported.',
+    ),
+    findsOneWidget,
+  );
   expect(find.byKey(const Key('replies-error')), findsNothing);
   await tap('reply-simulate');
   expect(find.byKey(const Key('replies-error')), findsNothing);

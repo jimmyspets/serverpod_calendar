@@ -1,12 +1,12 @@
 # Authenticated attendee replies
 
-The accepted [ADR 0131](adr/0131-first-authenticated-attendee-replies.md) adds an organizer-side, non-recurring REPLY increment. The scoped local batch checks passed in phases; see the validation record for commands and limits. It preserves the exact supported source distinctions and stores participation separately from native event content. Recurring/instance replies, other inbound methods, delegation, mail transport and manual conflict adoption remain separate requirements.
+The accepted [ADR 0131](adr/0131-first-authenticated-attendee-replies.md) adds an organizer-side REPLY increment, extended to recurring masters by accepted [ADR 0132](adr/0132-recurring-master-attendee-replies.md). The scoped local batch checks passed in phases; see the validation record for commands and limits. It preserves the exact supported source distinctions and stores participation separately from native event content. Instance/range replies, other inbound methods, delegation, mail transport and manual conflict adoption remain separate requirements.
 
 ## Trusted ingress
 
 Call `CalendarModule.receiveSchedulingReply(session, delivery)` only from trusted server code. Install `CalendarSchedulingRuntime.replies` with a `CalendarSchedulingReplyHost` and bounded options. There is no reusable ingestion endpoint or client-supplied verified-sender flag. The host selects an actual event in a trusted scope and supplies a namespaced delivery key and origin reference. It must verify that origin may respond for the exact stored attendee address. Source UID, ORGANIZER, ATTENDEE, session display addresses and SMTP headers establish no such authority.
 
-The module loads the actual calendar/event/binding and committed publication, requires explicit native provenance, a non-recurring published series, the exact protocol UID/organizer and a member of the fixed roster, and validates one bounded pure REPLY. Detached/recurring components and delegated/SENT-BY flows reject. Ordinary file import and bearer feeds never provide scheduling authority.
+The module loads the actual calendar/event/binding and committed publication, requires explicit native provenance, a validated non-recurring or recurring published master, the exact protocol UID/organizer and a member of the fixed roster, and validates one bounded pure REPLY. Instance/range components and delegated/SENT-BY flows reject. Ordinary file import and bearer feeds never provide scheduling authority.
 
 Preliminary host approval precedes private reply history lookup. Both proposal and final checks receive immutable actual current/published event and parent, complete normalized source, digest, origin reference, current response, proposed classification and server source/receipt IDs. The final check runs after proposed writes inside the scope transaction: denial or failure rolls back all three tables. Hosts declare coordinated or fresh-check guarantees; external fresh checks retain the documented after-check revocation race. No process-local lock or cached permission supplies correctness.
 
@@ -49,3 +49,15 @@ Independent `readSchedulingResponses` is required alongside scheduling and full 
 The example installs a **development/test-only synthetic simulation**. The server verifies the authenticated private demo owner and fixed `example.invalid` roster; this does not verify a real mailbox. The Flutter **Attendee replies** screen shows current/prior/unknown responses, simulates a response with stable uncertain retries, and explicitly opens retained private source as inert selectable text. It never applies stale records or sends mail. Production hosts supply their own trusted ingress.
 
 See [validation](scaffold-validation.md) for commands actually run and their limits. Synthetic tests do not establish RFC 6047 mail or external-client interoperability.
+
+## Recurring master resolution
+
+A master REPLY has no RECURRENCE-ID/RANGE. Minimal replies may omit timing and recurrence; supplied rule/date sets compare canonical typed values, exact DATE/UTC/named-zone profiles and preserved PERIOD end/duration forms. Source groups and omissions remain intact. An instance reply still rejects.
+
+The current target comes from validated self-contained checkpoint evidence. Complete REQUESTs use their master; detached cancellations/restorations retain their active master basis. v6 uses the actual last complete REQUEST, including publication-only exclusions. Whole-series CANCEL is inactive and uses its cancellation version. Missing or inconsistent evidence fails unavailable; cleanup of older publication rows does not require reconstructing from private drafts.
+
+`publicationId` identifies the latest checkpoint carrier, while `publishedSequence` identifies the actual master version. `recurring` labels a whole-series response. A detached occurrence's higher SEQUENCE is not a newer master invitation. Unchanged masters preserve current responses and source ordering; changed masters or whole cancellation record source inactivity within the same scope transaction, including v6 reopening and complete masked restoration. All publishing hosts must carry this hook even without an inbound adapter.
+
+Trusted reply policy receives `publishedMessage`, `publishedMaster` and `latestPublicationKind`, separately from canonical `publishedEvent` and actual `currentEvent`. The complete retained message is validated, including occurrence components; no stripping or native mutation manufactures a supported target. Read policy also receives the exact published message/master through `replyPublishedMessage`/`replyPublishedMaster`. Hosts must upgrade these unpublished interfaces together. The three reply tables, limits and retention rules remain unchanged; no migration is required.
+
+The example labels recurring replies as whole-series responses and explicitly excludes instance replies. Synthetic responses remain inert with respect to native content, mail and remote participant authority.

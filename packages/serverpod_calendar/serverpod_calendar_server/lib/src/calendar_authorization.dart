@@ -214,6 +214,8 @@ final class CalendarAuthorizationRequest {
     this.scheduling,
     this.schedulingReplySource,
     this.schedulingReplyDocument,
+    this.replyPublishedMessage,
+    this.replyPublishedMaster,
     this.currentEvent,
     this.proposedEvent,
     this.proposedEventProtocolState,
@@ -283,6 +285,8 @@ final class CalendarAuthorizationRequest {
   final CalendarSchedulingIntent? scheduling;
   final CalendarSchedulingReplySourceView? schedulingReplySource;
   final String? schedulingReplyDocument;
+  final IcalendarSchedulingMessage? replyPublishedMessage;
+  final IcalendarSchedulingEvent? replyPublishedMaster;
   final CalendarEventPolicySnapshot? currentEvent;
   final CalendarEventContent? proposedEvent;
   final CalendarEventProtocolState? proposedEventProtocolState;

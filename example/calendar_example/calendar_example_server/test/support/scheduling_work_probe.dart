@@ -283,7 +283,8 @@ Future<Map<String, String>> _seed(
   Session s,
   String method,
 ) => s.db.transaction((tx) async {
-  final replyMode = method == 'REPLY';
+  final recurringReply = method == 'RECURRING_REPLY';
+  final replyMode = method == 'REPLY' || recurringReply;
   if (replyMode) method = 'REQUEST';
   final maskedRestore = method == 'MASKRESTORE';
   final reopening = method == 'REOPEN';
@@ -326,7 +327,7 @@ Future<Map<String, String>> _seed(
   );
   final content = CalendarEventContent(
     summary: 'Synthetic worker publication',
-    recurrence: replyMode
+    recurrence: replyMode && !recurringReply
         ? null
         : CalendarEventRecurrence(
             rule: CalendarEventRule(
@@ -354,7 +355,7 @@ Future<Map<String, String>> _seed(
   );
   final uid = Uuid().v4obj().toString(),
       recipient = 'mailto:bob@example.invalid';
-  final originals = method == 'REQUEST' && !replyMode
+  final originals = method == 'REQUEST' && (!replyMode || recurringReply)
       ? [
           EventSchedulingOriginal(
             content.timing.copyWith(

@@ -3,6 +3,11 @@ import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
 
 Future<void> schedulingReplySmoke(List<Client> clients) async {
+  await _replySmoke(clients, false);
+  await _replySmoke(clients, true);
+}
+
+Future<void> _replySmoke(List<Client> clients, bool recurring) async {
   final a = clients.first, b = clients.last;
   final api = a.modules.serverpod_calendar;
   final parent = (await api.calendar.create(
@@ -14,6 +19,24 @@ Future<void> schedulingReplySmoke(List<Client> clients) async {
   ))!;
   cal.CalendarEventContent content(String title) => cal.CalendarEventContent(
     summary: title,
+    recurrence: recurring
+        ? cal.CalendarEventRecurrence(
+            rule: cal.CalendarEventRule(
+              frequency: cal.CalendarEventFrequency.daily,
+              count: 4,
+              byDay: [],
+              byMonthDay: [],
+              byYearDay: [],
+              byWeekNo: [],
+              byMonth: [],
+              byHour: [],
+              byMinute: [],
+              bySetPosition: [],
+            ),
+            inclusions: [],
+            exclusions: [],
+          )
+        : null,
     timing: cal.CalendarEventTiming(
       kind: cal.CalendarEventTimeKind.utc,
       start: cal.CalendarEventCivil(year: 2026, month: 11, day: 2, hour: 9),
@@ -35,6 +58,9 @@ Future<void> schedulingReplySmoke(List<Client> clients) async {
     ),
   );
   final published = await api.calendarEvent.schedulingResponses(event.eventId);
+  if (published.recurring != recurring) {
+    throw StateError('Wrong reply target scope');
+  }
   final command = const Uuid().v4obj();
   final stamp = DateTime.utc(2026, 10, 27, 12);
   Future<cal.CalendarSchedulingReplyReceipt> submit(

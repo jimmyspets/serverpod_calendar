@@ -694,6 +694,7 @@ extension CalendarSchedulingOccurrenceOperations on CalendarService {
       meeting.revision++;
       meeting.latestPublicationId = p.id;
       meeting.updatedAt = now;
+      await _inactivateReplySources(meeting, p, tx, queuedAt);
       await CalendarSchedulingMeetingRecord.db.updateRow(
         _session,
         meeting,

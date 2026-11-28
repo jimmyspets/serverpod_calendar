@@ -339,11 +339,6 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
   @override
   Widget build(BuildContext context) {
     final eligible = _status?.origin == cal.CalendarEventOrigin.native;
-    final recurring =
-        _event.recurrence?.rule != null ||
-        (_event.recurrence?.inclusions.isNotEmpty ?? false) ||
-        (_event.recurrence?.exclusions.isNotEmpty ?? false) ||
-        (_event.periods?.isNotEmpty ?? false);
     final hasExceptions =
         (_event.timingOverrides?.singles.isNotEmpty ?? false) ||
         (_event.timingOverrides?.future.isNotEmpty ?? false);
@@ -359,7 +354,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
       appBar: AppBar(
         title: const Text('Meeting invitations'),
         actions: [
-          if (_status?.publicationId != null && !recurring)
+          if (_status?.publicationId != null)
             TextButton(
               key: const Key('scheduling-replies'),
               onPressed: _busy

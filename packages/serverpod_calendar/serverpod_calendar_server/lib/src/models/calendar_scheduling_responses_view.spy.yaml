@@ -5,4 +5,5 @@ fields:
   publicationId: UuidValue
   publishedSequence: int
   publishedCancelled: bool
+  recurring: bool
   responses: List<CalendarSchedulingAttendeeResponseView>

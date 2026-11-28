@@ -73,7 +73,7 @@ Future<void> main(List<String> args) async {
     if (args.contains('--replies')) {
       final fixture = (await b.command({
         'command': 'seed',
-        'method': 'REPLY',
+        'method': args.contains('--recurring') ? 'RECURRING_REPLY' : 'REPLY',
       })) as Map<String, dynamic>;
       fixtures.add(fixture);
       final raced = await Future.wait([
@@ -88,7 +88,7 @@ Future<void> main(List<String> args) async {
       for (final pause in ['before', 'after']) {
         final fixture = (await b.command({
           'command': 'seed',
-          'method': 'REPLY',
+          'method': args.contains('--recurring') ? 'RECURRING_REPLY' : 'REPLY',
         })) as Map<String, dynamic>;
         fixtures.add(fixture);
         a.submitted = Completer<void>();
