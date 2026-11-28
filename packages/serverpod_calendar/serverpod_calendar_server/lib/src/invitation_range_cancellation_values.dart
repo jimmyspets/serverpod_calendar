@@ -39,8 +39,100 @@ projectInvitationRangeCancellation({
   required String recipientAddress,
   int maxCandidateWork = eventMaxCandidateWork,
 }) {
+  return _projectRangeCancellation(
+    protocolUid: protocolUid,
+    content: content,
+    timingOverrides: timingOverrides,
+    protocolState: protocolState,
+    message: message,
+    recipientAddress: recipientAddress,
+    maxCandidateWork: maxCandidateWork,
+  ).proposal;
+}
+
+/// A detached pure proposal; it proves no accepted restoration or host rights.
+final class CalendarInvitationRangeRecancellationProjection {
+  const CalendarInvitationRangeRecancellationProjection._(
+    this.protocolUid,
+    this.content,
+    this.timingOverrides,
+    this.protocolState,
+    this.originalStart,
+    this.cancellationVersion,
+    this.previousRestorationVersion,
+    this.requiredAfterSequence,
+    this.sourceMessage,
+  );
+  final String protocolUid;
+  final CalendarEventContent content;
+  final CalendarEventTimingOverrides timingOverrides;
+  final CalendarEventProtocolState protocolState;
+  final CalendarEventTiming originalStart;
+  final CalendarEventProtocolVersion cancellationVersion;
+  final CalendarEventProtocolVersion previousRestorationVersion;
+  final int requiredAfterSequence;
+  final IcalendarSchedulingMessage sourceMessage;
+}
+
+/// Proposes another cancellation with an independent restoration version floor.
+/// The caller must establish actual history, authority and clean current state.
+CalendarInvitationRangeRecancellationProjection
+projectInvitationRangeRecancellation({
+  required String protocolUid,
+  required CalendarEventContent content,
+  CalendarEventTimingOverrides? timingOverrides,
+  required CalendarEventProtocolState protocolState,
+  required CalendarEventProtocolVersion previousRestorationVersion,
+  required IcalendarSchedulingMessage message,
+  required String recipientAddress,
+  int maxCandidateWork = eventMaxCandidateWork,
+}) {
+  final result = _projectRangeCancellation(
+    protocolUid: protocolUid,
+    content: content,
+    timingOverrides: timingOverrides,
+    protocolState: protocolState,
+    previousRestorationVersion: previousRestorationVersion,
+    message: message,
+    recipientAddress: recipientAddress,
+    maxCandidateWork: maxCandidateWork,
+  );
+  final p = result.proposal;
+  return CalendarInvitationRangeRecancellationProjection._(
+    p.protocolUid,
+    p.content,
+    p.timingOverrides,
+    p.protocolState,
+    p.originalStart,
+    p.cancellationVersion,
+    result.previousRestorationVersion!,
+    p.requiredAfterSequence,
+    p.sourceMessage,
+  );
+}
+
+({
+  CalendarInvitationRangeCancellationProjection proposal,
+  CalendarEventProtocolVersion? previousRestorationVersion,
+})
+_projectRangeCancellation({
+  required String protocolUid,
+  required CalendarEventContent content,
+  CalendarEventTimingOverrides? timingOverrides,
+  required CalendarEventProtocolState protocolState,
+  CalendarEventProtocolVersion? previousRestorationVersion,
+  required IcalendarSchedulingMessage message,
+  required String recipientAddress,
+  required int maxCandidateWork,
+}) {
   try {
     RangeError.checkValueInInterval(maxCandidateWork, 1, eventMaxCandidateWork);
+    final previous = previousRestorationVersion == null
+        ? null
+        : validateEventProtocolVersion(previousRestorationVersion).copyWith();
+    if (previous != null && previous.sequence == null) {
+      throw ArgumentError('Missing restoration sequence');
+    }
     serializeIcalendarSyntax(message.source);
     if (message.timeZones.length > const IcalendarComponentLimits().maxZones) {
       throw const RecurrenceLimitException('invitationProjectionZones');
@@ -116,7 +208,11 @@ projectInvitationRangeCancellation({
       single?.sourceMetadata ?? ownRange?.sourceMetadata,
       state.sourceMetadata,
     );
-    final floor = _rangeSourceSequenceFloor(state, original);
+    final floor = _rangeSourceSequenceFloor(
+      state,
+      original,
+      minimum: previous?.sequence ?? 0,
+    );
     if (source.sequence! <= floor) throw ArgumentError('Stale cancellation');
     final cancellationVersion = validateEventProtocolVersion(
       CalendarEventProtocolVersion(
@@ -135,15 +231,18 @@ projectInvitationRangeCancellation({
       ),
       sharedWorkBudget: work,
     )!;
-    return CalendarInvitationRangeCancellationProjection._(
-      protocolUid,
-      accepted,
-      proposed,
-      state,
-      original,
-      cancellationVersion,
-      floor,
-      message,
+    return (
+      proposal: CalendarInvitationRangeCancellationProjection._(
+        protocolUid,
+        accepted,
+        proposed,
+        state,
+        original,
+        cancellationVersion,
+        floor,
+        message,
+      ),
+      previousRestorationVersion: previous,
     );
   } on IcalendarSyntaxException catch (e) {
     if (e.kind == IcalendarSyntaxError.limitExceeded) {

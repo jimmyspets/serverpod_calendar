@@ -357,6 +357,6 @@ See [the approved implementation](restoration-range-applications.md). Grouped ch
 
 Current Serverpod dependency alignment is documented in [the 4.1.0 upgrade record](serverpod-4.1-upgrade.md); earlier tool observations retain their original dates and versions.
 
-## Proposed post-restoration range cancellation prerequisite
+## Pure post-restoration range cancellation prerequisite
 
-[Proposed ADR 0169](adr/0169-pure-range-cancellation-after-source-restoration.md) adds a separate pure re-cancellation helper and an explicit historical-restoration SEQUENCE floor alongside the current affected-component floor. It preserves retained timing/content/flags/versions and bounded work. These mechanics require approval; no database, checkpoint, API, retention or runtime guard change is implemented. Repeated durable cycles and their history/authority/retry design remain separate.
+[Accepted ADR 0169](adr/0169-pure-range-cancellation-after-source-restoration.md) implements a separate pure re-cancellation helper and explicit historical-restoration sequence floor alongside the affected-component floor. It preserves timing/content/flags/versions with one shared bounded projection path and tests repeated pure cancellation/restore-only cycles. See [the scoped profile](range-recancellation-projection.md). No database, checkpoint, generated endpoint, retention or durable guard change follows; repeated authenticated cycles remain separate.

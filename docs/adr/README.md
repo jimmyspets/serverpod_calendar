@@ -185,7 +185,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0167](0167-single-instance-applications-after-source-range-restoration.md) | Single-instance source applications after range restoration | Accepted; latest-only receipts, current v10 ledger and unchanged historical proof |
 | [0168](0168-range-request-applications-after-source-restoration.md) | Range REQUEST application after source restoration | Accepted; dual strict sequence floors, current v11 range/receipt bindings and unchanged historical proof |
 
-| [0169](0169-pure-range-cancellation-after-source-restoration.md) | Pure range cancellation after source restoration | Proposed; separate pure helper and historical restoration sequence floor; durable cycles remain guarded |
+| [0169](0169-pure-range-cancellation-after-source-restoration.md) | Pure range cancellation after source restoration | Accepted; separate pure helper, historical restoration floor and repeated pure round trips; durable cycles remain guarded |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

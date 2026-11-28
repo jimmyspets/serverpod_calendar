@@ -1,0 +1,15 @@
+# Pure cancellation after source restoration
+
+Accepted [ADR 0169](adr/0169-pure-range-cancellation-after-source-restoration.md) adds projectInvitationRangeRecancellation to the exported invitation-values library. It validates a new THISANDFUTURE CANCEL against current canonical values and an independently supplied previousRestorationVersion. It does not apply a calendar change or prove that a restoration was accepted.
+
+Incoming explicit SEQUENCE must be strictly greater than the maximum of the historical restoration sequence and the existing affected-component floor. That floor includes the underlying master/range beneath an anchor single and every affected later component in original order. Equal sequence with a later DTSTAMP rejects; exhaustion rejects without allocating an increment. This is our conservative application policy, not a universal RFC rule.
+
+The previous restoration version must have an explicit valid nonnegative sequence and valid whole-second UTC timestamps. Zero is accepted as an untrusted pure comparison value; it does not establish a valid durable history. Missing canonical sequences compare as zero while their omissions remain intact. Historical/current source timestamps and optional values remain separate from canonical versions and database audit time.
+
+The final-field result carries detached validated values, the exact original, combined requiredAfterSequence, independent cancellation and previous-restoration versions, and the immutable source message. It exposes no nested first-cancellation result with another floor. The existing first-cancellation helper keeps its canonical-only contract. Both entry points share one internal projection path and recurrence-work budget.
+
+A valid cancellation can select any exact current original, independently of an earlier cycle's anchor. Suppression follows original order, including moved singles and later ranges, while retaining their timing, content, inheritance, individual cancellation flags, source metadata, unarmed alarms and canonical versions. DATE/UTC/exact named zones, DST, PERIOD additions and exclusions retain existing meanings. Existing active cutoffs, cancelled masters and unsupported source data reject.
+
+Existing whole-second [1970-01-01, 2100-01-01) dates, explicit exclusive endpoints and work/source/zone/native-slot limits remain. Private durable history capacity is separate; pure success reserves no cycle slot. The candidate cannot become an ordinary cutoff-free import baseline or bypass feed/export representability guards.
+
+Repeated pure cancellation/restore-only round trips use the existing restoration helper with each new cancellation version. This confirms pure version advancement and preservation; v7/v11 authenticated services still reject a second durable cancellation. No SQL, generated endpoint/model, JSON checkpoint version, permission, retention, UI, dependency or delivery change is added. The next durable contract must verify actual accepted history, clean state, source authority, receipts, bounded evidence and concurrency. See [actual checks](scaffold-validation.md).
