@@ -222,6 +222,8 @@ The optional module now has a scoped event-subscription implementation under [AD
 
 ## Scheduling
 
+Next proposed batch: [ADR 0117](adr/0117-first-itip-message-profile.md) defines pure PUBLISH/REQUEST/REPLY/CANCEL message validation for one non-recurring event, before recurrence, durable reconciliation and email. Its scope decision is pending; no scheduling runtime is implemented by that document.
+
 - [ ] Implement all selected VEVENT and VFREEBUSY methods from [RFC 5546](rfc/rfc-5546.md), with exact roles/properties, host-verified address/delegate/SENT-BY authority and resource acceptance policy. Imported metadata, DNS checks or feed credentials never authorize scheduling.
 - [ ] Separate protocol UID/SEQUENCE/DTSTAMP/RECURRENCE-ID from app revisions and publication/mail identities. Reconcile updates/replies/cancellations, range/instance changes and counter proposals; deduplicate/reject stale or replayed messages without resurrecting cancelled invitations.
 - [ ] Commit event/state/inbound-ledger/outbound intent atomically and use durable observable retries. Test all methods, MIME/METHOD mismatches, forged/revoked authority, response loops, recipient/input bounds and crash recovery. VTODO methods remain excluded inbound/outbound, including mixed-component rejection without partial processing.
