@@ -3,6 +3,20 @@ part of 'calendar_module.dart';
 T _taskValue<T>(T Function() body) {
   try {
     return body();
+  } on IcalendarSyntaxException catch (e) {
+    throw _failure(
+      e.kind == IcalendarSyntaxError.limitExceeded
+          ? CalendarFailureCode.limitExceeded
+          : CalendarFailureCode.validation,
+    );
+  } on IcalendarComponentException catch (e) {
+    throw _failure(
+      e.kind == IcalendarComponentError.limitExceeded
+          ? CalendarFailureCode.limitExceeded
+          : CalendarFailureCode.validation,
+    );
+  } on IcalendarValueException {
+    throw _failure(CalendarFailureCode.validation);
   } on ArgumentError {
     throw _failure(CalendarFailureCode.validation);
   } on ZoneCoverageException {
@@ -23,6 +37,21 @@ final class _Task {
       data.progress = validateTaskProgress(data.progress);
       data.assignees = validateTaskAssignees(data.assignees);
       validateTaskVersion(data.protocolVersion);
+      if (data.sourceState != null) {
+        data.sourceState = validateTaskSourceState(
+          data.protocolUid,
+          data.sourceState!,
+        );
+        final master = data.sourceState!.master;
+        if (master.content != data.content ||
+            master.progress != data.progress ||
+            master.version != data.protocolVersion) {
+          throw ArgumentError('Task source projection mismatch');
+        }
+      }
+      if (data.importBaseline != null) {
+        validateTaskImportBaseline(data.importBaseline!, data.protocolUid);
+      }
     } catch (_) {
       throw _failure(CalendarFailureCode.unavailable);
     }
@@ -41,6 +70,7 @@ final class _Task {
     protocolVersion: data.protocolVersion,
     updatedAt: data.updatedAt,
     hasRecordedProgress: data.hasRecordedProgress,
+    sourceState: data.sourceState,
   );
 }
 
@@ -61,6 +91,8 @@ extension CalendarTaskOperations on CalendarService {
     CalendarTaskProgress? progress,
     List<CalendarTaskAssignee>? assignees,
     CalendarTaskProtocolVersion? version,
+    CalendarTaskProtocolVersion? occurrenceVersion,
+    CalendarTaskSourceState? sourceState,
     CalendarTaskProgressRequest? change,
     CalendarTaskOccurrenceQuery? occurrenceQuery,
     CalendarTaskOccurrenceProgressRequest? occurrenceChange,
@@ -80,6 +112,8 @@ extension CalendarTaskOperations on CalendarService {
     proposedTaskProgress: progress,
     proposedTaskAssignees: assignees,
     proposedTaskVersion: version,
+    proposedTaskOccurrenceVersion: occurrenceVersion,
+    proposedTaskSourceState: sourceState,
     taskProgressChange: change,
     taskOccurrenceQuery: occurrenceQuery,
     taskOccurrenceProgressChange: occurrenceChange,
@@ -336,6 +370,7 @@ extension CalendarTaskOperations on CalendarService {
       CalendarAuthorizationRequest request(
         CalendarTaskProgress progress, [
         CalendarTaskProtocolVersion? version,
+        CalendarTaskSourceState? sourceState,
       ]) => _tr(
         task.parent,
         op,
@@ -344,6 +379,7 @@ extension CalendarTaskOperations on CalendarService {
         progress: progress,
         assignees: nextAssignees,
         version: version,
+        sourceState: sourceState ?? task.data.sourceState,
         change: change,
         recordedOccurrences: [for (final r in recorded) _taskRecordValue(r)],
       );
@@ -379,31 +415,54 @@ extension CalendarTaskOperations on CalendarService {
               () => changeTaskProgressValue(task.data.progress, change, now),
             );
       final changed =
-          jsonEncode([
-            task.data.content.toJson(),
-            task.data.progress.toJson(),
-            task.data.assignees.map((v) => v.toJson()).toList(),
-          ]) !=
-          jsonEncode([
-            nextContent.toJson(),
-            progress.toJson(),
-            nextAssignees.map((v) => v.toJson()).toList(),
-          ]);
+          nextContent != task.data.content || progress != task.data.progress;
       final version = changed
           ? _taskValue(() => advanceTaskVersion(task.data.protocolVersion, now))
           : task.data.protocolVersion;
+      final sourceState = changed && task.data.sourceState != null
+          ? _taskValue(
+              () => changeTaskSourceMaster(
+                task.data.protocolUid,
+                task.data.sourceState!,
+                nextContent,
+                progress,
+                version,
+                now,
+              ),
+            )
+          : task.data.sourceState;
       await _decide(
         c,
-        [request(progress, version)],
+        [request(progress, version, sourceState)],
         tx,
         CalendarAuthorizationPhase.preliminaryWrite,
       );
-      final decisions = await _final(c, [request(progress, version)], tx);
+      final decisions = await _final(c, [
+        request(progress, version, sourceState),
+      ], tx);
       if (change != null && changed) task.data.hasRecordedProgress = true;
       task.data.content = nextContent;
       task.data.progress = progress;
       task.data.assignees = nextAssignees;
       task.data.protocolVersion = version;
+      task.data.sourceState = sourceState;
+      if (sourceState != null) {
+        final byKey = {
+          for (final o in sourceState.occurrences)
+            taskOriginalKey(o.originalStart!): o,
+        };
+        for (final row in recorded) {
+          final component = byKey[row.originalKey]!;
+          if (row.protocolVersion != component.version) {
+            row.protocolVersion = component.version;
+            await CalendarTaskOccurrenceRecord.db.updateRow(
+              _session,
+              row,
+              transaction: tx,
+            );
+          }
+        }
+      }
       task.data.updatedAt = now;
       task.identity.revision++;
       await CalendarTaskDataRecord.db.updateRow(

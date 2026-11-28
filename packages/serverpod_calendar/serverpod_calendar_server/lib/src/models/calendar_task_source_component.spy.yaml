@@ -1,0 +1,10 @@
+class: CalendarTaskSourceComponent
+serverOnly: true
+immutable: true
+fields:
+  originalStart: CalendarEventTiming?
+  version: CalendarTaskProtocolVersion
+  content: CalendarTaskContent
+  progress: CalendarTaskProgress
+  textParameters: CalendarEventTextParameters?
+  metadata: CalendarTaskSourceMetadata

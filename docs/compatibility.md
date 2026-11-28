@@ -289,3 +289,11 @@ The maintainer selected the timing/composition-first slice and positive opening 
 ## Source-preserving native task progress prerequisite, 2026-10-23
 
 [ADR 0096](adr/0096-source-preserving-native-task-progress.md) and [the progress guide](task-source-progress.md) now preserve independently optional status/percentage/completion in native JSON/API values. Native commands explicitly produce agreed states; read/content edits retain source combinations. Recurring originals without a row use the complete master progress; sparse rows replace it without merging. No imported history is invented. Generated clients and Flutter handle absence explicitly. Full task source metadata/version/baseline storage and authenticated import/export remain separate; this supersedes older mandatory-progress/neutral-master read claims only for this prerequisite.
+
+## Task import/storage boundary, 2026-10-23
+
+[The task import contract](task-import.md) records the confirmed create-only/source-preservation/permission/checkpoint choices. [The source-storage prerequisite](task-source-storage.md) is now implemented under ADR 0098. No authenticated task import/export, original-file archival, native alarm activation or external-client compatibility is established by these documents.
+
+## Source-preserving task storage increment, 2026-10-23
+
+[The storage guide](task-source-storage.md) records the ADR 0098 current source metadata/component-version and private-baseline prerequisite. Source values remain read-only, inert and unarmed; assignment-only edits keep protocol versions unchanged and occurrence progress versions its own component. Native projections must agree with source state, and incompatible edits reject. This supersedes the immediately preceding storage-pending/proposal notes only for the scoped storage increment; task import/export, native metadata editors, alarm runtime and external-client evidence remain separate.

@@ -159,3 +159,11 @@ See [standalone availability wire adaptation](icalendar-availability-adapter.md)
 ## Source-preserving native task progress prerequisite, 2026-10-23
 
 [ADR 0096](adr/0096-source-preserving-native-task-progress.md) and [the progress guide](task-source-progress.md) now preserve independently optional status/percentage/completion in native JSON/API values. Native commands explicitly produce agreed states; read/content edits retain source combinations. Recurring originals without a row use the complete master progress; sparse rows replace it without merging. No imported history is invented. Generated clients and Flutter handle absence explicitly. Full task source metadata/version/baseline storage and authenticated import/export remain separate; this supersedes older mandatory-progress/neutral-master read claims only for this prerequisite.
+
+## Task import contract and source-storage proposal
+
+[ADR 0097](adr/0097-create-only-task-import-contract.md) records create-only import, independent gates/source versions/private baseline and the confirmed unknown prior-progress checkpoint. [ADR 0098](adr/0098-task-source-storage-model.md) and [the storage guide](task-source-storage.md) record the implemented typed source-retention prerequisite. [The import contract](task-import.md) remains distinct from an implemented endpoint; task import/export, native alarm activation and scheduling remain pending.
+
+## Source-preserving task storage increment, 2026-10-23
+
+[The storage guide](task-source-storage.md) records the ADR 0098 current source metadata/component-version and private-baseline prerequisite. Source values remain read-only, inert and unarmed; assignment-only edits keep protocol versions unchanged and occurrence progress versions its own component. Native projections must agree with source state, and incompatible edits reject. This supersedes the immediately preceding storage-pending/proposal notes only for the scoped storage increment; task import/export, native metadata editors, alarm runtime and external-client evidence remain separate.

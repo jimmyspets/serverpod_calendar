@@ -141,6 +141,7 @@ import 'calendar_task_history_entry.dart' as _idhalyap;
 import 'calendar_task_history_page.dart' as _ibsdsx6x;
 import 'calendar_task_history_query.dart' as _i1vdb6de;
 import 'calendar_task_history_record.dart' as _i6c7wo1p;
+import 'calendar_task_import_baseline.dart' as _iqsm27bn;
 import 'calendar_task_occurrence.dart' as _isgg83d3;
 import 'calendar_task_occurrence_preview.dart' as _id9j5e7y;
 import 'calendar_task_occurrence_progress_request.dart' as _irw24ank;
@@ -153,6 +154,16 @@ import 'calendar_task_progress_request.dart' as _in6zlsph;
 import 'calendar_task_protocol_version.dart' as _iz9t6x1i;
 import 'calendar_task_receipt.dart' as _im9usybn;
 import 'calendar_task_record.dart' as _irbiaacf;
+import 'calendar_task_source_alarm.dart' as _i00avof0;
+import 'calendar_task_source_attachment.dart' as _iuzk4pe3;
+import 'calendar_task_source_category_group.dart' as _iic8eifm;
+import 'calendar_task_source_component.dart' as _ivqadd6c;
+import 'calendar_task_source_duration.dart' as _im8khkr9;
+import 'calendar_task_source_metadata.dart' as _i76q6myt;
+import 'calendar_task_source_participant.dart' as _iw6fme2j;
+import 'calendar_task_source_relationship.dart' as _izyrs4yl;
+import 'calendar_task_source_state.dart' as _it1pm24a;
+import 'calendar_task_source_text.dart' as _i9mnuab5;
 import 'calendar_task_status.dart' as _iiahrdev;
 import 'calendar_task_time_kind.dart' as _ijhc2xsq;
 import 'calendar_task_timing.dart' as _i9h8y8lg;
@@ -277,6 +288,7 @@ export 'calendar_task_history_entry.dart';
 export 'calendar_task_history_page.dart';
 export 'calendar_task_history_query.dart';
 export 'calendar_task_history_record.dart';
+export 'calendar_task_import_baseline.dart';
 export 'calendar_task_occurrence.dart';
 export 'calendar_task_occurrence_preview.dart';
 export 'calendar_task_occurrence_progress_request.dart';
@@ -289,6 +301,16 @@ export 'calendar_task_progress_request.dart';
 export 'calendar_task_protocol_version.dart';
 export 'calendar_task_receipt.dart';
 export 'calendar_task_record.dart';
+export 'calendar_task_source_alarm.dart';
+export 'calendar_task_source_attachment.dart';
+export 'calendar_task_source_category_group.dart';
+export 'calendar_task_source_component.dart';
+export 'calendar_task_source_duration.dart';
+export 'calendar_task_source_metadata.dart';
+export 'calendar_task_source_participant.dart';
+export 'calendar_task_source_relationship.dart';
+export 'calendar_task_source_state.dart';
+export 'calendar_task_source_text.dart';
 export 'calendar_task_status.dart';
 export 'calendar_task_time_kind.dart';
 export 'calendar_task_timing.dart';
@@ -1285,6 +1307,18 @@ class Protocol extends _is.DatabaseSerializationManager {
           isNullable: true,
           dartType: 'bool?',
         ),
+        _isp.ColumnDefinition(
+          name: 'sourceState',
+          columnType: _isp.ColumnType.json,
+          isNullable: true,
+          dartType: 'protocol:CalendarTaskSourceState?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'importBaseline',
+          columnType: _isp.ColumnType.json,
+          isNullable: true,
+          dartType: 'protocol:CalendarTaskImportBaseline?',
+        ),
       ],
       foreignKeys: [
         _isp.ForeignKeyDefinition(
@@ -1484,6 +1518,12 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnType: _isp.ColumnType.json,
           isNullable: false,
           dartType: 'protocol:CalendarTaskProgress',
+        ),
+        _isp.ColumnDefinition(
+          name: 'protocolVersion',
+          columnType: _isp.ColumnType.json,
+          isNullable: true,
+          dartType: 'protocol:CalendarTaskProtocolVersion?',
         ),
       ],
       foreignKeys: [
@@ -1912,6 +1952,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _i6c7wo1p.CalendarTaskHistoryRecord) {
       return _i6c7wo1p.CalendarTaskHistoryRecord.fromJson(data) as T;
     }
+    if (t == _iqsm27bn.CalendarTaskImportBaseline) {
+      return _iqsm27bn.CalendarTaskImportBaseline.fromJson(data) as T;
+    }
     if (t == _isgg83d3.CalendarTaskOccurrence) {
       return _isgg83d3.CalendarTaskOccurrence.fromJson(data) as T;
     }
@@ -1948,6 +1991,36 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _irbiaacf.CalendarTaskRecord) {
       return _irbiaacf.CalendarTaskRecord.fromJson(data) as T;
+    }
+    if (t == _i00avof0.CalendarTaskSourceAlarm) {
+      return _i00avof0.CalendarTaskSourceAlarm.fromJson(data) as T;
+    }
+    if (t == _iuzk4pe3.CalendarTaskSourceAttachment) {
+      return _iuzk4pe3.CalendarTaskSourceAttachment.fromJson(data) as T;
+    }
+    if (t == _iic8eifm.CalendarTaskSourceCategoryGroup) {
+      return _iic8eifm.CalendarTaskSourceCategoryGroup.fromJson(data) as T;
+    }
+    if (t == _ivqadd6c.CalendarTaskSourceComponent) {
+      return _ivqadd6c.CalendarTaskSourceComponent.fromJson(data) as T;
+    }
+    if (t == _im8khkr9.CalendarTaskSourceDuration) {
+      return _im8khkr9.CalendarTaskSourceDuration.fromJson(data) as T;
+    }
+    if (t == _i76q6myt.CalendarTaskSourceMetadata) {
+      return _i76q6myt.CalendarTaskSourceMetadata.fromJson(data) as T;
+    }
+    if (t == _iw6fme2j.CalendarTaskSourceParticipant) {
+      return _iw6fme2j.CalendarTaskSourceParticipant.fromJson(data) as T;
+    }
+    if (t == _izyrs4yl.CalendarTaskSourceRelationship) {
+      return _izyrs4yl.CalendarTaskSourceRelationship.fromJson(data) as T;
+    }
+    if (t == _it1pm24a.CalendarTaskSourceState) {
+      return _it1pm24a.CalendarTaskSourceState.fromJson(data) as T;
+    }
+    if (t == _i9mnuab5.CalendarTaskSourceText) {
+      return _i9mnuab5.CalendarTaskSourceText.fromJson(data) as T;
     }
     if (t == _iiahrdev.CalendarTaskStatus) {
       return _iiahrdev.CalendarTaskStatus.fromJson(data) as T;
@@ -2655,6 +2728,12 @@ class Protocol extends _is.DatabaseSerializationManager {
               : null)
           as T;
     }
+    if (t == _is.getType<_iqsm27bn.CalendarTaskImportBaseline?>()) {
+      return (data != null
+              ? _iqsm27bn.CalendarTaskImportBaseline.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _is.getType<_isgg83d3.CalendarTaskOccurrence?>()) {
       return (data != null
               ? _isgg83d3.CalendarTaskOccurrence.fromJson(data)
@@ -2721,6 +2800,66 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _is.getType<_irbiaacf.CalendarTaskRecord?>()) {
       return (data != null ? _irbiaacf.CalendarTaskRecord.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i00avof0.CalendarTaskSourceAlarm?>()) {
+      return (data != null
+              ? _i00avof0.CalendarTaskSourceAlarm.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iuzk4pe3.CalendarTaskSourceAttachment?>()) {
+      return (data != null
+              ? _iuzk4pe3.CalendarTaskSourceAttachment.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iic8eifm.CalendarTaskSourceCategoryGroup?>()) {
+      return (data != null
+              ? _iic8eifm.CalendarTaskSourceCategoryGroup.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ivqadd6c.CalendarTaskSourceComponent?>()) {
+      return (data != null
+              ? _ivqadd6c.CalendarTaskSourceComponent.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_im8khkr9.CalendarTaskSourceDuration?>()) {
+      return (data != null
+              ? _im8khkr9.CalendarTaskSourceDuration.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i76q6myt.CalendarTaskSourceMetadata?>()) {
+      return (data != null
+              ? _i76q6myt.CalendarTaskSourceMetadata.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iw6fme2j.CalendarTaskSourceParticipant?>()) {
+      return (data != null
+              ? _iw6fme2j.CalendarTaskSourceParticipant.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_izyrs4yl.CalendarTaskSourceRelationship?>()) {
+      return (data != null
+              ? _izyrs4yl.CalendarTaskSourceRelationship.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_it1pm24a.CalendarTaskSourceState?>()) {
+      return (data != null
+              ? _it1pm24a.CalendarTaskSourceState.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i9mnuab5.CalendarTaskSourceText?>()) {
+      return (data != null
+              ? _i9mnuab5.CalendarTaskSourceText.fromJson(data)
+              : null)
           as T;
     }
     if (t == _is.getType<_iiahrdev.CalendarTaskStatus?>()) {
@@ -3152,6 +3291,64 @@ class Protocol extends _is.DatabaseSerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_iic8eifm.CalendarTaskSourceCategoryGroup>) {
+      return (data as List)
+              .map(
+                (e) =>
+                    deserialize<_iic8eifm.CalendarTaskSourceCategoryGroup>(e),
+              )
+              .toList()
+          as T;
+    }
+    if (t == List<_i9mnuab5.CalendarTaskSourceText>) {
+      return (data as List)
+              .map((e) => deserialize<_i9mnuab5.CalendarTaskSourceText>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_iw6fme2j.CalendarTaskSourceParticipant>) {
+      return (data as List)
+              .map(
+                (e) => deserialize<_iw6fme2j.CalendarTaskSourceParticipant>(e),
+              )
+              .toList()
+          as T;
+    }
+    if (t == List<_izyrs4yl.CalendarTaskSourceRelationship>) {
+      return (data as List)
+              .map(
+                (e) => deserialize<_izyrs4yl.CalendarTaskSourceRelationship>(e),
+              )
+              .toList()
+          as T;
+    }
+    if (t == List<_iuzk4pe3.CalendarTaskSourceAttachment>) {
+      return (data as List)
+              .map(
+                (e) => deserialize<_iuzk4pe3.CalendarTaskSourceAttachment>(e),
+              )
+              .toList()
+          as T;
+    }
+    if (t == List<_i00avof0.CalendarTaskSourceAlarm>) {
+      return (data as List)
+              .map((e) => deserialize<_i00avof0.CalendarTaskSourceAlarm>(e))
+              .toList()
+          as T;
+    }
+    if (t == Map<String, List<String>>) {
+      return (data as Map).map(
+            (k, v) =>
+                MapEntry(deserialize<String>(k), deserialize<List<String>>(v)),
+          )
+          as T;
+    }
+    if (t == List<_ivqadd6c.CalendarTaskSourceComponent>) {
+      return (data as List)
+              .map((e) => deserialize<_ivqadd6c.CalendarTaskSourceComponent>(e))
+              .toList()
+          as T;
+    }
     if (t == _is.getType<List<_ih5e3u6u.CalendarTaskAssignee>?>()) {
       return (data != null
               ? (data as List)
@@ -3354,6 +3551,7 @@ class Protocol extends _is.DatabaseSerializationManager {
       _ibsdsx6x.CalendarTaskHistoryPage => 'CalendarTaskHistoryPage',
       _i1vdb6de.CalendarTaskHistoryQuery => 'CalendarTaskHistoryQuery',
       _i6c7wo1p.CalendarTaskHistoryRecord => 'CalendarTaskHistoryRecord',
+      _iqsm27bn.CalendarTaskImportBaseline => 'CalendarTaskImportBaseline',
       _isgg83d3.CalendarTaskOccurrence => 'CalendarTaskOccurrence',
       _id9j5e7y.CalendarTaskOccurrencePreview =>
         'CalendarTaskOccurrencePreview',
@@ -3368,6 +3566,19 @@ class Protocol extends _is.DatabaseSerializationManager {
       _iz9t6x1i.CalendarTaskProtocolVersion => 'CalendarTaskProtocolVersion',
       _im9usybn.CalendarTaskReceipt => 'CalendarTaskReceipt',
       _irbiaacf.CalendarTaskRecord => 'CalendarTaskRecord',
+      _i00avof0.CalendarTaskSourceAlarm => 'CalendarTaskSourceAlarm',
+      _iuzk4pe3.CalendarTaskSourceAttachment => 'CalendarTaskSourceAttachment',
+      _iic8eifm.CalendarTaskSourceCategoryGroup =>
+        'CalendarTaskSourceCategoryGroup',
+      _ivqadd6c.CalendarTaskSourceComponent => 'CalendarTaskSourceComponent',
+      _im8khkr9.CalendarTaskSourceDuration => 'CalendarTaskSourceDuration',
+      _i76q6myt.CalendarTaskSourceMetadata => 'CalendarTaskSourceMetadata',
+      _iw6fme2j.CalendarTaskSourceParticipant =>
+        'CalendarTaskSourceParticipant',
+      _izyrs4yl.CalendarTaskSourceRelationship =>
+        'CalendarTaskSourceRelationship',
+      _it1pm24a.CalendarTaskSourceState => 'CalendarTaskSourceState',
+      _i9mnuab5.CalendarTaskSourceText => 'CalendarTaskSourceText',
       _iiahrdev.CalendarTaskStatus => 'CalendarTaskStatus',
       _ijhc2xsq.CalendarTaskTimeKind => 'CalendarTaskTimeKind',
       _i9h8y8lg.CalendarTaskTiming => 'CalendarTaskTiming',
@@ -3625,6 +3836,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarTaskHistoryQuery';
       case _i6c7wo1p.CalendarTaskHistoryRecord():
         return 'CalendarTaskHistoryRecord';
+      case _iqsm27bn.CalendarTaskImportBaseline():
+        return 'CalendarTaskImportBaseline';
       case _isgg83d3.CalendarTaskOccurrence():
         return 'CalendarTaskOccurrence';
       case _id9j5e7y.CalendarTaskOccurrencePreview():
@@ -3649,6 +3862,26 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarTaskReceipt';
       case _irbiaacf.CalendarTaskRecord():
         return 'CalendarTaskRecord';
+      case _i00avof0.CalendarTaskSourceAlarm():
+        return 'CalendarTaskSourceAlarm';
+      case _iuzk4pe3.CalendarTaskSourceAttachment():
+        return 'CalendarTaskSourceAttachment';
+      case _iic8eifm.CalendarTaskSourceCategoryGroup():
+        return 'CalendarTaskSourceCategoryGroup';
+      case _ivqadd6c.CalendarTaskSourceComponent():
+        return 'CalendarTaskSourceComponent';
+      case _im8khkr9.CalendarTaskSourceDuration():
+        return 'CalendarTaskSourceDuration';
+      case _i76q6myt.CalendarTaskSourceMetadata():
+        return 'CalendarTaskSourceMetadata';
+      case _iw6fme2j.CalendarTaskSourceParticipant():
+        return 'CalendarTaskSourceParticipant';
+      case _izyrs4yl.CalendarTaskSourceRelationship():
+        return 'CalendarTaskSourceRelationship';
+      case _it1pm24a.CalendarTaskSourceState():
+        return 'CalendarTaskSourceState';
+      case _i9mnuab5.CalendarTaskSourceText():
+        return 'CalendarTaskSourceText';
       case _iiahrdev.CalendarTaskStatus():
         return 'CalendarTaskStatus';
       case _ijhc2xsq.CalendarTaskTimeKind():
@@ -4089,6 +4322,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (dataClassName == 'CalendarTaskHistoryRecord') {
       return deserialize<_i6c7wo1p.CalendarTaskHistoryRecord>(data['data']);
     }
+    if (dataClassName == 'CalendarTaskImportBaseline') {
+      return deserialize<_iqsm27bn.CalendarTaskImportBaseline>(data['data']);
+    }
     if (dataClassName == 'CalendarTaskOccurrence') {
       return deserialize<_isgg83d3.CalendarTaskOccurrence>(data['data']);
     }
@@ -4126,6 +4362,40 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'CalendarTaskRecord') {
       return deserialize<_irbiaacf.CalendarTaskRecord>(data['data']);
+    }
+    if (dataClassName == 'CalendarTaskSourceAlarm') {
+      return deserialize<_i00avof0.CalendarTaskSourceAlarm>(data['data']);
+    }
+    if (dataClassName == 'CalendarTaskSourceAttachment') {
+      return deserialize<_iuzk4pe3.CalendarTaskSourceAttachment>(data['data']);
+    }
+    if (dataClassName == 'CalendarTaskSourceCategoryGroup') {
+      return deserialize<_iic8eifm.CalendarTaskSourceCategoryGroup>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarTaskSourceComponent') {
+      return deserialize<_ivqadd6c.CalendarTaskSourceComponent>(data['data']);
+    }
+    if (dataClassName == 'CalendarTaskSourceDuration') {
+      return deserialize<_im8khkr9.CalendarTaskSourceDuration>(data['data']);
+    }
+    if (dataClassName == 'CalendarTaskSourceMetadata') {
+      return deserialize<_i76q6myt.CalendarTaskSourceMetadata>(data['data']);
+    }
+    if (dataClassName == 'CalendarTaskSourceParticipant') {
+      return deserialize<_iw6fme2j.CalendarTaskSourceParticipant>(data['data']);
+    }
+    if (dataClassName == 'CalendarTaskSourceRelationship') {
+      return deserialize<_izyrs4yl.CalendarTaskSourceRelationship>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarTaskSourceState') {
+      return deserialize<_it1pm24a.CalendarTaskSourceState>(data['data']);
+    }
+    if (dataClassName == 'CalendarTaskSourceText') {
+      return deserialize<_i9mnuab5.CalendarTaskSourceText>(data['data']);
     }
     if (dataClassName == 'CalendarTaskStatus') {
       return deserialize<_iiahrdev.CalendarTaskStatus>(data['data']);

@@ -524,3 +524,15 @@ Generated additions are `CalendarEventTextParameters`, `CalendarEventProtocolVer
 ## Source-preserving native task progress prerequisite, 2026-10-23
 
 [ADR 0096](adr/0096-source-preserving-native-task-progress.md) and [the progress guide](task-source-progress.md) now preserve independently optional status/percentage/completion in native JSON/API values. Native commands explicitly produce agreed states; read/content edits retain source combinations. Recurring originals without a row use the complete master progress; sparse rows replace it without merging. No imported history is invented. Generated clients and Flutter handle absence explicitly. Full task source metadata/version/baseline storage and authenticated import/export remain separate; this supersedes older mandatory-progress/neutral-master read claims only for this prerequisite.
+
+## Create-only task import model contract
+
+[ADR 0097](adr/0097-create-only-task-import-contract.md) confirms create-only destination UID conflicts, separate import/create/progress gates, independent source component versions and a private active-row baseline. Request/receipt/source-storage DTOs remain proposed; the [contract](task-import.md) is not an implemented endpoint. Full decoded source storage must precede importing it.
+
+## Task source storage model
+
+[ADR 0098](adr/0098-task-source-storage-model.md) now implements structured immutable current metadata, signed alarm durations, per-original component source state/versions and a separate private versioned baseline. The [storage guide](task-source-storage.md) records the scoped prerequisite; authenticated task import/export and richer native editors remain separate. Imported non-recurring tasks retain unknown prior progress; neutral source fields do not authorize recurrence conversion. Source metadata never becomes host assignments, armed alarms or historical transitions. Complete DTO fields, retention/version rules, limits and validation gates are recorded in the ADR before changing table/model sources.
+
+## Source-preserving task storage increment, 2026-10-23
+
+[The storage guide](task-source-storage.md) records the ADR 0098 current source metadata/component-version and private-baseline prerequisite. Source values remain read-only, inert and unarmed; assignment-only edits keep protocol versions unchanged and occurrence progress versions its own component. Native projections must agree with source state, and incompatible edits reject. This supersedes the immediately preceding storage-pending/proposal notes only for the scoped storage increment; task import/export, native metadata editors, alarm runtime and external-client evidence remain separate.

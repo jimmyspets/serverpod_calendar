@@ -1,0 +1,7 @@
+class: CalendarTaskSourceAttachment
+serverOnly: true
+immutable: true
+fields:
+  uri: String
+  mediaType: String?
+  explicitUri: bool

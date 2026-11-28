@@ -25,7 +25,24 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
           throw ArgumentError('Stored identity mismatch');
         }
         validateTaskProgress(row.progress);
+        if (row.protocolVersion != null) {
+          validateTaskVersion(row.protocolVersion!);
+        }
       } catch (_) {
+        throw _failure(CalendarFailureCode.unavailable);
+      }
+    }
+    if (task.data.sourceState != null) {
+      final components = {
+        for (final o in task.data.sourceState!.occurrences)
+          taskOriginalKey(o.originalStart!): o,
+      };
+      if (components.length != rows.length ||
+          rows.any(
+            (r) =>
+                components[r.originalKey]?.progress != r.progress ||
+                components[r.originalKey]?.version != r.protocolVersion,
+          )) {
         throw _failure(CalendarFailureCode.unavailable);
       }
     }
@@ -147,6 +164,7 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
       CalendarAuthorizationRequest request(
         CalendarTaskProgress after, [
         CalendarTaskProtocolVersion? version,
+        CalendarTaskSourceState? sourceState,
       ]) => _tr(
         task.parent,
         CalendarPermission.changeTaskProgress,
@@ -163,7 +181,9 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
         content: task.data.content,
         progress: task.data.progress,
         assignees: task.data.assignees,
-        version: version,
+        version: task.data.protocolVersion,
+        occurrenceVersion: version ?? row?.protocolVersion,
+        sourceState: sourceState ?? task.data.sourceState,
       );
       await _decide(
         c,
@@ -193,15 +213,39 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
         throw _failure(CalendarFailureCode.limitExceeded);
       }
       final version = changed
-          ? _taskValue(() => advanceTaskVersion(task.data.protocolVersion, now))
-          : task.data.protocolVersion;
+          ? _taskValue(
+              () => row == null
+                  ? taskOccurrenceInitialVersion(now)
+                  : advanceTaskVersion(
+                      row.protocolVersion ??
+                          taskOccurrenceInitialVersion(
+                            task.data.updatedAt,
+                            legacy: true,
+                          ),
+                      now,
+                    ),
+            )
+          : row?.protocolVersion;
+      final sourceState = changed && task.data.sourceState != null
+          ? _taskValue(
+              () => changeTaskSourceOccurrence(
+                task.data.protocolUid,
+                task.data.sourceState!,
+                input.originalStart,
+                after,
+                version!,
+              ),
+            )
+          : task.data.sourceState;
       await _decide(
         c,
-        [request(after, version)],
+        [request(after, version, sourceState)],
         tx,
         CalendarAuthorizationPhase.preliminaryWrite,
       );
-      final decisions = await _final(c, [request(after, version)], tx);
+      final decisions = await _final(c, [
+        request(after, version, sourceState),
+      ], tx);
       task.identity.revision++;
       if (changed) {
         if (row == null) {
@@ -212,11 +256,13 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
               originalKey: key,
               originalStart: input.originalStart,
               progress: after,
+              protocolVersion: version,
             ),
             transaction: tx,
           );
         } else {
           row.progress = after;
+          row.protocolVersion = version;
           await CalendarTaskOccurrenceRecord.db.updateRow(
             _session,
             row,
@@ -239,7 +285,7 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
         );
       }
       task.data.updatedAt = now;
-      task.data.protocolVersion = version;
+      task.data.sourceState = sourceState;
       await CalendarTaskDataRecord.db.updateRow(
         _session,
         task.data,

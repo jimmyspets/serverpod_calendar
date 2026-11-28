@@ -1,0 +1,13 @@
+class: CalendarTaskSourceAlarm
+serverOnly: true
+immutable: true
+fields:
+  description: CalendarTaskSourceText
+  relativeDuration: CalendarTaskSourceDuration?
+  absoluteUtc: DateTime?
+  related: String?
+  uid: String?
+  acknowledged: DateTime?
+  repeat: int?
+  repeatInterval: CalendarTaskSourceDuration?
+  snoozeTargetUid: String?

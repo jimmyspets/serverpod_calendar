@@ -15,6 +15,7 @@ import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_task_progress.dart' as _ikcsq95s;
+import 'calendar_task_protocol_version.dart' as _iz9t6x1i;
 
 abstract class CalendarTaskOccurrenceRecord
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
@@ -24,6 +25,7 @@ abstract class CalendarTaskOccurrenceRecord
     required this.originalKey,
     required this.originalStart,
     required this.progress,
+    this.protocolVersion,
   });
 
   factory CalendarTaskOccurrenceRecord({
@@ -32,6 +34,7 @@ abstract class CalendarTaskOccurrenceRecord
     required String originalKey,
     required _ieswiaty.CalendarEventTiming originalStart,
     required _ikcsq95s.CalendarTaskProgress progress,
+    _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion,
   }) = _CalendarTaskOccurrenceRecordImpl;
 
   factory CalendarTaskOccurrenceRecord.fromJson(
@@ -49,6 +52,12 @@ abstract class CalendarTaskOccurrenceRecord
           .deserialize<_ikcsq95s.CalendarTaskProgress>(
             jsonSerialization['progress'],
           ),
+      protocolVersion: jsonSerialization['protocolVersion'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_iz9t6x1i.CalendarTaskProtocolVersion>(
+                  jsonSerialization['protocolVersion'],
+                ),
     );
   }
 
@@ -67,6 +76,8 @@ abstract class CalendarTaskOccurrenceRecord
 
   _ikcsq95s.CalendarTaskProgress progress;
 
+  _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion;
+
   @override
   _is.Table<int?> get table => t;
 
@@ -79,6 +90,7 @@ abstract class CalendarTaskOccurrenceRecord
     String? originalKey,
     _ieswiaty.CalendarEventTiming? originalStart,
     _ikcsq95s.CalendarTaskProgress? progress,
+    _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -89,6 +101,7 @@ abstract class CalendarTaskOccurrenceRecord
       'originalKey': originalKey,
       'originalStart': originalStart.toJson(),
       'progress': progress.toJson(),
+      if (protocolVersion != null) 'protocolVersion': protocolVersion?.toJson(),
     };
   }
 
@@ -134,12 +147,14 @@ class _CalendarTaskOccurrenceRecordImpl extends CalendarTaskOccurrenceRecord {
     required String originalKey,
     required _ieswiaty.CalendarEventTiming originalStart,
     required _ikcsq95s.CalendarTaskProgress progress,
+    _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion,
   }) : super._(
          id: id,
          taskId: taskId,
          originalKey: originalKey,
          originalStart: originalStart,
          progress: progress,
+         protocolVersion: protocolVersion,
        );
 
   /// Returns a shallow copy of this [CalendarTaskOccurrenceRecord]
@@ -152,6 +167,7 @@ class _CalendarTaskOccurrenceRecordImpl extends CalendarTaskOccurrenceRecord {
     String? originalKey,
     _ieswiaty.CalendarEventTiming? originalStart,
     _ikcsq95s.CalendarTaskProgress? progress,
+    Object? protocolVersion = _Undefined,
   }) {
     return CalendarTaskOccurrenceRecord(
       id: id is int? ? id : this.id,
@@ -159,6 +175,9 @@ class _CalendarTaskOccurrenceRecordImpl extends CalendarTaskOccurrenceRecord {
       originalKey: originalKey ?? this.originalKey,
       originalStart: originalStart ?? this.originalStart.copyWith(),
       progress: progress ?? this.progress.copyWith(),
+      protocolVersion: protocolVersion is _iz9t6x1i.CalendarTaskProtocolVersion?
+          ? protocolVersion
+          : this.protocolVersion?.copyWith(),
     );
   }
 }
@@ -192,6 +211,16 @@ class CalendarTaskOccurrenceRecordUpdateTable
     table.progress,
     value,
   );
+
+  _is.ColumnValue<
+    _iz9t6x1i.CalendarTaskProtocolVersion,
+    _iz9t6x1i.CalendarTaskProtocolVersion
+  >
+  protocolVersion(_iz9t6x1i.CalendarTaskProtocolVersion? value) =>
+      _is.ColumnValue(
+        table.protocolVersion,
+        value,
+      );
 }
 
 class CalendarTaskOccurrenceRecordTable extends _is.Table<int?> {
@@ -214,6 +243,11 @@ class CalendarTaskOccurrenceRecordTable extends _is.Table<int?> {
       'progress',
       this,
     );
+    protocolVersion =
+        _is.ColumnSerializable<_iz9t6x1i.CalendarTaskProtocolVersion>(
+          'protocolVersion',
+          this,
+        );
   }
 
   late final CalendarTaskOccurrenceRecordUpdateTable updateTable;
@@ -227,6 +261,9 @@ class CalendarTaskOccurrenceRecordTable extends _is.Table<int?> {
 
   late final _is.ColumnSerializable<_ikcsq95s.CalendarTaskProgress> progress;
 
+  late final _is.ColumnSerializable<_iz9t6x1i.CalendarTaskProtocolVersion>
+  protocolVersion;
+
   @override
   List<_is.Column> get columns => [
     id,
@@ -234,6 +271,7 @@ class CalendarTaskOccurrenceRecordTable extends _is.Table<int?> {
     originalKey,
     originalStart,
     progress,
+    protocolVersion,
   ];
 }
 

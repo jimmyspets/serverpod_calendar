@@ -1905,6 +1905,14 @@ Future<void> taskSmoke(List<Client> clients) async {
         ],
       ),
     );
+    check(
+      (await tasks.getTask(
+            task.taskId,
+            cal.CalendarTaskFieldGroup.values,
+          )).protocolVersion ==
+          first.protocolVersion,
+      'Assignment-only edits preserve protocol version across hosts',
+    );
     await rejects(
       () => tasks.changeAssignments(
         cal.CalendarTaskAssignmentsRequest(
@@ -2071,6 +2079,7 @@ Future<void> taskSmoke(List<Client> clients) async {
           23,
       'Task nominal day through DST across hosts',
     );
+    final seriesVersion = (await read(series.taskId)).protocolVersion;
     await tasks.changeOccurrenceProgress(
       cal.CalendarTaskOccurrenceProgressRequest(
         taskId: series.taskId,
@@ -2079,6 +2088,11 @@ Future<void> taskSmoke(List<Client> clients) async {
         action: cal.CalendarTaskProgressAction.complete,
       ),
     );
+    check(
+      (await read(series.taskId)).protocolVersion == seriesVersion,
+      'Occurrence progress leaves master protocol version unchanged across hosts',
+    );
+
     final observed = await remote.previewOccurrences(preview(2));
     check(
       observed.occurrences.first.progress.status ==

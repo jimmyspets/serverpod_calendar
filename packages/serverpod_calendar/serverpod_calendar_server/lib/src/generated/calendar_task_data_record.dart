@@ -15,8 +15,10 @@ import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'calendar_task_assignee.dart' as _ih5e3u6u;
 import 'calendar_task_content.dart' as _if7nbvl8;
+import 'calendar_task_import_baseline.dart' as _iqsm27bn;
 import 'calendar_task_progress.dart' as _ikcsq95s;
 import 'calendar_task_protocol_version.dart' as _iz9t6x1i;
+import 'calendar_task_source_state.dart' as _it1pm24a;
 
 abstract class CalendarTaskDataRecord
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
@@ -33,6 +35,8 @@ abstract class CalendarTaskDataRecord
     required this.createdAt,
     required this.updatedAt,
     this.hasRecordedProgress,
+    this.sourceState,
+    this.importBaseline,
   });
 
   factory CalendarTaskDataRecord({
@@ -48,6 +52,8 @@ abstract class CalendarTaskDataRecord
     required DateTime createdAt,
     required DateTime updatedAt,
     bool? hasRecordedProgress,
+    _it1pm24a.CalendarTaskSourceState? sourceState,
+    _iqsm27bn.CalendarTaskImportBaseline? importBaseline,
   }) = _CalendarTaskDataRecordImpl;
 
   factory CalendarTaskDataRecord.fromJson(
@@ -87,6 +93,17 @@ abstract class CalendarTaskDataRecord
           : _is.BoolJsonExtension.fromJson(
               jsonSerialization['hasRecordedProgress'],
             ),
+      sourceState: jsonSerialization['sourceState'] == null
+          ? null
+          : _ix00hwbf.Protocol().deserialize<_it1pm24a.CalendarTaskSourceState>(
+              jsonSerialization['sourceState'],
+            ),
+      importBaseline: jsonSerialization['importBaseline'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_iqsm27bn.CalendarTaskImportBaseline>(
+                  jsonSerialization['importBaseline'],
+                ),
     );
   }
 
@@ -119,6 +136,10 @@ abstract class CalendarTaskDataRecord
 
   bool? hasRecordedProgress;
 
+  _it1pm24a.CalendarTaskSourceState? sourceState;
+
+  _iqsm27bn.CalendarTaskImportBaseline? importBaseline;
+
   @override
   _is.Table<int?> get table => t;
 
@@ -138,6 +159,8 @@ abstract class CalendarTaskDataRecord
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? hasRecordedProgress,
+    _it1pm24a.CalendarTaskSourceState? sourceState,
+    _iqsm27bn.CalendarTaskImportBaseline? importBaseline,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -156,6 +179,8 @@ abstract class CalendarTaskDataRecord
       'updatedAt': updatedAt.toJson(),
       if (hasRecordedProgress != null)
         'hasRecordedProgress': hasRecordedProgress,
+      if (sourceState != null) 'sourceState': sourceState?.toJson(),
+      if (importBaseline != null) 'importBaseline': importBaseline?.toJson(),
     };
   }
 
@@ -208,6 +233,8 @@ class _CalendarTaskDataRecordImpl extends CalendarTaskDataRecord {
     required DateTime createdAt,
     required DateTime updatedAt,
     bool? hasRecordedProgress,
+    _it1pm24a.CalendarTaskSourceState? sourceState,
+    _iqsm27bn.CalendarTaskImportBaseline? importBaseline,
   }) : super._(
          id: id,
          taskId: taskId,
@@ -221,6 +248,8 @@ class _CalendarTaskDataRecordImpl extends CalendarTaskDataRecord {
          createdAt: createdAt,
          updatedAt: updatedAt,
          hasRecordedProgress: hasRecordedProgress,
+         sourceState: sourceState,
+         importBaseline: importBaseline,
        );
 
   /// Returns a shallow copy of this [CalendarTaskDataRecord]
@@ -240,6 +269,8 @@ class _CalendarTaskDataRecordImpl extends CalendarTaskDataRecord {
     DateTime? createdAt,
     DateTime? updatedAt,
     Object? hasRecordedProgress = _Undefined,
+    Object? sourceState = _Undefined,
+    Object? importBaseline = _Undefined,
   }) {
     return CalendarTaskDataRecord(
       id: id is int? ? id : this.id,
@@ -257,6 +288,12 @@ class _CalendarTaskDataRecordImpl extends CalendarTaskDataRecord {
       hasRecordedProgress: hasRecordedProgress is bool?
           ? hasRecordedProgress
           : this.hasRecordedProgress,
+      sourceState: sourceState is _it1pm24a.CalendarTaskSourceState?
+          ? sourceState
+          : this.sourceState?.copyWith(),
+      importBaseline: importBaseline is _iqsm27bn.CalendarTaskImportBaseline?
+          ? importBaseline
+          : this.importBaseline?.copyWith(),
     );
   }
 }
@@ -339,6 +376,25 @@ class CalendarTaskDataRecordUpdateTable
         table.hasRecordedProgress,
         value,
       );
+
+  _is.ColumnValue<
+    _it1pm24a.CalendarTaskSourceState,
+    _it1pm24a.CalendarTaskSourceState
+  >
+  sourceState(_it1pm24a.CalendarTaskSourceState? value) => _is.ColumnValue(
+    table.sourceState,
+    value,
+  );
+
+  _is.ColumnValue<
+    _iqsm27bn.CalendarTaskImportBaseline,
+    _iqsm27bn.CalendarTaskImportBaseline
+  >
+  importBaseline(_iqsm27bn.CalendarTaskImportBaseline? value) =>
+      _is.ColumnValue(
+        table.importBaseline,
+        value,
+      );
 }
 
 class CalendarTaskDataRecordTable extends _is.Table<int?> {
@@ -390,6 +446,15 @@ class CalendarTaskDataRecordTable extends _is.Table<int?> {
       'hasRecordedProgress',
       this,
     );
+    sourceState = _is.ColumnSerializable<_it1pm24a.CalendarTaskSourceState>(
+      'sourceState',
+      this,
+    );
+    importBaseline =
+        _is.ColumnSerializable<_iqsm27bn.CalendarTaskImportBaseline>(
+          'importBaseline',
+          this,
+        );
   }
 
   late final CalendarTaskDataRecordUpdateTable updateTable;
@@ -418,6 +483,12 @@ class CalendarTaskDataRecordTable extends _is.Table<int?> {
 
   late final _is.ColumnBool hasRecordedProgress;
 
+  late final _is.ColumnSerializable<_it1pm24a.CalendarTaskSourceState>
+  sourceState;
+
+  late final _is.ColumnSerializable<_iqsm27bn.CalendarTaskImportBaseline>
+  importBaseline;
+
   @override
   List<_is.Column> get columns => [
     id,
@@ -432,6 +503,8 @@ class CalendarTaskDataRecordTable extends _is.Table<int?> {
     createdAt,
     updatedAt,
     hasRecordedProgress,
+    sourceState,
+    importBaseline,
   ];
 }
 

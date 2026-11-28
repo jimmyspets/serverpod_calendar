@@ -1,0 +1,6 @@
+class: CalendarTaskSourceCategoryGroup
+serverOnly: true
+immutable: true
+fields:
+  values: List<String>
+  language: String?

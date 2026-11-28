@@ -1,0 +1,67 @@
+{
+  "__className__": "serverpod.DatabaseMigration",
+  "actions": [
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "serverpod_calendar_task_data",
+        "schema": "public",
+        "addColumns": [
+          {
+            "__className__": "serverpod.ColumnDefinition",
+            "name": "sourceState",
+            "fieldName": "sourceState",
+            "columnType": 8,
+            "isNullable": true,
+            "dartType": "protocol:CalendarTaskSourceState?"
+          },
+          {
+            "__className__": "serverpod.ColumnDefinition",
+            "name": "importBaseline",
+            "fieldName": "importBaseline",
+            "columnType": 8,
+            "isNullable": true,
+            "dartType": "protocol:CalendarTaskImportBaseline?"
+          }
+        ],
+        "deleteColumns": [],
+        "modifyColumns": [],
+        "addIndexes": [],
+        "deleteIndexes": [],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": []
+      }
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "serverpod_calendar_task_occurrence",
+        "schema": "public",
+        "addColumns": [
+          {
+            "__className__": "serverpod.ColumnDefinition",
+            "name": "protocolVersion",
+            "fieldName": "protocolVersion",
+            "columnType": 8,
+            "isNullable": true,
+            "dartType": "protocol:CalendarTaskProtocolVersion?"
+          }
+        ],
+        "deleteColumns": [],
+        "modifyColumns": [],
+        "addIndexes": [],
+        "deleteIndexes": [],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": []
+      }
+    }
+  ],
+  "warnings": [],
+  "migrationApiVersion": 1
+}
