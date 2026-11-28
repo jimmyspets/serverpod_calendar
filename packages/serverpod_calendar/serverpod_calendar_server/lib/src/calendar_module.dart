@@ -4,11 +4,14 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:serverpod/serverpod.dart';
+import 'package:crypto/crypto.dart';
 import 'package:serverpod_calendar_core/serverpod_calendar_core.dart';
 import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 
 import 'calendar_authorization.dart';
 import 'alarm_values.dart';
+import 'alarm_runtime.dart';
+import 'alarm_work_store.dart';
 import 'generated/protocol.dart';
 import 'native_calendar_name.dart';
 import 'event_values.dart';
@@ -27,6 +30,7 @@ import 'availability_wire_output.dart';
 import 'availability_import_baseline.dart';
 
 part 'calendar_alarms.dart';
+part 'calendar_alarm_worker.dart';
 part 'calendar_events.dart';
 part 'calendar_event_occurrence_content.dart';
 part 'calendar_tasks.dart';
@@ -52,6 +56,7 @@ abstract final class CalendarModule {
     Serverpod pod, {
     required CalendarHostPolicy policy,
     required CalendarModuleOptions options,
+    CalendarAlarmRuntime? alarms,
     List<CalendarDependencyProvider> dependencies = const [],
     List<CalendarAvailabilityExtensionRegistration> availabilityExtensions =
         const [],
@@ -79,6 +84,14 @@ abstract final class CalendarModule {
         policy.guarantee != CalendarAuthorizationGuarantee.coordinated) {
       throw ArgumentError('Host cannot supply required coordinated guarantee');
     }
+    if (alarms != null &&
+        options.requiredWriteGuarantee ==
+            CalendarAuthorizationGuarantee.coordinated &&
+        alarms.policy.guarantee != CalendarAuthorizationGuarantee.coordinated) {
+      throw ArgumentError(
+        'Alarm policy cannot supply required coordinated guarantee',
+      );
+    }
     final registry = <String, CalendarAvailabilityExtensionRegistration>{};
     if (availabilityExtensions.length > 32) {
       throw ArgumentError('Too many extension registrations');
@@ -96,7 +109,28 @@ abstract final class CalendarModule {
       options,
       List.unmodifiable(dependencies),
       Map.unmodifiable(registry),
+      alarms,
     );
+  }
+
+  /// Trusted server maintenance entry point; never a client endpoint.
+  static Future<void> runAlarmMaintenance(Session session) async {
+    final runtime = _installed[session.serverpod];
+    if (runtime?.alarms == null) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
+    await _AlarmWorker(CalendarService._(session, runtime!)).run();
+  }
+
+  /// Delivery modules revalidate stored source references before each retry.
+  static Future<bool> validateAlarmDelivery(
+    Session session,
+    CalendarAlarmDeliveryIntent intent,
+  ) async {
+    final runtime = _installed[session.serverpod];
+    if (runtime?.alarms == null) return false;
+    return _AlarmWorker(CalendarService._(session, runtime!))
+        .validateDelivery(intent);
   }
 
   static CalendarService service(Session session) {
@@ -130,9 +164,11 @@ final class _Runtime {
     this.options,
     this.dependencies,
     this.availabilityExtensions,
+    this.alarms,
   );
   final Map<String, CalendarAvailabilityExtensionRegistration>
   availabilityExtensions;
+  final CalendarAlarmRuntime? alarms;
   final CalendarHostPolicy policy;
   final CalendarModuleOptions options;
   final List<CalendarDependencyProvider> dependencies;
@@ -277,6 +313,15 @@ final class CalendarService {
     if (scope.revision >= _maxRevision) {
       throw _failure(CalendarFailureCode.limitExceeded);
     }
+    // A shared write records durable wake-up/invalidation in this transaction.
+    // Private definitions never block it through recipient policy or list caps.
+    await _session.db.unsafeExecute(
+      'UPDATE serverpod_calendar_alarm_plan SET dirty=true, '
+      '"nextScanAt"=clock_timestamp(), "leaseOwner"=NULL, "leaseUntil"=NULL, '
+      '"leaseFence"=CASE WHEN "leaseFence"<9007199254740991 THEN "leaseFence"+1 ELSE "leaseFence" END WHERE "scopeKey"=@scope',
+      parameters: QueryParameters.named({'scope': scope.scopeKey}),
+      transaction: tx,
+    );
     scope.revision++;
     await CalendarScopeRecord.db.updateRow(_session, scope, transaction: tx);
   }

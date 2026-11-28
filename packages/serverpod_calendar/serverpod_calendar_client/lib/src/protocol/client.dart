@@ -183,6 +183,22 @@ class EndpointCalendarAlarm extends _isc.EndpointRef {
     {'request': request},
   );
 
+  _ida.Future<_i39h9w7l.CalendarAlarmView?> setArmed(
+    _ihgvrd5l.CalendarAlarmParent parent,
+    _isc.UuidValue alarmId,
+    int expectedRevision,
+    bool armed,
+  ) => caller.callServerEndpoint<_i39h9w7l.CalendarAlarmView?>(
+    'serverpod_calendar.calendarAlarm',
+    'setArmed',
+    {
+      'parent': parent,
+      'alarmId': alarmId,
+      'expectedRevision': expectedRevision,
+      'armed': armed,
+    },
+  );
+
   _ida.Future<void> delete(
     _ihgvrd5l.CalendarAlarmParent parent,
     _isc.UuidValue alarmId,

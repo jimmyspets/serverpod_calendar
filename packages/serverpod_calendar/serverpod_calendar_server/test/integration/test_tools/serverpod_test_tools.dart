@@ -443,6 +443,45 @@ class _CalendarAlarmEndpoint {
     });
   }
 
+  _ida.Future<_izvxtiv8.CalendarAlarmView?> setArmed(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i3f0y8iu.CalendarAlarmParent parent,
+    _is.UuidValue alarmId,
+    int expectedRevision,
+    bool armed,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarAlarm',
+            method: 'setArmed',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarAlarm',
+          methodName: 'setArmed',
+          parameters: _ist.testObjectToJson({
+            'parent': parent,
+            'alarmId': alarmId,
+            'expectedRevision': expectedRevision,
+            'armed': armed,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_izvxtiv8.CalendarAlarmView?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _ida.Future<void> delete(
     _ist.TestSessionBuilder sessionBuilder,
     _i3f0y8iu.CalendarAlarmParent parent,

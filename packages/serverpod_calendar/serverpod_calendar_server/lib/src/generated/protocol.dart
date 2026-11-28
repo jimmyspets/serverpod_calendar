@@ -27,12 +27,18 @@ import 'package:serverpod_calendar_server/src/generated/calendar_task_field_grou
     as _ik0gz7r1;
 import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
     as _ik9lwgjh;
+import 'calendar_alarm_action_record.dart' as _ipt2851n;
 import 'calendar_alarm_anchor.dart' as _iv448ru6;
 import 'calendar_alarm_create_request.dart' as _iu47syqa;
 import 'calendar_alarm_definition.dart' as _irif99jb;
 import 'calendar_alarm_duration.dart' as _i1qnv8jf;
+import 'calendar_alarm_firing_kind.dart' as _i8okwxwj;
+import 'calendar_alarm_firing_record.dart' as _ihgh57kq;
+import 'calendar_alarm_firing_state.dart' as _ihos0r46;
 import 'calendar_alarm_parent.dart' as _iiyuulin;
 import 'calendar_alarm_parent_kind.dart' as _ig3zti62;
+import 'calendar_alarm_plan_record.dart' as _iid4j1lu;
+import 'calendar_alarm_plan_status.dart' as _irtomk7p;
 import 'calendar_alarm_record.dart' as _iralscit;
 import 'calendar_alarm_update_request.dart' as _im2lo7e9;
 import 'calendar_alarm_view.dart' as _ie7u1nxa;
@@ -212,12 +218,18 @@ import 'calendar_task_view.dart' as _ii3yrr21;
 import 'calendar_text_parameters.dart' as _iffxqqc7;
 import 'calendar_text_variant.dart' as _itcy22f3;
 import 'calendar_view.dart' as _ivspd2q7;
+export 'calendar_alarm_action_record.dart';
 export 'calendar_alarm_anchor.dart';
 export 'calendar_alarm_create_request.dart';
 export 'calendar_alarm_definition.dart';
 export 'calendar_alarm_duration.dart';
+export 'calendar_alarm_firing_kind.dart';
+export 'calendar_alarm_firing_record.dart';
+export 'calendar_alarm_firing_state.dart';
 export 'calendar_alarm_parent.dart';
 export 'calendar_alarm_parent_kind.dart';
+export 'calendar_alarm_plan_record.dart';
+export 'calendar_alarm_plan_status.dart';
 export 'calendar_alarm_record.dart';
 export 'calendar_alarm_update_request.dart';
 export 'calendar_alarm_view.dart';
@@ -464,6 +476,20 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'int',
         ),
         _isp.ColumnDefinition(
+          name: 'armed',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isp.ColumnDefinition(
+          name: 'generation',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '1',
+        ),
+        _isp.ColumnDefinition(
           name: 'definition',
           columnType: _isp.ColumnType.json,
           isNullable: false,
@@ -518,6 +544,483 @@ class Protocol extends _is.DatabaseSerializationManager {
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
               definition: 'recipientKey',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'serverpod_calendar_alarm_action',
+      dartName: 'CalendarAlarmActionRecord',
+      schema: 'public',
+      module: 'serverpod_calendar',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'alarmId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'originalKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'revision',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'acknowledgedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'dismissedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'pendingSnoozeAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'snoozeRevision',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_alarm_action_fk_0',
+          columns: ['alarmId'],
+          referenceTable: 'serverpod_calendar_alarm',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_alarm_action_identity_unique',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'alarmId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'originalKey',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'serverpod_calendar_alarm_firing',
+      dartName: 'CalendarAlarmFiringRecord',
+      schema: 'public',
+      module: 'serverpod_calendar',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'alarmId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'generation',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'originalKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'kind',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:CalendarAlarmFiringKind',
+        ),
+        _isp.ColumnDefinition(
+          name: 'repeatOrdinal',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'snoozeRevision',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'dueAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'expiresAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'state',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:CalendarAlarmFiringState',
+          columnDefault: '\'pending\'',
+        ),
+        _isp.ColumnDefinition(
+          name: 'reason',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'nextAttemptAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'attemptCount',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'acceptedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'terminalAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseOwner',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseUntil',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseFence',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_alarm_firing_fk_0',
+          columns: ['alarmId'],
+          referenceTable: 'serverpod_calendar_alarm',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_alarm_firing_identity_unique',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'alarmId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'generation',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'originalKey',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'kind',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'repeatOrdinal',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'snoozeRevision',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_alarm_firing_due_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'state',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'nextAttemptAt',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'leaseUntil',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_alarm_firing_terminal_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'terminalAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'serverpod_calendar_alarm_plan',
+      dartName: 'CalendarAlarmPlanRecord',
+      schema: 'public',
+      module: 'serverpod_calendar',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'alarmId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'scopeKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'generation',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'timingDigest',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'windowStart',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'windowEnd',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'status',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:CalendarAlarmPlanStatus',
+          columnDefault: '\'pending\'',
+        ),
+        _isp.ColumnDefinition(
+          name: 'reason',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'dirty',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'true',
+        ),
+        _isp.ColumnDefinition(
+          name: 'nextScanAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'lastCompletedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseOwner',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseUntil',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'leaseFence',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'serverpod_calendar_alarm_plan_fk_0',
+          columns: ['alarmId'],
+          referenceTable: 'serverpod_calendar_alarm',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_alarm_plan_alarm_unique',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'alarmId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_alarm_plan_due_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'nextScanAt',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'leaseUntil',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'calendar_alarm_plan_scope_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'scopeKey',
             ),
           ],
           type: 'btree',
@@ -1813,6 +2316,9 @@ class Protocol extends _is.DatabaseSerializationManager {
       }
     }
 
+    if (t == _ipt2851n.CalendarAlarmActionRecord) {
+      return _ipt2851n.CalendarAlarmActionRecord.fromJson(data) as T;
+    }
     if (t == _iv448ru6.CalendarAlarmAnchor) {
       return _iv448ru6.CalendarAlarmAnchor.fromJson(data) as T;
     }
@@ -1825,11 +2331,26 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _i1qnv8jf.CalendarAlarmDuration) {
       return _i1qnv8jf.CalendarAlarmDuration.fromJson(data) as T;
     }
+    if (t == _i8okwxwj.CalendarAlarmFiringKind) {
+      return _i8okwxwj.CalendarAlarmFiringKind.fromJson(data) as T;
+    }
+    if (t == _ihgh57kq.CalendarAlarmFiringRecord) {
+      return _ihgh57kq.CalendarAlarmFiringRecord.fromJson(data) as T;
+    }
+    if (t == _ihos0r46.CalendarAlarmFiringState) {
+      return _ihos0r46.CalendarAlarmFiringState.fromJson(data) as T;
+    }
     if (t == _iiyuulin.CalendarAlarmParent) {
       return _iiyuulin.CalendarAlarmParent.fromJson(data) as T;
     }
     if (t == _ig3zti62.CalendarAlarmParentKind) {
       return _ig3zti62.CalendarAlarmParentKind.fromJson(data) as T;
+    }
+    if (t == _iid4j1lu.CalendarAlarmPlanRecord) {
+      return _iid4j1lu.CalendarAlarmPlanRecord.fromJson(data) as T;
+    }
+    if (t == _irtomk7p.CalendarAlarmPlanStatus) {
+      return _irtomk7p.CalendarAlarmPlanStatus.fromJson(data) as T;
     }
     if (t == _iralscit.CalendarAlarmRecord) {
       return _iralscit.CalendarAlarmRecord.fromJson(data) as T;
@@ -2376,6 +2897,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _ivspd2q7.CalendarView) {
       return _ivspd2q7.CalendarView.fromJson(data) as T;
     }
+    if (t == _is.getType<_ipt2851n.CalendarAlarmActionRecord?>()) {
+      return (data != null
+              ? _ipt2851n.CalendarAlarmActionRecord.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _is.getType<_iv448ru6.CalendarAlarmAnchor?>()) {
       return (data != null
               ? _iv448ru6.CalendarAlarmAnchor.fromJson(data)
@@ -2400,6 +2927,24 @@ class Protocol extends _is.DatabaseSerializationManager {
               : null)
           as T;
     }
+    if (t == _is.getType<_i8okwxwj.CalendarAlarmFiringKind?>()) {
+      return (data != null
+              ? _i8okwxwj.CalendarAlarmFiringKind.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ihgh57kq.CalendarAlarmFiringRecord?>()) {
+      return (data != null
+              ? _ihgh57kq.CalendarAlarmFiringRecord.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ihos0r46.CalendarAlarmFiringState?>()) {
+      return (data != null
+              ? _ihos0r46.CalendarAlarmFiringState.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _is.getType<_iiyuulin.CalendarAlarmParent?>()) {
       return (data != null
               ? _iiyuulin.CalendarAlarmParent.fromJson(data)
@@ -2409,6 +2954,18 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_ig3zti62.CalendarAlarmParentKind?>()) {
       return (data != null
               ? _ig3zti62.CalendarAlarmParentKind.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iid4j1lu.CalendarAlarmPlanRecord?>()) {
+      return (data != null
+              ? _iid4j1lu.CalendarAlarmPlanRecord.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_irtomk7p.CalendarAlarmPlanStatus?>()) {
+      return (data != null
+              ? _irtomk7p.CalendarAlarmPlanStatus.fromJson(data)
               : null)
           as T;
     }
@@ -4101,12 +4658,18 @@ class Protocol extends _is.DatabaseSerializationManager {
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
+      _ipt2851n.CalendarAlarmActionRecord => 'CalendarAlarmActionRecord',
       _iv448ru6.CalendarAlarmAnchor => 'CalendarAlarmAnchor',
       _iu47syqa.CalendarAlarmCreateRequest => 'CalendarAlarmCreateRequest',
       _irif99jb.CalendarAlarmDefinition => 'CalendarAlarmDefinition',
       _i1qnv8jf.CalendarAlarmDuration => 'CalendarAlarmDuration',
+      _i8okwxwj.CalendarAlarmFiringKind => 'CalendarAlarmFiringKind',
+      _ihgh57kq.CalendarAlarmFiringRecord => 'CalendarAlarmFiringRecord',
+      _ihos0r46.CalendarAlarmFiringState => 'CalendarAlarmFiringState',
       _iiyuulin.CalendarAlarmParent => 'CalendarAlarmParent',
       _ig3zti62.CalendarAlarmParentKind => 'CalendarAlarmParentKind',
+      _iid4j1lu.CalendarAlarmPlanRecord => 'CalendarAlarmPlanRecord',
+      _irtomk7p.CalendarAlarmPlanStatus => 'CalendarAlarmPlanStatus',
       _iralscit.CalendarAlarmRecord => 'CalendarAlarmRecord',
       _im2lo7e9.CalendarAlarmUpdateRequest => 'CalendarAlarmUpdateRequest',
       _ie7u1nxa.CalendarAlarmView => 'CalendarAlarmView',
@@ -4356,6 +4919,8 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
 
     switch (data) {
+      case _ipt2851n.CalendarAlarmActionRecord():
+        return 'CalendarAlarmActionRecord';
       case _iv448ru6.CalendarAlarmAnchor():
         return 'CalendarAlarmAnchor';
       case _iu47syqa.CalendarAlarmCreateRequest():
@@ -4364,10 +4929,20 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarAlarmDefinition';
       case _i1qnv8jf.CalendarAlarmDuration():
         return 'CalendarAlarmDuration';
+      case _i8okwxwj.CalendarAlarmFiringKind():
+        return 'CalendarAlarmFiringKind';
+      case _ihgh57kq.CalendarAlarmFiringRecord():
+        return 'CalendarAlarmFiringRecord';
+      case _ihos0r46.CalendarAlarmFiringState():
+        return 'CalendarAlarmFiringState';
       case _iiyuulin.CalendarAlarmParent():
         return 'CalendarAlarmParent';
       case _ig3zti62.CalendarAlarmParentKind():
         return 'CalendarAlarmParentKind';
+      case _iid4j1lu.CalendarAlarmPlanRecord():
+        return 'CalendarAlarmPlanRecord';
+      case _irtomk7p.CalendarAlarmPlanStatus():
+        return 'CalendarAlarmPlanStatus';
       case _iralscit.CalendarAlarmRecord():
         return 'CalendarAlarmRecord';
       case _im2lo7e9.CalendarAlarmUpdateRequest():
@@ -4740,6 +5315,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (dataClassName is! String) {
       return super.deserializeByClassName(data);
     }
+    if (dataClassName == 'CalendarAlarmActionRecord') {
+      return deserialize<_ipt2851n.CalendarAlarmActionRecord>(data['data']);
+    }
     if (dataClassName == 'CalendarAlarmAnchor') {
       return deserialize<_iv448ru6.CalendarAlarmAnchor>(data['data']);
     }
@@ -4752,11 +5330,26 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (dataClassName == 'CalendarAlarmDuration') {
       return deserialize<_i1qnv8jf.CalendarAlarmDuration>(data['data']);
     }
+    if (dataClassName == 'CalendarAlarmFiringKind') {
+      return deserialize<_i8okwxwj.CalendarAlarmFiringKind>(data['data']);
+    }
+    if (dataClassName == 'CalendarAlarmFiringRecord') {
+      return deserialize<_ihgh57kq.CalendarAlarmFiringRecord>(data['data']);
+    }
+    if (dataClassName == 'CalendarAlarmFiringState') {
+      return deserialize<_ihos0r46.CalendarAlarmFiringState>(data['data']);
+    }
     if (dataClassName == 'CalendarAlarmParent') {
       return deserialize<_iiyuulin.CalendarAlarmParent>(data['data']);
     }
     if (dataClassName == 'CalendarAlarmParentKind') {
       return deserialize<_ig3zti62.CalendarAlarmParentKind>(data['data']);
+    }
+    if (dataClassName == 'CalendarAlarmPlanRecord') {
+      return deserialize<_iid4j1lu.CalendarAlarmPlanRecord>(data['data']);
+    }
+    if (dataClassName == 'CalendarAlarmPlanStatus') {
+      return deserialize<_irtomk7p.CalendarAlarmPlanStatus>(data['data']);
     }
     if (dataClassName == 'CalendarAlarmRecord') {
       return deserialize<_iralscit.CalendarAlarmRecord>(data['data']);
@@ -5462,6 +6055,12 @@ class Protocol extends _is.DatabaseSerializationManager {
       }
     }
     switch (t) {
+      case _ipt2851n.CalendarAlarmActionRecord:
+        return _ipt2851n.CalendarAlarmActionRecord.t;
+      case _ihgh57kq.CalendarAlarmFiringRecord:
+        return _ihgh57kq.CalendarAlarmFiringRecord.t;
+      case _iid4j1lu.CalendarAlarmPlanRecord:
+        return _iid4j1lu.CalendarAlarmPlanRecord.t;
       case _iralscit.CalendarAlarmRecord:
         return _iralscit.CalendarAlarmRecord.t;
       case _ie9je6js.CalendarAvailabilityDataRecord:

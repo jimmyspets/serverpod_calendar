@@ -13,6 +13,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
 import 'dart:io' as _idi;
+import 'package:calendar_example_server/src/generated/future_calls.dart'
+    as _ilebb88e;
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _iacs;
@@ -150,6 +152,8 @@ void withServerpod(
 }
 
 class TestEndpoints {
+  late final futureCalls = _FutureCalls();
+
   late final _EmailIdpEndpoint emailIdp;
 
   late final _RefreshJwtTokensEndpoint refreshJwtTokens;
@@ -177,6 +181,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
   }
+}
+
+class _FutureCalls {
+  late final calendarAlarmMaintenance = _CalendarAlarmMaintenanceFutureCall();
 }
 
 class _EmailIdpEndpoint {
@@ -533,5 +541,20 @@ class _SmokeEndpoint {
         await _localUniqueSession.close();
       }
     });
+  }
+}
+
+class _CalendarAlarmMaintenanceFutureCall {
+  Future<void> sweep(_ist.TestSessionBuilder sessionBuilder) async {
+    var _localUniqueSession =
+        (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild();
+    try {
+      await _ilebb88e.CalendarAlarmMaintenanceSweepFutureCall().invoke(
+        _localUniqueSession,
+        null,
+      );
+    } finally {
+      await _localUniqueSession.close();
+    }
   }
 }

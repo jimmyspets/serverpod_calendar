@@ -1,0 +1,27 @@
+class: CalendarAlarmPlanRecord
+serverOnly: true
+table: serverpod_calendar_alarm_plan
+fields:
+  id: UuidValue?, defaultPersist=random
+  alarmId: UuidValue, relation(parent=serverpod_calendar_alarm)
+  scopeKey: String
+  generation: int
+  timingDigest: String?
+  windowStart: DateTime?
+  windowEnd: DateTime?
+  status: CalendarAlarmPlanStatus, default=pending
+  reason: String?
+  dirty: bool, default=true
+  nextScanAt: DateTime
+  lastCompletedAt: DateTime?
+  leaseOwner: UuidValue?
+  leaseUntil: DateTime?
+  leaseFence: int, default=0
+indexes:
+  calendar_alarm_plan_alarm_unique:
+    fields: alarmId
+    unique: true
+  calendar_alarm_plan_due_idx:
+    fields: nextScanAt, leaseUntil
+  calendar_alarm_plan_scope_idx:
+    fields: scopeKey

@@ -506,7 +506,47 @@ END;
 $verify_personal$;
 DROP TABLE personal_alarm_upgrade_guard;
 """)
-        print("PASS: populated schema upgrades preserve identity, revisions, content, associations, protocol UID strings and opening identities and old cursor bindings.")
+        # Additive worker storage must not arm existing definitions or invent
+        # any work/action history, and must preserve every previous row.
+        sql(database, """
+INSERT INTO serverpod_calendar_alarm
+(id, "scopeKey", "calendarId", "parentKind", "parentId", "recipientNamespace", "recipientKey",
+ revision, definition, "createdAt", "updatedAt")
+VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'metadata-upgrade-test',
+ '11111111-1111-4111-8111-111111111111', 'event', '55555555-5555-4555-8555-555555555555',
+ 'fixture', 'recipient', 7, '{"absoluteUtc":"2026-03-29T12:00:00.000Z"}', '2026-01-01', '2026-01-02');
+CREATE TABLE alarm_work_upgrade_guard (table_name text PRIMARY KEY, rows jsonb NOT NULL);
+DO $snapshot_work$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+   AND tablename NOT IN ('serverpod_migrations', 'alarm_work_upgrade_guard') LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s', item.tablename) INTO contents;
+  INSERT INTO alarm_work_upgrade_guard VALUES (item.tablename, contents);
+ END LOOP;
+END;
+$snapshot_work$;
+""")
+        sql(database, (SERVER / "migrations/20261025064233961-alarm-work/migration.sql").read_text(encoding="utf-8"))
+        sql(database, """
+DO $verify_work$
+DECLARE item record; contents jsonb; strip text;
+BEGIN
+ FOR item IN SELECT * FROM alarm_work_upgrade_guard LOOP
+  strip := CASE WHEN item.table_name='serverpod_calendar_alarm' THEN '-''armed''-''generation''' ELSE '' END;
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t)%s AS v FROM %I t) s', strip, item.table_name) INTO contents;
+  IF contents IS DISTINCT FROM item.rows THEN RAISE EXCEPTION 'Alarm work migration changed %', item.table_name; END IF;
+ END LOOP;
+ IF EXISTS (SELECT 1 FROM serverpod_calendar_alarm WHERE armed OR generation<>1)
+ OR (SELECT count(*) FROM serverpod_calendar_alarm_plan)<>0
+ OR (SELECT count(*) FROM serverpod_calendar_alarm_firing)<>0
+ OR (SELECT count(*) FROM serverpod_calendar_alarm_action)<>0
+ THEN RAISE EXCEPTION 'Migration armed alarms or invented work/action state'; END IF;
+END;
+$verify_work$;
+DROP TABLE alarm_work_upgrade_guard;
+""")
+        print("PASS: populated schema upgrades preserve prior rows, add unarmed generation defaults and create no alarm work or actions.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")
 

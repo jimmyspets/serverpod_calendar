@@ -1,0 +1,7 @@
+enum: CalendarAlarmPlanStatus
+serialized: byName
+values:
+  - pending
+  - ready
+  - needsAttention
+  - unavailable

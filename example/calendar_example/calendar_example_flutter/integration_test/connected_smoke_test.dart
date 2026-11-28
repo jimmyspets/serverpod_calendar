@@ -1397,6 +1397,16 @@ Future<void> _personalAlarmJourney(
         : find.textContaining('12:30:00'),
   );
   expect((await api.list(parent)).single.revision, 2);
+  await tester.tap(find.byTooltip('Arm personal alarm'));
+  await _waitFor(tester, find.textContaining('Armed:'));
+  expect((await api.list(parent)).single.armed, isTrue);
+  await tester.tap(find.byTooltip('Disarm personal alarm'));
+  await _waitFor(
+    tester,
+    find.textContaining('Unarmed: current master anchor available'),
+  );
+  expect((await api.list(parent)).single.armed, isFalse);
+  expect((await api.list(parent)).single.revision, 4);
   await _tap(tester, 'alarm-delete-${alarm.id}');
   await _waitFor(tester, find.text('No personal alarm definitions.'));
   expect(await api.list(parent), isEmpty);

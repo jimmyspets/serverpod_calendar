@@ -61,10 +61,16 @@ extension CalendarAlarmOperations on CalendarService {
     }
   }
 
-  CalendarAlarmView _alarmView(CalendarAlarmRecord row, _AlarmParent parent) {
+  CalendarAlarmView _alarmView(
+    CalendarAlarmRecord row,
+    _AlarmParent parent, {
+    CalendarAlarmPlanRecord? plan,
+  }) {
     try {
       validateAlarmDefinition(row.definition);
-      if (row.revision < 1 ||
+      if (row.generation < 1 ||
+          row.generation > CalendarService._maxRevision ||
+          row.revision < 1 ||
           row.revision > CalendarService._maxRevision ||
           row.calendarId != parent.parent.identity.id ||
           row.updatedAt.isBefore(row.createdAt)) {
@@ -77,6 +83,19 @@ extension CalendarAlarmOperations on CalendarService {
       id: row.id!,
       parent: CalendarAlarmParent(kind: row.parentKind, id: row.parentId),
       revision: row.revision,
+      armed: row.armed,
+      planningStatus: !row.armed
+          ? null
+          : plan == null ||
+                (plan.dirty && plan.status == CalendarAlarmPlanStatus.ready)
+          ? CalendarAlarmPlanStatus.pending
+          : plan.status,
+      planningWindowEnd:
+          row.armed &&
+              plan?.dirty == false &&
+              plan?.status == CalendarAlarmPlanStatus.ready
+          ? plan!.windowEnd
+          : null,
       definition: row.definition,
       anchorCompatible: parent.compatible(row.definition),
       createdAt: row.createdAt,
@@ -91,6 +110,7 @@ extension CalendarAlarmOperations on CalendarService {
     UuidValue? alarmId,
     CalendarAlarmView? current,
     CalendarAlarmDefinition? proposed,
+    bool? armed,
   }) => CalendarAuthorizationRequest(
     key:
         '${operation.name}:${alarmId ?? parent.event?.identity.id ?? parent.task!.identity.id}',
@@ -105,6 +125,7 @@ extension CalendarAlarmOperations on CalendarService {
     alarmId: alarmId,
     currentAlarm: current,
     proposedAlarmDefinition: proposed,
+    proposedAlarmArmed: armed,
   );
 
   Future<List<CalendarAlarmRecord>> _privateAlarms(
@@ -152,7 +173,19 @@ extension CalendarAlarmOperations on CalendarService {
       );
       final rows = await _privateAlarms(c, input, recipient, tx);
       if (rows.length > 16) throw _failure(CalendarFailureCode.limitExceeded);
-      final views = rows.map((r) => _alarmView(r, parent)).toList();
+      final plans = rows.isEmpty
+          ? <CalendarAlarmPlanRecord>[]
+          : await CalendarAlarmPlanRecord.db.find(
+              _session,
+              where: (t) => t.alarmId.inSet(rows.map((r) => r.id!).toSet()),
+              limit: 17,
+              transaction: tx,
+            );
+      if (plans.length > 16) throw _failure(CalendarFailureCode.unavailable);
+      final byAlarm = {for (final p in plans) p.alarmId: p};
+      final views = rows
+          .map((r) => _alarmView(r, parent, plan: byAlarm[r.id]))
+          .toList();
       for (final view in views) {
         await _decide(
           c,
@@ -289,7 +322,8 @@ extension CalendarAlarmOperations on CalendarService {
       if (input.expectedRevision != row.revision) {
         throw _failure(CalendarFailureCode.staleRevision);
       }
-      if (row.revision >= CalendarService._maxRevision) {
+      if (row.revision >= CalendarService._maxRevision ||
+          row.generation >= CalendarService._maxRevision) {
         throw _failure(CalendarFailureCode.limitExceeded);
       }
       if (!parent.compatible(definition)) {
@@ -302,10 +336,102 @@ extension CalendarAlarmOperations on CalendarService {
         CalendarAuthorizationPhase.finalWrite,
       );
       final decisions = await _final(c, requests, tx);
-      row.definition = definition;
+      if (row.definition != definition) {
+        row.definition = definition;
+        row.generation++;
+        await _invalidateAlarmWork(row, tx);
+      }
       row.revision++;
       row.updatedAt = await _revisionTime(tx, previous: row.updatedAt);
       await CalendarAlarmRecord.db.updateRow(_session, row, transaction: tx);
+      return decisions.values.every((d) => d.discloseMutationReceipt)
+          ? _alarmView(row, parent)
+          : null;
+    });
+  }
+
+  Future<CalendarAlarmView?> setPersonalAlarmArmed(
+    CalendarAlarmParent input,
+    UuidValue alarmId,
+    int expectedRevision,
+    bool armed,
+  ) async {
+    final c = await _context();
+    if (armed && _runtime.alarms == null) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
+    return _transaction(c, (tx, _) async {
+      final parent = await _alarmParent(c, input, tx);
+      final recipient = await _alarmRecipient(
+        c,
+        tx,
+        CalendarAuthorizationPhase.preliminaryWrite,
+      );
+      final rows = await _privateAlarms(
+        c,
+        input,
+        recipient,
+        tx,
+        alarmId: alarmId,
+      );
+      if (rows.length != 1) throw _failure(CalendarFailureCode.accessDenied);
+      final row = rows.single;
+      final requests = [
+        _alarmRequest(
+          parent,
+          CalendarPermission.armPersonalAlarm,
+          recipient,
+          alarmId: row.id,
+          current: _alarmView(row, parent),
+          armed: armed,
+        ),
+      ];
+      await _decide(
+        c,
+        requests,
+        tx,
+        CalendarAuthorizationPhase.preliminaryWrite,
+      );
+      if (row.revision != expectedRevision) {
+        throw _failure(CalendarFailureCode.staleRevision);
+      }
+      if (row.revision >= CalendarService._maxRevision ||
+          row.generation >= CalendarService._maxRevision) {
+        throw _failure(CalendarFailureCode.limitExceeded);
+      }
+      if (armed && !parent.compatible(row.definition)) {
+        throw _failure(CalendarFailureCode.validation);
+      }
+      await _verifyAlarmRecipient(
+        c,
+        recipient,
+        tx,
+        CalendarAuthorizationPhase.finalWrite,
+      );
+      final decisions = await _final(c, requests, tx);
+      final changed = row.armed != armed;
+      row.armed = armed;
+      if (changed) row.generation++;
+      row.revision++;
+      row.updatedAt = await _revisionTime(tx, previous: row.updatedAt);
+      if (changed) await _invalidateAlarmWork(row, tx);
+      await CalendarAlarmRecord.db.updateRow(_session, row, transaction: tx);
+      if (armed) {
+        await CalendarAlarmPlanRecord.db.insert(
+          _session,
+          [
+            CalendarAlarmPlanRecord(
+              alarmId: row.id!,
+              scopeKey: c.scopeKey,
+              generation: row.generation,
+              nextScanAt: row.updatedAt,
+            ),
+          ],
+          transaction: tx,
+          ignoreConflicts: true,
+          noReturn: true,
+        );
+      }
       return decisions.values.every((d) => d.discloseMutationReceipt)
           ? _alarmView(row, parent)
           : null;
@@ -359,8 +485,48 @@ extension CalendarAlarmOperations on CalendarService {
         CalendarAuthorizationPhase.finalWrite,
       );
       await _final(c, requests, tx);
+      await _deleteAlarmWork(row.id!, tx);
       await CalendarAlarmRecord.db.deleteRow(_session, row, transaction: tx);
     });
+  }
+
+  Future<void> _deleteAlarmWork(UuidValue alarmId, Transaction tx) async {
+    for (final table in const [
+      'serverpod_calendar_alarm_firing',
+      'serverpod_calendar_alarm_action',
+      'serverpod_calendar_alarm_plan',
+    ]) {
+      await _session.db.unsafeExecute(
+        'DELETE FROM $table WHERE "alarmId"=CAST(@alarm AS uuid)',
+        parameters: QueryParameters.named({'alarm': alarmId.toString()}),
+        transaction: tx,
+      );
+    }
+  }
+
+  Future<void> _invalidateAlarmWork(
+    CalendarAlarmRecord alarm,
+    Transaction tx,
+  ) async {
+    await _session.db.unsafeExecute(
+      'UPDATE serverpod_calendar_alarm_plan SET dirty=true, '
+      'generation=@generation, "nextScanAt"=clock_timestamp(), '
+      '"leaseOwner"=NULL, "leaseUntil"=NULL, "leaseFence"=CASE WHEN "leaseFence"<9007199254740991 THEN "leaseFence"+1 ELSE "leaseFence" END '
+      'WHERE "alarmId"=CAST(@alarm AS uuid)',
+      parameters: QueryParameters.named({
+        'alarm': alarm.id!.toString(),
+        'generation': alarm.generation,
+      }),
+      transaction: tx,
+    );
+    await _session.db.unsafeExecute(
+      """UPDATE serverpod_calendar_alarm_firing SET state='suppressed',
+      reason='generationChanged', "terminalAt"=clock_timestamp(),
+      "updatedAt"=clock_timestamp(), "leaseOwner"=NULL, "leaseUntil"=NULL,
+      "leaseFence"=CASE WHEN "leaseFence"<9007199254740991 THEN "leaseFence"+1 ELSE "leaseFence" END WHERE "alarmId"=CAST(@alarm AS uuid) AND state='pending'""",
+      parameters: QueryParameters.named({'alarm': alarm.id!.toString()}),
+      transaction: tx,
+    );
   }
 
   Future<void> _deleteParentAlarms(
@@ -369,6 +535,24 @@ extension CalendarAlarmOperations on CalendarService {
     UuidValue parentId,
     Transaction tx,
   ) async {
+    // Set-based deletion avoids a private per-recipient cap on shared deletion.
+    for (final table in const [
+      'serverpod_calendar_alarm_firing',
+      'serverpod_calendar_alarm_action',
+      'serverpod_calendar_alarm_plan',
+    ]) {
+      await _session.db.unsafeExecute(
+        'DELETE FROM $table WHERE "alarmId" IN '
+        '(SELECT id FROM serverpod_calendar_alarm WHERE "scopeKey"=@scope '
+        'AND "parentKind"=@kind AND "parentId"=CAST(@parent AS uuid))',
+        parameters: QueryParameters.named({
+          'scope': scopeKey,
+          'kind': kind.name,
+          'parent': parentId.toString(),
+        }),
+        transaction: tx,
+      );
+    }
     await CalendarAlarmRecord.db.deleteWhere(
       _session,
       where: (t) =>

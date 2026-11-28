@@ -27,10 +27,13 @@ abstract class CalendarAlarmRecord
     required this.recipientNamespace,
     required this.recipientKey,
     required this.revision,
+    bool? armed,
+    int? generation,
     required this.definition,
     required this.createdAt,
     required this.updatedAt,
-  });
+  }) : armed = armed ?? false,
+       generation = generation ?? 1;
 
   factory CalendarAlarmRecord({
     _is.UuidValue? id,
@@ -41,6 +44,8 @@ abstract class CalendarAlarmRecord
     required String recipientNamespace,
     required String recipientKey,
     required int revision,
+    bool? armed,
+    int? generation,
     required _irif99jb.CalendarAlarmDefinition definition,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -64,6 +69,10 @@ abstract class CalendarAlarmRecord
       recipientNamespace: jsonSerialization['recipientNamespace'] as String,
       recipientKey: jsonSerialization['recipientKey'] as String,
       revision: jsonSerialization['revision'] as int,
+      armed: jsonSerialization['armed'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(jsonSerialization['armed']),
+      generation: jsonSerialization['generation'] as int?,
       definition: _ix00hwbf.Protocol()
           .deserialize<_irif99jb.CalendarAlarmDefinition>(
             jsonSerialization['definition'],
@@ -98,6 +107,10 @@ abstract class CalendarAlarmRecord
 
   int revision;
 
+  bool armed;
+
+  int generation;
+
   _irif99jb.CalendarAlarmDefinition definition;
 
   DateTime createdAt;
@@ -119,6 +132,8 @@ abstract class CalendarAlarmRecord
     String? recipientNamespace,
     String? recipientKey,
     int? revision,
+    bool? armed,
+    int? generation,
     _irif99jb.CalendarAlarmDefinition? definition,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -135,6 +150,8 @@ abstract class CalendarAlarmRecord
       'recipientNamespace': recipientNamespace,
       'recipientKey': recipientKey,
       'revision': revision,
+      'armed': armed,
+      'generation': generation,
       'definition': definition.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
@@ -186,6 +203,8 @@ class _CalendarAlarmRecordImpl extends CalendarAlarmRecord {
     required String recipientNamespace,
     required String recipientKey,
     required int revision,
+    bool? armed,
+    int? generation,
     required _irif99jb.CalendarAlarmDefinition definition,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -198,6 +217,8 @@ class _CalendarAlarmRecordImpl extends CalendarAlarmRecord {
          recipientNamespace: recipientNamespace,
          recipientKey: recipientKey,
          revision: revision,
+         armed: armed,
+         generation: generation,
          definition: definition,
          createdAt: createdAt,
          updatedAt: updatedAt,
@@ -216,6 +237,8 @@ class _CalendarAlarmRecordImpl extends CalendarAlarmRecord {
     String? recipientNamespace,
     String? recipientKey,
     int? revision,
+    bool? armed,
+    int? generation,
     _irif99jb.CalendarAlarmDefinition? definition,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -229,6 +252,8 @@ class _CalendarAlarmRecordImpl extends CalendarAlarmRecord {
       recipientNamespace: recipientNamespace ?? this.recipientNamespace,
       recipientKey: recipientKey ?? this.recipientKey,
       revision: revision ?? this.revision,
+      armed: armed ?? this.armed,
+      generation: generation ?? this.generation,
       definition: definition ?? this.definition.copyWith(),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -280,6 +305,16 @@ class CalendarAlarmRecordUpdateTable
 
   _is.ColumnValue<int, int> revision(int value) => _is.ColumnValue(
     table.revision,
+    value,
+  );
+
+  _is.ColumnValue<bool, bool> armed(bool value) => _is.ColumnValue(
+    table.armed,
+    value,
+  );
+
+  _is.ColumnValue<int, int> generation(int value) => _is.ColumnValue(
+    table.generation,
     value,
   );
 
@@ -338,6 +373,16 @@ class CalendarAlarmRecordTable extends _is.Table<_is.UuidValue?> {
       'revision',
       this,
     );
+    armed = _is.ColumnBool(
+      'armed',
+      this,
+      hasDefault: true,
+    );
+    generation = _is.ColumnInt(
+      'generation',
+      this,
+      hasDefault: true,
+    );
     definition = _is.ColumnSerializable<_irif99jb.CalendarAlarmDefinition>(
       'definition',
       this,
@@ -368,6 +413,10 @@ class CalendarAlarmRecordTable extends _is.Table<_is.UuidValue?> {
 
   late final _is.ColumnInt revision;
 
+  late final _is.ColumnBool armed;
+
+  late final _is.ColumnInt generation;
+
   late final _is.ColumnSerializable<_irif99jb.CalendarAlarmDefinition>
   definition;
 
@@ -385,6 +434,8 @@ class CalendarAlarmRecordTable extends _is.Table<_is.UuidValue?> {
     recipientNamespace,
     recipientKey,
     revision,
+    armed,
+    generation,
     definition,
     createdAt,
     updatedAt,

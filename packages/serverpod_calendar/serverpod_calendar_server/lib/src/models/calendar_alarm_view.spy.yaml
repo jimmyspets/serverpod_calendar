@@ -4,6 +4,9 @@ fields:
   id: UuidValue
   parent: CalendarAlarmParent
   revision: int
+  armed: bool, default=false
+  planningStatus: CalendarAlarmPlanStatus?
+  planningWindowEnd: DateTime?
   definition: CalendarAlarmDefinition
   anchorCompatible: bool
   createdAt: DateTime

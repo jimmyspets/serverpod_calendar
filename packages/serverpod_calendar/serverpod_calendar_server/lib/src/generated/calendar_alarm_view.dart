@@ -15,6 +15,7 @@ import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'calendar_alarm_definition.dart' as _irif99jb;
 import 'calendar_alarm_parent.dart' as _iiyuulin;
+import 'calendar_alarm_plan_status.dart' as _irtomk7p;
 
 @_is.immutable
 abstract class CalendarAlarmView
@@ -23,16 +24,22 @@ abstract class CalendarAlarmView
     required this.id,
     required this.parent,
     required this.revision,
+    bool? armed,
+    this.planningStatus,
+    this.planningWindowEnd,
     required this.definition,
     required this.anchorCompatible,
     required this.createdAt,
     required this.updatedAt,
-  });
+  }) : armed = armed ?? false;
 
   const factory CalendarAlarmView({
     required _is.UuidValue id,
     required _iiyuulin.CalendarAlarmParent parent,
     required int revision,
+    bool? armed,
+    _irtomk7p.CalendarAlarmPlanStatus? planningStatus,
+    DateTime? planningWindowEnd,
     required _irif99jb.CalendarAlarmDefinition definition,
     required bool anchorCompatible,
     required DateTime createdAt,
@@ -46,6 +53,19 @@ abstract class CalendarAlarmView
         jsonSerialization['parent'],
       ),
       revision: jsonSerialization['revision'] as int,
+      armed: jsonSerialization['armed'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(jsonSerialization['armed']),
+      planningStatus: jsonSerialization['planningStatus'] == null
+          ? null
+          : _irtomk7p.CalendarAlarmPlanStatus.fromJson(
+              (jsonSerialization['planningStatus'] as String),
+            ),
+      planningWindowEnd: jsonSerialization['planningWindowEnd'] == null
+          ? null
+          : _is.DateTimeJsonExtension.fromJson(
+              jsonSerialization['planningWindowEnd'],
+            ),
       definition: _ix00hwbf.Protocol()
           .deserialize<_irif99jb.CalendarAlarmDefinition>(
             jsonSerialization['definition'],
@@ -68,6 +88,12 @@ abstract class CalendarAlarmView
 
   final int revision;
 
+  final bool armed;
+
+  final _irtomk7p.CalendarAlarmPlanStatus? planningStatus;
+
+  final DateTime? planningWindowEnd;
+
   final _irif99jb.CalendarAlarmDefinition definition;
 
   final bool anchorCompatible;
@@ -83,6 +109,9 @@ abstract class CalendarAlarmView
     _is.UuidValue? id,
     _iiyuulin.CalendarAlarmParent? parent,
     int? revision,
+    bool? armed,
+    _irtomk7p.CalendarAlarmPlanStatus? planningStatus,
+    DateTime? planningWindowEnd,
     _irif99jb.CalendarAlarmDefinition? definition,
     bool? anchorCompatible,
     DateTime? createdAt,
@@ -112,6 +141,21 @@ abstract class CalendarAlarmView
                 ) ||
                 other.revision == revision) &&
             (identical(
+                  other.armed,
+                  armed,
+                ) ||
+                other.armed == armed) &&
+            (identical(
+                  other.planningStatus,
+                  planningStatus,
+                ) ||
+                other.planningStatus == planningStatus) &&
+            (identical(
+                  other.planningWindowEnd,
+                  planningWindowEnd,
+                ) ||
+                other.planningWindowEnd == planningWindowEnd) &&
+            (identical(
                   other.definition,
                   definition,
                 ) ||
@@ -140,6 +184,9 @@ abstract class CalendarAlarmView
       id,
       parent,
       revision,
+      armed,
+      planningStatus,
+      planningWindowEnd,
       definition,
       anchorCompatible,
       createdAt,
@@ -154,6 +201,10 @@ abstract class CalendarAlarmView
       'id': id.toJson(),
       'parent': parent.toJson(),
       'revision': revision,
+      'armed': armed,
+      if (planningStatus != null) 'planningStatus': planningStatus?.toJson(),
+      if (planningWindowEnd != null)
+        'planningWindowEnd': planningWindowEnd?.toJson(),
       'definition': definition.toJson(),
       'anchorCompatible': anchorCompatible,
       'createdAt': createdAt.toJson(),
@@ -168,6 +219,10 @@ abstract class CalendarAlarmView
       'id': id.toJson(),
       'parent': parent.toJsonForProtocol(),
       'revision': revision,
+      'armed': armed,
+      if (planningStatus != null) 'planningStatus': planningStatus?.toJson(),
+      if (planningWindowEnd != null)
+        'planningWindowEnd': planningWindowEnd?.toJson(),
       'definition': definition.toJsonForProtocol(),
       'anchorCompatible': anchorCompatible,
       'createdAt': createdAt.toJson(),
@@ -181,11 +236,16 @@ abstract class CalendarAlarmView
   }
 }
 
+class _Undefined {}
+
 class _CalendarAlarmViewImpl extends CalendarAlarmView {
   const _CalendarAlarmViewImpl({
     required _is.UuidValue id,
     required _iiyuulin.CalendarAlarmParent parent,
     required int revision,
+    bool? armed,
+    _irtomk7p.CalendarAlarmPlanStatus? planningStatus,
+    DateTime? planningWindowEnd,
     required _irif99jb.CalendarAlarmDefinition definition,
     required bool anchorCompatible,
     required DateTime createdAt,
@@ -194,6 +254,9 @@ class _CalendarAlarmViewImpl extends CalendarAlarmView {
          id: id,
          parent: parent,
          revision: revision,
+         armed: armed,
+         planningStatus: planningStatus,
+         planningWindowEnd: planningWindowEnd,
          definition: definition,
          anchorCompatible: anchorCompatible,
          createdAt: createdAt,
@@ -208,6 +271,9 @@ class _CalendarAlarmViewImpl extends CalendarAlarmView {
     _is.UuidValue? id,
     _iiyuulin.CalendarAlarmParent? parent,
     int? revision,
+    bool? armed,
+    Object? planningStatus = _Undefined,
+    Object? planningWindowEnd = _Undefined,
     _irif99jb.CalendarAlarmDefinition? definition,
     bool? anchorCompatible,
     DateTime? createdAt,
@@ -217,6 +283,13 @@ class _CalendarAlarmViewImpl extends CalendarAlarmView {
       id: id ?? this.id,
       parent: parent ?? this.parent.copyWith(),
       revision: revision ?? this.revision,
+      armed: armed ?? this.armed,
+      planningStatus: planningStatus is _irtomk7p.CalendarAlarmPlanStatus?
+          ? planningStatus
+          : this.planningStatus,
+      planningWindowEnd: planningWindowEnd is DateTime?
+          ? planningWindowEnd
+          : this.planningWindowEnd,
       definition: definition ?? this.definition.copyWith(),
       anchorCompatible: anchorCompatible ?? this.anchorCompatible,
       createdAt: createdAt ?? this.createdAt,

@@ -10,6 +10,7 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  armPersonalAlarm,
   readPersonalAlarms,
   createPersonalAlarm,
   updatePersonalAlarm,
@@ -167,6 +168,7 @@ final class CalendarAuthorizationRequest {
     this.alarmId,
     this.currentAlarm,
     this.proposedAlarmDefinition,
+    this.proposedAlarmArmed,
     this.current,
     this.proposed,
     this.calendarId,
@@ -229,6 +231,7 @@ final class CalendarAuthorizationRequest {
   final UuidValue? alarmId;
   final CalendarAlarmView? currentAlarm;
   final CalendarAlarmDefinition? proposedAlarmDefinition;
+  final bool? proposedAlarmArmed;
   final UuidValue? eventId;
   final UuidValue? taskId;
   final CalendarTaskPolicySnapshot? currentTask;

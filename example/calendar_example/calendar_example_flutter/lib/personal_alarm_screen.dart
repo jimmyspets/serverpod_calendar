@@ -89,6 +89,26 @@ class _PersonalAlarmScreenState extends State<PersonalAlarmScreen> {
     }
   }
 
+  Future<void> _setArmed(cal.CalendarAlarmView alarm) async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await widget.client.modules.serverpod_calendar.calendarAlarm.setArmed(
+        widget.parent,
+        alarm.id,
+        alarm.revision,
+        !alarm.armed,
+      );
+      if (mounted) await _load();
+    } catch (e) {
+      if (mounted) setState(() => _error = _message(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _delete(cal.CalendarAlarmView alarm) async {
     setState(() {
       _busy = true;
@@ -132,7 +152,8 @@ class _PersonalAlarmScreenState extends State<PersonalAlarmScreen> {
       children: [
         const Text(
           'Private timing definitions for your current host recipient. '
-          'All definitions are unarmed: planning and delivery are not implemented. '
+          'Save first, then explicitly arm to request planning. '
+          'Notification delivery is not connected in this example yet. '
           'Imported source alarms are separate and are never adopted here.',
         ),
         if (_busy) const LinearProgressIndicator(),
@@ -144,16 +165,30 @@ class _PersonalAlarmScreenState extends State<PersonalAlarmScreen> {
             key: ValueKey('alarm-${alarm.id}'),
             title: Text(_label(alarm.definition)),
             subtitle: Text(
-              alarm.anchorCompatible
+              !alarm.anchorCompatible
+                  ? 'Needs attention: current master anchor unavailable'
+                  : !alarm.armed
                   ? 'Unarmed: current master anchor available'
-                  : 'Needs attention: current master anchor unavailable; unarmed',
+                  : 'Armed: ${alarm.planningStatus?.name ?? "pending"}',
             ),
             onTap: _busy ? null : () => _edit(alarm),
-            trailing: IconButton(
-              key: ValueKey('alarm-delete-${alarm.id}'),
-              icon: const Icon(Icons.delete_outline),
-              tooltip: 'Delete personal alarm',
-              onPressed: _busy ? null : () => _delete(alarm),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(alarm.armed ? Icons.alarm_off : Icons.alarm_on),
+                  tooltip: alarm.armed
+                      ? 'Disarm personal alarm'
+                      : 'Arm personal alarm',
+                  onPressed: _busy ? null : () => _setArmed(alarm),
+                ),
+                IconButton(
+                  key: ValueKey('alarm-delete-${alarm.id}'),
+                  icon: const Icon(Icons.delete_outline),
+                  tooltip: 'Delete personal alarm',
+                  onPressed: _busy ? null : () => _delete(alarm),
+                ),
+              ],
             ),
           ),
       ],

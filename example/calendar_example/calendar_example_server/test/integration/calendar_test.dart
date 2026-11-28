@@ -11,6 +11,7 @@ import 'package:serverpod_calendar_server/src/event_wire_storage.dart';
 import 'package:serverpod_calendar_server/src/event_protocol_values.dart';
 import 'package:serverpod_calendar_server/src/task_recurrence_values.dart';
 import 'package:serverpod_calendar_server/src/task_source_values.dart';
+import 'package:serverpod_calendar_server/src/alarm_work_store.dart';
 
 import 'test_tools/serverpod_test_tools.dart';
 
@@ -451,6 +452,598 @@ void main() {
     );
     CalendarAlarmDefinition absoluteAlarm() =>
         CalendarAlarmDefinition(absoluteUtc: DateTime.utc(2026, 3, 29, 12));
+
+    Future<CalendarAlarmRecord> workAlarm() async {
+      final calendar = (await service.create(createInput()))!.calendarId;
+      final event = await booking(calendar, 10, 11);
+      final alarm = (await service.createPersonalAlarm(
+        CalendarAlarmCreateRequest(
+          parent: eventAlarmParent(event.eventId),
+          definition: relativeAlarm(),
+        ),
+      ))!;
+      return (await CalendarAlarmRecord.db.findById(session, alarm.id))!;
+    }
+
+    Future<CalendarAlarmPlanRecord> workPlan(CalendarAlarmRecord alarm) =>
+        CalendarAlarmPlanRecord.db.insertRow(
+          session,
+          CalendarAlarmPlanRecord(
+            alarmId: alarm.id!,
+            scopeKey: alarm.scopeKey,
+            generation: alarm.generation,
+            nextScanAt: DateTime.utc(2020),
+          ),
+        );
+
+    Future<CalendarAlarmFiringRecord> workFiring(
+      CalendarAlarmRecord alarm,
+      int ordinal,
+      CalendarAlarmFiringState state, {
+      DateTime? terminal,
+      DateTime? lease,
+    }) => CalendarAlarmFiringRecord.db.insertRow(
+      session,
+      CalendarAlarmFiringRecord(
+        alarmId: alarm.id!,
+        generation: alarm.generation,
+        originalKey: 'original',
+        kind: CalendarAlarmFiringKind.automatic,
+        repeatOrdinal: ordinal,
+        dueAt: DateTime.utc(2020),
+        expiresAt: DateTime.utc(2020, 1, 1, 0, 15),
+        state: state,
+        nextAttemptAt: DateTime.utc(2020),
+        terminalAt: terminal,
+        leaseUntil: lease,
+        createdAt: DateTime.utc(2020),
+        updatedAt: DateTime.utc(2020),
+      ),
+    );
+
+    late TestAlarmBackgroundPolicy alarmPolicy;
+    late TestAlarmDeliveryPort alarmDelivery;
+    void installAlarmRuntime({int cap = 1000}) {
+      alarmPolicy = TestAlarmBackgroundPolicy();
+      alarmDelivery = TestAlarmDeliveryPort();
+      CalendarModule.install(
+        session.serverpod,
+        policy: policy,
+        options: const CalendarModuleOptions(
+          requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+        ),
+        alarms: CalendarAlarmRuntime(
+          policy: alarmPolicy,
+          delivery: alarmDelivery,
+          options: CalendarAlarmWorkOptions(maxFirings: cap),
+        ),
+      );
+      service = CalendarModule.service(session);
+    }
+
+    Future<DateTime> alarmNow() async => DateTime.fromMillisecondsSinceEpoch(
+      ((await session.db.unsafeQuery('SELECT clock_timestamp()')).single.single
+                  as DateTime)
+              .toUtc()
+              .millisecondsSinceEpoch ~/
+          1000 *
+          1000,
+      isUtc: true,
+    );
+    Future<CalendarAlarmView> armedDueAlarm({bool repeats = false}) async {
+      final row = await workAlarm();
+      final now = await alarmNow();
+      await service.updatePersonalAlarm(
+        CalendarAlarmUpdateRequest(
+          parent: eventAlarmParent(row.parentId),
+          alarmId: row.id!,
+          expectedRevision: 1,
+          definition: CalendarAlarmDefinition(
+            absoluteUtc: now.subtract(const Duration(minutes: 1)),
+            repeat: repeats ? 2 : null,
+            repeatInterval: repeats ? CalendarAlarmDuration(seconds: 30) : null,
+          ),
+        ),
+      );
+      return (await service.setPersonalAlarmArmed(
+        eventAlarmParent(row.parentId),
+        row.id!,
+        2,
+        true,
+      ))!;
+    }
+
+    test('alarm planner explicit arming requires configured runtime and separate authority', () async {
+      final row = await workAlarm();
+      expect(row.armed, isFalse);
+      await expectLater(
+        service.setPersonalAlarmArmed(
+          eventAlarmParent(row.parentId),
+          row.id!,
+          1,
+          true,
+        ),
+        failure(CalendarFailureCode.unavailable),
+      );
+      installAlarmRuntime();
+      policy.denied.add(CalendarPermission.armPersonalAlarm);
+      await expectLater(
+        service.setPersonalAlarmArmed(
+          eventAlarmParent(row.parentId),
+          row.id!,
+          1,
+          true,
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(await CalendarAlarmPlanRecord.db.count(session), 0);
+      policy.denied.clear();
+      final armed = (await service.setPersonalAlarmArmed(
+        eventAlarmParent(row.parentId),
+        row.id!,
+        1,
+        true,
+      ))!;
+      expect(armed.armed, isTrue);
+      expect(armed.revision, 2);
+      await expectLater(
+        service.setPersonalAlarmArmed(
+          eventAlarmParent(row.parentId),
+          row.id!,
+          1,
+          false,
+        ),
+        failure(CalendarFailureCode.staleRevision),
+      );
+    });
+
+    test('alarm planner complete window coalesces repeats and accepts one stable private intent', () async {
+      installAlarmRuntime();
+      final alarm = await armedDueAlarm(repeats: true);
+      final scope = await generation();
+      await CalendarModule.runAlarmMaintenance(session);
+      final plan = (await CalendarAlarmPlanRecord.db.findFirstRow(session))!;
+      expect(plan.status, CalendarAlarmPlanStatus.ready);
+      expect(plan.dirty, isFalse);
+      expect(
+        plan.windowEnd!.difference(plan.windowStart!),
+        const Duration(days: 30, minutes: 15),
+      );
+      final firings = await CalendarAlarmFiringRecord.db.find(
+        session,
+        orderBy: (t) => t.repeatOrdinal,
+      );
+      expect(firings.map((f) => f.state), [
+        CalendarAlarmFiringState.suppressed,
+        CalendarAlarmFiringState.suppressed,
+        CalendarAlarmFiringState.accepted,
+      ]);
+      expect(alarmDelivery.accepted, hasLength(1));
+      final intent = alarmDelivery.accepted.values.single;
+      expect(intent.alarmId, alarm.id);
+      expect(
+        await CalendarModule.validateAlarmDelivery(session, intent),
+        isTrue,
+      );
+      expect(await generation(), scope);
+      expect(
+        (await service.listPersonalAlarms(alarm.parent)).single.revision,
+        alarm.revision,
+      );
+      await CalendarModule.runAlarmMaintenance(session);
+      expect(alarmDelivery.calls, 1);
+      alarmPolicy.verdict = CalendarAuthorizationVerdict.deny;
+      expect(
+        await CalendarModule.validateAlarmDelivery(session, intent),
+        isFalse,
+      );
+    });
+
+    test('alarm planner identical private writes and parent text edits never replay accepted firings', () async {
+      installAlarmRuntime();
+      final alarm = await armedDueAlarm();
+      await CalendarModule.runAlarmMaintenance(session);
+      final original = (await CalendarAlarmRecord.db.findById(
+        session,
+        alarm.id,
+      ))!;
+      final saved = (await service.updatePersonalAlarm(
+        CalendarAlarmUpdateRequest(
+          parent: alarm.parent,
+          alarmId: alarm.id,
+          expectedRevision: alarm.revision,
+          definition: alarm.definition,
+        ),
+      ))!;
+      await service.setPersonalAlarmArmed(
+        alarm.parent,
+        alarm.id,
+        saved.revision,
+        true,
+      );
+      final data = (await CalendarEventDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.eventId.equals(alarm.parent.id),
+      ))!;
+      await service.updateEvent(
+        CalendarEventUpdateRequest(
+          eventId: alarm.parent.id,
+          expectedRevision: 1,
+          content: data.content.copyWith(summary: 'Changed text only'),
+        ),
+      );
+      await CalendarModule.runAlarmMaintenance(session);
+      expect(
+        (await CalendarAlarmRecord.db.findById(session, alarm.id))!.generation,
+        original.generation,
+      );
+      expect(await CalendarAlarmFiringRecord.db.count(session), 1);
+      expect(alarmDelivery.calls, 1);
+      expect(
+        (await service.listPersonalAlarms(alarm.parent)).single.planningStatus,
+        CalendarAlarmPlanStatus.ready,
+      );
+    });
+
+    test('alarm planner host can permit planning while denying dispatch independently', () async {
+      installAlarmRuntime();
+      await armedDueAlarm();
+      alarmPolicy.deniedOperations.add(
+        CalendarAlarmBackgroundOperation.dispatch,
+      );
+      await CalendarModule.runAlarmMaintenance(session);
+      expect(
+        (await CalendarAlarmPlanRecord.db.findFirstRow(session))!.status,
+        CalendarAlarmPlanStatus.ready,
+      );
+      expect(alarmDelivery.calls, 0);
+      expect(
+        (await CalendarAlarmFiringRecord.db.findFirstRow(session))!.state,
+        CalendarAlarmFiringState.pending,
+      );
+      expect(
+        alarmPolicy.lastOperation,
+        CalendarAlarmBackgroundOperation.dispatch,
+      );
+    });
+
+    test(
+      'alarm planner density failure exposes no partial work or handoff',
+      () async {
+        installAlarmRuntime(cap: 1);
+        await armedDueAlarm(repeats: true);
+        await CalendarModule.runAlarmMaintenance(session);
+        final plan = (await CalendarAlarmPlanRecord.db.findFirstRow(session))!;
+        expect(plan.status, CalendarAlarmPlanStatus.needsAttention);
+        expect(plan.windowStart, isNull);
+        expect(plan.windowEnd, isNull);
+        expect(await CalendarAlarmFiringRecord.db.count(session), 0);
+        expect(alarmDelivery.calls, 0);
+      },
+    );
+
+    test('alarm planner final background denial is atomic and actions survive replanning', () async {
+      installAlarmRuntime();
+      final alarm = await armedDueAlarm();
+      alarmPolicy.finalVerdict = CalendarAuthorizationVerdict.deny;
+      await CalendarModule.runAlarmMaintenance(session);
+      expect(
+        (await CalendarAlarmPlanRecord.db.findFirstRow(session))!.status,
+        CalendarAlarmPlanStatus.unavailable,
+      );
+      expect(await CalendarAlarmFiringRecord.db.count(session), 0);
+      expect(alarmDelivery.calls, 0);
+      alarmPolicy.finalVerdict = null;
+      await CalendarAlarmActionRecord.db.insertRow(
+        session,
+        CalendarAlarmActionRecord(
+          alarmId: alarm.id,
+          originalKey: 'item',
+          revision: 1,
+          acknowledgedAt: await alarmNow(),
+          createdAt: await alarmNow(),
+          updatedAt: await alarmNow(),
+        ),
+      );
+      await service.updatePersonalAlarm(
+        CalendarAlarmUpdateRequest(
+          parent: alarm.parent,
+          alarmId: alarm.id,
+          expectedRevision: alarm.revision,
+          definition: alarm.definition.copyWith(
+            absoluteUtc: alarm.definition.absoluteUtc!.subtract(
+              const Duration(seconds: 1),
+            ),
+          ),
+        ),
+      );
+      await CalendarModule.runAlarmMaintenance(session);
+      expect(
+        (await CalendarAlarmPlanRecord.db.findFirstRow(session))!.status,
+        CalendarAlarmPlanStatus.ready,
+      );
+      expect(
+        (await CalendarAlarmFiringRecord.db.findFirstRow(session))!.state,
+        CalendarAlarmFiringState.suppressed,
+      );
+      expect(alarmDelivery.calls, 0);
+    });
+
+    test('alarm planner preserves independent task source progress while suppressing every completion signal', () async {
+      installAlarmRuntime();
+      final calendar = (await service.create(createInput()))!.calendarId;
+      final now = await alarmNow();
+      for (final progress in [
+        CalendarTaskProgress(status: CalendarTaskStatus.completed),
+        CalendarTaskProgress(status: CalendarTaskStatus.cancelled),
+        CalendarTaskProgress(
+          status: CalendarTaskStatus.needsAction,
+          percentComplete: 100,
+        ),
+        CalendarTaskProgress(completedAt: now),
+      ]) {
+        final task = (await service.createTask(
+          CalendarTaskCreateRequest(
+            calendarId: calendar,
+            content: CalendarTaskContent(
+              timing: CalendarTaskTiming(kind: CalendarTaskTimeKind.undated),
+            ),
+            assignees: [],
+          ),
+        ))!;
+        final data = (await CalendarTaskDataRecord.db.findFirstRow(
+          session,
+          where: (t) => t.taskId.equals(task.taskId),
+        ))!;
+        data.progress = progress;
+        await CalendarTaskDataRecord.db.updateRow(session, data);
+        final parent = CalendarAlarmParent(
+          kind: CalendarAlarmParentKind.task,
+          id: task.taskId,
+        );
+        final alarm = (await service.createPersonalAlarm(
+          CalendarAlarmCreateRequest(
+            parent: parent,
+            definition: CalendarAlarmDefinition(
+              absoluteUtc: now.subtract(const Duration(minutes: 1)),
+            ),
+          ),
+        ))!;
+        await service.setPersonalAlarmArmed(parent, alarm.id, 1, true);
+        expect(
+          (await CalendarTaskDataRecord.db.findFirstRow(
+            session,
+            where: (t) => t.taskId.equals(task.taskId),
+          ))!.progress,
+          progress,
+        );
+      }
+      await CalendarModule.runAlarmMaintenance(session);
+      final firings = await CalendarAlarmFiringRecord.db.find(session);
+      expect(firings, hasLength(4));
+      expect(
+        firings.every((f) => f.state == CalendarAlarmFiringState.suppressed),
+        isTrue,
+      );
+      expect(alarmDelivery.calls, 0);
+    });
+
+    test('alarm planner crash after durable acceptance retries the same logical id', () async {
+      installAlarmRuntime();
+      final alarm = await armedDueAlarm();
+      alarmDelivery.throwAfterAcceptance = true;
+      await CalendarModule.runAlarmMaintenance(session);
+      final first = (await CalendarAlarmFiringRecord.db.findFirstRow(session))!;
+      expect(first.state, CalendarAlarmFiringState.pending);
+      expect(first.attemptCount, 1);
+      expect(alarmDelivery.accepted, hasLength(1));
+      first.nextAttemptAt = DateTime.utc(2020);
+      await CalendarAlarmFiringRecord.db.updateRow(session, first);
+      await CalendarModule.runAlarmMaintenance(session);
+      expect(alarmDelivery.calls, 2);
+      expect(alarmDelivery.accepted, hasLength(1));
+      expect(
+        (await CalendarAlarmFiringRecord.db.findById(
+          session,
+          first.id!,
+        ))!.state,
+        CalendarAlarmFiringState.accepted,
+      );
+      final intent = alarmDelivery.accepted.values.single;
+      await service.setPersonalAlarmArmed(
+        alarm.parent,
+        alarm.id,
+        alarm.revision,
+        false,
+      );
+      expect(
+        await CalendarModule.validateAlarmDelivery(session, intent),
+        isFalse,
+      );
+      await CalendarModule.runAlarmMaintenance(session);
+      expect(alarmDelivery.calls, 2);
+    });
+
+    test(
+      'alarm work leases reject expired owners and stale generations',
+      () async {
+        final alarm = await workAlarm(), plan = await workPlan(alarm);
+        final store = AlarmWorkStore(session, CalendarAlarmWorkOptions());
+        final first = (await store.claimPlans()).single;
+        expect(await store.claimPlans(), isEmpty);
+        await session.db.transaction((tx) async {
+          expect(await store.ownedPlan(first, tx), isNotNull);
+        });
+        final expired = (await CalendarAlarmPlanRecord.db.findById(
+          session,
+          plan.id!,
+        ))!;
+        expired.leaseUntil = DateTime.utc(2020);
+        await CalendarAlarmPlanRecord.db.updateRow(session, expired);
+        final second = (await store.claimPlans()).single;
+        expect(second.fence, first.fence + 1);
+        expect(second.owner, isNot(first.owner));
+        await session.db.transaction((tx) async {
+          expect(await store.ownedPlan(first, tx), isNull);
+          expect(await store.ownedPlan(second, tx), isNotNull);
+        });
+        await service.updatePersonalAlarm(
+          CalendarAlarmUpdateRequest(
+            parent: eventAlarmParent(alarm.parentId),
+            alarmId: alarm.id!,
+            expectedRevision: alarm.revision,
+            definition: absoluteAlarm(),
+          ),
+        );
+        await session.db.transaction((tx) async {
+          expect(await store.ownedPlan(second, tx), isNull);
+        });
+        final changed = (await CalendarAlarmPlanRecord.db.findById(
+          session,
+          plan.id!,
+        ))!;
+        expect(changed.dirty, isTrue);
+        expect(changed.generation, 2);
+        expect(changed.leaseOwner, isNull);
+      },
+    );
+
+    test('alarm work pruning is bounded terminal-only and never deletes action state', () async {
+      final alarm = await workAlarm();
+      final action = await CalendarAlarmActionRecord.db.insertRow(
+        session,
+        CalendarAlarmActionRecord(
+          alarmId: alarm.id!,
+          originalKey: 'original',
+          revision: 1,
+          acknowledgedAt: DateTime.utc(2020),
+          dismissedAt: DateTime.utc(2020),
+          createdAt: DateTime.utc(2020),
+          updatedAt: DateTime.utc(2020),
+        ),
+      );
+      await workFiring(
+        alarm,
+        0,
+        CalendarAlarmFiringState.accepted,
+        terminal: DateTime.utc(2020),
+      );
+      await workFiring(
+        alarm,
+        1,
+        CalendarAlarmFiringState.suppressed,
+        terminal: DateTime.utc(2020),
+      );
+      await workFiring(
+        alarm,
+        2,
+        CalendarAlarmFiringState.pending,
+        terminal: DateTime.utc(2020),
+      );
+      await workFiring(alarm, 3, CalendarAlarmFiringState.expired);
+      await workFiring(
+        alarm,
+        4,
+        CalendarAlarmFiringState.accepted,
+        terminal: DateTime.utc(2020),
+        lease: DateTime.utc(2099),
+      );
+      final store = AlarmWorkStore(
+        session,
+        CalendarAlarmWorkOptions(maxClaims: 1),
+      );
+      expect(await store.pruneTerminalHistory(), 1);
+      expect(await store.pruneTerminalHistory(), 1);
+      expect(await store.pruneTerminalHistory(), 0);
+      expect(await CalendarAlarmFiringRecord.db.count(session), 3);
+      expect(
+        (await CalendarAlarmActionRecord.db.findById(
+          session,
+          action.id!,
+        ))!.toJson(),
+        action.toJson(),
+      );
+      await service.deletePersonalAlarm(
+        eventAlarmParent(alarm.parentId),
+        alarm.id!,
+        1,
+      );
+      expect(await CalendarAlarmPlanRecord.db.count(session), 0);
+      expect(await CalendarAlarmFiringRecord.db.count(session), 0);
+      expect(await CalendarAlarmActionRecord.db.count(session), 0);
+    });
+
+    test(
+      'alarm work shared writes dirty leases without changing private versions',
+      () async {
+        final alarm = await workAlarm(), plan = await workPlan(alarm);
+        final store = AlarmWorkStore(session, CalendarAlarmWorkOptions());
+        final lease = (await store.claimPlans()).single;
+        final before = alarm.toJson();
+        await service.create(createInput('Unrelated shared calendar write'));
+        final changed = (await CalendarAlarmPlanRecord.db.findById(
+          session,
+          plan.id!,
+        ))!;
+        expect(changed.dirty, isTrue);
+        expect(changed.leaseOwner, isNull);
+        expect(changed.leaseFence, greaterThan(lease.fence));
+        expect(
+          (await CalendarAlarmRecord.db.findById(session, alarm.id!))!.toJson(),
+          before,
+        );
+        await session.db.transaction((tx) async {
+          expect(await store.ownedPlan(lease, tx), isNull);
+        });
+      },
+    );
+
+    test('alarm work setting changes suppress retries but preserve acknowledgements', () async {
+      final alarm = await workAlarm();
+      await workPlan(alarm);
+      final firing = await workFiring(
+        alarm,
+        0,
+        CalendarAlarmFiringState.pending,
+      );
+      final action = await CalendarAlarmActionRecord.db.insertRow(
+        session,
+        CalendarAlarmActionRecord(
+          alarmId: alarm.id!,
+          originalKey: 'original',
+          revision: 1,
+          acknowledgedAt: DateTime.utc(2020),
+          createdAt: DateTime.utc(2020),
+          updatedAt: DateTime.utc(2020),
+        ),
+      );
+      await service.updatePersonalAlarm(
+        CalendarAlarmUpdateRequest(
+          parent: eventAlarmParent(alarm.parentId),
+          alarmId: alarm.id!,
+          expectedRevision: 1,
+          definition: absoluteAlarm(),
+        ),
+      );
+      final changed = (await CalendarAlarmFiringRecord.db.findById(
+        session,
+        firing.id!,
+      ))!;
+      expect(changed.state, CalendarAlarmFiringState.suppressed);
+      expect(changed.terminalAt, isNotNull);
+      expect(
+        (await CalendarAlarmActionRecord.db.findById(
+          session,
+          action.id!,
+        ))!.toJson(),
+        action.toJson(),
+      );
+      await service.deleteEvent(alarm.parentId, 1);
+      expect(await CalendarAlarmRecord.db.count(session), 0);
+      expect(await CalendarAlarmPlanRecord.db.count(session), 0);
+      expect(await CalendarAlarmFiringRecord.db.count(session), 0);
+      expect(await CalendarAlarmActionRecord.db.count(session), 0);
+    });
 
     test('personal alarms CRUD leaves item protocol, source and scope generation unchanged', () async {
       final calendar = (await service.create(createInput()))!.calendarId;
@@ -13269,4 +13862,48 @@ final class BrokenDependency implements CalendarDependencyProvider {
     UuidValue id,
     Transaction tx,
   ) async => throw StateError('Synthetic dependency outage');
+}
+
+final class TestAlarmBackgroundPolicy implements CalendarAlarmBackgroundPolicy {
+  CalendarAuthorizationVerdict verdict = CalendarAuthorizationVerdict.allow;
+  CalendarAuthorizationVerdict? finalVerdict;
+  final deniedOperations = <CalendarAlarmBackgroundOperation>{};
+  CalendarAlarmBackgroundOperation? lastOperation;
+  @override
+  CalendarAuthorizationGuarantee get guarantee =>
+      CalendarAuthorizationGuarantee.freshCheck;
+  @override
+  Future<CalendarAuthorizationVerdict> authorize(
+    Session session,
+    CalendarAlarmBackgroundContext context,
+    Transaction transaction,
+    CalendarAuthorizationPhase phase,
+  ) async {
+    lastOperation = context.operation;
+    if (deniedOperations.contains(context.operation)) {
+      return CalendarAuthorizationVerdict.deny;
+    }
+    return phase == CalendarAuthorizationPhase.finalWrite
+        ? finalVerdict ?? verdict
+        : verdict;
+  }
+}
+
+final class TestAlarmDeliveryPort implements CalendarAlarmDeliveryPort {
+  final accepted = <UuidValue, CalendarAlarmDeliveryIntent>{};
+  int calls = 0;
+  bool throwAfterAcceptance = false;
+  @override
+  Future<bool> accept(
+    Session session,
+    CalendarAlarmDeliveryIntent intent,
+  ) async {
+    calls++;
+    final alreadyAccepted = accepted.containsKey(intent.firingId);
+    accepted.putIfAbsent(intent.firingId, () => intent);
+    if (throwAfterAcceptance && !alreadyAccepted) {
+      throw StateError('Synthetic crash after durable acceptance');
+    }
+    return true;
+  }
 }

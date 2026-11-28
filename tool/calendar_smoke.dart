@@ -3321,6 +3321,45 @@ Future<void> personalAlarmSmoke(List<Client> clients) async {
         1,
     'Private alarm writes changed shared event revision',
   );
+  final beforeArm = (await b.calendarAlarm.list(parent))
+      .firstWhere((r) => r.id == rows.first.id);
+  final armed = (await a.calendarAlarm.setArmed(
+    parent,
+    beforeArm.id,
+    beforeArm.revision,
+    true,
+  ))!;
+  check(armed.armed, 'Explicit arming failed across hosts');
+  cal.CalendarAlarmView? planned;
+  final deadline = DateTime.now().add(const Duration(seconds: 45));
+  while (DateTime.now().isBefore(deadline)) {
+    planned = (await b.calendarAlarm.list(parent))
+        .firstWhere((r) => r.id == armed.id);
+    if (planned.planningStatus == cal.CalendarAlarmPlanStatus.ready) break;
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+  }
+  check(
+    planned?.planningStatus == cal.CalendarAlarmPlanStatus.ready &&
+        planned?.planningWindowEnd != null,
+    'Independent host maintenance did not complete the rolling alarm plan',
+  );
+  check(
+    planned!.revision == armed.revision,
+    'Background planning changed the private API revision',
+  );
+  final disarmed = (await b.calendarAlarm.setArmed(
+    parent,
+    armed.id,
+    armed.revision,
+    false,
+  ))!;
+  check(
+    !disarmed.armed &&
+        !(await a.calendarAlarm.list(parent))
+            .firstWhere((r) => r.id == armed.id)
+            .armed,
+    'Cross-host disarming failed',
+  );
   await b.calendarEvent.deleteEvent(event.eventId, 1);
   await rejects(
     () => a.calendarAlarm.list(parent),
@@ -3356,6 +3395,6 @@ Future<void> personalAlarmSmoke(List<Client> clients) async {
   );
   await a.calendar.delete(calendar, 1);
   print(
-    'PASS: private personal alarm definitions across two hosts, competing cap/revision writes, unchanged item versions and parent deletion. No planning or delivery.',
+    'PASS: private personal alarm definitions across two hosts, competing cap/revision writes, unchanged item versions, explicit arming/rolling planning/disarming and parent deletion. Notification delivery remains unconnected.',
   );
 }

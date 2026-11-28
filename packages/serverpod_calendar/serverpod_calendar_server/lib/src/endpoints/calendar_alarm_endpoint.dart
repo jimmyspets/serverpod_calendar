@@ -18,6 +18,15 @@ class CalendarAlarmEndpoint extends Endpoint {
     Session session,
     CalendarAlarmUpdateRequest request,
   ) => CalendarModule.service(session).updatePersonalAlarm(request);
+  Future<CalendarAlarmView?> setArmed(
+    Session session,
+    CalendarAlarmParent parent,
+    UuidValue alarmId,
+    int expectedRevision,
+    bool armed,
+  ) =>
+      CalendarModule.service(session)
+          .setPersonalAlarmArmed(parent, alarmId, expectedRevision, armed);
   Future<void> delete(
     Session session,
     CalendarAlarmParent parent,
