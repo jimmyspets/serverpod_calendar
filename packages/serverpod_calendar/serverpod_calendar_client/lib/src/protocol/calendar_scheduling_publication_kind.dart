@@ -18,7 +18,9 @@ enum CalendarSchedulingPublicationKind implements _isc.SerializableModel {
   occurrenceCancel,
   occurrenceRestore,
   seriesReopen,
-  occurrenceRestoreWithMaster;
+  occurrenceRestoreWithMaster,
+  rangeCancel,
+  rangeRestore;
 
   static CalendarSchedulingPublicationKind fromJson(String name) {
     switch (name) {
@@ -34,6 +36,10 @@ enum CalendarSchedulingPublicationKind implements _isc.SerializableModel {
         return CalendarSchedulingPublicationKind.seriesReopen;
       case 'occurrenceRestoreWithMaster':
         return CalendarSchedulingPublicationKind.occurrenceRestoreWithMaster;
+      case 'rangeCancel':
+        return CalendarSchedulingPublicationKind.rangeCancel;
+      case 'rangeRestore':
+        return CalendarSchedulingPublicationKind.rangeRestore;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "CalendarSchedulingPublicationKind"',

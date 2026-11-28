@@ -482,6 +482,42 @@ void main() {
       utf8.encode((await publication(receipt.publicationId)).payload),
     );
 
+    Future<CalendarSchedulingOccurrenceCancelRequest> instanceCommand(
+      UuidValue id,
+      CalendarEventTiming point,
+    ) async => CalendarSchedulingOccurrenceCancelRequest(
+      eventId: id,
+      expectedRevision: (await service.getEvent(
+        id,
+        CalendarEventFieldGroup.values,
+      )).revision,
+      commandId: Uuid().v4obj(),
+      originalStart: point,
+    );
+
+    Future<CalendarSchedulingOccurrenceRestoreRequest> restoreCommand(
+      UuidValue id,
+      CalendarEventTiming point,
+    ) async => CalendarSchedulingOccurrenceRestoreRequest(
+      eventId: id,
+      expectedRevision: (await service.getEvent(
+        id,
+        CalendarEventFieldGroup.values,
+      )).revision,
+      commandId: Uuid().v4obj(),
+      originalStart: point,
+    );
+
+    Future<CalendarSchedulingReopenRequest> reopenCommand(UuidValue id) async =>
+        CalendarSchedulingReopenRequest(
+          eventId: id,
+          expectedRevision: (await service.getEvent(
+            id,
+            CalendarEventFieldGroup.values,
+          )).revision,
+          commandId: Uuid().v4obj(),
+        );
+
     for (final kind in [
       CalendarEventTimeKind.date,
       CalendarEventTimeKind.utc,
@@ -525,41 +561,215 @@ void main() {
       );
     }
 
-    Future<CalendarSchedulingOccurrenceCancelRequest> instanceCommand(
-      UuidValue id,
-      CalendarEventTiming point,
-    ) async => CalendarSchedulingOccurrenceCancelRequest(
-      eventId: id,
-      expectedRevision: (await service.getEvent(
-        id,
-        CalendarEventFieldGroup.values,
-      )).revision,
-      commandId: Uuid().v4obj(),
-      originalStart: point,
-    );
+    for (final kind in [
+      CalendarEventTimeKind.date,
+      CalendarEventTimeKind.utc,
+      CalendarEventTimeKind.zoned,
+    ]) {
+      test(
+        'durable outgoing range $kind repeats with preserved private drafts',
+        () async {
+          final content = masterContent(kind: kind);
+          final id = await masterEvent(content);
+          final savedCommand = masterRequest(id, content);
+          final initialSaved = await service.saveAndNotify(savedCommand);
+          await CalendarModule.runSchedulingMaintenance(session);
+          final point = masterTiming(
+            kind: kind,
+            day: 29,
+          ).copyWith(duration: null);
+          var revision = 2;
+          for (var cycle = 0; cycle < 2; cycle++) {
+            final command = CalendarSchedulingFutureCancelRequest(
+              eventId: id,
+              expectedRevision: revision,
+              commandId: Uuid().v4obj(),
+              originalStart: point,
+            );
+            final cancelled = await service.cancelFutureAndNotify(command);
+            revision = cancelled.eventRevision;
+            final status = await service.schedulingStatus(id);
+            expect(status.hasPublishedRangeCancellation, true);
+            expect(
+              (await service.saveAndNotify(savedCommand)).publicationId,
+              initialSaved.publicationId,
+            );
+            expect(status.hasLocalChanges, false);
+            expect(
+              (await eventData(id)).timingOverrides!.cancelledFrom!.toJson(),
+              point.toJson(),
+            );
+            expect(
+              (await service.cancelFutureAndNotify(command)).publicationId,
+              cancelled.publicationId,
+            );
+            await expectLater(
+              service.cancelAndNotify(cancelRequest(id, revision: revision)),
+              failure(CalendarFailureCode.dependencyConflict),
+            );
+            await CalendarModule.runSchedulingMaintenance(session);
+            expect(
+              (await service.schedulingStatus(id)).deliveries.single.state,
+              CalendarSchedulingDeliveryState.accepted,
+            );
+            final restored = await service.restoreFutureAndNotify(
+              CalendarSchedulingFutureRestoreRequest(
+                eventId: id,
+                expectedRevision: revision,
+                commandId: Uuid().v4obj(),
+                originalStart: point,
+              ),
+            );
+            revision = restored.eventRevision;
+            expect(
+              (await service.cancelFutureAndNotify(command)).publicationId,
+              cancelled.publicationId,
+            );
+            expect(
+              (await service.schedulingStatus(id))
+                  .hasPublishedRangeCancellation,
+              false,
+            );
+            expect(
+              (await eventData(id)).timingOverrides?.cancelledFrom,
+              isNull,
+            );
+            final wire = parseIcalendarSchedulingMessage(
+              utf8.encode((await publication(restored.publicationId)).payload),
+            );
+            expect(wire.events.where((e) => e.isThisAndFuture).length, 1);
+            await CalendarModule.runSchedulingMaintenance(session);
+          }
+          final saved = await service.saveAndNotify(
+            masterRequest(id, content, revision: revision),
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          expect(
+            (await service.schedulingStatus(id)).hasPublishedRangeCancellation,
+            false,
+          );
+          expect(
+            (await publication(saved.publicationId)).snapshot,
+            contains('"version":7'),
+          );
+          expect(transport.submissions.length, greaterThanOrEqualTo(5));
+        },
+      );
+    }
 
-    Future<CalendarSchedulingOccurrenceRestoreRequest> restoreCommand(
-      UuidValue id,
-      CalendarEventTiming point,
-    ) async => CalendarSchedulingOccurrenceRestoreRequest(
-      eventId: id,
-      expectedRevision: (await service.getEvent(
-        id,
-        CalendarEventFieldGroup.values,
-      )).revision,
-      commandId: Uuid().v4obj(),
-      originalStart: point,
-    );
-
-    Future<CalendarSchedulingReopenRequest> reopenCommand(UuidValue id) async =>
-        CalendarSchedulingReopenRequest(
+    for (final kind in [
+      CalendarEventTimeKind.date,
+      CalendarEventTimeKind.utc,
+      CalendarEventTimeKind.zoned,
+    ]) {
+      test(
+        'durable outgoing range $kind preserves individual masks and continuations',
+        () async {
+          final content = masterContent(kind: kind);
+          final id = await masterEvent(content);
+          await service.saveAndNotify(masterRequest(id, content));
+          await CalendarModule.runSchedulingMaintenance(session);
+          final point = masterTiming(
+            kind: kind,
+            day: 29,
+          ).copyWith(duration: null);
+          final single = masterTiming(
+            kind: kind,
+            day: 30,
+          ).copyWith(duration: null);
+          final individual = await service.cancelOccurrenceAndNotify(
+            await instanceCommand(id, single),
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          final cancelled = await service.cancelFutureAndNotify(
+            CalendarSchedulingFutureCancelRequest(
+              eventId: id,
+              expectedRevision: individual.eventRevision,
+              commandId: Uuid().v4obj(),
+              originalStart: point,
+            ),
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          final restored = await service.restoreFutureAndNotify(
+            CalendarSchedulingFutureRestoreRequest(
+              eventId: id,
+              expectedRevision: cancelled.eventRevision,
+              commandId: Uuid().v4obj(),
+              originalStart: point,
+            ),
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          final status = await service.schedulingStatus(id);
+          expect(status.hasOccurrenceCancellations, true);
+          expect(status.usesPublicationExclusions, true);
+          expect(
+            (await publication(restored.publicationId)).payload,
+            contains('EXDATE'),
+          );
+          final restoredSingle = await service.restoreOccurrenceAndNotify(
+            await restoreCommand(id, single),
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          expect(
+            (await service.schedulingStatus(id)).hasOccurrenceCancellations,
+            false,
+          );
+          await service.saveAndNotify(
+            masterRequest(id, content, revision: restoredSingle.eventRevision),
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          final whole = await service.cancelAndNotify(
+            cancelRequest(
+              id,
+              revision: (await service.schedulingStatus(id)).eventRevision,
+            ),
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          expect((await publication(whole.publicationId)).method, 'CANCEL');
+        },
+      );
+    }
+    test('durable outgoing range preserves intervening native edits and their cutoff', () async {
+      final content = masterContent();
+      final id = await masterEvent(content);
+      await service.saveAndNotify(masterRequest(id, content));
+      await CalendarModule.runSchedulingMaintenance(session);
+      final point = masterTiming(day: 29).copyWith(duration: null);
+      final cancelled = await service.cancelFutureAndNotify(
+        CalendarSchedulingFutureCancelRequest(
           eventId: id,
-          expectedRevision: (await service.getEvent(
-            id,
-            CalendarEventFieldGroup.values,
-          )).revision,
+          expectedRevision: 2,
           commandId: Uuid().v4obj(),
-        );
+          originalStart: point,
+        ),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      await service.updateEvent(
+        CalendarEventUpdateRequest(
+          eventId: id,
+          expectedRevision: cancelled.eventRevision,
+          content: content.copyWith(summary: 'Private newer draft'),
+        ),
+      );
+      final before = await eventData(id);
+      final restored = await service.restoreFutureAndNotify(
+        CalendarSchedulingFutureRestoreRequest(
+          eventId: id,
+          expectedRevision: (await service.schedulingStatus(id)).eventRevision,
+          commandId: Uuid().v4obj(),
+          originalStart: point,
+        ),
+      );
+      final after = await eventData(id);
+      expect(after.content.toJson(), before.content.toJson());
+      expect(after.timingOverrides!.toJson(), before.timingOverrides!.toJson());
+      expect(
+        (await publication(restored.publicationId)).payload,
+        isNot(contains('Private newer draft')),
+      );
+      expect((await service.schedulingStatus(id)).hasLocalChanges, true);
+      await CalendarModule.runSchedulingMaintenance(session);
+    });
 
     Future<UuidValue> cancelledPublishedSeries() async {
       final content = masterContent();
@@ -4472,6 +4682,263 @@ void main() {
       expect(
         transport.submissions[0].deliveryKey,
         transport.submissions[1].deliveryKey,
+      );
+    });
+    for (final restoring in [false, true]) {
+      for (final permission in [
+        CalendarPermission.readScheduling,
+        CalendarPermission.readEvent,
+        CalendarPermission.readEventSource,
+        CalendarPermission.changeEventStatus,
+        restoring
+            ? CalendarPermission.restoreFutureScheduling
+            : CalendarPermission.cancelFutureScheduling,
+      ]) {
+        test(
+          'durable outgoing range $restoring independently gates ${permission.name}',
+          () async {
+            final content = masterContent(), id = await masterEvent(content);
+            await service.saveAndNotify(masterRequest(id, content));
+            await CalendarModule.runSchedulingMaintenance(session);
+            final point = masterTiming(day: 29).copyWith(duration: null);
+            var revision = 2;
+            if (restoring) {
+              revision = (await service.cancelFutureAndNotify(
+                CalendarSchedulingFutureCancelRequest(
+                  eventId: id,
+                  expectedRevision: revision,
+                  commandId: Uuid().v4obj(),
+                  originalStart: point,
+                ),
+              )).eventRevision;
+              await CalendarModule.runSchedulingMaintenance(session);
+            }
+            final before = (await eventData(id)).toJson(),
+                count = (await publications()).length;
+            policy.denied.add(permission);
+            await expectLater(
+              restoring
+                  ? service.restoreFutureAndNotify(
+                      CalendarSchedulingFutureRestoreRequest(
+                        eventId: id,
+                        expectedRevision: revision,
+                        commandId: Uuid().v4obj(),
+                        originalStart: point,
+                      ),
+                    )
+                  : service.cancelFutureAndNotify(
+                      CalendarSchedulingFutureCancelRequest(
+                        eventId: id,
+                        expectedRevision: revision,
+                        commandId: Uuid().v4obj(),
+                        originalStart: point,
+                      ),
+                    ),
+              failure(CalendarFailureCode.accessDenied),
+            );
+            expect((await eventData(id)).toJson(), before);
+            expect((await publications()).length, count);
+          },
+        );
+      }
+    }
+    test('durable outgoing range final denial, pending, stale and unsupported anchors are atomic', () async {
+      final content = masterContent(), id = await masterEvent(content);
+      await service.saveAndNotify(masterRequest(id, content));
+      final point = masterTiming(day: 29).copyWith(duration: null);
+      final command = CalendarSchedulingFutureCancelRequest(
+        eventId: id,
+        expectedRevision: 2,
+        commandId: Uuid().v4obj(),
+        originalStart: point,
+      );
+      await expectLater(
+        service.cancelFutureAndNotify(command),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      host.denyFinal = true;
+      await expectLater(
+        service.cancelFutureAndNotify(command),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      host.denyFinal = false;
+      await expectLater(
+        service.cancelFutureAndNotify(command.copyWith(expectedRevision: 1)),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      await expectLater(
+        service.cancelFutureAndNotify(
+          command.copyWith(
+            originalStart: point.copyWith(
+              duration: CalendarEventDuration(days: 1),
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      expect((await publications()).length, 1);
+      expect((await eventData(id)).timingOverrides, isNull);
+      final cancelled = await service.cancelFutureAndNotify(command);
+      await CalendarModule.runSchedulingMaintenance(session);
+      await expectLater(
+        service.restoreFutureAndNotify(
+          CalendarSchedulingFutureRestoreRequest(
+            eventId: id,
+            expectedRevision: cancelled.eventRevision,
+            commandId: Uuid().v4obj(),
+            originalStart: masterTiming(day: 30).copyWith(duration: null),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      await expectLater(
+        service.restoreFutureAndNotify(
+          CalendarSchedulingFutureRestoreRequest(
+            eventId: id,
+            expectedRevision: cancelled.eventRevision,
+            commandId: command.commandId,
+            originalStart: point,
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+    });
+    test('durable outgoing range retains pre-existing native cutoff and detects private state', () async {
+      final content = masterContent(), id = await masterEvent(content);
+      await service.saveAndNotify(masterRequest(id, content));
+      await CalendarModule.runSchedulingMaintenance(session);
+      final point = masterTiming(day: 29).copyWith(duration: null),
+          privatePoint = masterTiming(day: 30).copyWith(duration: null);
+      await service.changeOccurrence(
+        CalendarEventOccurrenceChange(
+          eventId: id,
+          expectedRevision: 2,
+          originalStart: privatePoint,
+          action: CalendarEventOccurrenceAction.cancelFuture,
+        ),
+      );
+      final cancelled = await service.cancelFutureAndNotify(
+        CalendarSchedulingFutureCancelRequest(
+          eventId: id,
+          expectedRevision: 3,
+          commandId: Uuid().v4obj(),
+          originalStart: point,
+        ),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      final restored = await service.restoreFutureAndNotify(
+        CalendarSchedulingFutureRestoreRequest(
+          eventId: id,
+          expectedRevision: cancelled.eventRevision,
+          commandId: Uuid().v4obj(),
+          originalStart: point,
+        ),
+      );
+      expect(
+        (await eventData(id)).timingOverrides!.cancelledFrom!.toJson(),
+        privatePoint.toJson(),
+      );
+      expect((await service.schedulingStatus(id)).hasLocalChanges, true);
+      expect(
+        (await publication(restored.publicationId)).payload,
+        isNot(contains('STATUS:CANCELLED')),
+      );
+    });
+    test('durable outgoing range admits a published future anchor without changing its shift', () async {
+      final content = masterContent(), id = await masterEvent(content);
+      final point = masterTiming(day: 29).copyWith(duration: null);
+      await service.changeOccurrence(
+        CalendarEventOccurrenceChange(
+          eventId: id,
+          expectedRevision: 1,
+          originalStart: point,
+          action: CalendarEventOccurrenceAction.replaceFutureTiming,
+          replacement: masterTiming(day: 30),
+        ),
+      );
+      await service.saveAndNotify(masterRequest(id, content, revision: 2));
+      await CalendarModule.runSchedulingMaintenance(session);
+      final before = (await eventData(id)).timingOverrides!.future.single
+          .toJson();
+      final cancelled = await service.cancelFutureAndNotify(
+        CalendarSchedulingFutureCancelRequest(
+          eventId: id,
+          expectedRevision: 3,
+          commandId: Uuid().v4obj(),
+          originalStart: point,
+        ),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      await service.restoreFutureAndNotify(
+        CalendarSchedulingFutureRestoreRequest(
+          eventId: id,
+          expectedRevision: cancelled.eventRevision,
+          commandId: Uuid().v4obj(),
+          originalStart: point,
+        ),
+      );
+      expect(
+        (await eventData(id)).timingOverrides!.future.single.toJson(),
+        before,
+      );
+      expect((await service.schedulingStatus(id)).hasLocalChanges, false);
+    });
+    test('durable outgoing range corrupt version and restored target bindings fail closed', () async {
+      final content = masterContent(), id = await masterEvent(content);
+      await service.saveAndNotify(masterRequest(id, content));
+      await CalendarModule.runSchedulingMaintenance(session);
+      final point = masterTiming(day: 29).copyWith(duration: null);
+      final cancelled = await service.cancelFutureAndNotify(
+        CalendarSchedulingFutureCancelRequest(
+          eventId: id,
+          expectedRevision: 2,
+          commandId: Uuid().v4obj(),
+          originalStart: point,
+        ),
+      );
+      await CalendarModule.runSchedulingMaintenance(session);
+      final row = await publication(cancelled.publicationId),
+          good = row.snapshot;
+      row.eventRevision++;
+      await CalendarSchedulingPublicationRecord.db.updateRow(session, row);
+      await expectLater(
+        service.schedulingStatus(id),
+        failure(CalendarFailureCode.unavailable),
+      );
+      row.eventRevision--;
+      await CalendarSchedulingPublicationRecord.db.updateRow(session, row);
+      final malformed = jsonDecode(good) as Map<String, dynamic>;
+      (malformed['facts'] as Map)['version'] = 7;
+      row.snapshot = jsonEncode(malformed);
+      await CalendarSchedulingPublicationRecord.db.updateRow(session, row);
+      await expectLater(
+        service.schedulingStatus(id),
+        failure(CalendarFailureCode.unavailable),
+      );
+      row.snapshot = good;
+      await CalendarSchedulingPublicationRecord.db.updateRow(session, row);
+      final restored = await service.restoreFutureAndNotify(
+        CalendarSchedulingFutureRestoreRequest(
+          eventId: id,
+          expectedRevision: cancelled.eventRevision,
+          commandId: Uuid().v4obj(),
+          originalStart: point,
+        ),
+      );
+      final restoredRow = await publication(restored.publicationId);
+      final state = jsonDecode(restoredRow.snapshot) as Map<String, dynamic>;
+      (state['range'] as Map)['anchor'] = masterTiming(day: 30)
+          .copyWith(duration: null)
+          .toJson();
+      restoredRow.snapshot = jsonEncode(state);
+      await CalendarSchedulingPublicationRecord.db.updateRow(
+        session,
+        restoredRow,
+      );
+      await expectLater(
+        service.schedulingStatus(id),
+        failure(CalendarFailureCode.unavailable),
       );
     });
   });

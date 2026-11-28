@@ -136,6 +136,9 @@ extension CalendarSchedulingOccurrenceOperations on CalendarService {
       final receiptCheckpoint = retry == null
           ? null
           : _schedulingReadCheckpoint(retry);
+      if (retry == null && previous.rangeControl?.active == true) {
+        throw _failure(CalendarFailureCode.dependencyConflict);
+      }
       if (receiptCheckpoint != null) kind = receiptCheckpoint.kind;
       final basisRecord =
           receiptCheckpoint?.basisRecord ?? previous.basisRecord;
@@ -679,6 +682,14 @@ extension CalendarSchedulingOccurrenceOperations on CalendarService {
         transaction: tx,
       );
       // Run the complete private validator before committing any checkpoint.
+      if (previous.rangeControl != null) {
+        _schedulingCarryRange(p, previous);
+        await CalendarSchedulingPublicationRecord.db.updateRow(
+          _session,
+          p,
+          transaction: tx,
+        );
+      }
       _schedulingReadCheckpoint(p);
       await CalendarSchedulingDeliveryRecord.db.insert(_session, [
         for (final r in authority.routes)

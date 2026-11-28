@@ -12,5 +12,7 @@ fields:
   originalStart: CalendarEventTiming?
   hasOccurrenceCancellations: bool, default=false
   usesPublicationExclusions: bool, default=false
+  hasPublishedRangeCancellation: bool, default=false
+  publishedRangeStart: CalendarEventTiming?
   hasLocalChanges: bool
   deliveries: List<CalendarSchedulingDeliveryView>

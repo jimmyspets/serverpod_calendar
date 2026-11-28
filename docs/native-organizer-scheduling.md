@@ -6,7 +6,7 @@ Status: scoped outbound REQUEST/CANCEL implementation through a transport-indepe
 
 Create an ordinary native event first. The generated `calendarEvent.saveAndNotify` API accepts its UUID and expected revision, final event content, recipient calendar-address proposals and a UUID command key. It saves the validated event and all recipient intents in one transaction, or saves nothing. Ordinary event edits never queue invitations. The host supplies the verified organizer and approved routes; no client-supplied organizer identity or system flag is accepted.
 
-The workflow supports single events and recurring masters with DATE, UTC and named-zone native timing with a fixed organizer and 1–64 fixed recipients. Every REQUEST publication is a complete supported snapshot for that same set; instance CANCEL is a separate partial action. Imported and unknown-origin events require a future explicit adoption flow. Changing recipients/organizer, range cancellation, replies, delegation and other durable methods reject and remain first-release work. Supported occurrence REQUEST/reset and single-CANCEL profiles are described below. No invitation grants access, assigns a task or reserves a resource.
+The workflow supports single events and recurring masters with DATE, UTC and named-zone native timing with a fixed organizer and 1–64 fixed recipients. Every REQUEST publication is a complete supported snapshot for that same set; instance CANCEL is a separate partial action. Imported and unknown-origin events require a future explicit adoption flow. Changing recipients/organizer, RANGE replies, delegation and other durable methods remain separate first-release work. Accepted ADR 0172 adds the bounded [published range controls](published-range-controls.md) described separately, with their own active-cutoff guards. Supported occurrence REQUEST/reset and single-CANCEL profiles are described below. No invitation grants access, assigns a task or reserves a resource.
 
 The canonical event retains the approved organizer/attendee metadata; ordinary source-read permissions protect it. The event's protocol UID is stable and separate from feed publication identity and transport IDs. Native omitted/empty summaries produce an empty scheduling SUMMARY, never the example's “Untitled event” display label. Existing text LANGUAGE/ALTREP annotations survive ordinary text changes. Rich data unsupported by the scheduling profile rejects before committing; it is not silently dropped.
 
@@ -196,3 +196,8 @@ Accepted ADR 0134 adds the scoped native/ordinary VEVENT descriptive-field incre
 ## Native item text/link metadata
 
 Accepted ADR 0135 adds selected-field native event/task URL, classification, category and comment editors with independent disclosure, retained source groups/baselines and effective outgoing versions. CONTACT remains import-only; category search remains separate. See [the implementation guide](native-item-text-metadata.md) and scoped validation evidence.
+
+
+## Durable outgoing range controls
+
+[ADR 0172](adr/0172-durable-published-range-controls.md) and [the scoped range guide](published-range-controls.md) supersede earlier blanket outgoing-range rejection only for the approved faithful-anchor cancel/restore/cycle profile. Existing active-cutoff guards, arbitrary-anchor restrictions and remaining recipient/client boundaries still apply. Full validation is recorded separately.

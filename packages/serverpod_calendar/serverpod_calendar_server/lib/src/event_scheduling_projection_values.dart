@@ -70,8 +70,13 @@ eventSchedulingProjection(
   CalendarEventTimingOverrides? input,
   List<EventSchedulingOriginal> originals, {
   bool membershipOnly = false,
+  RecurrenceWorkBudget? sharedWorkBudget,
 }) {
-  final current = validateEventOverrides(content, input);
+  final current = validateEventOverrides(
+    content,
+    input,
+    sharedWorkBudget: sharedWorkBudget,
+  );
   if (current?.cancelledFrom != null) {
     throw ArgumentError('Future cancellation has no REQUEST projection');
   }
@@ -120,6 +125,7 @@ eventSchedulingProjection(
       ],
       future: future.values.toList(),
     ),
+    sharedWorkBudget: sharedWorkBudget,
   );
   if (membershipOnly) return (current, List.unmodifiable(slots.values));
   final changes = future.values.toList()
@@ -174,6 +180,7 @@ eventSchedulingProjection(
       singles: singles.values.toList(),
       future: future.values.toList(),
     ),
+    sharedWorkBudget: sharedWorkBudget,
   );
   return (result, List.unmodifiable(slots.values));
 }
@@ -252,6 +259,104 @@ CivilDateTime _eventSchedulingCivilFields(DateTime v, {bool end = false}) =>
       minute: v.minute,
       second: v.second,
     );
+
+/// Builds a faithful publication-only range anchor before a suffix is cancelled.
+/// The returned edits never replace canonical state. PERIOD lengths are captured
+/// as finite single projections so a new range cannot reinterpret those starts.
+(CalendarEventTimingOverrides, List<EventSchedulingOriginal>)
+eventSchedulingRangeRestoration(
+  CalendarEventContent content,
+  CalendarEventTimingOverrides? input,
+  List<EventSchedulingOriginal> retained,
+  CalendarEventTiming anchor, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
+  final work =
+      sharedWorkBudget ?? RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
+  final current = validateEventOverrides(
+    content,
+    input,
+    sharedWorkBudget: work,
+  );
+  _profile(content.timing, anchor, anchor: true);
+  if (!eventSchedulingMember(content, anchor, sharedWorkBudget: work)) {
+    throw ArgumentError('Missing published original');
+  }
+  final key = _anchorKey(anchor);
+  if (current?.cancelledFrom != null ||
+      (current?.singles.any((s) => _anchorKey(s.originalStart) == key) ??
+          false) ||
+      retained.any((s) => s.key == key && !s.isThisAndFuture)) {
+    throw ArgumentError('Unrestorable published anchor');
+  }
+  final ranges = [...?current?.future]
+    ..sort(
+      (a, b) =>
+          _anchorKey(a.originalStart).compareTo(_anchorKey(b.originalStart)),
+    );
+  CalendarEventFutureOverride? active;
+  for (final row in ranges) {
+    if (_anchorKey(row.originalStart).compareTo(key) > 0) break;
+    active = row;
+  }
+  // A special duration at this original must not become the suffix duration.
+  if (active == null &&
+      (content.periods?.any((p) => _anchorKey(p) == key) ?? false)) {
+    throw ArgumentError('PERIOD anchor requires a separate profile');
+  }
+  final markers = {
+    for (final row in retained) row.key: row,
+  };
+  if (markers.length != retained.length) {
+    throw ArgumentError('Duplicate retained original');
+  }
+  markers[key] = EventSchedulingOriginal(anchor, true);
+  for (final period in content.periods ?? <CalendarEventTiming>[]) {
+    if (_anchorKey(period).compareTo(key) <= 0) continue;
+    final periodKey = _anchorKey(period);
+    if ((current?.singles.any(
+              (s) => _anchorKey(s.originalStart) == periodKey,
+            ) ??
+            false) ||
+        (current?.future.any((s) => _anchorKey(s.originalStart) == periodKey) ??
+            false)) {
+      continue;
+    }
+    markers.putIfAbsent(
+      periodKey,
+      () => EventSchedulingOriginal(
+        period.copyWith(end: null, duration: null),
+        false,
+      ),
+    );
+  }
+  final union = {
+    ...markers.keys,
+    for (final row in current?.singles ?? <CalendarEventSingleOverride>[])
+      _anchorKey(row.originalStart),
+    for (final row in ranges) _anchorKey(row.originalStart),
+  };
+  if (union.length > 64) {
+    throw const RecurrenceLimitException('schedulingOriginals');
+  }
+  // Charge every finite projection to the caller's budget before materializing.
+  for (final marker in markers.values) {
+    if (!eventSchedulingMember(
+      content,
+      marker.originalStart,
+      sharedWorkBudget: work,
+    )) {
+      throw ArgumentError('Missing retained original');
+    }
+  }
+  final result = eventSchedulingProjection(
+    content,
+    current,
+    markers.values.toList(),
+    sharedWorkBudget: work,
+  );
+  return (result.$1!, result.$2);
+}
 
 /// Projects one original from already validated publication content/overrides.
 /// Membership consumes the caller's aggregate budget; this allocates no edit.

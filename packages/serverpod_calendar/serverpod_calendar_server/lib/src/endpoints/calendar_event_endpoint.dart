@@ -55,6 +55,14 @@ class CalendarEventEndpoint extends Endpoint {
     Session session,
     CalendarSchedulingOccurrenceCancelRequest request,
   ) => CalendarModule.service(session).cancelOccurrenceAndNotify(request);
+  Future<CalendarSchedulingReceipt> cancelFutureAndNotify(
+    Session session,
+    CalendarSchedulingFutureCancelRequest request,
+  ) => CalendarModule.service(session).cancelFutureAndNotify(request);
+  Future<CalendarSchedulingReceipt> restoreFutureAndNotify(
+    Session session,
+    CalendarSchedulingFutureRestoreRequest request,
+  ) => CalendarModule.service(session).restoreFutureAndNotify(request);
   @override
   bool get requireLogin => true;
   Future<CalendarSchedulingReceipt> saveAndNotify(

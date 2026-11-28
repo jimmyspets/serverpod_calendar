@@ -402,6 +402,9 @@ extension CalendarSchedulingOperations on CalendarService {
               retry.meetingId != meeting?.id)) {
         throw _failure(CalendarFailureCode.validation);
       }
+      if (retry == null && previousCheckpoint?.rangeControl?.active == true) {
+        throw _failure(CalendarFailureCode.dependencyConflict);
+      }
       if (!cancellation &&
           retry == null &&
           (previousCheckpoint?.cancelled.isNotEmpty ?? false)) {
@@ -949,7 +952,15 @@ extension CalendarSchedulingOperations on CalendarService {
             ),
             transaction: tx,
           );
-      if ((jsonDecode(checkpoint) as Map)['version'] == 5) {
+      if (previousCheckpoint?.rangeControl != null) {
+        _schedulingCarryRange(publication, previousCheckpoint);
+        await CalendarSchedulingPublicationRecord.db.updateRow(
+          _session,
+          publication,
+          transaction: tx,
+        );
+      }
+      if ((jsonDecode(publication.snapshot) as Map)['version'] == 5) {
         _schedulingReadCheckpoint(publication);
       }
       await CalendarSchedulingDeliveryRecord.db.insert(_session, [
@@ -1082,6 +1093,11 @@ extension CalendarSchedulingOperations on CalendarService {
         originalStart: checkpoint?.target,
         hasOccurrenceCancellations: checkpoint?.cancelled.isNotEmpty ?? false,
         usesPublicationExclusions: checkpoint?.publicationExclusions != null,
+        hasPublishedRangeCancellation:
+            checkpoint?.rangeControl?.active ?? false,
+        publishedRangeStart: checkpoint?.rangeControl?.active == true
+            ? checkpoint!.rangeControl!.anchor
+            : null,
         hasLocalChanges:
             p == null ||
             _schedulingCanonicalKey(

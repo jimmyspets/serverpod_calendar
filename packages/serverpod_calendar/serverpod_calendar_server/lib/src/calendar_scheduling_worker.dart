@@ -155,8 +155,9 @@ final class _SchedulingWorker {
             (checkpoint.kind ==
                         CalendarSchedulingPublicationKind.seriesCancel &&
                     published.content.status != CalendarEventStatus.cancelled ||
-                parsed.events.single.status !=
-                    IcalendarEventStatus.cancelled) ||
+                parsed.events.any(
+                  (e) => e.status != IcalendarEventStatus.cancelled,
+                )) ||
         parsed.uid != p.protocolUid ||
         parsed.events.any(
           (event) =>

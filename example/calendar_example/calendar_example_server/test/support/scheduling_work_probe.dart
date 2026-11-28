@@ -11,13 +11,14 @@ import 'package:serverpod_calendar_server/src/event_values.dart';
 import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 import 'package:calendar_example_server/src/generated/serverpod.dart'
     as generated;
-import 'package:calendar_example_server/src/calendar_policy.dart';
 import 'package:calendar_example_server/src/scheduling_mime.dart';
 import 'package:calendar_example_server/src/imip_mime_input.dart';
 import 'package:calendar_example_server/src/imip_ingress.dart';
 import 'package:calendar_example_server/src/synthetic_imip_input.dart';
 
 final class _Host implements CalendarSchedulingHost {
+  String scope = '', pause = '';
+
   @override
   CalendarAuthorizationGuarantee get guarantee =>
       CalendarAuthorizationGuarantee.freshCheck;
@@ -28,18 +29,72 @@ final class _Host implements CalendarSchedulingHost {
     CalendarEventPolicySnapshot e,
     List<String> p,
     Transaction t,
-  ) => throw StateError('No user entry point in worker probe');
+  ) async => CalendarSchedulingAuthority(
+    organizerAddress: 'mailto:organizer@example.invalid',
+    authorityRef: a.scopeKey,
+    routes: p.map((r) => CalendarSchedulingRoute(r, r)),
+  );
+
   @override
   Future<CalendarAuthorizationVerdict> authorizeMessage(
     Session s,
     CalendarSchedulingPolicyContext c,
     Transaction t,
     CalendarAuthorizationPhase phase,
-  ) async =>
-      c.scopeKey.startsWith('scheduling-work-probe:') &&
-          c.authority.authorityRef == c.scopeKey
-      ? CalendarAuthorizationVerdict.allow
-      : CalendarAuthorizationVerdict.deny;
+  ) async {
+    if (pause == 'before' &&
+        phase == CalendarAuthorizationPhase.finalWrite &&
+        {
+          CalendarSchedulingPublicationKind.rangeCancel,
+          CalendarSchedulingPublicationKind.rangeRestore,
+        }.contains(c.intent.publicationKind)) {
+      stdout.writeln('SCHEDULING_SUBMITTED');
+      await Completer<void>().future;
+    }
+    return c.scopeKey.startsWith('scheduling-work-probe:') &&
+            c.authority.authorityRef == c.scopeKey
+        ? CalendarAuthorizationVerdict.allow
+        : CalendarAuthorizationVerdict.deny;
+  }
+}
+
+final class _Policy implements CalendarHostPolicy {
+  _Policy(this.host);
+  final _Host host;
+  @override
+  CalendarAuthorizationGuarantee get guarantee =>
+      CalendarAuthorizationGuarantee.freshCheck;
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw StateError('Unexpected synthetic policy operation');
+  @override
+  Future<CalendarHostContext> resolveContext(Session session) async =>
+      CalendarHostContext(
+        principalId: 'synthetic',
+        scopeKey: host.scope,
+        policyRevision: 'range-command-probe-v1',
+      );
+  @override
+  Future<List<CalendarAuthorizationDecision>> authorizeBatch(
+    Session s,
+    CalendarHostContext c,
+    List<CalendarAuthorizationRequest> requests,
+    Transaction tx,
+    CalendarAuthorizationPhase phase,
+  ) async => [
+    for (final r in requests)
+      CalendarAuthorizationDecision(
+        key: r.key,
+        verdict:
+            c.scopeKey == host.scope &&
+                c.scopeKey.startsWith('scheduling-work-probe:')
+            ? CalendarAuthorizationVerdict.allow
+            : CalendarAuthorizationVerdict.deny,
+        discloseMutationReceipt: true,
+        disclosedGroups: CalendarFieldGroup.values,
+        eventDisclosedGroups: CalendarEventFieldGroup.values,
+      ),
+  ];
 }
 
 final class _Transport implements CalendarSchedulingTransport {
@@ -115,14 +170,16 @@ Future<void> main(List<String> args) async {
   }
   final transport = _Transport();
   final replies = _ReplyHost();
+  final host = _Host();
   CalendarModule.install(
     pod,
-    policy: DemoCalendarPolicy(),
+    policy: _Policy(host),
     options: const CalendarModuleOptions(
       requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+      policyTimeout: Duration(seconds: 30),
     ),
     scheduling: CalendarSchedulingRuntime(
-      host: _Host(),
+      host: host,
       transport: transport,
       replies: CalendarSchedulingReplyRuntime(host: replies),
       options: CalendarSchedulingOptions(
@@ -140,6 +197,54 @@ Future<void> main(List<String> args) async {
       final input = jsonDecode(line) as Map<String, dynamic>;
       Object? result;
       switch (input['command']) {
+        case 'range-command':
+          final id = UuidValue.fromString(input['eventId'] as String);
+          final meeting = (await CalendarSchedulingMeetingRecord.db
+              .findFirstRow(s, where: (t) => t.eventId.equals(id)))!;
+          host.scope = meeting.scopeKey;
+          host.pause = input['pause'] as String? ?? '';
+          s.updateAuthenticated(
+            AuthenticationInfo('synthetic', {}, authId: 'range-command-probe'),
+          );
+          try {
+            final point = CalendarEventTiming(
+              kind: CalendarEventTimeKind.utc,
+              start: CalendarEventCivil(year: 2026, month: 11, day: 4, hour: 9),
+            );
+            final service = CalendarModule.service(s);
+            final receipt = input['restore'] == true
+                ? await service.restoreFutureAndNotify(
+                    CalendarSchedulingFutureRestoreRequest(
+                      eventId: id,
+                      expectedRevision: input['revision'] as int,
+                      commandId: UuidValue.fromString(input['key'] as String),
+                      originalStart: point,
+                    ),
+                  )
+                : await service.cancelFutureAndNotify(
+                    CalendarSchedulingFutureCancelRequest(
+                      eventId: id,
+                      expectedRevision: input['revision'] as int,
+                      commandId: UuidValue.fromString(input['key'] as String),
+                      originalStart: point,
+                    ),
+                  );
+            if (host.pause == 'after') {
+              stdout.writeln('SCHEDULING_SUBMITTED');
+              await Completer<void>().future;
+            }
+            result = {
+              'publicationId': receipt.publicationId.toString(),
+              'unchanged': receipt.unchanged,
+              'revision': receipt.eventRevision,
+              'publications': await CalendarSchedulingPublicationRecord.db
+                  .count(s, where: (t) => t.meetingId.equals(meeting.id!)),
+            };
+          } finally {
+            host.pause = '';
+            s.updateAuthenticated(null);
+          }
+          break;
         case 'reply':
           replies.pause = input['pause'] as String? ?? '';
           final eventId = UuidValue.fromString(input['eventId'] as String);
@@ -308,6 +413,9 @@ Future<Map<String, String>> _seed(
   final recurringReply = method == 'RECURRING_REPLY' || instanceReply;
   final replyMode = method == 'REPLY' || recurringReply;
   if (replyMode) method = 'REQUEST';
+  final rangeCancel = method == 'RANGE_CANCEL';
+  final rangeRestore = method == 'RANGE_RESTORE';
+  if (rangeCancel || rangeRestore) method = 'REQUEST';
   final maskedRestore = method == 'MASKRESTORE';
   final reopening = method == 'REOPEN';
   final projectedMode = reopening || maskedRestore;
@@ -845,6 +953,119 @@ Future<Map<String, String>> _seed(
       p.method = 'REQUEST';
       p.sequence = 3;
     }
+    await CalendarSchedulingPublicationRecord.db.updateRow(
+      s,
+      p,
+      transaction: tx,
+    );
+  }
+  if (rangeCancel || rangeRestore) {
+    final point = CalendarEventTiming(
+      kind: CalendarEventTimeKind.utc,
+      start: CalendarEventCivil(year: 2026, month: 11, day: 4, hour: 9),
+    );
+    Map<String, dynamic> facts = jsonDecode(p.snapshot) as Map<String, dynamic>;
+    if (rangeRestore) {
+      final projected = eventSchedulingRangeRestoration(
+        content,
+        null,
+        [],
+        point,
+      );
+      final protocol = state.copyWith(
+        version: state.version.copyWith(sequence: 1),
+        overrides: [
+          CalendarEventOverrideProtocolState(
+            originalStart: point,
+            isThisAndFuture: true,
+            version: state.version.copyWith(sequence: 2),
+            summaryPresent: true,
+            descriptionPresent: true,
+            locationPresent: true,
+            statusPresent: true,
+            transparencyPresent: true,
+          ),
+        ],
+      );
+      final source = CalendarEventPolicySnapshot(
+        event.id!,
+        calendar.id!,
+        2,
+        content,
+        uid,
+        now,
+        origin: CalendarEventOrigin.native,
+        timingOverrides: projected.$1,
+        protocolState: protocol,
+      );
+      final calendarTree = parseIcalendarSyntax(eventExportBytes([source]));
+      final restored = projectIcalendarRequestFields(
+        validateIcalendarEventCalendar(calendarTree),
+      );
+      p.payload = utf8.decode(serializeIcalendarSchedulingMessage(restored));
+      p.payloadDigest = sha256.convert(utf8.encode(p.payload)).toString();
+      p.sequence = 1;
+      final ledger = restored.events.map(component).toList();
+      final outgoing = {
+        ...checkpoint,
+        'state': protocol.toJson(),
+        'overrides': projected.$1.toJson(),
+      };
+      facts = {
+        'version': 3,
+        'canonical': checkpoint,
+        'outgoing': outgoing,
+        'ledger': ledger,
+        'projectionOriginals': projected.$2.map((v) => v.toJson()).toList(),
+      };
+      p.projection = jsonEncode({'version': 3, 'components': ledger});
+    }
+    final current = {
+      'projection': p.projection,
+      'payload': p.payload,
+      'method': p.method,
+      'sequence': p.sequence,
+      'stamp': p.stamp.toIso8601String(),
+    };
+    final kind = rangeCancel ? 'rangeCancel' : 'rangeRestore';
+    if (rangeCancel) {
+      final cancelled = projectPublishedRangeCancellation(
+        basis: message.source,
+        originalStart: point,
+        sequence: 1,
+        stamp: state.version.stamp,
+      );
+      p.payload = utf8.decode(
+        serializeIcalendarSchedulingMessage(cancelled.message),
+      );
+      p.payloadDigest = sha256.convert(utf8.encode(p.payload)).toString();
+      p.method = 'CANCEL';
+      p.sequence = 1;
+      p.projection = jsonEncode({
+        'version': 7,
+        'kind': kind,
+        'target': point.toJson(),
+        'components': cancelled.message.events.map(component).toList(),
+      });
+    }
+    facts.remove('version');
+    p.snapshot = jsonEncode({
+      'version': 7,
+      'kind': kind,
+      'currentVersion': 3,
+      'facts': facts,
+      'currentMessage': current,
+      'canonical': checkpoint,
+      'comparison': checkpoint,
+      'range': {
+        'anchor': point.toJson(),
+        'active': rangeCancel,
+        'sequence': 1,
+        'stamp': p.stamp.toIso8601String(),
+        'installedRevision': null,
+        'installedKey': null,
+      },
+    });
     await CalendarSchedulingPublicationRecord.db.updateRow(
       s,
       p,

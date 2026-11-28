@@ -524,6 +524,90 @@ Future<void> schedulingSmoke(List<Client> clients) async {
     throw StateError('Complete publication failed to leave projection mode');
   }
   await terminal();
+  final rangeEvent = (await a.calendarEvent.create(
+    cal.CalendarEventCreateRequest(
+      calendarId: calendar.calendarId,
+      content: content('Published range controls'),
+    ),
+  ))!;
+  final rangeSaved = await b.calendarEvent.saveAndNotify(
+    cal.CalendarSchedulingSaveRequest(
+      eventId: rangeEvent.eventId,
+      expectedRevision: 1,
+      commandId: cal.Uuid().v4obj(),
+      content: content('Published range controls'),
+      recipients: ['mailto:bob@example.invalid'],
+    ),
+  );
+  Future<cal.CalendarSchedulingView> rangeTerminal() async {
+    for (var i = 0; i < 150; i++) {
+      final result = await a.calendarEvent.schedulingStatus(rangeEvent.eventId);
+      if (result.deliveries.every(
+        (d) => d.state == cal.CalendarSchedulingDeliveryState.accepted,
+      )) {
+        return result;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+    throw StateError('Synthetic range delivery did not finish');
+  }
+
+  await rangeTerminal();
+  var rangeRevision = rangeSaved.eventRevision;
+  final rangePoint = cal.CalendarEventTiming(
+    kind: cal.CalendarEventTimeKind.utc,
+    start: cal.CalendarEventCivil(year: 2026, month: 11, day: 3, hour: 9),
+  );
+  for (var cycle = 0; cycle < 2; cycle++) {
+    final cancel = cal.CalendarSchedulingFutureCancelRequest(
+      eventId: rangeEvent.eventId,
+      expectedRevision: rangeRevision,
+      commandId: cal.Uuid().v4obj(),
+      originalStart: rangePoint,
+    );
+    final cancelRace = await Future.wait([
+      a.calendarEvent.cancelFutureAndNotify(cancel),
+      b.calendarEvent.cancelFutureAndNotify(cancel),
+    ]);
+    if (cancelRace.map((r) => r.publicationId).toSet().length != 1 ||
+        cancelRace.where((r) => !r.unchanged).length != 1) {
+      throw StateError('Range cancellation raced duplicate intent');
+    }
+    if (!(await b.calendarEvent.schedulingStatus(rangeEvent.eventId))
+        .hasPublishedRangeCancellation) {
+      throw StateError('Range cutoff was not visible across hosts');
+    }
+    await rangeTerminal();
+    final restore = cal.CalendarSchedulingFutureRestoreRequest(
+      eventId: rangeEvent.eventId,
+      expectedRevision: cancelRace.first.eventRevision,
+      commandId: cal.Uuid().v4obj(),
+      originalStart: rangePoint,
+    );
+    final restoreRace = await Future.wait([
+      b.calendarEvent.restoreFutureAndNotify(restore),
+      a.calendarEvent.restoreFutureAndNotify(restore),
+    ]);
+    if (restoreRace.map((r) => r.publicationId).toSet().length != 1 ||
+        restoreRace.where((r) => !r.unchanged).length != 1) {
+      throw StateError('Range restoration raced duplicate intent');
+    }
+    rangeRevision = restoreRace.first.eventRevision;
+    if ((await rangeTerminal()).hasPublishedRangeCancellation) {
+      throw StateError('Restoration left a published cutoff');
+    }
+    final native = await b.calendarEvent.getEvent(
+      rangeEvent.eventId,
+      cal.CalendarEventFieldGroup.values,
+    );
+    if (native.timingOverrides?.cancelledFrom != null ||
+        native.timingOverrides?.future.isNotEmpty == true) {
+      throw StateError('Range restoration pinned native inheritance');
+    }
+  }
+  stdout.writeln(
+    'PASS: durable outgoing range cancellation/restoration and repeated cycles race through two independent generated-client hosts without duplicate intents or pinned native inheritance.',
+  );
   stdout.writeln(
     'PASS: two-host recurring occurrence-bundle publication and retained resets, idempotency/revision races, local draft isolation, cancellation/reopening, v4 cancellation and v5 published-value restoration races, guarded complete REQUESTs, v6 preserved-cancellation reopening/master-restoration races, synthetic acceptance and exact MIME/decoded calendar fixtures.',
   );

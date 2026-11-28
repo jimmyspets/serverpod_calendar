@@ -132,7 +132,13 @@ _ReplyTarget _replyTarget(
   final cancellation = publication.checkpoint.cancelled
       .where((s) => _replySamePoint(s.point, point))
       .firstOrNull;
-  if (publication.method == 'CANCEL' || cancellation != null) {
+  final cutoff = publication.checkpoint.rangeControl;
+  final rangeCancelled =
+      cutoff?.active == true &&
+      _replyPointOrder(point).compareTo(_replyPointOrder(cutoff!.anchor)) >= 0;
+  if (publication.method == 'CANCEL' ||
+      cancellation != null ||
+      rangeCancelled) {
     if (cancellation == null &&
         !eventSchedulingMember(
           publication.wire.content,
@@ -155,7 +161,8 @@ _ReplyTarget _replyTarget(
       publication.master,
       null,
       null,
-      cancellation?.version.sequence ?? publication.sequence,
+      cancellation?.version.sequence ??
+          (rangeCancelled ? cutoff.sequence : publication.sequence),
       true,
       _schedulingDigest(jsonEncode(['cancel', key])),
     );

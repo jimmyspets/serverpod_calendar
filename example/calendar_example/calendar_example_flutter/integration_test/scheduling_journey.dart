@@ -509,6 +509,88 @@ Future<void> runSchedulingJourney(WidgetTester tester, Client client) async {
   projected = await api.calendarEvent.schedulingStatus(extra.eventId);
   expect(projected.usesPublicationExclusions, false);
   expect(projected.hasLocalChanges, false);
+  // A fresh ordinary anchor exercises the range control screen separately from
+  // the retained single identities in the preceding historical fixtures.
+  await tester.pageBack();
+  await tester.pumpAndSettle();
+  final rangeEvent = (await api.calendarEvent.create(
+    cal.CalendarEventCreateRequest(
+      calendarId: calendar.calendarId,
+      content: content('Flutter range controls'),
+    ),
+  ))!;
+  final rangeView = await api.calendarEvent.getEvent(
+    rangeEvent.eventId,
+    cal.CalendarEventFieldGroup.values,
+  );
+  unawaited(
+    Navigator.of(tester.element(find.byType(Scaffold).first)).push<void>(
+      MaterialPageRoute(
+        builder: (_) => EventSchedulingScreen(client: client, event: rangeView),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+  await _wait(
+    tester,
+    () =>
+        find.byKey(const Key('scheduling-status')).evaluate().isNotEmpty &&
+        find.byType(LinearProgressIndicator).evaluate().isEmpty,
+  );
+  final recipients = find.byKey(const Key('scheduling-recipients'));
+  await tester.scrollUntilVisible(
+    recipients,
+    250,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.enterText(recipients, 'mailto:bob@example.invalid');
+  await _tap(tester, 'scheduling-publish');
+  expect(find.byKey(const Key('scheduling-error')), findsNothing);
+  Future<void> rangeTerminal() async {
+    for (var i = 0; i < 150; i++) {
+      final status = await api.calendarEvent.schedulingStatus(
+        rangeEvent.eventId,
+      );
+      if (status.deliveries.every(
+        (d) => d.state == cal.CalendarSchedulingDeliveryState.accepted,
+      )) {
+        return;
+      }
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    fail('Range publication delivery did not finish');
+  }
+
+  await rangeTerminal();
+  await original('2026-11-03');
+  for (var cycle = 0; cycle < 2; cycle++) {
+    await _tap(tester, 'scheduling-cancel-future');
+    expect(find.byKey(const Key('scheduling-error')), findsNothing);
+    expect(
+      (await api.calendarEvent.schedulingStatus(rangeEvent.eventId))
+          .hasPublishedRangeCancellation,
+      true,
+    );
+    await rangeTerminal();
+    await _tap(tester, 'scheduling-restore-future');
+    expect(find.byKey(const Key('scheduling-error')), findsNothing);
+    expect(
+      (await api.calendarEvent.schedulingStatus(rangeEvent.eventId))
+          .hasPublishedRangeCancellation,
+      false,
+    );
+    expect(
+      (await api.calendarEvent.getEvent(
+        rangeEvent.eventId,
+        cal.CalendarEventFieldGroup.values,
+      )).timingOverrides,
+      isNull,
+    );
+    await rangeTerminal();
+  }
   await tester.pageBack();
   await tester.pumpAndSettle();
   // This profile deliberately has no binding deletion API. The root harness
