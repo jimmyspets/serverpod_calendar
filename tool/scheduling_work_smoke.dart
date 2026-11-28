@@ -142,7 +142,9 @@ Future<void> main(List<String> args) async {
       );
       return;
     }
-    final methods = args.contains('--projected-only')
+    final methods = args.contains('--mime-only')
+        ? ['REQUEST', 'CANCEL']
+        : args.contains('--projected-only')
         ? ['REOPEN', 'MASKRESTORE']
         : args.contains('--restore-only')
         ? ['RESTORE']
@@ -200,7 +202,13 @@ Future<void> main(List<String> args) async {
             .toList();
         if (recorded.length != (pause == 'after' ? 2 : 1) ||
             recorded.any((v) => v['key'] != recovered['key']) ||
-            recorded.map((v) => v['digest']).toSet().length != 1) {
+            recorded.map((v) => v['digest']).toSet().length != 1 ||
+            recorded.map((v) => v['mimeDigest']).toSet().length != 1 ||
+            recorded.any(
+              (v) =>
+                  v['mimeDigest'] is! String ||
+                  v['decodedDigest'] != v['digest'],
+            )) {
           throw StateError(
             'Recovered $method submissions changed identity or bytes',
           );
@@ -211,7 +219,7 @@ Future<void> main(List<String> args) async {
       }
     }
     stdout.writeln(
-      'PASS: ${methods.join(', ')} on two independent scheduling workers, competing claims, actual loss before/after synthetic acceptance and fenced stable-key recovery.',
+      'PASS: ${methods.join(', ')} on two independent scheduling workers, competing claims, actual loss before/after synthetic acceptance, fenced stable-key recovery and byte-identical MIME/decoded payloads.',
     );
   } finally {
     final live = probes.where((p) => !p.stopped).toList();

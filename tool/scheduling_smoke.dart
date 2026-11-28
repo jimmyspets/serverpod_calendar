@@ -5,8 +5,11 @@ import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
 
+import 'scheduling_mime_smoke.dart';
+
 /// Real generated-client writes race across independent example host processes.
 Future<void> schedulingSmoke(List<Client> clients) async {
+  final mimeChecks = await SyntheticSchedulingMimeChecks.start();
   final a = clients.first.modules.serverpod_calendar;
   final b = clients.last.modules.serverpod_calendar;
   final calendar = (await a.calendar.create(
@@ -162,6 +165,7 @@ Future<void> schedulingSmoke(List<Client> clients) async {
     throw StateError('Independent hosts did not dispatch synthetic intent');
   }
   final ready = await a.calendarEvent.schedulingStatus(event.eventId);
+  await mimeChecks.accepted(ready);
   final cancel = cal.CalendarSchedulingCancelRequest(
     eventId: event.eventId,
     expectedRevision: ready.eventRevision,
@@ -202,6 +206,7 @@ Future<void> schedulingSmoke(List<Client> clients) async {
       if (status.deliveries.every(
         (d) => d.state == cal.CalendarSchedulingDeliveryState.accepted,
       )) {
+        await mimeChecks.accepted(status);
         return;
       }
       await Future<void>.delayed(const Duration(milliseconds: 200));
@@ -518,8 +523,9 @@ Future<void> schedulingSmoke(List<Client> clients) async {
       .usesPublicationExclusions) {
     throw StateError('Complete publication failed to leave projection mode');
   }
+  await terminal();
   stdout.writeln(
-    'PASS: two-host recurring occurrence-bundle publication and retained resets, idempotency/revision races, local draft isolation, cancellation/reopening, v4 cancellation and v5 published-value restoration races, guarded complete REQUESTs, v6 preserved-cancellation reopening/master-restoration races and synthetic acceptance.',
+    'PASS: two-host recurring occurrence-bundle publication and retained resets, idempotency/revision races, local draft isolation, cancellation/reopening, v4 cancellation and v5 published-value restoration races, guarded complete REQUESTs, v6 preserved-cancellation reopening/master-restoration races, synthetic acceptance and exact MIME/decoded calendar fixtures.',
   );
   // Bindings deliberately reject deletion in the first profile. Isolated test
   // storage is reset by the root harness; no public cleanup backdoor is added.

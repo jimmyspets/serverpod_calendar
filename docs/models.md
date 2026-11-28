@@ -752,3 +752,6 @@ The approved migration adds a kind field to the existing private application row
 
 
 Accepted [ADR 0142](adr/0142-pure-decoded-imip-calendar-parts.md) adds only pure immutable `ImipDecodedPart`, ordered `ImipParameter`, `ImipCalendarPart` and bounded limits/error types. The carrier holds already transfer-decoded bytes plus actual host-provided protection context; accepted payloads reuse existing event/free-busy scheduling models. These are not Serverpod tables/generated-client models, native ingress authority or whole-mail storage. See [the pure API/profile](imip-calendar-parts.md); MIME parsing/transfer/provider integration remains separately required.
+
+
+Accepted [ADR 0143](adr/0143-synthetic-host-outbound-imip-composition.md) adds a host-local composer over the existing immutable CalendarSchedulingSubmission. It produces bounded MIME text and a bounded error enum; the only recording change is a synthetic `mime` field beside the existing local fixture payload. No Serverpod model/table, native protocol version, payload digest or transport-interface field changes. See [the host composition guide](outbound-imip-composition.md).

@@ -1,20 +1,20 @@
 # ADR 0143: Synthetic host-owned outbound iMIP composition
 
-Status: **Proposed; library/dependency, MIME and recording mechanics require explicit maintainer agreement before implementation.** Date: 2026-10-30.
+Status: **Accepted by explicit maintainer approval on 2026-10-30 for the complete library/pin/notice, bounded MIME/envelope and synthetic recording batch. Scoped implementation and complete local batch validation are recorded separately.**
 
 ## Context and evaluated evidence
 
-Accepted [ADR 0142](0142-pure-decoded-imip-calendar-parts.md) validates decoded calendar mail parts; it deliberately does not parse whole email or deliver mail. Existing approved organizer REQUEST/CANCEL workflows already persist authorized payloads and stable recipient delivery identities. Their example transport records synthetic calendar payloads locally. The next proposed increment composes an actual bounded MIME message in that host adapter while preserving all existing authority, payload and retry boundaries.
+Accepted [ADR 0142](0142-pure-decoded-imip-calendar-parts.md) validates decoded calendar mail parts; it deliberately does not parse whole email or deliver mail. Existing approved organizer REQUEST/CANCEL workflows already persist authorized payloads and stable recipient delivery identities. Their example transport records synthetic calendar payloads locally. The approved increment composes an actual bounded MIME message in that host adapter while preserving all existing authority, payload and retry boundaries.
 
 [The source evaluation](../mime-library-evaluation.md) inspected verified published archives of enough_mail 3.0.0, mime 2.1.0 and mailer 7.2.0. An isolated Dart 3.13.5 probe resolved enough_mail and used its public MIME builder/binary parser without invoking SMTP; Unicode calendar bytes and exact CRLF survived base64 composition/reparse. Its decoded Content-Type parameter map collapses duplicates, so it cannot be accepted as the complete inbound ambiguity gate. Nothing has been added to workspace dependencies by this evaluation.
 
-## Proposed dependency and host boundary
+## Approved dependency and host boundary
 
 Pin enough_mail **3.0.0** only in the example Serverpod host, using its public `mime.dart` builder API. Its published license is MPL-2.0; retain package attribution/license information in a third-party notice while preserving this repository's Apache 2.0 LICENSE. This is a concrete dependency choice for maintainer review, not a claim about legal compatibility or the safety of arbitrary upstream code. Do not vendor or patch upstream source. Verify actual workspace resolution, lockfile, generation/analysis and host compilation after approval; isolated resolution does not prove the full workspace graph.
 
 Keep reusable core/iCalendar/calendar modules free of this MIME/provider dependency. The existing CalendarSchedulingTransport interface remains replaceable and unchanged; other hosts may select another evaluated provider. This batch adds no package pair, Serverpod model/table/migration/endpoint or production transport configuration. Do not instantiate SMTP/IMAP/POP/network clients, discover accounts, read mail credentials or send real mail.
 
-## Proposed bounded composition
+## Approved bounded composition
 
 Add a host-local, directly testable composer for the existing VEVENT REQUEST/CANCEL submissions only. Parse/validate the original immutable payload through the accepted iMIP part profile with a **512 KiB** decoded-body cap, matching the existing scheduling transport maximum. Do not serialize the calendar again or replace the authorized payload with normalized bytes. The emitted calendar body must decode to the exact original UTF-8 bytes; host-approved calendar digests/native protocol versions remain unchanged.
 
@@ -36,8 +36,8 @@ Test exact MIME hints, ASCII/base64 output, Unicode and exact CRLF/body preserva
 
 Integrate the composer into the synthetic example transport only after approval. Verify existing JSON consumers tolerate the additive field. Extend actual two-host scheduling/recovery probes to compare stable-key MIME/decoded calendar bodies while preserving all previously required race/loss/lease checks. Run focused checks during development, broader formatting/workspace analysis, relevant pure/module/database/client/Flutter evidence and the complete root check before marking the batch ready; record exact phases and any deferrals before one implementation commit.
 
-## Alternatives and decision requested
+## Alternatives and accepted decision
 
 The mime package provides a smaller multipart utility but no complete outbound email builder; its header map also needs a separate inbound ambiguity design. Mailer is an outbound SMTP composition library, but it does not offer the same standalone public MIME builder/parser surface evaluated here. Provider-produced MIME remains a valid later host alternative. Custom whole-mail parsing would violate the delegated library/provider boundary. Treating enough_mail's normalized parameter map as sufficient inbound evidence would undermine ADR 0142.
 
-Approve this concrete example-only library/pin/notice, single-part composition, deterministic envelope and synthetic recording batch before source changes. Complete inbound MIME/raw-part ambiguity, multipart handling, trusted ingress, durable participant responses/remaining lifecycle, provider/network configuration, real sending and external-client evidence remain separate required work. This proposal changes no existing source authority or native state semantics.
+The maintainer explicitly approved the complete concrete batch before source changes. See [the implementation guide](../outbound-imip-composition.md) and the separate validation record. Complete inbound MIME/raw-part ambiguity, multipart handling, trusted ingress, durable participant responses/remaining lifecycle, provider/network configuration, real sending and external-client evidence remain separate required work. This proposal changes no existing source authority or native state semantics.

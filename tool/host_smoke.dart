@@ -95,6 +95,7 @@ Future<void> main(List<String> args) async {
         if (args.contains('--feeds')) '--feeds',
         if (args.contains('--replies-only')) '--replies-only',
         if (args.contains('--invitations-only')) '--invitations-only',
+        if (args.contains('--scheduling-only')) '--scheduling-only',
         'http://localhost:18180/',
         'http://localhost:18280/',
       ], workingDirectory: root);
@@ -106,7 +107,8 @@ Future<void> main(List<String> args) async {
         Duration(
           seconds:
               args.contains('--replies-only') ||
-                  args.contains('--invitations-only')
+                  args.contains('--invitations-only') ||
+                  args.contains('--scheduling-only')
               ? 180
               : 240,
         ),
@@ -121,7 +123,8 @@ Future<void> main(List<String> args) async {
       if (args.contains('--feeds') && !args.contains('--flutter')) return;
       if (!args.contains('--feeds') &&
           !args.contains('--replies-only') &&
-          !args.contains('--invitations-only')) {
+          !args.contains('--invitations-only') &&
+          !args.contains('--scheduling-only')) {
         final recoveryClients = [
           for (final port in [18180, 18280])
             Client('http://localhost:$port/')

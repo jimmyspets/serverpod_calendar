@@ -150,7 +150,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0142](0142-pure-decoded-imip-calendar-parts.md) | Pure decoded iMIP calendar-part boundary | Accepted 2026-10-29; scoped pure implementation and local batch validation complete |
 
-| [0143](0143-synthetic-host-outbound-imip-composition.md) | Synthetic host-owned outbound iMIP composition | Proposed; concrete library/envelope/recording batch awaits explicit review |
+| [0143](0143-synthetic-host-outbound-imip-composition.md) | Synthetic host-owned outbound iMIP composition | Accepted 2026-10-30; scoped host implementation and local batch validation complete |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
