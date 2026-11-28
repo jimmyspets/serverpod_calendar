@@ -329,7 +329,9 @@ final class _SchedulingCheckpoint {
     this.privateStateRecord,
     this.fullRequestPayload,
     this.reopenFloor,
+    this.instanceVersionProfile = false,
   });
+  final bool instanceVersionProfile;
   final CalendarEventPolicySnapshot canonical, outgoing;
   final IcalendarSchedulingMessage message;
   final List<_SchedulingComponentVersion> ledger;
@@ -353,6 +355,10 @@ _SchedulingCheckpoint _schedulingReadCheckpoint(
     _schedulingBound(p.snapshot);
     _schedulingBound(p.projection);
     final header = jsonDecode(p.snapshot) as Map<String, dynamic>;
+    if (header.containsKey('instanceVersionProfile') &&
+        header['version'] != 3) {
+      throw const FormatException();
+    }
     if (header['version'] == 4) return _schedulingReadV4(p, header);
     if (header['version'] == 5) return _schedulingReadV5(p, header);
     if (header['version'] == 6) return _schedulingReadV6(p, header);
@@ -369,7 +375,12 @@ _SchedulingCheckpoint _schedulingReadCheckpoint(
     final components = _schedulingComponents(message);
     final master = components.singleWhere((v) => v.key == 'master');
     final value = jsonDecode(p.snapshot) as Map<String, dynamic>;
+    final profile = value['instanceVersionProfile'];
+    if (profile != null && (profile is! int || profile != 1)) {
+      throw const FormatException();
+    }
     final legacy = !value.containsKey('version');
+    if (profile != null && value['version'] != 3) throw const FormatException();
     final version = legacy ? 1 : value['version'] as int;
     if (!legacy && !{2, 3}.contains(version)) throw const FormatException();
     final projectionOriginals = version < 3
@@ -545,6 +556,7 @@ _SchedulingCheckpoint _schedulingReadCheckpoint(
           ? CalendarSchedulingPublicationKind.seriesCancel
           : CalendarSchedulingPublicationKind.request,
       basisRecord: p.method == 'REQUEST' ? p : null,
+      instanceVersionProfile: profile == 1,
     );
   } catch (_) {
     throw _failure(CalendarFailureCode.unavailable);
@@ -555,10 +567,12 @@ String _schedulingWriteCheckpoint(
   CalendarEventPolicySnapshot canonical,
   CalendarEventPolicySnapshot outgoing,
   List<_SchedulingComponentVersion> ledger,
-  List<EventSchedulingOriginal> projectionOriginals,
-) => _schedulingBound(
+  List<EventSchedulingOriginal> projectionOriginals, {
+  bool instanceVersionProfile = false,
+}) => _schedulingBound(
   jsonEncode({
     'version': 3,
+    if (instanceVersionProfile) 'instanceVersionProfile': 1,
     'canonical': _schedulingSnapshotMap(canonical),
     'outgoing': _schedulingSnapshotMap(outgoing),
     'ledger': ledger.map((v) => v.toJson()).toList(),
@@ -592,6 +606,42 @@ String _schedulingVersionedPayload(
       previous?.message.method == IcalendarSchedulingMethod.cancel
       ? previous!.message.events.single.sequence!
       : null;
+  final previousMaximum =
+      previous?.ledger.fold<int>(
+        previous.individuals.fold<int>(
+          -1,
+          (a, v) => max(a, v.version.sequence),
+        ),
+        (a, v) => max(a, v.sequence),
+      ) ??
+      -1;
+  final upgrading = previous != null && !previous.instanceVersionProfile;
+  String applicability(_SchedulingComponentVersion master) => utf8.decode(
+    serializeIcalendarSyntax(
+      IcalendarSyntaxDocument([
+        IcalendarSyntaxComponent(
+          'VEVENT',
+          parseIcalendarSyntax(utf8.encode(master.projection))
+              .components
+              .single
+              .entries
+              .where(
+                (p) =>
+                    p is IcalendarSyntaxProperty &&
+                    {
+                      'DTSTART',
+                      'RRULE',
+                      'RDATE',
+                      'EXDATE',
+                    }.contains(p.canonicalName),
+              ),
+        ),
+      ]),
+    ),
+  );
+  final applicabilityChanged =
+      previous != null &&
+      applicability(old['master']!) != applicability(current['master']!);
   final versions = <String, _SchedulingComponentVersion>{};
   for (final value in values) {
     if (value.key == 'master') {
@@ -601,13 +651,19 @@ String _schedulingVersionedPayload(
     final prior = old[value.key];
     if (prior != null &&
         prior.projection == value.projection &&
-        reopenFloor == null) {
+        reopenFloor == null &&
+        !upgrading &&
+        !(value.future && applicabilityChanged)) {
       versions[value.key] = prior;
     } else {
       final sequence = max(
         value.sequence,
         max(
-          prior == null ? 0 : prior.sequence + 1,
+          upgrading || prior == null && previous != null
+              ? previousMaximum + 1
+              : prior == null
+              ? 0
+              : prior.sequence + 1,
           reopenFloor == null ? 0 : reopenFloor + 1,
         ),
       );

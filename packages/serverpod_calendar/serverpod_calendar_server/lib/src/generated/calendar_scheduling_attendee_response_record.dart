@@ -20,6 +20,7 @@ abstract class CalendarSchedulingAttendeeResponseRecord
     required this.scopeKey,
     required this.meetingId,
     required this.attendeeAddress,
+    String? targetKey,
     required this.revision,
     required this.sourceId,
     required this.sequence,
@@ -27,13 +28,14 @@ abstract class CalendarSchedulingAttendeeResponseRecord
     this.sourceParticipation,
     required this.effectiveParticipation,
     required this.receivedAt,
-  });
+  }) : targetKey = targetKey ?? 'master';
 
   factory CalendarSchedulingAttendeeResponseRecord({
     _is.UuidValue? id,
     required String scopeKey,
     required _is.UuidValue meetingId,
     required String attendeeAddress,
+    String? targetKey,
     required int revision,
     required _is.UuidValue sourceId,
     required int sequence,
@@ -55,6 +57,7 @@ abstract class CalendarSchedulingAttendeeResponseRecord
         jsonSerialization['meetingId'],
       ),
       attendeeAddress: jsonSerialization['attendeeAddress'] as String,
+      targetKey: jsonSerialization['targetKey'] as String?,
       revision: jsonSerialization['revision'] as int,
       sourceId: _is.UuidValueJsonExtension.fromJson(
         jsonSerialization['sourceId'],
@@ -89,6 +92,8 @@ abstract class CalendarSchedulingAttendeeResponseRecord
 
   String attendeeAddress;
 
+  String targetKey;
+
   int revision;
 
   _is.UuidValue sourceId;
@@ -114,6 +119,7 @@ abstract class CalendarSchedulingAttendeeResponseRecord
     String? scopeKey,
     _is.UuidValue? meetingId,
     String? attendeeAddress,
+    String? targetKey,
     int? revision,
     _is.UuidValue? sourceId,
     int? sequence,
@@ -131,6 +137,7 @@ abstract class CalendarSchedulingAttendeeResponseRecord
       'scopeKey': scopeKey,
       'meetingId': meetingId.toJson(),
       'attendeeAddress': attendeeAddress,
+      'targetKey': targetKey,
       'revision': revision,
       'sourceId': sourceId.toJson(),
       'sequence': sequence,
@@ -188,6 +195,7 @@ class _CalendarSchedulingAttendeeResponseRecordImpl
     required String scopeKey,
     required _is.UuidValue meetingId,
     required String attendeeAddress,
+    String? targetKey,
     required int revision,
     required _is.UuidValue sourceId,
     required int sequence,
@@ -200,6 +208,7 @@ class _CalendarSchedulingAttendeeResponseRecordImpl
          scopeKey: scopeKey,
          meetingId: meetingId,
          attendeeAddress: attendeeAddress,
+         targetKey: targetKey,
          revision: revision,
          sourceId: sourceId,
          sequence: sequence,
@@ -218,6 +227,7 @@ class _CalendarSchedulingAttendeeResponseRecordImpl
     String? scopeKey,
     _is.UuidValue? meetingId,
     String? attendeeAddress,
+    String? targetKey,
     int? revision,
     _is.UuidValue? sourceId,
     int? sequence,
@@ -231,6 +241,7 @@ class _CalendarSchedulingAttendeeResponseRecordImpl
       scopeKey: scopeKey ?? this.scopeKey,
       meetingId: meetingId ?? this.meetingId,
       attendeeAddress: attendeeAddress ?? this.attendeeAddress,
+      targetKey: targetKey ?? this.targetKey,
       revision: revision ?? this.revision,
       sourceId: sourceId ?? this.sourceId,
       sequence: sequence ?? this.sequence,
@@ -267,6 +278,11 @@ class CalendarSchedulingAttendeeResponseRecordUpdateTable
         table.attendeeAddress,
         value,
       );
+
+  _is.ColumnValue<String, String> targetKey(String value) => _is.ColumnValue(
+    table.targetKey,
+    value,
+  );
 
   _is.ColumnValue<int, int> revision(int value) => _is.ColumnValue(
     table.revision,
@@ -333,6 +349,11 @@ class CalendarSchedulingAttendeeResponseRecordTable
       'attendeeAddress',
       this,
     );
+    targetKey = _is.ColumnString(
+      'targetKey',
+      this,
+      hasDefault: true,
+    );
     revision = _is.ColumnInt(
       'revision',
       this,
@@ -373,6 +394,8 @@ class CalendarSchedulingAttendeeResponseRecordTable
 
   late final _is.ColumnString attendeeAddress;
 
+  late final _is.ColumnString targetKey;
+
   late final _is.ColumnInt revision;
 
   late final _is.ColumnUuid sourceId;
@@ -395,6 +418,7 @@ class CalendarSchedulingAttendeeResponseRecordTable
     scopeKey,
     meetingId,
     attendeeAddress,
+    targetKey,
     revision,
     sourceId,
     sequence,

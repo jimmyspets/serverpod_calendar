@@ -6,6 +6,9 @@ fields:
   scopeKey: String
   meetingId: UuidValue, relation(parent=serverpod_calendar_scheduling_meeting)
   attendeeAddress: String
+  targetKey: String, default='master'
+  originalStart: CalendarEventTiming?
+  targetBasisKey: String, default='master'
   digest: String
   normalizedSource: String
   sequence: int?

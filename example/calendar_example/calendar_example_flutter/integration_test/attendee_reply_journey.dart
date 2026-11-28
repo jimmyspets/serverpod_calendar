@@ -95,7 +95,7 @@ Future<void> runAttendeeReplyJourney(WidgetTester tester, Client client) async {
   expect(find.text('No recorded response'), findsOneWidget);
   expect(
     find.text(
-      'Whole-series master response; instance replies are not supported.',
+      'Whole-series master response; single-occurrence responses are separate.',
     ),
     findsOneWidget,
   );
@@ -122,6 +122,7 @@ Future<void> runAttendeeReplyJourney(WidgetTester tester, Client client) async {
     before.publishedSequence - 1,
     DateTime.utc(2026, 10, 27, 15),
     'Private stale comment',
+    null,
   );
   await tap('replies-reload');
   final read = find.byKey(ValueKey('reply-read-${stale.sourceId}'));
@@ -155,6 +156,43 @@ Future<void> runAttendeeReplyJourney(WidgetTester tester, Client client) async {
     response.effectiveParticipation,
     cal.CalendarSchedulingParticipation.accepted,
   );
+  final masterSource = response.sourceId;
+  final originalInput = find.byKey(const Key('reply-original'));
+  await tester.scrollUntilVisible(
+    originalInput,
+    200,
+    scrollable: find.byType(Scrollable).last,
+    maxScrolls: 20,
+  );
+  await tester.ensureVisible(originalInput);
+  await tester.enterText(originalInput, '2026-11-03');
+  await tap('reply-open-instance');
+  expect(
+    find.text(
+      'Single-occurrence response; other occurrences and the whole series stay independent.',
+    ),
+    findsOneWidget,
+  );
+  expect(find.text('No recorded response'), findsOneWidget);
+  await tap('reply-simulate');
+  expect(find.byKey(const Key('replies-error')), findsNothing);
+  final instance = await api.calendarEvent.schedulingInstanceResponses(
+    event.eventId,
+    cal.CalendarEventTiming(
+      kind: cal.CalendarEventTimeKind.date,
+      start: cal.CalendarEventCivil(year: 2026, month: 11, day: 3),
+    ),
+  );
+  expect(instance.responses.single.isCurrent, isTrue);
+  expect(
+    (await api.calendarEvent.schedulingResponses(event.eventId))
+        .responses
+        .single
+        .sourceId,
+    masterSource,
+  );
+  await tester.pageBack();
+  await tester.pumpAndSettle();
   await tester.pageBack();
   await tester.pumpAndSettle();
 }

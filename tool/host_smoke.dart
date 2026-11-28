@@ -93,6 +93,7 @@ Future<void> main(List<String> args) async {
         'run',
         'tool/client_smoke.dart',
         if (args.contains('--feeds')) '--feeds',
+        if (args.contains('--replies-only')) '--replies-only',
         'http://localhost:18180/',
         'http://localhost:18280/',
       ], workingDirectory: root);
@@ -109,7 +110,7 @@ Future<void> main(List<String> args) async {
       await err.cancel();
       if (code != 0) throw StateError('Real-client smoke failed ($code).');
       if (args.contains('--feeds') && !args.contains('--flutter')) return;
-      if (!args.contains('--feeds')) {
+      if (!args.contains('--feeds') && !args.contains('--replies-only')) {
         final recoveryClients = [
           for (final port in [18180, 18280])
             Client('http://localhost:$port/')

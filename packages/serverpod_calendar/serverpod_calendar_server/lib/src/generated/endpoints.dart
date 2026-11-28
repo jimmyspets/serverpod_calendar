@@ -59,6 +59,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_event_replace_r
     as _i6eqxu43;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_status_request.dart'
     as _ib916yyf;
+import 'package:serverpod_calendar_server/src/generated/calendar_event_timing.dart'
+    as _i3rsvgvx;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_update_request.dart'
     as _iabs06xo;
 import 'package:serverpod_calendar_server/src/generated/calendar_field_group.dart'
@@ -1030,6 +1032,33 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'calendarEvent',
       endpoint: endpoints['calendarEvent']!,
       methodConnectors: {
+        'schedulingInstanceResponses': _is.MethodConnector(
+          name: 'schedulingInstanceResponses',
+          params: {
+            'eventId': _is.ParameterDescription(
+              name: 'eventId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'originalStart': _is.ParameterDescription(
+              name: 'originalStart',
+              type: _is.getType<_i3rsvgvx.CalendarEventTiming>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .schedulingInstanceResponses(
+                        session,
+                        params['eventId'],
+                        params['originalStart'],
+                      ),
+        ),
         'schedulingResponses': _is.MethodConnector(
           name: 'schedulingResponses',
           params: {

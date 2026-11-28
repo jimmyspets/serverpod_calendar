@@ -583,6 +583,7 @@ class _SchedulingDemoEndpoint {
     int? sequence,
     DateTime sourceStamp,
     String? comment,
+    _ipn35bcd.CalendarEventTiming? originalStart,
   ) async {
     return _ist.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -603,6 +604,7 @@ class _SchedulingDemoEndpoint {
             'sequence': sequence,
             'sourceStamp': sourceStamp,
             'comment': comment,
+            'originalStart': originalStart,
           }),
           serializationManager: _serializationManager,
         );

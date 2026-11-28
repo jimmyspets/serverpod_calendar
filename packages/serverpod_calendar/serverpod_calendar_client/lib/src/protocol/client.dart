@@ -90,6 +90,8 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_event_replace_re
     as _ijp3g32l;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_status_request.dart'
     as _ignysrxk;
+import 'package:serverpod_calendar_client/src/protocol/calendar_event_timing.dart'
+    as _i71qtqle;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_update_request.dart'
     as _itsbll8l;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_view.dart'
@@ -112,6 +114,8 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_protocol_metadat
     as _i3063onq;
 import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_cancel_request.dart'
     as _i9pzc99x;
+import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_instance_responses_view.dart'
+    as _io5teeym;
 import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_occurrence_cancel_request.dart'
     as _ilzksl2h;
 import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_occurrence_restore_request.dart'
@@ -570,6 +574,20 @@ class EndpointCalendarEvent extends _isc.EndpointRef {
 
   @override
   String get name => 'serverpod_calendar.calendarEvent';
+
+  _ida.Future<_io5teeym.CalendarSchedulingInstanceResponsesView>
+  schedulingInstanceResponses(
+    _isc.UuidValue eventId,
+    _i71qtqle.CalendarEventTiming originalStart,
+  ) => caller
+      .callServerEndpoint<_io5teeym.CalendarSchedulingInstanceResponsesView>(
+        'serverpod_calendar.calendarEvent',
+        'schedulingInstanceResponses',
+        {
+          'eventId': eventId,
+          'originalStart': originalStart,
+        },
+      );
 
   _ida.Future<_ikx44dyb.CalendarSchedulingResponsesView> schedulingResponses(
     _isc.UuidValue eventId,

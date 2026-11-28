@@ -73,12 +73,21 @@ Future<void> main(List<String> args) async {
     if (args.contains('--replies')) {
       final fixture = (await b.command({
         'command': 'seed',
-        'method': args.contains('--recurring') ? 'RECURRING_REPLY' : 'REPLY',
+        'method': args.contains('--instances')
+            ? 'INSTANCE_REPLY'
+            : args.contains('--recurring')
+            ? 'RECURRING_REPLY'
+            : 'REPLY',
       })) as Map<String, dynamic>;
       fixtures.add(fixture);
       final raced = await Future.wait([
         for (final probe in [a, b])
-          probe.command({'command': 'reply', ...fixture, 'key': 'raced'}),
+          probe.command({
+            'command': 'reply',
+            ...fixture,
+            'key': 'raced',
+            'instance': args.contains('--instances'),
+          }),
       ]);
       final r0 = raced.first as Map, r1 = raced.last as Map;
       if (r0['receiptId'] != r1['receiptId'] ||
@@ -88,13 +97,18 @@ Future<void> main(List<String> args) async {
       for (final pause in ['before', 'after']) {
         final fixture = (await b.command({
           'command': 'seed',
-          'method': args.contains('--recurring') ? 'RECURRING_REPLY' : 'REPLY',
+          'method': args.contains('--instances')
+              ? 'INSTANCE_REPLY'
+              : args.contains('--recurring')
+              ? 'RECURRING_REPLY'
+              : 'REPLY',
         })) as Map<String, dynamic>;
         fixtures.add(fixture);
         a.submitted = Completer<void>();
         final lost = a
             .command({
               'command': 'reply',
+              'instance': args.contains('--instances'),
               ...fixture,
               'key': 'recover-$pause',
               'pause': pause,
@@ -105,6 +119,7 @@ Future<void> main(List<String> args) async {
         await lost;
         final recovered = (await b.command({
           'command': 'reply',
+          'instance': args.contains('--instances'),
           ...fixture,
           'key': 'recover-$pause',
         })) as Map;
@@ -112,13 +127,18 @@ Future<void> main(List<String> args) async {
             recovered['sources'] != 1 ||
             recovered['receipts'] != 1 ||
             recovered['responses'] != 1 ||
-            recovered['outcome'] != 'applied') {
+            recovered['outcome'] != 'applied' ||
+            recovered['instance'] != args.contains('--instances')) {
           throw StateError('Reply process-loss recovery violated atomicity');
         }
         if (pause == 'before') a = await start('reply-recovered', 18580);
       }
       stdout.writeln(
-        'PASS: independent reply hosts, raced stable keys, actual loss before commit and after commit, atomic three-table recovery.',
+        'PASS: independent ${args.contains('--instances')
+            ? 'instance'
+            : args.contains('--recurring')
+            ? 'recurring-master'
+            : 'non-recurring'} reply hosts, raced stable keys, actual loss before commit and after commit, atomic three-table recovery.',
       );
       return;
     }

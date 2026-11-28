@@ -365,6 +365,7 @@ _SchedulingCheckpoint _schedulingReadV5(
     _schedulingActiveOriginals(basis, states),
     List.unmodifiable(originals.values),
     kind: kind,
+    instanceVersionProfile: basis.instanceVersionProfile,
     target: target,
     nativeMatch: nativeMatch,
     basisRecord: basisRecord,

@@ -172,6 +172,7 @@ import 'calendar_scheduling_cancel_request.dart' as _i4uu6f5m;
 import 'calendar_scheduling_delivery_record.dart' as _iuidcanh;
 import 'calendar_scheduling_delivery_state.dart' as _it5jr5tm;
 import 'calendar_scheduling_delivery_view.dart' as _i63ky642;
+import 'calendar_scheduling_instance_responses_view.dart' as _i8yevrne;
 import 'calendar_scheduling_meeting_record.dart' as _ihlqfuoo;
 import 'calendar_scheduling_occurrence_cancel_request.dart' as _ia8x0otq;
 import 'calendar_scheduling_occurrence_restore_request.dart' as _io2t7cny;
@@ -395,6 +396,7 @@ export 'calendar_scheduling_cancel_request.dart';
 export 'calendar_scheduling_delivery_record.dart';
 export 'calendar_scheduling_delivery_state.dart';
 export 'calendar_scheduling_delivery_view.dart';
+export 'calendar_scheduling_instance_responses_view.dart';
 export 'calendar_scheduling_meeting_record.dart';
 export 'calendar_scheduling_occurrence_cancel_request.dart';
 export 'calendar_scheduling_occurrence_restore_request.dart';
@@ -1958,6 +1960,13 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'String',
         ),
         _isp.ColumnDefinition(
+          name: 'targetKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+          columnDefault: '\'master\'',
+        ),
+        _isp.ColumnDefinition(
           name: 'revision',
           columnType: _isp.ColumnType.bigint,
           isNullable: false,
@@ -2036,6 +2045,10 @@ class Protocol extends _is.DatabaseSerializationManager {
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
               definition: 'attendeeAddress',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'targetKey',
             ),
           ],
           type: 'btree',
@@ -2733,6 +2746,26 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnType: _isp.ColumnType.text,
           isNullable: false,
           dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'targetKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+          columnDefault: '\'master\'',
+        ),
+        _isp.ColumnDefinition(
+          name: 'originalStart',
+          columnType: _isp.ColumnType.json,
+          isNullable: true,
+          dartType: 'protocol:CalendarEventTiming?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'targetBasisKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+          columnDefault: '\'master\'',
         ),
         _isp.ColumnDefinition(
           name: 'digest',
@@ -3874,6 +3907,10 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _i63ky642.CalendarSchedulingDeliveryView) {
       return _i63ky642.CalendarSchedulingDeliveryView.fromJson(data) as T;
     }
+    if (t == _i8yevrne.CalendarSchedulingInstanceResponsesView) {
+      return _i8yevrne.CalendarSchedulingInstanceResponsesView.fromJson(data)
+          as T;
+    }
     if (t == _ihlqfuoo.CalendarSchedulingMeetingRecord) {
       return _ihlqfuoo.CalendarSchedulingMeetingRecord.fromJson(data) as T;
     }
@@ -4957,6 +4994,13 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_i63ky642.CalendarSchedulingDeliveryView?>()) {
       return (data != null
               ? _i63ky642.CalendarSchedulingDeliveryView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t ==
+        _is.getType<_i8yevrne.CalendarSchedulingInstanceResponsesView?>()) {
+      return (data != null
+              ? _i8yevrne.CalendarSchedulingInstanceResponsesView.fromJson(data)
               : null)
           as T;
     }
@@ -6317,6 +6361,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         'CalendarSchedulingDeliveryState',
       _i63ky642.CalendarSchedulingDeliveryView =>
         'CalendarSchedulingDeliveryView',
+      _i8yevrne.CalendarSchedulingInstanceResponsesView =>
+        'CalendarSchedulingInstanceResponsesView',
       _ihlqfuoo.CalendarSchedulingMeetingRecord =>
         'CalendarSchedulingMeetingRecord',
       _ia8x0otq.CalendarSchedulingOccurrenceCancelRequest =>
@@ -6727,6 +6773,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarSchedulingDeliveryState';
       case _i63ky642.CalendarSchedulingDeliveryView():
         return 'CalendarSchedulingDeliveryView';
+      case _i8yevrne.CalendarSchedulingInstanceResponsesView():
+        return 'CalendarSchedulingInstanceResponsesView';
       case _ihlqfuoo.CalendarSchedulingMeetingRecord():
         return 'CalendarSchedulingMeetingRecord';
       case _ia8x0otq.CalendarSchedulingOccurrenceCancelRequest():
@@ -7411,6 +7459,11 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'CalendarSchedulingDeliveryView') {
       return deserialize<_i63ky642.CalendarSchedulingDeliveryView>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarSchedulingInstanceResponsesView') {
+      return deserialize<_i8yevrne.CalendarSchedulingInstanceResponsesView>(
         data['data'],
       );
     }

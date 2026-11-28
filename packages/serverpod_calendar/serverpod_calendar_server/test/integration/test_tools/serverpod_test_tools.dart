@@ -93,6 +93,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_event_replace_r
     as _ihod1iqv;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_status_request.dart'
     as _ib916yyf;
+import 'package:serverpod_calendar_server/src/generated/calendar_event_timing.dart'
+    as _i3rsvgvx;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_update_request.dart'
     as _iabs06xo;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_view.dart'
@@ -115,6 +117,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_protocol_metada
     as _i53ouodu;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_cancel_request.dart'
     as _ih6si8n9;
+import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_instance_responses_view.dart'
+    as _isrkk9n1;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_occurrence_cancel_request.dart'
     as _ihunri6y;
 import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_occurrence_restore_request.dart'
@@ -1578,6 +1582,44 @@ class _CalendarEventEndpoint {
   final _is.EndpointDispatch _endpointDispatch;
 
   final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_isrkk9n1.CalendarSchedulingInstanceResponsesView>
+  schedulingInstanceResponses(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue eventId,
+    _i3rsvgvx.CalendarEventTiming originalStart,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarEvent',
+            method: 'schedulingInstanceResponses',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarEvent',
+          methodName: 'schedulingInstanceResponses',
+          parameters: _ist.testObjectToJson({
+            'eventId': eventId,
+            'originalStart': originalStart,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<
+                  _isrkk9n1.CalendarSchedulingInstanceResponsesView
+                >);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 
   _ida.Future<_iorx7nwv.CalendarSchedulingResponsesView> schedulingResponses(
     _ist.TestSessionBuilder sessionBuilder,

@@ -11,6 +11,9 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_calendar_server/src/generated/protocol.dart'
+    as _ix00hwbf;
+import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_scheduling_participation.dart' as _iot0xi24;
 import 'calendar_scheduling_reply_outcome.dart' as _ikqvfn4d;
 
@@ -21,6 +24,9 @@ abstract class CalendarSchedulingReplySourceRecord
     required this.scopeKey,
     required this.meetingId,
     required this.attendeeAddress,
+    String? targetKey,
+    this.originalStart,
+    String? targetBasisKey,
     required this.digest,
     required this.normalizedSource,
     this.sequence,
@@ -32,13 +38,17 @@ abstract class CalendarSchedulingReplySourceRecord
     required this.publishedCancelled,
     required this.receivedAt,
     this.inactiveAt,
-  });
+  }) : targetKey = targetKey ?? 'master',
+       targetBasisKey = targetBasisKey ?? 'master';
 
   factory CalendarSchedulingReplySourceRecord({
     _is.UuidValue? id,
     required String scopeKey,
     required _is.UuidValue meetingId,
     required String attendeeAddress,
+    String? targetKey,
+    _ieswiaty.CalendarEventTiming? originalStart,
+    String? targetBasisKey,
     required String digest,
     required String normalizedSource,
     int? sequence,
@@ -64,6 +74,13 @@ abstract class CalendarSchedulingReplySourceRecord
         jsonSerialization['meetingId'],
       ),
       attendeeAddress: jsonSerialization['attendeeAddress'] as String,
+      targetKey: jsonSerialization['targetKey'] as String?,
+      originalStart: jsonSerialization['originalStart'] == null
+          ? null
+          : _ix00hwbf.Protocol().deserialize<_ieswiaty.CalendarEventTiming>(
+              jsonSerialization['originalStart'],
+            ),
+      targetBasisKey: jsonSerialization['targetBasisKey'] as String?,
       digest: jsonSerialization['digest'] as String,
       normalizedSource: jsonSerialization['normalizedSource'] as String,
       sequence: jsonSerialization['sequence'] as int?,
@@ -106,6 +123,12 @@ abstract class CalendarSchedulingReplySourceRecord
 
   String attendeeAddress;
 
+  String targetKey;
+
+  _ieswiaty.CalendarEventTiming? originalStart;
+
+  String targetBasisKey;
+
   String digest;
 
   String normalizedSource;
@@ -139,6 +162,9 @@ abstract class CalendarSchedulingReplySourceRecord
     String? scopeKey,
     _is.UuidValue? meetingId,
     String? attendeeAddress,
+    String? targetKey,
+    _ieswiaty.CalendarEventTiming? originalStart,
+    String? targetBasisKey,
     String? digest,
     String? normalizedSource,
     int? sequence,
@@ -159,6 +185,9 @@ abstract class CalendarSchedulingReplySourceRecord
       'scopeKey': scopeKey,
       'meetingId': meetingId.toJson(),
       'attendeeAddress': attendeeAddress,
+      'targetKey': targetKey,
+      if (originalStart != null) 'originalStart': originalStart?.toJson(),
+      'targetBasisKey': targetBasisKey,
       'digest': digest,
       'normalizedSource': normalizedSource,
       if (sequence != null) 'sequence': sequence,
@@ -217,6 +246,9 @@ class _CalendarSchedulingReplySourceRecordImpl
     required String scopeKey,
     required _is.UuidValue meetingId,
     required String attendeeAddress,
+    String? targetKey,
+    _ieswiaty.CalendarEventTiming? originalStart,
+    String? targetBasisKey,
     required String digest,
     required String normalizedSource,
     int? sequence,
@@ -233,6 +265,9 @@ class _CalendarSchedulingReplySourceRecordImpl
          scopeKey: scopeKey,
          meetingId: meetingId,
          attendeeAddress: attendeeAddress,
+         targetKey: targetKey,
+         originalStart: originalStart,
+         targetBasisKey: targetBasisKey,
          digest: digest,
          normalizedSource: normalizedSource,
          sequence: sequence,
@@ -255,6 +290,9 @@ class _CalendarSchedulingReplySourceRecordImpl
     String? scopeKey,
     _is.UuidValue? meetingId,
     String? attendeeAddress,
+    String? targetKey,
+    Object? originalStart = _Undefined,
+    String? targetBasisKey,
     String? digest,
     String? normalizedSource,
     Object? sequence = _Undefined,
@@ -272,6 +310,11 @@ class _CalendarSchedulingReplySourceRecordImpl
       scopeKey: scopeKey ?? this.scopeKey,
       meetingId: meetingId ?? this.meetingId,
       attendeeAddress: attendeeAddress ?? this.attendeeAddress,
+      targetKey: targetKey ?? this.targetKey,
+      originalStart: originalStart is _ieswiaty.CalendarEventTiming?
+          ? originalStart
+          : this.originalStart?.copyWith(),
+      targetBasisKey: targetBasisKey ?? this.targetBasisKey,
       digest: digest ?? this.digest,
       normalizedSource: normalizedSource ?? this.normalizedSource,
       sequence: sequence is int? ? sequence : this.sequence,
@@ -310,6 +353,23 @@ class CalendarSchedulingReplySourceRecordUpdateTable
   _is.ColumnValue<String, String> attendeeAddress(String value) =>
       _is.ColumnValue(
         table.attendeeAddress,
+        value,
+      );
+
+  _is.ColumnValue<String, String> targetKey(String value) => _is.ColumnValue(
+    table.targetKey,
+    value,
+  );
+
+  _is.ColumnValue<_ieswiaty.CalendarEventTiming, _ieswiaty.CalendarEventTiming>
+  originalStart(_ieswiaty.CalendarEventTiming? value) => _is.ColumnValue(
+    table.originalStart,
+    value,
+  );
+
+  _is.ColumnValue<String, String> targetBasisKey(String value) =>
+      _is.ColumnValue(
+        table.targetBasisKey,
         value,
       );
 
@@ -403,6 +463,20 @@ class CalendarSchedulingReplySourceRecordTable
       'attendeeAddress',
       this,
     );
+    targetKey = _is.ColumnString(
+      'targetKey',
+      this,
+      hasDefault: true,
+    );
+    originalStart = _is.ColumnSerializable<_ieswiaty.CalendarEventTiming>(
+      'originalStart',
+      this,
+    );
+    targetBasisKey = _is.ColumnString(
+      'targetBasisKey',
+      this,
+      hasDefault: true,
+    );
     digest = _is.ColumnString(
       'digest',
       this,
@@ -460,6 +534,13 @@ class CalendarSchedulingReplySourceRecordTable
 
   late final _is.ColumnString attendeeAddress;
 
+  late final _is.ColumnString targetKey;
+
+  late final _is.ColumnSerializable<_ieswiaty.CalendarEventTiming>
+  originalStart;
+
+  late final _is.ColumnString targetBasisKey;
+
   late final _is.ColumnString digest;
 
   late final _is.ColumnString normalizedSource;
@@ -490,6 +571,9 @@ class CalendarSchedulingReplySourceRecordTable
     scopeKey,
     meetingId,
     attendeeAddress,
+    targetKey,
+    originalStart,
+    targetBasisKey,
     digest,
     normalizedSource,
     sequence,

@@ -290,6 +290,7 @@ _SchedulingCheckpoint _schedulingReadV4(
     basis.projectionOriginals,
     basis.originals,
     kind: kind,
+    instanceVersionProfile: basis.instanceVersionProfile,
     target: target,
     nativeMatch: nativeMatch,
     basisRecord: basisRecord,

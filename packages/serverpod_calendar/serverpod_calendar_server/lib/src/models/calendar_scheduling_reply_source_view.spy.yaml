@@ -3,6 +3,7 @@ immutable: true
 fields:
   id: UuidValue
   attendeeAddress: String
+  originalStart: CalendarEventTiming?
   sourceSequence: int?
   stamp: DateTime
   sourceParticipation: CalendarSchedulingParticipation?
