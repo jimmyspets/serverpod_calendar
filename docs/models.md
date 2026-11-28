@@ -536,3 +536,7 @@ Generated additions are `CalendarEventTextParameters`, `CalendarEventProtocolVer
 ## Source-preserving task storage increment, 2026-10-23
 
 [The storage guide](task-source-storage.md) records the ADR 0098 current source metadata/component-version and private-baseline prerequisite. Source values remain read-only, inert and unarmed; assignment-only edits keep protocol versions unchanged and occurrence progress versions its own component. Native projections must agree with source state, and incompatible edits reject. This supersedes the immediately preceding storage-pending/proposal notes only for the scoped storage increment; task import/export, native metadata editors, alarm runtime and external-client evidence remain separate.
+
+## Create-only task import models
+
+[ADR 0099](adr/0099-authenticated-create-only-task-import.md) profiles immutable `CalendarTaskImportRequest` (calendar UUID, expected parent revision, byte slice), minimal `CalendarTaskImportResult` receipts, and server host-context `CalendarTaskImportIntent`/`CalendarTaskImportMember` with complete current source proposals. The historical baseline is excluded from these contexts/responses. Existing ADR 0098 storage is reused without table changes. Import creates no history/assignments/alarm activation and keeps prior progress unknown.

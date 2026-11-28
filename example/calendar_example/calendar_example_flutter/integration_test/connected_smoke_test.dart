@@ -618,6 +618,38 @@ void main() {
       isEmpty,
     );
 
+    await _tap(tester, 'task-import');
+    await _tap(tester, 'task-import-example');
+    await _tap(tester, 'task-import-submit');
+    await _waitFor(tester, find.text('Imported example task'));
+    final importedTask = (await tasks.list(
+      calendar.id,
+      pageSize: 10,
+      fieldGroups: cal.CalendarTaskFieldGroup.values,
+    )).tasks.single;
+    expect(importedTask.progress!.status, isNull);
+    expect(importedTask.progress!.percentComplete, 25);
+    expect(importedTask.assignees, isEmpty);
+    expect(importedTask.protocolVersion!.sequence, isNull);
+    await _tap(tester, 'task-import');
+    await _tap(tester, 'task-import-example');
+    await _tap(tester, 'task-import-submit');
+    await _waitFor(tester, find.byKey(const Key('task-import-error')));
+    await tester.pageBack();
+    await _idle(tester);
+    await tester.tap(find.text('Imported example task'));
+    await _idle(tester);
+    await _tap(tester, 'task-delete');
+    await _tap(tester, 'task-confirm-delete');
+    expect(
+      (await tasks.list(
+        calendar.id,
+        pageSize: 10,
+        fieldGroups: cal.CalendarTaskFieldGroup.values,
+      )).tasks,
+      isEmpty,
+    );
+
     await tester.pageBack();
     await _idle(tester);
 

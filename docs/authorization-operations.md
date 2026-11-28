@@ -136,3 +136,7 @@ The [ADR 0056 per-calendar free/busy service](calendar-free-busy.md) requires `r
 ## Current-state event export, 2026-10-23
 
 [ADR 0082](adr/0082-authenticated-current-event-export.md) and [the export guide](event-export.md) implement explicit revision-bound complete series from one calendar. Require separate export permission and all supported read-disclosure groups, with complete selection context and repeated post-serialization checks. Generate current supported semantics and pinned zones, excluding historical baseline/native storage metadata. Reject unrepresentable cancellation restoration state and any decoded current-state mismatch; never silently normalize or redact. Export is read-only; source replacement, feeds, scheduling and alarms remain separate.
+
+## Create-only task import operations
+
+[ADR 0099](adr/0099-authenticated-create-only-task-import.md) implements `importTasks` on the actual destination, `createTask` for every complete proposed series and `changeTaskProgress` whenever any master/occurrence includes a source progress property. Preliminary/final immutable intent contains all members and current source state, never a historical baseline. Require every final batch/member decision to disclose a mutation receipt; no implied read access follows. Source attendees assign nobody and alarms stay unarmed; see [the import guide](task-import.md).

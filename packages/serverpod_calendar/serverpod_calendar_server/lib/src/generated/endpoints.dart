@@ -71,6 +71,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_task_field_grou
     as _ik0gz7r1;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_history_query.dart'
     as _issl6zlo;
+import 'package:serverpod_calendar_server/src/generated/calendar_task_import_request.dart'
+    as _in2ug0m6;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_occurrence_progress_request.dart'
     as _ingyryea;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_occurrence_query.dart'
@@ -962,6 +964,26 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'calendarTask',
       endpoint: endpoints['calendarTask']!,
       methodConnectors: {
+        'importTasks': _is.MethodConnector(
+          name: 'importTasks',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_in2ug0m6.CalendarTaskImportRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarTask'] as _i4tukef9.CalendarTaskEndpoint)
+                      .importTasks(
+                        session,
+                        params['request'],
+                      ),
+        ),
         'create': _is.MethodConnector(
           name: 'create',
           params: {

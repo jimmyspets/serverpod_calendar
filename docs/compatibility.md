@@ -297,3 +297,7 @@ The maintainer selected the timing/composition-first slice and positive opening 
 ## Source-preserving task storage increment, 2026-10-23
 
 [The storage guide](task-source-storage.md) records the ADR 0098 current source metadata/component-version and private-baseline prerequisite. Source values remain read-only, inert and unarmed; assignment-only edits keep protocol versions unchanged and occurrence progress versions its own component. Native projections must agree with source state, and incompatible edits reject. This supersedes the immediately preceding storage-pending/proposal notes only for the scoped storage increment; task import/export, native metadata editors, alarm runtime and external-client evidence remain separate.
+
+## Create-only task import increment, 2026-10-23
+
+Authenticated [task import](task-import.md#implemented-create-only-operation) now follows under ADR 0099. It retains the supported strict VTODO profile and complete source storage under independent host permissions. This supersedes prior import-pending notes only for create-only native ingestion; task export, synchronization, native source editors, alarm execution and external-client evidence remain separate.

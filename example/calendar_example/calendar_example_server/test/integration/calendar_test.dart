@@ -277,6 +277,627 @@ void main() {
       cursor: cursor,
     );
 
+    List<String> importedTask(
+      String uid, {
+      List<String> properties = const [],
+      List<String> timing = const ['DTSTART;VALUE=DATE:20260328'],
+    }) => [
+      'BEGIN:VTODO',
+      'UID:$uid',
+      'DTSTAMP:20260301T000000Z',
+      ...timing,
+      ...properties,
+      'END:VTODO',
+    ];
+    String taskCalendar(List<String> components) => [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:Synthetic',
+      ...components,
+      'END:VCALENDAR',
+      '',
+    ].join('\r\n');
+    CalendarTaskImportRequest taskImportRequest(
+      UuidValue parent, {
+      String? text,
+      int revision = 1,
+    }) => CalendarTaskImportRequest(
+      calendarId: parent,
+      expectedRevision: revision,
+      bytes: ByteData.sublistView(
+        Uint8List.fromList(
+          utf8.encode(
+            text ?? taskCalendar(importedTask('imported@example.invalid')),
+          ),
+        ),
+      ),
+    );
+
+    test('task import retains full source progress metadata baseline versions and no invented side effects', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final text = taskCalendar([
+        ...importedTask(
+          'source@example.invalid',
+          properties: [
+            'SUMMARY;LANGUAGE=sv:Hej',
+            'PERCENT-COMPLETE:37',
+            'COMPLETED:20260302T000000Z',
+            'RRULE:FREQ=DAILY;COUNT=3',
+            'SEQUENCE:7',
+            'LAST-MODIFIED:20260201T000000Z',
+            'CATEGORIES;LANGUAGE=sv:ett,ett',
+            'COMMENT:Comment',
+            'CONTACT:Private contact',
+            'CLASS:PRIVATE',
+            'ORGANIZER:mailto:source@example.invalid',
+            'ATTENDEE;RSVP=TRUE:mailto:guest@example.invalid',
+            'RELATED-TO:missing@example.invalid',
+            'ATTACH;FMTTYPE=application/pdf:cid:synthetic@example.invalid',
+            'BEGIN:VALARM',
+            'ACTION:DISPLAY',
+            'DESCRIPTION:Unarmed',
+            'TRIGGER:-PT5M',
+            'UID:alarm@example.invalid',
+            'ACKNOWLEDGED:20260301T090000Z',
+            'END:VALARM',
+          ],
+        ),
+        'BEGIN:VTODO',
+        'UID:source@example.invalid',
+        'DTSTAMP:20260303T000000Z',
+        'RECURRENCE-ID;VALUE=DATE:20260329',
+        'PERCENT-COMPLETE:12',
+        'END:VTODO',
+      ]);
+      final result = await service.importTasks(
+        taskImportRequest(parent, text: text),
+      );
+      final id = result.receipts.single.taskId, view = await taskRead(id);
+      expect(id.toString(), isNot('source@example.invalid'));
+      expect(view.protocolVersion!.sequence, 7);
+      expect(view.protocolVersion!.lastModified, DateTime.utc(2026, 2, 1));
+      expect(view.protocolVersion!.created, isNull);
+      expect(view.progress!.status, isNull);
+      expect(view.progress!.percentComplete, 37);
+      expect(view.progress!.completedAt, DateTime.utc(2026, 3, 2));
+      expect(view.assignees, isEmpty);
+      expect(view.summary, 'Hej');
+      final data = (await CalendarTaskDataRecord.db.find(session)).single;
+      expect(data.hasRecordedProgress, isNull);
+      expect(
+        data.sourceState!.master.metadata.contacts.single.value,
+        'Private contact',
+      );
+      expect(
+        data.sourceState!.master.metadata.alarms.single.acknowledged,
+        DateTime.utc(2026, 3, 1, 9),
+      );
+      validateTaskImportBaseline(
+        data.importBaseline!,
+        'source@example.invalid',
+      );
+      final previews = await service.previewTaskOccurrences(
+        CalendarTaskOccurrenceQuery(
+          taskId: id,
+          expectedRevision: 1,
+          fromDate: day(27).start,
+          untilDate: day(31).start,
+        ),
+      );
+      expect(previews.occurrences[0].progress.percentComplete, 37);
+      expect(previews.occurrences[1].progress.percentComplete, 12);
+      expect(previews.occurrences[1].progress.completedAt, isNull);
+      expect(await CalendarTaskHistoryRecord.db.count(session), 0);
+      final row = (await CalendarTaskOccurrenceRecord.db.find(session)).single;
+      expect(row.protocolVersion!.stamp, DateTime.utc(2026, 3, 3));
+      expect(row.protocolVersion!.sequence, isNull);
+      expect((await service.get(parent, groups)).revision, 1);
+      expect(view.toJson().containsKey('sourceState'), isFalse);
+      expect(view.toJson().containsKey('importBaseline'), isFalse);
+      await service.deleteTask(id, 1);
+      expect(await CalendarTaskDataRecord.db.count(session), 0);
+      expect(await CalendarTaskOccurrenceRecord.db.count(session), 0);
+    });
+    for (final op in [
+      CalendarPermission.importTasks,
+      CalendarPermission.createTask,
+      CalendarPermission.changeTaskProgress,
+    ]) {
+      test(
+        'task import independently requires ${op.name} and rolls back final denial',
+        () async {
+          final parent = (await service.create(createInput()))!.calendarId;
+          final request = taskImportRequest(
+            parent,
+            text: taskCalendar(
+              importedTask('gate', properties: ['PERCENT-COMPLETE:0']),
+            ),
+          );
+          policy.denied.add(op);
+          await expectLater(
+            service.importTasks(request),
+            failure(CalendarFailureCode.accessDenied),
+          );
+          policy.denied.clear();
+          policy.denyFinal = true;
+          await expectLater(
+            service.importTasks(request),
+            failure(CalendarFailureCode.accessDenied),
+          );
+          policy.denyFinal = false;
+          expect(await CalendarTaskRecord.db.count(session), 0);
+          expect(await CalendarTaskDataRecord.db.count(session), 0);
+        },
+      );
+    }
+    for (final property in [
+      'STATUS:NEEDS-ACTION',
+      'PERCENT-COMPLETE:0',
+      'COMPLETED:20260301T000000Z',
+    ]) {
+      test(
+        'task import progress authority detects source $property on an occurrence',
+        () async {
+          final parent = (await service.create(createInput()))!.calendarId;
+          final text = taskCalendar([
+            ...importedTask(
+              'progress',
+              properties: ['RRULE:FREQ=DAILY;COUNT=2'],
+            ),
+            'BEGIN:VTODO',
+            'UID:progress',
+            'DTSTAMP:20260301T000000Z',
+            'RECURRENCE-ID;VALUE=DATE:20260329',
+            property,
+            'END:VTODO',
+          ]);
+          policy.denied.add(CalendarPermission.changeTaskProgress);
+          await expectLater(
+            service.importTasks(taskImportRequest(parent, text: text)),
+            failure(CalendarFailureCode.accessDenied),
+          );
+          expect(await CalendarTaskRecord.db.count(session), 0);
+        },
+      );
+    }
+    test('task import absent progress needs no progress authority and neutral prior progress stays unknown', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      policy.denied.addAll([
+        CalendarPermission.changeTaskProgress,
+        CalendarPermission.changeTaskAssignments,
+      ]);
+      final result = await service.importTasks(taskImportRequest(parent)),
+          id = result.receipts.single.taskId;
+      final data = (await CalendarTaskDataRecord.db.find(session)).single;
+      expect(data.progress.status, isNull);
+      expect(data.progress.percentComplete, isNull);
+      expect(data.hasRecordedProgress, isNull);
+      policy.denied.clear();
+      await expectLater(
+        service.updateTask(
+          CalendarTaskUpdateRequest(
+            taskId: id,
+            expectedRevision: 1,
+            content: data.content.copyWith(
+              recurrence: CalendarEventRecurrence(
+                rule: daily(),
+                inclusions: [],
+                exclusions: [],
+              ),
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+    });
+    test('task import final member rejection and policy revocation roll back complete immutable batch', () async {
+      CalendarModule.install(
+        session.serverpod,
+        policy: policy,
+        options: const CalendarModuleOptions(
+          requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+          policyBatchSize: 1,
+        ),
+      );
+      service = CalendarModule.service(session);
+      final parent = (await service.create(createInput()))!.calendarId;
+      final request = taskImportRequest(
+        parent,
+        text: taskCalendar([
+          ...importedTask('first'),
+          ...importedTask('second'),
+        ]),
+      );
+      policy.denyTaskImportUid = 'second';
+      policy.onTaskImport = (s, r, tx, phase) async {
+        if (r.taskImport != null) {
+          expect(r.current!.calendarId, parent);
+          expect(r.taskImport!.members, hasLength(2));
+          expect(() => r.taskImport!.members.clear(), throwsUnsupportedError);
+          expect(
+            () => r
+                .taskImport!
+                .members
+                .first
+                .sourceState
+                .master
+                .metadata
+                .contacts
+                .clear(),
+            throwsUnsupportedError,
+          );
+          if (r.taskId != null) expect(r.proposedTaskSourceState, isNotNull);
+        }
+      };
+      await expectLater(
+        service.importTasks(request),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(await CalendarTaskRecord.db.count(session), 0);
+      policy.denyTaskImportUid = null;
+      policy.onTaskImport = (s, r, tx, phase) async {
+        if (r.taskImport != null &&
+            phase == CalendarAuthorizationPhase.finalWrite) {
+          policy.epoch = 'revoked';
+        }
+      };
+      await expectLater(
+        service.importTasks(request),
+        failure(CalendarFailureCode.unavailable),
+      );
+      expect(await CalendarTaskRecord.db.count(session), 0);
+    });
+    test('task import receipts require batch member and progress disclosure and grant no task read', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      policy.hideTaskImportBatch = true;
+      final result = await service.importTasks(taskImportRequest(parent));
+      expect(result.receipts, isEmpty);
+      expect(await CalendarTaskRecord.db.count(session), 1);
+      policy.hideTaskImportBatch = false;
+      policy.hideTaskImportUid = 'hidden';
+      final next = await service.importTasks(
+        taskImportRequest(
+          parent,
+          text: taskCalendar([
+            ...importedTask('shown'),
+            ...importedTask('hidden'),
+          ]),
+        ),
+      );
+      expect(next.receipts, hasLength(1));
+      expect(await CalendarTaskRecord.db.count(session), 3);
+      policy.denied.add(CalendarPermission.readTask);
+      await expectLater(
+        taskRead(next.receipts.single.taskId),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+    test('task import exact destination UID conflicts copies and tombstone reuse preserve identities', () async {
+      final parent = (await service.create(createInput()))!.calendarId,
+          other = (await service.create(createInput('Other')))!.calendarId;
+      final first = (await service.importTasks(taskImportRequest(parent)))
+          .receipts
+          .single;
+      await expectLater(
+        service.importTasks(taskImportRequest(parent)),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      final copy = (await service.importTasks(taskImportRequest(other)))
+          .receipts
+          .single;
+      expect(copy.taskId, isNot(first.taskId));
+      await service.importTasks(
+        taskImportRequest(
+          parent,
+          text: taskCalendar(importedTask('Imported@example.invalid')),
+        ),
+      );
+      await service.deleteTask(first.taskId, 1);
+      final reused = (await service.importTasks(taskImportRequest(parent)))
+          .receipts
+          .single;
+      expect(reused.taskId, isNot(first.taskId));
+      expect(await CalendarTaskRecord.db.count(session), 4);
+    });
+    test('task import preserves the exact ByteData slice and snapshots bytes before policy awaits', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final payload = utf8.encode(taskCalendar(importedTask('slice'))),
+          storage = Uint8List.fromList([1, 2, ...payload, 3]);
+      policy.onTaskImport = (s, r, tx, phase) async {
+        if (r.taskImport == null) storage.fillRange(0, storage.length, 0);
+      };
+      final result = await service.importTasks(
+        CalendarTaskImportRequest(
+          calendarId: parent,
+          expectedRevision: 1,
+          bytes: ByteData.view(storage.buffer, 2, payload.length),
+        ),
+      );
+      expect(result.receipts, hasLength(1));
+      expect(
+        (await taskRead(result.receipts.single.taskId)).protocolUid,
+        'slice',
+      );
+    });
+    test('task import stale revision scope and destination budgets reject without writes', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      await expectLater(
+        service.importTasks(taskImportRequest(parent, revision: 2)),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      policy.scopeOverride = 'other';
+      await expectLater(
+        service.importTasks(taskImportRequest(parent)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.scopeOverride = null;
+      CalendarModule.install(
+        session.serverpod,
+        policy: policy,
+        options: const CalendarModuleOptions(
+          requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+          maxScannedTasks: 1,
+        ),
+      );
+      service = CalendarModule.service(session);
+      await expectLater(
+        service.importTasks(
+          taskImportRequest(
+            parent,
+            text: taskCalendar([
+              ...importedTask('one'),
+              ...importedTask('two'),
+            ]),
+          ),
+        ),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      expect(await CalendarTaskRecord.db.count(session), 0);
+    });
+    for (final malformed in <String, String>{
+      'empty': taskCalendar([]),
+      'bare LF': taskCalendar(importedTask('bad')).replaceAll('\r\n', '\n'),
+      'floating': taskCalendar(
+        importedTask('bad', timing: ['DTSTART:20260328T120000']),
+      ),
+      'fraction': taskCalendar(
+        importedTask('bad', timing: ['DTSTART:20260328T120000.001Z']),
+      ),
+      'unsupported': taskCalendar(
+        importedTask('bad', properties: ['X-UNKNOWN:bad']),
+      ),
+      'duplicate': taskCalendar([
+        ...importedTask('same'),
+        ...importedTask('same'),
+      ]),
+      'detached': taskCalendar([
+        'BEGIN:VTODO',
+        'UID:missing',
+        'DTSTAMP:20260301T000000Z',
+        'RECURRENCE-ID;VALUE=DATE:20260329',
+        'END:VTODO',
+      ]),
+      'method': taskCalendar(importedTask('bad'))
+          .replaceFirst('VERSION:2.0', 'VERSION:2.0\r\nMETHOD:REQUEST'),
+    }.entries) {
+      test('task import rejects ${malformed.key} atomically', () async {
+        final parent = (await service.create(createInput()))!.calendarId;
+        await expectLater(
+          service.importTasks(taskImportRequest(parent, text: malformed.value)),
+          failure(CalendarFailureCode.validation),
+        );
+        expect(await CalendarTaskRecord.db.count(session), 0);
+        expect(await CalendarTaskDataRecord.db.count(session), 0);
+      });
+    }
+
+    test('task import strict byte bounds encoding and authorization precede source parsing', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      for (final bytes in [
+        Uint8List.fromList([0xff]),
+        Uint8List.fromList([
+          0xef,
+          0xbb,
+          0xbf,
+          ...utf8.encode(taskCalendar(importedTask('bom'))),
+        ]),
+      ]) {
+        await expectLater(
+          service.importTasks(
+            CalendarTaskImportRequest(
+              calendarId: parent,
+              expectedRevision: 1,
+              bytes: ByteData.sublistView(bytes),
+            ),
+          ),
+          failure(CalendarFailureCode.validation),
+        );
+      }
+      await expectLater(
+        service.importTasks(
+          CalendarTaskImportRequest(
+            calendarId: parent,
+            expectedRevision: 1,
+            bytes: ByteData(1048577),
+          ),
+        ),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      policy.denied.add(CalendarPermission.importTasks);
+      await expectLater(
+        service.importTasks(taskImportRequest(parent, text: 'malformed')),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(await CalendarTaskRecord.db.count(session), 0);
+    });
+    test('task import digest collisions compare exact UIDs and hidden progress receipts remain private', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      await service.importTasks(taskImportRequest(parent));
+      final existing = (await CalendarTaskDataRecord.db.find(session)).single;
+      existing.uidDigest = eventUidDigest('collision');
+      await CalendarTaskDataRecord.db.updateRow(session, existing);
+      final result = await service.importTasks(
+        taskImportRequest(
+          parent,
+          text: taskCalendar(importedTask('collision')),
+        ),
+      );
+      expect(result.receipts, hasLength(1));
+      expect(await CalendarTaskRecord.db.count(session), 2);
+      policy.hideTaskProgressReceipt = true;
+      final hidden = await service.importTasks(
+        taskImportRequest(
+          parent,
+          text: taskCalendar(
+            importedTask(
+              'progress-hidden',
+              properties: ['STATUS:NEEDS-ACTION'],
+            ),
+          ),
+        ),
+      );
+      expect(hidden.receipts, isEmpty);
+      expect(await CalendarTaskRecord.db.count(session), 3);
+    });
+
+    test('task import accepts undated UTC and named-zone source timing without reinterpretation', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      for (final (uid, timing) in [
+        ('undated', <String>[]),
+        ('utc', ['DUE:20260329T120000Z']),
+        ('dated', ['DUE;VALUE=DATE:20260329']),
+      ]) {
+        final result = await service.importTasks(
+          taskImportRequest(
+            parent,
+            text: taskCalendar(importedTask(uid, timing: timing)),
+          ),
+        );
+        final view = await taskRead(result.receipts.single.taskId);
+        expect(view.timing!.start, isNull);
+        if (uid == 'utc') expect(view.timing!.kind, CalendarTaskTimeKind.utc);
+        if (uid == 'undated') {
+          expect(view.timing!.kind, CalendarTaskTimeKind.undated);
+        }
+      }
+      final document = IcalendarSyntaxDocument([
+        IcalendarSyntaxComponent('VCALENDAR', [
+          IcalendarSyntaxProperty('VERSION', '2.0'),
+          IcalendarSyntaxProperty('PRODID', 'Synthetic'),
+          createIcalendarTimeZone('Europe/Stockholm'),
+          IcalendarSyntaxComponent('VTODO', [
+            IcalendarSyntaxProperty('UID', 'zoned'),
+            IcalendarSyntaxProperty('DTSTAMP', '20260301T000000Z'),
+            IcalendarSyntaxProperty(
+              'DTSTART',
+              '20260328T090000',
+              parameters: [
+                IcalendarSyntaxParameter('TZID', ['Europe/Stockholm']),
+              ],
+            ),
+            IcalendarSyntaxProperty('DURATION', 'P1D'),
+          ]),
+        ]),
+      ]);
+      final result = await service.importTasks(
+        CalendarTaskImportRequest(
+          calendarId: parent,
+          expectedRevision: 1,
+          bytes: ByteData.sublistView(serializeIcalendarSyntax(document)),
+        ),
+      );
+      final view = await taskRead(result.receipts.single.taskId);
+      expect(view.timing!.zoneId, 'Europe/Stockholm');
+      expect(view.timing!.duration!.days, 1);
+    });
+
+    test('task import late parse conflict and post-write overflow leave no partial state', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      await expectLater(
+        service.importTasks(
+          taskImportRequest(
+            parent,
+            text: taskCalendar([
+              ...importedTask('valid'),
+              ...importedTask('invalid', properties: ['X-UNKNOWN:bad']),
+            ]),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      expect(await CalendarTaskRecord.db.count(session), 0);
+      await service.importTasks(
+        taskImportRequest(parent, text: taskCalendar(importedTask('existing'))),
+      );
+      await expectLater(
+        service.importTasks(
+          taskImportRequest(
+            parent,
+            text: taskCalendar([
+              ...importedTask('would-be-new'),
+              ...importedTask('existing'),
+            ]),
+          ),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      expect(await CalendarTaskRecord.db.count(session), 1);
+      final scope = (await CalendarScopeRecord.db.findFirstRow(
+        session,
+        where: (t) => t.scopeKey.equals('test:alice'),
+      ))!;
+      scope.revision = 9007199254740991;
+      await CalendarScopeRecord.db.updateRow(session, scope);
+      await expectLater(
+        service.importTasks(
+          taskImportRequest(
+            parent,
+            text: taskCalendar([
+              ...importedTask(
+                'rolled-back',
+                properties: ['RRULE:FREQ=DAILY;COUNT=2'],
+              ),
+              'BEGIN:VTODO',
+              'UID:rolled-back',
+              'DTSTAMP:20260301T000000Z',
+              'RECURRENCE-ID;VALUE=DATE:20260329',
+              'END:VTODO',
+            ]),
+          ),
+        ),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      expect(await CalendarTaskRecord.db.count(session), 1);
+      expect(await CalendarTaskDataRecord.db.count(session), 1);
+      expect(await CalendarTaskOccurrenceRecord.db.count(session), 0);
+      expect(
+        (await CalendarTaskDataRecord.db.find(session)).single.protocolUid,
+        'existing',
+      );
+    });
+    test(
+      'task import rereads destination revision after pre-parse authorization',
+      () async {
+        final parent = (await service.create(createInput()))!.calendarId;
+        policy.onTaskImport = (s, r, tx, phase) async {
+          if (r.taskImport == null) {
+            final row = (await CalendarIdentityRecord.db.findById(
+              s,
+              parent,
+              transaction: tx,
+            ))!;
+            row.revision++;
+            await CalendarIdentityRecord.db.updateRow(s, row, transaction: tx);
+          }
+        };
+        await expectLater(
+          service.importTasks(taskImportRequest(parent)),
+          failure(CalendarFailureCode.staleRevision),
+        );
+        expect(await CalendarTaskRecord.db.count(session), 0);
+      },
+    );
+
     // Synthetic storage fixture only; no import endpoint is exercised here.
     Future<CalendarTaskReceipt> storedSourceTask({
       bool recurring = false,
@@ -8255,6 +8876,17 @@ final class TestPolicy implements CalendarHostPolicy {
   void Function(CalendarAuthorizationRequest)? onFreeBusyRequest;
   final deniedEventExports = <UuidValue>{};
   void Function(CalendarAuthorizationRequest)? onEventExport;
+  String? denyTaskImportUid, hideTaskImportUid;
+  bool hideTaskImportBatch = false, hideTaskProgressReceipt = false;
+  final taskImportRequests =
+      <(CalendarAuthorizationRequest, CalendarAuthorizationPhase)>[];
+  Future<void> Function(
+    Session,
+    CalendarAuthorizationRequest,
+    Transaction,
+    CalendarAuthorizationPhase,
+  )?
+  onTaskImport;
   String? denyEventImportUid, hideEventImportUid;
   bool hideEventImportBatch = false, hideEventLifecycleReceipt = false;
   final eventImportRequests =
@@ -8399,6 +9031,11 @@ final class TestPolicy implements CalendarHostPolicy {
       if (request.operation == CalendarPermission.exportEvents) {
         onEventExport?.call(request);
       }
+      if (request.taskImport != null ||
+          request.operation == CalendarPermission.importTasks) {
+        taskImportRequests.add((request, phase));
+        await onTaskImport?.call(s, request, tx, phase);
+      }
       if (request.eventImport != null) {
         eventImportRequests.add((request, phase));
       }
@@ -8466,7 +9103,15 @@ final class TestPolicy implements CalendarHostPolicy {
     return CalendarAuthorizationDecision(
       key: r.key,
       verdict:
-          (r.operation == CalendarPermission.exportEvents &&
+          (r.taskImport != null &&
+                  r.operation == CalendarPermission.createTask &&
+                  phase == CalendarAuthorizationPhase.finalWrite &&
+                  r.taskImport!.members.any(
+                    (m) =>
+                        m.taskId == r.taskId &&
+                        m.protocolUid == denyTaskImportUid,
+                  )) ||
+              (r.operation == CalendarPermission.exportEvents &&
                   deniedEventExports.contains(r.eventId)) ||
               (r.eventImport != null &&
                   r.operation == CalendarPermission.createEvent &&
@@ -8504,6 +9149,16 @@ final class TestPolicy implements CalendarHostPolicy {
       taskDisclosedGroups: taskGrants,
       eventDisclosedGroups: eventGrants,
       discloseMutationReceipt:
+          !(r.taskImport != null &&
+              r.operation == CalendarPermission.changeTaskProgress &&
+              hideTaskProgressReceipt) &&
+          !(r.operation == CalendarPermission.importTasks &&
+              hideTaskImportBatch) &&
+          !(r.taskImport?.members.any(
+                (m) =>
+                    m.taskId == r.taskId && m.protocolUid == hideTaskImportUid,
+              ) ??
+              false) &&
           !(r.operation == CalendarPermission.importEvents &&
               hideEventImportBatch) &&
           !(r.eventImport != null &&

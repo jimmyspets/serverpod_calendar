@@ -1,0 +1,4 @@
+class: CalendarTaskImportResult
+immutable: true
+fields:
+  receipts: List<CalendarTaskReceipt>
