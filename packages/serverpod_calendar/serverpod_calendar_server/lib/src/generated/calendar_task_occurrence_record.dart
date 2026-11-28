@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'calendar_event_timing.dart' as _ieswiaty;
+import 'calendar_task_occurrence_content.dart' as _irmu5f0n;
 import 'calendar_task_progress.dart' as _ikcsq95s;
 import 'calendar_task_protocol_version.dart' as _iz9t6x1i;
 import 'calendar_task_timing.dart' as _i9h8y8lg;
@@ -27,6 +28,7 @@ abstract class CalendarTaskOccurrenceRecord
     required this.originalStart,
     this.replacementTiming,
     this.futureTiming,
+    this.contentOverrides,
     required this.progress,
     this.protocolVersion,
   });
@@ -38,6 +40,7 @@ abstract class CalendarTaskOccurrenceRecord
     required _ieswiaty.CalendarEventTiming originalStart,
     _i9h8y8lg.CalendarTaskTiming? replacementTiming,
     _i9h8y8lg.CalendarTaskTiming? futureTiming,
+    _irmu5f0n.CalendarTaskOccurrenceContent? contentOverrides,
     required _ikcsq95s.CalendarTaskProgress progress,
     _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion,
   }) = _CalendarTaskOccurrenceRecordImpl;
@@ -63,6 +66,12 @@ abstract class CalendarTaskOccurrenceRecord
           : _ix00hwbf.Protocol().deserialize<_i9h8y8lg.CalendarTaskTiming>(
               jsonSerialization['futureTiming'],
             ),
+      contentOverrides: jsonSerialization['contentOverrides'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_irmu5f0n.CalendarTaskOccurrenceContent>(
+                  jsonSerialization['contentOverrides'],
+                ),
       progress: _ix00hwbf.Protocol()
           .deserialize<_ikcsq95s.CalendarTaskProgress>(
             jsonSerialization['progress'],
@@ -93,6 +102,8 @@ abstract class CalendarTaskOccurrenceRecord
 
   _i9h8y8lg.CalendarTaskTiming? futureTiming;
 
+  _irmu5f0n.CalendarTaskOccurrenceContent? contentOverrides;
+
   _ikcsq95s.CalendarTaskProgress progress;
 
   _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion;
@@ -110,6 +121,7 @@ abstract class CalendarTaskOccurrenceRecord
     _ieswiaty.CalendarEventTiming? originalStart,
     _i9h8y8lg.CalendarTaskTiming? replacementTiming,
     _i9h8y8lg.CalendarTaskTiming? futureTiming,
+    _irmu5f0n.CalendarTaskOccurrenceContent? contentOverrides,
     _ikcsq95s.CalendarTaskProgress? progress,
     _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion,
   });
@@ -124,6 +136,8 @@ abstract class CalendarTaskOccurrenceRecord
       if (replacementTiming != null)
         'replacementTiming': replacementTiming?.toJson(),
       if (futureTiming != null) 'futureTiming': futureTiming?.toJson(),
+      if (contentOverrides != null)
+        'contentOverrides': contentOverrides?.toJson(),
       'progress': progress.toJson(),
       if (protocolVersion != null) 'protocolVersion': protocolVersion?.toJson(),
     };
@@ -172,6 +186,7 @@ class _CalendarTaskOccurrenceRecordImpl extends CalendarTaskOccurrenceRecord {
     required _ieswiaty.CalendarEventTiming originalStart,
     _i9h8y8lg.CalendarTaskTiming? replacementTiming,
     _i9h8y8lg.CalendarTaskTiming? futureTiming,
+    _irmu5f0n.CalendarTaskOccurrenceContent? contentOverrides,
     required _ikcsq95s.CalendarTaskProgress progress,
     _iz9t6x1i.CalendarTaskProtocolVersion? protocolVersion,
   }) : super._(
@@ -181,6 +196,7 @@ class _CalendarTaskOccurrenceRecordImpl extends CalendarTaskOccurrenceRecord {
          originalStart: originalStart,
          replacementTiming: replacementTiming,
          futureTiming: futureTiming,
+         contentOverrides: contentOverrides,
          progress: progress,
          protocolVersion: protocolVersion,
        );
@@ -196,6 +212,7 @@ class _CalendarTaskOccurrenceRecordImpl extends CalendarTaskOccurrenceRecord {
     _ieswiaty.CalendarEventTiming? originalStart,
     Object? replacementTiming = _Undefined,
     Object? futureTiming = _Undefined,
+    Object? contentOverrides = _Undefined,
     _ikcsq95s.CalendarTaskProgress? progress,
     Object? protocolVersion = _Undefined,
   }) {
@@ -210,6 +227,10 @@ class _CalendarTaskOccurrenceRecordImpl extends CalendarTaskOccurrenceRecord {
       futureTiming: futureTiming is _i9h8y8lg.CalendarTaskTiming?
           ? futureTiming
           : this.futureTiming?.copyWith(),
+      contentOverrides:
+          contentOverrides is _irmu5f0n.CalendarTaskOccurrenceContent?
+          ? contentOverrides
+          : this.contentOverrides?.copyWith(),
       progress: progress ?? this.progress.copyWith(),
       protocolVersion: protocolVersion is _iz9t6x1i.CalendarTaskProtocolVersion?
           ? protocolVersion
@@ -250,6 +271,16 @@ class CalendarTaskOccurrenceRecordUpdateTable
     table.futureTiming,
     value,
   );
+
+  _is.ColumnValue<
+    _irmu5f0n.CalendarTaskOccurrenceContent,
+    _irmu5f0n.CalendarTaskOccurrenceContent
+  >
+  contentOverrides(_irmu5f0n.CalendarTaskOccurrenceContent? value) =>
+      _is.ColumnValue(
+        table.contentOverrides,
+        value,
+      );
 
   _is.ColumnValue<
     _ikcsq95s.CalendarTaskProgress,
@@ -295,6 +326,11 @@ class CalendarTaskOccurrenceRecordTable extends _is.Table<int?> {
       'futureTiming',
       this,
     );
+    contentOverrides =
+        _is.ColumnSerializable<_irmu5f0n.CalendarTaskOccurrenceContent>(
+          'contentOverrides',
+          this,
+        );
     progress = _is.ColumnSerializable<_ikcsq95s.CalendarTaskProgress>(
       'progress',
       this,
@@ -320,6 +356,9 @@ class CalendarTaskOccurrenceRecordTable extends _is.Table<int?> {
 
   late final _is.ColumnSerializable<_i9h8y8lg.CalendarTaskTiming> futureTiming;
 
+  late final _is.ColumnSerializable<_irmu5f0n.CalendarTaskOccurrenceContent>
+  contentOverrides;
+
   late final _is.ColumnSerializable<_ikcsq95s.CalendarTaskProgress> progress;
 
   late final _is.ColumnSerializable<_iz9t6x1i.CalendarTaskProtocolVersion>
@@ -333,6 +372,7 @@ class CalendarTaskOccurrenceRecordTable extends _is.Table<int?> {
     originalStart,
     replacementTiming,
     futureTiming,
+    contentOverrides,
     progress,
     protocolVersion,
   ];

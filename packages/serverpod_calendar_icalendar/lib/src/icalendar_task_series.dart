@@ -51,12 +51,6 @@ IcalendarTaskSeries _taskSeries(
     componentFail(IcalendarComponentError.duplicate);
   }
   final limits = budget.limits;
-  bool sameText(IcalendarTaskText? a, IcalendarTaskText? b) =>
-      a == null ||
-      (b != null &&
-          a.value == b.value &&
-          a.language == b.language &&
-          a.alternativeUri == b.alternativeUri);
   bool supplied(IcalendarTask t, String name) => t.source.entries
       .whereType<IcalendarSyntaxProperty>()
       .any((p) => p.canonicalName == name);
@@ -65,12 +59,8 @@ IcalendarTaskSeries _taskSeries(
     _matchingTaskParticipants(master.participants, o.participants);
     _matchingTaskReferences(master.references, o.references);
     _matchingDisplayAlarms(master.alarms, o.alarms);
-    if (!sameText(o.summary, master.summary) ||
-        !sameText(o.description, master.description) ||
-        !sameText(o.location, master.location) ||
-        (o.priority != null && o.priority != (master.priority ?? 0))) {
-      componentFail(IcalendarComponentError.unsupportedProperty);
-    }
+    // Selected text/priority values belong only to this original, including
+    // RANGE anchors. Only timing propagates in the supported task profile.
   }
   final linked = <IcalendarTaskOccurrenceComponent>[];
   if (master.dateTiming != null) {

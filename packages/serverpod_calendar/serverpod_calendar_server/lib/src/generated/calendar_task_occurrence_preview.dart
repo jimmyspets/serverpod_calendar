@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+import 'calendar_task_field_group.dart' as _isemqyyv;
 import 'calendar_task_occurrence.dart' as _isgg83d3;
 
 @_is.immutable
@@ -22,12 +23,14 @@ abstract class CalendarTaskOccurrencePreview
   const CalendarTaskOccurrencePreview._({
     required this.taskId,
     required this.revision,
+    required this.disclosedGroups,
     required this.occurrences,
   });
 
   const factory CalendarTaskOccurrencePreview({
     required _is.UuidValue taskId,
     required int revision,
+    required List<_isemqyyv.CalendarTaskFieldGroup> disclosedGroups,
     required List<_isgg83d3.CalendarTaskOccurrence> occurrences,
   }) = _CalendarTaskOccurrencePreviewImpl;
 
@@ -37,6 +40,10 @@ abstract class CalendarTaskOccurrencePreview
     return CalendarTaskOccurrencePreview(
       taskId: _is.UuidValueJsonExtension.fromJson(jsonSerialization['taskId']),
       revision: jsonSerialization['revision'] as int,
+      disclosedGroups: _ix00hwbf.Protocol()
+          .deserialize<List<_isemqyyv.CalendarTaskFieldGroup>>(
+            jsonSerialization['disclosedGroups'],
+          ),
       occurrences: _ix00hwbf.Protocol()
           .deserialize<List<_isgg83d3.CalendarTaskOccurrence>>(
             jsonSerialization['occurrences'],
@@ -48,6 +55,8 @@ abstract class CalendarTaskOccurrencePreview
 
   final int revision;
 
+  final List<_isemqyyv.CalendarTaskFieldGroup> disclosedGroups;
+
   final List<_isgg83d3.CalendarTaskOccurrence> occurrences;
 
   /// Returns a shallow copy of this [CalendarTaskOccurrencePreview]
@@ -56,6 +65,7 @@ abstract class CalendarTaskOccurrencePreview
   CalendarTaskOccurrencePreview copyWith({
     _is.UuidValue? taskId,
     int? revision,
+    List<_isemqyyv.CalendarTaskFieldGroup>? disclosedGroups,
     List<_isgg83d3.CalendarTaskOccurrence>? occurrences,
   });
   @override
@@ -77,6 +87,10 @@ abstract class CalendarTaskOccurrencePreview
                 ) ||
                 other.revision == revision) &&
             const _iss.DeepCollectionEquality().equals(
+              other.disclosedGroups,
+              disclosedGroups,
+            ) &&
+            const _iss.DeepCollectionEquality().equals(
               other.occurrences,
               occurrences,
             );
@@ -88,6 +102,7 @@ abstract class CalendarTaskOccurrencePreview
       runtimeType,
       taskId,
       revision,
+      const _iss.DeepCollectionEquality().hash(disclosedGroups),
       const _iss.DeepCollectionEquality().hash(occurrences),
     );
   }
@@ -98,6 +113,7 @@ abstract class CalendarTaskOccurrencePreview
       '__className__': 'serverpod_calendar.CalendarTaskOccurrencePreview',
       'taskId': taskId.toJson(),
       'revision': revision,
+      'disclosedGroups': disclosedGroups.toJson(valueToJson: (v) => v.toJson()),
       'occurrences': occurrences.toJson(valueToJson: (v) => v.toJson()),
     };
   }
@@ -108,6 +124,7 @@ abstract class CalendarTaskOccurrencePreview
       '__className__': 'serverpod_calendar.CalendarTaskOccurrencePreview',
       'taskId': taskId.toJson(),
       'revision': revision,
+      'disclosedGroups': disclosedGroups.toJson(valueToJson: (v) => v.toJson()),
       'occurrences': occurrences.toJson(
         valueToJson: (v) => v.toJsonForProtocol(),
       ),
@@ -124,10 +141,12 @@ class _CalendarTaskOccurrencePreviewImpl extends CalendarTaskOccurrencePreview {
   const _CalendarTaskOccurrencePreviewImpl({
     required _is.UuidValue taskId,
     required int revision,
+    required List<_isemqyyv.CalendarTaskFieldGroup> disclosedGroups,
     required List<_isgg83d3.CalendarTaskOccurrence> occurrences,
   }) : super._(
          taskId: taskId,
          revision: revision,
+         disclosedGroups: disclosedGroups,
          occurrences: occurrences,
        );
 
@@ -138,11 +157,14 @@ class _CalendarTaskOccurrencePreviewImpl extends CalendarTaskOccurrencePreview {
   CalendarTaskOccurrencePreview copyWith({
     _is.UuidValue? taskId,
     int? revision,
+    List<_isemqyyv.CalendarTaskFieldGroup>? disclosedGroups,
     List<_isgg83d3.CalendarTaskOccurrence>? occurrences,
   }) {
     return CalendarTaskOccurrencePreview(
       taskId: taskId ?? this.taskId,
       revision: revision ?? this.revision,
+      disclosedGroups:
+          disclosedGroups ?? this.disclosedGroups.map((e0) => e0).toList(),
       occurrences:
           occurrences ?? this.occurrences.map((e0) => e0.copyWith()).toList(),
     );

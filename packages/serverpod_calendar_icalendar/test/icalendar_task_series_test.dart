@@ -420,15 +420,41 @@ void main() {
       rejects(IcalendarComponentError.missing),
     );
   });
-  test('different content annotations priority timing or deadlines reject', () {
-    for (final p in [
-      'SUMMARY:Arbete',
-      'SUMMARY;LANGUAGE=sv:Other',
-      'DESCRIPTION:Added',
-      'LOCATION:Room',
-      'PRIORITY:4',
-      'DUE;VALUE=DATE:20261025',
-    ]) {
+  test(
+    'content differences and clear values stay local even on RANGE anchors',
+    () {
+      final c = series([
+        master,
+        [
+          original.replaceFirst('VALUE=DATE', 'VALUE=DATE;RANGE=THISANDFUTURE'),
+          'DTSTART;VALUE=DATE:20261025',
+          'SUMMARY;LANGUAGE=en:Other',
+          'DESCRIPTION:',
+          'LOCATION:Room',
+          'PRIORITY:0',
+        ],
+        ['RECURRENCE-ID;VALUE=DATE:20261024'],
+      ]);
+      final anchor = c.series.single.overrides.first,
+          later = c.series.single.overrides.last;
+      expect(anchor.summary!.value, 'Other');
+      expect(anchor.summary!.language, 'en');
+      expect(anchor.description!.value, '');
+      expect(anchor.location!.value, 'Room');
+      expect(anchor.priority, 0);
+      expect(later.summary!.value, 'Arbete');
+      expect(later.description, isNull);
+      expect(later.priority, 3);
+      expect(later.dateTiming!.start!.day, 26);
+      final again = parseIcalendarTaskCalendar(
+        serializeIcalendarTaskCalendar(c),
+      ).series.single;
+      expect(again.overrides.first.description!.value, '');
+      expect(again.overrides.last.component.summary, isNull);
+    },
+  );
+  test('partial changed deadlines still reject', () {
+    for (final p in ['DUE;VALUE=DATE:20261025']) {
       expect(
         () => series([
           master,

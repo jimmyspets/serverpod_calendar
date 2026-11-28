@@ -1,0 +1,7 @@
+class: CalendarTaskOccurrenceContent
+immutable: true
+fields:
+  summary: String?
+  description: String?
+  location: String?
+  priority: int?

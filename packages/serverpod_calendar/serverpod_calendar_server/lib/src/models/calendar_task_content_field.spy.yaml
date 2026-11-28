@@ -1,0 +1,7 @@
+enum: CalendarTaskContentField
+serialized: byName
+values:
+  - summary
+  - description
+  - location
+  - priority

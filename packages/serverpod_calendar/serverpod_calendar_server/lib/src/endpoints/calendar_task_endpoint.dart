@@ -66,6 +66,10 @@ class CalendarTaskEndpoint extends Endpoint {
     Session session,
     CalendarTaskOccurrenceProgressRequest request,
   ) => CalendarModule.service(session).changeTaskOccurrenceProgress(request);
+  Future<CalendarTaskReceipt?> changeOccurrenceContent(
+    Session session,
+    CalendarTaskOccurrenceContentRequest request,
+  ) => CalendarModule.service(session).changeTaskOccurrenceContent(request);
   Future<CalendarTaskHistoryPage> occurrenceHistory(
     Session session,
     CalendarTaskHistoryQuery query,

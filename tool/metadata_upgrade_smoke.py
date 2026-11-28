@@ -453,6 +453,30 @@ BEGIN
 END;
 $task_future_absence$;
 """)
+        for table in source_preserved:
+            sql(database, f"CREATE TABLE {table}_before_task_content AS SELECT * FROM {table};")
+        sql(database, (SERVER / "migrations/20261023211410837-task-occurrence-content/migration.sql").read_text(encoding="utf-8"))
+        for table in source_preserved:
+            strip = "-'contentOverrides'" if table == "serverpod_calendar_task_occurrence" else ""
+            sql(database, f"""
+DO $task_timing$
+BEGIN
+ IF (SELECT count(*) FROM {table}) <> (SELECT count(*) FROM {table}_before_task_content)
+ OR EXISTS (SELECT 1 FROM {table} current JOIN {table}_before_task_content old ON current.id=old.id
+ WHERE (to_jsonb(current){strip}) IS DISTINCT FROM to_jsonb(old))
+ THEN RAISE EXCEPTION 'Task content migration changed {table}'; END IF;
+END;
+$task_timing$;
+DROP TABLE {table}_before_task_content;
+""")
+        sql(database, """
+DO $task_future_absence$
+BEGIN
+ IF EXISTS (SELECT 1 FROM serverpod_calendar_task_occurrence WHERE "contentOverrides" IS NOT NULL)
+ THEN RAISE EXCEPTION 'Task content migration invented content overrides'; END IF;
+END;
+$task_future_absence$;
+""")
         print("PASS: populated schema upgrades preserve identity, revisions, content, associations, protocol UID strings and opening identities and old cursor bindings.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

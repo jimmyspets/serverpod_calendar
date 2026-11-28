@@ -173,6 +173,7 @@ final class CalendarAuthorizationRequest {
     this.taskOccurrenceQuery,
     this.taskOccurrenceProgressChange,
     this.taskOccurrenceTimingChange,
+    this.taskOccurrenceContentChange,
     this.taskHistoryQuery,
     this.currentTaskOccurrence,
     this.proposedTaskOccurrence,
@@ -223,6 +224,7 @@ final class CalendarAuthorizationRequest {
   final CalendarTaskOccurrenceQuery? taskOccurrenceQuery;
   final CalendarTaskOccurrenceProgressRequest? taskOccurrenceProgressChange;
   final CalendarTaskOccurrenceTimingRequest? taskOccurrenceTimingChange;
+  final CalendarTaskOccurrenceContentRequest? taskOccurrenceContentChange;
   final CalendarTaskHistoryQuery? taskHistoryQuery;
   final CalendarTaskOccurrence? currentTaskOccurrence, proposedTaskOccurrence;
   final List<CalendarTaskOccurrence> recordedTaskOccurrences;

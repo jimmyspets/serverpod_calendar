@@ -964,6 +964,7 @@ void main() {
             taskId: task.taskId,
             originalKey: taskOriginalKey(o.originalStart!),
             originalStart: o.originalStart!,
+            contentOverrides: taskSourceContentOverrides(o),
             progress: o.progress,
             protocolVersion: o.version,
           ),
@@ -1006,14 +1007,15 @@ void main() {
       );
       final after = (await CalendarTaskDataRecord.db.find(session)).single;
       expect(after.importBaseline, before.importBaseline);
-      expect(after.sourceState!.occurrences.single.content.summary, 'Changed');
-      expect(after.sourceState!.occurrences.single.version.sequence, 1);
+      expect(
+        after.sourceState!.occurrences.single,
+        before.sourceState!.occurrences.single,
+      );
       expect(
         (await CalendarTaskOccurrenceRecord.db.find(session))
             .single
-            .protocolVersion!
-            .sequence,
-        1,
+            .protocolVersion,
+        before.sourceState!.occurrences.single.version,
       );
       expect(after.protocolVersion.sequence, 1);
       final view = await taskRead(task.taskId);
@@ -3407,6 +3409,436 @@ void main() {
       kind: CalendarTaskTimeKind.date,
       start: CalendarEventCivil(year: 2026, month: 3, day: day),
     );
+    CalendarTaskOccurrenceContentChange contentChange(
+      CalendarTaskContentField field,
+      CalendarTaskContentAction action, {
+      String? text,
+      int? priority,
+    }) => CalendarTaskOccurrenceContentChange(
+      field: field,
+      action: action,
+      text: text,
+      priority: priority,
+    );
+    CalendarTaskOccurrenceContentRequest taskContentRequest(
+      CalendarTaskReceipt t,
+      CalendarEventTiming original,
+      int revision,
+      List<CalendarTaskOccurrenceContentChange> changes,
+    ) => CalendarTaskOccurrenceContentRequest(
+      taskId: t.taskId,
+      expectedRevision: revision,
+      originalStart: original,
+      changes: changes,
+    );
+    CalendarTaskOccurrenceQuery contentPreview(
+      CalendarTaskReceipt t,
+      int revision,
+    ) => taskPreview(t, revision).copyWith(
+      fieldGroups: [
+        CalendarTaskFieldGroup.summary,
+        CalendarTaskFieldGroup.description,
+        CalendarTaskFieldGroup.location,
+        CalendarTaskFieldGroup.priority,
+      ],
+    );
+
+    test('task content new source component captures sparse progress and rejects orphaning pattern edits', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final t = (await service.importTasks(
+        taskImportRequest(
+          parent,
+          text: taskCalendar(
+            importedTask(
+              'content-capture',
+              properties: [
+                'RRULE:FREQ=DAILY;COUNT=3',
+                'SUMMARY;LANGUAGE=sv:Hej',
+                'PERCENT-COMPLETE:37',
+              ],
+            ),
+          ),
+        ),
+      )).receipts.single;
+      final original = (await service.previewTaskOccurrences(taskPreview(t)))
+          .occurrences[1]
+          .originalStart;
+      final data = (await CalendarTaskDataRecord.db.find(session)).single;
+      await service.changeTaskOccurrenceContent(
+        taskContentRequest(t, original, 1, [
+          contentChange(
+            CalendarTaskContentField.summary,
+            CalendarTaskContentAction.setValue,
+            text: 'Own',
+          ),
+        ]),
+      );
+      final row = (await CalendarTaskOccurrenceRecord.db.find(session)).single;
+      expect(row.progress.status, isNull);
+      expect(row.progress.percentComplete, 37);
+      expect(await CalendarTaskHistoryRecord.db.find(session), isEmpty);
+      final after = (await CalendarTaskDataRecord.db.find(session)).single;
+      expect(after.importBaseline, data.importBaseline);
+      expect(after.protocolVersion, data.protocolVersion);
+      expect(
+        after.sourceState!.occurrences.single.textParameters!.summary!.language,
+        'sv',
+      );
+      await expectLater(
+        service.updateTask(
+          CalendarTaskUpdateRequest(
+            taskId: t.taskId,
+            expectedRevision: 2,
+            content: data.content.copyWith(
+              recurrence: CalendarEventRecurrence(
+                rule: daily(count: 1),
+                inclusions: [],
+                exclusions: [],
+              ),
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      await CalendarTaskDataRecord.db.updateRow(
+        session,
+        after.copyWith(
+          importBaseline: after.importBaseline!.copyWith(
+            profile: after.importBaseline!.profile.replaceFirst('v3/', 'v2/'),
+          ),
+        ),
+      );
+      await expectLater(
+        service.changeTaskOccurrenceContent(
+          taskContentRequest(t, original, 2, [
+            contentChange(
+              CalendarTaskContentField.summary,
+              CalendarTaskContentAction.clearValue,
+            ),
+          ]),
+        ),
+        failure(CalendarFailureCode.unavailable),
+      );
+      expect(
+        (await CalendarTaskOccurrenceRecord.db.find(session))
+            .single
+            .contentOverrides!
+            .summary,
+        'Own',
+      );
+    });
+
+    test('task content selected fields follow or pin series independently and preserve completion history', () async {
+      final t = await recurringTask();
+      var data = (await CalendarTaskDataRecord.db.find(session)).single;
+      await service.updateTask(
+        CalendarTaskUpdateRequest(
+          taskId: t.taskId,
+          expectedRevision: 1,
+          content: data.content.copyWith(
+            summary: 'Series',
+            location: 'Room',
+            priority: 3,
+          ),
+        ),
+      );
+      final original = (await service.previewTaskOccurrences(taskPreview(t, 2)))
+          .occurrences
+          .first
+          .originalStart;
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(t, original, 2, CalendarTaskProgressAction.complete),
+      );
+      final history = (await CalendarTaskHistoryRecord.db.find(session)).single
+          .toJson();
+      await service.changeTaskOccurrenceContent(
+        taskContentRequest(t, original, 3, [
+          contentChange(
+            CalendarTaskContentField.summary,
+            CalendarTaskContentAction.setValue,
+            text: 'Series',
+          ),
+        ]),
+      );
+      data = (await CalendarTaskDataRecord.db.find(session)).single;
+      await service.updateTask(
+        CalendarTaskUpdateRequest(
+          taskId: t.taskId,
+          expectedRevision: 4,
+          content: data.content.copyWith(
+            summary: 'New series',
+            location: 'New room',
+          ),
+        ),
+      );
+      var preview = (await service.previewTaskOccurrences(contentPreview(t, 5)))
+          .occurrences;
+      expect(preview.map((o) => o.content!.summary), [
+        'Series',
+        'New series',
+        'New series',
+      ]);
+      expect(preview.first.content!.location, 'New room');
+      expect(preview.first.progress.status, CalendarTaskStatus.completed);
+      await service.changeTaskOccurrenceContent(
+        taskContentRequest(t, original, 5, [
+          contentChange(
+            CalendarTaskContentField.summary,
+            CalendarTaskContentAction.clearValue,
+          ),
+        ]),
+      );
+      expect(
+        (await service.previewTaskOccurrences(contentPreview(t, 6)))
+            .occurrences
+            .first
+            .content!
+            .summary,
+        '',
+      );
+      await service.changeTaskOccurrenceContent(
+        taskContentRequest(t, original, 6, [
+          contentChange(
+            CalendarTaskContentField.summary,
+            CalendarTaskContentAction.inheritSeries,
+          ),
+        ]),
+      );
+      preview = (await service.previewTaskOccurrences(contentPreview(t, 7)))
+          .occurrences;
+      expect(preview.first.content!.summary, 'New series');
+      expect(preview.first.contentOverrides, isNull);
+      expect(
+        (await CalendarTaskHistoryRecord.db.find(session)).single.toJson(),
+        history,
+      );
+      final row = (await CalendarTaskOccurrenceRecord.db.find(session)).single;
+      await service.changeTaskOccurrenceContent(
+        taskContentRequest(t, original, 7, [
+          contentChange(
+            CalendarTaskContentField.summary,
+            CalendarTaskContentAction.inheritSeries,
+          ),
+        ]),
+      );
+      expect(
+        (await CalendarTaskOccurrenceRecord.db.find(session))
+            .single
+            .protocolVersion,
+        row.protocolVersion,
+      );
+    });
+
+    test('task content default and selected preview disclosure hides other values and override presence', () async {
+      final t = await recurringTask();
+      final original = (await service.previewTaskOccurrences(taskPreview(t)))
+          .occurrences
+          .first
+          .originalStart;
+      await service.changeTaskOccurrenceContent(
+        taskContentRequest(t, original, 1, [
+          contentChange(
+            CalendarTaskContentField.location,
+            CalendarTaskContentAction.setValue,
+            text: 'Private room',
+          ),
+        ]),
+      );
+      final ordinary = await service.previewTaskOccurrences(taskPreview(t, 2));
+      expect(ordinary.occurrences.map((o) => o.content), everyElement(isNull));
+      expect(
+        ordinary.occurrences.map((o) => o.contentOverrides),
+        everyElement(isNull),
+      );
+      policy.taskGrants = {
+        CalendarTaskFieldGroup.timing,
+        CalendarTaskFieldGroup.progress,
+        CalendarTaskFieldGroup.summary,
+      };
+      final query = taskPreview(
+        t,
+        2,
+      ).copyWith(fieldGroups: [CalendarTaskFieldGroup.summary]);
+      final visible = await service.previewTaskOccurrences(query);
+      expect(visible.disclosedGroups.toSet(), {
+        CalendarTaskFieldGroup.timing,
+        CalendarTaskFieldGroup.progress,
+        CalendarTaskFieldGroup.summary,
+      });
+      expect(visible.occurrences.first.contentOverrides, isNull);
+      await expectLater(
+        service.previewTaskOccurrences(
+          query.copyWith(fieldGroups: [CalendarTaskFieldGroup.location]),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      await expectLater(
+        service.previewTaskOccurrences(
+          query.copyWith(fieldGroups: [CalendarTaskFieldGroup.assignments]),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+    });
+
+    test('task content independent authority immutable final context stale denial and late rollback', () async {
+      final t = await recurringTask();
+      final original = (await service.previewTaskOccurrences(taskPreview(t)))
+          .occurrences
+          .first
+          .originalStart;
+      final changes = [
+        contentChange(
+          CalendarTaskContentField.summary,
+          CalendarTaskContentAction.setValue,
+          text: 'Own',
+        ),
+      ];
+      await expectLater(
+        service.changeTaskOccurrenceContent(
+          taskContentRequest(t, original, 2, changes),
+        ),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      policy.denied.add(CalendarPermission.updateTask);
+      await expectLater(
+        service.changeTaskOccurrenceContent(
+          taskContentRequest(t, original, 1, changes),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denied.clear();
+      policy.denyFinal = true;
+      await expectLater(
+        service.changeTaskOccurrenceContent(
+          taskContentRequest(t, original, 1, changes),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denyFinal = false;
+      policy.denied.addAll([
+        CalendarPermission.changeTaskProgress,
+        CalendarPermission.changeTaskAssignments,
+        CalendarPermission.readTask,
+      ]);
+      policy.onFinal = () {
+        final q = policy.lastTaskRequest!;
+        expect(q.calendarId, t.calendarId);
+        expect(q.taskOccurrenceContentChange!.originalStart, original);
+        expect(q.proposedTaskOccurrence!.content!.summary, 'Own');
+        expect(q.proposedTaskOccurrenceVersion!.sequence, 0);
+        expect(
+          () => q.taskOccurrenceContentChange!.changes.clear(),
+          throwsUnsupportedError,
+        );
+        expect(() => q.recordedTaskOccurrences.clear(), throwsUnsupportedError);
+      };
+      final scope = (await CalendarScopeRecord.db.find(session)).single;
+      scope.revision = 9007199254740991;
+      await CalendarScopeRecord.db.updateRow(session, scope);
+      await expectLater(
+        service.changeTaskOccurrenceContent(
+          taskContentRequest(t, original, 1, changes),
+        ),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      expect(await CalendarTaskOccurrenceRecord.db.find(session), isEmpty);
+      expect(
+        (await CalendarTaskRecord.db.findById(session, t.taskId))!.revision,
+        1,
+      );
+    });
+
+    test('task content source range stays anchor local retains annotations and captures no history', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final t = (await service.importTasks(
+        taskImportRequest(
+          parent,
+          text: taskCalendar([
+            ...importedTask(
+              'content',
+              properties: [
+                'RRULE:FREQ=DAILY;COUNT=3',
+                'SUMMARY;LANGUAGE=sv:Hej',
+                'PRIORITY:3',
+                'PERCENT-COMPLETE:37',
+              ],
+            ),
+            ...importedTask(
+              'content',
+              timing: ['DTSTART;VALUE=DATE:20260329'],
+              properties: [
+                'RECURRENCE-ID;VALUE=DATE;RANGE=THISANDFUTURE:20260328',
+                'SUMMARY;LANGUAGE=en:Own',
+                'PRIORITY:0',
+              ],
+            ),
+          ]),
+        ),
+      )).receipts.single;
+      var preview = (await service.previewTaskOccurrences(contentPreview(t, 1)))
+          .occurrences;
+      final original = preview.first.originalStart;
+      expect(preview.map((o) => o.content!.summary), ['Own', 'Hej', 'Hej']);
+      expect(preview.map((o) => o.content!.priority), [0, 3, 3]);
+      final baseline = (await CalendarTaskDataRecord.db.find(session))
+          .single
+          .importBaseline;
+      await service.changeTaskOccurrenceContent(
+        taskContentRequest(t, original, 1, [
+          contentChange(
+            CalendarTaskContentField.summary,
+            CalendarTaskContentAction.setValue,
+            text: 'Edited',
+          ),
+        ]),
+      );
+      var data = (await CalendarTaskDataRecord.db.find(session)).single;
+      expect(
+        data.sourceState!.occurrences.single.textParameters!.summary!.language,
+        'en',
+      );
+      await service.changeTaskOccurrenceContent(
+        taskContentRequest(t, original, 2, [
+          contentChange(
+            CalendarTaskContentField.summary,
+            CalendarTaskContentAction.clearValue,
+          ),
+        ]),
+      );
+      data = (await CalendarTaskDataRecord.db.find(session)).single;
+      expect(
+        data.sourceState!.occurrences.single.textParameters!.summary,
+        isNull,
+      );
+      await service.changeTaskOccurrenceContent(
+        taskContentRequest(t, original, 3, [
+          contentChange(
+            CalendarTaskContentField.summary,
+            CalendarTaskContentAction.inheritSeries,
+          ),
+        ]),
+      );
+      data = (await CalendarTaskDataRecord.db.find(session)).single;
+      expect(data.importBaseline, baseline);
+      expect(data.sourceState!.occurrences.single.thisAndFuture, isTrue);
+      expect(data.sourceState!.occurrences.single.content.summary, isNull);
+      expect(await CalendarTaskHistoryRecord.db.find(session), isEmpty);
+      final bytes = await service.exportTasks(
+        taskExport([t.copyWith(revision: 4)]),
+      );
+      final other = (await service.create(createInput()))!.calendarId;
+      final copy = (await service.importTasks(
+        CalendarTaskImportRequest(
+          calendarId: other,
+          expectedRevision: 1,
+          bytes: bytes,
+        ),
+      )).receipts.single;
+      preview = (await service.previewTaskOccurrences(contentPreview(copy, 1)))
+          .occurrences;
+      expect(preview.map((o) => o.content!.summary), ['Hej', 'Hej', 'Hej']);
+      expect(preview.map((o) => o.content!.priority), [0, 3, 3]);
+    });
     CalendarTaskOccurrenceTimingRequest taskFuture(
       CalendarTaskReceipt t,
       CalendarEventTiming original,

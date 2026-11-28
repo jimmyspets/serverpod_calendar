@@ -59,6 +59,10 @@ extension CalendarTaskExportOperations on CalendarService {
                         row.protocolVersion ??
                         (throw _failure(CalendarFailureCode.validation)),
                     content: CalendarTaskContent(
+                      summary: row.contentOverrides?.summary,
+                      description: row.contentOverrides?.description,
+                      location: row.contentOverrides?.location,
+                      priority: row.contentOverrides?.priority,
                       timing:
                           row.futureTiming ??
                           row.replacementTiming ??

@@ -110,6 +110,8 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_task_import_requ
     as _iiqxekdw;
 import 'package:serverpod_calendar_client/src/protocol/calendar_task_import_result.dart'
     as _i0rbroow;
+import 'package:serverpod_calendar_client/src/protocol/calendar_task_occurrence_content_request.dart'
+    as _i3yuxhmq;
 import 'package:serverpod_calendar_client/src/protocol/calendar_task_occurrence_preview.dart'
     as _i9hybq8z;
 import 'package:serverpod_calendar_client/src/protocol/calendar_task_occurrence_progress_request.dart'
@@ -618,6 +620,14 @@ class EndpointCalendarTask extends _isc.EndpointRef {
   ) => caller.callServerEndpoint<_igkgk3pi.CalendarTaskReceipt?>(
     'serverpod_calendar.calendarTask',
     'changeOccurrenceProgress',
+    {'request': request},
+  );
+
+  _ida.Future<_igkgk3pi.CalendarTaskReceipt?> changeOccurrenceContent(
+    _i3yuxhmq.CalendarTaskOccurrenceContentRequest request,
+  ) => caller.callServerEndpoint<_igkgk3pi.CalendarTaskReceipt?>(
+    'serverpod_calendar.calendarTask',
+    'changeOccurrenceContent',
     {'request': request},
   );
 

@@ -2552,6 +2552,108 @@ Future<void> taskImportSmoke(List<Client> clients) async {
       'Setting and clearing future timing invents no progress history across hosts',
     );
 
+    cal.CalendarTaskOccurrenceContentRequest contentRequest(
+      int revision, {
+      bool inherit = false,
+    }) => cal.CalendarTaskOccurrenceContentRequest(
+      taskId: first.taskId,
+      expectedRevision: revision,
+      originalStart: anchor,
+      changes: [
+        cal.CalendarTaskOccurrenceContentChange(
+          field: cal.CalendarTaskContentField.summary,
+          action: inherit
+              ? cal.CalendarTaskContentAction.inheritSeries
+              : cal.CalendarTaskContentAction.setValue,
+          text: inherit ? null : 'Own content',
+        ),
+      ],
+    );
+    cal.CalendarTaskOccurrenceProgressRequest reopenRequest(int revision) =>
+        progressRequest(revision).copyWith(
+          originalStart: anchor,
+          action: cal.CalendarTaskProgressAction.reopen,
+        );
+    final contentWinners = await Future.wait([
+      compete(() => a.changeOccurrenceContent(contentRequest(8))),
+      compete(() => b.changeOccurrenceProgress(reopenRequest(8))),
+    ]);
+    check(
+      contentWinners.where((v) => v).length == 1,
+      'Exactly one competing content/progress write wins across hosts',
+    );
+    if (contentWinners.first) {
+      await b.changeOccurrenceProgress(reopenRequest(9));
+    } else {
+      await a.changeOccurrenceContent(contentRequest(9));
+    }
+    cal.CalendarTaskOccurrenceQuery contentQuery(UuidValue id, int revision) =>
+        cal.CalendarTaskOccurrenceQuery(
+          taskId: id,
+          expectedRevision: revision,
+          fromDate: cal.CalendarEventCivil(year: 2026, month: 3, day: 27),
+          untilDate: cal.CalendarEventCivil(year: 2026, month: 4, day: 1),
+          fieldGroups: [cal.CalendarTaskFieldGroup.summary],
+        );
+    final contentValues = (await b.previewOccurrences(
+      contentQuery(first.taskId, 10),
+    )).occurrences;
+    check(
+      contentValues.first.content!.summary == 'Own content' &&
+          contentValues.first.progress.percentComplete == 0 &&
+          contentValues.last.contentOverrides == null,
+      'Content retry preserves independent progress and per-field inheritance across hosts',
+    );
+    final beforeContentNoop = await a.exportTasks(exportRequest(10));
+    await a.changeOccurrenceContent(contentRequest(10));
+    final afterContentNoop = await b.exportTasks(exportRequest(11));
+    check(
+      base64Encode(
+            beforeContentNoop.buffer.asUint8List(
+              beforeContentNoop.offsetInBytes,
+              beforeContentNoop.lengthInBytes,
+            ),
+          ) ==
+          base64Encode(
+            afterContentNoop.buffer.asUint8List(
+              afterContentNoop.offsetInBytes,
+              afterContentNoop.lengthInBytes,
+            ),
+          ),
+      'Identical content save leaves exported protocol state stable across hosts',
+    );
+    final contentCopy = (await b.importTasks(
+      cal.CalendarTaskImportRequest(
+        calendarId: other,
+        expectedRevision: 1,
+        bytes: afterContentNoop,
+      ),
+    )).receipts.single;
+    ids.add(contentCopy.taskId);
+    final copiedContent = (await b.previewOccurrences(
+      contentQuery(contentCopy.taskId, 1),
+    )).occurrences;
+    check(
+      copiedContent.first.contentOverrides!.summary == 'Own content' &&
+          copiedContent.last.contentOverrides == null,
+      'Selected content overrides round trip across hosts without becoming series defaults',
+    );
+    await b.deleteTask(contentCopy.taskId, 1);
+    ids.remove(contentCopy.taskId);
+    await a.changeOccurrenceContent(contentRequest(11, inherit: true));
+    final contentHistory = await b.occurrenceHistory(
+      cal.CalendarTaskHistoryQuery(
+        taskId: first.taskId,
+        expectedRevision: 12,
+        originalStart: anchor,
+        pageSize: 10,
+      ),
+    );
+    check(
+      contentHistory.entries.length == 2,
+      'Content set/no-op/inherit adds no completion history across hosts',
+    );
+
     await rejects(
       () => b.importTasks(request(p, 'two-host-task')),
       cal.CalendarFailureCode.dependencyConflict,

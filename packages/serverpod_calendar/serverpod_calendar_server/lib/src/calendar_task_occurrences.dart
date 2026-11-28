@@ -10,6 +10,7 @@ CalendarTaskOccurrence _taskRecordValue(CalendarTaskOccurrenceRecord r) =>
           : null,
       replacementTiming: r.replacementTiming,
       futureTiming: r.futureTiming,
+      contentOverrides: r.contentOverrides,
       progress: r.progress,
     );
 
@@ -32,6 +33,10 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
           throw ArgumentError('Stored identity mismatch');
         }
         validateTaskProgress(row.progress);
+        if (validateTaskOccurrenceContent(row.contentOverrides) !=
+            row.contentOverrides) {
+          throw ArgumentError('Noncanonical content overrides');
+        }
         if (row.replacementTiming != null) {
           validateTaskReplacement(task.data.content, row.replacementTiming!);
         }
@@ -60,7 +65,10 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
                 components[r.originalKey]?.version != r.protocolVersion ||
                 taskSourceReplacement(components[r.originalKey]!) !=
                     r.replacementTiming ||
-                taskSourceFuture(components[r.originalKey]!) != r.futureTiming,
+                taskSourceFuture(components[r.originalKey]!) !=
+                    r.futureTiming ||
+                taskSourceContentOverrides(components[r.originalKey]!) !=
+                    r.contentOverrides,
           )) {
         throw _failure(CalendarFailureCode.unavailable);
       }
@@ -97,6 +105,14 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
       CalendarTaskFieldGroup.timing,
       CalendarTaskFieldGroup.progress,
     };
+    if (query != null) {
+      final requested = query.fieldGroups ?? const <CalendarTaskFieldGroup>[];
+      if (requested.length > 4 ||
+          !taskOccurrenceContentGroups.containsAll(requested)) {
+        throw _failure(CalendarFailureCode.validation);
+      }
+      groups.addAll(requested);
+    }
     for (final operation in [CalendarPermission.readTask, op]) {
       final r = _tr(
         task.parent,
@@ -133,6 +149,14 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
   Future<CalendarTaskOccurrencePreview> previewTaskOccurrences(
     CalendarTaskOccurrenceQuery query,
   ) async {
+    if ((query.fieldGroups?.length ?? 0) > 4) {
+      throw _failure(CalendarFailureCode.validation);
+    }
+    query = query.copyWith(
+      fieldGroups: query.fieldGroups == null
+          ? null
+          : List.unmodifiable(query.fieldGroups!),
+    );
     final c = await _context();
     return _transaction(c, (tx, _) async {
       final task = await _task(c, query.taskId, tx);
@@ -162,12 +186,37 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
       final records = {
         for (final r in stored) r.originalKey: r.progress,
       };
+      final ownContent = {
+        for (final r in stored) r.originalKey: r.contentOverrides,
+      };
+      final contentGroups =
+          (query.fieldGroups ?? const <CalendarTaskFieldGroup>[]).toSet();
       final result = CalendarTaskOccurrencePreview(
         taskId: query.taskId,
         revision: task.identity.revision,
+        disclosedGroups: [
+          CalendarTaskFieldGroup.timing,
+          CalendarTaskFieldGroup.progress,
+          ...contentGroups,
+        ],
         occurrences: [
           for (final o in values)
             o.copyWith(
+              content: contentGroups.isEmpty
+                  ? null
+                  : taskDisclosedOccurrenceContent(
+                      taskEffectiveOccurrenceContent(
+                        task.data.content,
+                        ownContent[taskOriginalKey(o.originalStart)],
+                      ),
+                      contentGroups,
+                    ),
+              contentOverrides: contentGroups.isEmpty
+                  ? null
+                  : taskDisclosedOccurrenceContent(
+                      ownContent[taskOriginalKey(o.originalStart)],
+                      contentGroups,
+                    ),
               progress:
                   records[taskOriginalKey(o.originalStart)] ??
                   task.data.progress,
