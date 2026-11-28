@@ -1,10 +1,10 @@
 # ADR 0160: First durable incoming range cancellation
 
-Status: **Proposed; the maintainer confirmed cancel-all/preserve-exceptions and newer-than-all-affected version policies. Concrete acceptance, storage, API and temporary composition guards await explicit approval.**
+Status: **Accepted — explicit maintainer approval on 2026-11-02. Implementation and validation evidence are recorded separately.**
 
 ## Context and scope
 
-ADRs 0158/0159 implement native cutoffs and a pure first-cancellation proposal. PR #149 contains the pure implementation: grouped local checks passed; exact-head hosted runtime CI remains separate. An incoming range CANCEL still cannot be applied. Existing source baselines are deliberately cutoff-free, and canonical master/occurrence versions must not be overwritten by the cancellation's independent source version.
+ADRs 0158/0159 implement native cutoffs and a pure first-cancellation proposal. PR #149 contains the pure implementation: grouped local checks and exact-head hosted inspect/runtime CI passed (verified 2026-11-02). Before this batch, an incoming range CANCEL could not be applied. Existing source baselines are deliberately cutoff-free, and canonical master/occurrence versions must not be overwritten by the cancellation's independent source version.
 
 Inspected occurrence acceptance v1/v2/v3, typed targets/component/source/receipt hashes, current-state comparison, existing immutable views/request/receipt, host/native gates and cleanup/invalidation. Existing checkpoints retain canonical component data rather than replaying historical messages. This proposal adds a separate first cancellation layer in that same checkpoint.
 

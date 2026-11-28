@@ -336,7 +336,7 @@ void main() {
       }
       expect((await data()).timingOverrides, isNull);
     });
-    test('range CANCEL stays read-only and retained REQUEST retries do not dismiss it', () async {
+    test('range CANCEL requires its own action and retained REQUEST retries do not dismiss it', () async {
       await setup();
       final input = await update();
       final result = await service.applyInvitationRangeUpdate(input);
@@ -344,7 +344,7 @@ void main() {
         rangeInvitationBytes(sequence: 3, cancel: true),
       );
       final view = await service.invitationRangeApplication(cancel.entryId);
-      expect(view.canApply, isFalse);
+      expect(view.canApply, isTrue);
       expect(view.incomingKind, CalendarInvitationSourceKind.rangeCancellation);
       await expectLater(
         service.applyInvitationRangeUpdate(command(view)),

@@ -68,8 +68,10 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
   });
   Future<void> _apply() => _run(() async {
     final v = _view!;
-    _cancel ??=
-        v.incomingKind == cal.CalendarInvitationSourceKind.instanceCancellation;
+    _cancel ??= {
+      cal.CalendarInvitationSourceKind.instanceCancellation,
+      cal.CalendarInvitationSourceKind.rangeCancellation,
+    }.contains(v.incomingKind);
     _request ??= cal.CalendarInvitationOccurrenceApplyRequest(
       invitationId: v.invitationId,
       sourceId: v.incomingSourceId!,
@@ -82,7 +84,9 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
     );
     final api = widget.client.modules.serverpod_calendar.calendarInvitation;
     final r = widget.range
-        ? await api.applyRangeUpdate(_request!)
+        ? _cancel!
+              ? await api.applyRangeCancellation(_request!)
+              : await api.applyRangeUpdate(_request!)
         : _cancel!
         ? await api.applyOccurrenceCancellation(_request!)
         : await api.applyOccurrenceUpdate(_request!);
@@ -106,7 +110,7 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.range ? 'Apply range update' : 'Apply occurrence notice',
+          widget.range ? 'Apply range notice' : 'Apply occurrence notice',
         ),
         bottom: _busy
             ? const PreferredSize(
@@ -123,16 +127,20 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
           ),
           if (widget.range)
             const Text(
-              'This and future: timing propagates from the original anchor. Text changes stay at that anchor. Other explicit exceptions remain unchanged. Range cancellation and participation are not supported.',
+              'This and future: timing propagates from the original anchor. Text changes stay at that anchor. Other explicit exceptions remain unchanged. A range cancellation suppresses every original from its anchor, preserving exception data. Participation stays separate.',
             ),
           if (_error != null)
             Text(_error!, key: const Key('invitation-occurrence-error')),
           if (_result != null)
             Text(
-              '${widget.range ? 'Range update' : 'Occurrence'} applied. Event revision ${_result!.eventRevision}.',
+              '${widget.range ? 'Range notice' : 'Occurrence'} applied. Event revision ${_result!.eventRevision}.',
               key: const Key('invitation-occurrence-result'),
             ),
           if (v != null) ...[
+            if (v.hasAcceptedRangeCancellation)
+              const Text(
+                'A source range cancellation is accepted. Further source applications are temporarily blocked; exact retained retries remain available.',
+              ),
             Text('Original: ${invitationTimingLabel(v.originalStart)}'),
             Text(
               'Accepted ${v.acceptedKind.name}; SEQUENCE ${v.acceptedVersion.sequence ?? 'omitted (effective zero)'}',
@@ -173,10 +181,13 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
               child: Text(
                 _request != null
                     ? widget.range
-                          ? 'Retry the same range update'
+                          ? 'Retry the same range action'
                           : 'Retry the same occurrence action'
                     : widget.range
-                    ? 'Apply range update'
+                    ? v.incomingKind ==
+                              cal.CalendarInvitationSourceKind.rangeCancellation
+                          ? 'Apply range cancellation'
+                          : 'Apply range update'
                     : v.incomingKind ==
                           cal.CalendarInvitationSourceKind.instanceCancellation
                     ? 'Apply occurrence cancellation'
@@ -186,7 +197,7 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
             if (v.incomingKind ==
                 cal.CalendarInvitationSourceKind.rangeCancellation)
               const Text(
-                'Range cancellation remains review-only. The calendar series is unchanged by this notice.',
+                'Apply explicitly cancels all originals from the anchor, including moved exceptions. Timing, content and source versions are retained. New source applications then remain blocked pending composition support.',
               ),
             const Text(
               'New whole-series sources preserve accepted occurrence edits and individual cancellations. Updates that remove an accepted original are rejected.',

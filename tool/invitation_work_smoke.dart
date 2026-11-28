@@ -55,7 +55,8 @@ void require(bool value, String message) {
 
 Future<void> main(List<String> args) async {
   final nativeFuture = args.contains('--native-future');
-  final rangeApply = args.contains('--range-applications');
+  final rangeCancel = args.contains('--range-cancellations');
+  final rangeApply = args.contains('--range-applications') || rangeCancel;
   final occurrenceApply =
       args.contains('--occurrence-applications') || rangeApply;
   final instanceResponses = args.contains('--instance-responses');
@@ -386,6 +387,7 @@ Future<void> main(List<String> args) async {
           'caseId': id,
           'key': 'instance',
           'instance': true,
+          'cancel': rangeCancel,
           'sequence': 2,
         }) as Map;
         final v = await b.command({
@@ -417,6 +419,7 @@ Future<void> main(List<String> args) async {
           (p) => p.command({
             'range': rangeApply,
             'command': 'occurrence-apply',
+            'cancel': rangeCancel,
             'caseId': raceId,
             'request': raceRequest,
           }),
@@ -434,6 +437,7 @@ Future<void> main(List<String> args) async {
             .command({
               'range': rangeApply,
               'command': 'occurrence-apply',
+              'cancel': rangeCancel,
               'caseId': id,
               'request': request,
               'pause': pause,
@@ -459,6 +463,7 @@ Future<void> main(List<String> args) async {
         final recovered = await b.command({
           'range': rangeApply,
           'command': 'occurrence-apply',
+          'cancel': rangeCancel,
           'caseId': id,
           'request': request,
         }) as Map;
@@ -480,6 +485,92 @@ Future<void> main(List<String> args) async {
           'Occurrence recovery duplicated state or overwrote master acceptance',
         );
         a = await start('a-occurrence-recovered-$pause', 18780);
+      }
+      if (rangeCancel) {
+        final id = nextCase(), first = await prepare(id);
+        final next = await b.command({
+          'command': 'receive',
+          'caseId': id,
+          'key': 'competing-cutoff',
+          'range': true,
+          'instance': true,
+          'cancel': true,
+          'sequence': 3,
+          'original': '20300105T090000Z',
+        }) as Map;
+        final v = await b.command({
+          'command': 'occurrence-view',
+          'caseId': id,
+          'range': true,
+          'entryId': next['entryId'],
+        }) as Map;
+        require(
+          v['canApply'] == true,
+          'Competing cancellation was not eligible',
+        );
+        final second = {
+          ...first,
+          'invitationId': v['invitationId'],
+          'sourceId': v['incomingSourceId'],
+          'expectedInvitationRevision': v['invitationRevision'],
+        };
+        final results = await Future.wait([
+          a.command({
+            'command': 'occurrence-apply',
+            'caseId': id,
+            'range': true,
+            'cancel': true,
+            'request': first,
+          }),
+          b.command({
+            'command': 'occurrence-apply',
+            'caseId': id,
+            'range': true,
+            'cancel': true,
+            'request': second,
+          }),
+        ]);
+        require(
+          results.where((v) => (v as Map)['id'] != null).length == 1 &&
+              results
+                      .where((v) => (v as Map)['error'] == 'dependencyConflict')
+                      .length ==
+                  1,
+          'Competing cutoffs replaced or duplicated first acceptance',
+        );
+      }
+      if (rangeCancel) {
+        final incoming = await b.command({
+          'command': 'receive',
+          'caseId': raceId,
+          'key': 'blocked-master',
+          'sequence': 5,
+        }) as Map;
+        final view = await b.command({
+          'command': 'application',
+          'caseId': raceId,
+          'entryId': incoming['entryId'],
+        }) as Map;
+        require(
+          view['occurrenceCompositionBlocked'] == true &&
+              view['hasLocalChanges'] == false,
+          'Accepted cancellation guard/state failed across hosts',
+        );
+        final retry = await b.command({
+          'command': 'occurrence-apply',
+          'caseId': raceId,
+          'range': true,
+          'cancel': true,
+          'request': raceRequest,
+        }) as Map;
+        require(
+          retry['id'] == (race.first as Map)['id'],
+          'New notice lost retained cancellation retry',
+        );
+        stdout.writeln(
+          'PASS: range cancellation two-host race, actual loss before/after commit, stable retries and cross-host composition guard.',
+        );
+        return;
       }
       Future<Map<String, dynamic>> composedCommand(String id) async {
         final incoming = await b.command({

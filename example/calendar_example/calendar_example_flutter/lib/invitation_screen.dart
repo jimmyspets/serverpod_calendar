@@ -260,7 +260,7 @@ class _InvitationScreenState extends State<InvitationScreen> {
                     Text(
                       entry.kind ==
                               cal.CalendarInvitationSourceKind.rangeCancellation
-                          ? 'Range cancellation is review-only. Range participation responses are not supported.'
+                          ? 'Range cancellation requires explicit calendar application. Range participation responses are not supported.'
                           : 'Calendar application is an explicit action. Range participation responses are not supported.',
                     ),
                   ] else if (entry.originalStart != null) ...[
@@ -320,7 +320,7 @@ class _InvitationScreenState extends State<InvitationScreen> {
                                     cal
                                         .CalendarInvitationSourceKind
                                         .rangeCancellation
-                                ? 'View accepted range'
+                                ? 'Preview / apply range cancellation'
                                 : 'Preview / apply range update',
                           ),
                         ),

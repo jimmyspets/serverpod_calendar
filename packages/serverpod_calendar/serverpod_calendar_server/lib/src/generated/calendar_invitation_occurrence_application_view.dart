@@ -24,6 +24,7 @@ abstract class CalendarInvitationOccurrenceApplicationView
     implements _is.SerializableModel, _is.ProtocolSerialization {
   const CalendarInvitationOccurrenceApplicationView._({
     bool? isThisAndFuture,
+    bool? hasAcceptedRangeCancellation,
     required this.linkId,
     required this.invitationId,
     required this.calendarId,
@@ -46,10 +47,12 @@ abstract class CalendarInvitationOccurrenceApplicationView
     this.acceptedSourceText,
     required this.canApply,
     this.latestResult,
-  }) : isThisAndFuture = isThisAndFuture ?? false;
+  }) : isThisAndFuture = isThisAndFuture ?? false,
+       hasAcceptedRangeCancellation = hasAcceptedRangeCancellation ?? false;
 
   const factory CalendarInvitationOccurrenceApplicationView({
     bool? isThisAndFuture,
+    bool? hasAcceptedRangeCancellation,
     required _is.UuidValue linkId,
     required _is.UuidValue invitationId,
     required _is.UuidValue calendarId,
@@ -82,6 +85,12 @@ abstract class CalendarInvitationOccurrenceApplicationView
           ? null
           : _is.BoolJsonExtension.fromJson(
               jsonSerialization['isThisAndFuture'],
+            ),
+      hasAcceptedRangeCancellation:
+          jsonSerialization['hasAcceptedRangeCancellation'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(
+              jsonSerialization['hasAcceptedRangeCancellation'],
             ),
       linkId: _is.UuidValueJsonExtension.fromJson(jsonSerialization['linkId']),
       invitationId: _is.UuidValueJsonExtension.fromJson(
@@ -151,6 +160,8 @@ abstract class CalendarInvitationOccurrenceApplicationView
 
   final bool isThisAndFuture;
 
+  final bool hasAcceptedRangeCancellation;
+
   final _is.UuidValue linkId;
 
   final _is.UuidValue invitationId;
@@ -200,6 +211,7 @@ abstract class CalendarInvitationOccurrenceApplicationView
   @_is.useResult
   CalendarInvitationOccurrenceApplicationView copyWith({
     bool? isThisAndFuture,
+    bool? hasAcceptedRangeCancellation,
     _is.UuidValue? linkId,
     _is.UuidValue? invitationId,
     _is.UuidValue? calendarId,
@@ -236,6 +248,12 @@ abstract class CalendarInvitationOccurrenceApplicationView
                   isThisAndFuture,
                 ) ||
                 other.isThisAndFuture == isThisAndFuture) &&
+            (identical(
+                  other.hasAcceptedRangeCancellation,
+                  hasAcceptedRangeCancellation,
+                ) ||
+                other.hasAcceptedRangeCancellation ==
+                    hasAcceptedRangeCancellation) &&
             (identical(
                   other.linkId,
                   linkId,
@@ -353,6 +371,7 @@ abstract class CalendarInvitationOccurrenceApplicationView
     return Object.hashAll([
       runtimeType,
       isThisAndFuture,
+      hasAcceptedRangeCancellation,
       linkId,
       invitationId,
       calendarId,
@@ -384,6 +403,7 @@ abstract class CalendarInvitationOccurrenceApplicationView
       '__className__':
           'serverpod_calendar.CalendarInvitationOccurrenceApplicationView',
       'isThisAndFuture': isThisAndFuture,
+      'hasAcceptedRangeCancellation': hasAcceptedRangeCancellation,
       'linkId': linkId.toJson(),
       'invitationId': invitationId.toJson(),
       'calendarId': calendarId.toJson(),
@@ -418,6 +438,7 @@ abstract class CalendarInvitationOccurrenceApplicationView
       '__className__':
           'serverpod_calendar.CalendarInvitationOccurrenceApplicationView',
       'isThisAndFuture': isThisAndFuture,
+      'hasAcceptedRangeCancellation': hasAcceptedRangeCancellation,
       'linkId': linkId.toJson(),
       'invitationId': invitationId.toJson(),
       'calendarId': calendarId.toJson(),
@@ -460,6 +481,7 @@ class _CalendarInvitationOccurrenceApplicationViewImpl
     extends CalendarInvitationOccurrenceApplicationView {
   const _CalendarInvitationOccurrenceApplicationViewImpl({
     bool? isThisAndFuture,
+    bool? hasAcceptedRangeCancellation,
     required _is.UuidValue linkId,
     required _is.UuidValue invitationId,
     required _is.UuidValue calendarId,
@@ -484,6 +506,7 @@ class _CalendarInvitationOccurrenceApplicationViewImpl
     _iyajy5op.CalendarInvitationOccurrenceApplyReceipt? latestResult,
   }) : super._(
          isThisAndFuture: isThisAndFuture,
+         hasAcceptedRangeCancellation: hasAcceptedRangeCancellation,
          linkId: linkId,
          invitationId: invitationId,
          calendarId: calendarId,
@@ -514,6 +537,7 @@ class _CalendarInvitationOccurrenceApplicationViewImpl
   @override
   CalendarInvitationOccurrenceApplicationView copyWith({
     bool? isThisAndFuture,
+    bool? hasAcceptedRangeCancellation,
     _is.UuidValue? linkId,
     _is.UuidValue? invitationId,
     _is.UuidValue? calendarId,
@@ -539,6 +563,8 @@ class _CalendarInvitationOccurrenceApplicationViewImpl
   }) {
     return CalendarInvitationOccurrenceApplicationView(
       isThisAndFuture: isThisAndFuture ?? this.isThisAndFuture,
+      hasAcceptedRangeCancellation:
+          hasAcceptedRangeCancellation ?? this.hasAcceptedRangeCancellation,
       linkId: linkId ?? this.linkId,
       invitationId: invitationId ?? this.invitationId,
       calendarId: calendarId ?? this.calendarId,

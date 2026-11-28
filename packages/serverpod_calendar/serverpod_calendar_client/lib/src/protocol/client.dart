@@ -969,6 +969,16 @@ class EndpointCalendarInvitation extends _isc.EndpointRef {
       );
 
   _ida.Future<_irwikun7.CalendarInvitationOccurrenceApplyReceipt>
+  applyRangeCancellation(
+    _idv4uqrm.CalendarInvitationOccurrenceApplyRequest request,
+  ) => caller
+      .callServerEndpoint<_irwikun7.CalendarInvitationOccurrenceApplyReceipt>(
+        'serverpod_calendar.calendarInvitation',
+        'applyRangeCancellation',
+        {'request': request},
+      );
+
+  _ida.Future<_irwikun7.CalendarInvitationOccurrenceApplyReceipt>
   applyOccurrenceUpdate(
     _idv4uqrm.CalendarInvitationOccurrenceApplyRequest request,
   ) => caller
