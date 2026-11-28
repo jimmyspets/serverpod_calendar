@@ -40,3 +40,6 @@ Defaults: **128 total raw VEVENT components**, **64 overrides per master UID**, 
 The core's optional sharedWorkBudget is now propagated through recurrence sets and membership constructors; omitted budgets preserve existing native behavior. No host API/storage, generated client or schema changes are part of this increment. Per-occurrence content, future cancellation, authenticated import/export, scheduling, alarm activation, feeds and external-client interoperability require separate work.
 
 Source: [RFC 5545 RECURRENCE-ID and RANGE](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.4.4).
+
+
+[ADR 0078](adr/0078-create-only-event-import-and-storage.md) and [the event import contract](event-import.md) now record selected source-preserving storage/create-only import choices. Current runtime is unchanged: event PERIOD persistence, imported text annotations/component versions and authenticated event import remain unimplemented. Preserve existing native timing/lifecycle/authorization behavior until the separately reviewed storage increment extends it.

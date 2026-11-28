@@ -415,3 +415,8 @@ The maintainer selected the timing/composition-first slice and positive opening 
 ## Availability storage prerequisite increment, 2026-10-22
 
 [ADR 0072](adr/0072-source-preserving-availability-storage.md) and [the storage guide](availability-storage.md) implement source-preserving availability prerequisites: text protocol UIDs with native UUID separation, grouped categories/read-only CONTACT, availability PERIODs, source component versions and data-preserving upgrades. Native edits/calculation enforce the expanded state; pure conversion supplies no host authority or database import. Authenticated create-only import remains the next batch under ADR 0071.
+
+
+## Event source-preservation proposal under ADR 0078
+
+[The event import mapping](event-import.md#verified-current-gaps) distinguishes existing event records from proposed source-preserving fields. Proposed additions cover text protocol UID/exact destination-scoped candidate lookup, typed PERIODs/annotations, source presence/effective-state separation, independent component protocol checkpoints and one private imported source baseline in active data. Native UUID/revision/parent/deletion identities remain separate. Source annotations stay with their text disclosure groups; protocol-version access cannot expose hidden text or alternative-representation links. Physical layout, exact generated types/indices/limits and migration handling require review before .spy.yaml changes. This catalog update does not change current schema or make event import implemented.
