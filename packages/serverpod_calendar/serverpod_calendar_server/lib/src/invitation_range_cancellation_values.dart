@@ -116,29 +116,7 @@ projectInvitationRangeCancellation({
       single?.sourceMetadata ?? ownRange?.sourceMetadata,
       state.sourceMetadata,
     );
-    final cutoffOrder = _rangeCancellationOrder(original);
-    CalendarEventOverrideProtocolState? underlying;
-    var floor = 0;
-    void consider(CalendarEventProtocolVersion version) {
-      final sequence = version.sequence ?? 0;
-      if (sequence > floor) floor = sequence;
-    }
-
-    for (final component in state.overrides) {
-      final order = _rangeCancellationOrder(component.originalStart);
-      if (order.compareTo(cutoffOrder) >= 0) consider(component.version);
-      if (component.isThisAndFuture &&
-          order.compareTo(cutoffOrder) <= 0 &&
-          (underlying == null ||
-              order.compareTo(
-                    _rangeCancellationOrder(underlying.originalStart),
-                  ) >
-                  0)) {
-        underlying = component;
-      }
-    }
-    // A single at the anchor must not hide a newer surrounding segment.
-    consider(underlying?.version ?? state.version);
+    final floor = _rangeSourceSequenceFloor(state, original);
     if (source.sequence! <= floor) throw ArgumentError('Stale cancellation');
     final cancellationVersion = validateEventProtocolVersion(
       CalendarEventProtocolVersion(
@@ -197,4 +175,36 @@ String _rangeCancellationOrder(CalendarEventTiming value) {
     c.minute,
     c.second,
   ].map((n) => n.toString().padLeft(4, '0')).join(':');
+}
+
+// Shared original-order floor for cutoff cancellation and restore-only matching.
+int _rangeSourceSequenceFloor(
+  CalendarEventProtocolState state,
+  CalendarEventTiming original, {
+  int minimum = 0,
+}) {
+  final cutoffOrder = _rangeCancellationOrder(original);
+  CalendarEventOverrideProtocolState? underlying;
+  var floor = minimum;
+  void consider(CalendarEventProtocolVersion version) {
+    final sequence = version.sequence ?? 0;
+    if (sequence > floor) floor = sequence;
+  }
+
+  for (final component in state.overrides) {
+    final order = _rangeCancellationOrder(component.originalStart);
+    if (order.compareTo(cutoffOrder) >= 0) consider(component.version);
+    if (component.isThisAndFuture &&
+        order.compareTo(cutoffOrder) <= 0 &&
+        (underlying == null ||
+            order.compareTo(
+                  _rangeCancellationOrder(underlying.originalStart),
+                ) >
+                0)) {
+      underlying = component;
+    }
+  }
+  // A single at the anchor must not hide a newer surrounding segment.
+  consider(underlying?.version ?? state.version);
+  return floor;
 }

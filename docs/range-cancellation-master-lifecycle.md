@@ -42,6 +42,6 @@ The original latest range-cancellation retry and separate latest master retry re
 
 Existing protected flags distinguish a retained range cancellation from a blocked command. Flutter explicitly applies whole cancellation/reopening and explains that the cancelled suffix survives, preserving the same request across uncertain responses. Active-cutoff export/feed/new organizer REQUEST rejection and no-stale-304 behavior remain even while the master is cancelled; a temporarily redundant cutoff is never erased for publication. See [validation](scaffold-validation.md) and [development commands](development.md) for scoped synthetic evidence and readiness gates.
 
-## Next proposal
+## Pure restoration boundary
 
-[Proposed ADR 0163](adr/0163-pure-restore-only-range-source-projection.md) validates a restore-only source candidate at the exact cutoff, preserving retained values and individual cancellations. Its concrete pure mechanics await approval; durable acceptance and all current restoration guards remain separate.
+[Accepted ADR 0163](adr/0163-pure-restore-only-range-source-projection.md) adds the [pure restore-only validator](range-restoration-projection.md) at the exact cutoff, preserving retained values and individual cancellations. Durable acceptance and all current restoration guards remain separate.

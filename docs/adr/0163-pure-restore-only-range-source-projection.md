@@ -1,6 +1,6 @@
 # ADR 0163: Pure restore-only range source projection
 
-Status: **Proposed. The maintainer confirmed restore-only/same-cutoff/preserve-retained-values behavior; concrete pure-profile mechanics require explicit approval.**
+Status: **Accepted — explicit maintainer agreement on 2026-11-02 covering the pure exact-matching, source-floor and unchanged-canonical-state batch. Implementation evidence is recorded separately.**
 
 ## Context and bounded scope
 
@@ -48,4 +48,4 @@ An accepted candidate still needs a separately reviewed durable contract: actual
 
 After explicit approval, cover DATE/UTC/named zones/DST gaps/folds, whole-second/exclusive-end limits, exact versus moved identity, earlier/PERIOD originals, same-anchor single/future edits and individual cancellations, preserved inheritance and source metadata/omissions. Test every mismatched timing/content/profile/participant/status case; different anchors, missing cutoffs, cancelled masters, unprofiled recurrence/alarms/delegation; equal/lower/maximum/omitted version values, underlying/later floors and work/size/slot exhaustion. Verify detached immutable results, no canonical version changes and unchanged prior pure range/single/cancellation behavior.
 
-Use focused pure VM tests during development. At batch completion run formatting/full workspace analysis, complete core/iCalendar VM+Chrome, module VM/Chrome and relevant native source-lifecycle regressions before one code commit. Full implementation-head repository CI remains the readiness gate. Pure tests do not establish authenticated restoration, persistence, external-client interoperability or delivery support. Explicit maintainer agreement is required before implementing these protocol/model mechanics.
+Use focused pure VM tests during development. At batch completion run formatting/full workspace analysis, complete core/iCalendar VM+Chrome, module VM/Chrome and relevant native source-lifecycle regressions before one code commit. Full implementation-head repository CI remains the readiness gate. Pure tests do not establish authenticated restoration, persistence, external-client interoperability or delivery support. The maintainer explicitly approved these protocol/model mechanics. See [the scoped implementation profile](../range-restoration-projection.md) for behavior and the validation record for actual results.
