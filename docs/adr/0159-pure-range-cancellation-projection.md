@@ -1,6 +1,6 @@
 # ADR 0159: Pure incoming range CANCEL projection
 
-Status: **Proposed. The maintainer confirmed newer-than-all-affected-component SEQUENCE policy. Concrete projection, version-floor and result mechanics await explicit approval.**
+Status: **Accepted 2026-11-02 by explicit maintainer approval of the proposed pure batch, including the underlying-segment floor. Implementation evidence is recorded separately.**
 
 ## Context and evidence
 
@@ -10,7 +10,7 @@ The maintainer selected incoming range cancellation only when its SEQUENCE excee
 
 Inspected pure occurrence/range projection, cancellation timing/property matching, original membership/effective timing, independent protocol state, native cutoff validation and v1/v2/v3 accepted checkpoints. [RFC 5546 section 3.2.5](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.5) defines range CANCEL and required SEQUENCE; [RFC 5545 section 3.8.4.4](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.4.4) supplies original-identity ordering. Source grammar, pure semantics, host authority, persistent freshness and external-client behavior remain distinct.
 
-## Proposed grouped increment
+## Approved grouped increment
 
 Add a separate pure `projectInvitationRangeCancellation` helper beside the current projectors. Its inputs are protocol UID, accepted content/overrides/protocol state, one parsed scheduling message, recipient address and the existing optional work ceiling. It validates and freezes input values; it performs no SQL, authorization, network access, clock/version allocation, native mutation or automatic reply.
 
@@ -30,7 +30,7 @@ Require an explicit valid incoming SEQUENCE. Compare numerically with the maximu
 
 Use original civil/profile ordering, not moved actual start or source timestamp order. Unrelated earlier singles and superseded earlier ranges do not raise the floor. Missing accepted SEQUENCE counts as zero only for comparison; retain its omission. Incoming SEQUENCE must be strictly greater; an equal value rejects even with a later DTSTAMP. Do not require source timestamps to advance or normalize them. Compare directly, without adding one to a maximum value; a maximum accepted sequence leaves no representable newer cancellation.
 
-The second floor above is an explicit proposed conservative refinement of the confirmed policy: it covers the segment beneath an anchor single. Review it as application mechanics, not a new RFC claim. Pure checks use only the supplied accepted snapshot; the future service must verify that snapshot is current and authorized under transaction/revision fences. Exact durable retries will use their retained acceptance evidence rather than reapply this first-acceptance test to already-cancelled state.
+The second floor above is an explicitly approved conservative refinement of the confirmed policy: it covers the segment beneath an anchor single. It is application mechanics, not a new RFC claim. Pure checks use only the supplied accepted snapshot; the future service must verify that snapshot is current and authorized under transaction/revision fences. Exact durable retries will use their retained acceptance evidence rather than reapply this first-acceptance test to already-cancelled state.
 
 ## Result and preserved versions
 
@@ -50,6 +50,9 @@ No table/SQL/generated protocol/endpoint/Flutter/feed/worker or dependency chang
 
 ## Acceptance conditions
 
-After explicit maintainer agreement, implement and test DATE/UTC/zoned anchors, earlier/PERIOD additions, single/future co-location, moved/later exceptions, retained individual cancellation, end/duration/DST meaning, minimal omissions and matching/differing source properties. Verify preserved component versions/source dates, null-as-zero comparison without normalization, equal/lower/higher and maximum sequence, high-version later exceptions, the anchor-single/underlying-segment case and unrelated earlier versions. Cover current-cutoff, pattern/identity/participant/profile rejection, horizon/work/slot/source limits, immutability and no partial result. Existing single/range REQUEST tests remain regressions.
+The maintainer explicitly approved these mechanics on 2026-11-02. Implement and test DATE/UTC/zoned anchors, earlier/PERIOD additions, single/future co-location, moved/later exceptions, retained individual cancellation, end/duration/DST meaning, minimal omissions and matching/differing source properties. Verify preserved component versions/source dates, null-as-zero comparison without normalization, equal/lower/higher and maximum sequence, high-version later exceptions, the anchor-single/underlying-segment case and unrelated earlier versions. Cover current-cutoff, pattern/identity/participant/profile rejection, horizon/work/slot/source limits, immutability and no partial result. Existing single/range REQUEST tests remain regressions.
 
 Use focused VM development tests, then formatting/workspace analysis, complete core/iCalendar VM+Chrome and module suites plus affected native/range database guards at batch completion. Full repository CI remains the readiness gate. Commit only the completed agreed batch and record actual/deferred evidence; pure success is not durable cancellation or interoperability support.
+
+
+See [the scoped implementation guide](../range-cancellation-projection.md) and [actual validation](../scaffold-validation.md). Approval enables only the pure candidate and version rules; durable source cancellation remains separate.

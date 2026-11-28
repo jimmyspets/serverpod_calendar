@@ -9,6 +9,8 @@ import 'event_wire_output.dart';
 import 'event_wire_storage.dart';
 import 'generated/protocol.dart';
 
+part 'invitation_range_cancellation_values.dart';
+
 /// A pure proposal, never proof of origin, freshness, a clean baseline or rights.
 final class CalendarInvitationOccurrenceProjection {
   const CalendarInvitationOccurrenceProjection._(
@@ -148,7 +150,7 @@ CalendarInvitationOccurrenceProjection projectInvitationOccurrence({
       _checkCancellationProperties(
         source,
         effective,
-        old,
+        old?.sourceMetadata,
         state.sourceMetadata,
       );
       replacement =
@@ -460,12 +462,11 @@ void _checkCancellationTiming(
 void _checkCancellationProperties(
   IcalendarSchedulingEvent source,
   CalendarEventContent effective,
-  CalendarEventSingleOverride? single,
+  CalendarEventSourceMetadata? own,
   CalendarEventSourceMetadata? masterMetadata,
 ) {
   final writer = EventComponentWriter();
   // Future timing propagates; future-anchor content/metadata remains local.
-  final own = single?.sourceMetadata;
   final expected = <String, List<IcalendarSyntaxProperty>>{};
   final normalizedValues = <IcalendarSyntaxProperty, String>{};
   void add(Iterable<IcalendarSyntaxEntry> entries, {bool replace = false}) {

@@ -714,10 +714,12 @@ Pure-core implementation PR #145 passed full hosted inspect/runtime CI. The main
 
 ## Incoming range CANCEL projection prerequisite
 
-Native cutoff implementation PR #147 passed full hosted inspect/runtime CI. The maintainer selected strictly newer SEQUENCE than all affected accepted components for incoming range cancellation. [Proposed ADR 0159](adr/0159-pure-range-cancellation-projection.md) defines the next pure projection, preserving retained component versions and a separate cancellation source version. Its concrete mechanics are unapproved and unimplemented.
+Native cutoff implementation PR #147 passed full hosted inspect/runtime CI. The maintainer selected strictly newer SEQUENCE than all affected accepted components for incoming range cancellation. Accepted [ADR 0159](adr/0159-pure-range-cancellation-projection.md) implements the [pure projection](range-cancellation-projection.md), preserving retained component versions and a separate cancellation source version. Actual validation and durable integration remain separate.
 
 - [x] Confirm newer-than-all-affected product policy.
 - [x] Inspect source matching, original/effective timing, independent version floors, native cutoff and accepted-baseline/checkpoint boundaries.
-- [ ] Review separate pure result/source version, bounded original-order floors (including the segment beneath an anchor single), and no persistence/baseline weakening.
-- [ ] Implement and validate the approved projection batch before one code commit; full CI remains required before readiness.
+- [x] Review separate pure result/source version, bounded original-order floors (including the segment beneath an anchor single), and no persistence/baseline weakening.
+- [x] Implement the approved projection and focused regressions.
+- [x] Complete grouped pure/module VM+Chrome and affected database checks before one code commit; all passed as recorded in validation.
+- [ ] Pass full exact-head hosted CI before readiness.
 - [ ] Review durable acceptance layers, exact retries, master composition and source restoration separately. Range CANCEL application and replies remain guarded.
