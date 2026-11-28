@@ -1447,3 +1447,18 @@ Documentation-only next group after completed ADR 0143. The verified pinned libr
 
 
 Documentation validation passed **3,019 relative links**, consecutive ADRs 0001–0144, **10 Markdown-only candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. No repository runtime suite was repeated for this proposal; isolated evaluation probes and completed ADR 0143 full-root/MCP evidence remain distinct.
+
+
+## Host raw iMIP MIME extraction — ADR 0144 (2026-10-30)
+
+The maintainer explicitly approved the complete raw-framing/ambiguity/multipart/transfer/protection/budget group before source changes. The Dart package-exploration MCP reported no registered project roots, so inspection used the verified pinned local package source and CLI; this did not establish runtime MCP unavailability. Owned interactive runners were verified/stopped before host build work, without a development reset. No dependency, model/table/migration or endpoint changed.
+
+The initial **81**-case focused pass was expanded and a placeholder removed. Expanded fixture editing briefly used Windows default encoding and contained an extra parenthesis; formatting/loading failures were corrected with explicit UTF-8/newlines and valid syntax before the successful final runs. Review replaced repeated padding substring allocations with a linear scan. Reported brace/string-style findings were fixed; after formatting completed, the stable whole host unit group passed **120** cases, including **89** raw MIME cases and 31 prior composer regressions. Final workspace fatal-info analysis passed.
+
+`dart run tool/scheduling_work_smoke.dart --mime-only` passed actual REQUEST/CANCEL competing hosts, loss before/after acceptance and fenced recovery using the raw extractor, with identical MIME/decoded calendar digests. Runtime sources were frozen for `./tool/check.ps1`; no SDK suite shares its configured host ports. Complete broader, restored interactive MCP and static evidence follows before the single batch commit; no native ingress/actor mapping or real mail is implemented.
+
+
+The complete broader `./tool/check.ps1` exited successfully on the frozen runtime. Stable generation/lockfile, authored formatting and workspace fatal-info analysis passed; complete core **502 VM/502 Chrome**, iCalendar **620 VM/620 Chrome**, module **227 VM/17 Chrome**, feed **13**, Flutter **9** and example host **120** tests passed. All **779** database cases passed. Populated upgrades, independent invitation/alarm/notification recovery, all six scheduling recovery modes using the raw extractor and all three reply recovery profiles passed. Full two-host generated clients, synthetic MIME fixture assertions and connected Flutter journeys passed. Release web and its Wasm compilation dry run passed; Wasm runtime and external mail/calendar conformance are not claimed. No SDK suite shared configured host ports. Actual restored interactive MCP and final static evidence follow before the single complete-batch commit.
+
+
+Owned interactive server/Chrome runners were restored without a development reset; the latest existing migration was already applied. The actual IDE DTD and owned Chrome VM service connected successfully. Serverpod MCP hot reload and Flutter hot reload succeeded, with no runtime errors. Final static verification passed **3,028 relative links**, consecutive ADRs 0001–0144, **17 candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. All 116 open PRs and zero standalone issues were reviewed across pagination; only the own MIME stack overlapped. The complete approved raw MIME batch is ready for its single implementation commit.

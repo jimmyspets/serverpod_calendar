@@ -78,3 +78,6 @@ Accepted ADR 0141 adds [explicit linked cancellation application/reopening](../.
 
 
 Accepted ADR 0143 adds [synthetic host-owned MIME composition](../../docs/outbound-imip-composition.md), with the approved enough_mail pin only in the example host. Preserve exact authorized calendar bytes, fixed deterministic envelope fields, current worker authority/fencing and bounded non-echo failure handling. Recording adds only synthetic MIME to ignored attempt fixtures; it establishes no delivery/receipt or inbound authority. Keep reusable modules provider-independent and upstream notices intact. No SMTP/IMAP/POP client, real mail, protection downgrade, raw-message table or inbound parser follows.
+
+
+Accepted ADR 0144 adds [bounded host-only raw MIME extraction](../../docs/raw-imip-extraction.md), superseding raw-parser-not-implemented statements only for this scoped helper. Inspect actual headers/protection before decoding, guard ambiguity before normalized maps, and preserve exact MIME-versus-calendar framing semantics and fixed budgets. Native/provider authority, dispatch, replies and real delivery remain separate. Do not infer identity from headers, render auxiliary HTML, strip protection, invoke automatic recursive/text-repair paths or claim complete MIME/RFC 6047 conformance. No table/schema/endpoint or reusable-module provider dependency is added.

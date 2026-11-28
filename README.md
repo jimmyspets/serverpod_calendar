@@ -219,3 +219,6 @@ The pure [decoded iMIP calendar-part adapter](docs/imip-calendar-parts.md) now v
 
 
 The example now includes [synthetic outbound iMIP composition](docs/outbound-imip-composition.md): deterministic MIME is recorded locally, with no real email delivery.
+
+
+The example also provides [bounded raw iMIP MIME extraction](docs/raw-imip-extraction.md), returning untrusted calendar data without native routing, sender authority or real mail.

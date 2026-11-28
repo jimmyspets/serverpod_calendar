@@ -1,16 +1,16 @@
 # ADR 0144: Bounded host-owned raw iMIP MIME extraction
 
-Status: **Proposed; concrete raw-framing, ambiguity, multipart, transfer and resource-limit mechanics require explicit maintainer agreement before implementation.** Date: 2026-10-30.
+Status: **Accepted by explicit maintainer approval on 2026-10-30 for the complete host raw-framing/ambiguity/multipart/transfer/protection/limit batch. Scoped implementation and complete local batch validation are recorded separately.**
 
 ## Context and evidence
 
-Accepted [ADR 0142](0142-pure-decoded-imip-calendar-parts.md) validates one decoded calendar part; [ADR 0143](0143-synthetic-host-outbound-imip-composition.md) composes synthetic outgoing MIME. The next proposed group connects complete raw mail bytes to that pure gate without granting native authority or changing durable ingress. Keep enough_mail 3.0.0 confined to the example host; no dependency, table, migration, endpoint, provider credential or network transport is added.
+Accepted [ADR 0142](0142-pure-decoded-imip-calendar-parts.md) validates one decoded calendar part; [ADR 0143](0143-synthetic-host-outbound-imip-composition.md) composes synthetic outgoing MIME. The approved group connects complete raw mail bytes to that pure gate without granting native authority or changing durable ingress. Keep enough_mail 3.0.0 confined to the example host; no dependency, table, migration, endpoint, provider credential or network transport is added.
 
 The verified published source and isolated probes show that public BinaryMimeData framing can retain actual/duplicate headers without automatic child descent, and its binary decoders preserve Unicode/CRLF for 7bit, base64 and quoted-printable. The public flat multipart splitter preserves a boundary separator CRLF; removing exactly that framing CRLF preserves the calendar payload. Probes used no Serverpod ports/database or mail network. The first framing probe's nullable Header.value compile assumption was corrected before its successful execution. This is evaluated-path evidence, not a security audit or proof of complete MIME compatibility.
 
 [RFC 2045 section 6](https://www.rfc-editor.org/rfc/rfc2045.html#section-6) supplies transfer semantics; [RFC 2046 section 5.1.1](https://www.rfc-editor.org/rfc/rfc2046.html#section-5.1.1) distinguishes separator CRLF from body data and limits boundary size. [RFC 5322 section 2.1.1](https://www.rfc-editor.org/rfc/rfc5322.html#section-2.1.1) supplies the message line ceiling. The narrower shapes, grammar and budgets below are explicit application choices, not complete RFC conformance.
 
-## Proposed host API and delegation
+## Approved host API and delegation
 
 Add a synchronous, directly testable host-local helper accepting complete raw message bytes and a required actual outer-protection marker. It returns the existing immutable ImipCalendarPart only after all container/part checks pass. Ordinary mail headers and human alternatives are inert transport presentation, not canonical calendar fields or a new raw-mail archive. All existing VEVENT eight-method and VFREEBUSY three-method pure profiles remain independently validated; successful parsing proves no stored existence, recipient authority or permission to reconcile.
 
@@ -18,7 +18,7 @@ Use the evaluated library for binary framing/header unfolding, flat splitting an
 
 Add only bounded raw-header/resource guards and a strict critical-parameter allowlist before trusting the library's lossy parameter map. This is host-side validation of the selected library/profile, not a new general RFC 5322/MIME parser. Preserve source parameter order/name/value spelling through the existing carrier. Source From/To/Reply-To/Sender/Subject/Date/Message-ID, participant text and encoding success never supply trusted scope, native actor, sender proof or duplicate-delivery identity. Those require later verified host/provider ingress.
 
-## Proposed shapes and ambiguity rules
+## Approved shapes and ambiguity rules
 
 Accept one text/calendar message, or one flat multipart/alternative with one to three leaves: exactly one text/calendar, at most one text/plain and at most one text/html. Either auxiliary type is optional; order does not select a preferred calendar. Decode auxiliary bytes only under bounds/declared charset, never render/return HTML, execute scripts, load links/images or resolve Content-ID. Other multipart types, nesting, message/rfc822, binary attachments, unknown leaves or duplicate calendar/auxiliary parts reject the whole message. Check every part before returning a result; never accept only the first matching calendar.
 
@@ -28,7 +28,7 @@ Calendar Content-Type permits only method/charset/component; plain/html permits 
 
 Boundary is case-sensitive, one to 70 ASCII characters from letters/digits/dot/underscore/equals/plus/hyphen. Require bounded valid opening/closing delimiter framing, reject missing/repeated closing delimiters, and count parts before splitting/copying. Up to 4 KiB each of ASCII preamble/epilogue is inert presentation, not a calendar component. Use the library's public splitter only after that guard. Remove exactly its one retained MIME separator CRLF from each raw leaf; do not trim decoded calendar data, invent a missing calendar CRLF or normalize text.
 
-## Proposed transfer/charset profile
+## Approved transfer/charset profile
 
 Support absent/7bit, base64 and quoted-printable only. Reject 8bit, binary and other encodings explicitly. Raw framing uses CRLF wherever line breaks occur; final encoded-wire CRLF is not invented. Decoded calendar still obeys its strict UTF-8/CRLF/no-BOM profile and ordinary time/zone limits. UTF-8 and US-ASCII are the only charsets; absence requires ASCII. No charset guessing/transcoding or HTML encoding sniffing.
 
@@ -36,7 +36,7 @@ Before library decoding, validate encoded grammar and a conservative/exact decod
 
 Library-decoded byte count must agree with the checked bound. Do not silently apply the library's permissive bare-LF or malformed-input fallbacks. Independent golden vectors, not only the same library's encoder, must establish decoding behavior.
 
-## Proposed fixed resource/protection boundary
+## Approved fixed resource/protection boundary
 
 Raw message cap is 1 MiB. Aggregate header blocks are at most 16 KiB/64 fields; field names at most 64 ASCII characters. Raw physical lines are at most 998 bytes excluding CRLF and at most 16,384 total. Reuse the pure part's 16-parameter, 64-name and 1,024-value-byte limits. Calendar decoded cap is 512 KiB; each auxiliary decoded body is at most 64 KiB. Up to three leaves and one root are allowed, with no recursive descent. Preamble/epilogue and boundary caps are stated above. These are fixed first-profile limits, not RFC maxima or client-adjustable budgets.
 
@@ -44,8 +44,8 @@ Check raw byte values/length and header prefixes before library copying, and agg
 
 Signed/encrypted/unknown outer markers reject. Actual protected/unsupported MIME types reject even if a caller incorrectly supplies none. Do not decode protected bodies, strip envelopes, synthesize plain-source evidence, claim signature verification or downgrade required confidentiality. A host must supply the complete original message and actual outer context; this code cannot prove that a trusted provider did not already remove an outer layer.
 
-## Validation and decision requested
+## Validation and accepted decision
 
 Test all selected primary kinds/methods, single/flat alternative orders, duplicate/unknown parts, header/parameter ambiguity and aliases, simple quotes/folding, malformed/protected/nested frames, boundary CRLF, auxiliary inertness, base64/7bit/quoted-printable golden vectors including padding/soft breaks, charset/timezone semantics and budgets before work/allocation. Compare accepted calendar bytes with existing outbound envelopes. Extend real two-host scheduling fixture/recovery checks to exercise the raw helper while preserving independent MIME/digest/lease assertions. Run focused tests, relevant broader suites and complete batch checks in recorded phases before one implementation commit.
 
-Approve this concrete host-only raw MIME extraction group before source changes. It does not route mail to native handlers, create/review/apply invitations, change attendee responses, send replies, map trusted identities or perform network delivery. Those integrations, broader MIME shapes/encodings, actual provider trust, remaining scheduling lifecycle and external interoperability remain separate required work. Reusable modules and existing native permissions/state remain unchanged.
+The maintainer explicitly approved the complete concrete group before implementation. See [the implementation/profile guide](../raw-imip-extraction.md) and the separate validation record. It does not route mail to native handlers, create/review/apply invitations, change attendee responses, send replies, map trusted identities or perform network delivery. Those integrations, broader MIME shapes/encodings, actual provider trust, remaining scheduling lifecycle and external interoperability remain separate required work. Reusable modules and existing native permissions/state remain unchanged.

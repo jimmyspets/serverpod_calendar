@@ -755,3 +755,6 @@ Accepted [ADR 0142](adr/0142-pure-decoded-imip-calendar-parts.md) adds only pure
 
 
 Accepted [ADR 0143](adr/0143-synthetic-host-outbound-imip-composition.md) adds a host-local composer over the existing immutable CalendarSchedulingSubmission. It produces bounded MIME text and a bounded error enum; the only recording change is a synthetic `mime` field beside the existing local fixture payload. No Serverpod model/table, native protocol version, payload digest or transport-interface field changes. See [the host composition guide](outbound-imip-composition.md).
+
+
+Accepted [ADR 0144](adr/0144-bounded-host-raw-imip-mime.md) adds only a host-local raw MIME extractor and bounded error enum over existing immutable ImipCalendarPart results. Internal framing/budget objects are not Serverpod models or native actor/proof contexts; no raw-mail table, endpoint or automatic dispatcher is introduced. See [the profile](raw-imip-extraction.md).

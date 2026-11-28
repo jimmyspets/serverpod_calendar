@@ -540,7 +540,8 @@ Accepted [ADR 0141](adr/0141-explicit-linked-cancellation-application.md) adds e
 - [x] Review [ADR 0142](adr/0142-pure-decoded-imip-calendar-parts.md): pure carrier, method/component/charset checks, bounded mailbox subset, protection rejection and limits.
 - [x] Implement the approved pure profile.
 - [x] Complete pure batch validation before one implementation commit.
-- [ ] Separately select/evaluate host MIME/provider integration, complete message handling, trusted ingress/outbound authority and synthetic delivery before external mail evidence.
+- [x] Select/evaluate host MIME composition and bounded extraction under ADRs 0143/0144.
+- [ ] Separately complete verified provider integration, wider message handling and trusted ingress before external mail evidence.
 
 This scoped pure prerequisite does not complete the RFC 6047 mail requirement or imply authority from parsed addresses. Existing event/free-busy iTIP payloads remain independent of mail binding. No real sending is authorized.
 
@@ -551,7 +552,8 @@ This scoped pure prerequisite does not complete the RFC 6047 mail requirement or
 - [x] Review [ADR 0143](adr/0143-synthetic-host-outbound-imip-composition.md): example-host-only dependency, deterministic bounded MIME and recording.
 - [x] Implement the approved synthetic composition batch.
 - [x] Complete focused and broader host batch validation before one implementation commit.
-- [ ] Separately complete inbound MIME ambiguity/protection, multipart, trusted delivery/ingress, remaining scheduling lifecycle and external-client evidence.
+- [x] Complete the scoped inbound MIME ambiguity/protection and flat multipart prerequisite under ADR 0144.
+- [ ] Separately complete trusted delivery/ingress, remaining scheduling lifecycle and external-client evidence.
 
 No real sending or complete mail conformance follows from this synthetic batch.
 
@@ -559,8 +561,9 @@ No real sending or complete mail conformance follows from this synthetic batch.
 ## Bounded raw iMIP MIME extraction
 
 - [x] Inspect nonrecursive binary framing/duplicate retention and run isolated single/flat multipart byte-preservation probes.
-- [ ] Review [ADR 0144](adr/0144-bounded-host-raw-imip-mime.md): raw ambiguity/protection, shapes, transfer semantics and fixed budgets.
-- [ ] Implement/validate the approved group after explicit agreement, before one code commit.
+- [x] Review [ADR 0144](adr/0144-bounded-host-raw-imip-mime.md): raw ambiguity/protection, shapes, transfer semantics and fixed budgets.
+- [x] Implement the approved extraction group.
+- [x] Complete focused/broader batch validation before one code commit.
 - [ ] Separately design verified provider ingress/native dispatch and real transport, remaining MIME/participant lifecycle and interoperability.
 
-This proposed extraction group grants no authority, applies no native state and sends no mail.
+This scoped extraction group grants no authority, applies no native state and sends no mail.
