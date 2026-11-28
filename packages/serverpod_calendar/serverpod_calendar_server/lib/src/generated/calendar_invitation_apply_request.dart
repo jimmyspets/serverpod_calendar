@@ -23,7 +23,8 @@ abstract class CalendarInvitationApplyRequest
     required this.expectedEventRevision,
     required this.expectedCalendarRevision,
     required this.expectedApplicationRevision,
-  });
+    int? expectedOccurrenceRevision,
+  }) : expectedOccurrenceRevision = expectedOccurrenceRevision ?? 0;
 
   const factory CalendarInvitationApplyRequest({
     required _is.UuidValue invitationId,
@@ -33,6 +34,7 @@ abstract class CalendarInvitationApplyRequest
     required int expectedEventRevision,
     required int expectedCalendarRevision,
     required int expectedApplicationRevision,
+    int? expectedOccurrenceRevision,
   }) = _CalendarInvitationApplyRequestImpl;
 
   factory CalendarInvitationApplyRequest.fromJson(
@@ -53,6 +55,8 @@ abstract class CalendarInvitationApplyRequest
           jsonSerialization['expectedCalendarRevision'] as int,
       expectedApplicationRevision:
           jsonSerialization['expectedApplicationRevision'] as int,
+      expectedOccurrenceRevision:
+          jsonSerialization['expectedOccurrenceRevision'] as int?,
     );
   }
 
@@ -70,6 +74,8 @@ abstract class CalendarInvitationApplyRequest
 
   final int expectedApplicationRevision;
 
+  final int expectedOccurrenceRevision;
+
   /// Returns a shallow copy of this [CalendarInvitationApplyRequest]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -81,6 +87,7 @@ abstract class CalendarInvitationApplyRequest
     int? expectedEventRevision,
     int? expectedCalendarRevision,
     int? expectedApplicationRevision,
+    int? expectedOccurrenceRevision,
   });
   @override
   bool operator ==(Object other) {
@@ -126,7 +133,12 @@ abstract class CalendarInvitationApplyRequest
                   expectedApplicationRevision,
                 ) ||
                 other.expectedApplicationRevision ==
-                    expectedApplicationRevision);
+                    expectedApplicationRevision) &&
+            (identical(
+                  other.expectedOccurrenceRevision,
+                  expectedOccurrenceRevision,
+                ) ||
+                other.expectedOccurrenceRevision == expectedOccurrenceRevision);
   }
 
   @override
@@ -140,6 +152,7 @@ abstract class CalendarInvitationApplyRequest
       expectedEventRevision,
       expectedCalendarRevision,
       expectedApplicationRevision,
+      expectedOccurrenceRevision,
     );
   }
 
@@ -154,6 +167,7 @@ abstract class CalendarInvitationApplyRequest
       'expectedEventRevision': expectedEventRevision,
       'expectedCalendarRevision': expectedCalendarRevision,
       'expectedApplicationRevision': expectedApplicationRevision,
+      'expectedOccurrenceRevision': expectedOccurrenceRevision,
     };
   }
 
@@ -168,6 +182,7 @@ abstract class CalendarInvitationApplyRequest
       'expectedEventRevision': expectedEventRevision,
       'expectedCalendarRevision': expectedCalendarRevision,
       'expectedApplicationRevision': expectedApplicationRevision,
+      'expectedOccurrenceRevision': expectedOccurrenceRevision,
     };
   }
 
@@ -187,6 +202,7 @@ class _CalendarInvitationApplyRequestImpl
     required int expectedEventRevision,
     required int expectedCalendarRevision,
     required int expectedApplicationRevision,
+    int? expectedOccurrenceRevision,
   }) : super._(
          invitationId: invitationId,
          sourceId: sourceId,
@@ -195,6 +211,7 @@ class _CalendarInvitationApplyRequestImpl
          expectedEventRevision: expectedEventRevision,
          expectedCalendarRevision: expectedCalendarRevision,
          expectedApplicationRevision: expectedApplicationRevision,
+         expectedOccurrenceRevision: expectedOccurrenceRevision,
        );
 
   /// Returns a shallow copy of this [CalendarInvitationApplyRequest]
@@ -209,6 +226,7 @@ class _CalendarInvitationApplyRequestImpl
     int? expectedEventRevision,
     int? expectedCalendarRevision,
     int? expectedApplicationRevision,
+    int? expectedOccurrenceRevision,
   }) {
     return CalendarInvitationApplyRequest(
       invitationId: invitationId ?? this.invitationId,
@@ -222,6 +240,8 @@ class _CalendarInvitationApplyRequestImpl
           expectedCalendarRevision ?? this.expectedCalendarRevision,
       expectedApplicationRevision:
           expectedApplicationRevision ?? this.expectedApplicationRevision,
+      expectedOccurrenceRevision:
+          expectedOccurrenceRevision ?? this.expectedOccurrenceRevision,
     );
   }
 }

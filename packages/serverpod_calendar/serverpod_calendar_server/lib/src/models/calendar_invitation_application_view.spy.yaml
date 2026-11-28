@@ -26,3 +26,4 @@ fields:
   canApply: bool
   latestResult: CalendarInvitationApplyReceipt?
   occurrenceCompositionBlocked: bool, default=false
+  occurrenceRevision: int, default=0

@@ -168,7 +168,7 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
         throw StateError('Invalid checkpoint');
       }
       final state = jsonDecode(row.stateJson) as Map<String, dynamic>;
-      if (state['version'] != 1 ||
+      if (!{1, 2}.contains(state['version']) ||
           state['masterDigest'] != _occMasterDigest(link, master) ||
           state['baselineDigest'] !=
               _invBaselineDigest(event.data.importBaseline!)) {
@@ -245,9 +245,15 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
       if (receipt.linkId != link.id ||
           receipt.calendarId != link.calendarId ||
           receipt.eventId != link.eventId ||
-          receipt.occurrenceRevision != row.revision ||
-          receipt.eventRevision != row.eventRevision ||
-          receipt.appliedAt != row.updatedAt ||
+          receipt.occurrenceRevision < 1 ||
+          receipt.occurrenceRevision > row.revision ||
+          receipt.eventRevision < 2 ||
+          receipt.eventRevision > row.eventRevision ||
+          receipt.appliedAt != DateTime.parse(selected['acceptedAt']) ||
+          (state['version'] == 1 &&
+              (receipt.occurrenceRevision != row.revision ||
+                  receipt.eventRevision != row.eventRevision ||
+                  receipt.appliedAt != row.updatedAt)) ||
           receipt.invitationId.toString() != selected['invitationId'] ||
           receipt.sourceId.toString() != selected['sourceId'] ||
           receipt.kind.name != selected['kind'] ||
@@ -255,9 +261,38 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
               .hasMatch(state['requestDigest'] as String)) {
         throw StateError('Invalid result');
       }
+      if (state['version'] == 2) {
+        if (state['receiptDigest'] !=
+            _invitationHash([
+              state['requestDigest'] as String,
+              jsonEncode(_occOrdered(receipt.toJson())),
+              selected['digest'] as String,
+            ])) {
+          throw StateError('Invalid retained result binding');
+        }
+        final layer = _occAccepted(frozen);
+        final composed = _invCompose(
+          CalendarEventImportMember(
+            eventId: link.eventId,
+            protocolUid: link.uid,
+            content: layer.content,
+            timingOverrides: layer.edits,
+            protocolState: layer.protocol,
+          ),
+          event,
+          state,
+        );
+        if (eventImportBaseline(
+              link.uid,
+              composed.content,
+              composed.timingOverrides,
+              composed.protocolState,
+            ).canonicalValue !=
+            event.data.importBaseline!.canonicalValue) {
+          throw StateError('Invalid composition');
+        }
+      }
       return state;
-    } on CalendarException {
-      rethrow;
     } catch (_) {
       throw _failure(CalendarFailureCode.unavailable);
     }
@@ -883,7 +918,7 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
         eventRevision: receipt.eventRevision,
         updatedAt: now,
         stateJson: jsonEncode({
-          'version': 1,
+          'version': state?['version'] ?? 1,
           'masterBaseline':
               state?['masterBaseline'] ?? event.data.importBaseline!.toJson(),
           'masterBaselineDigest':
@@ -894,6 +929,12 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
           'targets': targets,
           'requestDigest': digest,
           'receipt': receipt.toJson(),
+          if (state?['version'] == 2)
+            'receiptDigest': _invitationHash([
+              digest,
+              jsonEncode(_occOrdered(receipt.toJson())),
+              source.digest,
+            ]),
         }),
       );
       final proposed = CalendarEventPolicySnapshot(

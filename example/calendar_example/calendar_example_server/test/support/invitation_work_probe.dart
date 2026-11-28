@@ -497,6 +497,13 @@ Future<void> main(List<String> args) async {
               ),
               'applications': await CalendarInvitationApplicationRecord.db
                   .count(session, where: (t) => t.scopeKey.equals(host.scope)),
+              'occurrenceRevision':
+                  (await CalendarInvitationOccurrenceApplicationRecord.db
+                          .findFirstRow(
+                            session,
+                            where: (t) => t.scopeKey.equals(host.scope),
+                          ))
+                      ?.revision,
               'eventRevision': await session.db
                   .unsafeQuery(
                     'SELECT e.revision FROM serverpod_calendar_event e JOIN serverpod_calendar_identity c ON c.id=e."calendarId" WHERE c."scopeKey"=@scope',

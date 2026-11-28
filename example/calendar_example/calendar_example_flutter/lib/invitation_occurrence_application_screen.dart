@@ -166,7 +166,7 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
               ),
             ),
             const Text(
-              'After occurrence acceptance, new whole-series source application is guarded until master/instance composition is implemented.',
+              'New whole-series sources preserve accepted occurrence edits and individual cancellations. Updates that remove an accepted original are rejected.',
             ),
           ],
           TextButton(

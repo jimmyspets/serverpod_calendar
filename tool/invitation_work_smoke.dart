@@ -207,8 +207,136 @@ Future<void> main(List<String> args) async {
         );
         a = await start('a-occurrence-recovered-$pause', 18780);
       }
+      Future<Map<String, dynamic>> composedCommand(String id) async {
+        final incoming = await b.command({
+          'command': 'receive',
+          'caseId': id,
+          'key': 'new-master',
+          'sequence': 3,
+        }) as Map;
+        final v = await b.command({
+          'command': 'application',
+          'caseId': id,
+          'entryId': incoming['entryId'],
+        }) as Map;
+        require(
+          v['canApply'] == true && v['occurrenceRevision'] == 1,
+          'Composed master preview failed',
+        );
+        return {
+          'invitationId': v['invitationId'],
+          'sourceId': v['incomingSourceId'],
+          'linkId': v['linkId'],
+          'expectedInvitationRevision': v['invitationRevision'],
+          'expectedEventRevision': v['eventRevision'],
+          'expectedCalendarRevision': v['calendarRevision'],
+          'expectedApplicationRevision': v['applicationRevision'],
+          'expectedOccurrenceRevision': v['occurrenceRevision'],
+        };
+      }
+
+      // Actual process loss around the atomic master/event/occurrence write.
+      for (final pause in ['apply-before', 'apply-after']) {
+        final id = nextCase(), occurrence = await prepare(id);
+        final original = await b.command({
+          'command': 'occurrence-apply',
+          'caseId': id,
+          'request': occurrence,
+        }) as Map;
+        final request = await composedCommand(id);
+        a.paused = Completer<Map<String, dynamic>>();
+        final lost = a
+            .command({
+              'command': 'apply',
+              'caseId': id,
+              'request': request,
+              'pause': pause,
+            })
+            .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+        final submitted = await a.paused!.future.timeout(
+          const Duration(seconds: 40),
+        );
+        final visible =
+            await b.command({'command': 'inspect', 'caseId': id}) as Map;
+        require(
+          visible['eventRevision'] == (pause == 'apply-before' ? 2 : 3) &&
+              visible['occurrenceRevision'] ==
+                  (pause == 'apply-before' ? 1 : 2) &&
+              visible['applications'] == (pause == 'apply-before' ? 0 : 1),
+          'Composition partially visible',
+        );
+        await a.stop();
+        await lost;
+        final recovered = await b.command({
+          'command': 'apply',
+          'caseId': id,
+          'request': request,
+        }) as Map;
+        require(
+          recovered['id'] != null &&
+              ((pause == 'apply-after') ==
+                  (recovered['id'] == submitted['id'])),
+          'Composition loss retry changed result',
+        );
+        final retry = await b.command({
+          'command': 'occurrence-apply',
+          'caseId': id,
+          'request': occurrence,
+        }) as Map;
+        require(
+          retry['id'] == original['id'],
+          'Composition lost historical occurrence receipt',
+        );
+        a = await start('a-composition-recovered-$pause', 18780);
+      }
+      // Different valid master/instance commands from one snapshot have one winner.
+      final id = nextCase(), initial = await prepare(id);
+      await b.command({
+        'command': 'occurrence-apply',
+        'caseId': id,
+        'request': initial,
+      });
+      final masterRequest = await composedCommand(id);
+      final source = await b.command({
+        'command': 'receive',
+        'caseId': id,
+        'key': 'next-instance',
+        'instance': true,
+        'sequence': 4,
+      }) as Map;
+      final v = await b.command({
+        'command': 'occurrence-view',
+        'caseId': id,
+        'entryId': source['entryId'],
+      }) as Map;
+      final instanceRequest = {
+        'invitationId': v['invitationId'],
+        'sourceId': v['incomingSourceId'],
+        'linkId': v['linkId'],
+        'expectedInvitationRevision': v['invitationRevision'],
+        'expectedEventRevision': v['eventRevision'],
+        'expectedCalendarRevision': v['calendarRevision'],
+        'expectedApplicationRevision': v['applicationRevision'],
+        'expectedOccurrenceRevision': v['occurrenceRevision'],
+      };
+      final compositionRace = await Future.wait([
+        a.command({'command': 'apply', 'caseId': id, 'request': masterRequest}),
+        b.command({
+          'command': 'occurrence-apply',
+          'caseId': id,
+          'request': instanceRequest,
+        }),
+      ]);
+      require(
+        compositionRace.where((r) => (r as Map)['id'] != null).length == 1 &&
+            compositionRace
+                    .where((r) => (r as Map)['error'] == 'staleRevision')
+                    .length ==
+                1,
+        'Master/instance revision fence failed',
+      );
       stdout.writeln(
-        'PASS: independent occurrence-application hosts, same-command race, atomic event/checkpoint/review visibility and actual loss before/after commit with exact retry recovery.',
+        'PASS: independent occurrence-application hosts, same-command race, atomic event/checkpoint/review visibility and actual loss before/after occurrence and composed-master commits, historical retry recovery and master/instance races.',
       );
       return;
     }

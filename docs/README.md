@@ -303,4 +303,6 @@ Accepted [ADR 0150](adr/0150-pure-instance-invitation-projection.md) implements 
 
 Accepted [ADR 0151](adr/0151-explicit-single-instance-invitation-application.md) groups explicit occurrence REQUEST/CANCEL application, one private acceptance table, independent versions/latest retries, deletion scrubbing and example/recovery evidence. The scoped [implementation](instance-invitation-application.md) includes the temporary master-composition guard and active copied-source retention; actual validation is recorded separately.
 
-Proposed [ADR 0152](adr/0152-master-invitation-application-with-accepted-occurrences.md) lifts the temporary master guard only after reviewed composition. The maintainer confirmed preservation of accepted occurrences and rejection of orphaning master changes. Existing-table JSON v2, master request revision fencing, composition authority, historical retry rules and the conservative whole-cancellation floor remain proposed.
+Accepted [ADR 0152](adr/0152-master-invitation-application-with-accepted-occurrences.md) supersedes that guard with explicit preserved-layer composition, revision fencing, independent authority and historical retries. Its conservative whole-cancellation version rule is an application safeguard; no broader interoperability follows.
+
+[Master invitation/occurrence composition](master-invitation-occurrence-composition.md) describes the accepted ADR 0152 implementation, independent versions, orphan protection and historical retries.

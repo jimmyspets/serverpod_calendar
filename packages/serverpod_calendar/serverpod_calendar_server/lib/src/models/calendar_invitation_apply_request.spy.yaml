@@ -8,3 +8,4 @@ fields:
   expectedEventRevision: int
   expectedCalendarRevision: int
   expectedApplicationRevision: int
+  expectedOccurrenceRevision: int, default=0
