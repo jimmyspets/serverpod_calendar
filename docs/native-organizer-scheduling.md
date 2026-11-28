@@ -53,3 +53,6 @@ The Flutter event editor opens **Meeting invitations** for saved full-detail eve
 Focused database tests cover authorization, atomicity, native/imported/unknown origin, DATE/UTC/zones, source annotations, command/revision behavior, private snapshots, supersession, expiry, recovery and retention. Separate processes exercise competing workers and actual holder loss before/after synthetic acceptance. Generated-client and Flutter journeys extend the root checks. Actual counts, failures/corrections and broad-run results are recorded in [validation](scaffold-validation.md); tests do not establish external mail/client interoperability or full scheduling conformance.
 
 Recurring/native lifecycle profiles, participant changes, inbound ledger/order/reconciliation, replies/delegation/counters, VFREEBUSY runtime, explicit adoption/resend/cancellation cleanup, maintained MIME transport and external-client/release evidence remain required separately. All selected methods remain in the [RFC inventory](rfc/rfc-5546.md).
+
+
+The next [cancellation proposal](adr/0123-explicit-native-organizer-cancellation.md) is pending maintainer review. It would add an explicit action using the last published snapshot without exposing local drafts; no cancellation endpoint or dispatch change is implemented by that document.

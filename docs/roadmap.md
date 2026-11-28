@@ -418,3 +418,8 @@ The action APIs now have scoped implementation and focused validation. Notificat
 ## Current batch: optional event subscriptions
 
 The first [event-feed module](http-event-feeds.md) under ADR 0116 is implemented in scope and undergoing final batch validation. Focused VM/database/two-host/browser evidence does not close external client, production infrastructure, scheduling or the other remaining first-release gates.
+
+
+## Next organizer lifecycle proposal
+
+[ADR 0123](adr/0123-explicit-native-organizer-cancellation.md) proposes explicit non-recurring Cancel and notify using the last published snapshot, preserving unpublished local fields and reusing existing delivery storage. Review the cancellation/reopening semantics before implementation. It is unapproved and unimplemented; recurring scheduling, recipient changes, binding deletion and inbound reconciliation remain separate.
