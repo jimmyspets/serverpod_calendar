@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_availability_category_group.dart' as _iywbqexh;
 import 'calendar_availability_class.dart' as _iucw7bzg;
 import 'calendar_availability_extension.dart' as _ip5gybl4;
@@ -193,23 +194,31 @@ abstract class CalendarAvailabilityContent
   @_is.useResult
   CalendarAvailabilityContent copyWith({
     String? summary,
-    _ieswiaty.CalendarEventTiming? validFrom,
-    _ieswiaty.CalendarEventTiming? validUntil,
+    _ieswiaty.CalendarEventTiming? validFrom =
+        const _UndefinedCalendarAvailabilityContent$validFrom(),
+    _ieswiaty.CalendarEventTiming? validUntil =
+        const _UndefinedCalendarAvailabilityContent$validFrom(),
     int? priority,
     _izms466b.CalendarFreeBusyKind? closedKind,
     List<_i8tf9h36.CalendarAvailabilityOpening>? openings,
     String? description,
     String? location,
-    List<String>? categories,
-    List<String>? comments,
+    List<String>? categories = const _is.$UndefinedList<String>(),
+    List<String>? comments = const _is.$UndefinedList<String>(),
     String? url,
     _iucw7bzg.CalendarAvailabilityClass? classification,
-    _ipbm7ji7.CalendarAvailabilityTextParameters? textParameters,
-    List<_ip5gybl4.CalendarAvailabilityExtension>? extensions,
-    _i5oc0nlo.CalendarAvailabilityOrganizer? organizer,
-    _idn2i48l.CalendarEventDuration? validDuration,
-    List<_iywbqexh.CalendarAvailabilityCategoryGroup>? categoryGroups,
-    List<_itw42wa3.CalendarAvailabilityText>? contacts,
+    _ipbm7ji7.CalendarAvailabilityTextParameters? textParameters =
+        const _UndefinedCalendarAvailabilityContent$textParameters(),
+    List<_ip5gybl4.CalendarAvailabilityExtension>? extensions =
+        const _is.$UndefinedList<_ip5gybl4.CalendarAvailabilityExtension>(),
+    _i5oc0nlo.CalendarAvailabilityOrganizer? organizer =
+        const _UndefinedCalendarAvailabilityContent$organizer(),
+    _idn2i48l.CalendarEventDuration? validDuration =
+        const _UndefinedCalendarAvailabilityContent$validDuration(),
+    List<_iywbqexh.CalendarAvailabilityCategoryGroup>? categoryGroups =
+        const _is.$UndefinedList<_iywbqexh.CalendarAvailabilityCategoryGroup>(),
+    List<_itw42wa3.CalendarAvailabilityText>? contacts =
+        const _is.$UndefinedList<_itw42wa3.CalendarAvailabilityText>(),
   });
   @override
   bool operator ==(Object other) {
@@ -402,6 +411,30 @@ abstract class CalendarAvailabilityContent
 
 class _Undefined {}
 
+class _UndefinedCalendarAvailabilityContent$validFrom
+    extends _is.UndefinedSentinel
+    implements _ieswiaty.CalendarEventTiming {
+  const _UndefinedCalendarAvailabilityContent$validFrom();
+}
+
+class _UndefinedCalendarAvailabilityContent$textParameters
+    extends _is.UndefinedSentinel
+    implements _ipbm7ji7.CalendarAvailabilityTextParameters {
+  const _UndefinedCalendarAvailabilityContent$textParameters();
+}
+
+class _UndefinedCalendarAvailabilityContent$organizer
+    extends _is.UndefinedSentinel
+    implements _i5oc0nlo.CalendarAvailabilityOrganizer {
+  const _UndefinedCalendarAvailabilityContent$organizer();
+}
+
+class _UndefinedCalendarAvailabilityContent$validDuration
+    extends _is.UndefinedSentinel
+    implements _idn2i48l.CalendarEventDuration {
+  const _UndefinedCalendarAvailabilityContent$validDuration();
+}
+
 class _CalendarAvailabilityContentImpl extends CalendarAvailabilityContent {
   const _CalendarAvailabilityContentImpl({
     String? summary,
@@ -449,67 +482,73 @@ class _CalendarAvailabilityContentImpl extends CalendarAvailabilityContent {
   @override
   CalendarAvailabilityContent copyWith({
     Object? summary = _Undefined,
-    Object? validFrom = _Undefined,
-    Object? validUntil = _Undefined,
+    _ieswiaty.CalendarEventTiming? validFrom =
+        const _UndefinedCalendarAvailabilityContent$validFrom(),
+    _ieswiaty.CalendarEventTiming? validUntil =
+        const _UndefinedCalendarAvailabilityContent$validFrom(),
     int? priority,
     _izms466b.CalendarFreeBusyKind? closedKind,
     List<_i8tf9h36.CalendarAvailabilityOpening>? openings,
     Object? description = _Undefined,
     Object? location = _Undefined,
-    Object? categories = _Undefined,
-    Object? comments = _Undefined,
+    List<String>? categories = const _is.$UndefinedList<String>(),
+    List<String>? comments = const _is.$UndefinedList<String>(),
     Object? url = _Undefined,
     Object? classification = _Undefined,
-    Object? textParameters = _Undefined,
-    Object? extensions = _Undefined,
-    Object? organizer = _Undefined,
-    Object? validDuration = _Undefined,
-    Object? categoryGroups = _Undefined,
-    Object? contacts = _Undefined,
+    _ipbm7ji7.CalendarAvailabilityTextParameters? textParameters =
+        const _UndefinedCalendarAvailabilityContent$textParameters(),
+    List<_ip5gybl4.CalendarAvailabilityExtension>? extensions =
+        const _is.$UndefinedList<_ip5gybl4.CalendarAvailabilityExtension>(),
+    _i5oc0nlo.CalendarAvailabilityOrganizer? organizer =
+        const _UndefinedCalendarAvailabilityContent$organizer(),
+    _idn2i48l.CalendarEventDuration? validDuration =
+        const _UndefinedCalendarAvailabilityContent$validDuration(),
+    List<_iywbqexh.CalendarAvailabilityCategoryGroup>? categoryGroups =
+        const _is.$UndefinedList<_iywbqexh.CalendarAvailabilityCategoryGroup>(),
+    List<_itw42wa3.CalendarAvailabilityText>? contacts =
+        const _is.$UndefinedList<_itw42wa3.CalendarAvailabilityText>(),
   }) {
     return CalendarAvailabilityContent(
       summary: summary is String? ? summary : this.summary,
-      validFrom: validFrom is _ieswiaty.CalendarEventTiming?
-          ? validFrom
-          : this.validFrom?.copyWith(),
-      validUntil: validUntil is _ieswiaty.CalendarEventTiming?
-          ? validUntil
-          : this.validUntil?.copyWith(),
+      validFrom: validFrom is _is.UndefinedSentinel
+          ? this.validFrom?.copyWith()
+          : validFrom,
+      validUntil: validUntil is _is.UndefinedSentinel
+          ? this.validUntil?.copyWith()
+          : validUntil,
       priority: priority ?? this.priority,
       closedKind: closedKind ?? this.closedKind,
       openings: openings ?? this.openings.map((e0) => e0.copyWith()).toList(),
       description: description is String? ? description : this.description,
       location: location is String? ? location : this.location,
-      categories: categories is List<String>?
-          ? categories
-          : this.categories?.map((e0) => e0).toList(),
-      comments: comments is List<String>?
-          ? comments
-          : this.comments?.map((e0) => e0).toList(),
+      categories: categories is _is.UndefinedSentinel
+          ? this.categories?.map((e0) => e0).toList()
+          : categories,
+      comments: comments is _is.UndefinedSentinel
+          ? this.comments?.map((e0) => e0).toList()
+          : comments,
       url: url is String? ? url : this.url,
       classification: classification is _iucw7bzg.CalendarAvailabilityClass?
           ? classification
           : this.classification,
-      textParameters:
-          textParameters is _ipbm7ji7.CalendarAvailabilityTextParameters?
-          ? textParameters
-          : this.textParameters?.copyWith(),
-      extensions: extensions is List<_ip5gybl4.CalendarAvailabilityExtension>?
-          ? extensions
-          : this.extensions?.map((e0) => e0.copyWith()).toList(),
-      organizer: organizer is _i5oc0nlo.CalendarAvailabilityOrganizer?
-          ? organizer
-          : this.organizer?.copyWith(),
-      validDuration: validDuration is _idn2i48l.CalendarEventDuration?
-          ? validDuration
-          : this.validDuration?.copyWith(),
-      categoryGroups:
-          categoryGroups is List<_iywbqexh.CalendarAvailabilityCategoryGroup>?
-          ? categoryGroups
-          : this.categoryGroups?.map((e0) => e0.copyWith()).toList(),
-      contacts: contacts is List<_itw42wa3.CalendarAvailabilityText>?
-          ? contacts
-          : this.contacts?.map((e0) => e0.copyWith()).toList(),
+      textParameters: textParameters is _is.UndefinedSentinel
+          ? this.textParameters?.copyWith()
+          : textParameters,
+      extensions: extensions is _is.UndefinedSentinel
+          ? this.extensions?.map((e0) => e0.copyWith()).toList()
+          : extensions,
+      organizer: organizer is _is.UndefinedSentinel
+          ? this.organizer?.copyWith()
+          : organizer,
+      validDuration: validDuration is _is.UndefinedSentinel
+          ? this.validDuration?.copyWith()
+          : validDuration,
+      categoryGroups: categoryGroups is _is.UndefinedSentinel
+          ? this.categoryGroups?.map((e0) => e0.copyWith()).toList()
+          : categoryGroups,
+      contacts: contacts is _is.UndefinedSentinel
+          ? this.contacts?.map((e0) => e0.copyWith()).toList()
+          : contacts,
     );
   }
 }

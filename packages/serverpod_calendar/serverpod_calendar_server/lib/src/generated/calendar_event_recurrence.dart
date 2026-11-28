@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_event_rule.dart' as _iovyzq1q;
 import 'calendar_event_timing.dart' as _ieswiaty;
 
@@ -62,7 +63,8 @@ abstract class CalendarEventRecurrence
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
   CalendarEventRecurrence copyWith({
-    _iovyzq1q.CalendarEventRule? rule,
+    _iovyzq1q.CalendarEventRule? rule =
+        const _UndefinedCalendarEventRecurrence$rule(),
     List<_ieswiaty.CalendarEventTiming>? inclusions,
     List<_ieswiaty.CalendarEventTiming>? exclusions,
   });
@@ -129,7 +131,10 @@ abstract class CalendarEventRecurrence
   }
 }
 
-class _Undefined {}
+class _UndefinedCalendarEventRecurrence$rule extends _is.UndefinedSentinel
+    implements _iovyzq1q.CalendarEventRule {
+  const _UndefinedCalendarEventRecurrence$rule();
+}
 
 class _CalendarEventRecurrenceImpl extends CalendarEventRecurrence {
   const _CalendarEventRecurrenceImpl({
@@ -147,12 +152,13 @@ class _CalendarEventRecurrenceImpl extends CalendarEventRecurrence {
   @_is.useResult
   @override
   CalendarEventRecurrence copyWith({
-    Object? rule = _Undefined,
+    _iovyzq1q.CalendarEventRule? rule =
+        const _UndefinedCalendarEventRecurrence$rule(),
     List<_ieswiaty.CalendarEventTiming>? inclusions,
     List<_ieswiaty.CalendarEventTiming>? exclusions,
   }) {
     return CalendarEventRecurrence(
-      rule: rule is _iovyzq1q.CalendarEventRule? ? rule : this.rule?.copyWith(),
+      rule: rule is _is.UndefinedSentinel ? this.rule?.copyWith() : rule,
       inclusions:
           inclusions ?? this.inclusions.map((e0) => e0.copyWith()).toList(),
       exclusions:

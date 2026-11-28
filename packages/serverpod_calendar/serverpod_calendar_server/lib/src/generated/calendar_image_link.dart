@@ -51,7 +51,7 @@ abstract class CalendarImageLink
   @_is.useResult
   CalendarImageLink copyWith({
     String? uri,
-    List<String>? display,
+    List<String>? display = const _is.$UndefinedList<String>(),
     String? mediaType,
   });
   @override
@@ -99,14 +99,14 @@ class _CalendarImageLinkImpl extends CalendarImageLink {
   @override
   CalendarImageLink copyWith({
     String? uri,
-    Object? display = _Undefined,
+    List<String>? display = const _is.$UndefinedList<String>(),
     Object? mediaType = _Undefined,
   }) {
     return CalendarImageLink(
       uri: uri ?? this.uri,
-      display: display is List<String>?
-          ? display
-          : this.display?.map((e0) => e0).toList(),
+      display: display is _is.UndefinedSentinel
+          ? this.display?.map((e0) => e0).toList()
+          : display,
       mediaType: mediaType is String? ? mediaType : this.mediaType,
     );
   }

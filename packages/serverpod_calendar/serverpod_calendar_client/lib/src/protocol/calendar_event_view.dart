@@ -13,6 +13,7 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_event_field_group.dart' as _iftiwkuj;
 import 'calendar_event_geographic_position.dart' as _iloy79hd;
 import 'calendar_event_occurrence_protocol_version.dart' as _im5iu6ju;
@@ -264,27 +265,40 @@ abstract class CalendarEventView
     String? summary,
     String? description,
     String? location,
-    _ieswiaty.CalendarEventTiming? timing,
+    _ieswiaty.CalendarEventTiming? timing =
+        const _UndefinedCalendarEventView$timing(),
     _ivzxk9bc.CalendarEventStatus? status,
     _iwjkdwy7.CalendarEventTransparency? transparency,
     String? protocolUid,
-    DateTime? lastModified,
-    _iqxs44bf.CalendarEventRecurrence? recurrence,
-    _ijijze99.CalendarEventTimingOverrides? timingOverrides,
-    List<_ieswiaty.CalendarEventTiming>? periods,
-    _isfojy12.CalendarEventTextParameters? textParameters,
+    DateTime? lastModified = const _isc.$UndefinedDateTime(),
+    _iqxs44bf.CalendarEventRecurrence? recurrence =
+        const _UndefinedCalendarEventView$recurrence(),
+    _ijijze99.CalendarEventTimingOverrides? timingOverrides =
+        const _UndefinedCalendarEventView$timingOverrides(),
+    List<_ieswiaty.CalendarEventTiming>? periods =
+        const _isc.$UndefinedList<_ieswiaty.CalendarEventTiming>(),
+    _isfojy12.CalendarEventTextParameters? textParameters =
+        const _UndefinedCalendarEventView$textParameters(),
     bool? statusPresent,
     bool? transparencyPresent,
-    _iblfo3t0.CalendarEventProtocolVersion? protocolVersion,
+    _iblfo3t0.CalendarEventProtocolVersion? protocolVersion =
+        const _UndefinedCalendarEventView$protocolVersion(),
     List<_im5iu6ju.CalendarEventOccurrenceProtocolVersion>?
-    occurrenceProtocolVersions,
+        occurrenceProtocolVersions =
+        const _isc.$UndefinedList<
+          _im5iu6ju.CalendarEventOccurrenceProtocolVersion
+        >(),
     int? priority,
-    _iloy79hd.CalendarEventGeographicPosition? geographicPosition,
-    List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups,
+    _iloy79hd.CalendarEventGeographicPosition? geographicPosition =
+        const _UndefinedCalendarEventView$geographicPosition(),
+    List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups =
+        const _isc.$UndefinedList<_iiajf89w.CalendarEventResourceGroup>(),
     String? url,
     String? classification,
-    List<_i3iolgr8.CalendarItemCategoryGroup>? categoryGroups,
-    List<_itx19m90.CalendarItemComment>? comments,
+    List<_i3iolgr8.CalendarItemCategoryGroup>? categoryGroups =
+        const _isc.$UndefinedList<_i3iolgr8.CalendarItemCategoryGroup>(),
+    List<_itx19m90.CalendarItemComment>? comments =
+        const _isc.$UndefinedList<_itx19m90.CalendarItemComment>(),
   });
   @override
   Map<String, dynamic> toJson() {
@@ -391,6 +405,37 @@ abstract class CalendarEventView
 
 class _Undefined {}
 
+class _UndefinedCalendarEventView$timing extends _isc.UndefinedSentinel
+    implements _ieswiaty.CalendarEventTiming {
+  const _UndefinedCalendarEventView$timing();
+}
+
+class _UndefinedCalendarEventView$recurrence extends _isc.UndefinedSentinel
+    implements _iqxs44bf.CalendarEventRecurrence {
+  const _UndefinedCalendarEventView$recurrence();
+}
+
+class _UndefinedCalendarEventView$timingOverrides extends _isc.UndefinedSentinel
+    implements _ijijze99.CalendarEventTimingOverrides {
+  const _UndefinedCalendarEventView$timingOverrides();
+}
+
+class _UndefinedCalendarEventView$textParameters extends _isc.UndefinedSentinel
+    implements _isfojy12.CalendarEventTextParameters {
+  const _UndefinedCalendarEventView$textParameters();
+}
+
+class _UndefinedCalendarEventView$protocolVersion extends _isc.UndefinedSentinel
+    implements _iblfo3t0.CalendarEventProtocolVersion {
+  const _UndefinedCalendarEventView$protocolVersion();
+}
+
+class _UndefinedCalendarEventView$geographicPosition
+    extends _isc.UndefinedSentinel
+    implements _iloy79hd.CalendarEventGeographicPosition {
+  const _UndefinedCalendarEventView$geographicPosition();
+}
+
 class _CalendarEventViewImpl extends CalendarEventView {
   _CalendarEventViewImpl({
     required _isc.UuidValue id,
@@ -463,26 +508,40 @@ class _CalendarEventViewImpl extends CalendarEventView {
     Object? summary = _Undefined,
     Object? description = _Undefined,
     Object? location = _Undefined,
-    Object? timing = _Undefined,
+    _ieswiaty.CalendarEventTiming? timing =
+        const _UndefinedCalendarEventView$timing(),
     Object? status = _Undefined,
     Object? transparency = _Undefined,
     Object? protocolUid = _Undefined,
-    Object? lastModified = _Undefined,
-    Object? recurrence = _Undefined,
-    Object? timingOverrides = _Undefined,
-    Object? periods = _Undefined,
-    Object? textParameters = _Undefined,
+    DateTime? lastModified = const _isc.$UndefinedDateTime(),
+    _iqxs44bf.CalendarEventRecurrence? recurrence =
+        const _UndefinedCalendarEventView$recurrence(),
+    _ijijze99.CalendarEventTimingOverrides? timingOverrides =
+        const _UndefinedCalendarEventView$timingOverrides(),
+    List<_ieswiaty.CalendarEventTiming>? periods =
+        const _isc.$UndefinedList<_ieswiaty.CalendarEventTiming>(),
+    _isfojy12.CalendarEventTextParameters? textParameters =
+        const _UndefinedCalendarEventView$textParameters(),
     Object? statusPresent = _Undefined,
     Object? transparencyPresent = _Undefined,
-    Object? protocolVersion = _Undefined,
-    Object? occurrenceProtocolVersions = _Undefined,
+    _iblfo3t0.CalendarEventProtocolVersion? protocolVersion =
+        const _UndefinedCalendarEventView$protocolVersion(),
+    List<_im5iu6ju.CalendarEventOccurrenceProtocolVersion>?
+        occurrenceProtocolVersions =
+        const _isc.$UndefinedList<
+          _im5iu6ju.CalendarEventOccurrenceProtocolVersion
+        >(),
     Object? priority = _Undefined,
-    Object? geographicPosition = _Undefined,
-    Object? resourceGroups = _Undefined,
+    _iloy79hd.CalendarEventGeographicPosition? geographicPosition =
+        const _UndefinedCalendarEventView$geographicPosition(),
+    List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups =
+        const _isc.$UndefinedList<_iiajf89w.CalendarEventResourceGroup>(),
     Object? url = _Undefined,
     Object? classification = _Undefined,
-    Object? categoryGroups = _Undefined,
-    Object? comments = _Undefined,
+    List<_i3iolgr8.CalendarItemCategoryGroup>? categoryGroups =
+        const _isc.$UndefinedList<_i3iolgr8.CalendarItemCategoryGroup>(),
+    List<_itx19m90.CalendarItemComment>? comments =
+        const _isc.$UndefinedList<_itx19m90.CalendarItemComment>(),
   }) {
     return CalendarEventView(
       id: id ?? this.id,
@@ -493,67 +552,59 @@ class _CalendarEventViewImpl extends CalendarEventView {
       summary: summary is String? ? summary : this.summary,
       description: description is String? ? description : this.description,
       location: location is String? ? location : this.location,
-      timing: timing is _ieswiaty.CalendarEventTiming?
-          ? timing
-          : this.timing?.copyWith(),
+      timing: timing is _isc.UndefinedSentinel
+          ? this.timing?.copyWith()
+          : timing,
       status: status is _ivzxk9bc.CalendarEventStatus? ? status : this.status,
       transparency: transparency is _iwjkdwy7.CalendarEventTransparency?
           ? transparency
           : this.transparency,
       protocolUid: protocolUid is String? ? protocolUid : this.protocolUid,
-      lastModified: lastModified is DateTime?
-          ? lastModified
-          : this.lastModified,
-      recurrence: recurrence is _iqxs44bf.CalendarEventRecurrence?
-          ? recurrence
-          : this.recurrence?.copyWith(),
-      timingOverrides:
-          timingOverrides is _ijijze99.CalendarEventTimingOverrides?
-          ? timingOverrides
-          : this.timingOverrides?.copyWith(),
-      periods: periods is List<_ieswiaty.CalendarEventTiming>?
-          ? periods
-          : this.periods?.map((e0) => e0.copyWith()).toList(),
-      textParameters: textParameters is _isfojy12.CalendarEventTextParameters?
-          ? textParameters
-          : this.textParameters?.copyWith(),
+      lastModified: lastModified is _isc.UndefinedSentinel
+          ? this.lastModified
+          : lastModified,
+      recurrence: recurrence is _isc.UndefinedSentinel
+          ? this.recurrence?.copyWith()
+          : recurrence,
+      timingOverrides: timingOverrides is _isc.UndefinedSentinel
+          ? this.timingOverrides?.copyWith()
+          : timingOverrides,
+      periods: periods is _isc.UndefinedSentinel
+          ? this.periods?.map((e0) => e0.copyWith()).toList()
+          : periods,
+      textParameters: textParameters is _isc.UndefinedSentinel
+          ? this.textParameters?.copyWith()
+          : textParameters,
       statusPresent: statusPresent is bool?
           ? statusPresent
           : this.statusPresent,
       transparencyPresent: transparencyPresent is bool?
           ? transparencyPresent
           : this.transparencyPresent,
-      protocolVersion:
-          protocolVersion is _iblfo3t0.CalendarEventProtocolVersion?
-          ? protocolVersion
-          : this.protocolVersion?.copyWith(),
+      protocolVersion: protocolVersion is _isc.UndefinedSentinel
+          ? this.protocolVersion?.copyWith()
+          : protocolVersion,
       occurrenceProtocolVersions:
-          occurrenceProtocolVersions
-              is List<_im5iu6ju.CalendarEventOccurrenceProtocolVersion>?
-          ? occurrenceProtocolVersions
-          : this.occurrenceProtocolVersions
-                ?.map((e0) => e0.copyWith())
-                .toList(),
+          occurrenceProtocolVersions is _isc.UndefinedSentinel
+          ? this.occurrenceProtocolVersions?.map((e0) => e0.copyWith()).toList()
+          : occurrenceProtocolVersions,
       priority: priority is int? ? priority : this.priority,
-      geographicPosition:
-          geographicPosition is _iloy79hd.CalendarEventGeographicPosition?
-          ? geographicPosition
-          : this.geographicPosition?.copyWith(),
-      resourceGroups:
-          resourceGroups is List<_iiajf89w.CalendarEventResourceGroup>?
-          ? resourceGroups
-          : this.resourceGroups?.map((e0) => e0.copyWith()).toList(),
+      geographicPosition: geographicPosition is _isc.UndefinedSentinel
+          ? this.geographicPosition?.copyWith()
+          : geographicPosition,
+      resourceGroups: resourceGroups is _isc.UndefinedSentinel
+          ? this.resourceGroups?.map((e0) => e0.copyWith()).toList()
+          : resourceGroups,
       url: url is String? ? url : this.url,
       classification: classification is String?
           ? classification
           : this.classification,
-      categoryGroups:
-          categoryGroups is List<_i3iolgr8.CalendarItemCategoryGroup>?
-          ? categoryGroups
-          : this.categoryGroups?.map((e0) => e0.copyWith()).toList(),
-      comments: comments is List<_itx19m90.CalendarItemComment>?
-          ? comments
-          : this.comments?.map((e0) => e0.copyWith()).toList(),
+      categoryGroups: categoryGroups is _isc.UndefinedSentinel
+          ? this.categoryGroups?.map((e0) => e0.copyWith()).toList()
+          : categoryGroups,
+      comments: comments is _isc.UndefinedSentinel
+          ? this.comments?.map((e0) => e0.copyWith()).toList()
+          : comments,
     );
   }
 }

@@ -14,6 +14,7 @@ import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_task_assignee.dart' as _ih5e3u6u;
 import 'calendar_task_content.dart' as _if7nbvl8;
 

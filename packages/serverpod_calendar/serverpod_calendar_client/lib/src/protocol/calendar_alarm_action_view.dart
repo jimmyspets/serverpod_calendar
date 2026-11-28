@@ -99,10 +99,10 @@ abstract class CalendarAlarmActionView
     _isc.UuidValue? alarmId,
     String? originalKey,
     int? revision,
-    DateTime? acknowledgedAt,
-    DateTime? dismissedAt,
-    DateTime? pendingSnoozeAt,
-    DateTime? resetAt,
+    DateTime? acknowledgedAt = const _isc.$UndefinedDateTime(),
+    DateTime? dismissedAt = const _isc.$UndefinedDateTime(),
+    DateTime? pendingSnoozeAt = const _isc.$UndefinedDateTime(),
+    DateTime? resetAt = const _isc.$UndefinedDateTime(),
     DateTime? updatedAt,
   });
   @override
@@ -214,8 +214,6 @@ abstract class CalendarAlarmActionView
   }
 }
 
-class _Undefined {}
-
 class _CalendarAlarmActionViewImpl extends CalendarAlarmActionView {
   const _CalendarAlarmActionViewImpl({
     required _isc.UuidValue id,
@@ -248,10 +246,10 @@ class _CalendarAlarmActionViewImpl extends CalendarAlarmActionView {
     _isc.UuidValue? alarmId,
     String? originalKey,
     int? revision,
-    Object? acknowledgedAt = _Undefined,
-    Object? dismissedAt = _Undefined,
-    Object? pendingSnoozeAt = _Undefined,
-    Object? resetAt = _Undefined,
+    DateTime? acknowledgedAt = const _isc.$UndefinedDateTime(),
+    DateTime? dismissedAt = const _isc.$UndefinedDateTime(),
+    DateTime? pendingSnoozeAt = const _isc.$UndefinedDateTime(),
+    DateTime? resetAt = const _isc.$UndefinedDateTime(),
     DateTime? updatedAt,
   }) {
     return CalendarAlarmActionView(
@@ -259,14 +257,16 @@ class _CalendarAlarmActionViewImpl extends CalendarAlarmActionView {
       alarmId: alarmId ?? this.alarmId,
       originalKey: originalKey ?? this.originalKey,
       revision: revision ?? this.revision,
-      acknowledgedAt: acknowledgedAt is DateTime?
-          ? acknowledgedAt
-          : this.acknowledgedAt,
-      dismissedAt: dismissedAt is DateTime? ? dismissedAt : this.dismissedAt,
-      pendingSnoozeAt: pendingSnoozeAt is DateTime?
-          ? pendingSnoozeAt
-          : this.pendingSnoozeAt,
-      resetAt: resetAt is DateTime? ? resetAt : this.resetAt,
+      acknowledgedAt: acknowledgedAt is _isc.UndefinedSentinel
+          ? this.acknowledgedAt
+          : acknowledgedAt,
+      dismissedAt: dismissedAt is _isc.UndefinedSentinel
+          ? this.dismissedAt
+          : dismissedAt,
+      pendingSnoozeAt: pendingSnoozeAt is _isc.UndefinedSentinel
+          ? this.pendingSnoozeAt
+          : pendingSnoozeAt,
+      resetAt: resetAt is _isc.UndefinedSentinel ? this.resetAt : resetAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }

@@ -13,6 +13,7 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_text_parameters.dart' as _iffxqqc7;
 
 @_isc.immutable
@@ -62,9 +63,12 @@ abstract class CalendarEventTextParameters
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
   CalendarEventTextParameters copyWith({
-    _iffxqqc7.CalendarTextParameters? summary,
-    _iffxqqc7.CalendarTextParameters? description,
-    _iffxqqc7.CalendarTextParameters? location,
+    _iffxqqc7.CalendarTextParameters? summary =
+        const _UndefinedCalendarEventTextParameters$summary(),
+    _iffxqqc7.CalendarTextParameters? description =
+        const _UndefinedCalendarEventTextParameters$summary(),
+    _iffxqqc7.CalendarTextParameters? location =
+        const _UndefinedCalendarEventTextParameters$summary(),
   });
   @override
   bool operator ==(Object other) {
@@ -127,7 +131,11 @@ abstract class CalendarEventTextParameters
   }
 }
 
-class _Undefined {}
+class _UndefinedCalendarEventTextParameters$summary
+    extends _isc.UndefinedSentinel
+    implements _iffxqqc7.CalendarTextParameters {
+  const _UndefinedCalendarEventTextParameters$summary();
+}
 
 class _CalendarEventTextParametersImpl extends CalendarEventTextParameters {
   const _CalendarEventTextParametersImpl({
@@ -145,20 +153,23 @@ class _CalendarEventTextParametersImpl extends CalendarEventTextParameters {
   @_isc.useResult
   @override
   CalendarEventTextParameters copyWith({
-    Object? summary = _Undefined,
-    Object? description = _Undefined,
-    Object? location = _Undefined,
+    _iffxqqc7.CalendarTextParameters? summary =
+        const _UndefinedCalendarEventTextParameters$summary(),
+    _iffxqqc7.CalendarTextParameters? description =
+        const _UndefinedCalendarEventTextParameters$summary(),
+    _iffxqqc7.CalendarTextParameters? location =
+        const _UndefinedCalendarEventTextParameters$summary(),
   }) {
     return CalendarEventTextParameters(
-      summary: summary is _iffxqqc7.CalendarTextParameters?
-          ? summary
-          : this.summary?.copyWith(),
-      description: description is _iffxqqc7.CalendarTextParameters?
-          ? description
-          : this.description?.copyWith(),
-      location: location is _iffxqqc7.CalendarTextParameters?
-          ? location
-          : this.location?.copyWith(),
+      summary: summary is _isc.UndefinedSentinel
+          ? this.summary?.copyWith()
+          : summary,
+      description: description is _isc.UndefinedSentinel
+          ? this.description?.copyWith()
+          : description,
+      location: location is _isc.UndefinedSentinel
+          ? this.location?.copyWith()
+          : location,
     );
   }
 }

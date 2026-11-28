@@ -11,6 +11,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
+
 import 'calendar_invitation_response_choice.dart' as _il64jj9v;
 import 'calendar_invitation_response_delivery_state.dart' as _iw51ozry;
 
@@ -129,7 +130,7 @@ abstract class CalendarInvitationResponseActivityView
     int? attemptCount,
     DateTime? queuedAt,
     DateTime? expiresAt,
-    DateTime? terminalAt,
+    DateTime? terminalAt = const _is.$UndefinedDateTime(),
     String? resultCode,
   });
   @override
@@ -235,7 +236,7 @@ class _CalendarInvitationResponseActivityViewImpl
     int? attemptCount,
     DateTime? queuedAt,
     DateTime? expiresAt,
-    Object? terminalAt = _Undefined,
+    DateTime? terminalAt = const _is.$UndefinedDateTime(),
     Object? resultCode = _Undefined,
   }) {
     return CalendarInvitationResponseActivityView(
@@ -253,7 +254,9 @@ class _CalendarInvitationResponseActivityViewImpl
       attemptCount: attemptCount ?? this.attemptCount,
       queuedAt: queuedAt ?? this.queuedAt,
       expiresAt: expiresAt ?? this.expiresAt,
-      terminalAt: terminalAt is DateTime? ? terminalAt : this.terminalAt,
+      terminalAt: terminalAt is _is.UndefinedSentinel
+          ? this.terminalAt
+          : terminalAt,
       resultCode: resultCode is String? ? resultCode : this.resultCode,
     );
   }

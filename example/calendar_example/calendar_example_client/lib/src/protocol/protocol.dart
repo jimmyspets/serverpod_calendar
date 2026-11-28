@@ -22,20 +22,34 @@ import 'package:serverpod_calendar_feed_client/serverpod_calendar_feed_client.da
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_notifications_client/serverpod_notifications_client.dart'
     as _i9wvmat7;
+
 export 'client.dart';
 
-class Protocol extends _isc.SerializationManager {
+class Protocol extends _isc.SerializationManager
+    implements _isc.ProtocolDeserializationProvider {
   Protocol._();
 
   factory Protocol() => _instance;
 
   static final Protocol _instance = Protocol._().._registerHostProtocols();
 
-  static String? getClassNameFromObjectJson(dynamic data) {
-    if (data is! Map) return null;
-    final className = data['__className__'] as String?;
-    return className;
-  }
+  @override
+  _isc.ProtocolDeserialization get deserializationMetadata =>
+      _isc.ProtocolDeserialization.cached(
+        this,
+        types: const [],
+        modules: const [
+          _iaic.Protocol.new,
+          _imrxcdin.Protocol.new,
+          _ithfap9s.Protocol.new,
+          _i9wvmat7.Protocol.new,
+          _iacc.Protocol.new,
+        ],
+        classNames: const [],
+      );
+
+  static String? getClassNameFromObjectJson(dynamic data) =>
+      _isc.ProtocolDeserialization.readClassName(data);
 
   @override
   T deserialize<T>(
@@ -43,8 +57,8 @@ class Protocol extends _isc.SerializationManager {
     Type? t,
   ]) {
     t ??= T;
-
-    final dataClassName = getClassNameFromObjectJson(data);
+    final rawDataClassName = _isc.ProtocolDeserialization.readClassName(data);
+    final dataClassName = rawDataClassName;
     if (dataClassName != null && dataClassName != getClassNameForType(t)) {
       try {
         return deserializeByClassName({
@@ -58,21 +72,16 @@ class Protocol extends _isc.SerializationManager {
       }
     }
 
-    try {
-      return _iaic.Protocol().deserialize<T>(data, t);
-    } on _isc.DeserializationTypeNotFoundException catch (_) {}
-    try {
-      return _imrxcdin.Protocol().deserialize<T>(data, t);
-    } on _isc.DeserializationTypeNotFoundException catch (_) {}
-    try {
-      return _ithfap9s.Protocol().deserialize<T>(data, t);
-    } on _isc.DeserializationTypeNotFoundException catch (_) {}
-    try {
-      return _i9wvmat7.Protocol().deserialize<T>(data, t);
-    } on _isc.DeserializationTypeNotFoundException catch (_) {}
-    try {
-      return _iacc.Protocol().deserialize<T>(data, t);
-    } on _isc.DeserializationTypeNotFoundException catch (_) {}
+    final modules = deserializationMetadata.modulesForDeserialization(
+      t,
+      className: rawDataClassName,
+    );
+    for (final module in modules) {
+      try {
+        return module.deserialize<T>(data, t);
+      } on _isc.DeserializationTypeNotFoundException catch (_) {}
+    }
+
     return super.deserialize<T>(data, t);
   }
 
@@ -134,24 +143,34 @@ class Protocol extends _isc.SerializationManager {
       return super.deserializeByClassName(data);
     }
     if (dataClassName.startsWith('serverpod_auth_idp.')) {
-      data['className'] = dataClassName.substring(19);
-      return _iaic.Protocol().deserializeByClassName(data);
+      return _iaic.Protocol().deserializeByClassName({
+        ...data,
+        'className': dataClassName.substring(19),
+      });
     }
     if (dataClassName.startsWith('serverpod_calendar.')) {
-      data['className'] = dataClassName.substring(19);
-      return _imrxcdin.Protocol().deserializeByClassName(data);
+      return _imrxcdin.Protocol().deserializeByClassName({
+        ...data,
+        'className': dataClassName.substring(19),
+      });
     }
     if (dataClassName.startsWith('serverpod_calendar_feed.')) {
-      data['className'] = dataClassName.substring(24);
-      return _ithfap9s.Protocol().deserializeByClassName(data);
+      return _ithfap9s.Protocol().deserializeByClassName({
+        ...data,
+        'className': dataClassName.substring(24),
+      });
     }
     if (dataClassName.startsWith('serverpod_notifications.')) {
-      data['className'] = dataClassName.substring(24);
-      return _i9wvmat7.Protocol().deserializeByClassName(data);
+      return _i9wvmat7.Protocol().deserializeByClassName({
+        ...data,
+        'className': dataClassName.substring(24),
+      });
     }
     if (dataClassName.startsWith('serverpod_auth_core.')) {
-      data['className'] = dataClassName.substring(20);
-      return _iacc.Protocol().deserializeByClassName(data);
+      return _iacc.Protocol().deserializeByClassName({
+        ...data,
+        'className': dataClassName.substring(20),
+      });
     }
     return super.deserializeByClassName(data);
   }

@@ -23,6 +23,7 @@ import 'package:serverpod_calendar_server/serverpod_calendar_server.dart'
     as _ipn35bcd;
 import 'package:serverpod_notifications_server/serverpod_notifications_server.dart'
     as _ik9lwgjh;
+
 import '../auth/email_idp_endpoint.dart' as _iuc1hd5t;
 import '../auth/refresh_jwt_tokens_endpoint.dart' as _ih79u0oj;
 import '../endpoints/invitation_demo_endpoint.dart' as _i9j0zg07;

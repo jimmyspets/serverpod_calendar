@@ -10,9 +10,12 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'dart:async' as _ida;
+
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_event_content.dart' as _id4cvk34;
 import 'calendar_event_import_baseline.dart' as _iblybidp;
 import 'calendar_event_origin.dart' as _ipbrznp8;
@@ -141,9 +144,12 @@ abstract class CalendarEventDataRecord
     _ipbrznp8.CalendarEventOrigin? origin,
     String? protocolUid,
     String? uidDigest,
-    _i8iqsbco.CalendarEventProtocolState? protocolState,
-    _iblybidp.CalendarEventImportBaseline? importBaseline,
-    _ijijze99.CalendarEventTimingOverrides? timingOverrides,
+    _i8iqsbco.CalendarEventProtocolState? protocolState =
+        const _UndefinedCalendarEventDataRecord$protocolState(),
+    _iblybidp.CalendarEventImportBaseline? importBaseline =
+        const _UndefinedCalendarEventDataRecord$importBaseline(),
+    _ijijze99.CalendarEventTimingOverrides? timingOverrides =
+        const _UndefinedCalendarEventDataRecord$timingOverrides(),
     _id4cvk34.CalendarEventContent? content,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -202,6 +208,24 @@ abstract class CalendarEventDataRecord
 
 class _Undefined {}
 
+class _UndefinedCalendarEventDataRecord$protocolState
+    extends _is.UndefinedSentinel
+    implements _i8iqsbco.CalendarEventProtocolState {
+  const _UndefinedCalendarEventDataRecord$protocolState();
+}
+
+class _UndefinedCalendarEventDataRecord$importBaseline
+    extends _is.UndefinedSentinel
+    implements _iblybidp.CalendarEventImportBaseline {
+  const _UndefinedCalendarEventDataRecord$importBaseline();
+}
+
+class _UndefinedCalendarEventDataRecord$timingOverrides
+    extends _is.UndefinedSentinel
+    implements _ijijze99.CalendarEventTimingOverrides {
+  const _UndefinedCalendarEventDataRecord$timingOverrides();
+}
+
 class _CalendarEventDataRecordImpl extends CalendarEventDataRecord {
   _CalendarEventDataRecordImpl({
     int? id,
@@ -242,9 +266,12 @@ class _CalendarEventDataRecordImpl extends CalendarEventDataRecord {
     _ipbrznp8.CalendarEventOrigin? origin,
     String? protocolUid,
     String? uidDigest,
-    Object? protocolState = _Undefined,
-    Object? importBaseline = _Undefined,
-    Object? timingOverrides = _Undefined,
+    _i8iqsbco.CalendarEventProtocolState? protocolState =
+        const _UndefinedCalendarEventDataRecord$protocolState(),
+    _iblybidp.CalendarEventImportBaseline? importBaseline =
+        const _UndefinedCalendarEventDataRecord$importBaseline(),
+    _ijijze99.CalendarEventTimingOverrides? timingOverrides =
+        const _UndefinedCalendarEventDataRecord$timingOverrides(),
     _id4cvk34.CalendarEventContent? content,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -256,16 +283,15 @@ class _CalendarEventDataRecordImpl extends CalendarEventDataRecord {
       origin: origin ?? this.origin,
       protocolUid: protocolUid ?? this.protocolUid,
       uidDigest: uidDigest ?? this.uidDigest,
-      protocolState: protocolState is _i8iqsbco.CalendarEventProtocolState?
-          ? protocolState
-          : this.protocolState?.copyWith(),
-      importBaseline: importBaseline is _iblybidp.CalendarEventImportBaseline?
-          ? importBaseline
-          : this.importBaseline?.copyWith(),
-      timingOverrides:
-          timingOverrides is _ijijze99.CalendarEventTimingOverrides?
-          ? timingOverrides
-          : this.timingOverrides?.copyWith(),
+      protocolState: protocolState is _is.UndefinedSentinel
+          ? this.protocolState?.copyWith()
+          : protocolState,
+      importBaseline: importBaseline is _is.UndefinedSentinel
+          ? this.importBaseline?.copyWith()
+          : importBaseline,
+      timingOverrides: timingOverrides is _is.UndefinedSentinel
+          ? this.timingOverrides?.copyWith()
+          : timingOverrides,
       content: content ?? this.content.copyWith(),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -530,6 +556,69 @@ class CalendarEventDataRecordRepository {
       transaction: transaction,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+    );
+  }
+
+  /// Emits [CalendarEventDataRecord]s matching the given query parameters every time the
+  /// source tables are modified.
+  ///
+  /// Use [where] to specify which items to include in the return value.
+  /// If none is specified, all items will be returned.
+  ///
+  /// To specify the order of the items use [orderBy] or [orderByList]
+  /// when sorting by multiple columns.
+  ///
+  /// The maximum number of items can be set by [limit]. If no limit is set,
+  /// all items matching the query will be returned.
+  ///
+  /// [offset] defines how many items to skip, after which [limit] (or all)
+  /// items are read from the database.
+  ///
+  /// Use [throttle] to specify the minimum interval between queries. It can
+  /// also be set to `null`, in which case the stream will only be throttled
+  /// when its subscription is paused.
+  ///
+  /// Source tables are collected from the queried table, [where], [orderBy],
+  /// [orderByList], and the [include] graph. [alsoTriggerOnTables] is added
+  /// to that set. Pass [Table] instances such as `CalendarEventDataRecord.t`.
+  ///
+  /// Raw [Expression] SQL is not inspected. Tables referenced only in raw
+  /// SQL must be passed via [alsoTriggerOnTables].
+  ///
+  /// The stream always reads committed state and never joins an ambient
+  /// [Transaction]. Emissions for a write fire after that write commits.
+  ///
+  /// Currently only supported on SQLite. Calling this method on PostgreSQL
+  /// throws an [UnsupportedError].
+  ///
+  /// ```dart
+  /// var subscription = Persons.db.watch(
+  ///   session,
+  ///   where: (t) => t.lastName.equals('Jones'),
+  ///   orderBy: (t) => t.firstName,
+  ///   limit: 100,
+  /// ).listen((persons) {
+  ///   // Handle the latest matching rows.
+  /// });
+  /// ```
+  _ida.Stream<List<CalendarEventDataRecord>> watch(
+    _is.DatabaseSession session, {
+    _is.WhereExpressionBuilder<CalendarEventDataRecordTable>? where,
+    int? limit,
+    int? offset,
+    _is.OrderByBuilder<CalendarEventDataRecordTable>? orderBy,
+    _is.OrderByListBuilder<CalendarEventDataRecordTable>? orderByList,
+    Duration? throttle = const Duration(milliseconds: 30),
+    Iterable<_is.Table>? alsoTriggerOnTables,
+  }) {
+    return session.db.watch<CalendarEventDataRecord>(
+      where: where?.call(CalendarEventDataRecord.t),
+      orderBy: orderBy?.call(CalendarEventDataRecord.t),
+      orderByList: orderByList?.call(CalendarEventDataRecord.t),
+      limit: limit,
+      offset: offset,
+      throttle: throttle,
+      alsoTriggerOnTables: alsoTriggerOnTables,
     );
   }
 

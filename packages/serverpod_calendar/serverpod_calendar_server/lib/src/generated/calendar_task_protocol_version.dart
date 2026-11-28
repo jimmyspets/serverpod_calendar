@@ -60,8 +60,8 @@ abstract class CalendarTaskProtocolVersion
   CalendarTaskProtocolVersion copyWith({
     int? sequence,
     DateTime? stamp,
-    DateTime? created,
-    DateTime? lastModified,
+    DateTime? created = const _is.$UndefinedDateTime(),
+    DateTime? lastModified = const _is.$UndefinedDateTime(),
   });
   @override
   bool operator ==(Object other) {
@@ -154,16 +154,16 @@ class _CalendarTaskProtocolVersionImpl extends CalendarTaskProtocolVersion {
   CalendarTaskProtocolVersion copyWith({
     Object? sequence = _Undefined,
     DateTime? stamp,
-    Object? created = _Undefined,
-    Object? lastModified = _Undefined,
+    DateTime? created = const _is.$UndefinedDateTime(),
+    DateTime? lastModified = const _is.$UndefinedDateTime(),
   }) {
     return CalendarTaskProtocolVersion(
       sequence: sequence is int? ? sequence : this.sequence,
       stamp: stamp ?? this.stamp,
-      created: created is DateTime? ? created : this.created,
-      lastModified: lastModified is DateTime?
-          ? lastModified
-          : this.lastModified,
+      created: created is _is.UndefinedSentinel ? this.created : created,
+      lastModified: lastModified is _is.UndefinedSentinel
+          ? this.lastModified
+          : lastModified,
     );
   }
 }

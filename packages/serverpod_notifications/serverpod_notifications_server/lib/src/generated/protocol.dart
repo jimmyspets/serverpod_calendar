@@ -13,6 +13,7 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/protocol.dart' as _isp;
 import 'package:serverpod/serverpod.dart' as _is;
+
 import 'notification_cursor_record.dart' as _iivbetmh;
 import 'notification_delivery_record.dart' as _i0qtwtk5;
 import 'notification_delivery_state.dart' as _is3a40pv;
@@ -32,7 +33,8 @@ export 'notification_page.dart';
 export 'notification_scope_record.dart';
 export 'notification_view.dart';
 
-class Protocol extends _is.DatabaseSerializationManager {
+class Protocol extends _is.DatabaseSerializationManager
+    implements _is.DatabaseProtocolDeserializationProvider {
   Protocol._();
 
   factory Protocol() => _instance;
@@ -40,6 +42,46 @@ class Protocol extends _is.DatabaseSerializationManager {
   static final Protocol _instance = Protocol._();
 
   final Set<_is.SerializationManager> _hostProtocols = {};
+
+  @override
+  _is.ProtocolDeserialization get deserializationMetadata =>
+      _is.ProtocolDeserialization.cached(
+        this,
+        types: const [
+          _is.getType<_iivbetmh.NotificationCursorRecord>,
+          _is.getType<_i0qtwtk5.NotificationDeliveryRecord>,
+          _is.getType<_is3a40pv.NotificationDeliveryState>,
+          _is.getType<_i299pw2t.NotificationException>,
+          _is.getType<_i909e29g.NotificationFailureCode>,
+          _is.getType<_i6bnr478.NotificationHint>,
+          _is.getType<_iw4dnqzf.NotificationPage>,
+          _is.getType<_i48objlk.NotificationScopeRecord>,
+          _is.getType<_i86vfscw.NotificationView>,
+          _is.getType<_iivbetmh.NotificationCursorRecord?>,
+          _is.getType<_i0qtwtk5.NotificationDeliveryRecord?>,
+          _is.getType<_is3a40pv.NotificationDeliveryState?>,
+          _is.getType<_i299pw2t.NotificationException?>,
+          _is.getType<_i909e29g.NotificationFailureCode?>,
+          _is.getType<_i6bnr478.NotificationHint?>,
+          _is.getType<_iw4dnqzf.NotificationPage?>,
+          _is.getType<_i48objlk.NotificationScopeRecord?>,
+          _is.getType<_i86vfscw.NotificationView?>,
+          _is.getType<List<_i86vfscw.NotificationView>>,
+        ],
+        modules: const [_isp.Protocol.new],
+        classNames: const [
+          'NotificationCursorRecord',
+          'NotificationDeliveryRecord',
+          'NotificationDeliveryState',
+          'NotificationException',
+          'NotificationFailureCode',
+          'NotificationHint',
+          'NotificationPage',
+          'NotificationScopeRecord',
+          'NotificationView',
+        ],
+        classNamePrefix: 'serverpod_notifications.',
+      );
 
   static List<_isp.TableDefinition> get targetTableDefinitions => [
     _isp.TableDefinition(
@@ -424,13 +466,11 @@ class Protocol extends _is.DatabaseSerializationManager {
     _hostProtocols.add(protocol);
   }
 
-  static String? getClassNameFromObjectJson(dynamic data) {
-    if (data is! Map) return null;
-    final className = data['__className__'] as String?;
-    if (className == null) return null;
-    if (!className.startsWith('serverpod_notifications.')) return className;
-    return className.substring(24);
-  }
+  static String? getClassNameFromObjectJson(dynamic data) =>
+      _is.ProtocolDeserialization.normalizeClassName(
+        _is.ProtocolDeserialization.readClassName(data),
+        prefix: 'serverpod_notifications.',
+      );
 
   @override
   T deserialize<T>(
@@ -438,8 +478,11 @@ class Protocol extends _is.DatabaseSerializationManager {
     Type? t,
   ]) {
     t ??= T;
-
-    final dataClassName = getClassNameFromObjectJson(data);
+    final rawDataClassName = _is.ProtocolDeserialization.readClassName(data);
+    final dataClassName = _is.ProtocolDeserialization.normalizeClassName(
+      rawDataClassName,
+      prefix: 'serverpod_notifications.',
+    );
     if (dataClassName != null && dataClassName != getClassNameForType(t)) {
       try {
         return deserializeByClassName({
@@ -534,9 +577,16 @@ class Protocol extends _is.DatabaseSerializationManager {
               .toList()
           as T;
     }
-    try {
-      return _isp.Protocol().deserialize<T>(data, t);
-    } on _is.DeserializationTypeNotFoundException catch (_) {}
+    final modules = deserializationMetadata.modulesForDeserialization(
+      t,
+      className: rawDataClassName,
+    );
+    for (final module in modules) {
+      try {
+        return module.deserialize<T>(data, t);
+      } on _is.DeserializationTypeNotFoundException catch (_) {}
+    }
+
     return super.deserialize<T>(data, t);
   }
 
@@ -628,8 +678,10 @@ class Protocol extends _is.DatabaseSerializationManager {
       return deserialize<_i86vfscw.NotificationView>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
-      data['className'] = dataClassName.substring(10);
-      return _isp.Protocol().deserializeByClassName(data);
+      return _isp.Protocol().deserializeByClassName({
+        ...data,
+        'className': dataClassName.substring(10),
+      });
     }
     return super.deserializeByClassName(data);
   }

@@ -11,6 +11,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
+
 import 'package:serverpod_calendar_feed_client/src/protocol/calendar_feed_created_credential.dart'
     as _i5f8j021;
 import 'package:serverpod_calendar_feed_client/src/protocol/calendar_feed_credential_view.dart'

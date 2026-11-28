@@ -18,8 +18,8 @@ dependencies:
     path: ../../../packages/serverpod_calendar_feed/serverpod_calendar_feed_client
   serverpod_notifications_client:
     path: ../../../packages/serverpod_notifications/serverpod_notifications_client
-  serverpod_flutter: 4.0.4
-  serverpod_auth_idp_flutter: 4.0.4
+  serverpod_flutter: 4.1.0
+  serverpod_auth_idp_flutter: 4.1.0
 dev_dependencies:
   flutter_lints: 6.0.0
   flutter_test:

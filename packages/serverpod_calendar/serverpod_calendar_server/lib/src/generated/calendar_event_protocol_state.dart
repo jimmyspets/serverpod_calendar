@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_event_override_protocol_state.dart' as _iml0c566;
 import 'calendar_event_protocol_version.dart' as _iblfo3t0;
 import 'calendar_event_source_metadata.dart' as _ic57ts5d;
@@ -85,7 +86,8 @@ abstract class CalendarEventProtocolState
     bool? statusPresent,
     bool? transparencyPresent,
     List<_iml0c566.CalendarEventOverrideProtocolState>? overrides,
-    _ic57ts5d.CalendarEventSourceMetadata? sourceMetadata,
+    _ic57ts5d.CalendarEventSourceMetadata? sourceMetadata =
+        const _UndefinedCalendarEventProtocolState$sourceMetadata(),
   });
   @override
   bool operator ==(Object other) {
@@ -156,7 +158,11 @@ abstract class CalendarEventProtocolState
   }
 }
 
-class _Undefined {}
+class _UndefinedCalendarEventProtocolState$sourceMetadata
+    extends _is.UndefinedSentinel
+    implements _ic57ts5d.CalendarEventSourceMetadata {
+  const _UndefinedCalendarEventProtocolState$sourceMetadata();
+}
 
 class _CalendarEventProtocolStateImpl extends CalendarEventProtocolState {
   const _CalendarEventProtocolStateImpl({
@@ -182,7 +188,8 @@ class _CalendarEventProtocolStateImpl extends CalendarEventProtocolState {
     bool? statusPresent,
     bool? transparencyPresent,
     List<_iml0c566.CalendarEventOverrideProtocolState>? overrides,
-    Object? sourceMetadata = _Undefined,
+    _ic57ts5d.CalendarEventSourceMetadata? sourceMetadata =
+        const _UndefinedCalendarEventProtocolState$sourceMetadata(),
   }) {
     return CalendarEventProtocolState(
       version: version ?? this.version.copyWith(),
@@ -190,9 +197,9 @@ class _CalendarEventProtocolStateImpl extends CalendarEventProtocolState {
       transparencyPresent: transparencyPresent ?? this.transparencyPresent,
       overrides:
           overrides ?? this.overrides.map((e0) => e0.copyWith()).toList(),
-      sourceMetadata: sourceMetadata is _ic57ts5d.CalendarEventSourceMetadata?
-          ? sourceMetadata
-          : this.sourceMetadata?.copyWith(),
+      sourceMetadata: sourceMetadata is _is.UndefinedSentinel
+          ? this.sourceMetadata?.copyWith()
+          : sourceMetadata,
     );
   }
 }

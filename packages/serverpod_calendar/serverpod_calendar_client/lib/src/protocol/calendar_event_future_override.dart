@@ -13,6 +13,7 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_event_occurrence_content.dart' as _io4uvjqi;
 import 'calendar_event_timing.dart' as _ieswiaty;
 
@@ -64,7 +65,8 @@ abstract class CalendarEventFutureOverride
   CalendarEventFutureOverride copyWith({
     _ieswiaty.CalendarEventTiming? originalStart,
     _ieswiaty.CalendarEventTiming? replacement,
-    _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides,
+    _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides =
+        const _UndefinedCalendarEventFutureOverride$contentOverrides(),
   });
   @override
   bool operator ==(Object other) {
@@ -129,7 +131,11 @@ abstract class CalendarEventFutureOverride
   }
 }
 
-class _Undefined {}
+class _UndefinedCalendarEventFutureOverride$contentOverrides
+    extends _isc.UndefinedSentinel
+    implements _io4uvjqi.CalendarEventOccurrenceContent {
+  const _UndefinedCalendarEventFutureOverride$contentOverrides();
+}
 
 class _CalendarEventFutureOverrideImpl extends CalendarEventFutureOverride {
   const _CalendarEventFutureOverrideImpl({
@@ -149,15 +155,15 @@ class _CalendarEventFutureOverrideImpl extends CalendarEventFutureOverride {
   CalendarEventFutureOverride copyWith({
     _ieswiaty.CalendarEventTiming? originalStart,
     _ieswiaty.CalendarEventTiming? replacement,
-    Object? contentOverrides = _Undefined,
+    _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides =
+        const _UndefinedCalendarEventFutureOverride$contentOverrides(),
   }) {
     return CalendarEventFutureOverride(
       originalStart: originalStart ?? this.originalStart.copyWith(),
       replacement: replacement ?? this.replacement.copyWith(),
-      contentOverrides:
-          contentOverrides is _io4uvjqi.CalendarEventOccurrenceContent?
-          ? contentOverrides
-          : this.contentOverrides?.copyWith(),
+      contentOverrides: contentOverrides is _isc.UndefinedSentinel
+          ? this.contentOverrides?.copyWith()
+          : contentOverrides,
     );
   }
 }

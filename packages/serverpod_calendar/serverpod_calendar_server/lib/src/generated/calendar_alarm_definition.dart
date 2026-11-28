@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_alarm_anchor.dart' as _iv448ru6;
 import 'calendar_alarm_duration.dart' as _i1qnv8jf;
 
@@ -82,12 +83,14 @@ abstract class CalendarAlarmDefinition
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
   CalendarAlarmDefinition copyWith({
-    DateTime? absoluteUtc,
-    _i1qnv8jf.CalendarAlarmDuration? relativeDuration,
+    DateTime? absoluteUtc = const _is.$UndefinedDateTime(),
+    _i1qnv8jf.CalendarAlarmDuration? relativeDuration =
+        const _UndefinedCalendarAlarmDefinition$relativeDuration(),
     _iv448ru6.CalendarAlarmAnchor? anchor,
     String? dateZoneId,
     int? repeat,
-    _i1qnv8jf.CalendarAlarmDuration? repeatInterval,
+    _i1qnv8jf.CalendarAlarmDuration? repeatInterval =
+        const _UndefinedCalendarAlarmDefinition$relativeDuration(),
   });
   @override
   bool operator ==(Object other) {
@@ -179,6 +182,12 @@ abstract class CalendarAlarmDefinition
 
 class _Undefined {}
 
+class _UndefinedCalendarAlarmDefinition$relativeDuration
+    extends _is.UndefinedSentinel
+    implements _i1qnv8jf.CalendarAlarmDuration {
+  const _UndefinedCalendarAlarmDefinition$relativeDuration();
+}
+
 class _CalendarAlarmDefinitionImpl extends CalendarAlarmDefinition {
   const _CalendarAlarmDefinitionImpl({
     DateTime? absoluteUtc,
@@ -201,24 +210,28 @@ class _CalendarAlarmDefinitionImpl extends CalendarAlarmDefinition {
   @_is.useResult
   @override
   CalendarAlarmDefinition copyWith({
-    Object? absoluteUtc = _Undefined,
-    Object? relativeDuration = _Undefined,
+    DateTime? absoluteUtc = const _is.$UndefinedDateTime(),
+    _i1qnv8jf.CalendarAlarmDuration? relativeDuration =
+        const _UndefinedCalendarAlarmDefinition$relativeDuration(),
     Object? anchor = _Undefined,
     Object? dateZoneId = _Undefined,
     Object? repeat = _Undefined,
-    Object? repeatInterval = _Undefined,
+    _i1qnv8jf.CalendarAlarmDuration? repeatInterval =
+        const _UndefinedCalendarAlarmDefinition$relativeDuration(),
   }) {
     return CalendarAlarmDefinition(
-      absoluteUtc: absoluteUtc is DateTime? ? absoluteUtc : this.absoluteUtc,
-      relativeDuration: relativeDuration is _i1qnv8jf.CalendarAlarmDuration?
-          ? relativeDuration
-          : this.relativeDuration?.copyWith(),
+      absoluteUtc: absoluteUtc is _is.UndefinedSentinel
+          ? this.absoluteUtc
+          : absoluteUtc,
+      relativeDuration: relativeDuration is _is.UndefinedSentinel
+          ? this.relativeDuration?.copyWith()
+          : relativeDuration,
       anchor: anchor is _iv448ru6.CalendarAlarmAnchor? ? anchor : this.anchor,
       dateZoneId: dateZoneId is String? ? dateZoneId : this.dateZoneId,
       repeat: repeat is int? ? repeat : this.repeat,
-      repeatInterval: repeatInterval is _i1qnv8jf.CalendarAlarmDuration?
-          ? repeatInterval
-          : this.repeatInterval?.copyWith(),
+      repeatInterval: repeatInterval is _is.UndefinedSentinel
+          ? this.repeatInterval?.copyWith()
+          : repeatInterval,
     );
   }
 }

@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_event_content.dart' as _id4cvk34;
 import 'calendar_event_protocol_version.dart' as _iblfo3t0;
 import 'calendar_invitation_apply_receipt.dart' as _ic2yh4ry;
@@ -263,13 +264,15 @@ abstract class CalendarInvitationApplicationView
     _id4cvk34.CalendarEventContent? currentContent,
     _iblfo3t0.CalendarEventProtocolVersion? currentVersion,
     _ilccsff7.CalendarInvitationSourceKind? incomingKind,
-    _is.UuidValue? incomingSourceId,
+    _is.UuidValue? incomingSourceId = const _is.$UndefinedUuidValue(),
     int? invitationRevision,
-    _id4cvk34.CalendarEventContent? incomingContent,
+    _id4cvk34.CalendarEventContent? incomingContent =
+        const _UndefinedCalendarInvitationApplicationView$incomingContent(),
     String? incomingSourceText,
     bool? canApplyCancellation,
     bool? canApply,
-    _ic2yh4ry.CalendarInvitationApplyReceipt? latestResult,
+    _ic2yh4ry.CalendarInvitationApplyReceipt? latestResult =
+        const _UndefinedCalendarInvitationApplicationView$latestResult(),
     bool? occurrenceCompositionBlocked,
     int? occurrenceRevision,
     bool? hasAcceptedRangeCancellation,
@@ -545,6 +548,18 @@ abstract class CalendarInvitationApplicationView
 
 class _Undefined {}
 
+class _UndefinedCalendarInvitationApplicationView$incomingContent
+    extends _is.UndefinedSentinel
+    implements _id4cvk34.CalendarEventContent {
+  const _UndefinedCalendarInvitationApplicationView$incomingContent();
+}
+
+class _UndefinedCalendarInvitationApplicationView$latestResult
+    extends _is.UndefinedSentinel
+    implements _ic2yh4ry.CalendarInvitationApplyReceipt {
+  const _UndefinedCalendarInvitationApplicationView$latestResult();
+}
+
 class _CalendarInvitationApplicationViewImpl
     extends CalendarInvitationApplicationView {
   const _CalendarInvitationApplicationViewImpl({
@@ -629,13 +644,15 @@ class _CalendarInvitationApplicationViewImpl
     _id4cvk34.CalendarEventContent? currentContent,
     _iblfo3t0.CalendarEventProtocolVersion? currentVersion,
     Object? incomingKind = _Undefined,
-    Object? incomingSourceId = _Undefined,
+    _is.UuidValue? incomingSourceId = const _is.$UndefinedUuidValue(),
     Object? invitationRevision = _Undefined,
-    Object? incomingContent = _Undefined,
+    _id4cvk34.CalendarEventContent? incomingContent =
+        const _UndefinedCalendarInvitationApplicationView$incomingContent(),
     Object? incomingSourceText = _Undefined,
     bool? canApplyCancellation,
     bool? canApply,
-    Object? latestResult = _Undefined,
+    _ic2yh4ry.CalendarInvitationApplyReceipt? latestResult =
+        const _UndefinedCalendarInvitationApplicationView$latestResult(),
     bool? occurrenceCompositionBlocked,
     int? occurrenceRevision,
     bool? hasAcceptedRangeCancellation,
@@ -663,23 +680,23 @@ class _CalendarInvitationApplicationViewImpl
       incomingKind: incomingKind is _ilccsff7.CalendarInvitationSourceKind?
           ? incomingKind
           : this.incomingKind,
-      incomingSourceId: incomingSourceId is _is.UuidValue?
-          ? incomingSourceId
-          : this.incomingSourceId,
+      incomingSourceId: incomingSourceId is _is.UndefinedSentinel
+          ? this.incomingSourceId
+          : incomingSourceId,
       invitationRevision: invitationRevision is int?
           ? invitationRevision
           : this.invitationRevision,
-      incomingContent: incomingContent is _id4cvk34.CalendarEventContent?
-          ? incomingContent
-          : this.incomingContent?.copyWith(),
+      incomingContent: incomingContent is _is.UndefinedSentinel
+          ? this.incomingContent?.copyWith()
+          : incomingContent,
       incomingSourceText: incomingSourceText is String?
           ? incomingSourceText
           : this.incomingSourceText,
       canApplyCancellation: canApplyCancellation ?? this.canApplyCancellation,
       canApply: canApply ?? this.canApply,
-      latestResult: latestResult is _ic2yh4ry.CalendarInvitationApplyReceipt?
-          ? latestResult
-          : this.latestResult?.copyWith(),
+      latestResult: latestResult is _is.UndefinedSentinel
+          ? this.latestResult?.copyWith()
+          : latestResult,
       occurrenceCompositionBlocked:
           occurrenceCompositionBlocked ?? this.occurrenceCompositionBlocked,
       occurrenceRevision: occurrenceRevision ?? this.occurrenceRevision,

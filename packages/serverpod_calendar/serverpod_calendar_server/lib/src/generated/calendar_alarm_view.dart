@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_alarm_definition.dart' as _irif99jb;
 import 'calendar_alarm_parent.dart' as _iiyuulin;
 import 'calendar_alarm_plan_status.dart' as _irtomk7p;
@@ -111,7 +112,7 @@ abstract class CalendarAlarmView
     int? revision,
     bool? armed,
     _irtomk7p.CalendarAlarmPlanStatus? planningStatus,
-    DateTime? planningWindowEnd,
+    DateTime? planningWindowEnd = const _is.$UndefinedDateTime(),
     _irif99jb.CalendarAlarmDefinition? definition,
     bool? anchorCompatible,
     DateTime? createdAt,
@@ -273,7 +274,7 @@ class _CalendarAlarmViewImpl extends CalendarAlarmView {
     int? revision,
     bool? armed,
     Object? planningStatus = _Undefined,
-    Object? planningWindowEnd = _Undefined,
+    DateTime? planningWindowEnd = const _is.$UndefinedDateTime(),
     _irif99jb.CalendarAlarmDefinition? definition,
     bool? anchorCompatible,
     DateTime? createdAt,
@@ -287,9 +288,9 @@ class _CalendarAlarmViewImpl extends CalendarAlarmView {
       planningStatus: planningStatus is _irtomk7p.CalendarAlarmPlanStatus?
           ? planningStatus
           : this.planningStatus,
-      planningWindowEnd: planningWindowEnd is DateTime?
-          ? planningWindowEnd
-          : this.planningWindowEnd,
+      planningWindowEnd: planningWindowEnd is _is.UndefinedSentinel
+          ? this.planningWindowEnd
+          : planningWindowEnd,
       definition: definition ?? this.definition.copyWith(),
       anchorCompatible: anchorCompatible ?? this.anchorCompatible,
       createdAt: createdAt ?? this.createdAt,

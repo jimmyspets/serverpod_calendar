@@ -11,6 +11,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
+
 import 'calendar_failure_code.dart' as _i7h2f30k;
 
 abstract class CalendarException

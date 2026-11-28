@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_availability_override_protocol_state.dart' as _i33h9mr5;
 
 @_is.immutable
@@ -74,10 +75,13 @@ abstract class CalendarAvailabilityOpeningProtocolState
   @_is.useResult
   CalendarAvailabilityOpeningProtocolState copyWith({
     _is.UuidValue? openingUid,
-    DateTime? created,
+    DateTime? created = const _is.$UndefinedDateTime(),
     DateTime? stamp,
-    DateTime? lastModified,
-    List<_i33h9mr5.CalendarAvailabilityOverrideProtocolState>? overrides,
+    DateTime? lastModified = const _is.$UndefinedDateTime(),
+    List<_i33h9mr5.CalendarAvailabilityOverrideProtocolState>? overrides =
+        const _is.$UndefinedList<
+          _i33h9mr5.CalendarAvailabilityOverrideProtocolState
+        >(),
   });
   @override
   bool operator ==(Object other) {
@@ -161,8 +165,6 @@ abstract class CalendarAvailabilityOpeningProtocolState
   }
 }
 
-class _Undefined {}
-
 class _CalendarAvailabilityOpeningProtocolStateImpl
     extends CalendarAvailabilityOpeningProtocolState {
   const _CalendarAvailabilityOpeningProtocolStateImpl({
@@ -185,23 +187,24 @@ class _CalendarAvailabilityOpeningProtocolStateImpl
   @override
   CalendarAvailabilityOpeningProtocolState copyWith({
     _is.UuidValue? openingUid,
-    Object? created = _Undefined,
+    DateTime? created = const _is.$UndefinedDateTime(),
     DateTime? stamp,
-    Object? lastModified = _Undefined,
-    Object? overrides = _Undefined,
+    DateTime? lastModified = const _is.$UndefinedDateTime(),
+    List<_i33h9mr5.CalendarAvailabilityOverrideProtocolState>? overrides =
+        const _is.$UndefinedList<
+          _i33h9mr5.CalendarAvailabilityOverrideProtocolState
+        >(),
   }) {
     return CalendarAvailabilityOpeningProtocolState(
       openingUid: openingUid ?? this.openingUid,
-      created: created is DateTime? ? created : this.created,
+      created: created is _is.UndefinedSentinel ? this.created : created,
       stamp: stamp ?? this.stamp,
-      lastModified: lastModified is DateTime?
-          ? lastModified
-          : this.lastModified,
-      overrides:
-          overrides
-              is List<_i33h9mr5.CalendarAvailabilityOverrideProtocolState>?
-          ? overrides
-          : this.overrides?.map((e0) => e0.copyWith()).toList(),
+      lastModified: lastModified is _is.UndefinedSentinel
+          ? this.lastModified
+          : lastModified,
+      overrides: overrides is _is.UndefinedSentinel
+          ? this.overrides?.map((e0) => e0.copyWith()).toList()
+          : overrides,
     );
   }
 }

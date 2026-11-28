@@ -10,7 +10,10 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'dart:async' as _ida;
+
 import 'package:serverpod/serverpod.dart' as _is;
+
 import 'notification_delivery_state.dart' as _is3a40pv;
 
 abstract class NotificationDeliveryRecord
@@ -178,7 +181,7 @@ abstract class NotificationDeliveryRecord
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
   NotificationDeliveryRecord copyWith({
-    _is.UuidValue? id,
+    _is.UuidValue? id = const _is.$UndefinedUuidValue(),
     String? scopeKey,
     String? recipientNamespace,
     String? recipientKey,
@@ -193,11 +196,11 @@ abstract class NotificationDeliveryRecord
     String? reason,
     DateTime? nextAttemptAt,
     int? attemptCount,
-    _is.UuidValue? leaseOwner,
-    DateTime? leaseUntil,
+    _is.UuidValue? leaseOwner = const _is.$UndefinedUuidValue(),
+    DateTime? leaseUntil = const _is.$UndefinedDateTime(),
     int? leaseFence,
-    DateTime? publishedAt,
-    DateTime? terminalAt,
+    DateTime? publishedAt = const _is.$UndefinedDateTime(),
+    DateTime? terminalAt = const _is.$UndefinedDateTime(),
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -319,7 +322,7 @@ class _NotificationDeliveryRecordImpl extends NotificationDeliveryRecord {
   @_is.useResult
   @override
   NotificationDeliveryRecord copyWith({
-    Object? id = _Undefined,
+    _is.UuidValue? id = const _is.$UndefinedUuidValue(),
     String? scopeKey,
     String? recipientNamespace,
     String? recipientKey,
@@ -334,16 +337,16 @@ class _NotificationDeliveryRecordImpl extends NotificationDeliveryRecord {
     Object? reason = _Undefined,
     DateTime? nextAttemptAt,
     int? attemptCount,
-    Object? leaseOwner = _Undefined,
-    Object? leaseUntil = _Undefined,
+    _is.UuidValue? leaseOwner = const _is.$UndefinedUuidValue(),
+    DateTime? leaseUntil = const _is.$UndefinedDateTime(),
     int? leaseFence,
-    Object? publishedAt = _Undefined,
-    Object? terminalAt = _Undefined,
+    DateTime? publishedAt = const _is.$UndefinedDateTime(),
+    DateTime? terminalAt = const _is.$UndefinedDateTime(),
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
     return NotificationDeliveryRecord(
-      id: id is _is.UuidValue? ? id : this.id,
+      id: id is _is.UndefinedSentinel ? this.id : id,
       scopeKey: scopeKey ?? this.scopeKey,
       recipientNamespace: recipientNamespace ?? this.recipientNamespace,
       recipientKey: recipientKey ?? this.recipientKey,
@@ -358,11 +361,19 @@ class _NotificationDeliveryRecordImpl extends NotificationDeliveryRecord {
       reason: reason is String? ? reason : this.reason,
       nextAttemptAt: nextAttemptAt ?? this.nextAttemptAt,
       attemptCount: attemptCount ?? this.attemptCount,
-      leaseOwner: leaseOwner is _is.UuidValue? ? leaseOwner : this.leaseOwner,
-      leaseUntil: leaseUntil is DateTime? ? leaseUntil : this.leaseUntil,
+      leaseOwner: leaseOwner is _is.UndefinedSentinel
+          ? this.leaseOwner
+          : leaseOwner,
+      leaseUntil: leaseUntil is _is.UndefinedSentinel
+          ? this.leaseUntil
+          : leaseUntil,
       leaseFence: leaseFence ?? this.leaseFence,
-      publishedAt: publishedAt is DateTime? ? publishedAt : this.publishedAt,
-      terminalAt: terminalAt is DateTime? ? terminalAt : this.terminalAt,
+      publishedAt: publishedAt is _is.UndefinedSentinel
+          ? this.publishedAt
+          : publishedAt,
+      terminalAt: terminalAt is _is.UndefinedSentinel
+          ? this.terminalAt
+          : terminalAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -736,6 +747,69 @@ class NotificationDeliveryRecordRepository {
       transaction: transaction,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+    );
+  }
+
+  /// Emits [NotificationDeliveryRecord]s matching the given query parameters every time the
+  /// source tables are modified.
+  ///
+  /// Use [where] to specify which items to include in the return value.
+  /// If none is specified, all items will be returned.
+  ///
+  /// To specify the order of the items use [orderBy] or [orderByList]
+  /// when sorting by multiple columns.
+  ///
+  /// The maximum number of items can be set by [limit]. If no limit is set,
+  /// all items matching the query will be returned.
+  ///
+  /// [offset] defines how many items to skip, after which [limit] (or all)
+  /// items are read from the database.
+  ///
+  /// Use [throttle] to specify the minimum interval between queries. It can
+  /// also be set to `null`, in which case the stream will only be throttled
+  /// when its subscription is paused.
+  ///
+  /// Source tables are collected from the queried table, [where], [orderBy],
+  /// [orderByList], and the [include] graph. [alsoTriggerOnTables] is added
+  /// to that set. Pass [Table] instances such as `NotificationDeliveryRecord.t`.
+  ///
+  /// Raw [Expression] SQL is not inspected. Tables referenced only in raw
+  /// SQL must be passed via [alsoTriggerOnTables].
+  ///
+  /// The stream always reads committed state and never joins an ambient
+  /// [Transaction]. Emissions for a write fire after that write commits.
+  ///
+  /// Currently only supported on SQLite. Calling this method on PostgreSQL
+  /// throws an [UnsupportedError].
+  ///
+  /// ```dart
+  /// var subscription = Persons.db.watch(
+  ///   session,
+  ///   where: (t) => t.lastName.equals('Jones'),
+  ///   orderBy: (t) => t.firstName,
+  ///   limit: 100,
+  /// ).listen((persons) {
+  ///   // Handle the latest matching rows.
+  /// });
+  /// ```
+  _ida.Stream<List<NotificationDeliveryRecord>> watch(
+    _is.DatabaseSession session, {
+    _is.WhereExpressionBuilder<NotificationDeliveryRecordTable>? where,
+    int? limit,
+    int? offset,
+    _is.OrderByBuilder<NotificationDeliveryRecordTable>? orderBy,
+    _is.OrderByListBuilder<NotificationDeliveryRecordTable>? orderByList,
+    Duration? throttle = const Duration(milliseconds: 30),
+    Iterable<_is.Table>? alsoTriggerOnTables,
+  }) {
+    return session.db.watch<NotificationDeliveryRecord>(
+      where: where?.call(NotificationDeliveryRecord.t),
+      orderBy: orderBy?.call(NotificationDeliveryRecord.t),
+      orderByList: orderByList?.call(NotificationDeliveryRecord.t),
+      limit: limit,
+      offset: offset,
+      throttle: throttle,
+      alsoTriggerOnTables: alsoTriggerOnTables,
     );
   }
 

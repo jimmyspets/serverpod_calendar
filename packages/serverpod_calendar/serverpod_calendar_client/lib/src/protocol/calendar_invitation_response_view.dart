@@ -13,6 +13,7 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_invitation_response_choice.dart' as _il64jj9v;
 import 'calendar_invitation_response_delivery_state.dart' as _iw51ozry;
@@ -133,16 +134,17 @@ abstract class CalendarInvitationResponseView
   @_isc.useResult
   CalendarInvitationResponseView copyWith({
     _isc.UuidValue? invitationId,
-    _ieswiaty.CalendarEventTiming? originalStart,
+    _ieswiaty.CalendarEventTiming? originalStart =
+        const _UndefinedCalendarInvitationResponseView$originalStart(),
     bool? canSend,
     int? revision,
-    _isc.UuidValue? responseId,
+    _isc.UuidValue? responseId = const _isc.$UndefinedUuidValue(),
     _il64jj9v.CalendarInvitationResponseChoice? choice,
-    DateTime? stamp,
-    _isc.UuidValue? sourceId,
+    DateTime? stamp = const _isc.$UndefinedDateTime(),
+    _isc.UuidValue? sourceId = const _isc.$UndefinedUuidValue(),
     int? sourceRevision,
     int? sourceSequence,
-    DateTime? sourceStamp,
+    DateTime? sourceStamp = const _isc.$UndefinedDateTime(),
     bool? appliesToCurrentSource,
     _iw51ozry.CalendarInvitationResponseDeliveryState? deliveryState,
   });
@@ -290,6 +292,12 @@ abstract class CalendarInvitationResponseView
 
 class _Undefined {}
 
+class _UndefinedCalendarInvitationResponseView$originalStart
+    extends _isc.UndefinedSentinel
+    implements _ieswiaty.CalendarEventTiming {
+  const _UndefinedCalendarInvitationResponseView$originalStart();
+}
+
 class _CalendarInvitationResponseViewImpl
     extends CalendarInvitationResponseView {
   const _CalendarInvitationResponseViewImpl({
@@ -328,39 +336,44 @@ class _CalendarInvitationResponseViewImpl
   @override
   CalendarInvitationResponseView copyWith({
     _isc.UuidValue? invitationId,
-    Object? originalStart = _Undefined,
+    _ieswiaty.CalendarEventTiming? originalStart =
+        const _UndefinedCalendarInvitationResponseView$originalStart(),
     bool? canSend,
     int? revision,
-    Object? responseId = _Undefined,
+    _isc.UuidValue? responseId = const _isc.$UndefinedUuidValue(),
     Object? choice = _Undefined,
-    Object? stamp = _Undefined,
-    Object? sourceId = _Undefined,
+    DateTime? stamp = const _isc.$UndefinedDateTime(),
+    _isc.UuidValue? sourceId = const _isc.$UndefinedUuidValue(),
     Object? sourceRevision = _Undefined,
     Object? sourceSequence = _Undefined,
-    Object? sourceStamp = _Undefined,
+    DateTime? sourceStamp = const _isc.$UndefinedDateTime(),
     bool? appliesToCurrentSource,
     Object? deliveryState = _Undefined,
   }) {
     return CalendarInvitationResponseView(
       invitationId: invitationId ?? this.invitationId,
-      originalStart: originalStart is _ieswiaty.CalendarEventTiming?
-          ? originalStart
-          : this.originalStart?.copyWith(),
+      originalStart: originalStart is _isc.UndefinedSentinel
+          ? this.originalStart?.copyWith()
+          : originalStart,
       canSend: canSend ?? this.canSend,
       revision: revision ?? this.revision,
-      responseId: responseId is _isc.UuidValue? ? responseId : this.responseId,
+      responseId: responseId is _isc.UndefinedSentinel
+          ? this.responseId
+          : responseId,
       choice: choice is _il64jj9v.CalendarInvitationResponseChoice?
           ? choice
           : this.choice,
-      stamp: stamp is DateTime? ? stamp : this.stamp,
-      sourceId: sourceId is _isc.UuidValue? ? sourceId : this.sourceId,
+      stamp: stamp is _isc.UndefinedSentinel ? this.stamp : stamp,
+      sourceId: sourceId is _isc.UndefinedSentinel ? this.sourceId : sourceId,
       sourceRevision: sourceRevision is int?
           ? sourceRevision
           : this.sourceRevision,
       sourceSequence: sourceSequence is int?
           ? sourceSequence
           : this.sourceSequence,
-      sourceStamp: sourceStamp is DateTime? ? sourceStamp : this.sourceStamp,
+      sourceStamp: sourceStamp is _isc.UndefinedSentinel
+          ? this.sourceStamp
+          : sourceStamp,
       appliesToCurrentSource:
           appliesToCurrentSource ?? this.appliesToCurrentSource,
       deliveryState:

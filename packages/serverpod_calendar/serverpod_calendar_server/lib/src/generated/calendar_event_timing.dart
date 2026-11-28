@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_event_civil.dart' as _i1bb5k1r;
 import 'calendar_event_duration.dart' as _idn2i48l;
 import 'calendar_event_time_kind.dart' as _idbnuf6y;
@@ -74,8 +75,10 @@ abstract class CalendarEventTiming
   CalendarEventTiming copyWith({
     _idbnuf6y.CalendarEventTimeKind? kind,
     _i1bb5k1r.CalendarEventCivil? start,
-    _i1bb5k1r.CalendarEventCivil? end,
-    _idn2i48l.CalendarEventDuration? duration,
+    _i1bb5k1r.CalendarEventCivil? end =
+        const _UndefinedCalendarEventTiming$end(),
+    _idn2i48l.CalendarEventDuration? duration =
+        const _UndefinedCalendarEventTiming$duration(),
     String? zoneId,
   });
   @override
@@ -157,6 +160,16 @@ abstract class CalendarEventTiming
 
 class _Undefined {}
 
+class _UndefinedCalendarEventTiming$end extends _is.UndefinedSentinel
+    implements _i1bb5k1r.CalendarEventCivil {
+  const _UndefinedCalendarEventTiming$end();
+}
+
+class _UndefinedCalendarEventTiming$duration extends _is.UndefinedSentinel
+    implements _idn2i48l.CalendarEventDuration {
+  const _UndefinedCalendarEventTiming$duration();
+}
+
 class _CalendarEventTimingImpl extends CalendarEventTiming {
   const _CalendarEventTimingImpl({
     required _idbnuf6y.CalendarEventTimeKind kind,
@@ -179,17 +192,19 @@ class _CalendarEventTimingImpl extends CalendarEventTiming {
   CalendarEventTiming copyWith({
     _idbnuf6y.CalendarEventTimeKind? kind,
     _i1bb5k1r.CalendarEventCivil? start,
-    Object? end = _Undefined,
-    Object? duration = _Undefined,
+    _i1bb5k1r.CalendarEventCivil? end =
+        const _UndefinedCalendarEventTiming$end(),
+    _idn2i48l.CalendarEventDuration? duration =
+        const _UndefinedCalendarEventTiming$duration(),
     Object? zoneId = _Undefined,
   }) {
     return CalendarEventTiming(
       kind: kind ?? this.kind,
       start: start ?? this.start.copyWith(),
-      end: end is _i1bb5k1r.CalendarEventCivil? ? end : this.end?.copyWith(),
-      duration: duration is _idn2i48l.CalendarEventDuration?
-          ? duration
-          : this.duration?.copyWith(),
+      end: end is _is.UndefinedSentinel ? this.end?.copyWith() : end,
+      duration: duration is _is.UndefinedSentinel
+          ? this.duration?.copyWith()
+          : duration,
       zoneId: zoneId is String? ? zoneId : this.zoneId,
     );
   }

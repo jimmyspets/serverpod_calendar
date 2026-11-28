@@ -60,8 +60,8 @@ abstract class CalendarEventProtocolVersion
   CalendarEventProtocolVersion copyWith({
     int? sequence,
     DateTime? stamp,
-    DateTime? created,
-    DateTime? lastModified,
+    DateTime? created = const _isc.$UndefinedDateTime(),
+    DateTime? lastModified = const _isc.$UndefinedDateTime(),
   });
   @override
   bool operator ==(Object other) {
@@ -154,16 +154,16 @@ class _CalendarEventProtocolVersionImpl extends CalendarEventProtocolVersion {
   CalendarEventProtocolVersion copyWith({
     Object? sequence = _Undefined,
     DateTime? stamp,
-    Object? created = _Undefined,
-    Object? lastModified = _Undefined,
+    DateTime? created = const _isc.$UndefinedDateTime(),
+    DateTime? lastModified = const _isc.$UndefinedDateTime(),
   }) {
     return CalendarEventProtocolVersion(
       sequence: sequence is int? ? sequence : this.sequence,
       stamp: stamp ?? this.stamp,
-      created: created is DateTime? ? created : this.created,
-      lastModified: lastModified is DateTime?
-          ? lastModified
-          : this.lastModified,
+      created: created is _isc.UndefinedSentinel ? this.created : created,
+      lastModified: lastModified is _isc.UndefinedSentinel
+          ? this.lastModified
+          : lastModified,
     );
   }
 }

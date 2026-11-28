@@ -13,6 +13,7 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_alarm_action_kind.dart' as _ihv8htej;
 import 'calendar_alarm_parent.dart' as _iiyuulin;
 
@@ -94,9 +95,9 @@ abstract class CalendarAlarmActionRequest
     int? expectedAlarmRevision,
     int? expectedActionRevision,
     _ihv8htej.CalendarAlarmActionKind? kind,
-    _isc.UuidValue? firingId,
-    _isc.UuidValue? actionId,
-    DateTime? snoozeAt,
+    _isc.UuidValue? firingId = const _isc.$UndefinedUuidValue(),
+    _isc.UuidValue? actionId = const _isc.$UndefinedUuidValue(),
+    DateTime? snoozeAt = const _isc.$UndefinedDateTime(),
   });
   @override
   bool operator ==(Object other) {
@@ -199,8 +200,6 @@ abstract class CalendarAlarmActionRequest
   }
 }
 
-class _Undefined {}
-
 class _CalendarAlarmActionRequestImpl extends CalendarAlarmActionRequest {
   const _CalendarAlarmActionRequestImpl({
     required _iiyuulin.CalendarAlarmParent parent,
@@ -232,9 +231,9 @@ class _CalendarAlarmActionRequestImpl extends CalendarAlarmActionRequest {
     int? expectedAlarmRevision,
     int? expectedActionRevision,
     _ihv8htej.CalendarAlarmActionKind? kind,
-    Object? firingId = _Undefined,
-    Object? actionId = _Undefined,
-    Object? snoozeAt = _Undefined,
+    _isc.UuidValue? firingId = const _isc.$UndefinedUuidValue(),
+    _isc.UuidValue? actionId = const _isc.$UndefinedUuidValue(),
+    DateTime? snoozeAt = const _isc.$UndefinedDateTime(),
   }) {
     return CalendarAlarmActionRequest(
       parent: parent ?? this.parent.copyWith(),
@@ -244,9 +243,9 @@ class _CalendarAlarmActionRequestImpl extends CalendarAlarmActionRequest {
       expectedActionRevision:
           expectedActionRevision ?? this.expectedActionRevision,
       kind: kind ?? this.kind,
-      firingId: firingId is _isc.UuidValue? ? firingId : this.firingId,
-      actionId: actionId is _isc.UuidValue? ? actionId : this.actionId,
-      snoozeAt: snoozeAt is DateTime? ? snoozeAt : this.snoozeAt,
+      firingId: firingId is _isc.UndefinedSentinel ? this.firingId : firingId,
+      actionId: actionId is _isc.UndefinedSentinel ? this.actionId : actionId,
+      snoozeAt: snoozeAt is _isc.UndefinedSentinel ? this.snoozeAt : snoozeAt,
     );
   }
 }

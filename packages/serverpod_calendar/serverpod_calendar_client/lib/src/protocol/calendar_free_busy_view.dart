@@ -13,6 +13,7 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_free_busy_coverage.dart' as _ia3n9q23;
 import 'calendar_free_busy_period.dart' as _i82zcrxb;
 

@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_item_category_group.dart' as _i3iolgr8;
 import 'calendar_item_comment.dart' as _itx19m90;
 import 'calendar_item_text_metadata_field.dart' as _i12tuyl5;
@@ -79,8 +80,10 @@ abstract class CalendarItemTextMetadataPatch
     List<_i12tuyl5.CalendarItemTextMetadataField>? selectedFields,
     String? url,
     String? classification,
-    List<_i3iolgr8.CalendarItemCategoryGroup>? categoryGroups,
-    List<_itx19m90.CalendarItemComment>? comments,
+    List<_i3iolgr8.CalendarItemCategoryGroup>? categoryGroups =
+        const _is.$UndefinedList<_i3iolgr8.CalendarItemCategoryGroup>(),
+    List<_itx19m90.CalendarItemComment>? comments =
+        const _is.$UndefinedList<_itx19m90.CalendarItemComment>(),
   });
   @override
   bool operator ==(Object other) {
@@ -189,8 +192,10 @@ class _CalendarItemTextMetadataPatchImpl extends CalendarItemTextMetadataPatch {
     List<_i12tuyl5.CalendarItemTextMetadataField>? selectedFields,
     Object? url = _Undefined,
     Object? classification = _Undefined,
-    Object? categoryGroups = _Undefined,
-    Object? comments = _Undefined,
+    List<_i3iolgr8.CalendarItemCategoryGroup>? categoryGroups =
+        const _is.$UndefinedList<_i3iolgr8.CalendarItemCategoryGroup>(),
+    List<_itx19m90.CalendarItemComment>? comments =
+        const _is.$UndefinedList<_itx19m90.CalendarItemComment>(),
   }) {
     return CalendarItemTextMetadataPatch(
       selectedFields:
@@ -199,13 +204,12 @@ class _CalendarItemTextMetadataPatchImpl extends CalendarItemTextMetadataPatch {
       classification: classification is String?
           ? classification
           : this.classification,
-      categoryGroups:
-          categoryGroups is List<_i3iolgr8.CalendarItemCategoryGroup>?
-          ? categoryGroups
-          : this.categoryGroups?.map((e0) => e0.copyWith()).toList(),
-      comments: comments is List<_itx19m90.CalendarItemComment>?
-          ? comments
-          : this.comments?.map((e0) => e0.copyWith()).toList(),
+      categoryGroups: categoryGroups is _is.UndefinedSentinel
+          ? this.categoryGroups?.map((e0) => e0.copyWith()).toList()
+          : categoryGroups,
+      comments: comments is _is.UndefinedSentinel
+          ? this.comments?.map((e0) => e0.copyWith()).toList()
+          : comments,
     );
   }
 }

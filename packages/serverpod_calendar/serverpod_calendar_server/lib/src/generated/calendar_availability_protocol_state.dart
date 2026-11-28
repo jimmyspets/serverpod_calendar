@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_availability_opening_protocol_state.dart' as _ix3hb3ib;
 
 @_is.immutable
@@ -71,9 +72,9 @@ abstract class CalendarAvailabilityProtocolState
   @_is.useResult
   CalendarAvailabilityProtocolState copyWith({
     int? sequence,
-    DateTime? created,
+    DateTime? created = const _is.$UndefinedDateTime(),
     DateTime? stamp,
-    DateTime? lastModified,
+    DateTime? lastModified = const _is.$UndefinedDateTime(),
     List<_ix3hb3ib.CalendarAvailabilityOpeningProtocolState>? openings,
   });
   @override
@@ -176,18 +177,18 @@ class _CalendarAvailabilityProtocolStateImpl
   @override
   CalendarAvailabilityProtocolState copyWith({
     Object? sequence = _Undefined,
-    Object? created = _Undefined,
+    DateTime? created = const _is.$UndefinedDateTime(),
     DateTime? stamp,
-    Object? lastModified = _Undefined,
+    DateTime? lastModified = const _is.$UndefinedDateTime(),
     List<_ix3hb3ib.CalendarAvailabilityOpeningProtocolState>? openings,
   }) {
     return CalendarAvailabilityProtocolState(
       sequence: sequence is int? ? sequence : this.sequence,
-      created: created is DateTime? ? created : this.created,
+      created: created is _is.UndefinedSentinel ? this.created : created,
       stamp: stamp ?? this.stamp,
-      lastModified: lastModified is DateTime?
-          ? lastModified
-          : this.lastModified,
+      lastModified: lastModified is _is.UndefinedSentinel
+          ? this.lastModified
+          : lastModified,
       openings: openings ?? this.openings.map((e0) => e0.copyWith()).toList(),
     );
   }

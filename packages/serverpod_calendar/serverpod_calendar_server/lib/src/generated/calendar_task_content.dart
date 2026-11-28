@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_event_recurrence.dart' as _iqxs44bf;
 import 'calendar_task_timing.dart' as _i9h8y8lg;
 
@@ -75,7 +76,8 @@ abstract class CalendarTaskContent
     String? location,
     int? priority,
     _i9h8y8lg.CalendarTaskTiming? timing,
-    _iqxs44bf.CalendarEventRecurrence? recurrence,
+    _iqxs44bf.CalendarEventRecurrence? recurrence =
+        const _UndefinedCalendarTaskContent$recurrence(),
   });
   @override
   bool operator ==(Object other) {
@@ -164,6 +166,11 @@ abstract class CalendarTaskContent
 
 class _Undefined {}
 
+class _UndefinedCalendarTaskContent$recurrence extends _is.UndefinedSentinel
+    implements _iqxs44bf.CalendarEventRecurrence {
+  const _UndefinedCalendarTaskContent$recurrence();
+}
+
 class _CalendarTaskContentImpl extends CalendarTaskContent {
   const _CalendarTaskContentImpl({
     String? summary,
@@ -191,7 +198,8 @@ class _CalendarTaskContentImpl extends CalendarTaskContent {
     Object? location = _Undefined,
     Object? priority = _Undefined,
     _i9h8y8lg.CalendarTaskTiming? timing,
-    Object? recurrence = _Undefined,
+    _iqxs44bf.CalendarEventRecurrence? recurrence =
+        const _UndefinedCalendarTaskContent$recurrence(),
   }) {
     return CalendarTaskContent(
       summary: summary is String? ? summary : this.summary,
@@ -199,9 +207,9 @@ class _CalendarTaskContentImpl extends CalendarTaskContent {
       location: location is String? ? location : this.location,
       priority: priority is int? ? priority : this.priority,
       timing: timing ?? this.timing.copyWith(),
-      recurrence: recurrence is _iqxs44bf.CalendarEventRecurrence?
-          ? recurrence
-          : this.recurrence?.copyWith(),
+      recurrence: recurrence is _is.UndefinedSentinel
+          ? this.recurrence?.copyWith()
+          : recurrence,
     );
   }
 }

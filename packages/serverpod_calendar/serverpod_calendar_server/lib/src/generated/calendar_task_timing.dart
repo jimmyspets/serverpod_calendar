@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_event_civil.dart' as _i1bb5k1r;
 import 'calendar_event_duration.dart' as _idn2i48l;
 import 'calendar_task_time_kind.dart' as _ijhc2xsq;
@@ -75,9 +76,12 @@ abstract class CalendarTaskTiming
   @_is.useResult
   CalendarTaskTiming copyWith({
     _ijhc2xsq.CalendarTaskTimeKind? kind,
-    _i1bb5k1r.CalendarEventCivil? start,
-    _i1bb5k1r.CalendarEventCivil? due,
-    _idn2i48l.CalendarEventDuration? duration,
+    _i1bb5k1r.CalendarEventCivil? start =
+        const _UndefinedCalendarTaskTiming$start(),
+    _i1bb5k1r.CalendarEventCivil? due =
+        const _UndefinedCalendarTaskTiming$start(),
+    _idn2i48l.CalendarEventDuration? duration =
+        const _UndefinedCalendarTaskTiming$duration(),
     String? zoneId,
   });
   @override
@@ -159,6 +163,16 @@ abstract class CalendarTaskTiming
 
 class _Undefined {}
 
+class _UndefinedCalendarTaskTiming$start extends _is.UndefinedSentinel
+    implements _i1bb5k1r.CalendarEventCivil {
+  const _UndefinedCalendarTaskTiming$start();
+}
+
+class _UndefinedCalendarTaskTiming$duration extends _is.UndefinedSentinel
+    implements _idn2i48l.CalendarEventDuration {
+  const _UndefinedCalendarTaskTiming$duration();
+}
+
 class _CalendarTaskTimingImpl extends CalendarTaskTiming {
   const _CalendarTaskTimingImpl({
     required _ijhc2xsq.CalendarTaskTimeKind kind,
@@ -180,20 +194,21 @@ class _CalendarTaskTimingImpl extends CalendarTaskTiming {
   @override
   CalendarTaskTiming copyWith({
     _ijhc2xsq.CalendarTaskTimeKind? kind,
-    Object? start = _Undefined,
-    Object? due = _Undefined,
-    Object? duration = _Undefined,
+    _i1bb5k1r.CalendarEventCivil? start =
+        const _UndefinedCalendarTaskTiming$start(),
+    _i1bb5k1r.CalendarEventCivil? due =
+        const _UndefinedCalendarTaskTiming$start(),
+    _idn2i48l.CalendarEventDuration? duration =
+        const _UndefinedCalendarTaskTiming$duration(),
     Object? zoneId = _Undefined,
   }) {
     return CalendarTaskTiming(
       kind: kind ?? this.kind,
-      start: start is _i1bb5k1r.CalendarEventCivil?
-          ? start
-          : this.start?.copyWith(),
-      due: due is _i1bb5k1r.CalendarEventCivil? ? due : this.due?.copyWith(),
-      duration: duration is _idn2i48l.CalendarEventDuration?
-          ? duration
-          : this.duration?.copyWith(),
+      start: start is _is.UndefinedSentinel ? this.start?.copyWith() : start,
+      due: due is _is.UndefinedSentinel ? this.due?.copyWith() : due,
+      duration: duration is _is.UndefinedSentinel
+          ? this.duration?.copyWith()
+          : duration,
       zoneId: zoneId is String? ? zoneId : this.zoneId,
     );
   }

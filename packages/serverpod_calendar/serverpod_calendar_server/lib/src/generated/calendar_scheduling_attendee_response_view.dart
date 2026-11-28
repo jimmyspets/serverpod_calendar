@@ -11,6 +11,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
+
 import 'calendar_scheduling_participation.dart' as _iot0xi24;
 
 @_is.immutable
@@ -99,14 +100,14 @@ abstract class CalendarSchedulingAttendeeResponseView
   @_is.useResult
   CalendarSchedulingAttendeeResponseView copyWith({
     String? attendeeAddress,
-    _is.UuidValue? sourceId,
+    _is.UuidValue? sourceId = const _is.$UndefinedUuidValue(),
     int? revision,
     int? invitationSequence,
     int? sourceSequence,
-    DateTime? stamp,
+    DateTime? stamp = const _is.$UndefinedDateTime(),
     _iot0xi24.CalendarSchedulingParticipation? sourceParticipation,
     _iot0xi24.CalendarSchedulingParticipation? effectiveParticipation,
-    DateTime? receivedAt,
+    DateTime? receivedAt = const _is.$UndefinedDateTime(),
     bool? isCurrent,
   });
   @override
@@ -266,19 +267,19 @@ class _CalendarSchedulingAttendeeResponseViewImpl
   @override
   CalendarSchedulingAttendeeResponseView copyWith({
     String? attendeeAddress,
-    Object? sourceId = _Undefined,
+    _is.UuidValue? sourceId = const _is.$UndefinedUuidValue(),
     Object? revision = _Undefined,
     Object? invitationSequence = _Undefined,
     Object? sourceSequence = _Undefined,
-    Object? stamp = _Undefined,
+    DateTime? stamp = const _is.$UndefinedDateTime(),
     Object? sourceParticipation = _Undefined,
     Object? effectiveParticipation = _Undefined,
-    Object? receivedAt = _Undefined,
+    DateTime? receivedAt = const _is.$UndefinedDateTime(),
     bool? isCurrent,
   }) {
     return CalendarSchedulingAttendeeResponseView(
       attendeeAddress: attendeeAddress ?? this.attendeeAddress,
-      sourceId: sourceId is _is.UuidValue? ? sourceId : this.sourceId,
+      sourceId: sourceId is _is.UndefinedSentinel ? this.sourceId : sourceId,
       revision: revision is int? ? revision : this.revision,
       invitationSequence: invitationSequence is int?
           ? invitationSequence
@@ -286,7 +287,7 @@ class _CalendarSchedulingAttendeeResponseViewImpl
       sourceSequence: sourceSequence is int?
           ? sourceSequence
           : this.sourceSequence,
-      stamp: stamp is DateTime? ? stamp : this.stamp,
+      stamp: stamp is _is.UndefinedSentinel ? this.stamp : stamp,
       sourceParticipation:
           sourceParticipation is _iot0xi24.CalendarSchedulingParticipation?
           ? sourceParticipation
@@ -295,7 +296,9 @@ class _CalendarSchedulingAttendeeResponseViewImpl
           effectiveParticipation is _iot0xi24.CalendarSchedulingParticipation?
           ? effectiveParticipation
           : this.effectiveParticipation,
-      receivedAt: receivedAt is DateTime? ? receivedAt : this.receivedAt,
+      receivedAt: receivedAt is _is.UndefinedSentinel
+          ? this.receivedAt
+          : receivedAt,
       isCurrent: isCurrent ?? this.isCurrent,
     );
   }

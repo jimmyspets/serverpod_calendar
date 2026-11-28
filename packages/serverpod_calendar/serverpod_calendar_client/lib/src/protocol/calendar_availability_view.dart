@@ -14,6 +14,7 @@ import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_availability_content.dart' as _ifxxil5c;
 import 'calendar_availability_opening_edits.dart' as _id5ke9r5;
 import 'calendar_availability_protocol_state.dart' as _ib9yzivj;
@@ -99,8 +100,9 @@ abstract class CalendarAvailabilityView
     _isc.UuidValue? calendarId,
     int? revision,
     String? protocolUid,
-    DateTime? lastModified,
-    List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides,
+    DateTime? lastModified = const _isc.$UndefinedDateTime(),
+    List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides =
+        const _isc.$UndefinedList<_id5ke9r5.CalendarAvailabilityOpeningEdits>(),
     _ifxxil5c.CalendarAvailabilityContent? content,
     _ib9yzivj.CalendarAvailabilityProtocolState? protocolState,
   });
@@ -210,8 +212,6 @@ abstract class CalendarAvailabilityView
   }
 }
 
-class _Undefined {}
-
 class _CalendarAvailabilityViewImpl extends CalendarAvailabilityView {
   const _CalendarAvailabilityViewImpl({
     required _isc.UuidValue id,
@@ -242,8 +242,9 @@ class _CalendarAvailabilityViewImpl extends CalendarAvailabilityView {
     _isc.UuidValue? calendarId,
     int? revision,
     String? protocolUid,
-    Object? lastModified = _Undefined,
-    Object? timingOverrides = _Undefined,
+    DateTime? lastModified = const _isc.$UndefinedDateTime(),
+    List<_id5ke9r5.CalendarAvailabilityOpeningEdits>? timingOverrides =
+        const _isc.$UndefinedList<_id5ke9r5.CalendarAvailabilityOpeningEdits>(),
     _ifxxil5c.CalendarAvailabilityContent? content,
     _ib9yzivj.CalendarAvailabilityProtocolState? protocolState,
   }) {
@@ -252,13 +253,12 @@ class _CalendarAvailabilityViewImpl extends CalendarAvailabilityView {
       calendarId: calendarId ?? this.calendarId,
       revision: revision ?? this.revision,
       protocolUid: protocolUid ?? this.protocolUid,
-      lastModified: lastModified is DateTime?
-          ? lastModified
-          : this.lastModified,
-      timingOverrides:
-          timingOverrides is List<_id5ke9r5.CalendarAvailabilityOpeningEdits>?
-          ? timingOverrides
-          : this.timingOverrides?.map((e0) => e0.copyWith()).toList(),
+      lastModified: lastModified is _isc.UndefinedSentinel
+          ? this.lastModified
+          : lastModified,
+      timingOverrides: timingOverrides is _isc.UndefinedSentinel
+          ? this.timingOverrides?.map((e0) => e0.copyWith()).toList()
+          : timingOverrides,
       content: content ?? this.content.copyWith(),
       protocolState: protocolState ?? this.protocolState.copyWith(),
     );

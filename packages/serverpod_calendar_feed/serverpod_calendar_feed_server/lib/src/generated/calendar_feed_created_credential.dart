@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_feed_server/src/generated/protocol.dart'
     as _i0kswevi;
+
 import 'calendar_feed_credential_view.dart' as _i9qbm9qw;
 
 @_is.immutable

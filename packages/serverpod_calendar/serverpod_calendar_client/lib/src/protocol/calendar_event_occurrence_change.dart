@@ -13,6 +13,7 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_event_occurrence_action.dart' as _icnciyzp;
 import 'calendar_event_timing.dart' as _ieswiaty;
 
@@ -76,7 +77,8 @@ abstract class CalendarEventOccurrenceChange
     int? expectedRevision,
     _ieswiaty.CalendarEventTiming? originalStart,
     _icnciyzp.CalendarEventOccurrenceAction? action,
-    _ieswiaty.CalendarEventTiming? replacement,
+    _ieswiaty.CalendarEventTiming? replacement =
+        const _UndefinedCalendarEventOccurrenceChange$replacement(),
   });
   @override
   bool operator ==(Object other) {
@@ -155,7 +157,11 @@ abstract class CalendarEventOccurrenceChange
   }
 }
 
-class _Undefined {}
+class _UndefinedCalendarEventOccurrenceChange$replacement
+    extends _isc.UndefinedSentinel
+    implements _ieswiaty.CalendarEventTiming {
+  const _UndefinedCalendarEventOccurrenceChange$replacement();
+}
 
 class _CalendarEventOccurrenceChangeImpl extends CalendarEventOccurrenceChange {
   const _CalendarEventOccurrenceChangeImpl({
@@ -181,16 +187,17 @@ class _CalendarEventOccurrenceChangeImpl extends CalendarEventOccurrenceChange {
     int? expectedRevision,
     _ieswiaty.CalendarEventTiming? originalStart,
     _icnciyzp.CalendarEventOccurrenceAction? action,
-    Object? replacement = _Undefined,
+    _ieswiaty.CalendarEventTiming? replacement =
+        const _UndefinedCalendarEventOccurrenceChange$replacement(),
   }) {
     return CalendarEventOccurrenceChange(
       eventId: eventId ?? this.eventId,
       expectedRevision: expectedRevision ?? this.expectedRevision,
       originalStart: originalStart ?? this.originalStart.copyWith(),
       action: action ?? this.action,
-      replacement: replacement is _ieswiaty.CalendarEventTiming?
-          ? replacement
-          : this.replacement?.copyWith(),
+      replacement: replacement is _isc.UndefinedSentinel
+          ? this.replacement?.copyWith()
+          : replacement,
     );
   }
 }

@@ -13,6 +13,7 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_event_content.dart' as _id4cvk34;
 import 'calendar_event_protocol_version.dart' as _iblfo3t0;
 import 'calendar_event_timing.dart' as _ieswiaty;
@@ -236,16 +237,20 @@ abstract class CalendarInvitationOccurrenceApplicationView
     bool? hasLocalChanges,
     _iblfo3t0.CalendarEventProtocolVersion? acceptedVersion,
     _ilccsff7.CalendarInvitationSourceKind? acceptedKind,
-    _id4cvk34.CalendarEventContent? currentOccurrence,
-    _id4cvk34.CalendarEventContent? proposedOccurrence,
+    _id4cvk34.CalendarEventContent? currentOccurrence =
+        const _UndefinedCalendarInvitationOccurrenceApplicationView$currentOccurrence(),
+    _id4cvk34.CalendarEventContent? proposedOccurrence =
+        const _UndefinedCalendarInvitationOccurrenceApplicationView$currentOccurrence(),
     _ilccsff7.CalendarInvitationSourceKind? incomingKind,
-    _isc.UuidValue? incomingSourceId,
+    _isc.UuidValue? incomingSourceId = const _isc.$UndefinedUuidValue(),
     int? invitationRevision,
-    _iblfo3t0.CalendarEventProtocolVersion? incomingVersion,
+    _iblfo3t0.CalendarEventProtocolVersion? incomingVersion =
+        const _UndefinedCalendarInvitationOccurrenceApplicationView$incomingVersion(),
     String? incomingSourceText,
     String? acceptedSourceText,
     bool? canApply,
-    _iyajy5op.CalendarInvitationOccurrenceApplyReceipt? latestResult,
+    _iyajy5op.CalendarInvitationOccurrenceApplyReceipt? latestResult =
+        const _UndefinedCalendarInvitationOccurrenceApplicationView$latestResult(),
   });
   @override
   bool operator ==(Object other) {
@@ -498,6 +503,24 @@ abstract class CalendarInvitationOccurrenceApplicationView
 
 class _Undefined {}
 
+class _UndefinedCalendarInvitationOccurrenceApplicationView$currentOccurrence
+    extends _isc.UndefinedSentinel
+    implements _id4cvk34.CalendarEventContent {
+  const _UndefinedCalendarInvitationOccurrenceApplicationView$currentOccurrence();
+}
+
+class _UndefinedCalendarInvitationOccurrenceApplicationView$incomingVersion
+    extends _isc.UndefinedSentinel
+    implements _iblfo3t0.CalendarEventProtocolVersion {
+  const _UndefinedCalendarInvitationOccurrenceApplicationView$incomingVersion();
+}
+
+class _UndefinedCalendarInvitationOccurrenceApplicationView$latestResult
+    extends _isc.UndefinedSentinel
+    implements _iyajy5op.CalendarInvitationOccurrenceApplyReceipt {
+  const _UndefinedCalendarInvitationOccurrenceApplicationView$latestResult();
+}
+
 class _CalendarInvitationOccurrenceApplicationViewImpl
     extends CalendarInvitationOccurrenceApplicationView {
   const _CalendarInvitationOccurrenceApplicationViewImpl({
@@ -574,16 +597,20 @@ class _CalendarInvitationOccurrenceApplicationViewImpl
     bool? hasLocalChanges,
     _iblfo3t0.CalendarEventProtocolVersion? acceptedVersion,
     _ilccsff7.CalendarInvitationSourceKind? acceptedKind,
-    Object? currentOccurrence = _Undefined,
-    Object? proposedOccurrence = _Undefined,
+    _id4cvk34.CalendarEventContent? currentOccurrence =
+        const _UndefinedCalendarInvitationOccurrenceApplicationView$currentOccurrence(),
+    _id4cvk34.CalendarEventContent? proposedOccurrence =
+        const _UndefinedCalendarInvitationOccurrenceApplicationView$currentOccurrence(),
     Object? incomingKind = _Undefined,
-    Object? incomingSourceId = _Undefined,
+    _isc.UuidValue? incomingSourceId = const _isc.$UndefinedUuidValue(),
     int? invitationRevision,
-    Object? incomingVersion = _Undefined,
+    _iblfo3t0.CalendarEventProtocolVersion? incomingVersion =
+        const _UndefinedCalendarInvitationOccurrenceApplicationView$incomingVersion(),
     Object? incomingSourceText = _Undefined,
     Object? acceptedSourceText = _Undefined,
     bool? canApply,
-    Object? latestResult = _Undefined,
+    _iyajy5op.CalendarInvitationOccurrenceApplyReceipt? latestResult =
+        const _UndefinedCalendarInvitationOccurrenceApplicationView$latestResult(),
   }) {
     return CalendarInvitationOccurrenceApplicationView(
       isThisAndFuture: isThisAndFuture ?? this.isThisAndFuture,
@@ -603,23 +630,22 @@ class _CalendarInvitationOccurrenceApplicationViewImpl
       hasLocalChanges: hasLocalChanges ?? this.hasLocalChanges,
       acceptedVersion: acceptedVersion ?? this.acceptedVersion.copyWith(),
       acceptedKind: acceptedKind ?? this.acceptedKind,
-      currentOccurrence: currentOccurrence is _id4cvk34.CalendarEventContent?
-          ? currentOccurrence
-          : this.currentOccurrence?.copyWith(),
-      proposedOccurrence: proposedOccurrence is _id4cvk34.CalendarEventContent?
-          ? proposedOccurrence
-          : this.proposedOccurrence?.copyWith(),
+      currentOccurrence: currentOccurrence is _isc.UndefinedSentinel
+          ? this.currentOccurrence?.copyWith()
+          : currentOccurrence,
+      proposedOccurrence: proposedOccurrence is _isc.UndefinedSentinel
+          ? this.proposedOccurrence?.copyWith()
+          : proposedOccurrence,
       incomingKind: incomingKind is _ilccsff7.CalendarInvitationSourceKind?
           ? incomingKind
           : this.incomingKind,
-      incomingSourceId: incomingSourceId is _isc.UuidValue?
-          ? incomingSourceId
-          : this.incomingSourceId,
+      incomingSourceId: incomingSourceId is _isc.UndefinedSentinel
+          ? this.incomingSourceId
+          : incomingSourceId,
       invitationRevision: invitationRevision ?? this.invitationRevision,
-      incomingVersion:
-          incomingVersion is _iblfo3t0.CalendarEventProtocolVersion?
-          ? incomingVersion
-          : this.incomingVersion?.copyWith(),
+      incomingVersion: incomingVersion is _isc.UndefinedSentinel
+          ? this.incomingVersion?.copyWith()
+          : incomingVersion,
       incomingSourceText: incomingSourceText is String?
           ? incomingSourceText
           : this.incomingSourceText,
@@ -627,10 +653,9 @@ class _CalendarInvitationOccurrenceApplicationViewImpl
           ? acceptedSourceText
           : this.acceptedSourceText,
       canApply: canApply ?? this.canApply,
-      latestResult:
-          latestResult is _iyajy5op.CalendarInvitationOccurrenceApplyReceipt?
-          ? latestResult
-          : this.latestResult?.copyWith(),
+      latestResult: latestResult is _isc.UndefinedSentinel
+          ? this.latestResult?.copyWith()
+          : latestResult,
     );
   }
 }

@@ -14,6 +14,7 @@
 import 'dart:async' as _ida;
 import 'dart:io' as _idi;
 import 'dart:typed_data' as _idt;
+
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/calendar_alarm_action_request.dart'
     as _i4jzmye1;
@@ -448,12 +449,10 @@ class _CalendarAlarmEndpoint {
           parameters: _ist.testObjectToJson({'parent': parent}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<List<_izvxtiv8.CalendarAlarmView>>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<List<_izvxtiv8.CalendarAlarmView>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -479,12 +478,10 @@ class _CalendarAlarmEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_izvxtiv8.CalendarAlarmView?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_izvxtiv8.CalendarAlarmView?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -514,12 +511,10 @@ class _CalendarAlarmEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_i2tqagc3.CalendarAlarmSourceTimings>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i2tqagc3.CalendarAlarmSourceTimings>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -553,12 +548,10 @@ class _CalendarAlarmEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_izvxtiv8.CalendarAlarmView?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_izvxtiv8.CalendarAlarmView?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -584,12 +577,10 @@ class _CalendarAlarmEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_izvxtiv8.CalendarAlarmView?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_izvxtiv8.CalendarAlarmView?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -623,12 +614,10 @@ class _CalendarAlarmEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_izvxtiv8.CalendarAlarmView?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_izvxtiv8.CalendarAlarmView?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -660,12 +649,10 @@ class _CalendarAlarmEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<void>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<void>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -691,12 +678,10 @@ class _CalendarAlarmEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_i1d2lmbf.CalendarAlarmActionView?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i1d2lmbf.CalendarAlarmActionView?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -732,12 +717,10 @@ class _CalendarAlarmEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_iufzu7ub.CalendarAlarmActivityPage>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_iufzu7ub.CalendarAlarmActivityPage>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -774,12 +757,10 @@ class _CalendarAvailabilityEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ibom5eka.CalendarAvailabilityReplaceResult>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ibom5eka.CalendarAvailabilityReplaceResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -805,12 +786,10 @@ class _CalendarAvailabilityEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_idt.ByteData>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_idt.ByteData>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -836,12 +815,10 @@ class _CalendarAvailabilityEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_imwaqqth.CalendarAvailabilityImportResult>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_imwaqqth.CalendarAvailabilityImportResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -867,12 +844,10 @@ class _CalendarAvailabilityEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_i6vowhmw.CalendarAvailabilityReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i6vowhmw.CalendarAvailabilityReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -898,12 +873,10 @@ class _CalendarAvailabilityEndpoint {
           parameters: _ist.testObjectToJson({'availabilityId': availabilityId}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_i6fuga80.CalendarAvailabilityView>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i6fuga80.CalendarAvailabilityView>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -933,12 +906,10 @@ class _CalendarAvailabilityEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<List<_i6fuga80.CalendarAvailabilityView>>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<List<_i6fuga80.CalendarAvailabilityView>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -964,12 +935,10 @@ class _CalendarAvailabilityEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_i6vowhmw.CalendarAvailabilityReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i6vowhmw.CalendarAvailabilityReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -995,12 +964,10 @@ class _CalendarAvailabilityEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_i6vowhmw.CalendarAvailabilityReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i6vowhmw.CalendarAvailabilityReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1026,12 +993,10 @@ class _CalendarAvailabilityEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_i6vowhmw.CalendarAvailabilityReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i6vowhmw.CalendarAvailabilityReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1057,14 +1022,10 @@ class _CalendarAvailabilityEndpoint {
           parameters: _ist.testObjectToJson({'query': query}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<
-                  _i2fqfjcg.CalendarAvailabilityOccurrencePreview
-                >);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i2fqfjcg.CalendarAvailabilityOccurrencePreview>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1094,12 +1055,10 @@ class _CalendarAvailabilityEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_i6vowhmw.CalendarAvailabilityReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i6vowhmw.CalendarAvailabilityReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1136,12 +1095,10 @@ class _CalendarAvailabilitySearchEndpoint {
           parameters: _ist.testObjectToJson({'query': query}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_i5d3khya.CalendarAvailabilitySearchView>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i5d3khya.CalendarAvailabilitySearchView>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1175,12 +1132,10 @@ class _CalendarDiagnosticsEndpoint {
           parameters: _ist.testObjectToJson({}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<String>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<String>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1217,12 +1172,10 @@ class _CalendarEndpoint {
           parameters: _ist.testObjectToJson({'query': query}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_idt.ByteData>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_idt.ByteData>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1248,12 +1201,10 @@ class _CalendarEndpoint {
           parameters: _ist.testObjectToJson({'query': query}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_i3y4q8eh.CalendarFreeBusyView>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i3y4q8eh.CalendarFreeBusyView>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1279,12 +1230,10 @@ class _CalendarEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1314,12 +1263,10 @@ class _CalendarEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_id91u9he.CalendarView>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_id91u9he.CalendarView>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1353,12 +1300,10 @@ class _CalendarEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ibhixnze.CalendarPage>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ibhixnze.CalendarPage>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1384,12 +1329,10 @@ class _CalendarEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1415,12 +1358,10 @@ class _CalendarEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1446,12 +1387,10 @@ class _CalendarEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1477,12 +1416,10 @@ class _CalendarEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1508,12 +1445,10 @@ class _CalendarEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1539,12 +1474,10 @@ class _CalendarEndpoint {
           parameters: _ist.testObjectToJson({'calendarId': calendarId}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<List<_iwx7nyid.CalendarSubjectView>>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<List<_iwx7nyid.CalendarSubjectView>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1570,12 +1503,10 @@ class _CalendarEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1605,12 +1536,10 @@ class _CalendarEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ied1lssg.CalendarMutationReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1647,12 +1576,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'query': query}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ifhgp6vp.CalendarEventOccurrencePage>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ifhgp6vp.CalendarEventOccurrencePage>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1678,12 +1605,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_irjxy316.CalendarEventReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_irjxy316.CalendarEventReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1709,12 +1634,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_irjxy316.CalendarEventReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_irjxy316.CalendarEventReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1745,14 +1668,10 @@ class _CalendarEventEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<
-                  _isrkk9n1.CalendarSchedulingInstanceResponsesView
-                >);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_isrkk9n1.CalendarSchedulingInstanceResponsesView>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1778,12 +1697,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'eventId': eventId}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_iorx7nwv.CalendarSchedulingResponsesView>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_iorx7nwv.CalendarSchedulingResponsesView>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1810,14 +1727,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'eventId': eventId}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<
-                  List<_ivnk0jd2.CalendarSchedulingReplySourceView>
-                >);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<List<_ivnk0jd2.CalendarSchedulingReplySourceView>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1847,12 +1760,10 @@ class _CalendarEventEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_iafjnu1c.CalendarSchedulingReplyDocument>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_iafjnu1c.CalendarSchedulingReplyDocument>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1878,12 +1789,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_igqgquq7.CalendarSchedulingReceipt>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_igqgquq7.CalendarSchedulingReceipt>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1909,12 +1818,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_igqgquq7.CalendarSchedulingReceipt>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_igqgquq7.CalendarSchedulingReceipt>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1940,12 +1847,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_igqgquq7.CalendarSchedulingReceipt>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_igqgquq7.CalendarSchedulingReceipt>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1971,12 +1876,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_igqgquq7.CalendarSchedulingReceipt>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_igqgquq7.CalendarSchedulingReceipt>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2002,12 +1905,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_igqgquq7.CalendarSchedulingReceipt>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_igqgquq7.CalendarSchedulingReceipt>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2033,12 +1934,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'eventId': eventId}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ia2bd5e3.CalendarSchedulingView>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ia2bd5e3.CalendarSchedulingView>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2064,12 +1963,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ihod1iqv.CalendarEventReplaceResult>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ihod1iqv.CalendarEventReplaceResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2095,12 +1992,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_idt.ByteData>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_idt.ByteData>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2126,12 +2021,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_iaw5gnbe.CalendarEventImportResult>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_iaw5gnbe.CalendarEventImportResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2157,12 +2050,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_irjxy316.CalendarEventReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_irjxy316.CalendarEventReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2192,12 +2083,10 @@ class _CalendarEventEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_i6zsydj7.CalendarEventView>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i6zsydj7.CalendarEventView>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2233,12 +2122,10 @@ class _CalendarEventEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_i092pg3q.CalendarEventPage>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i092pg3q.CalendarEventPage>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2264,12 +2151,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'query': query}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_i2qqvmw2.CalendarEventOccurrencePreview>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i2qqvmw2.CalendarEventOccurrencePreview>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2295,12 +2180,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_irjxy316.CalendarEventReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_irjxy316.CalendarEventReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2326,12 +2209,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_irjxy316.CalendarEventReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_irjxy316.CalendarEventReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2357,12 +2238,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_irjxy316.CalendarEventReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_irjxy316.CalendarEventReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2388,12 +2267,10 @@ class _CalendarEventEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_irjxy316.CalendarEventReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_irjxy316.CalendarEventReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2423,12 +2300,10 @@ class _CalendarEventEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_irjxy316.CalendarEventReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_irjxy316.CalendarEventReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2464,12 +2339,10 @@ class _CalendarInvitationEndpoint {
           parameters: _ist.testObjectToJson({}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<List<_ienzv1fd.CalendarInvitationView>>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<List<_ienzv1fd.CalendarInvitationView>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2495,12 +2368,10 @@ class _CalendarInvitationEndpoint {
           parameters: _ist.testObjectToJson({'id': id}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ienzv1fd.CalendarInvitationView>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ienzv1fd.CalendarInvitationView>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2526,12 +2397,10 @@ class _CalendarInvitationEndpoint {
           parameters: _ist.testObjectToJson({'id': id}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<List<_ifi5u0vl.CalendarInvitationSourceView>>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<List<_ifi5u0vl.CalendarInvitationSourceView>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2561,12 +2430,10 @@ class _CalendarInvitationEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_i0si9ea3.CalendarInvitationDocument>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i0si9ea3.CalendarInvitationDocument>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2596,12 +2463,10 @@ class _CalendarInvitationEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<void>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<void>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2627,12 +2492,10 @@ class _CalendarInvitationEndpoint {
           parameters: _ist.testObjectToJson({'id': id}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_iunzc6nn.CalendarInvitationAdoptionReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_iunzc6nn.CalendarInvitationAdoptionReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2658,12 +2521,10 @@ class _CalendarInvitationEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_iunzc6nn.CalendarInvitationAdoptionReceipt>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_iunzc6nn.CalendarInvitationAdoptionReceipt>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2689,12 +2550,10 @@ class _CalendarInvitationEndpoint {
           parameters: _ist.testObjectToJson({'id': id}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_it55tvb3.CalendarInvitationApplicationView>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_it55tvb3.CalendarInvitationApplicationView>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2720,12 +2579,10 @@ class _CalendarInvitationEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_imp6ds4w.CalendarInvitationApplyReceipt>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_imp6ds4w.CalendarInvitationApplyReceipt>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2751,12 +2608,10 @@ class _CalendarInvitationEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_imp6ds4w.CalendarInvitationApplyReceipt>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_imp6ds4w.CalendarInvitationApplyReceipt>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2785,12 +2640,11 @@ class _CalendarInvitationEndpoint {
         );
         var _localReturnValue =
             await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<
-                  _ib1sbzev.CalendarInvitationOccurrenceApplicationView
-                >);
+              _localUniqueSession,
+              _localCallContext.arguments,
+            ) as _ida.Future<
+              _ib1sbzev.CalendarInvitationOccurrenceApplicationView
+            >);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2819,12 +2673,11 @@ class _CalendarInvitationEndpoint {
         );
         var _localReturnValue =
             await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<
-                  _ib1sbzev.CalendarInvitationOccurrenceApplicationView
-                >);
+              _localUniqueSession,
+              _localCallContext.arguments,
+            ) as _ida.Future<
+              _ib1sbzev.CalendarInvitationOccurrenceApplicationView
+            >);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2853,12 +2706,11 @@ class _CalendarInvitationEndpoint {
         );
         var _localReturnValue =
             await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<
-                  _ib1sbzev.CalendarInvitationOccurrenceApplicationView
-                >);
+              _localUniqueSession,
+              _localCallContext.arguments,
+            ) as _ida.Future<
+              _ib1sbzev.CalendarInvitationOccurrenceApplicationView
+            >);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2885,14 +2737,10 @@ class _CalendarInvitationEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<
-                  _ihn04pvw.CalendarInvitationOccurrenceApplyReceipt
-                >);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ihn04pvw.CalendarInvitationOccurrenceApplyReceipt>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2919,14 +2767,10 @@ class _CalendarInvitationEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<
-                  _ihn04pvw.CalendarInvitationOccurrenceApplyReceipt
-                >);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ihn04pvw.CalendarInvitationOccurrenceApplyReceipt>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2953,14 +2797,10 @@ class _CalendarInvitationEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<
-                  _ihn04pvw.CalendarInvitationOccurrenceApplyReceipt
-                >);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ihn04pvw.CalendarInvitationOccurrenceApplyReceipt>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2987,14 +2827,10 @@ class _CalendarInvitationEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<
-                  _ihn04pvw.CalendarInvitationOccurrenceApplyReceipt
-                >);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ihn04pvw.CalendarInvitationOccurrenceApplyReceipt>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3021,14 +2857,10 @@ class _CalendarInvitationEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<
-                  _ihn04pvw.CalendarInvitationOccurrenceApplyReceipt
-                >);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ihn04pvw.CalendarInvitationOccurrenceApplyReceipt>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3054,12 +2886,10 @@ class _CalendarInvitationEndpoint {
           parameters: _ist.testObjectToJson({'id': id}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_i98knljr.CalendarInvitationResponseView>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i98knljr.CalendarInvitationResponseView>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3088,12 +2918,11 @@ class _CalendarInvitationEndpoint {
         );
         var _localReturnValue =
             await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<
-                  List<_icy7qc8h.CalendarInvitationResponseActivityView>
-                >);
+              _localUniqueSession,
+              _localCallContext.arguments,
+            ) as _ida.Future<
+              List<_icy7qc8h.CalendarInvitationResponseActivityView>
+            >);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3119,12 +2948,10 @@ class _CalendarInvitationEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_i4le44qp.CalendarInvitationResponseReceipt>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i4le44qp.CalendarInvitationResponseReceipt>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3161,12 +2988,10 @@ class _CalendarTaskEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3192,12 +3017,10 @@ class _CalendarTaskEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_igldhn4m.CalendarTaskReplaceResult>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_igldhn4m.CalendarTaskReplaceResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3223,12 +3046,10 @@ class _CalendarTaskEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_idt.ByteData>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_idt.ByteData>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3254,12 +3075,10 @@ class _CalendarTaskEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_imwandrw.CalendarTaskImportResult>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_imwandrw.CalendarTaskImportResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3285,12 +3104,10 @@ class _CalendarTaskEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3320,12 +3137,10 @@ class _CalendarTaskEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_iz0gxasm.CalendarTaskView>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_iz0gxasm.CalendarTaskView>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3361,12 +3176,10 @@ class _CalendarTaskEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ig64r97r.CalendarTaskPage>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ig64r97r.CalendarTaskPage>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3392,12 +3205,10 @@ class _CalendarTaskEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3423,12 +3234,10 @@ class _CalendarTaskEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3454,12 +3263,10 @@ class _CalendarTaskEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3489,12 +3296,10 @@ class _CalendarTaskEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3520,12 +3325,10 @@ class _CalendarTaskEndpoint {
           parameters: _ist.testObjectToJson({'query': query}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_i8v6r7o6.CalendarTaskOccurrencePreview>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_i8v6r7o6.CalendarTaskOccurrencePreview>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3551,12 +3354,10 @@ class _CalendarTaskEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3582,12 +3383,10 @@ class _CalendarTaskEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3613,12 +3412,10 @@ class _CalendarTaskEndpoint {
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -3644,12 +3441,10 @@ class _CalendarTaskEndpoint {
           parameters: _ist.testObjectToJson({'query': query}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _ida.Future<_iqgurf9e.CalendarTaskHistoryPage>);
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _ida.Future<_iqgurf9e.CalendarTaskHistoryPage>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

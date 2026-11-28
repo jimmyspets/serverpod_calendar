@@ -10,9 +10,12 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'dart:async' as _ida;
+
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_invitation_source_kind.dart' as _ilccsff7;
 
@@ -159,24 +162,25 @@ abstract class CalendarInvitationRecord
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
   CalendarInvitationRecord copyWith({
-    _is.UuidValue? id,
+    _is.UuidValue? id = const _is.$UndefinedUuidValue(),
     _ilccsff7.CalendarInvitationSourceKind? kind,
     bool? recurring,
     String? scopeKey,
     String? recipientKey,
     String? correlationDigest,
     String? targetKey,
-    _ieswiaty.CalendarEventTiming? originalStart,
+    _ieswiaty.CalendarEventTiming? originalStart =
+        const _UndefinedCalendarInvitationRecord$originalStart(),
     String? uid,
     String? organizer,
     int? revision,
-    _is.UuidValue? currentSourceId,
+    _is.UuidValue? currentSourceId = const _is.$UndefinedUuidValue(),
     int? sequence,
     DateTime? stamp,
     String? digest,
     DateTime? createdAt,
     DateTime? updatedAt,
-    DateTime? dismissedAt,
+    DateTime? dismissedAt = const _is.$UndefinedDateTime(),
   });
   @override
   Map<String, dynamic> toJson() {
@@ -238,6 +242,12 @@ abstract class CalendarInvitationRecord
 
 class _Undefined {}
 
+class _UndefinedCalendarInvitationRecord$originalStart
+    extends _is.UndefinedSentinel
+    implements _ieswiaty.CalendarEventTiming {
+  const _UndefinedCalendarInvitationRecord$originalStart();
+}
+
 class _CalendarInvitationRecordImpl extends CalendarInvitationRecord {
   _CalendarInvitationRecordImpl({
     _is.UuidValue? id,
@@ -284,48 +294,51 @@ class _CalendarInvitationRecordImpl extends CalendarInvitationRecord {
   @_is.useResult
   @override
   CalendarInvitationRecord copyWith({
-    Object? id = _Undefined,
+    _is.UuidValue? id = const _is.$UndefinedUuidValue(),
     _ilccsff7.CalendarInvitationSourceKind? kind,
     bool? recurring,
     String? scopeKey,
     String? recipientKey,
     String? correlationDigest,
     String? targetKey,
-    Object? originalStart = _Undefined,
+    _ieswiaty.CalendarEventTiming? originalStart =
+        const _UndefinedCalendarInvitationRecord$originalStart(),
     String? uid,
     String? organizer,
     int? revision,
-    Object? currentSourceId = _Undefined,
+    _is.UuidValue? currentSourceId = const _is.$UndefinedUuidValue(),
     Object? sequence = _Undefined,
     DateTime? stamp,
     String? digest,
     DateTime? createdAt,
     DateTime? updatedAt,
-    Object? dismissedAt = _Undefined,
+    DateTime? dismissedAt = const _is.$UndefinedDateTime(),
   }) {
     return CalendarInvitationRecord(
-      id: id is _is.UuidValue? ? id : this.id,
+      id: id is _is.UndefinedSentinel ? this.id : id,
       kind: kind ?? this.kind,
       recurring: recurring ?? this.recurring,
       scopeKey: scopeKey ?? this.scopeKey,
       recipientKey: recipientKey ?? this.recipientKey,
       correlationDigest: correlationDigest ?? this.correlationDigest,
       targetKey: targetKey ?? this.targetKey,
-      originalStart: originalStart is _ieswiaty.CalendarEventTiming?
-          ? originalStart
-          : this.originalStart?.copyWith(),
+      originalStart: originalStart is _is.UndefinedSentinel
+          ? this.originalStart?.copyWith()
+          : originalStart,
       uid: uid ?? this.uid,
       organizer: organizer ?? this.organizer,
       revision: revision ?? this.revision,
-      currentSourceId: currentSourceId is _is.UuidValue?
-          ? currentSourceId
-          : this.currentSourceId,
+      currentSourceId: currentSourceId is _is.UndefinedSentinel
+          ? this.currentSourceId
+          : currentSourceId,
       sequence: sequence is int? ? sequence : this.sequence,
       stamp: stamp ?? this.stamp,
       digest: digest ?? this.digest,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      dismissedAt: dismissedAt is DateTime? ? dismissedAt : this.dismissedAt,
+      dismissedAt: dismissedAt is _is.UndefinedSentinel
+          ? this.dismissedAt
+          : dismissedAt,
     );
   }
 }
@@ -643,6 +656,69 @@ class CalendarInvitationRecordRepository {
       transaction: transaction,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+    );
+  }
+
+  /// Emits [CalendarInvitationRecord]s matching the given query parameters every time the
+  /// source tables are modified.
+  ///
+  /// Use [where] to specify which items to include in the return value.
+  /// If none is specified, all items will be returned.
+  ///
+  /// To specify the order of the items use [orderBy] or [orderByList]
+  /// when sorting by multiple columns.
+  ///
+  /// The maximum number of items can be set by [limit]. If no limit is set,
+  /// all items matching the query will be returned.
+  ///
+  /// [offset] defines how many items to skip, after which [limit] (or all)
+  /// items are read from the database.
+  ///
+  /// Use [throttle] to specify the minimum interval between queries. It can
+  /// also be set to `null`, in which case the stream will only be throttled
+  /// when its subscription is paused.
+  ///
+  /// Source tables are collected from the queried table, [where], [orderBy],
+  /// [orderByList], and the [include] graph. [alsoTriggerOnTables] is added
+  /// to that set. Pass [Table] instances such as `CalendarInvitationRecord.t`.
+  ///
+  /// Raw [Expression] SQL is not inspected. Tables referenced only in raw
+  /// SQL must be passed via [alsoTriggerOnTables].
+  ///
+  /// The stream always reads committed state and never joins an ambient
+  /// [Transaction]. Emissions for a write fire after that write commits.
+  ///
+  /// Currently only supported on SQLite. Calling this method on PostgreSQL
+  /// throws an [UnsupportedError].
+  ///
+  /// ```dart
+  /// var subscription = Persons.db.watch(
+  ///   session,
+  ///   where: (t) => t.lastName.equals('Jones'),
+  ///   orderBy: (t) => t.firstName,
+  ///   limit: 100,
+  /// ).listen((persons) {
+  ///   // Handle the latest matching rows.
+  /// });
+  /// ```
+  _ida.Stream<List<CalendarInvitationRecord>> watch(
+    _is.DatabaseSession session, {
+    _is.WhereExpressionBuilder<CalendarInvitationRecordTable>? where,
+    int? limit,
+    int? offset,
+    _is.OrderByBuilder<CalendarInvitationRecordTable>? orderBy,
+    _is.OrderByListBuilder<CalendarInvitationRecordTable>? orderByList,
+    Duration? throttle = const Duration(milliseconds: 30),
+    Iterable<_is.Table>? alsoTriggerOnTables,
+  }) {
+    return session.db.watch<CalendarInvitationRecord>(
+      where: where?.call(CalendarInvitationRecord.t),
+      orderBy: orderBy?.call(CalendarInvitationRecord.t),
+      orderByList: orderByList?.call(CalendarInvitationRecord.t),
+      limit: limit,
+      offset: offset,
+      throttle: throttle,
+      alsoTriggerOnTables: alsoTriggerOnTables,
     );
   }
 

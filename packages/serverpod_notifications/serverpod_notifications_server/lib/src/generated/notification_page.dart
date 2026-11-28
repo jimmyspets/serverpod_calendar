@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_notifications_server/src/generated/protocol.dart'
     as _i117tju2;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'notification_view.dart' as _i86vfscw;
 
 @_is.immutable

@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_task_source_duration.dart' as _im8khkr9;
 import 'calendar_task_source_text.dart' as _i9mnuab5;
 
@@ -103,13 +104,15 @@ abstract class CalendarTaskSourceAlarm
   @_is.useResult
   CalendarTaskSourceAlarm copyWith({
     _i9mnuab5.CalendarTaskSourceText? description,
-    _im8khkr9.CalendarTaskSourceDuration? relativeDuration,
-    DateTime? absoluteUtc,
+    _im8khkr9.CalendarTaskSourceDuration? relativeDuration =
+        const _UndefinedCalendarTaskSourceAlarm$relativeDuration(),
+    DateTime? absoluteUtc = const _is.$UndefinedDateTime(),
     String? related,
     String? uid,
-    DateTime? acknowledged,
+    DateTime? acknowledged = const _is.$UndefinedDateTime(),
     int? repeat,
-    _im8khkr9.CalendarTaskSourceDuration? repeatInterval,
+    _im8khkr9.CalendarTaskSourceDuration? repeatInterval =
+        const _UndefinedCalendarTaskSourceAlarm$relativeDuration(),
     String? snoozeTargetUid,
   });
   @override
@@ -213,6 +216,12 @@ abstract class CalendarTaskSourceAlarm
 
 class _Undefined {}
 
+class _UndefinedCalendarTaskSourceAlarm$relativeDuration
+    extends _is.UndefinedSentinel
+    implements _im8khkr9.CalendarTaskSourceDuration {
+  const _UndefinedCalendarTaskSourceAlarm$relativeDuration();
+}
+
 class _CalendarTaskSourceAlarmImpl extends CalendarTaskSourceAlarm {
   const _CalendarTaskSourceAlarmImpl({
     required _i9mnuab5.CalendarTaskSourceText description,
@@ -242,31 +251,34 @@ class _CalendarTaskSourceAlarmImpl extends CalendarTaskSourceAlarm {
   @override
   CalendarTaskSourceAlarm copyWith({
     _i9mnuab5.CalendarTaskSourceText? description,
-    Object? relativeDuration = _Undefined,
-    Object? absoluteUtc = _Undefined,
+    _im8khkr9.CalendarTaskSourceDuration? relativeDuration =
+        const _UndefinedCalendarTaskSourceAlarm$relativeDuration(),
+    DateTime? absoluteUtc = const _is.$UndefinedDateTime(),
     Object? related = _Undefined,
     Object? uid = _Undefined,
-    Object? acknowledged = _Undefined,
+    DateTime? acknowledged = const _is.$UndefinedDateTime(),
     Object? repeat = _Undefined,
-    Object? repeatInterval = _Undefined,
+    _im8khkr9.CalendarTaskSourceDuration? repeatInterval =
+        const _UndefinedCalendarTaskSourceAlarm$relativeDuration(),
     Object? snoozeTargetUid = _Undefined,
   }) {
     return CalendarTaskSourceAlarm(
       description: description ?? this.description.copyWith(),
-      relativeDuration:
-          relativeDuration is _im8khkr9.CalendarTaskSourceDuration?
-          ? relativeDuration
-          : this.relativeDuration?.copyWith(),
-      absoluteUtc: absoluteUtc is DateTime? ? absoluteUtc : this.absoluteUtc,
+      relativeDuration: relativeDuration is _is.UndefinedSentinel
+          ? this.relativeDuration?.copyWith()
+          : relativeDuration,
+      absoluteUtc: absoluteUtc is _is.UndefinedSentinel
+          ? this.absoluteUtc
+          : absoluteUtc,
       related: related is String? ? related : this.related,
       uid: uid is String? ? uid : this.uid,
-      acknowledged: acknowledged is DateTime?
-          ? acknowledged
-          : this.acknowledged,
+      acknowledged: acknowledged is _is.UndefinedSentinel
+          ? this.acknowledged
+          : acknowledged,
       repeat: repeat is int? ? repeat : this.repeat,
-      repeatInterval: repeatInterval is _im8khkr9.CalendarTaskSourceDuration?
-          ? repeatInterval
-          : this.repeatInterval?.copyWith(),
+      repeatInterval: repeatInterval is _is.UndefinedSentinel
+          ? this.repeatInterval?.copyWith()
+          : repeatInterval,
       snoozeTargetUid: snoozeTargetUid is String?
           ? snoozeTargetUid
           : this.snoozeTargetUid,

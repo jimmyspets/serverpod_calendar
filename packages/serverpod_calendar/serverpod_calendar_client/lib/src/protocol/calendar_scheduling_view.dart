@@ -14,6 +14,7 @@ import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_event_origin.dart' as _ipbrznp8;
 import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_scheduling_delivery_view.dart' as _i63ky642;
@@ -144,11 +145,12 @@ abstract class CalendarSchedulingView
     int? eventRevision,
     _ipbrznp8.CalendarEventOrigin? origin,
     String? organizerAddress,
-    _isc.UuidValue? publicationId,
-    DateTime? publishedAt,
+    _isc.UuidValue? publicationId = const _isc.$UndefinedUuidValue(),
+    DateTime? publishedAt = const _isc.$UndefinedDateTime(),
     String? method,
     _il38fbb4.CalendarSchedulingPublicationKind? publicationKind,
-    _ieswiaty.CalendarEventTiming? originalStart,
+    _ieswiaty.CalendarEventTiming? originalStart =
+        const _UndefinedCalendarSchedulingView$originalStart(),
     bool? hasOccurrenceCancellations,
     bool? usesPublicationExclusions,
     bool? hasLocalChanges,
@@ -300,6 +302,12 @@ abstract class CalendarSchedulingView
 
 class _Undefined {}
 
+class _UndefinedCalendarSchedulingView$originalStart
+    extends _isc.UndefinedSentinel
+    implements _ieswiaty.CalendarEventTiming {
+  const _UndefinedCalendarSchedulingView$originalStart();
+}
+
 class _CalendarSchedulingViewImpl extends CalendarSchedulingView {
   const _CalendarSchedulingViewImpl({
     required _isc.UuidValue eventId,
@@ -340,11 +348,12 @@ class _CalendarSchedulingViewImpl extends CalendarSchedulingView {
     int? eventRevision,
     _ipbrznp8.CalendarEventOrigin? origin,
     Object? organizerAddress = _Undefined,
-    Object? publicationId = _Undefined,
-    Object? publishedAt = _Undefined,
+    _isc.UuidValue? publicationId = const _isc.$UndefinedUuidValue(),
+    DateTime? publishedAt = const _isc.$UndefinedDateTime(),
     Object? method = _Undefined,
     Object? publicationKind = _Undefined,
-    Object? originalStart = _Undefined,
+    _ieswiaty.CalendarEventTiming? originalStart =
+        const _UndefinedCalendarSchedulingView$originalStart(),
     bool? hasOccurrenceCancellations,
     bool? usesPublicationExclusions,
     bool? hasLocalChanges,
@@ -357,18 +366,20 @@ class _CalendarSchedulingViewImpl extends CalendarSchedulingView {
       organizerAddress: organizerAddress is String?
           ? organizerAddress
           : this.organizerAddress,
-      publicationId: publicationId is _isc.UuidValue?
-          ? publicationId
-          : this.publicationId,
-      publishedAt: publishedAt is DateTime? ? publishedAt : this.publishedAt,
+      publicationId: publicationId is _isc.UndefinedSentinel
+          ? this.publicationId
+          : publicationId,
+      publishedAt: publishedAt is _isc.UndefinedSentinel
+          ? this.publishedAt
+          : publishedAt,
       method: method is String? ? method : this.method,
       publicationKind:
           publicationKind is _il38fbb4.CalendarSchedulingPublicationKind?
           ? publicationKind
           : this.publicationKind,
-      originalStart: originalStart is _ieswiaty.CalendarEventTiming?
-          ? originalStart
-          : this.originalStart?.copyWith(),
+      originalStart: originalStart is _isc.UndefinedSentinel
+          ? this.originalStart?.copyWith()
+          : originalStart,
       hasOccurrenceCancellations:
           hasOccurrenceCancellations ?? this.hasOccurrenceCancellations,
       usesPublicationExclusions:

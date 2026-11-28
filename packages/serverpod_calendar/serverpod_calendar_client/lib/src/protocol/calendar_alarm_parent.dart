@@ -11,6 +11,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+
 import 'calendar_alarm_parent_kind.dart' as _ig3zti62;
 
 @_isc.immutable

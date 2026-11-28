@@ -14,6 +14,7 @@ import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_notifications_client/src/protocol/protocol.dart'
     as _i4nz4t2s;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'notification_view.dart' as _i86vfscw;
 
 @_isc.immutable

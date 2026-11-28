@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+
 import 'calendar_text_parameters.dart' as _iffxqqc7;
 
 @_is.immutable
@@ -78,11 +79,15 @@ abstract class CalendarAvailabilityTextParameters
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
   CalendarAvailabilityTextParameters copyWith({
-    _iffxqqc7.CalendarTextParameters? summary,
-    _iffxqqc7.CalendarTextParameters? description,
-    _iffxqqc7.CalendarTextParameters? location,
+    _iffxqqc7.CalendarTextParameters? summary =
+        const _UndefinedCalendarAvailabilityTextParameters$summary(),
+    _iffxqqc7.CalendarTextParameters? description =
+        const _UndefinedCalendarAvailabilityTextParameters$summary(),
+    _iffxqqc7.CalendarTextParameters? location =
+        const _UndefinedCalendarAvailabilityTextParameters$summary(),
     String? categoryLanguage,
-    List<_iffxqqc7.CalendarTextParameters?>? comments,
+    List<_iffxqqc7.CalendarTextParameters?>? comments =
+        const _is.$UndefinedList<_iffxqqc7.CalendarTextParameters?>(),
   });
   @override
   bool operator ==(Object other) {
@@ -166,6 +171,12 @@ abstract class CalendarAvailabilityTextParameters
 
 class _Undefined {}
 
+class _UndefinedCalendarAvailabilityTextParameters$summary
+    extends _is.UndefinedSentinel
+    implements _iffxqqc7.CalendarTextParameters {
+  const _UndefinedCalendarAvailabilityTextParameters$summary();
+}
+
 class _CalendarAvailabilityTextParametersImpl
     extends CalendarAvailabilityTextParameters {
   const _CalendarAvailabilityTextParametersImpl({
@@ -187,28 +198,32 @@ class _CalendarAvailabilityTextParametersImpl
   @_is.useResult
   @override
   CalendarAvailabilityTextParameters copyWith({
-    Object? summary = _Undefined,
-    Object? description = _Undefined,
-    Object? location = _Undefined,
+    _iffxqqc7.CalendarTextParameters? summary =
+        const _UndefinedCalendarAvailabilityTextParameters$summary(),
+    _iffxqqc7.CalendarTextParameters? description =
+        const _UndefinedCalendarAvailabilityTextParameters$summary(),
+    _iffxqqc7.CalendarTextParameters? location =
+        const _UndefinedCalendarAvailabilityTextParameters$summary(),
     Object? categoryLanguage = _Undefined,
-    Object? comments = _Undefined,
+    List<_iffxqqc7.CalendarTextParameters?>? comments =
+        const _is.$UndefinedList<_iffxqqc7.CalendarTextParameters?>(),
   }) {
     return CalendarAvailabilityTextParameters(
-      summary: summary is _iffxqqc7.CalendarTextParameters?
-          ? summary
-          : this.summary?.copyWith(),
-      description: description is _iffxqqc7.CalendarTextParameters?
-          ? description
-          : this.description?.copyWith(),
-      location: location is _iffxqqc7.CalendarTextParameters?
-          ? location
-          : this.location?.copyWith(),
+      summary: summary is _is.UndefinedSentinel
+          ? this.summary?.copyWith()
+          : summary,
+      description: description is _is.UndefinedSentinel
+          ? this.description?.copyWith()
+          : description,
+      location: location is _is.UndefinedSentinel
+          ? this.location?.copyWith()
+          : location,
       categoryLanguage: categoryLanguage is String?
           ? categoryLanguage
           : this.categoryLanguage,
-      comments: comments is List<_iffxqqc7.CalendarTextParameters?>?
-          ? comments
-          : this.comments?.map((e0) => e0?.copyWith()).toList(),
+      comments: comments is _is.UndefinedSentinel
+          ? this.comments?.map((e0) => e0?.copyWith()).toList()
+          : comments,
     );
   }
 }

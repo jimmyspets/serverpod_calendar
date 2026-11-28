@@ -10,9 +10,12 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'dart:async' as _ida;
+
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+
 import 'calendar_no_rule_fallback.dart' as _itts4qyp;
 import 'calendar_protocol_metadata.dart' as _itchuj1l;
 import 'calendar_supplemental_metadata.dart' as _ixppc388;
@@ -133,8 +136,10 @@ abstract class CalendarDataRecord
     String? color,
     String? availabilityZoneId,
     _itts4qyp.CalendarNoRuleFallback? noRuleFallback,
-    _itchuj1l.CalendarProtocolMetadata? protocolMetadata,
-    _ixppc388.CalendarSupplementalMetadata? supplementalMetadata,
+    _itchuj1l.CalendarProtocolMetadata? protocolMetadata =
+        const _UndefinedCalendarDataRecord$protocolMetadata(),
+    _ixppc388.CalendarSupplementalMetadata? supplementalMetadata =
+        const _UndefinedCalendarDataRecord$supplementalMetadata(),
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -194,6 +199,18 @@ abstract class CalendarDataRecord
 
 class _Undefined {}
 
+class _UndefinedCalendarDataRecord$protocolMetadata
+    extends _is.UndefinedSentinel
+    implements _itchuj1l.CalendarProtocolMetadata {
+  const _UndefinedCalendarDataRecord$protocolMetadata();
+}
+
+class _UndefinedCalendarDataRecord$supplementalMetadata
+    extends _is.UndefinedSentinel
+    implements _ixppc388.CalendarSupplementalMetadata {
+  const _UndefinedCalendarDataRecord$supplementalMetadata();
+}
+
 class _CalendarDataRecordImpl extends CalendarDataRecord {
   _CalendarDataRecordImpl({
     int? id,
@@ -236,8 +253,10 @@ class _CalendarDataRecordImpl extends CalendarDataRecord {
     Object? color = _Undefined,
     String? availabilityZoneId,
     _itts4qyp.CalendarNoRuleFallback? noRuleFallback,
-    Object? protocolMetadata = _Undefined,
-    Object? supplementalMetadata = _Undefined,
+    _itchuj1l.CalendarProtocolMetadata? protocolMetadata =
+        const _UndefinedCalendarDataRecord$protocolMetadata(),
+    _ixppc388.CalendarSupplementalMetadata? supplementalMetadata =
+        const _UndefinedCalendarDataRecord$supplementalMetadata(),
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -250,13 +269,12 @@ class _CalendarDataRecordImpl extends CalendarDataRecord {
       color: color is String? ? color : this.color,
       availabilityZoneId: availabilityZoneId ?? this.availabilityZoneId,
       noRuleFallback: noRuleFallback ?? this.noRuleFallback,
-      protocolMetadata: protocolMetadata is _itchuj1l.CalendarProtocolMetadata?
-          ? protocolMetadata
-          : this.protocolMetadata?.copyWith(),
-      supplementalMetadata:
-          supplementalMetadata is _ixppc388.CalendarSupplementalMetadata?
-          ? supplementalMetadata
-          : this.supplementalMetadata?.copyWith(),
+      protocolMetadata: protocolMetadata is _is.UndefinedSentinel
+          ? this.protocolMetadata?.copyWith()
+          : protocolMetadata,
+      supplementalMetadata: supplementalMetadata is _is.UndefinedSentinel
+          ? this.supplementalMetadata?.copyWith()
+          : supplementalMetadata,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -516,6 +534,69 @@ class CalendarDataRecordRepository {
       transaction: transaction,
       lockMode: lockMode,
       lockBehavior: lockBehavior,
+    );
+  }
+
+  /// Emits [CalendarDataRecord]s matching the given query parameters every time the
+  /// source tables are modified.
+  ///
+  /// Use [where] to specify which items to include in the return value.
+  /// If none is specified, all items will be returned.
+  ///
+  /// To specify the order of the items use [orderBy] or [orderByList]
+  /// when sorting by multiple columns.
+  ///
+  /// The maximum number of items can be set by [limit]. If no limit is set,
+  /// all items matching the query will be returned.
+  ///
+  /// [offset] defines how many items to skip, after which [limit] (or all)
+  /// items are read from the database.
+  ///
+  /// Use [throttle] to specify the minimum interval between queries. It can
+  /// also be set to `null`, in which case the stream will only be throttled
+  /// when its subscription is paused.
+  ///
+  /// Source tables are collected from the queried table, [where], [orderBy],
+  /// [orderByList], and the [include] graph. [alsoTriggerOnTables] is added
+  /// to that set. Pass [Table] instances such as `CalendarDataRecord.t`.
+  ///
+  /// Raw [Expression] SQL is not inspected. Tables referenced only in raw
+  /// SQL must be passed via [alsoTriggerOnTables].
+  ///
+  /// The stream always reads committed state and never joins an ambient
+  /// [Transaction]. Emissions for a write fire after that write commits.
+  ///
+  /// Currently only supported on SQLite. Calling this method on PostgreSQL
+  /// throws an [UnsupportedError].
+  ///
+  /// ```dart
+  /// var subscription = Persons.db.watch(
+  ///   session,
+  ///   where: (t) => t.lastName.equals('Jones'),
+  ///   orderBy: (t) => t.firstName,
+  ///   limit: 100,
+  /// ).listen((persons) {
+  ///   // Handle the latest matching rows.
+  /// });
+  /// ```
+  _ida.Stream<List<CalendarDataRecord>> watch(
+    _is.DatabaseSession session, {
+    _is.WhereExpressionBuilder<CalendarDataRecordTable>? where,
+    int? limit,
+    int? offset,
+    _is.OrderByBuilder<CalendarDataRecordTable>? orderBy,
+    _is.OrderByListBuilder<CalendarDataRecordTable>? orderByList,
+    Duration? throttle = const Duration(milliseconds: 30),
+    Iterable<_is.Table>? alsoTriggerOnTables,
+  }) {
+    return session.db.watch<CalendarDataRecord>(
+      where: where?.call(CalendarDataRecord.t),
+      orderBy: orderBy?.call(CalendarDataRecord.t),
+      orderByList: orderByList?.call(CalendarDataRecord.t),
+      limit: limit,
+      offset: offset,
+      throttle: throttle,
+      alsoTriggerOnTables: alsoTriggerOnTables,
     );
   }
 

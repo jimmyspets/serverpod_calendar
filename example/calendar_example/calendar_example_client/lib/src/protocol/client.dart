@@ -11,6 +11,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
+
 import 'package:http/http.dart' as _i85jenna;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _iacc;
@@ -23,6 +24,7 @@ import 'package:serverpod_calendar_feed_client/serverpod_calendar_feed_client.da
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_notifications_client/serverpod_notifications_client.dart'
     as _i9wvmat7;
+
 import 'protocol.dart' as _il2as5qe;
 
 /// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints

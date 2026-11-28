@@ -24,5 +24,5 @@ dev_dependencies:
     path: packages/serverpod_notifications/serverpod_notifications_client
   serverpod_calendar_feed_client:
     path: packages/serverpod_calendar_feed/serverpod_calendar_feed_client
-  serverpod_auth_core_client: 4.0.4
+  serverpod_auth_core_client: 4.1.0
   yaml: 3.1.3
