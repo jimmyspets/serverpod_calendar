@@ -1780,3 +1780,8 @@ Final grouped checks passed changed-source formatting, full workspace `dart anal
 Serverpod MCP was connected and server hot restart succeeded after generation. The preserved development Flutter app hot reload succeeded and reported no runtime errors. Development storage/app were preserved. Relative links/consecutive ADRs, UTF-8/whitespace, local credential scan and unchanged Apache 2.0 LICENSE are checked before the single completed-batch commit.
 
 The full `./tool/check.ps1`, unrelated worker/domain recovery profiles, complete browser and release build are deferred to exact-head hosted CI. Keep the implementation PR draft until that gate succeeds; the grouped local checks above are not labelled a full repository run. Range CANCEL application/restoration, range responses, native future cancellation and external-client/real-mail interoperability remain unimplemented by this batch.
+
+
+## ADR 0157 documentation proposal, 2026-11-01
+
+Documentation-only proposal follows completed ADR 0156 implementation PR #143. Inspected DATE/timed recurrence membership, timing ranges, explicit replacements, original civil comparison and aggregate/local budgets; checked primary RFC 5546 cancellation and RFC 5545 original-order/rescheduling context. The confirmed cancel-all/preserve-exceptions policy is distinguished from proposed cutoff APIs, caps and future durable integration. No runtime/generated/model/SQL/dependency change is included. Relative links/consecutive ADRs, scope, credential/UTF-8/whitespace and unchanged LICENSE checks are run before committing. Runtime tests are not rerun for this documentation proposal; ADR 0156 grouped evidence and pending hosted CI remain separate. Approval is required before implementation.
