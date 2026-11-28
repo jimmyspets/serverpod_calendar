@@ -711,3 +711,13 @@ Pure-core implementation PR #145 passed full hosted inspect/runtime CI. The main
 - [x] Implement native actions, generated clients, complete projections and Flutter; focused unit/DB, actual two-host commit loss and client/feed/browser checks passed.
 - [x] Complete broader grouped checks before one code commit; all pure/module VM+Chrome, 116 DB/alarm regressions and independent worker-loss checks passed as recorded in validation.
 - [ ] Pass full repository CI before readiness. Keep incoming/outgoing range CANCEL, range replies, wire mapping and broader reconciliation separate.
+
+## Incoming range CANCEL projection prerequisite
+
+Native cutoff implementation PR #147 passed full hosted inspect/runtime CI. The maintainer selected strictly newer SEQUENCE than all affected accepted components for incoming range cancellation. [Proposed ADR 0159](adr/0159-pure-range-cancellation-projection.md) defines the next pure projection, preserving retained component versions and a separate cancellation source version. Its concrete mechanics are unapproved and unimplemented.
+
+- [x] Confirm newer-than-all-affected product policy.
+- [x] Inspect source matching, original/effective timing, independent version floors, native cutoff and accepted-baseline/checkpoint boundaries.
+- [ ] Review separate pure result/source version, bounded original-order floors (including the segment beneath an anchor single), and no persistence/baseline weakening.
+- [ ] Implement and validate the approved projection batch before one code commit; full CI remains required before readiness.
+- [ ] Review durable acceptance layers, exact retries, master composition and source restoration separately. Range CANCEL application and replies remain guarded.
