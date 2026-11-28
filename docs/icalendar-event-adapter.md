@@ -55,3 +55,6 @@ IcalendarComponentException exposes unsupportedComponent, unsupportedProperty, u
 The result is suitable for further host-authorized mapping. Transactional import, source-to-native identity reconciliation, imported field editing/preservation, recurrence/exception wire support, scheduling/alarm handling, full calendar metadata mapping, authorized export and optional HTTP feed routes remain separate work. Unit/browser fixtures do not establish Apple/Google/Outlook interoperability.
 
 Sources: [RFC 5545 sections 3.6.1 and 3.6.5](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.6.1).
+
+
+The later [source metadata](event-source-metadata.md) and [inert participant](event-source-participants.md) increments under ADRs 0107–0108 extend the original pure profile and authenticated storage/import/export/replacement. They preserve declared decoded source semantics; native metadata/participant editors, scheduling, alarms and other unprofiled properties remain separate.

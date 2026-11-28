@@ -15,6 +15,7 @@ import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
 import 'calendar_event_source_category_group.dart' as _iui013s0;
+import 'calendar_event_source_participant.dart' as _iypom7ai;
 import 'calendar_event_source_text.dart' as _iwa6orjz;
 
 @_is.immutable
@@ -26,6 +27,8 @@ abstract class CalendarEventSourceMetadata
     required this.categoryGroups,
     required this.comments,
     required this.contacts,
+    this.organizer,
+    this.attendees,
   });
 
   const factory CalendarEventSourceMetadata({
@@ -34,6 +37,8 @@ abstract class CalendarEventSourceMetadata
     required List<_iui013s0.CalendarEventSourceCategoryGroup> categoryGroups,
     required List<_iwa6orjz.CalendarEventSourceText> comments,
     required List<_iwa6orjz.CalendarEventSourceText> contacts,
+    _iypom7ai.CalendarEventSourceParticipant? organizer,
+    List<_iypom7ai.CalendarEventSourceParticipant>? attendees,
   }) = _CalendarEventSourceMetadataImpl;
 
   factory CalendarEventSourceMetadata.fromJson(
@@ -54,6 +59,18 @@ abstract class CalendarEventSourceMetadata
           .deserialize<List<_iwa6orjz.CalendarEventSourceText>>(
             jsonSerialization['contacts'],
           ),
+      organizer: jsonSerialization['organizer'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_iypom7ai.CalendarEventSourceParticipant>(
+                  jsonSerialization['organizer'],
+                ),
+      attendees: jsonSerialization['attendees'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<List<_iypom7ai.CalendarEventSourceParticipant>>(
+                  jsonSerialization['attendees'],
+                ),
     );
   }
 
@@ -67,6 +84,10 @@ abstract class CalendarEventSourceMetadata
 
   final List<_iwa6orjz.CalendarEventSourceText> contacts;
 
+  final _iypom7ai.CalendarEventSourceParticipant? organizer;
+
+  final List<_iypom7ai.CalendarEventSourceParticipant>? attendees;
+
   /// Returns a shallow copy of this [CalendarEventSourceMetadata]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -76,6 +97,8 @@ abstract class CalendarEventSourceMetadata
     List<_iui013s0.CalendarEventSourceCategoryGroup>? categoryGroups,
     List<_iwa6orjz.CalendarEventSourceText>? comments,
     List<_iwa6orjz.CalendarEventSourceText>? contacts,
+    _iypom7ai.CalendarEventSourceParticipant? organizer,
+    List<_iypom7ai.CalendarEventSourceParticipant>? attendees,
   });
   @override
   bool operator ==(Object other) {
@@ -106,6 +129,15 @@ abstract class CalendarEventSourceMetadata
             const _iss.DeepCollectionEquality().equals(
               other.contacts,
               contacts,
+            ) &&
+            (identical(
+                  other.organizer,
+                  organizer,
+                ) ||
+                other.organizer == organizer) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.attendees,
+              attendees,
             );
   }
 
@@ -118,6 +150,8 @@ abstract class CalendarEventSourceMetadata
       const _iss.DeepCollectionEquality().hash(categoryGroups),
       const _iss.DeepCollectionEquality().hash(comments),
       const _iss.DeepCollectionEquality().hash(contacts),
+      organizer,
+      const _iss.DeepCollectionEquality().hash(attendees),
     );
   }
 
@@ -130,6 +164,9 @@ abstract class CalendarEventSourceMetadata
       'categoryGroups': categoryGroups.toJson(valueToJson: (v) => v.toJson()),
       'comments': comments.toJson(valueToJson: (v) => v.toJson()),
       'contacts': contacts.toJson(valueToJson: (v) => v.toJson()),
+      if (organizer != null) 'organizer': organizer?.toJson(),
+      if (attendees != null)
+        'attendees': attendees?.toJson(valueToJson: (v) => v.toJson()),
     };
   }
 
@@ -153,12 +190,16 @@ class _CalendarEventSourceMetadataImpl extends CalendarEventSourceMetadata {
     required List<_iui013s0.CalendarEventSourceCategoryGroup> categoryGroups,
     required List<_iwa6orjz.CalendarEventSourceText> comments,
     required List<_iwa6orjz.CalendarEventSourceText> contacts,
+    _iypom7ai.CalendarEventSourceParticipant? organizer,
+    List<_iypom7ai.CalendarEventSourceParticipant>? attendees,
   }) : super._(
          url: url,
          classification: classification,
          categoryGroups: categoryGroups,
          comments: comments,
          contacts: contacts,
+         organizer: organizer,
+         attendees: attendees,
        );
 
   /// Returns a shallow copy of this [CalendarEventSourceMetadata]
@@ -171,6 +212,8 @@ class _CalendarEventSourceMetadataImpl extends CalendarEventSourceMetadata {
     List<_iui013s0.CalendarEventSourceCategoryGroup>? categoryGroups,
     List<_iwa6orjz.CalendarEventSourceText>? comments,
     List<_iwa6orjz.CalendarEventSourceText>? contacts,
+    Object? organizer = _Undefined,
+    Object? attendees = _Undefined,
   }) {
     return CalendarEventSourceMetadata(
       url: url is String? ? url : this.url,
@@ -182,6 +225,12 @@ class _CalendarEventSourceMetadataImpl extends CalendarEventSourceMetadata {
           this.categoryGroups.map((e0) => e0.copyWith()).toList(),
       comments: comments ?? this.comments.map((e0) => e0.copyWith()).toList(),
       contacts: contacts ?? this.contacts.map((e0) => e0.copyWith()).toList(),
+      organizer: organizer is _iypom7ai.CalendarEventSourceParticipant?
+          ? organizer
+          : this.organizer?.copyWith(),
+      attendees: attendees is List<_iypom7ai.CalendarEventSourceParticipant>?
+          ? attendees
+          : this.attendees?.map((e0) => e0.copyWith()).toList(),
     );
   }
 }

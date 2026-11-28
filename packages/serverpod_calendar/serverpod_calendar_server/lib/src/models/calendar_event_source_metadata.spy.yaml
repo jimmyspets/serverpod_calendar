@@ -7,3 +7,5 @@ fields:
   categoryGroups: List<CalendarEventSourceCategoryGroup>
   comments: List<CalendarEventSourceText>
   contacts: List<CalendarEventSourceText>
+  organizer: CalendarEventSourceParticipant?
+  attendees: List<CalendarEventSourceParticipant>?

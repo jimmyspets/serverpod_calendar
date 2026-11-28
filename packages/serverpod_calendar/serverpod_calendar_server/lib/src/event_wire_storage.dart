@@ -113,10 +113,19 @@ CalendarEventRecurrence? _recurrence(IcalendarEventRecurrence? v) {
   );
 }
 
+CalendarEventSourceParticipant _participant(IcalendarEventParticipant v) =>
+    CalendarEventSourceParticipant(
+      address: v.address,
+      parameters: v.parameters,
+    );
 CalendarEventSourceMetadata? _metadata(IcalendarEvent event) =>
     validateEventSourceMetadata(
       CalendarEventSourceMetadata(
         url: event.metadata.url,
+        organizer: event.participants.organizer == null
+            ? null
+            : _participant(event.participants.organizer!),
+        attendees: event.participants.attendees.map(_participant).toList(),
         classification: event.metadata.classification,
         categoryGroups: [
           for (final g in event.metadata.categoryGroups)

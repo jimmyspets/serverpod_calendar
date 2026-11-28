@@ -122,3 +122,5 @@ Authenticated [task export](docs/task-export.md) now complements create-only tas
 Selected event occurrence content is implemented under [ADR 0106](docs/adr/0106-single-event-content-overrides.md); [the guide](docs/event-occurrence-content.md) explains timing inheritance, explicit export rejection and the pre-beta v2 source-baseline boundary.
 
 Read-only [event source metadata](docs/event-source-metadata.md) is implemented under ADR 0107, with independent source-read authorization; native metadata editors remain separate.
+
+[Event source participants](docs/event-source-participants.md) now preserve bounded ORGANIZER/ATTENDEE claims through interchange and storage, without host identity mapping, authority or invitations. Native participant editing and scheduling remain separate.

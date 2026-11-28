@@ -18,6 +18,8 @@ import 'event_overrides_test.dart' as g;
 import 'event_wire_output_test.dart' show snapshot;
 
 const metadata = [
+  'ORGANIZER;CN=Source organizer:mailto:source-organizer@example.invalid',
+  'ATTENDEE;PARTSTAT=ACCEPTED;MEMBER="urn:group:source":mailto:source-attendee@example.invalid',
   'URL:https://example.invalid/event',
   'CLASS:PRIVATE',
   'CATEGORIES;LANGUAGE=en:Work,Work',
@@ -82,6 +84,17 @@ void main() {
       overrides: component(metadata),
     );
     final own = p.edits!.singles.single;
+    expect(
+      p.protocolState.sourceMetadata!.organizer!.address,
+      'mailto:source-organizer@example.invalid',
+    );
+    expect(own.sourceMetadata!.attendees!.single.parameters['MEMBER'], [
+      'urn:group:source',
+    ]);
+    expect(
+      () => own.sourceMetadata!.attendees!.single.parameters['MEMBER']!.clear(),
+      throwsUnsupportedError,
+    );
     expect(p.protocolState.sourceMetadata!.categoryGroups.single.values, [
       'Work',
       'Work',

@@ -248,9 +248,23 @@ final class EventComponentWriter {
       property('STATUS', cancelled ? 'CANCELLED' : v.status.name.toUpperCase()),
     if (transparency) property('TRANSP', v.transparency.name.toUpperCase()),
   ];
+  IcalendarSyntaxProperty participant(
+    String name,
+    CalendarEventSourceParticipant p,
+  ) => IcalendarSyntaxProperty(
+    name,
+    p.address,
+    parameters: [
+      for (final e in p.parameters.entries)
+        IcalendarSyntaxParameter(e.key, e.value),
+    ],
+  );
   List<IcalendarSyntaxEntry> sourceMetadata(
     CalendarEventSourceMetadata? value,
   ) => [
+    if (value?.organizer != null) participant('ORGANIZER', value!.organizer!),
+    for (final p in value?.attendees ?? <CalendarEventSourceParticipant>[])
+      participant('ATTENDEE', p),
     if (value?.url != null) property('URL', value!.url!),
     if (value?.classification != null)
       property('CLASS', value!.classification!),

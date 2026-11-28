@@ -1,6 +1,6 @@
 # Delivery roadmap
 
-Status reconciled **2026-10-24**, through selected event occurrence content under ADR 0106 and explicit task/event source replacements under ADRs 0104–0105. The bounded temporal core, calendar/event/task services and scoped availability/interchange have local validation evidence. Read-only event source metadata under ADR 0107 extends that scope; the validation record separates completed checks from remaining release gates. The full first release remains incomplete. The [RFC tables](rfc/README.md) are the latest feature-scope source; [requirements](requirements.md) define acceptance targets and [ADRs](adr/README.md) distinguish confirmed choices from reviewable mechanics.
+Status reconciled **2026-10-24**, through selected event occurrence content under ADR 0106 and explicit task/event source replacements under ADRs 0104–0105. The bounded temporal core, calendar/event/task services and scoped availability/interchange have local validation evidence. Read-only event source metadata and inert participants under ADRs 0107–0108 extend that scope; the validation record separates completed checks from remaining release gates. The full first release remains incomplete. The [RFC tables](rfc/README.md) are the latest feature-scope source; [requirements](requirements.md) define acceptance targets and [ADRs](adr/README.md) distinguish confirmed choices from reviewable mechanics.
 
 This roadmap tracks the implementation represented by the current branch, including stacked draft PRs; an implemented checkbox does not mean the change is merged into main, released, or that every ADR mechanic is accepted. Check existing GitHub work before filing issues, and link each implementation issue to the relevant requirements and roadmap section.
 
@@ -15,7 +15,7 @@ Tasks have a [confirmed create-only import contract](task-import.md) under ADR 0
 | Workspace and example | Pinned SDKs, module/client packages, JWT sign-in, local setup/generation/check scripts | CI and broader feature integration |
 | Temporal core | Selected bounded Gregorian/ISO, timezone, duration, recurrence, exception/range timing and task-timing calculations | Durable upgrade/recalculation integration; pure full-horizon wire-zone validation is implemented under ADR 0065 |
 | Calendars and authorization | CRUD/associations, native/protocol metadata separation, UID/time, host policy, disclosure, revisions and cursors | Retention/cleanup, production coordinated-policy evidence and enforcement for remaining services |
-| Events | DATE/UTC/zoned CRUD, separate lifecycle rights, recurrence storage, bounded previews and single/future timing edits/cancellation, stored PERIODs/annotations, independent component versions, explicit source replacements, selected occurrence content under ADR 0106 and read-only grouped source metadata under ADR 0107 | Future content/cancellation, native metadata editors and richer source profiles and calendar-wide occurrence queries |
+| Events | DATE/UTC/zoned CRUD, separate lifecycle rights, recurrence storage, bounded previews and single/future timing edits/cancellation, stored PERIODs/annotations, independent component versions, explicit source replacements, selected occurrence content under ADR 0106 and read-only grouped source metadata under ADR 0107 and inert participants under ADR 0108 | Future content/cancellation, native metadata editors and richer source profiles and calendar-wide occurrence queries |
 | Tasks | Durable CRUD/assignments, recurrence/previews, independent occurrence progress/history, orphan protection, source-preserving progress/metadata/component storage, create-only VTODO import, authorized current-state export, single/future timing, selected single-content fields, baseline-aware source replacements and Flutter example | Future content and cancellation, richer filtered queries, broader source reconciliation/adoption and alarms |
 | Availability | Per-calendar complete/unknown free/busy; scoped rule CRUD, recurring openings, priority/range/fallback composition, explicit opening zones, scoped subject/common-free search, opening edits/metadata, duration envelopes and source-preserving UID/group/CONTACT/PERIOD/component-version storage | Indexed larger calendars and cross-scope/group-expansion coordination; scoped create/export/replacement APIs exist under ADRs 0073-0076 |
 | iCalendar and HTTP feeds | Bounded strict syntax/value codecs; scoped VEVENT recurrence/PERIOD/timing components and VTIMEZONE validation; availability timing/composition/publication metadata adapters and scoped authenticated import/export and explicit replacements; optional feed-module boundary selected | Remaining selected wire properties/components, remaining component profiles/reconciliation, feed module and external-client evidence |
@@ -149,6 +149,8 @@ Native metadata editing is partial evidence for FR-24, not ICS interoperability.
 
 
 - [x] Preserve bounded read-only VEVENT CLASS/URL and grouped CATEGORIES/COMMENT/CONTACT through storage, edits and authorized import/export/replacement under [ADR 0107](adr/0107-read-only-event-source-metadata.md), with independent source-read permission and bounded own-component matching. Native metadata editors remain separate.
+
+- [x] Preserve bounded inert VEVENT ORGANIZER/ATTENDEE source claims and event-specific participant parameters through storage and authorized round trips under [ADR 0108](adr/0108-inert-event-source-participants.md). Native participant editing and scheduling remain separate.
 
 ## Tasks
 
@@ -330,3 +332,7 @@ ADR 0106 implements the confirmed selected-field/anchor-local policy with timing
 ## Read-only event source metadata, 2026-10-24
 
 ADR 0107 follows the confirmed source-first/read-source/bounded occurrence choices. Wire/module/database checks cover persistence, privacy, matching, limits, retained source state, export and replacement; actual broader results are recorded in the validation record. Native metadata editors, other event profiles, feeds, scheduling and alarm runtime remain open.
+
+## Inert event source participants, 2026-10-24
+
+The confirmed task-style source-only choice now extends VEVENT under ADR 0108. Focused adapter, module and database checks cover data preservation, disclosure, validation, native retention and atomic rejection; the validation record tracks broader checks. Native participants, remaining source references/alarms, scheduling and runtime remain open.

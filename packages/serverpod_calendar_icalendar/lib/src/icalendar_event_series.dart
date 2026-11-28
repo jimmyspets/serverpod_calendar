@@ -12,6 +12,18 @@ final class IcalendarEventSeries {
     this.timedSeries,
   ) : overrides = List.unmodifiable(overrides);
 
+  /// Resolve source omissions without changing raw component presence.
+  IcalendarEventParticipants participantsFor(IcalendarEvent component) {
+    if (identical(component, master)) return master.participants;
+    if (!overrides.contains(component)) {
+      throw ArgumentError('Foreign component');
+    }
+    return _inheritedEventParticipants(
+      master.participants,
+      component.participants,
+    );
+  }
+
   /// Effective bounded metadata; the component retains its original omissions.
   IcalendarEventMetadata metadataFor(IcalendarEvent component) {
     if (identical(component, master)) return master.metadata;
@@ -40,6 +52,7 @@ IcalendarEventSeries _eventSeries(
   }
   for (final o in overrides) {
     _matchingEventMetadata(master.metadata, o.metadata);
+    _matchingEventParticipants(master.participants, o.participants);
     if ((o.transparency != null && o.isTransparent != master.isTransparent) ||
         (o.status != null &&
             o.status != master.status &&

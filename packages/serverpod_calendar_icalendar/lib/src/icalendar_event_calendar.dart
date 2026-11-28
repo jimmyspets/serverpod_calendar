@@ -12,6 +12,7 @@ import 'icalendar_event_recurrence.dart';
 
 part 'icalendar_event_series.dart';
 part 'icalendar_event_metadata.dart';
+part 'icalendar_event_participants.dart';
 part 'icalendar_task_calendar.dart';
 part 'icalendar_task_series.dart';
 part 'icalendar_task_metadata.dart';
@@ -41,6 +42,7 @@ final class IcalendarEvent {
     required this.dateSpan,
     required this.timedSpan,
     required this.metadata,
+    required this.participants,
     this.created,
     this.lastModified,
     this.sequence,
@@ -55,6 +57,7 @@ final class IcalendarEvent {
     this.isThisAndFuture = false,
   });
   final IcalendarEventMetadata metadata;
+  final IcalendarEventParticipants participants;
   final IcalendarSyntaxComponent source;
   final String uid;
   final DateTime stamp;
@@ -254,8 +257,10 @@ IcalendarEvent _event(
       'EXDATE',
       'RECURRENCE-ID',
       ..._eventMetadataProperties,
+      'ORGANIZER',
+      'ATTENDEE',
     },
-    repeated: {'RDATE', 'EXDATE', ..._eventRepeatedMetadata},
+    repeated: {'RDATE', 'EXDATE', 'ATTENDEE', ..._eventRepeatedMetadata},
   );
   final uid = componentText(requiredProperty(p, 'UID'));
   if (uid.isEmpty) componentFail(IcalendarComponentError.invalidValue);
@@ -372,6 +377,11 @@ IcalendarEvent _event(
         : componentUtc(p['LAST-MODIFIED']!.single),
     sequence: sequence,
     metadata: _eventMetadata(source, budget),
+    participants: _eventParticipants(
+      source,
+      budget,
+      isOverride: original != null,
+    ),
     summary: text('SUMMARY', 4096),
     description: text('DESCRIPTION', 16384),
     location: text('LOCATION', 4096),
