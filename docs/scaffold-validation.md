@@ -1060,3 +1060,11 @@ The first root-check attempt stopped at its initial formatting gate after automa
 No real email, external-client interoperability, new storage/migration, dependency change, development database reset or complete scheduling/release claim is made. Source/delivery authority, pending-work ordering and broader restoration/range/inbound/mail work retain their documented boundaries.
 
 Interactive restoration preserved development data. Serverpod MCP hot reload and Flutter VM connection/hot reload succeeded; Flutter reported no runtime errors, and current maintenance operations succeeded. Final static review passed 2,677 relative links, consecutive ADRs 0001-0128, 50 candidate-file/credential checks, unchanged Apache 2.0 LICENSE and whitespace checks. No generated or migration metadata was edited by hand.
+
+## Published-occurrence restoration contract, 2026-10-27
+
+The maintainer confirmed restoring published occurrence values while preserving newer drafts. ADR 0129 proposes concrete detached REQUEST, authority/DTO/status, serialized-delivery, v5 ledger and complete-REQUEST transition mechanics separately from that policy. Primary RFC Editor REQUEST/recurrence/sequencing references were checked on 2026-10-27. These mechanics await explicit approval; no runtime/model source/generated client/migration change is added by this documentation-only batch.
+
+Relative links, consecutive ADRs through 0129, changed-file/credential/LICENSE and whitespace checks are run before staging. Runtime tests are not repeated for this proposal; the preceding cancellation batch in commit `2754deb` has complete root checks plus focused final-refinement and interactive MCP evidence above. Restoration, cancelled-master reopening and broader lifecycle/release work remain separate.
+
+Documentation validation passed 2,688 relative links, consecutive ADRs 0001-0129, 13 changed/candidate files, credential scan, unchanged Apache 2.0 LICENSE and whitespace checks.
