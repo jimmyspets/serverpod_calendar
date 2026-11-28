@@ -14,16 +14,17 @@ Checked items describe only the stated implemented slice or explicitly selected 
 
 ## Current delivery position
 
-**In progress, 2026-11-16:** Serverpod 4.1.2 dependency alignment has resolved
-the workspace lockfile, regenerated all modules and passed workspace analysis,
-core/iCalendar VM and Chrome suites, calendar VM and focused scheduling tests.
-A fresh example-host migration succeeded. The full isolated run passed its
-database and two-host checks but failed a feed 304 representation-length
-assertion. A local raw Dart HTTP probe reproduced the zero-length 304 header;
-that [compatibility issue](feed-304-compatibility.md) and the stale
-imported-schema snapshot remain open.
-ADR 0187's approved exceptional-anchor durable implementation is available for
-draft review in [PR #205](https://github.com/jimmyspets/serverpod_calendar/pull/205).
+**Baseline reviewed 2026-11-28.** Main includes Flutter 3.50.1/Dart 3.14.0 and
+Serverpod 4.1.2. The upgrade PR's hosted inspection and runtime jobs passed
+with the maintainer-approved feed-test exception. The run records PR head
+`a683145`. The eventual merged tree includes later changes. The follow-up
+repository check at merge commit `f6c2994` passed inspection and runtime
+with the approved feed-test exception. See the [upgrade validation
+record](serverpod-4.1-upgrade.md#serverpod-412).
+The [feed 304 wire defect](feed-304-compatibility.md) remains open.
+
+ADR 0187's approved exceptional-anchor durable implementation is merged through
+[PR #205](https://github.com/jimmyspets/serverpod_calendar/pull/205).
 Focused checks, two-host process-loss recovery and command races, and the
 connected exceptional-anchor Flutter journey passed; the full exact-head check
 and hosted conclusion remain outstanding, as recorded in
@@ -35,7 +36,9 @@ failed at the same 4.1.2 feed 304 length assertion after its earlier database
 and two-host checks passed; the inspection job passed. This is not a full
 runtime success or a successful check for a later commit.
 
-The next independent scheduling increment is [ADR 0188](adr/0188-published-whole-series-lifecycle-with-active-range.md): the maintainer approved its finite-suffix pure projection, which is implemented for review in [draft PR #206](https://github.com/jimmyspets/serverpod_calendar/pull/206). Durable delivery ordering and checkpoint mechanics remain undecided. Existing whole-series lifecycle guards remain in force.
+The maintainer-approved [ADR 0188](adr/0188-published-whole-series-lifecycle-with-active-range.md)
+finite-suffix pure projection was merged through
+[PR #206](https://github.com/jimmyspets/serverpod_calendar/pull/206).
 The [pure implementation](published-finite-suffix-projection.md) has twenty-one
 focused VM tests covering finite DATE/UTC/zoned series, DST, source exclusions
 and RDATE/PERIOD additions, detached results and bounded rejection. The complete
@@ -47,7 +50,10 @@ passed inspection but failed its runtime job at the same 304 length assertion:
 zero reported for a 692-byte representation. It does not establish a passing
 full repository check.
 
-The next lifecycle investigation is [draft ADR 0189](adr/0189-whole-series-lifecycle-with-published-cutoff.md), in [draft PR #207](https://github.com/jimmyspets/serverpod_calendar/pull/207). Existing checkpoint readers require an active range to remain bound to its exact range-CANCEL payload, so whole-series transitions need a separately reviewed, self-contained proof rather than simply removing an API guard. No durable change is approved or implemented.
+The next scheduling design is [draft ADR 0189](adr/0189-whole-series-lifecycle-with-published-cutoff.md).
+[PR #207](https://github.com/jimmyspets/serverpod_calendar/pull/207) merged the
+investigation. The proposed bounded checkpoint, version and restoration proof
+still require explicit maintainer approval before durable implementation.
 
 Tasks have a [confirmed create-only import contract](task-import.md) under ADR 0097 and [implemented source storage](task-source-storage.md) under ADR 0098. Create-only authenticated import follows under ADR 0099; explicitly authorized [current-state task export](task-export.md) follows under ADR 0100, with separate rich-source disclosure. Imported non-recurring tasks retain unknown prior progress, so neutral source values do not enable recurrence conversion. Selected event occurrence content is implemented under ADR 0106. Native metadata editors and exact master-category search now extend events/tasks under ADRs 0134–0136. Trusted non-recurring invitation review, stable calendar addition and explicit conflict-protected REQUEST/CANCEL application/reopening extend scheduling under ADRs 0137–0141; receipt alone changes no calendar data. Broader source adoption/overwrite and future content/cancellation remain open; scoped alarm runtime, live delivery and timing-only source adoption have implementation evidence under ADRs 0112–0115.
 
@@ -69,7 +75,7 @@ The timing-only single/future batch is implemented under [ADR 0055](adr/0055-nat
 
 The maintainer explicitly permits dependency-driven reordering of this roadmap. Use these lanes as the working priority, preserving the full selected release scope and the explicit ADR/model review gates:
 
-1. Establish the current baseline: resolve hosted checks for delivered batches and validate the 4.1.2 toolchain before treating them as release evidence. Fix failures ahead of new implementation.
+1. Establish the current baseline: record the 4.1.2 upgrade PR result, obtain complete checks for the merged stack, and resolve the upstream feed 304 wire defect before treating the stack as release evidence.
 2. Finish shared recurring scheduling primitives, then their durable workflows. ADRs 0169–0170 now implement the scoped incoming repeated-cycle prerequisites/workflow, with full exact-head hosted success for PR #172. ADRs 0171–0172 implement the bounded outgoing range cancellation/restoration group. Initial REQUEST-bundle review/adoption under accepted ADR 0173 passed full exact-head hosted checks in PR #178. Accepted ADR 0174 implements the scoped complete-update slice, with actual batch validation recorded separately; ADR 0175 adds scoped whole-series cancellation/reopening; ADRs 0176–0177 add bundle master/original replies, and ADRs 0178–0179 add pure/durable ordinary recurring effective-notice responses. Preserve guards for partial bundle updates, component-wise lifecycle, suffix participation and other unimplemented reconciliation. Group code that shares original identity, version, source retention and retry machinery instead of repeatedly rebuilding the same boundary.
 3. Complete the other selected authenticated VEVENT/VFREEBUSY methods and participant/lifecycle reconciliation, reusing the stable series and outbox machinery. Pure parser support alone does not complete these operation rows. Host/provider trust and real-mail trials require their own concrete configuration and authorization.
 4. Close remaining native task/event metadata, future-content/cancellation, disclosure-safe query and availability gaps in coherent service/client/Flutter batches. Time-indexed candidates, timezone-update invalidation and production authorization coordination must retain existing completeness and concurrency guarantees.
@@ -1091,9 +1097,18 @@ Accepted [ADR 0182](adr/0182-native-event-information-publication.md) authorizes
 
 ## Durable exceptional range controls
 
-[ADR 0187](adr/0187-durable-exceptional-range-controls.md) approves grouped exceptional-anchor cancellation, restoration and repeated cycles with provenance, collision-safe outgoing versions and bounded v8 checkpoint proof. The [scoped implementation](durable-exceptional-range-controls.md) is for draft review and is not merged or release-ready. No new SQL or real mail is proposed.
+[ADR 0187](adr/0187-durable-exceptional-range-controls.md) approves grouped exceptional-anchor cancellation, restoration and repeated cycles with provenance, collision-safe outgoing versions and bounded v8 checkpoint proof. The [scoped implementation](durable-exceptional-range-controls.md) is merged. Full release evidence remains open.
 
 - [x] Review and approve the concrete checkpoint, source-exclusion versus individual-cancellation provenance, version and transaction contract.
 - [x] Exercise focused ordinary and exceptional database cases, source-proof corruption and limits, two-host process loss, and the connected exceptional-anchor Flutter journey. See [actual results](validation-durable-exceptional-range.md).
 - [x] Implement the scoped durable feature group and record its focused, database, two-host and Flutter validation.
-- [ ] Resolve the separate 4.1.2 feed 304 failure and complete full exact-head hosted checks before readiness.
+- [x] Verify the 4.1.2 upgrade PR's inspection and runtime jobs with the approved test exception.
+- [x] Validate a narrow Relic I/O patch against the strict two-host feed smoke in an isolated checkout. See [the candidate and actual result](feed-304-compatibility.md#adapter-candidate-and-local-validation).
+- [x] Verify full hosted inspection and runtime on the merged stack at `f6c2994` in [run 46131904608](https://github.com/jimmyspets/serverpod_calendar/actions/runs/46131904608).
+- [ ] Adopt a compatible fix for [Relic issue #454](https://github.com/serverpod/relic/issues/454), remove the exception and pass the strict two-host smoke test and full repository checks.
+
+## Whole-series lifecycle with a published cutoff
+
+- [x] Merge the approved pure finite-suffix projection under ADR 0188 and the draft durable investigation under ADR 0189.
+- [ ] Obtain maintainer agreement on the bounded v9 proof, version/reply authority and restoration contract in ADR 0189.
+- [ ] Prove exact v7/v8 restoration round trips and shared reader budgets, then complete the approved runtime and recovery batch.

@@ -25,3 +25,9 @@ were added. The complete 21-test focused suite passed after those additions.
 Workspace analysis also passed before the last three test-only additions. The new projection tests are VM-only;
 the Chrome count covers other browser-compatible module tests. Full repository
 and hosted readiness remain separate, including the known 4.1.2 feed failure.
+
+On 2026-11-28, the merged stack at `f6c2994` passed all 29 focused VM cases
+across `published_finite_suffix_projection_test.dart` and
+`exceptional_range_proof_test.dart`. These tests exercise the existing
+projection and proof. The proposed durable v9 reader and restoration bridge
+still require review and validation under [ADR 0189](adr/0189-whole-series-lifecycle-with-published-cutoff.md).

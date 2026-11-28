@@ -219,10 +219,54 @@ can safely update that basis without losing mask provenance needs an explicit
 composition contract. Real mail and external-client compatibility remain
 separate.
 
+### Proposed version and reply verification
+
+Use the maximum sequence across the frozen range control and its retained
+master, component and individual-cancellation ledgers, the current publication
+and its ledger, and the current and final native protocol floors. Include
+retained component floors even when the corresponding component is suppressed
+from the wire. A whole CANCEL allocates one sequence above that maximum.
+Reopening and restoration allocate the master first, then each emitted component
+in validated message order, with one sequence increment per allocation. Each
+transition uses a single whole-second database stamp at least as late as every
+contributing stamp. Reject an entire transition if any required allocation
+overflows. When testing a possible reopening during cancellation, include the
+proposed whole-CANCEL sequence and resulting native floors in that calculation.
+Reopening still performs its own checks against the then-current state.
+
+During whole cancellation, keep the existing cancelled-series reply rules.
+After masked reopening, classify an original using exact typed membership
+from the validated predecessor under the same work budget as the v9 read.
+A source-excluded or absent original has no reply target. An independently
+cancelled original remains cancelled, including when the suffix also covers it.
+An included original with only the suffix reason remains range-cancelled.
+For an unsuppressed original, verify the reply against the current emitted
+component or its current effective master and the applicable outgoing version.
+After restoration, use the restored REQUEST and its new ledger to classify
+current targets. Preserve historical receipt reads without moving old
+participation to new versions. A scalar RANGE reply remains outside this
+profile.
+
+### Proposed restoration proof
+
+Treat the native comparison used to seal the newly written row separately
+from the published comparison used to reconstruct its message. The former
+comes from the transaction's validated current and final native snapshots.
+The latter comes from the frozen active predecessor, with the original cutoff
+operation removed and individual masks reapplied. Carry cutoff ownership
+evidence into the closed form only when its revision and canonical identity
+still match. If a private revision intervened, leave the actual native cutoff
+untouched and bind the resulting native state independently of the outgoing
+restoration. The exact committed row, including the closed v8 proof when
+present, must round-trip through the existing closed-state reader before any
+state or delivery intent is committed. Exercise that read after pruning the
+original range-CANCEL row as well.
+
 ## Review and validation before implementation
 
-Complete the checkpoint, transition and version contract and obtain explicit
-maintainer agreement. Test normal and exceptional anchors, individually
+Obtain explicit maintainer agreement on the proposed checkpoint, transition,
+version and reply rules. Prove both closed-reader bridges and the shared
+reader budget before enabling the new public paths. Test normal and exceptional anchors, individually
 cancelled originals, source EXDATEs, COUNT/UNTIL and exhaustion, DATE/UTC/exact
 zones and DST, stale/private native edits, malformed proof, caps and overflow,
 pruning, retained retries, two-host races and worker loss around each commit.

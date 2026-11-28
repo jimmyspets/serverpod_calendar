@@ -219,8 +219,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0186](0186-exceptional-range-restoration-projection.md) | Pure restoration projection for exceptional range anchors | Accepted; bounded pure implementation and unit validation complete, exact-commit hosted validation pending |
 
-| [0187](0187-durable-exceptional-range-controls.md) | Durable exceptional-anchor range controls | Accepted by explicit maintainer agreement; scoped implementation in draft review, with full readiness checks outstanding |
-| [0188](0188-published-whole-series-lifecycle-with-active-range.md) | Published whole-series lifecycle with an active range cancellation | Pure projection approved and in draft review; durable mechanics remain draft |
+| [0187](0187-durable-exceptional-range-controls.md) | Durable exceptional-anchor range controls | Accepted by explicit maintainer agreement; scoped implementation merged, with full readiness checks outstanding |
+| [0188](0188-published-whole-series-lifecycle-with-active-range.md) | Published whole-series lifecycle with an active range cancellation | Approved pure projection merged; durable mechanics remain draft |
 | [0189](0189-whole-series-lifecycle-with-published-cutoff.md) | Whole-series lifecycle with a published cutoff | Draft investigation; checkpoint and version mechanics remain undecided |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
