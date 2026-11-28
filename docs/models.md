@@ -500,3 +500,11 @@ Generated additions are `CalendarEventTextParameters`, `CalendarEventProtocolVer
 ## VTODO source reference wire increment, 2026-10-23
 
 [ADR 0093](adr/0093-vtodo-source-references.md) and [the task adapter](icalendar-task-adapter.md#unresolved-relationships-and-inert-attachments) now preserve basic unresolved RELATED-TO UID references and URI-only ATTACH/FMTTYPE metadata. Keep missing/self/cyclic references as data, source order/duplicates/presence and matching occurrence inheritance. No native graph edges, identity resolution, file access, fetching or workflow follows. Binary/data payloads and extended relationship semantics reject. This supersedes older basic relationship/attachment-wire-pending notes only for this pure task slice; native editors/graph rules, extended metadata, alarms and authenticated task import/export remain separate.
+
+## VTODO DISPLAY alarm source model proposal
+
+[ADR 0094](adr/0094-vtodo-display-alarm-source-profile.md) proposes immutable `IcalendarDisplayAlarm` source/description/trigger/optional UID/acknowledgement/repeat data and `IcalendarAlarmTrigger` source plus relative duration/explicit anchor or absolute UTC value. Raw task alarm lists retain absence and linked occurrences inherit only in projections. These are unarmed source definitions, not personal native alarms, recipient identities, action history or pending delivery rows.
+
+## VTODO DISPLAY alarm wire increment, 2026-10-23
+
+[ADR 0094](adr/0094-vtodo-display-alarm-source-profile.md) and [the task adapter](icalendar-task-adapter.md#unarmed-display-alarm-definitions) now preserve unarmed DISPLAY source alarms, relative task start/due or absolute UTC triggers, bounded paired repeats and optional source UID/ACKNOWLEDGED. Validate typed anchor presence and matching occurrence inheritance, with shared file/text budgets and exact portable duration bounds. No native recipient/consent/action/history or delivery is inferred; no firing instants are generated. Snooze relationships, event alarms, activation authorization, native storage/runtime and notification integration remain separate. This supersedes older blanket task-VALARM rejection only for this source slice; no runtime/client interoperability follows.

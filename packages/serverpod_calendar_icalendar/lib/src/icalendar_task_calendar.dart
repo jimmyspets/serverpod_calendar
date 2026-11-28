@@ -29,6 +29,7 @@ final class IcalendarTask {
     required this.metadata,
     required this.participants,
     required this.references,
+    required this.alarms,
     this.created,
     this.lastModified,
     this.sequence,
@@ -58,6 +59,7 @@ final class IcalendarTask {
   final IcalendarTaskMetadata metadata;
   final IcalendarTaskParticipants participants;
   final IcalendarTaskReferences references;
+  final List<IcalendarDisplayAlarm> alarms;
   final CalendarDate? recurrenceDate;
   final TimedValue? recurrenceTime;
   Object? get originalStart => recurrenceDate ?? recurrenceTime;
@@ -189,7 +191,9 @@ IcalendarTask _taskComponent(
   Map<String, IcalendarValidatedTimeZone> zones,
   ComponentBudget budget,
 ) {
-  if (source.entries.any((e) => e is IcalendarSyntaxComponent)) {
+  if (source.entries.whereType<IcalendarSyntaxComponent>().any(
+    (e) => e.canonicalName != 'VALARM',
+  )) {
     componentFail(IcalendarComponentError.unsupportedComponent);
   }
   final p = componentProperties(
@@ -313,10 +317,11 @@ IcalendarTask _taskComponent(
       _ => componentFail(IcalendarComponentError.invalidValue),
     };
   }
-  return IcalendarTask._(
+  final task = IcalendarTask._(
     source: source,
     metadata: _taskMetadata(source, budget),
     references: _taskReferences(source, budget),
+    alarms: _displayAlarms(source, budget),
     participants: _taskParticipants(
       source,
       budget,
@@ -347,4 +352,6 @@ IcalendarTask _taskComponent(
         ? null
         : componentUtc(p['LAST-MODIFIED']!.single),
   );
+  if (!task.isOverride) _taskAlarmAnchors(task);
+  return task;
 }

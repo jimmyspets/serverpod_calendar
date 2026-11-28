@@ -63,6 +63,10 @@ final class IcalendarComponentLimits {
   const IcalendarComponentLimits({
     this.maxEvents = 128,
     this.maxTasks = 128,
+    this.maxAlarmsPerTask = 16,
+    this.maxCalendarAlarms = 256,
+    this.maxAlarmRepeat = 100,
+    this.maxAlarmDurationDays = 366,
     this.maxOverridesPerTask = 64,
     this.maxTaskMetadataCodePoints = 65536,
     this.maxZones = 32,
@@ -80,6 +84,10 @@ final class IcalendarComponentLimits {
     this.maxAvailableOverrides = 64,
     this.maxAvailabilityMetadataCodePoints = 65536,
   });
+  final int maxAlarmsPerTask,
+      maxCalendarAlarms,
+      maxAlarmRepeat,
+      maxAlarmDurationDays;
   final int maxTasks, maxOverridesPerTask, maxTaskMetadataCodePoints;
   final int maxEvents, maxZones, maxObservances, maxOnsets, maxCandidates;
   final int maxExplicitDates,
@@ -95,6 +103,10 @@ final class IcalendarComponentLimits {
     for (final n in [
       maxEvents,
       maxTasks,
+      maxAlarmsPerTask,
+      maxCalendarAlarms,
+      maxAlarmRepeat,
+      maxAlarmDurationDays,
       maxOverridesPerTask,
       maxTaskMetadataCodePoints,
       maxZones,
@@ -125,6 +137,13 @@ final class ComponentBudget {
   int observances = 0, onsets = 0, explicitDates = 0, ruleValues = 0;
   int metadataCodePoints = 0;
   int taskMetadataCodePoints = 0;
+  int alarmComponents = 0;
+  void alarm() {
+    if (++alarmComponents > limits.maxCalendarAlarms) {
+      componentFail(IcalendarComponentError.limitExceeded);
+    }
+  }
+
   void taskMetadata(int amount) {
     taskMetadataCodePoints += amount;
     if (taskMetadataCodePoints > limits.maxTaskMetadataCodePoints) {
