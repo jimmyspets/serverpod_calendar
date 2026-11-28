@@ -2,6 +2,17 @@ part of 'event_values.dart';
 
 const eventMaxOverrides = 128;
 
+/// Effective future cancellation follows original civil identity, not moved time.
+bool eventFutureCancelled(
+  CalendarEventTimingOverrides? overrides,
+  CalendarEventTiming original,
+) {
+  final cutoff = overrides?.cancelledFrom;
+  if (cutoff == null) return false;
+  _profile(cutoff, original, anchor: true);
+  return _anchorKey(original).compareTo(_anchorKey(cutoff)) >= 0;
+}
+
 void _profile(
   CalendarEventTiming master,
   CalendarEventTiming value, {
@@ -48,6 +59,9 @@ DateEventRangeSet _dateOverrides(
   bool validateContentOnly = false,
   RecurrenceWorkBudget? sharedWorkBudget,
 }) => DateEventRangeSet(
+  cancelledFrom: v?.cancelledFrom == null
+      ? null
+      : _date(v!.cancelledFrom!.start),
   base: DateEventExceptionSet(
     series: _dateMaster(c),
     exceptions: [
@@ -92,6 +106,9 @@ TimedEventSeries _timedOverrides(
 }) {
   final span = validateEventTiming(c.timing).$2!;
   return TimedEventSeries(
+    cancelledFrom: v?.cancelledFrom == null
+        ? null
+        : validateEventTiming(v!.cancelledFrom!).$2!.start,
     span: span,
     recurrence: TimedRecurrenceSet(
       start: span.start,
@@ -146,10 +163,25 @@ CalendarEventTimingOverrides? validateEventOverrides(
   RecurrenceWorkBudget? sharedWorkBudget,
 }) {
   if (input == null) return null;
-  if (input.singles.length + input.future.length > eventMaxOverrides) {
+  if (input.singles.length +
+          input.future.length +
+          (input.cancelledFrom == null ? 0 : 1) >
+      eventMaxOverrides) {
     throw const RecurrenceLimitException('maxOverrides');
   }
-  if (input.singles.isEmpty && input.future.isEmpty) return null;
+  if (input.singles.isEmpty &&
+      input.future.isEmpty &&
+      input.cancelledFrom == null) {
+    return null;
+  }
+  if (input.cancelledFrom != null) {
+    if (c.recurrence?.rule == null &&
+        (c.recurrence?.inclusions.isEmpty ?? true) &&
+        (periods ?? c.periods ?? []).isEmpty) {
+      throw ArgumentError('Future cancellation requires recurrence');
+    }
+    _profile(c.timing, input.cancelledFrom!, anchor: true);
+  }
   final keys = <String>{};
   void anchor(CalendarEventTiming a) {
     _profile(c.timing, a, anchor: true);
@@ -194,6 +226,7 @@ CalendarEventTimingOverrides? validateEventOverrides(
     );
   }
   final result = CalendarEventTimingOverrides(
+    cancelledFrom: input.cancelledFrom,
     singles: List.unmodifiable(
       singles..sort(
         (a, b) =>
@@ -249,7 +282,40 @@ CalendarEventTimingOverrides? changeEventOverrides(
     (v) => _anchorKey(v.originalStart) == key,
   );
   final previous = index < 0 ? null : singles[index];
+  var cutoff = current?.cancelledFrom;
   switch (request.action) {
+    case CalendarEventOccurrenceAction.cancelFuture:
+    case CalendarEventOccurrenceAction.restoreFuture:
+      final work = RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
+      // Prove requested membership even for a later, unchanged cancellation.
+      validateEventOverrides(
+        c,
+        CalendarEventTimingOverrides(
+          singles: singles,
+          future: future,
+          cancelledFrom: request.originalStart,
+        ),
+        periods: periods,
+        sharedWorkBudget: work,
+      );
+      if (request.action == CalendarEventOccurrenceAction.restoreFuture) {
+        if (cutoff == null || _anchorKey(cutoff) != key) {
+          throw ArgumentError('Restore requires the saved future cutoff');
+        }
+        cutoff = null;
+      } else if (cutoff == null || key.compareTo(_anchorKey(cutoff)) < 0) {
+        cutoff = request.originalStart;
+      }
+      return validateEventOverrides(
+        c,
+        CalendarEventTimingOverrides(
+          singles: singles,
+          future: future,
+          cancelledFrom: cutoff,
+        ),
+        periods: periods,
+        sharedWorkBudget: work,
+      );
     case CalendarEventOccurrenceAction.replaceSingleTiming:
     case CalendarEventOccurrenceAction.cancelSingle:
     case CalendarEventOccurrenceAction.restoreSingle:
@@ -330,7 +396,11 @@ CalendarEventTimingOverrides? changeEventOverrides(
   }
   return validateEventOverrides(
     c,
-    CalendarEventTimingOverrides(singles: singles, future: future),
+    CalendarEventTimingOverrides(
+      singles: singles,
+      future: future,
+      cancelledFrom: cutoff,
+    ),
     periods: periods,
   );
 }

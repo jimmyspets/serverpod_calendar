@@ -18,7 +18,9 @@ enum CalendarEventOccurrenceAction implements _isc.SerializableModel {
   cancelSingle,
   restoreSingle,
   replaceFutureTiming,
-  clearFutureTiming;
+  clearFutureTiming,
+  cancelFuture,
+  restoreFuture;
 
   static CalendarEventOccurrenceAction fromJson(String name) {
     switch (name) {
@@ -34,6 +36,10 @@ enum CalendarEventOccurrenceAction implements _isc.SerializableModel {
         return CalendarEventOccurrenceAction.replaceFutureTiming;
       case 'clearFutureTiming':
         return CalendarEventOccurrenceAction.clearFutureTiming;
+      case 'cancelFuture':
+        return CalendarEventOccurrenceAction.cancelFuture;
+      case 'restoreFuture':
+        return CalendarEventOccurrenceAction.restoreFuture;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "CalendarEventOccurrenceAction"',

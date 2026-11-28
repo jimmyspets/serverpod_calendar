@@ -171,7 +171,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0157](0157-pure-future-event-cancellation.md) | Pure event future-cancellation cutoff | Accepted 2026-11-01; scoped pure event cutoff; no durable cancellation or restoration |
 
-| [0158](0158-native-event-future-cancellation.md) | Native event future cancellation and cutoff restoration | Proposed; restoration policy confirmed; JSON/action/protocol/query/worker/publication mechanics await approval |
+| [0158](0158-native-event-future-cancellation.md) | Native event future cancellation and cutoff restoration | Accepted 2026-11-02; scoped native cutoff/restoration and complete consumers; wire/range scheduling separate |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

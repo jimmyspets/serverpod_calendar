@@ -271,6 +271,21 @@ class _EventOccurrenceScreenState extends State<EventOccurrenceScreen> {
             'Saved series changed. Reload it before editing or querying again.',
           ),
         if (_busy) const LinearProgressIndicator(),
+        if (_event.timingOverrides?.cancelledFrom case final cutoff?) ...[
+          Text(
+            'Cancelled from original ${_label(cutoff.start)} onward. Timing and content are retained. Individual cancellations remain separate. Local actions send no invitations.',
+          ),
+          TextButton(
+            key: const Key('occurrence-restore-future'),
+            onPressed: _busy || _stale
+                ? null
+                : () => _act(
+                    cutoff,
+                    cal.CalendarEventOccurrenceAction.restoreFuture,
+                  ),
+            child: const Text('Restore saved future cutoff'),
+          ),
+        ],
         if (_error != null) Text(_error!, key: const Key('preview-error')),
         if (_preview != null)
           Text(
@@ -336,6 +351,21 @@ class _EventOccurrenceScreenState extends State<EventOccurrenceScreen> {
                           ),
                     child: const Text('Cancel this occurrence'),
                   ),
+                  if (_event.recurrence?.rule != null ||
+                      (_event.recurrence?.inclusions.isNotEmpty ?? false) ||
+                      (_event.periods?.isNotEmpty ?? false))
+                    TextButton(
+                      key: ValueKey(
+                        'occurrence-cancel-future-${occurrenceKey(o.originalStart)}',
+                      ),
+                      onPressed: _busy || _stale
+                          ? null
+                          : () => _act(
+                              _anchor(o.originalStart),
+                              cal.CalendarEventOccurrenceAction.cancelFuture,
+                            ),
+                      child: const Text('Cancel this and future occurrences'),
+                    ),
                 ],
               ),
             ],
@@ -365,6 +395,10 @@ class _EventOccurrenceScreenState extends State<EventOccurrenceScreen> {
                           cal.CalendarEventOccurrenceAction.restoreSingle,
                         ),
                   child: const Text('Restore occurrence'),
+                ),
+              if (_event.timingOverrides?.cancelledFrom case final cutoff?)
+                Text(
+                  'Future cutoff ${_label(cutoff.start)} remains active; clearing an individual flag does not clear that cutoff.',
                 ),
               if (single.replacement != null)
                 TextButton(

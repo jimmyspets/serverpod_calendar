@@ -1,6 +1,6 @@
 # ADR 0158: Native event future cancellation and cutoff restoration
 
-Status: **Proposed. The maintainer confirmed cancel-all/preserve-exceptions and clear-entire-cutoff/preserve-individual-cancellations policies. Concrete storage, API and integration mechanics await explicit approval.**
+Status: **Accepted 2026-11-02 by explicit maintainer approval of the proposed native batch. Implementation evidence is recorded separately.**
 
 ## Context and evidence
 
@@ -10,7 +10,7 @@ Inspected native override validation/actions, protocol lifecycle/source baseline
 
 [RFC 5546 CANCEL](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.5) and [RFC 5545 original identity/RANGE](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.4.4) supply protocol context. The cutoff, commands, native protocol bookkeeping and restoration rules below are application policy; no incoming/outgoing scheduling reconciliation or interoperable range-cancellation encoding follows.
 
-## Proposed model and actions
+## Approved model and actions
 
 Add nullable `cancelledFrom: CalendarEventTiming?` to `CalendarEventTimingOverrides` in its existing nullable event active-data JSON column. It is a start-only original identity in the exact event kind/zone, not a replacement span. Retain single/future timing and content/source metadata unchanged. Expose it only with the existing timing disclosure group and include it in immutable current/proposed host snapshots. Null/absence means no cutoff. Do not rewrite legacy rows merely on read; preserve legacy source-baseline bytes and omissions. No new table, SQL column/index, migration, retention expansion or cancellation-history store is proposed. Upgrade writers/clients together; old writers cannot safely preserve an unknown JSON field.
 
@@ -51,3 +51,6 @@ This batch does not implement incoming range CANCEL application/master compositi
 After explicit model/ADR approval, regenerate sources using the pinned toolchain; no hand-edited generated files. Test DATE/UTC/named zones/DST, earlier/PERIOD additions, co-located/later/moved exceptions, repeated/earlier cancellation, exact full-cutoff restoration and preserved individual flags/content/versions. Cover orphan/profile/slot rejection, hidden timing/source groups, independent/final lifecycle authority, immutable host context, stale races/overflow and complete rollback. Verify legacy nullable reads/source baselines remain unchanged.
 
 Exercise active/cancelled pages, cursor invalidation, free/busy and common-free, planner digest/generation/lease invalidation, stale automatic/repeat/snooze/live recovery suppression and restored action/dedup/expiry behavior. Check unchanged absolute item alarms explicitly. Verify export/REQUEST/feed rejection and no stale 304, then restored representability. Run generated-client/Flutter journeys and actual two-host cancellation/restoration races plus worker loss/recovery with synthetic data. Use focused tests during development, broader grouped checks at completion and full repository CI before readiness; commit only the complete agreed batch.
+
+
+The maintainer explicitly approved these concrete model/API/protocol and integration mechanics on 2026-11-02. See [the implementation guide](../native-event-future-cancellation.md) and [actual validation](../scaffold-validation.md). Retained automatic transport acceptances are keyed by alarm/original/repeat/due across plan generations to enforce the approved no-redelivery restoration boundary; a changed due instant remains distinct. Incoming/outgoing range CANCEL and wire mapping remain separate.

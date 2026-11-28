@@ -187,18 +187,33 @@ final class _Policy implements CalendarHostPolicy {
     List<CalendarAuthorizationRequest> requests,
     Transaction tx,
     CalendarAuthorizationPhase phase,
-  ) async => [
-    for (final r in requests)
-      CalendarAuthorizationDecision(
-        key: r.key,
-        verdict: c.scopeKey == host.scope
-            ? CalendarAuthorizationVerdict.allow
-            : CalendarAuthorizationVerdict.deny,
-        discloseMutationReceipt: true,
-        disclosedGroups: CalendarFieldGroup.values,
-        eventDisclosedGroups: CalendarEventFieldGroup.values,
-      ),
-  ];
+  ) async {
+    if (host.pause == 'native-before' &&
+        phase == CalendarAuthorizationPhase.finalWrite &&
+        requests.any(
+          (r) =>
+              r.occurrenceChange?.action ==
+                  CalendarEventOccurrenceAction.cancelFuture ||
+              r.occurrenceChange?.action ==
+                  CalendarEventOccurrenceAction.restoreFuture,
+        )) {
+      stdout.writeln('INVITATION_PAUSED {}');
+      await Completer<void>().future;
+    }
+    return [
+      for (final r in requests)
+        CalendarAuthorizationDecision(
+          key: r.key,
+          verdict: c.scopeKey == host.scope
+              ? CalendarAuthorizationVerdict.allow
+              : CalendarAuthorizationVerdict.deny,
+          discloseMutationReceipt: true,
+          disclosedGroups: CalendarFieldGroup.values,
+          eventDisclosedGroups: CalendarEventFieldGroup.values,
+        ),
+    ];
+  }
+
   @override
   Future<CalendarHostContext> resolveContext(Session s) async =>
       CalendarHostContext(
@@ -249,6 +264,92 @@ Future<void> main(List<String> args) async {
       Object? result;
       try {
         switch (input['command']) {
+          case 'native-seed':
+            session.updateAuthenticated(
+              AuthenticationInfo('recipient', {}, authId: 'invitation-probe'),
+            );
+            try {
+              final service = CalendarModule.service(session);
+              final parent = (await service.create(
+                CalendarCreateRequest(
+                  displayName: 'Synthetic native future',
+                  availabilityZoneId: 'UTC',
+                  noRuleFallback: CalendarNoRuleFallback.free,
+                ),
+              ))!;
+              result = (await service.createEvent(
+                CalendarEventCreateRequest(
+                  calendarId: parent.calendarId,
+                  content: CalendarEventContent(
+                    timing: CalendarEventTiming(
+                      kind: CalendarEventTimeKind.utc,
+                      start: CalendarEventCivil(
+                        year: 2026,
+                        month: 1,
+                        day: 1,
+                        hour: 9,
+                      ),
+                      duration: CalendarEventDuration(hours: 1),
+                    ),
+                    recurrence: CalendarEventRecurrence(
+                      rule: CalendarEventRule(
+                        frequency: CalendarEventFrequency.daily,
+                        count: 5,
+                        byDay: [],
+                        byMonthDay: [],
+                        byYearDay: [],
+                        byWeekNo: [],
+                        byMonth: [],
+                        byHour: [],
+                        byMinute: [],
+                        bySetPosition: [],
+                      ),
+                      inclusions: [],
+                      exclusions: [],
+                    ),
+                  ),
+                ),
+              ))!.toJson();
+            } finally {
+              session.updateAuthenticated(null);
+            }
+          case 'native-change':
+            session.updateAuthenticated(
+              AuthenticationInfo('recipient', {}, authId: 'invitation-probe'),
+            );
+            try {
+              final receipt = await CalendarModule.service(session)
+                  .changeOccurrence(
+                    CalendarEventOccurrenceChange.fromJson(
+                      input['request'] as Map<String, dynamic>,
+                    ),
+                  );
+              if (host.pause == 'native-after') {
+                stdout.writeln('INVITATION_PAUSED {}');
+                await Completer<void>().future;
+              }
+              result = receipt!.toJson();
+            } finally {
+              session.updateAuthenticated(null);
+            }
+          case 'native-inspect':
+            final id = UuidValue.fromString(input['eventId'] as String);
+            final row = (await CalendarEventRecord.db.findById(session, id))!;
+            final calendar = (await CalendarIdentityRecord.db.findById(
+              session,
+              row.calendarId,
+            ))!;
+            if (calendar.scopeKey != host.scope) {
+              throw StateError('Wrong synthetic scope');
+            }
+            final data = (await CalendarEventDataRecord.db.findFirstRow(
+              session,
+              where: (t) => t.eventId.equals(id),
+            ))!;
+            result = {
+              'revision': row.revision,
+              'cutoff': data.timingOverrides?.cancelledFrom?.start.day,
+            };
           case 'response':
             session.updateAuthenticated(
               AuthenticationInfo('recipient', {}, authId: 'invitation-probe'),

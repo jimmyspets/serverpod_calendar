@@ -204,6 +204,8 @@ CalendarEventProtocolState advanceEventProtocol(
       ? validateEventSourceMetadata(sourceMetadata)
       : current.sourceMetadata;
   final masterChanged =
+      _json(beforeEdits?.cancelledFrom?.toJson()) !=
+          _json(afterEdits?.cancelledFrom?.toJson()) ||
       _json(before.toJson()) != _json(after.toJson()) ||
       _json(current.sourceMetadata?.toJson()) != _json(nextMetadata?.toJson());
   final oldComponents = _components(beforeEdits),
@@ -334,6 +336,7 @@ void validateEventImportBaseline(
   }
   final decoded = jsonDecode(value.canonicalValue) as Map<String, dynamic>;
   if (decoded['uid'] != uid ||
+      (decoded['edits'] is Map && decoded['edits']['cancelledFrom'] != null) ||
       decoded['content'] is! Map ||
       decoded['protocol'] is! Map ||
       decoded['protocol']['version']['sequence'] != value.sourceSequence ||

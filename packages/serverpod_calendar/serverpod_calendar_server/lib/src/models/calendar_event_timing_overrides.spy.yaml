@@ -3,3 +3,4 @@ immutable: true
 fields:
   singles: List<CalendarEventSingleOverride>
   future: List<CalendarEventFutureOverride>
+  cancelledFrom: CalendarEventTiming?

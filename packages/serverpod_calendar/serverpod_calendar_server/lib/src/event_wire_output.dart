@@ -373,6 +373,9 @@ final class EventComponentWriter {
     CalendarEventTimingOverrides? edits,
     CalendarEventProtocolState state,
   ) {
+    if (edits?.cancelledFrom != null) {
+      throw ArgumentError('Future cancellation is not wire representable');
+    }
     IcalendarSyntaxComponent override(
       CalendarEventTiming original,
       CalendarEventTiming? replacement,

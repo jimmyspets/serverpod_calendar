@@ -1,4 +1,5 @@
 import 'occurrence_query_smoke.dart';
+import 'native_future_smoke.dart';
 import 'invitation_smoke.dart';
 import 'item_category_smoke.dart';
 
@@ -114,9 +115,13 @@ Future<void> main(List<String> args) async {
             '--scheduling-only',
           }.contains,
         )) {
-      await occurrenceQuerySmoke(clients);
+      await nativeFutureSmoke(clients);
+      if (!args.contains('--native-future-only')) {
+        await occurrenceQuerySmoke(clients);
+      }
     }
-    if (args.contains('--occurrences-only')) {
+    if (args.contains('--occurrences-only') ||
+        args.contains('--native-future-only')) {
       stdout.writeln(
         'PASS: focused occurrence clients; unrelated feature/recovery and JWT-refresh flows skipped.',
       );

@@ -1,4 +1,5 @@
 import 'occurrence_query_journey.dart';
+import 'native_future_journey.dart';
 import 'invitation_journey.dart';
 import 'item_category_search_journey.dart';
 import 'item_text_metadata_journey.dart';
@@ -1301,6 +1302,7 @@ void main() {
     await runItemCategorySearchJourney(tester, client);
     await runInvitationJourney(tester, client);
     await runOccurrenceQueryJourney(tester, client);
+    await runNativeFutureJourney(tester, client);
     await _liveReminderJourney(tester, client);
     await tester.tap(find.byKey(const Key('sign-out')));
     await _waitFor(tester, find.byKey(const Key('sign-in')));

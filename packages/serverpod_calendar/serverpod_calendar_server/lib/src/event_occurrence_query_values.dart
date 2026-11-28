@@ -59,12 +59,14 @@ List<EventOccurrenceWindowProjection> eventOccurrenceWindow(
   required String dateZone,
   required Set<CalendarEventFieldGroup> groups,
   required EventOccurrenceQueryWork work,
+  bool includeCancelled = true,
 }) {
   final cancelled = {
     for (final own in overrides?.singles ?? <CalendarEventSingleOverride>[])
       if (own.cancelled) _anchorKey(own.originalStart),
   };
   final projection = overrides?.copyWith(
+    cancelledFrom: includeCancelled ? null : overrides.cancelledFrom,
     singles: List.unmodifiable([
       for (final own in overrides.singles) own.copyWith(cancelled: false),
     ]),
@@ -93,6 +95,7 @@ List<EventOccurrenceWindowProjection> eventOccurrenceWindow(
         start,
         eventOccurrenceQueryKey(original),
         content.status == CalendarEventStatus.cancelled ||
+            eventFutureCancelled(overrides, original) ||
             cancelled.contains(_anchorKey(original)),
       ),
     );

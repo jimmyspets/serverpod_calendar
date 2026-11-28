@@ -72,6 +72,9 @@ eventSchedulingProjection(
   bool membershipOnly = false,
 }) {
   final current = validateEventOverrides(content, input);
+  if (current?.cancelledFrom != null) {
+    throw ArgumentError('Future cancellation has no REQUEST projection');
+  }
   if (originals.length > 64 ||
       (current?.singles.length ?? 0) + (current?.future.length ?? 0) > 64) {
     throw const RecurrenceLimitException('schedulingOriginals');
