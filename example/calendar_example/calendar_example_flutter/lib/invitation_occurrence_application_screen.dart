@@ -26,6 +26,7 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
   String? _error;
   cal.CalendarInvitationOccurrenceApplyReceipt? _result;
   bool _busy = false;
+  bool _restoration = false;
   @override
   void initState() {
     super.initState();
@@ -54,7 +55,9 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
 
   Future<void> _load() => _run(() async {
     final api = widget.client.modules.serverpod_calendar.calendarInvitation;
-    final v = await (widget.range
+    final v = await (_restoration
+        ? api.rangeRestorationApplication
+        : widget.range
         ? api.rangeApplication
         : api.occurrenceApplication)(widget.id);
     if (mounted) {
@@ -83,7 +86,9 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
       expectedOccurrenceRevision: v.occurrenceRevision,
     );
     final api = widget.client.modules.serverpod_calendar.calendarInvitation;
-    final r = widget.range
+    final r = _restoration
+        ? await api.applyRangeRestoration(_request!)
+        : widget.range
         ? _cancel!
               ? await api.applyRangeCancellation(_request!)
               : await api.applyRangeUpdate(_request!)
@@ -97,7 +102,9 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
         _cancel = null;
       });
     }
-    final next = await (widget.range
+    final next = await (_restoration
+        ? api.rangeRestorationApplication
+        : widget.range
         ? api.rangeApplication
         : api.occurrenceApplication)(widget.id);
     if (mounted) {
@@ -137,9 +144,33 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
               key: const Key('invitation-occurrence-result'),
             ),
           if (v != null) ...[
-            if (v.hasAcceptedRangeCancellation)
+            if (v.hasAcceptedRangeRestoration)
               const Text(
-                'A source range cancellation is accepted. Occurrence source applications remain blocked. Whole-meeting changes preserve the cutoff; exact retained retries remain available.',
+                'Source restoration is accepted. Individual cancellations remain. New source changes await composition support; retained retries remain available.',
+              ),
+            if (v.hasAcceptedRangeCancellation &&
+                !v.hasAcceptedRangeRestoration)
+              const Text(
+                'A source range cancellation is accepted. Ordinary occurrence source applications remain blocked. Review a matching source restoration explicitly. Whole-meeting changes preserve the cutoff; exact retained retries remain available.',
+              ),
+            if (widget.range &&
+                v.hasAcceptedRangeCancellation &&
+                !v.hasAcceptedRangeRestoration &&
+                v.incomingKind == cal.CalendarInvitationSourceKind.request &&
+                !_restoration)
+              TextButton(
+                key: const Key('invitation-range-review-restoration'),
+                onPressed: _busy || _request != null
+                    ? null
+                    : () {
+                        _restoration = true;
+                        _load();
+                      },
+                child: const Text('Review source restoration'),
+              ),
+            if (_restoration)
+              const Text(
+                'Restore only: clear the exact saved cutoff using matching retained values. Individual cancellations and exception data stay unchanged.',
               ),
             Text('Original: ${invitationTimingLabel(v.originalStart)}'),
             Text(
@@ -183,6 +214,8 @@ class _State extends State<InvitationOccurrenceApplicationScreen> {
                     ? widget.range
                           ? 'Retry the same range action'
                           : 'Retry the same occurrence action'
+                    : _restoration
+                    ? 'Apply range restoration'
                     : widget.range
                     ? v.incomingKind ==
                               cal.CalendarInvitationSourceKind.rangeCancellation

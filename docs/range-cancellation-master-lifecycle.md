@@ -1,6 +1,6 @@
 # Whole-master lifecycle preserving range cancellation
 
-[Accepted ADR 0162](adr/0162-master-lifecycle-with-accepted-range-cancellation.md) permits explicit whole-series cancellation and a later explicit newer REQUEST reopening after accepted range cancellation. Existing `applyCancellation` and `applyUpdate` APIs keep the exact cutoff, retained single/future exceptions and independent original range source version. Receipt/review sends nothing and changes no calendar. Source-cutoff restoration and new occurrence applications remain separate.
+[Accepted ADR 0162](adr/0162-master-lifecycle-with-accepted-range-cancellation.md) permits explicit whole-series cancellation and a later explicit newer REQUEST reopening after accepted range cancellation. Existing `applyCancellation` and `applyUpdate` APIs keep the exact cutoff, retained single/future exceptions and independent original range source version. Receipt/review sends nothing and changes no calendar. First source-cutoff restoration now uses the separate [ADR 0164 service](source-range-restoration.md); other new occurrence applications remain guarded.
 
 Every transition requires current authority, a clean complete expected native state, validated source selection and expected revisions:
 
@@ -44,4 +44,4 @@ Existing protected flags distinguish a retained range cancellation from a blocke
 
 ## Pure restoration boundary
 
-[Accepted ADR 0163](adr/0163-pure-restore-only-range-source-projection.md) adds the [pure restore-only validator](range-restoration-projection.md) at the exact cutoff, preserving retained values and individual cancellations. Durable acceptance and all current restoration guards remain separate.
+[Accepted ADR 0163](adr/0163-pure-restore-only-range-source-projection.md) adds the [pure restore-only validator](range-restoration-projection.md) at the exact cutoff, preserving retained values and individual cancellations. First durable acceptance now follows in [ADR 0164](source-range-restoration.md); ordinary source paths retain their guards.

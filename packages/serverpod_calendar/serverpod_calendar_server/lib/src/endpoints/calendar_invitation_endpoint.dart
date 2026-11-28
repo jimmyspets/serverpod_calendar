@@ -49,6 +49,16 @@ class CalendarInvitationEndpoint extends Endpoint {
     Session session,
     UuidValue id,
   ) => CalendarModule.service(session).invitationRangeApplication(id);
+  Future<CalendarInvitationOccurrenceApplicationView>
+  rangeRestorationApplication(
+    Session session,
+    UuidValue id,
+  ) =>
+      CalendarModule.service(session).invitationRangeRestorationApplication(id);
+  Future<CalendarInvitationOccurrenceApplyReceipt> applyRangeRestoration(
+    Session session,
+    CalendarInvitationOccurrenceApplyRequest request,
+  ) => CalendarModule.service(session).applyInvitationRangeRestoration(request);
   Future<CalendarInvitationOccurrenceApplyReceipt> applyRangeUpdate(
     Session session,
     CalendarInvitationOccurrenceApplyRequest request,

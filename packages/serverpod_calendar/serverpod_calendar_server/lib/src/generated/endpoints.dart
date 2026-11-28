@@ -1896,6 +1896,51 @@ class Endpoints extends _is.EndpointDispatch {
                         params['id'],
                       ),
         ),
+        'rangeRestorationApplication': _is.MethodConnector(
+          name: 'rangeRestorationApplication',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .rangeRestorationApplication(
+                        session,
+                        params['id'],
+                      ),
+        ),
+        'applyRangeRestoration': _is.MethodConnector(
+          name: 'applyRangeRestoration',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is
+                  .getType<
+                    _ituh8bkh.CalendarInvitationOccurrenceApplyRequest
+                  >(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .applyRangeRestoration(
+                        session,
+                        params['request'],
+                      ),
+        ),
         'applyRangeUpdate': _is.MethodConnector(
           name: 'applyRangeUpdate',
           params: {

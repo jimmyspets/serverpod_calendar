@@ -1,6 +1,6 @@
 # ADR 0164: First durable source range restoration
 
-Status: **Proposed. Restore-only/same-cutoff/preserve-retained-values policy and the ADR 0163 pure validator are approved; the following storage/API/retry mechanics require explicit agreement.**
+Status: **Accepted — explicit maintainer agreement on 2026-11-02 covering bounded v7 evidence, authority, clean-series acceptance, retries, protected flags and generated-client/Flutter mechanics. Actual implementation evidence is recorded separately.**
 
 ## Context and first scope
 

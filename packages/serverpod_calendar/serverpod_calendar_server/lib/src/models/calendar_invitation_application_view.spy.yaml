@@ -28,3 +28,4 @@ fields:
   occurrenceCompositionBlocked: bool, default=false
   occurrenceRevision: int, default=0
   hasAcceptedRangeCancellation: bool, default=false
+  hasAcceptedRangeRestoration: bool, default=false

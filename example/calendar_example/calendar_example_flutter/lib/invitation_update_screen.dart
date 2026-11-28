@@ -159,7 +159,13 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
             Text(
               'Accepted source SEQUENCE: ${view.acceptedSequence?.toString() ?? 'omitted (effective 0)'}; DTSTAMP: ${view.acceptedStamp.toIso8601String()}',
             ),
-            if (view.hasAcceptedRangeCancellation)
+            if (view.hasAcceptedRangeRestoration)
+              const Text(
+                'An explicit source restoration cleared the suffix cutoff. Individual cancellations remain. New source changes await composition support.',
+                key: Key('invitation-master-range-restoration'),
+              ),
+            if (view.hasAcceptedRangeCancellation &&
+                !view.hasAcceptedRangeRestoration)
               const Text(
                 'An accepted range cancellation remains in force. Whole-meeting cancellation and reopening preserve this cutoff and individual cancellations; the cancelled suffix stays cancelled.',
                 key: Key('invitation-master-range-cancellation'),

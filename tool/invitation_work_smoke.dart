@@ -55,8 +55,12 @@ void require(bool value, String message) {
 
 Future<void> main(List<String> args) async {
   final nativeFuture = args.contains('--native-future');
+  final rangeRestoration = args.contains('--range-restorations');
   final rangeLifecycle = args.contains('--range-lifecycle');
-  final rangeCompose = args.contains('--range-compositions') || rangeLifecycle;
+  final rangeCompose =
+      args.contains('--range-compositions') ||
+      rangeLifecycle ||
+      rangeRestoration;
   final rangeCancel = args.contains('--range-cancellations') || rangeCompose;
   final rangeApply = args.contains('--range-applications') || rangeCancel;
   final occurrenceApply =
@@ -498,6 +502,130 @@ Future<void> main(List<String> args) async {
           );
         }
 
+        if (rangeRestoration) {
+          Future<Map<String, dynamic>> restoreInput(
+            String id,
+            int sequence,
+          ) async {
+            final incoming = await b.command({
+              'command': 'receive',
+              'caseId': id,
+              'key': 'restore-$sequence',
+              'range': true,
+              'instance': true,
+              'restore': true,
+              'sequence': sequence,
+            }) as Map;
+            final v = await b.command({
+              'command': 'occurrence-view',
+              'caseId': id,
+              'entryId': incoming['entryId'],
+              'range': true,
+              'restore': true,
+            }) as Map;
+            require(v['canApply'] == true, 'Restoration preview blocked');
+            return {
+              'invitationId': v['invitationId'],
+              'sourceId': v['incomingSourceId'],
+              'linkId': v['linkId'],
+              'expectedInvitationRevision': v['invitationRevision'],
+              'expectedEventRevision': v['eventRevision'],
+              'expectedCalendarRevision': v['calendarRevision'],
+              'expectedApplicationRevision': v['applicationRevision'],
+              'expectedOccurrenceRevision': v['occurrenceRevision'],
+            };
+          }
+
+          Future<Map> restore(
+            _Probe p,
+            String id,
+            Map request, {
+            String? pause,
+          }) async => await p.command({
+            'command': 'occurrence-apply',
+            'caseId': id,
+            'range': true,
+            'restore': true,
+            'request': request,
+            'pause': pause,
+          }) as Map;
+          final id = nextCase();
+          await cancellation(id);
+          final request = await restoreInput(id, 3);
+          final results = await Future.wait([
+            restore(a, id, request),
+            restore(b, id, request),
+          ]);
+          require(
+            results.first['id'] != null &&
+                results.first['id'] == results.last['id'],
+            'Restoration race duplicated commit',
+          );
+          final state =
+              await b.command({'command': 'inspect', 'caseId': id}) as Map;
+          require(
+            state['checkpointVersion'] == 7 && state['cutoff'] == null,
+            'Restoration not atomically visible',
+          );
+          final competing = nextCase();
+          await cancellation(competing);
+          final older = await restoreInput(competing, 3),
+              newer = await restoreInput(competing, 4);
+          final races = await Future.wait([
+            restore(a, competing, older),
+            restore(b, competing, newer),
+          ]);
+          require(
+            races.where((r) => r['id'] != null).length == 1 &&
+                races
+                        .where(
+                          (r) => {
+                            'staleRevision',
+                            'dependencyConflict',
+                          }.contains(r['error']),
+                        )
+                        .length ==
+                    1,
+            'Competing sources bypassed revision fence',
+          );
+          for (final pause in ['occurrence-before', 'occurrence-after']) {
+            final id = nextCase();
+            await cancellation(id);
+            final request = await restoreInput(id, 3);
+            a.paused = Completer<Map<String, dynamic>>();
+            final lost = restore(
+              a,
+              id,
+              request,
+              pause: pause,
+            ).then<void>((_) {}, onError: (Object _, StackTrace _) {});
+            final submitted = await a.paused!.future.timeout(
+              const Duration(seconds: 40),
+            );
+            final visible =
+                await b.command({'command': 'inspect', 'caseId': id}) as Map;
+            require(
+              visible['checkpointVersion'] ==
+                      (pause == 'occurrence-before' ? 4 : 7) &&
+                  (visible['cutoff'] == null) == (pause == 'occurrence-after'),
+              'Partial restoration visible across hosts',
+            );
+            await a.stop();
+            await lost;
+            final recovered = await restore(b, id, request);
+            require(
+              recovered['id'] != null &&
+                  ((pause == 'occurrence-after') ==
+                      (recovered['id'] == submitted['id'])),
+              'Restoration recovery broke retry identity',
+            );
+            a = await start('a-restoration-recovered-$pause', 18780);
+          }
+          stdout.writeln(
+            'PASS: range restoration same/competing-command hosts, atomic v7 visibility, actual process loss before/after commit and stable retries.',
+          );
+          return;
+        }
         final id = nextCase(),
             cancelled = await cancellation(id),
             request = await masterInput(id, 5, cancel: rangeLifecycle);

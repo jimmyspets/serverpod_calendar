@@ -65,6 +65,7 @@ Future<void> runRangeInvitationApplicationJourney(
     } else {
       await tester.ensureVisible(target);
     }
+    await tester.pumpAndSettle();
     await tester.tap(target);
     await tester.pump();
     await loaded();
@@ -266,6 +267,65 @@ Future<void> runRangeInvitationApplicationJourney(
           .status,
       cal.CalendarEventStatus.cancelled,
     );
+    navigator.pop();
+    await tester.pumpAndSettle();
+    await client.invitationDemo.simulateRange(
+      id,
+      const cal.Uuid().v4obj(),
+      8,
+      false,
+    );
+    navigator.push(
+      MaterialPageRoute<void>(
+        builder: (_) => InvitationOccurrenceApplicationScreen(
+          client: client,
+          id: source.entryId,
+          range: true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await loaded();
+    await tap('invitation-range-review-restoration');
+    expect(find.text('Apply range restoration'), findsWidgets);
+    final ready = await api.calendarInvitation.rangeRestorationApplication(
+      source.entryId,
+    );
+    expect(
+      ready.canApply,
+      isTrue,
+      reason: 'The matching source must be eligible for restoration.',
+    );
+    final applyButton = find.byKey(const Key('invitation-occurrence-apply'));
+    expect(tester.widget<ElevatedButton>(applyButton).onPressed, isNotNull);
+    await tap('invitation-occurrence-apply');
+    final actionError = find.byKey(const Key('invitation-occurrence-error'));
+    expect(
+      actionError,
+      findsNothing,
+      reason: actionError.evaluate().isEmpty
+          ? ''
+          : tester.widget<Text>(actionError).data,
+    );
+    final restored = await api.calendarInvitation.rangeRestorationApplication(
+      source.entryId,
+    );
+    expect(
+      restored.hasAcceptedRangeRestoration,
+      isTrue,
+      reason: 'The explicit UI action must commit restoration.',
+    );
+    expect(restored.hasLocalChanges, isFalse);
+    expect(
+      restored.currentOccurrence!.status,
+      cal.CalendarEventStatus.confirmed,
+    );
+    expect(restored.acceptedVersion.sequence, 8);
+    final masterRestored = await api.calendarInvitation.application(
+      master.entryId,
+    );
+    expect(masterRestored.hasAcceptedRangeRestoration, isTrue);
+    expect(masterRestored.occurrenceCompositionBlocked, isTrue);
     navigator.pop();
     await tester.pumpAndSettle();
   } finally {

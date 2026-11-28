@@ -57,6 +57,8 @@ enum CalendarInvitationOperation {
   readRangeApplication,
   applyRangeUpdate,
   applyRangeCancellation,
+  applyRangeRestoration,
+  readRangeRestorationApplication,
   applyOccurrenceUpdate,
   applyOccurrenceCancellation,
   composeAcceptedOccurrences,

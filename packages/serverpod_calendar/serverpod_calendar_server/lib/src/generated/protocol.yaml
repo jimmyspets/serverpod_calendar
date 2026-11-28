@@ -77,6 +77,8 @@ calendarInvitation:
   - applyCancellation:
   - occurrenceApplication:
   - rangeApplication:
+  - rangeRestorationApplication:
+  - applyRangeRestoration:
   - applyRangeUpdate:
   - applyRangeCancellation:
   - applyOccurrenceUpdate:
