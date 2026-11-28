@@ -554,3 +554,13 @@ This scoped pure prerequisite does not complete the RFC 6047 mail requirement or
 - [ ] Separately complete inbound MIME ambiguity/protection, multipart, trusted delivery/ingress, remaining scheduling lifecycle and external-client evidence.
 
 No real sending or complete mail conformance follows from this synthetic batch.
+
+
+## Bounded raw iMIP MIME extraction
+
+- [x] Inspect nonrecursive binary framing/duplicate retention and run isolated single/flat multipart byte-preservation probes.
+- [ ] Review [ADR 0144](adr/0144-bounded-host-raw-imip-mime.md): raw ambiguity/protection, shapes, transfer semantics and fixed budgets.
+- [ ] Implement/validate the approved group after explicit agreement, before one code commit.
+- [ ] Separately design verified provider ingress/native dispatch and real transport, remaining MIME/participant lifecycle and interoperability.
+
+This proposed extraction group grants no authority, applies no native state and sends no mail.
