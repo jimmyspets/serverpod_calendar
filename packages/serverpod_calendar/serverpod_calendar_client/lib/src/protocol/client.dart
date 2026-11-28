@@ -92,6 +92,8 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_event_replace_re
     as _ijp3g32l;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_status_request.dart'
     as _ignysrxk;
+import 'package:serverpod_calendar_client/src/protocol/calendar_event_text_metadata_request.dart'
+    as _iqxo05uf;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_timing.dart'
     as _i71qtqle;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_update_request.dart'
@@ -180,6 +182,8 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_task_replace_req
     as _iuoot210;
 import 'package:serverpod_calendar_client/src/protocol/calendar_task_replace_result.dart'
     as _ifqle8yh;
+import 'package:serverpod_calendar_client/src/protocol/calendar_task_text_metadata_request.dart'
+    as _iv697v9l;
 import 'package:serverpod_calendar_client/src/protocol/calendar_task_update_request.dart'
     as _i3qqxpb2;
 import 'package:serverpod_calendar_client/src/protocol/calendar_task_view.dart'
@@ -577,6 +581,14 @@ class EndpointCalendarEvent extends _isc.EndpointRef {
   @override
   String get name => 'serverpod_calendar.calendarEvent';
 
+  _ida.Future<_ieh64e0q.CalendarEventReceipt?> updateTextMetadata(
+    _iqxo05uf.CalendarEventTextMetadataRequest request,
+  ) => caller.callServerEndpoint<_ieh64e0q.CalendarEventReceipt?>(
+    'serverpod_calendar.calendarEvent',
+    'updateTextMetadata',
+    {'request': request},
+  );
+
   _ida.Future<_ieh64e0q.CalendarEventReceipt?> updateDescriptiveMetadata(
     _icyzf4uz.CalendarEventDescriptiveRequest request,
   ) => caller.callServerEndpoint<_ieh64e0q.CalendarEventReceipt?>(
@@ -794,6 +806,14 @@ class EndpointCalendarTask extends _isc.EndpointRef {
 
   @override
   String get name => 'serverpod_calendar.calendarTask';
+
+  _ida.Future<_igkgk3pi.CalendarTaskReceipt?> updateTextMetadata(
+    _iv697v9l.CalendarTaskTextMetadataRequest request,
+  ) => caller.callServerEndpoint<_igkgk3pi.CalendarTaskReceipt?>(
+    'serverpod_calendar.calendarTask',
+    'updateTextMetadata',
+    {'request': request},
+  );
 
   _ida.Future<_ifqle8yh.CalendarTaskReplaceResult> replaceFromImport(
     _iuoot210.CalendarTaskReplaceRequest request,

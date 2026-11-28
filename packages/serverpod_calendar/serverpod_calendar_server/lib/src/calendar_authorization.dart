@@ -69,6 +69,8 @@ enum CalendarPermission {
   createEvent,
   updateEvent,
   updateEventDescriptiveMetadata,
+  updateEventTextMetadata,
+  updateTaskTextMetadata,
   changeEventStatus,
   deleteEvent,
   list,
@@ -223,6 +225,7 @@ final class CalendarAuthorizationRequest {
     this.currentEvent,
     this.proposedEvent,
     this.proposedEventProtocolState,
+    this.itemTextMetadataPatch,
     this.occurrenceQuery,
     this.freeBusyQuery,
     this.availabilitySearchQuery,
@@ -297,6 +300,7 @@ final class CalendarAuthorizationRequest {
   final CalendarEventPolicySnapshot? currentEvent;
   final CalendarEventContent? proposedEvent;
   final CalendarEventProtocolState? proposedEventProtocolState;
+  final CalendarItemTextMetadataPatch? itemTextMetadataPatch;
   final CalendarEventOccurrenceQuery? occurrenceQuery;
   final CalendarFreeBusyQuery? freeBusyQuery;
   final CalendarAvailabilitySearchQuery? availabilitySearchQuery;

@@ -120,6 +120,7 @@ import 'calendar_event_rule.dart' as _iovyzq1q;
 import 'calendar_event_single_override.dart' as _iq1kxi25;
 import 'calendar_event_status.dart' as _ivzxk9bc;
 import 'calendar_event_status_request.dart' as _i3kbbl30;
+import 'calendar_event_text_metadata_request.dart' as _iswwug34;
 import 'calendar_event_text_parameters.dart' as _isfojy12;
 import 'calendar_event_time_kind.dart' as _idbnuf6y;
 import 'calendar_event_timing.dart' as _ieswiaty;
@@ -136,6 +137,10 @@ import 'calendar_free_busy_period.dart' as _i82zcrxb;
 import 'calendar_free_busy_query.dart' as _idid5g6i;
 import 'calendar_free_busy_view.dart' as _i3b615hg;
 import 'calendar_image_link.dart' as _igf45b52;
+import 'calendar_item_category_group.dart' as _i3iolgr8;
+import 'calendar_item_comment.dart' as _itx19m90;
+import 'calendar_item_text_metadata_field.dart' as _i12tuyl5;
+import 'calendar_item_text_metadata_patch.dart' as _ikwi9ryb;
 import 'calendar_metadata_update_request.dart' as _i759fw3a;
 import 'calendar_mutation_receipt.dart' as _iq0eskk0;
 import 'calendar_no_rule_fallback.dart' as _itts4qyp;
@@ -202,6 +207,7 @@ import 'calendar_task_replace_receipt.dart' as _ib5z6spp;
 import 'calendar_task_replace_request.dart' as _ibpx2vjc;
 import 'calendar_task_replace_result.dart' as _iyf2qeht;
 import 'calendar_task_status.dart' as _iiahrdev;
+import 'calendar_task_text_metadata_request.dart' as _it8lhctx;
 import 'calendar_task_time_kind.dart' as _ijhc2xsq;
 import 'calendar_task_timing.dart' as _i9h8y8lg;
 import 'calendar_task_update_request.dart' as _in7cuxyg;
@@ -301,6 +307,7 @@ export 'calendar_event_rule.dart';
 export 'calendar_event_single_override.dart';
 export 'calendar_event_status.dart';
 export 'calendar_event_status_request.dart';
+export 'calendar_event_text_metadata_request.dart';
 export 'calendar_event_text_parameters.dart';
 export 'calendar_event_time_kind.dart';
 export 'calendar_event_timing.dart';
@@ -317,6 +324,10 @@ export 'calendar_free_busy_period.dart';
 export 'calendar_free_busy_query.dart';
 export 'calendar_free_busy_view.dart';
 export 'calendar_image_link.dart';
+export 'calendar_item_category_group.dart';
+export 'calendar_item_comment.dart';
+export 'calendar_item_text_metadata_field.dart';
+export 'calendar_item_text_metadata_patch.dart';
 export 'calendar_metadata_update_request.dart';
 export 'calendar_mutation_receipt.dart';
 export 'calendar_no_rule_fallback.dart';
@@ -383,6 +394,7 @@ export 'calendar_task_replace_receipt.dart';
 export 'calendar_task_replace_request.dart';
 export 'calendar_task_replace_result.dart';
 export 'calendar_task_status.dart';
+export 'calendar_task_text_metadata_request.dart';
 export 'calendar_task_time_kind.dart';
 export 'calendar_task_timing.dart';
 export 'calendar_task_update_request.dart';
@@ -718,6 +730,9 @@ class Protocol extends _isc.SerializationManager {
     if (t == _i3kbbl30.CalendarEventStatusRequest) {
       return _i3kbbl30.CalendarEventStatusRequest.fromJson(data) as T;
     }
+    if (t == _iswwug34.CalendarEventTextMetadataRequest) {
+      return _iswwug34.CalendarEventTextMetadataRequest.fromJson(data) as T;
+    }
     if (t == _isfojy12.CalendarEventTextParameters) {
       return _isfojy12.CalendarEventTextParameters.fromJson(data) as T;
     }
@@ -765,6 +780,18 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _igf45b52.CalendarImageLink) {
       return _igf45b52.CalendarImageLink.fromJson(data) as T;
+    }
+    if (t == _i3iolgr8.CalendarItemCategoryGroup) {
+      return _i3iolgr8.CalendarItemCategoryGroup.fromJson(data) as T;
+    }
+    if (t == _itx19m90.CalendarItemComment) {
+      return _itx19m90.CalendarItemComment.fromJson(data) as T;
+    }
+    if (t == _i12tuyl5.CalendarItemTextMetadataField) {
+      return _i12tuyl5.CalendarItemTextMetadataField.fromJson(data) as T;
+    }
+    if (t == _ikwi9ryb.CalendarItemTextMetadataPatch) {
+      return _ikwi9ryb.CalendarItemTextMetadataPatch.fromJson(data) as T;
     }
     if (t == _i759fw3a.CalendarMetadataUpdateRequest) {
       return _i759fw3a.CalendarMetadataUpdateRequest.fromJson(data) as T;
@@ -970,6 +997,9 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _iiahrdev.CalendarTaskStatus) {
       return _iiahrdev.CalendarTaskStatus.fromJson(data) as T;
+    }
+    if (t == _it8lhctx.CalendarTaskTextMetadataRequest) {
+      return _it8lhctx.CalendarTaskTextMetadataRequest.fromJson(data) as T;
     }
     if (t == _ijhc2xsq.CalendarTaskTimeKind) {
       return _ijhc2xsq.CalendarTaskTimeKind.fromJson(data) as T;
@@ -1539,6 +1569,12 @@ class Protocol extends _isc.SerializationManager {
               : null)
           as T;
     }
+    if (t == _isc.getType<_iswwug34.CalendarEventTextMetadataRequest?>()) {
+      return (data != null
+              ? _iswwug34.CalendarEventTextMetadataRequest.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _isc.getType<_isfojy12.CalendarEventTextParameters?>()) {
       return (data != null
               ? _isfojy12.CalendarEventTextParameters.fromJson(data)
@@ -1625,6 +1661,30 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _isc.getType<_igf45b52.CalendarImageLink?>()) {
       return (data != null ? _igf45b52.CalendarImageLink.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i3iolgr8.CalendarItemCategoryGroup?>()) {
+      return (data != null
+              ? _i3iolgr8.CalendarItemCategoryGroup.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_itx19m90.CalendarItemComment?>()) {
+      return (data != null
+              ? _itx19m90.CalendarItemComment.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_i12tuyl5.CalendarItemTextMetadataField?>()) {
+      return (data != null
+              ? _i12tuyl5.CalendarItemTextMetadataField.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ikwi9ryb.CalendarItemTextMetadataPatch?>()) {
+      return (data != null
+              ? _ikwi9ryb.CalendarItemTextMetadataPatch.fromJson(data)
+              : null)
           as T;
     }
     if (t == _isc.getType<_i759fw3a.CalendarMetadataUpdateRequest?>()) {
@@ -2027,6 +2087,12 @@ class Protocol extends _isc.SerializationManager {
       return (data != null ? _iiahrdev.CalendarTaskStatus.fromJson(data) : null)
           as T;
     }
+    if (t == _isc.getType<_it8lhctx.CalendarTaskTextMetadataRequest?>()) {
+      return (data != null
+              ? _it8lhctx.CalendarTaskTextMetadataRequest.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _isc.getType<_ijhc2xsq.CalendarTaskTimeKind?>()) {
       return (data != null
               ? _ijhc2xsq.CalendarTaskTimeKind.fromJson(data)
@@ -2418,9 +2484,48 @@ class Protocol extends _isc.SerializationManager {
               : null)
           as T;
     }
+    if (t == List<_i3iolgr8.CalendarItemCategoryGroup>) {
+      return (data as List)
+              .map((e) => deserialize<_i3iolgr8.CalendarItemCategoryGroup>(e))
+              .toList()
+          as T;
+    }
+    if (t == _isc.getType<List<_i3iolgr8.CalendarItemCategoryGroup>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map(
+                      (e) =>
+                          deserialize<_i3iolgr8.CalendarItemCategoryGroup>(e),
+                    )
+                    .toList()
+              : null)
+          as T;
+    }
+    if (t == List<_itx19m90.CalendarItemComment>) {
+      return (data as List)
+              .map((e) => deserialize<_itx19m90.CalendarItemComment>(e))
+              .toList()
+          as T;
+    }
+    if (t == _isc.getType<List<_itx19m90.CalendarItemComment>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map((e) => deserialize<_itx19m90.CalendarItemComment>(e))
+                    .toList()
+              : null)
+          as T;
+    }
     if (t == List<_i82zcrxb.CalendarFreeBusyPeriod>) {
       return (data as List)
               .map((e) => deserialize<_i82zcrxb.CalendarFreeBusyPeriod>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i12tuyl5.CalendarItemTextMetadataField>) {
+      return (data as List)
+              .map(
+                (e) => deserialize<_i12tuyl5.CalendarItemTextMetadataField>(e),
+              )
               .toList()
           as T;
     }
@@ -2729,6 +2834,8 @@ class Protocol extends _isc.SerializationManager {
       _iq1kxi25.CalendarEventSingleOverride => 'CalendarEventSingleOverride',
       _ivzxk9bc.CalendarEventStatus => 'CalendarEventStatus',
       _i3kbbl30.CalendarEventStatusRequest => 'CalendarEventStatusRequest',
+      _iswwug34.CalendarEventTextMetadataRequest =>
+        'CalendarEventTextMetadataRequest',
       _isfojy12.CalendarEventTextParameters => 'CalendarEventTextParameters',
       _idbnuf6y.CalendarEventTimeKind => 'CalendarEventTimeKind',
       _ieswiaty.CalendarEventTiming => 'CalendarEventTiming',
@@ -2745,6 +2852,12 @@ class Protocol extends _isc.SerializationManager {
       _idid5g6i.CalendarFreeBusyQuery => 'CalendarFreeBusyQuery',
       _i3b615hg.CalendarFreeBusyView => 'CalendarFreeBusyView',
       _igf45b52.CalendarImageLink => 'CalendarImageLink',
+      _i3iolgr8.CalendarItemCategoryGroup => 'CalendarItemCategoryGroup',
+      _itx19m90.CalendarItemComment => 'CalendarItemComment',
+      _i12tuyl5.CalendarItemTextMetadataField =>
+        'CalendarItemTextMetadataField',
+      _ikwi9ryb.CalendarItemTextMetadataPatch =>
+        'CalendarItemTextMetadataPatch',
       _i759fw3a.CalendarMetadataUpdateRequest =>
         'CalendarMetadataUpdateRequest',
       _iq0eskk0.CalendarMutationReceipt => 'CalendarMutationReceipt',
@@ -2839,6 +2952,8 @@ class Protocol extends _isc.SerializationManager {
       _ibpx2vjc.CalendarTaskReplaceRequest => 'CalendarTaskReplaceRequest',
       _iyf2qeht.CalendarTaskReplaceResult => 'CalendarTaskReplaceResult',
       _iiahrdev.CalendarTaskStatus => 'CalendarTaskStatus',
+      _it8lhctx.CalendarTaskTextMetadataRequest =>
+        'CalendarTaskTextMetadataRequest',
       _ijhc2xsq.CalendarTaskTimeKind => 'CalendarTaskTimeKind',
       _i9h8y8lg.CalendarTaskTiming => 'CalendarTaskTiming',
       _in7cuxyg.CalendarTaskUpdateRequest => 'CalendarTaskUpdateRequest',
@@ -3047,6 +3162,8 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarEventStatus';
       case _i3kbbl30.CalendarEventStatusRequest():
         return 'CalendarEventStatusRequest';
+      case _iswwug34.CalendarEventTextMetadataRequest():
+        return 'CalendarEventTextMetadataRequest';
       case _isfojy12.CalendarEventTextParameters():
         return 'CalendarEventTextParameters';
       case _idbnuf6y.CalendarEventTimeKind():
@@ -3079,6 +3196,14 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarFreeBusyView';
       case _igf45b52.CalendarImageLink():
         return 'CalendarImageLink';
+      case _i3iolgr8.CalendarItemCategoryGroup():
+        return 'CalendarItemCategoryGroup';
+      case _itx19m90.CalendarItemComment():
+        return 'CalendarItemComment';
+      case _i12tuyl5.CalendarItemTextMetadataField():
+        return 'CalendarItemTextMetadataField';
+      case _ikwi9ryb.CalendarItemTextMetadataPatch():
+        return 'CalendarItemTextMetadataPatch';
       case _i759fw3a.CalendarMetadataUpdateRequest():
         return 'CalendarMetadataUpdateRequest';
       case _iq0eskk0.CalendarMutationReceipt():
@@ -3211,6 +3336,8 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarTaskReplaceResult';
       case _iiahrdev.CalendarTaskStatus():
         return 'CalendarTaskStatus';
+      case _it8lhctx.CalendarTaskTextMetadataRequest():
+        return 'CalendarTaskTextMetadataRequest';
       case _ijhc2xsq.CalendarTaskTimeKind():
         return 'CalendarTaskTimeKind';
       case _i9h8y8lg.CalendarTaskTiming():
@@ -3571,6 +3698,11 @@ class Protocol extends _isc.SerializationManager {
     if (dataClassName == 'CalendarEventStatusRequest') {
       return deserialize<_i3kbbl30.CalendarEventStatusRequest>(data['data']);
     }
+    if (dataClassName == 'CalendarEventTextMetadataRequest') {
+      return deserialize<_iswwug34.CalendarEventTextMetadataRequest>(
+        data['data'],
+      );
+    }
     if (dataClassName == 'CalendarEventTextParameters') {
       return deserialize<_isfojy12.CalendarEventTextParameters>(data['data']);
     }
@@ -3618,6 +3750,18 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'CalendarImageLink') {
       return deserialize<_igf45b52.CalendarImageLink>(data['data']);
+    }
+    if (dataClassName == 'CalendarItemCategoryGroup') {
+      return deserialize<_i3iolgr8.CalendarItemCategoryGroup>(data['data']);
+    }
+    if (dataClassName == 'CalendarItemComment') {
+      return deserialize<_itx19m90.CalendarItemComment>(data['data']);
+    }
+    if (dataClassName == 'CalendarItemTextMetadataField') {
+      return deserialize<_i12tuyl5.CalendarItemTextMetadataField>(data['data']);
+    }
+    if (dataClassName == 'CalendarItemTextMetadataPatch') {
+      return deserialize<_ikwi9ryb.CalendarItemTextMetadataPatch>(data['data']);
     }
     if (dataClassName == 'CalendarMetadataUpdateRequest') {
       return deserialize<_i759fw3a.CalendarMetadataUpdateRequest>(data['data']);
@@ -3862,6 +4006,11 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'CalendarTaskStatus') {
       return deserialize<_iiahrdev.CalendarTaskStatus>(data['data']);
+    }
+    if (dataClassName == 'CalendarTaskTextMetadataRequest') {
+      return deserialize<_it8lhctx.CalendarTaskTextMetadataRequest>(
+        data['data'],
+      );
     }
     if (dataClassName == 'CalendarTaskTimeKind') {
       return deserialize<_ijhc2xsq.CalendarTaskTimeKind>(data['data']);

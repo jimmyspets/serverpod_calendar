@@ -53,7 +53,8 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
         throw _failure(CalendarFailureCode.unavailable);
       }
     }
-    if (task.data.sourceState != null) {
+    if (task.data.sourceState != null &&
+        task.data.sourceState!.nativeMetadataOnly != true) {
       final components = {
         for (final o in task.data.sourceState!.occurrences)
           taskOriginalKey(o.originalStart!): o,

@@ -270,6 +270,11 @@ String componentText(
 }
 
 /// Absolute ASCII URI metadata; never retrieved. Not an identity/authority check.
+/// Shared bounded URI profile for inert metadata such as ALTREP.
+/// Validation never retrieves content and diagnostics omit the supplied value.
+void validateIcalendarMetadataUri(String value) =>
+    componentGuard<void>(() => componentUri(value));
+
 void componentUri(String value) {
   if (value.isEmpty ||
       value.length > 4096 ||

@@ -33,3 +33,5 @@ The synthetic example file includes these properties. Its import screen explains
 ## Descriptive-field extension
 
 Accepted [ADR 0134](adr/0134-native-event-descriptive-fields.md) independently extends ordinary VEVENT/native storage with optional PRIORITY, exact decimal-string GEO and repeated grouped RESOURCES. The [descriptive-field guide](native-event-descriptive-fields.md) specifies the subset editor, disclosure, strict occurrence compatibility and source/scheduling/feed preservation. Other source metadata/participant editors remain separate.
+
+Accepted ADR 0135 adds the [native text/link subset editor](native-item-text-metadata.md), independent field disclosure and selected-field host context. Preserve CONTACT/private source data, matching component presence, baselines and task progress/history. The separately approved private native task marker keeps native rows independent of wire limits; it grants no provenance or authority and is cleared from temporary exports. No SQL migration or real mail is added.

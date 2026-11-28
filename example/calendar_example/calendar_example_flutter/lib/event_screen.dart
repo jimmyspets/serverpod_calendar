@@ -1,3 +1,4 @@
+import 'item_text_metadata_editor.dart';
 import 'event_descriptive_editor.dart';
 import 'personal_alarm_screen.dart';
 import 'event_scheduling_screen.dart';
@@ -745,6 +746,26 @@ class _EventEditorState extends State<EventEditor> {
             ] else
               const Text(
                 'Some fields are withheld. Full editing is unavailable.',
+              ),
+            if (_view != null)
+              TextButton(
+                key: const Key('event-text-metadata'),
+                onPressed: locked || _dirty
+                    ? null
+                    : () async {
+                        await Navigator.of(context).push<void>(
+                          MaterialPageRoute(
+                            builder: (_) => ItemTextMetadataEditor(
+                              client: widget.client,
+                              event: _view!,
+                            ),
+                          ),
+                        );
+                        if (mounted) {
+                          await _run(_reload);
+                        }
+                      },
+                child: const Text('Text, labels and links'),
               ),
             if (_view != null)
               TextButton(

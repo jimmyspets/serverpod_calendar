@@ -151,7 +151,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0132](0132-recurring-master-attendee-replies.md) | Recurring master attendee replies | Accepted by explicit maintainer approval; scoped recurring-master reply implementation, actual master resolution and retention through partial/v6 publications; no new storage |
 | [0133](0133-single-instance-attendee-replies.md) | Single-instance attendee replies | Accepted 2026-10-28; scoped single-instance replies, target storage/index and collision-safe outgoing/legacy-upgrade mechanics |
 | [0134](0134-native-event-descriptive-fields.md) | Native event descriptive fields and interchange | Accepted 2026-10-28; native descriptive metadata/editor/disclosure, faithful wire/source storage and effective outgoing versions |
-| [0135](0135-native-item-text-metadata-editors.md) | Native event and task text/link metadata editors | Proposed; selected-field patches, independent disclosure and source/version preservation await approval |
+| [0135](0135-native-item-text-metadata-editors.md) | Native event and task text/link metadata editors | Accepted 2026-10-28, including the native task metadata-only refinement; selected-field editing/disclosure and source/version preservation |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

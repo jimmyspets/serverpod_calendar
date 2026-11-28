@@ -9,3 +9,7 @@ values:
   - progress
   - assignments
   - protocolIdentity
+  - url
+  - classification
+  - categories
+  - comments

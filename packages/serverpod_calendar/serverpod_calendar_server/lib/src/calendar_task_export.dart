@@ -41,41 +41,45 @@ extension CalendarTaskExportOperations on CalendarService {
       for (final member in members) {
         final rows = await _taskRecords(member, tx);
         final state =
-            member.data.sourceState ??
-            CalendarTaskSourceState(
-              master: CalendarTaskSourceComponent(
-                version: member.data.protocolVersion,
-                content: member.data.content,
-                progress: member.data.progress,
-                textParameters: CalendarEventTextParameters(),
-                metadata: emptyTaskSourceMetadata(),
-              ),
-              occurrences: [
-                for (final row in rows)
-                  CalendarTaskSourceComponent(
-                    originalStart: row.originalStart,
-                    thisAndFuture: row.futureTiming != null ? true : null,
-                    version:
-                        row.protocolVersion ??
-                        (throw _failure(CalendarFailureCode.validation)),
-                    content: CalendarTaskContent(
-                      summary: row.contentOverrides?.summary,
-                      description: row.contentOverrides?.description,
-                      location: row.contentOverrides?.location,
-                      priority: row.contentOverrides?.priority,
-                      timing:
-                          row.futureTiming ??
-                          row.replacementTiming ??
-                          CalendarTaskTiming(
-                            kind: CalendarTaskTimeKind.undated,
-                          ),
+            member.data.sourceState != null &&
+                member.data.sourceState!.nativeMetadataOnly != true
+            ? member.data.sourceState!
+            : CalendarTaskSourceState(
+                master:
+                    member.data.sourceState?.master ??
+                    CalendarTaskSourceComponent(
+                      version: member.data.protocolVersion,
+                      content: member.data.content,
+                      progress: member.data.progress,
+                      textParameters: CalendarEventTextParameters(),
+                      metadata: emptyTaskSourceMetadata(),
                     ),
-                    progress: row.progress,
-                    textParameters: CalendarEventTextParameters(),
-                    metadata: emptyTaskSourceMetadata(),
-                  ),
-              ],
-            );
+                occurrences: [
+                  for (final row in rows)
+                    CalendarTaskSourceComponent(
+                      originalStart: row.originalStart,
+                      thisAndFuture: row.futureTiming != null ? true : null,
+                      version:
+                          row.protocolVersion ??
+                          (throw _failure(CalendarFailureCode.validation)),
+                      content: CalendarTaskContent(
+                        summary: row.contentOverrides?.summary,
+                        description: row.contentOverrides?.description,
+                        location: row.contentOverrides?.location,
+                        priority: row.contentOverrides?.priority,
+                        timing:
+                            row.futureTiming ??
+                            row.replacementTiming ??
+                            CalendarTaskTiming(
+                              kind: CalendarTaskTimeKind.undated,
+                            ),
+                      ),
+                      progress: row.progress,
+                      textParameters: CalendarEventTextParameters(),
+                      metadata: emptyTaskSourceMetadata(),
+                    ),
+                ],
+              );
         projected.add(
           _taskValue(
             () => CalendarTaskExportMember(

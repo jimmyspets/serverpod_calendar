@@ -1,0 +1,8 @@
+class: CalendarItemTextMetadataPatch
+immutable: true
+fields:
+  selectedFields: List<CalendarItemTextMetadataField>
+  url: String?
+  classification: String?
+  categoryGroups: List<CalendarItemCategoryGroup>?
+  comments: List<CalendarItemComment>?

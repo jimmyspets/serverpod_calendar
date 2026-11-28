@@ -95,6 +95,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_event_replace_r
     as _ihod1iqv;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_status_request.dart'
     as _ib916yyf;
+import 'package:serverpod_calendar_server/src/generated/calendar_event_text_metadata_request.dart'
+    as _iowqejyn;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_timing.dart'
     as _i3rsvgvx;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_update_request.dart'
@@ -183,6 +185,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_task_replace_re
     as _ibprdq7s;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_replace_result.dart'
     as _igldhn4m;
+import 'package:serverpod_calendar_server/src/generated/calendar_task_text_metadata_request.dart'
+    as _i2kaqe7j;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_update_request.dart'
     as _ifljty0a;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_view.dart'
@@ -1585,6 +1589,37 @@ class _CalendarEventEndpoint {
 
   final _is.SerializationManager _serializationManager;
 
+  _ida.Future<_irjxy316.CalendarEventReceipt?> updateTextMetadata(
+    _ist.TestSessionBuilder sessionBuilder,
+    _iowqejyn.CalendarEventTextMetadataRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarEvent',
+            method: 'updateTextMetadata',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarEvent',
+          methodName: 'updateTextMetadata',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_irjxy316.CalendarEventReceipt?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _ida.Future<_irjxy316.CalendarEventReceipt?> updateDescriptiveMetadata(
     _ist.TestSessionBuilder sessionBuilder,
     _irn5q4mc.CalendarEventDescriptiveRequest request,
@@ -2338,6 +2373,37 @@ class _CalendarTaskEndpoint {
   final _is.EndpointDispatch _endpointDispatch;
 
   final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_ix5y5076.CalendarTaskReceipt?> updateTextMetadata(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i2kaqe7j.CalendarTaskTextMetadataRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarTask',
+            method: 'updateTextMetadata',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarTask',
+          methodName: 'updateTextMetadata',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ix5y5076.CalendarTaskReceipt?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 
   _ida.Future<_igldhn4m.CalendarTaskReplaceResult> replaceFromImport(
     _ist.TestSessionBuilder sessionBuilder,

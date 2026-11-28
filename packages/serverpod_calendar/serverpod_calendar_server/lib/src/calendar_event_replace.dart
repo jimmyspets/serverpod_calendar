@@ -104,6 +104,18 @@ extension CalendarEventReplacementOperations on CalendarService {
           proposedEvent: proposed?.content,
           proposedTimingOverrides: proposed?.edits,
           proposedEventProtocolState: proposed?.protocolState,
+          itemTextMetadataPatch:
+              op == CalendarPermission.updateEventTextMetadata &&
+                  event != null &&
+                  proposed != null
+              ? itemTextChanges(
+                  eventTextState(
+                    event.data.protocolState!,
+                    event.data.timingOverrides,
+                  ),
+                  eventTextState(proposed.protocolState, proposed.edits),
+                )
+              : null,
           eventReplacement: batch,
           eventGroups: CalendarEventFieldGroup.values,
         );
@@ -258,6 +270,18 @@ extension CalendarEventReplacementOperations on CalendarService {
         for (var i = 0; i < events.length; i++)
           if (changed[i]) ...[
             request(CalendarPermission.updateEvent, events[i]),
+            if (itemTextChanges(
+                  eventTextState(
+                    events[i].data.protocolState!,
+                    events[i].data.timingOverrides,
+                  ),
+                  eventTextState(
+                    proposals[events[i].data.protocolUid]!.protocolState,
+                    proposals[events[i].data.protocolUid]!.edits,
+                  ),
+                ) !=
+                null)
+              request(CalendarPermission.updateEventTextMetadata, events[i]),
             if (eventDescriptiveState(
                   events[i].data.protocolState!.sourceMetadata,
                   events[i].data.timingOverrides,

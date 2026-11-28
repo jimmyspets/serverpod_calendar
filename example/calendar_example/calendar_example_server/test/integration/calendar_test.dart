@@ -14862,6 +14862,8 @@ final class TestPolicy implements CalendarHostPolicy {
   onTaskImport;
   void Function(CalendarAuthorizationRequest)? onTaskReplacement;
   void Function(CalendarAuthorizationRequest)? onEventReplacement;
+  void Function(CalendarAuthorizationRequest, CalendarAuthorizationPhase)?
+  onItemTextMetadata;
   String? denyEventImportUid, hideEventImportUid;
   bool hideEventImportBatch = false, hideEventLifecycleReceipt = false;
   final eventImportRequests =
@@ -15004,6 +15006,9 @@ final class TestPolicy implements CalendarHostPolicy {
     CalendarAuthorizationPhase phase,
   ) async {
     for (final request in requests) {
+      if (request.itemTextMetadataPatch != null) {
+        onItemTextMetadata?.call(request, phase);
+      }
       if (request.operation == CalendarPermission.adoptPersonalAlarm) {
         lastAlarmAdoption = request;
       }

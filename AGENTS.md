@@ -259,6 +259,6 @@ Accepted [ADR 0133](docs/adr/0133-single-instance-attendee-replies.md) adds scop
 
 Accepted ADR 0134 adds optional event priority, exact bounded coordinate strings and grouped descriptive resources in existing JSON. Preserve subset-only editing, independent disclosure, source groups/omissions, strict retained-component compatibility and effective outgoing versions. Full feed authority includes all projected groups; labels never book resources. No new SQL migration or real mail follows. See [the implementation guide](docs/native-event-descriptive-fields.md).
 
-## Proposed native item text/link editors
+## Native item text/link metadata
 
-[ADR 0135](docs/adr/0135-native-item-text-metadata-editors.md) remains proposed for selected-field event/task URL/CLASS/CATEGORIES/COMMENT editing. Do not add its model/endpoint sources before explicit agreement. Preserve private CONTACT/participants/alarms, independent disclosure, source component presence, baselines and task progress/history. Category search, broader occurrence metadata and mail remain separate.
+Accepted ADR 0135, including the separately approved nativeMetadataOnly flag, adds selected-field event/task text/link editing in existing JSON without SQL changes. Preserve hidden/unselected values, immutable host patch context, component-presence gates, imported strict consistency and native row-backed progress/history. The private flag grants no provenance/authority; exports compose an unmarked temporary wire projection. CONTACT stays import-only, and search/mail remain separate. See [the guide](docs/native-item-text-metadata.md).

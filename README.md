@@ -198,6 +198,6 @@ Accepted [ADR 0133](docs/adr/0133-single-instance-attendee-replies.md) adds scop
 
 Accepted ADR 0134 adds the scoped native/ordinary VEVENT descriptive-field increment: exact decimal coordinates, optional priority and preserved resource groups, with separate editing/disclosure and effective scheduling versions. See [the implementation guide](docs/native-event-descriptive-fields.md) and validation evidence. Resource labels grant no booking or authority; external rendering/mail evidence remains separate.
 
-## Proposed native item text/link editors
+## Native item text/link metadata
 
-[ADR 0135](docs/adr/0135-native-item-text-metadata-editors.md) proposes native event/task URL, classification, category and comment editors after the completed descriptive-field batch. Selected-field patches would preserve hidden/unselected values. The concrete model/permission/version mechanics await approval; category search remains separate and CONTACT remains import-only.
+Accepted ADR 0135 adds selected-field native event/task URL, classification, category and comment editors with independent disclosure, retained source groups/baselines and effective outgoing versions. CONTACT remains import-only; category search remains separate. See [the implementation guide](docs/native-item-text-metadata.md) and scoped validation evidence.

@@ -24,6 +24,8 @@ import 'calendar_event_text_parameters.dart' as _isfojy12;
 import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_event_timing_overrides.dart' as _ijijze99;
 import 'calendar_event_transparency.dart' as _iwjkdwy7;
+import 'calendar_item_category_group.dart' as _i3iolgr8;
+import 'calendar_item_comment.dart' as _itx19m90;
 
 abstract class CalendarEventView
     implements _is.SerializableModel, _is.ProtocolSerialization {
@@ -51,6 +53,10 @@ abstract class CalendarEventView
     this.priority,
     this.geographicPosition,
     this.resourceGroups,
+    this.url,
+    this.classification,
+    this.categoryGroups,
+    this.comments,
   });
 
   factory CalendarEventView({
@@ -78,6 +84,10 @@ abstract class CalendarEventView
     int? priority,
     _iloy79hd.CalendarEventGeographicPosition? geographicPosition,
     List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups,
+    String? url,
+    String? classification,
+    List<_i3iolgr8.CalendarItemCategoryGroup>? categoryGroups,
+    List<_itx19m90.CalendarItemComment>? comments,
   }) = _CalendarEventViewImpl;
 
   factory CalendarEventView.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -171,6 +181,20 @@ abstract class CalendarEventView
                 .deserialize<List<_iiajf89w.CalendarEventResourceGroup>>(
                   jsonSerialization['resourceGroups'],
                 ),
+      url: jsonSerialization['url'] as String?,
+      classification: jsonSerialization['classification'] as String?,
+      categoryGroups: jsonSerialization['categoryGroups'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<List<_i3iolgr8.CalendarItemCategoryGroup>>(
+                  jsonSerialization['categoryGroups'],
+                ),
+      comments: jsonSerialization['comments'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<List<_itx19m90.CalendarItemComment>>(
+                  jsonSerialization['comments'],
+                ),
     );
   }
 
@@ -221,6 +245,14 @@ abstract class CalendarEventView
 
   List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups;
 
+  String? url;
+
+  String? classification;
+
+  List<_i3iolgr8.CalendarItemCategoryGroup>? categoryGroups;
+
+  List<_itx19m90.CalendarItemComment>? comments;
+
   /// Returns a shallow copy of this [CalendarEventView]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -249,6 +281,10 @@ abstract class CalendarEventView
     int? priority,
     _iloy79hd.CalendarEventGeographicPosition? geographicPosition,
     List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups,
+    String? url,
+    String? classification,
+    List<_i3iolgr8.CalendarItemCategoryGroup>? categoryGroups,
+    List<_itx19m90.CalendarItemComment>? comments,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -286,6 +322,14 @@ abstract class CalendarEventView
         'resourceGroups': resourceGroups?.toJson(
           valueToJson: (v) => v.toJson(),
         ),
+      if (url != null) 'url': url,
+      if (classification != null) 'classification': classification,
+      if (categoryGroups != null)
+        'categoryGroups': categoryGroups?.toJson(
+          valueToJson: (v) => v.toJson(),
+        ),
+      if (comments != null)
+        'comments': comments?.toJson(valueToJson: (v) => v.toJson()),
     };
   }
 
@@ -328,6 +372,14 @@ abstract class CalendarEventView
         'resourceGroups': resourceGroups?.toJson(
           valueToJson: (v) => v.toJsonForProtocol(),
         ),
+      if (url != null) 'url': url,
+      if (classification != null) 'classification': classification,
+      if (categoryGroups != null)
+        'categoryGroups': categoryGroups?.toJson(
+          valueToJson: (v) => v.toJsonForProtocol(),
+        ),
+      if (comments != null)
+        'comments': comments?.toJson(valueToJson: (v) => v.toJsonForProtocol()),
     };
   }
 
@@ -365,6 +417,10 @@ class _CalendarEventViewImpl extends CalendarEventView {
     int? priority,
     _iloy79hd.CalendarEventGeographicPosition? geographicPosition,
     List<_iiajf89w.CalendarEventResourceGroup>? resourceGroups,
+    String? url,
+    String? classification,
+    List<_i3iolgr8.CalendarItemCategoryGroup>? categoryGroups,
+    List<_itx19m90.CalendarItemComment>? comments,
   }) : super._(
          id: id,
          calendarId: calendarId,
@@ -389,6 +445,10 @@ class _CalendarEventViewImpl extends CalendarEventView {
          priority: priority,
          geographicPosition: geographicPosition,
          resourceGroups: resourceGroups,
+         url: url,
+         classification: classification,
+         categoryGroups: categoryGroups,
+         comments: comments,
        );
 
   /// Returns a shallow copy of this [CalendarEventView]
@@ -419,6 +479,10 @@ class _CalendarEventViewImpl extends CalendarEventView {
     Object? priority = _Undefined,
     Object? geographicPosition = _Undefined,
     Object? resourceGroups = _Undefined,
+    Object? url = _Undefined,
+    Object? classification = _Undefined,
+    Object? categoryGroups = _Undefined,
+    Object? comments = _Undefined,
   }) {
     return CalendarEventView(
       id: id ?? this.id,
@@ -479,6 +543,17 @@ class _CalendarEventViewImpl extends CalendarEventView {
           resourceGroups is List<_iiajf89w.CalendarEventResourceGroup>?
           ? resourceGroups
           : this.resourceGroups?.map((e0) => e0.copyWith()).toList(),
+      url: url is String? ? url : this.url,
+      classification: classification is String?
+          ? classification
+          : this.classification,
+      categoryGroups:
+          categoryGroups is List<_i3iolgr8.CalendarItemCategoryGroup>?
+          ? categoryGroups
+          : this.categoryGroups?.map((e0) => e0.copyWith()).toList(),
+      comments: comments is List<_itx19m90.CalendarItemComment>?
+          ? comments
+          : this.comments?.map((e0) => e0.copyWith()).toList(),
     );
   }
 }

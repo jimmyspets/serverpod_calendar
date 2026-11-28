@@ -9,3 +9,7 @@ values:
   - protocolIdentity
   - priority
   - resources
+  - url
+  - classification
+  - categories
+  - comments
