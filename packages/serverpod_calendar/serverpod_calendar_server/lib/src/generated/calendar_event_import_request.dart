@@ -1,0 +1,144 @@
+/* AUTOMATICALLY GENERATED CODE DO NOT MODIFY */
+/*   To generate run: "serverpod generate"    */
+
+// ignore_for_file: implementation_imports
+// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: non_constant_identifier_names
+// ignore_for_file: public_member_api_docs
+// ignore_for_file: type_literal_in_constant_pattern
+// ignore_for_file: use_super_parameters
+// ignore_for_file: invalid_use_of_internal_member
+
+// ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'dart:typed_data' as _idt;
+import 'package:serverpod/serverpod.dart' as _is;
+
+@_is.immutable
+abstract class CalendarEventImportRequest
+    implements _is.SerializableModel, _is.ProtocolSerialization {
+  const CalendarEventImportRequest._({
+    required this.calendarId,
+    required this.expectedRevision,
+    required this.bytes,
+  });
+
+  const factory CalendarEventImportRequest({
+    required _is.UuidValue calendarId,
+    required int expectedRevision,
+    required _idt.ByteData bytes,
+  }) = _CalendarEventImportRequestImpl;
+
+  factory CalendarEventImportRequest.fromJson(
+    Map<String, dynamic> jsonSerialization,
+  ) {
+    return CalendarEventImportRequest(
+      calendarId: _is.UuidValueJsonExtension.fromJson(
+        jsonSerialization['calendarId'],
+      ),
+      expectedRevision: jsonSerialization['expectedRevision'] as int,
+      bytes: _is.ByteDataJsonExtension.fromJson(jsonSerialization['bytes']),
+    );
+  }
+
+  final _is.UuidValue calendarId;
+
+  final int expectedRevision;
+
+  final _idt.ByteData bytes;
+
+  /// Returns a shallow copy of this [CalendarEventImportRequest]
+  /// with some or all fields replaced by the given arguments.
+  @_is.useResult
+  CalendarEventImportRequest copyWith({
+    _is.UuidValue? calendarId,
+    int? expectedRevision,
+    _idt.ByteData? bytes,
+  });
+  @override
+  bool operator ==(Object other) {
+    return identical(
+          other,
+          this,
+        ) ||
+        other.runtimeType == runtimeType &&
+            other is CalendarEventImportRequest &&
+            (identical(
+                  other.calendarId,
+                  calendarId,
+                ) ||
+                other.calendarId == calendarId) &&
+            (identical(
+                  other.expectedRevision,
+                  expectedRevision,
+                ) ||
+                other.expectedRevision == expectedRevision) &&
+            (identical(
+                  other.bytes,
+                  bytes,
+                ) ||
+                other.bytes == bytes);
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      runtimeType,
+      calendarId,
+      expectedRevision,
+      bytes,
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      '__className__': 'serverpod_calendar.CalendarEventImportRequest',
+      'calendarId': calendarId.toJson(),
+      'expectedRevision': expectedRevision,
+      'bytes': bytes.toJson(),
+    };
+  }
+
+  @override
+  Map<String, dynamic> toJsonForProtocol() {
+    return {
+      '__className__': 'serverpod_calendar.CalendarEventImportRequest',
+      'calendarId': calendarId.toJson(),
+      'expectedRevision': expectedRevision,
+      'bytes': bytes.toJson(),
+    };
+  }
+
+  @override
+  String toString() {
+    return _is.SerializationManager.encode(this);
+  }
+}
+
+class _CalendarEventImportRequestImpl extends CalendarEventImportRequest {
+  const _CalendarEventImportRequestImpl({
+    required _is.UuidValue calendarId,
+    required int expectedRevision,
+    required _idt.ByteData bytes,
+  }) : super._(
+         calendarId: calendarId,
+         expectedRevision: expectedRevision,
+         bytes: bytes,
+       );
+
+  /// Returns a shallow copy of this [CalendarEventImportRequest]
+  /// with some or all fields replaced by the given arguments.
+  @_is.useResult
+  @override
+  CalendarEventImportRequest copyWith({
+    _is.UuidValue? calendarId,
+    int? expectedRevision,
+    _idt.ByteData? bytes,
+  }) {
+    return CalendarEventImportRequest(
+      calendarId: calendarId ?? this.calendarId,
+      expectedRevision: expectedRevision ?? this.expectedRevision,
+      bytes: bytes ?? this.bytes.clone(),
+    );
+  }
+}

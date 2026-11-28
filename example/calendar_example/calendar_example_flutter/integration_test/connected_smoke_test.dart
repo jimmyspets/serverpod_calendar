@@ -745,6 +745,42 @@ void main() {
     await _tap(tester, 'event-delete');
     await _tap(tester, 'event-confirm-delete');
     expect(find.text(eventLabel), findsNothing);
+    await _tap(tester, 'event-import');
+    await _tap(tester, 'event-import-example');
+    await _tap(tester, 'event-import-submit');
+    await _waitFor(tester, find.text('Imported example event'));
+    final imported = (await events.list(
+      calendar.id,
+      pageSize: 10,
+      fieldGroups: cal.CalendarEventFieldGroup.values,
+    )).events.single;
+    expect(imported.protocolUid, 'example-event@example.invalid');
+    expect(imported.periods!.single.duration!.hours, 2);
+    expect(imported.protocolVersion!.sequence, isNull);
+    expect(imported.textParameters!.summary!.language, 'en');
+    await _tap(tester, 'event-import');
+    await _tap(tester, 'event-import-example');
+    await _tap(tester, 'event-import-submit');
+    await _waitFor(tester, find.byKey(const Key('event-import-error')));
+    expect(
+      (await events.list(
+        calendar.id,
+        pageSize: 10,
+        fieldGroups: cal.CalendarEventFieldGroup.values,
+      )).events,
+      hasLength(1),
+    );
+    final source = find.byKey(const Key('event-import-source'));
+    await tester.ensureVisible(source);
+    await tester.enterText(
+      source,
+      'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Synthetic//EN\nBEGIN:VTODO\nUID:unsupported\nEND:VTODO\nEND:VCALENDAR\n',
+    );
+    await _tap(tester, 'event-import-submit');
+    await _waitFor(tester, find.byKey(const Key('event-import-error')));
+    await tester.pageBack();
+    await _idle(tester);
+    await events.deleteEvent(imported.id, 1);
     await tester.pageBack();
     await _idle(tester);
     await _tap(tester, 'calendar-attach-self');

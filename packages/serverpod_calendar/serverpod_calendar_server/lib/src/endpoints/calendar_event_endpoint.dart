@@ -6,6 +6,10 @@ import '../generated/protocol.dart';
 class CalendarEventEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
+  Future<CalendarEventImportResult> importEvents(
+    Session session,
+    CalendarEventImportRequest request,
+  ) => CalendarModule.service(session).importEvents(request);
   Future<CalendarEventReceipt?> create(
     Session session,
     CalendarEventCreateRequest request,

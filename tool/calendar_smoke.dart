@@ -380,6 +380,7 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
     } finally {
       bob.close();
     }
+    await eventImportSmoke(clients);
     final ea = clients.first.modules.serverpod_calendar.calendarEvent;
     final eb = clients.last.modules.serverpod_calendar.calendarEvent;
     final eventIds = <UuidValue>[];
@@ -1623,6 +1624,153 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
     for (final id in ids) {
       final v = await b.getCalendar(id, groups);
       await b.delete(id, v.revision);
+    }
+  }
+}
+
+Future<void> eventImportSmoke(List<Client> clients) async {
+  final a = clients.first.modules.serverpod_calendar.calendar;
+  final b = clients.last.modules.serverpod_calendar.calendar;
+  final ea = clients.first.modules.serverpod_calendar.calendarEvent;
+  final eb = clients.last.modules.serverpod_calendar.calendarEvent;
+  final parents = <UuidValue>{};
+  final objects = <UuidValue>{};
+  Future<UuidValue> parent() async {
+    final r = (await a.create(
+      cal.CalendarCreateRequest(
+        displayName: 'Synthetic event import',
+        availabilityZoneId: 'UTC',
+        noRuleFallback: cal.CalendarNoRuleFallback.free,
+      ),
+    ))!;
+    parents.add(r.calendarId);
+    return r.calendarId;
+  }
+
+  String source(String uid) => [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Synthetic cross-host events//EN',
+    'BEGIN:VEVENT',
+    'UID:$uid',
+    'DTSTAMP:20400101T000000Z',
+    'SEQUENCE:7',
+    'DTSTART:20261026T090000Z',
+    'DURATION:PT1H',
+    'SUMMARY;LANGUAGE=sv:Imported event',
+    'RRULE:FREQ=DAILY;COUNT=3',
+    'RDATE;VALUE=PERIOD:20261030T090000Z/PT2H',
+    'END:VEVENT',
+    'BEGIN:VEVENT',
+    'UID:$uid',
+    'DTSTAMP:20390101T000000Z',
+    'RECURRENCE-ID:20261027T090000Z',
+    'DTSTART:20261027T110000Z',
+    'STATUS:CANCELLED',
+    'END:VEVENT',
+    'END:VCALENDAR',
+    '',
+  ].join('\r\n');
+  cal.CalendarEventImportRequest request(UuidValue id, String uid) =>
+      cal.CalendarEventImportRequest(
+        calendarId: id,
+        expectedRevision: 1,
+        bytes: ByteData.sublistView(
+          Uint8List.fromList(utf8.encode(source(uid))),
+        ),
+      );
+  try {
+    final first = await parent(), second = await parent();
+    final outcomes = await Future.wait([
+      for (final api in [ea, eb])
+        () async {
+          try {
+            final result = await api.importEvents(
+              request(first, 'same-source@example.invalid'),
+            );
+            objects.addAll(result.receipts.map((v) => v.eventId));
+            return true;
+          } on cal.CalendarException catch (e) {
+            if (e.code == cal.CalendarFailureCode.dependencyConflict) {
+              return false;
+            }
+            rethrow;
+          }
+        }(),
+    ]);
+    check(
+      outcomes.where((v) => v).length == 1,
+      'Competing event imports did not serialize',
+    );
+    final id = objects.single;
+    final view = await eb.getEvent(id, cal.CalendarEventFieldGroup.values);
+    check(
+      view.protocolUid == 'same-source@example.invalid' &&
+          view.protocolVersion!.sequence == 7 &&
+          view.protocolVersion!.created == null &&
+          view.occurrenceProtocolVersions!.single.version.stamp ==
+              DateTime.utc(2039) &&
+          view.textParameters!.summary!.language == 'sv',
+      'Imported source state differed across hosts',
+    );
+    final copy = await eb.importEvents(
+      request(second, 'same-source@example.invalid'),
+    );
+    objects.add(copy.receipts.single.eventId);
+    check(
+      copy.receipts.single.eventId != id,
+      'Independent copies reused native identity',
+    );
+    final busy = await b.freeBusy(
+      cal.CalendarFreeBusyQuery(
+        calendarId: first,
+        fromUtc: DateTime.utc(2026, 10, 30, 9),
+        untilUtc: DateTime.utc(2026, 10, 30, 11),
+      ),
+    );
+    check(
+      busy.coverage == cal.CalendarFreeBusyCoverage.complete &&
+          busy.periods.single.kind == cal.CalendarFreeBusyKind.busy,
+      'Imported PERIOD missing from cross-host occupancy',
+    );
+    final race = await parent();
+    final raceOutcomes = await Future.wait([
+      () async {
+        try {
+          final imported = await ea.importEvents(request(race, 'race-source'));
+          objects.addAll(imported.receipts.map((v) => v.eventId));
+          return true;
+        } on cal.CalendarException catch (e) {
+          if (e.code == cal.CalendarFailureCode.accessDenied) return false;
+          rethrow;
+        }
+      }(),
+      () async {
+        try {
+          await b.delete(race, 1);
+          parents.remove(race);
+          return true;
+        } on cal.CalendarException catch (e) {
+          if (e.code == cal.CalendarFailureCode.dependencyConflict) {
+            return false;
+          }
+          rethrow;
+        }
+      }(),
+    ]);
+    check(
+      raceOutcomes.where((v) => v).length == 1,
+      'Parent delete and event import failed to serialize',
+    );
+    print(
+      'PASS: create-only event import source retention, independent copies, cross-host occupied time, competing UID and parent deletion races.',
+    );
+  } finally {
+    for (final id in objects) {
+      await eb.deleteEvent(id, 1);
+    }
+    for (final id in parents) {
+      await b.delete(id, 1);
     }
   }
 }

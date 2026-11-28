@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'event_occurrence_screen.dart';
+import 'event_import_screen.dart';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
@@ -76,6 +77,23 @@ class _EventScreenState extends State<EventScreen> {
     appBar: AppBar(
       title: const Text('Events'),
       actions: [
+        TextButton(
+          key: const Key('event-import'),
+          onPressed: _busy
+              ? null
+              : () async {
+                  await Navigator.of(context).push<void>(
+                    MaterialPageRoute(
+                      builder: (_) => EventImportScreen(
+                        client: widget.client,
+                        calendarId: widget.calendarId,
+                      ),
+                    ),
+                  );
+                  if (mounted) await _load();
+                },
+          child: const Text('Import events'),
+        ),
         IconButton(
           key: const Key('events-refresh'),
           onPressed: _busy ? null : _load,

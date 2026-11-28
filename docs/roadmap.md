@@ -1,6 +1,6 @@
 # Delivery roadmap
 
-Status reconciled **2026-10-23**, through source-preserving event storage under ADR 0079 following the confirmed import contract under ADR 0078. Authenticated event import/export endpoints remain pending. The bounded temporal core and scoped native calendar/event services have local validation evidence; the full first release remains incomplete. The [RFC tables](rfc/README.md) are the latest feature-scope source. [Requirements](requirements.md) define stable FR/NFR acceptance targets; [ADRs](adr/README.md) distinguish confirmed scope from proposed implementation details.
+Status reconciled **2026-10-23**, through authenticated create-only VEVENT import under ADR 0080 following source-preserving storage and the confirmed ADR 0078 contract. Authenticated event export and replacement remain pending. The bounded temporal core and scoped native calendar/event services have local validation evidence; the full first release remains incomplete. The [RFC tables](rfc/README.md) are the latest feature-scope source. [Requirements](requirements.md) define stable FR/NFR acceptance targets; [ADRs](adr/README.md) distinguish confirmed scope from proposed implementation details.
 
 This roadmap tracks the implementation represented by the current branch, including stacked draft PRs; an implemented checkbox does not mean the change is merged into main, released, or that every ADR mechanic is accepted. Check existing GitHub work before filing issues, and link each implementation issue to the relevant requirements and roadmap section.
 
@@ -16,7 +16,7 @@ Checked items describe only the stated implemented slice or explicitly selected 
 | Events | DATE/UTC/zoned CRUD, separate lifecycle rights, recurrence storage, bounded previews and single/future timing edits/cancellation, stored PERIODs/annotations and independent component versions | Per-occurrence content, future cancellation, richer metadata and calendar-wide occurrence queries |
 | Tasks | Pure-core timing/recurrence projections | Durable CRUD, assignments, occurrence completion/history and Flutter journeys |
 | Availability | Per-calendar complete/unknown free/busy; scoped rule CRUD, recurring openings, priority/range/fallback composition, explicit opening zones, scoped subject/common-free search, opening edits/metadata, duration envelopes and source-preserving UID/group/CONTACT/PERIOD/component-version storage | Indexed larger calendars and cross-scope/group-expansion coordination; scoped create/export/replacement APIs exist under ADRs 0073-0076 |
-| iCalendar and HTTP feeds | Bounded strict syntax/value codecs; scoped VEVENT recurrence/PERIOD/timing components and VTIMEZONE validation; availability timing/composition/publication metadata adapters and scoped authenticated import/export; optional feed-module boundary selected | Remaining selected wire properties/components, other component imports/exports, feed module and external-client evidence |
+| iCalendar and HTTP feeds | Bounded strict syntax/value codecs; scoped VEVENT recurrence/PERIOD/timing components and VTIMEZONE validation; availability timing/composition/publication metadata adapters and scoped authenticated import/export; optional feed-module boundary selected | Remaining selected wire properties/components, remaining component imports/exports (create-only VEVENT import now exists), feed module and external-client evidence |
 | Scheduling and alarms | Selected scope; notification package scaffold | Scheduling/mail state and outbox; alarm workers/actions and connected Flutter delivery |
 | Validation and release | Local unit/browser/database/upgrade checks, two real hosts and Flutter journeys for implemented features | CI, remaining protocol/worker/recovery journeys, interoperability and publication readiness |
 
@@ -138,7 +138,9 @@ Native metadata editing is partial evidence for FR-24, not ICS interoperability.
 - [ ] Design adoption/overwrite, mixed upsert and broader source reconciliation separately; other component import/export and feeds remain pending.
 - [x] Record [create-only VEVENT import/storage choices](event-import.md) under ADR 0078, including source preservation, independent permissions, private baseline, native defaults/version lifecycle and source envelope normalization.
 - [x] Implement source-preserving event storage under [ADR 0079](adr/0079-source-preserving-event-storage.md): exact text UID candidates, PERIODs/annotations, independent component versions/presence, private baseline representation and data-preserving upgrades.
-- [ ] Implement authenticated create-only VEVENT import with independent import/create/lifecycle authority, exact destination UID conflicts, private baseline persistence and full-batch atomicity; event export and replacement remain separate batches.
+- [x] Implement [authenticated create-only VEVENT import](event-import.md#implemented-create-only-operation) under ADR 0080 with independent import/create/lifecycle authority, exact destination UID conflicts, private baseline persistence and full-batch atomicity.
+- [x] Record the confirmed [event export boundary](adr/0081-authenticated-event-export-contract.md): explicit complete series from one calendar, all-or-nothing availability/authorization, separate export permission and full supported field disclosure.
+- [ ] Implement current-state event export under ADR 0081; review exact output mapping and nonrepresentable native state before adding the endpoint. Event replacement/adoption remains separate.
 - [ ] Review the concrete ADR 0079 representation, limits and migration mechanics in the draft PR before accepting them as final contracts.
 
 
@@ -268,4 +270,9 @@ The maintainer selected recurrence storage/bounded API and example previews firs
 
 ## Event storage prerequisite, 2026-10-23
 
-[ADR 0079](./adr/0079-source-preserving-event-storage.md) and [the storage guide](event-storage.md) extend native events with stored PERIOD additions, retained text annotations, source property presence, independent component versions and a private baseline representation. Native edits, previews and occupied-time calculations use the retained values. Source conversion is pure and grants no authority; authenticated VEVENT import/export endpoints, source updates, feeds and scheduling remain pending. The next selected batch is create-only event import under ADR 0078.
+[ADR 0079](./adr/0079-source-preserving-event-storage.md) and [the storage guide](event-storage.md) extend native events with stored PERIOD additions, retained text annotations, source property presence, independent component versions and a private baseline representation. Native edits, previews and occupied-time calculations use the retained values. Source conversion is pure and grants no authority; create-only VEVENT import now follows under ADR 0080; event export, source updates, feeds and scheduling remain pending. ADR 0080 now implements the selected create-only import. Current-state event export is the next recommended area.
+
+
+## Event import increment, 2026-10-23
+
+[ADR 0080](adr/0080-authenticated-create-only-event-import.md) implements the [create-only event endpoint](event-import.md#implemented-create-only-operation), preserving supported source state and private baselines under independent full-batch authority. Two-host UID/delete races and the Flutter import workflow are scoped integration gates. Event export/replacement, richer content, scheduling, feeds, tasks and alarm execution remain pending.

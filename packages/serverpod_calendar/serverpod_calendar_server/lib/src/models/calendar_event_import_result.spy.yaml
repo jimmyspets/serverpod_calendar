@@ -1,0 +1,4 @@
+class: CalendarEventImportResult
+immutable: true
+fields:
+  receipts: List<CalendarEventReceipt>

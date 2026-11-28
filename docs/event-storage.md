@@ -1,6 +1,6 @@
 # Source-preserving event storage
 
-Status: **implemented prerequisite under ADR 0078; concrete storage mechanics under draft review**. [ADR 0079](adr/0079-source-preserving-event-storage.md) records this batch. Authenticated VEVENT import/export endpoints remain pending. Pure conversion is not an import permission or database operation.
+Status: **implemented prerequisite under ADR 0078; concrete storage mechanics under draft review**. [ADR 0079](adr/0079-source-preserving-event-storage.md) records this batch. Authenticated create-only VEVENT import now follows under ADR 0080; event export remains pending. Pure conversion is not an import permission or database operation.
 
 Native UUIDs, actual parent calendars and optimistic API revisions remain independent of protocol UIDs and versions. Active rows now store exact TEXT protocol UIDs (up to the existing 4,096-code-point profile), their actual calendar UUID and a SHA-256 candidate digest. The non-unique calendar/digest index narrows candidates; exact case-sensitive strings decide conflicts under the shared scope lock. Native creation generates its UID. A source UID never grants ownership or chooses a native identity.
 
@@ -32,4 +32,4 @@ The proposal prepares one private normalized source baseline, versioned with the
 
 Pinned generation creates module and example migrations. Their narrowly edited `migration.sql` converts UUID UIDs to text, fills actual calendar/digest columns and adds nullable protocol/baseline state without recreating event rows. Existing content, native identities, overrides, audit times and revisions survive; no source baseline or occurrence creation history is invented. Fresh schema comes from generated `definition.sql`. Development migration application requires no database reset.
 
-The [validation record](scaffold-validation.md) lists focused and completed-batch checks. The [import contract](event-import.md) remains the next implementation area. Whole-second ordinary dates remain [1970-01-01, 2100-01-01); [timezone limitations and updates](timezone-data.md) are unchanged. This batch adds no event import/export endpoint, HTTP feed, scheduling, alarms, external-client compatibility or broad RFC conformance claim.
+The [validation record](scaffold-validation.md) lists focused and completed-batch checks. The [implemented create-only import](event-import.md#implemented-create-only-operation) now uses this storage under ADR 0080; export/replacement remains separate. Whole-second ordinary dates remain [1970-01-01, 2100-01-01); [timezone limitations and updates](timezone-data.md) are unchanged. This batch adds no event import/export endpoint, HTTP feed, scheduling, alarms, external-client compatibility or broad RFC conformance claim.

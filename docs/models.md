@@ -419,12 +419,24 @@ The maintainer selected the timing/composition-first slice and positive opening 
 
 ## Event source-preservation proposal under ADR 0078
 
-[The event import mapping](event-import.md#prerequisite-mapping-recorded-before-adr-0079) distinguishes existing event records from proposed source-preserving fields. Proposed additions cover text protocol UID/exact destination-scoped candidate lookup, typed PERIODs/annotations, source presence/effective-state separation, independent component protocol checkpoints and one private imported source baseline in active data. Native UUID/revision/parent/deletion identities remain separate. Source annotations stay with their text disclosure groups; protocol-version access cannot expose hidden text or alternative-representation links. The original proposal is implemented as the scoped storage prerequisite under ADR 0079 below; concrete mechanics remain under draft review. The authenticated event import endpoint remains pending.
+[The event import mapping](event-import.md#prerequisite-mapping-recorded-before-adr-0079) distinguishes existing event records from proposed source-preserving fields. Proposed additions cover text protocol UID/exact destination-scoped candidate lookup, typed PERIODs/annotations, source presence/effective-state separation, independent component protocol checkpoints and one private imported source baseline in active data. Native UUID/revision/parent/deletion identities remain separate. Source annotations stay with their text disclosure groups; protocol-version access cannot expose hidden text or alternative-representation links. The original proposal is implemented as the scoped storage prerequisite under ADR 0079 below; concrete mechanics remain under draft review. The authenticated create-only event import endpoint now follows under ADR 0080; event export remains separate.
 
 
 ## Event storage prerequisite, 2026-10-23
 
-[ADR 0079](./adr/0079-source-preserving-event-storage.md) and [the storage guide](event-storage.md) extend native events with stored PERIOD additions, retained text annotations, source property presence, independent component versions and a private baseline representation. Native edits, previews and occupied-time calculations use the retained values. Source conversion is pure and grants no authority; authenticated VEVENT import/export endpoints, source updates, feeds and scheduling remain pending. The next selected batch is create-only event import under ADR 0078.
+[ADR 0079](./adr/0079-source-preserving-event-storage.md) and [the storage guide](event-storage.md) extend native events with stored PERIOD additions, retained text annotations, source property presence, independent component versions and a private baseline representation. Native edits, previews and occupied-time calculations use the retained values. Source conversion is pure and grants no authority; create-only VEVENT import now follows under ADR 0080; event export, source updates, feeds and scheduling remain pending. ADR 0080 now implements the selected create-only import; current-state event export is the next recommended area.
 
 
 Generated additions are `CalendarEventTextParameters`, `CalendarEventProtocolVersion` and `CalendarEventOccurrenceProtocolVersion` for authorized values, plus server-only `CalendarEventProtocolState`, `CalendarEventOverrideProtocolState` and `CalendarEventImportBaseline`. Existing content/view/update models carry retained values and explicit replacement flags. These are implemented sources rather than renamed broader proposed catalog families.
+
+
+## Create-only event import, 2026-10-23
+
+[ADR 0080](adr/0080-authenticated-create-only-event-import.md) and [the implemented import guide](event-import.md#implemented-create-only-operation) add authenticated full-file create-only VEVENT import. Require separate import/create authority and lifecycle permission for cancelled masters/single occurrences, using immutable full-batch actual-parent context and final transaction checks. Preserve supported source semantics/versions and a private active-data baseline; exact active UID conflicts are destination-local. Return only final-approved minimal receipts, with no implied detail access. The schema is unchanged from ADR 0079. Event export, replacement/adoption, feeds, scheduling and alarms remain separate.
+
+
+| Implemented import model | Fields and responsibility |
+| --- | --- |
+| `CalendarEventImportRequest` | Immutable destination `calendarId`, expected parent API `expectedRevision`, and `bytes: ByteData`; the server copies the bounded byte view before awaiting policy. No actor, native event identity, source checkpoint or baseline is accepted as client authority. |
+| `CalendarEventImportResult` | Immutable `receipts: List<CalendarEventReceipt>`; only final-disclosed native IDs/revisions/deletion flag, with no totals or source metadata. |
+| `CalendarEventImportIntent` / `CalendarEventImportMember` | Server-only host-adapter classes rather than generated wire models; a frozen full proposal with assigned native IDs, exact source UID, validated content, overrides and protocol state. The private source baseline is excluded. |
