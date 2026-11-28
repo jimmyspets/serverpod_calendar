@@ -92,8 +92,78 @@ CalendarEventContent validateEventContent(CalendarEventContent value) {
     validateCalendarPlainText(value.location!, maxCodePoints: 4096);
   }
   validateEventTiming(value.timing);
+  final recurrence = validateEventRecurrence(value.timing, value.recurrence);
+  final periods = value.periods ?? <CalendarEventTiming>[];
+  if (periods.length +
+          (recurrence?.inclusions.length ?? 0) +
+          (recurrence?.exclusions.length ?? 0) >
+      eventMaxExplicitDates) {
+    throw const RecurrenceLimitException('maxExplicitDates');
+  }
+  for (final period in periods) {
+    _profile(value.timing, period);
+    if (value.timing.kind == CalendarEventTimeKind.date ||
+        validateEventTiming(period).$2!.isPoint) {
+      throw ArgumentError('PERIOD additions require positive timed spans');
+    }
+  }
+  final canonical = <String, CalendarEventTiming>{};
+  if (periods.isNotEmpty) {
+    // Core validation rejects conflicting duration/end forms even if excluded.
+    final master = validateEventTiming(value.timing).$2!;
+    TimedRecurrenceSet(
+      start: master.start,
+      rule: _timedRule(recurrence?.rule),
+      inclusions: [
+        for (final v in recurrence?.inclusions ?? <CalendarEventTiming>[])
+          validateEventTiming(v).$2!.start,
+      ],
+      exclusions: [
+        for (final v in recurrence?.exclusions ?? <CalendarEventTiming>[])
+          validateEventTiming(v).$2!.start,
+      ],
+      periods: [for (final v in periods) validateEventTiming(v).$2!],
+      maxExplicitDates: eventMaxExplicitDates,
+    );
+    for (final period in periods) {
+      canonical[_anchorKey(period)] = period;
+    }
+  }
+  CalendarTextParameters? parameter(CalendarTextParameters? p, String? text) {
+    if (p == null) return null;
+    if (text == null) throw ArgumentError('Text parameters require a property');
+    if (p.language != null) validateCalendarLanguageTag(p.language!);
+    final uri = p.alternativeUri;
+    Uri? parsed;
+    try {
+      parsed = uri == null ? null : Uri.parse(uri);
+    } on FormatException {
+      throw ArgumentError('Malformed ALTREP URI');
+    }
+    if (uri != null &&
+        (uri.isEmpty ||
+            uri.length > 4096 ||
+            !RegExp(r'^[A-Za-z][A-Za-z0-9+.-]*:').hasMatch(uri) ||
+            uri.codeUnits.any((v) => v <= 32 || v >= 127) ||
+            !parsed!.isAbsolute)) {
+      throw ArgumentError('Absolute ASCII ALTREP required');
+    }
+    return p.language == null && uri == null ? null : p;
+  }
+
+  final a = parameter(value.textParameters?.summary, value.summary),
+      b = parameter(value.textParameters?.description, value.description),
+      c = parameter(value.textParameters?.location, value.location);
   return value.copyWith(
-    recurrence: validateEventRecurrence(value.timing, value.recurrence),
+    recurrence: recurrence,
+    periods: canonical.isEmpty
+        ? null
+        : List.unmodifiable([
+            for (final key in canonical.keys.toList()..sort()) canonical[key]!,
+          ]),
+    textParameters: a == null && b == null && c == null
+        ? null
+        : CalendarEventTextParameters(summary: a, description: b, location: c),
   );
 }
 
@@ -304,6 +374,7 @@ CalendarEventOccurrencePreview previewEventOccurrences(
   CalendarEventTimingOverrides? overrides,
   List<CalendarEventTiming>? periods,
 }) {
+  periods ??= content.periods;
   final (date, _) = validateEventTiming(content.timing);
   final result = <CalendarEventOccurrence>[];
   if (date != null) {

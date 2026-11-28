@@ -1,0 +1,35 @@
+# Source-preserving event storage
+
+Status: **implemented prerequisite under ADR 0078; concrete storage mechanics under draft review**. [ADR 0079](adr/0079-source-preserving-event-storage.md) records this batch. Authenticated VEVENT import/export endpoints remain pending. Pure conversion is not an import permission or database operation.
+
+Native UUIDs, actual parent calendars and optimistic API revisions remain independent of protocol UIDs and versions. Active rows now store exact TEXT protocol UIDs (up to the existing 4,096-code-point profile), their actual calendar UUID and a SHA-256 candidate digest. The non-unique calendar/digest index narrows candidates; exact case-sensitive strings decide conflicts under the shared scope lock. Native creation generates its UID. A source UID never grants ownership or chooses a native identity.
+
+## Retained values and edits
+
+`CalendarEventContent` adds optional `periods` and `textParameters`. PERIOD additions retain their positive timed interval and explicit end/duration form, using the master's exact UTC/named-zone profile. DATE periods and point periods reject. The combined raw inclusion/exclusion/PERIOD budget remains 256, charged before deduplication. Conflicting exceptional spans reject even when excluded. Stored periods participate in original occurrence membership, timing overrides, previews and free/busy; detail-list visibility does not determine occupancy.
+
+Summary, description and location annotations preserve optional LANGUAGE and absolute ASCII ALTREP under the existing wire limits. Annotations require a corresponding text property; absent text differs from explicitly empty text. URI schemes follow the pure wire annotation profile, rather than the calendar HTTP-link editor profile. No link is fetched.
+
+Ordinary update requests retain omitted PERIODs and annotations. `replacePeriods` and `replaceTextParameters` explicitly allow replacement or clearing; supplying different values without the respective flag rejects. Changing timing/profile or recurrence must preserve compatible additions and existing original override identities, otherwise the write rejects atomically. Clearing text with an attached annotation requires explicitly clearing or replacing that annotation as well. The example editor explains retention, shows annotation values, and offers explicit clear controls. Detailed PERIOD/annotation replacement remains available through typed APIs.
+
+## Independent protocol state
+
+A private `CalendarEventProtocolState` holds the master checkpoint and exact single/THISANDFUTURE original-identity checkpoints. Public `CalendarEventProtocolVersion` values contain optional SEQUENCE, required DTSTAMP and optional CREATED/LAST-MODIFIED. Source omissions remain absent. Omitted STATUS has effective native CONFIRMED by application policy; omitted TRANSP has effective OPAQUE. Presence is separate from these effective values.
+
+Every actual normalized component change is significant. Native master edits advance the master version; an occurrence advances when its own timing, cancellation or explicitly repeated content changes. Inherited text alone does not advance its checkpoint. New native components start at SEQUENCE 0 with known creation time. Existing components advance omitted SEQUENCE from effective zero; overflow beyond 2,147,483,647 rejects the transaction. Changed protocol times use nondecreasing whole-second database time, preserving optional CREATED. Identical normalized state preserves protocol versions and timestamps; accepted native writes still advance API revision/audit/scope generation according to the existing contract. API revision controls concurrency within a second.
+
+Legacy masters without state initialize a local checkpoint at SEQUENCE 0 from known database audit times. Legacy occurrence checkpoints use the known containing modification time and omit unknown CREATED. A read computes this local representation without writing a fabricated source history. Subsequent accepted writes persist current state. This is a local initialization, not evidence of the original protocol version.
+
+## Disclosure and source baseline
+
+Annotations follow their corresponding text group; periods follow timing; STATUS/TRANSP presence follows state. Master version scalars require protocol-identity disclosure. Occurrence version identities require **both timing and protocol-identity** disclosure. Hidden text and private property-presence masks are not embedded in public checkpoint values. Host policy receives trusted current and final validated proposed state; protocol state is never accepted as a client-owned authority assertion.
+
+`eventStorageProposal` converts a supported pure wire series into validated immutable native content, override state and independent source checkpoints. It retains text UIDs, DATE/UTC/named meanings, end/duration/default forms, recurrence/PERIOD additions, annotations, cancellation geometry, source presence and component versions. It performs no persistence, authorization, networking, scheduling or alarm activation. The envelope and VTIMEZONE presentation are regenerated from pinned data by future output adapters; original file bytes and decorative zone metadata are not archived.
+
+The proposal prepares one private normalized source baseline, versioned with the pinned IANA data profile and capped at 2 MiB UTF-8. It contains current decoded source semantics, excluding native IDs/audit/envelope presentation. Native creation and legacy initialization leave it absent. Native edits retain the last imported baseline for future exact local-conflict detection. It is absent from ordinary views, mutation receipts, cursors and host policy snapshots. Deletion removes the entire active row, including the baseline, leaving only the approved minimal identity marker. No event replacement/adoption API is introduced here.
+
+## Schema and validation
+
+Pinned generation creates module and example migrations. Their narrowly edited `migration.sql` converts UUID UIDs to text, fills actual calendar/digest columns and adds nullable protocol/baseline state without recreating event rows. Existing content, native identities, overrides, audit times and revisions survive; no source baseline or occurrence creation history is invented. Fresh schema comes from generated `definition.sql`. Development migration application requires no database reset.
+
+The [validation record](scaffold-validation.md) lists focused and completed-batch checks. The [import contract](event-import.md) remains the next implementation area. Whole-second ordinary dates remain [1970-01-01, 2100-01-01); [timezone limitations and updates](timezone-data.md) are unchanged. This batch adds no event import/export endpoint, HTTP feed, scheduling, alarms, external-client compatibility or broad RFC conformance claim.

@@ -14,8 +14,11 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'calendar_event_field_group.dart' as _iftiwkuj;
+import 'calendar_event_occurrence_protocol_version.dart' as _im5iu6ju;
+import 'calendar_event_protocol_version.dart' as _iblfo3t0;
 import 'calendar_event_recurrence.dart' as _iqxs44bf;
 import 'calendar_event_status.dart' as _ivzxk9bc;
+import 'calendar_event_text_parameters.dart' as _isfojy12;
 import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_event_timing_overrides.dart' as _ijijze99;
 import 'calendar_event_transparency.dart' as _iwjkdwy7;
@@ -37,6 +40,12 @@ abstract class CalendarEventView
     this.lastModified,
     this.recurrence,
     this.timingOverrides,
+    this.periods,
+    this.textParameters,
+    this.statusPresent,
+    this.transparencyPresent,
+    this.protocolVersion,
+    this.occurrenceProtocolVersions,
   });
 
   factory CalendarEventView({
@@ -54,6 +63,13 @@ abstract class CalendarEventView
     DateTime? lastModified,
     _iqxs44bf.CalendarEventRecurrence? recurrence,
     _ijijze99.CalendarEventTimingOverrides? timingOverrides,
+    List<_ieswiaty.CalendarEventTiming>? periods,
+    _isfojy12.CalendarEventTextParameters? textParameters,
+    bool? statusPresent,
+    bool? transparencyPresent,
+    _iblfo3t0.CalendarEventProtocolVersion? protocolVersion,
+    List<_im5iu6ju.CalendarEventOccurrenceProtocolVersion>?
+    occurrenceProtocolVersions,
   }) = _CalendarEventViewImpl;
 
   factory CalendarEventView.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -102,6 +118,38 @@ abstract class CalendarEventView
                 .deserialize<_ijijze99.CalendarEventTimingOverrides>(
                   jsonSerialization['timingOverrides'],
                 ),
+      periods: jsonSerialization['periods'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<List<_ieswiaty.CalendarEventTiming>>(
+                  jsonSerialization['periods'],
+                ),
+      textParameters: jsonSerialization['textParameters'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_isfojy12.CalendarEventTextParameters>(
+                  jsonSerialization['textParameters'],
+                ),
+      statusPresent: jsonSerialization['statusPresent'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(jsonSerialization['statusPresent']),
+      transparencyPresent: jsonSerialization['transparencyPresent'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(
+              jsonSerialization['transparencyPresent'],
+            ),
+      protocolVersion: jsonSerialization['protocolVersion'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_iblfo3t0.CalendarEventProtocolVersion>(
+                  jsonSerialization['protocolVersion'],
+                ),
+      occurrenceProtocolVersions:
+          jsonSerialization['occurrenceProtocolVersions'] == null
+          ? null
+          : _ix00hwbf.Protocol().deserialize<
+              List<_im5iu6ju.CalendarEventOccurrenceProtocolVersion>
+            >(jsonSerialization['occurrenceProtocolVersions']),
     );
   }
 
@@ -133,6 +181,19 @@ abstract class CalendarEventView
 
   _ijijze99.CalendarEventTimingOverrides? timingOverrides;
 
+  List<_ieswiaty.CalendarEventTiming>? periods;
+
+  _isfojy12.CalendarEventTextParameters? textParameters;
+
+  bool? statusPresent;
+
+  bool? transparencyPresent;
+
+  _iblfo3t0.CalendarEventProtocolVersion? protocolVersion;
+
+  List<_im5iu6ju.CalendarEventOccurrenceProtocolVersion>?
+  occurrenceProtocolVersions;
+
   /// Returns a shallow copy of this [CalendarEventView]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -151,6 +212,13 @@ abstract class CalendarEventView
     DateTime? lastModified,
     _iqxs44bf.CalendarEventRecurrence? recurrence,
     _ijijze99.CalendarEventTimingOverrides? timingOverrides,
+    List<_ieswiaty.CalendarEventTiming>? periods,
+    _isfojy12.CalendarEventTextParameters? textParameters,
+    bool? statusPresent,
+    bool? transparencyPresent,
+    _iblfo3t0.CalendarEventProtocolVersion? protocolVersion,
+    List<_im5iu6ju.CalendarEventOccurrenceProtocolVersion>?
+    occurrenceProtocolVersions,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -170,6 +238,17 @@ abstract class CalendarEventView
       if (lastModified != null) 'lastModified': lastModified?.toJson(),
       if (recurrence != null) 'recurrence': recurrence?.toJson(),
       if (timingOverrides != null) 'timingOverrides': timingOverrides?.toJson(),
+      if (periods != null)
+        'periods': periods?.toJson(valueToJson: (v) => v.toJson()),
+      if (textParameters != null) 'textParameters': textParameters?.toJson(),
+      if (statusPresent != null) 'statusPresent': statusPresent,
+      if (transparencyPresent != null)
+        'transparencyPresent': transparencyPresent,
+      if (protocolVersion != null) 'protocolVersion': protocolVersion?.toJson(),
+      if (occurrenceProtocolVersions != null)
+        'occurrenceProtocolVersions': occurrenceProtocolVersions?.toJson(
+          valueToJson: (v) => v.toJson(),
+        ),
     };
   }
 
@@ -192,6 +271,19 @@ abstract class CalendarEventView
       if (recurrence != null) 'recurrence': recurrence?.toJsonForProtocol(),
       if (timingOverrides != null)
         'timingOverrides': timingOverrides?.toJsonForProtocol(),
+      if (periods != null)
+        'periods': periods?.toJson(valueToJson: (v) => v.toJsonForProtocol()),
+      if (textParameters != null)
+        'textParameters': textParameters?.toJsonForProtocol(),
+      if (statusPresent != null) 'statusPresent': statusPresent,
+      if (transparencyPresent != null)
+        'transparencyPresent': transparencyPresent,
+      if (protocolVersion != null)
+        'protocolVersion': protocolVersion?.toJsonForProtocol(),
+      if (occurrenceProtocolVersions != null)
+        'occurrenceProtocolVersions': occurrenceProtocolVersions?.toJson(
+          valueToJson: (v) => v.toJsonForProtocol(),
+        ),
     };
   }
 
@@ -219,6 +311,13 @@ class _CalendarEventViewImpl extends CalendarEventView {
     DateTime? lastModified,
     _iqxs44bf.CalendarEventRecurrence? recurrence,
     _ijijze99.CalendarEventTimingOverrides? timingOverrides,
+    List<_ieswiaty.CalendarEventTiming>? periods,
+    _isfojy12.CalendarEventTextParameters? textParameters,
+    bool? statusPresent,
+    bool? transparencyPresent,
+    _iblfo3t0.CalendarEventProtocolVersion? protocolVersion,
+    List<_im5iu6ju.CalendarEventOccurrenceProtocolVersion>?
+    occurrenceProtocolVersions,
   }) : super._(
          id: id,
          calendarId: calendarId,
@@ -234,6 +333,12 @@ class _CalendarEventViewImpl extends CalendarEventView {
          lastModified: lastModified,
          recurrence: recurrence,
          timingOverrides: timingOverrides,
+         periods: periods,
+         textParameters: textParameters,
+         statusPresent: statusPresent,
+         transparencyPresent: transparencyPresent,
+         protocolVersion: protocolVersion,
+         occurrenceProtocolVersions: occurrenceProtocolVersions,
        );
 
   /// Returns a shallow copy of this [CalendarEventView]
@@ -255,6 +360,12 @@ class _CalendarEventViewImpl extends CalendarEventView {
     Object? lastModified = _Undefined,
     Object? recurrence = _Undefined,
     Object? timingOverrides = _Undefined,
+    Object? periods = _Undefined,
+    Object? textParameters = _Undefined,
+    Object? statusPresent = _Undefined,
+    Object? transparencyPresent = _Undefined,
+    Object? protocolVersion = _Undefined,
+    Object? occurrenceProtocolVersions = _Undefined,
   }) {
     return CalendarEventView(
       id: id ?? this.id,
@@ -283,6 +394,29 @@ class _CalendarEventViewImpl extends CalendarEventView {
           timingOverrides is _ijijze99.CalendarEventTimingOverrides?
           ? timingOverrides
           : this.timingOverrides?.copyWith(),
+      periods: periods is List<_ieswiaty.CalendarEventTiming>?
+          ? periods
+          : this.periods?.map((e0) => e0.copyWith()).toList(),
+      textParameters: textParameters is _isfojy12.CalendarEventTextParameters?
+          ? textParameters
+          : this.textParameters?.copyWith(),
+      statusPresent: statusPresent is bool?
+          ? statusPresent
+          : this.statusPresent,
+      transparencyPresent: transparencyPresent is bool?
+          ? transparencyPresent
+          : this.transparencyPresent,
+      protocolVersion:
+          protocolVersion is _iblfo3t0.CalendarEventProtocolVersion?
+          ? protocolVersion
+          : this.protocolVersion?.copyWith(),
+      occurrenceProtocolVersions:
+          occurrenceProtocolVersions
+              is List<_im5iu6ju.CalendarEventOccurrenceProtocolVersion>?
+          ? occurrenceProtocolVersions
+          : this.occurrenceProtocolVersions
+                ?.map((e0) => e0.copyWith())
+                .toList(),
     );
   }
 }

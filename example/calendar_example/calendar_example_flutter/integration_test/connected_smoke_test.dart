@@ -268,8 +268,15 @@ void main() {
       cal.CalendarEventUpdateRequest(
         eventId: event.id,
         expectedRevision: 1,
+        replaceTextParameters: true,
         content: cal.CalendarEventContent(
           summary: 'External event',
+          textParameters: cal.CalendarEventTextParameters(
+            summary: cal.CalendarTextParameters(
+              language: 'sv',
+              alternativeUri: 'cid:synthetic@example.invalid',
+            ),
+          ),
           timing: event.timing!,
         ),
       ),
@@ -305,6 +312,23 @@ void main() {
         cal.CalendarEventFieldGroup.values,
       )).summary,
       eventLabel,
+    );
+    final annotated = await events.getEvent(
+      event.id,
+      cal.CalendarEventFieldGroup.values,
+    );
+    expect(annotated.textParameters!.summary!.language, 'sv');
+    expect(annotated.protocolVersion!.sequence, 2);
+    expect(find.textContaining('annotations are retained'), findsOneWidget);
+    await _tap(tester, 'event-clear-parameters');
+    await _tap(tester, 'event-save');
+    await _enabledField(tester, summaryField);
+    expect(
+      (await events.getEvent(
+        event.id,
+        cal.CalendarEventFieldGroup.values,
+      )).textParameters?.summary,
+      isNull,
     );
     // Persist recurrence through Flutter and preview through the real endpoint.
     await tester.enterText(find.byKey(const Key('event-start')), '2026-03-29');

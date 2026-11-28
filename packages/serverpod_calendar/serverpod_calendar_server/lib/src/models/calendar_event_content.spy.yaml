@@ -8,3 +8,5 @@ fields:
   status: CalendarEventStatus, default=confirmed
   transparency: CalendarEventTransparency, default=opaque
   recurrence: CalendarEventRecurrence?
+  periods: List<CalendarEventTiming>?
+  textParameters: CalendarEventTextParameters?

@@ -82,6 +82,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0076](0076-availability-replacement-implementation.md) | Baseline-aware availability replacement implementation | Accepted private active-row snapshot/raw-read choices; scoped implementation, concrete mechanics under draft review |
 | [0077](0077-privacy-safe-calendar-freebusy-export.md) | Privacy-safe per-calendar VFREEBUSY export | Accepted per-calendar-first and separate export authority; concrete mechanics under draft review |
 | [0078](0078-create-only-event-import-and-storage.md) | Create-only event import and storage prerequisites | Accepted scope/identity/version/permissions/default/baseline/normalization/native lifecycle/legacy choices; schema/API mechanics proposed |
+| [0079](0079-source-preserving-event-storage.md) | Source-preserving event storage implementation | Scoped ADR 0078 prerequisite; concrete representation/migration mechanics under draft review |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

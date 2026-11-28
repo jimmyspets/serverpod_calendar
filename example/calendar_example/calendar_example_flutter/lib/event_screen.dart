@@ -159,7 +159,7 @@ class _EventEditorState extends State<EventEditor> {
       _inclusions = TextEditingController(),
       _exclusions = TextEditingController();
   cal.CalendarEventFrequency? _frequency;
-  bool _datesDirty = false;
+  bool _datesDirty = false, _clearPeriods = false, _clearParameters = false;
   cal.CalendarEventView? _view;
   cal.CalendarEventTimeKind _kind = cal.CalendarEventTimeKind.date;
   cal.CalendarEventTransparency _transparency =
@@ -203,6 +203,8 @@ class _EventEditorState extends State<EventEditor> {
     _exclusions.text =
         recurrence?.exclusions.map((v) => _format(v.start)).join('\n') ?? '';
     _datesDirty = false;
+    _clearPeriods = false;
+    _clearParameters = false;
     _zone.text = t?.zoneId ?? widget.initialZone;
     final d = t?.duration;
     final units = [
@@ -351,6 +353,8 @@ class _EventEditorState extends State<EventEditor> {
       status: _view?.status ?? cal.CalendarEventStatus.confirmed,
       transparency: _transparency,
       recurrence: _recurrence(),
+      periods: _clearPeriods ? null : _view?.periods,
+      textParameters: _clearParameters ? null : _view?.textParameters,
     );
   }
 
@@ -430,6 +434,8 @@ class _EventEditorState extends State<EventEditor> {
           expectedRevision: expected,
           content: content,
           replaceRecurrenceDates: _datesDirty,
+          replacePeriods: _clearPeriods,
+          replaceTextParameters: _clearParameters,
         ),
       );
       await _reload(expected: expected + 1);
@@ -509,7 +515,52 @@ class _EventEditorState extends State<EventEditor> {
               ),
             if (_view?.protocolUid != null)
               SelectableText('Event UID: ${_view!.protocolUid}'),
+            if (_view?.protocolVersion != null)
+              Text(
+                'Protocol sequence: ${_view!.protocolVersion!.sequence ?? 0}; stamp: ${_view!.protocolVersion!.stamp.toIso8601String()}',
+              ),
             if (_editable) ...[
+              if (_view?.textParameters != null) ...[
+                const Text(
+                  'Language and alternative-representation annotations are retained when editing text. Links are stored without fetching them.',
+                ),
+                for (final entry in {
+                  'Summary': _view!.textParameters!.summary,
+                  'Description': _view!.textParameters!.description,
+                  'Location': _view!.textParameters!.location,
+                }.entries)
+                  if (entry.value != null)
+                    SelectableText(
+                      '${entry.key}: language ${entry.value!.language ?? "unspecified"}; alternative ${entry.value!.alternativeUri ?? "none"}',
+                    ),
+                CheckboxListTile(
+                  key: const Key('event-clear-parameters'),
+                  title: const Text('Clear text annotations on save'),
+                  value: _clearParameters,
+                  onChanged: locked
+                      ? null
+                      : (v) => setState(() {
+                          _clearParameters = v!;
+                          _dirty = true;
+                        }),
+                ),
+              ],
+              if (_view?.periods?.isNotEmpty ?? false) ...[
+                Text(
+                  '${_view!.periods!.length} inclusion periods with their own end or duration are retained on save.',
+                ),
+                CheckboxListTile(
+                  key: const Key('event-clear-periods'),
+                  title: const Text('Remove inclusion periods on save'),
+                  value: _clearPeriods,
+                  onChanged: locked
+                      ? null
+                      : (v) => setState(() {
+                          _clearPeriods = v!;
+                          _dirty = true;
+                        }),
+                ),
+              ],
               text('event-summary', 'Summary (optional)', _summary),
               text('event-description', 'Description', _description, lines: 3),
               text('event-location', 'Location', _location),

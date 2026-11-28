@@ -469,7 +469,84 @@ Future<void> calendarSmoke(List<Client> clients, String bobPassword) async {
           );
         }
       }
-      final patternId = eventIds.last;
+      // Independent hosts retain exceptional spans/annotations across native edits.
+      final sourceFields = (await ea.create(
+        cal.CalendarEventCreateRequest(
+          calendarId: second.calendarId,
+          content: cal.CalendarEventContent(
+            summary: 'Synthetic source fields',
+            timing: cal.CalendarEventTiming(
+              kind: cal.CalendarEventTimeKind.utc,
+              start: cal.CalendarEventCivil(
+                year: 2026,
+                month: 4,
+                day: 2,
+                hour: 12,
+              ),
+            ),
+            periods: [
+              cal.CalendarEventTiming(
+                kind: cal.CalendarEventTimeKind.utc,
+                start: cal.CalendarEventCivil(
+                  year: 2026,
+                  month: 4,
+                  day: 3,
+                  hour: 12,
+                ),
+                duration: cal.CalendarEventDuration(hours: 2),
+              ),
+            ],
+            textParameters: cal.CalendarEventTextParameters(
+              summary: cal.CalendarTextParameters(
+                language: 'sv',
+                alternativeUri: 'cid:synthetic@example.invalid',
+              ),
+            ),
+          ),
+        ),
+      ))!;
+      eventIds.add(sourceFields.eventId);
+      final sourceRead = await eb.getEvent(
+        sourceFields.eventId,
+        cal.CalendarEventFieldGroup.values,
+      );
+      await eb.update(
+        cal.CalendarEventUpdateRequest(
+          eventId: sourceRead.id,
+          expectedRevision: sourceRead.revision,
+          content: cal.CalendarEventContent(
+            summary: 'Changed',
+            timing: sourceRead.timing!,
+          ),
+        ),
+      );
+      final retained = await ea.getEvent(
+        sourceRead.id,
+        cal.CalendarEventFieldGroup.values,
+      );
+      check(
+        retained.periods!.single.duration!.hours == 2 &&
+            retained.textParameters!.summary!.language == 'sv' &&
+            retained.protocolVersion!.sequence == 1,
+        'Cross-host source-field retention failed',
+      );
+      final projection = await ea.preview(
+        cal.CalendarEventOccurrenceQuery(
+          eventId: sourceRead.id,
+          expectedRevision: 2,
+          fromUtc: DateTime.utc(2026, 4, 2),
+          untilUtc: DateTime.utc(2026, 4, 4),
+        ),
+      );
+      check(
+        projection.occurrences.length == 2 &&
+            projection.occurrences.last.endUtc!
+                    .difference(projection.occurrences.last.startUtc!)
+                    .inHours ==
+                2,
+        'Stored PERIOD missing from cross-host calculations',
+      );
+      final patternId = eventIds[eventIds.length - 2];
       final patternOriginal = await eb.getEvent(
         patternId,
         cal.CalendarEventFieldGroup.values,

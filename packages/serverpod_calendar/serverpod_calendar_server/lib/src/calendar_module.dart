@@ -11,6 +11,7 @@ import 'calendar_authorization.dart';
 import 'generated/protocol.dart';
 import 'native_calendar_name.dart';
 import 'event_values.dart';
+import 'event_protocol_values.dart';
 import 'availability_values.dart';
 import 'availability_protocol_values.dart';
 import 'availability_storage_values.dart';

@@ -1,6 +1,6 @@
 # Create-only VEVENT import and source-preserving storage contract
 
-Status: **maintainer-confirmed product choices; proposed storage/API/lifecycle/transaction mechanics**. Date: 2026-10-22. [ADR 0078](adr/0078-create-only-event-import-and-storage.md) records ten confirmed choices. This is a documentation/design batch: there is no event import endpoint, new model, migration or changed runtime behavior yet. Existing native event services and the pure wire adapter remain implemented within their declared scopes.
+Status: **maintainer-confirmed product choices; storage prerequisite implemented under [ADR 0079](adr/0079-source-preserving-event-storage.md), authenticated import API/transaction mechanics still proposed**. [ADR 0078](adr/0078-create-only-event-import-and-storage.md) records ten confirmed choices. See [implemented storage](event-storage.md) for generated models/migrations, retention and native protocol lifecycle. There is no event import/export endpoint yet.
 
 ## Selected scope and preservation boundary
 
@@ -10,9 +10,9 @@ Use the current [event/zone profile](icalendar-event-adapter.md), [recurrence an
 
 The maintainer selected **decoded event preservation, not exact file retention**. Full source VTIMEZONE validation still applies, including unused supplied definitions. Persist event zone identifiers and validated temporal meaning, not the original file's PRODID, unused zones, TZNAME/COMMENT/TZURL decorations or source folding/property order. Future export regenerates the calendar envelope and full-horizon zones from the pinned database. Text values, annotations, source omissions, original identities, explicit end versus duration and duration units remain distinctions to preserve. URI-valued annotations are never fetched. A source-document archive or exact byte round trip is outside this contract.
 
-## Verified current gaps
+## Prerequisite mapping recorded before ADR 0079
 
-The following mapping comes from current source inspection, rather than assuming the availability implementation already extends events:
+The following table preserves the pre-implementation comparison. Its event storage gaps are addressed by ADR 0079; authenticated import, current permission/UID conflict gates and export remain pending. The proposed mechanics below remain historical design context where the implementation guide supersedes them.
 
 | Area | Current event implementation | Required prerequisite |
 | --- | --- | --- |

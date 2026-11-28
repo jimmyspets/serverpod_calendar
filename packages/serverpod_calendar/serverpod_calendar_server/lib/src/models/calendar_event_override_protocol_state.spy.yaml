@@ -1,0 +1,12 @@
+class: CalendarEventOverrideProtocolState
+serverOnly: true
+immutable: true
+fields:
+  originalStart: CalendarEventTiming
+  isThisAndFuture: bool, default=false
+  version: CalendarEventProtocolVersion
+  summaryPresent: bool, default=false
+  descriptionPresent: bool, default=false
+  locationPresent: bool, default=false
+  statusPresent: bool, default=false
+  transparencyPresent: bool, default=false

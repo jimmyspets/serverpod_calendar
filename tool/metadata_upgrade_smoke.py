@@ -296,6 +296,30 @@ END;
 $baseline$;
 DROP TABLE availability_before_baseline;
 """)
+        sql(database, "CREATE TABLE event_before_storage AS SELECT * FROM serverpod_calendar_event_data;")
+        sql(database, (SERVER / "migrations/20261023050029245-event-source-storage/migration.sql").read_text(encoding="utf-8"))
+        sql(database, """
+DO $event_storage$
+BEGIN
+ IF EXISTS (SELECT 1 FROM serverpod_calendar_event_data current
+   JOIN event_before_storage old ON current.id=old.id
+   WHERE (to_jsonb(current)-'calendarId'-'uidDigest'-'protocolState'-'importBaseline')
+      IS DISTINCT FROM (to_jsonb(old)-'protocolUid') || jsonb_build_object('protocolUid',old."protocolUid"::text))
+ OR EXISTS (SELECT 1 FROM serverpod_calendar_event_data d JOIN serverpod_calendar_event i ON i.id=d."eventId"
+   WHERE d."calendarId"<>i."calendarId" OR d."uidDigest"<>encode(sha256(convert_to(d."protocolUid",'UTF8')),'hex')
+   OR d."protocolState" IS NOT NULL OR d."importBaseline" IS NOT NULL)
+ OR (SELECT count(*) FROM serverpod_calendar_event_data)<>(SELECT count(*) FROM event_before_storage)
+ OR (SELECT data_type FROM information_schema.columns WHERE table_schema='public'
+   AND table_name='serverpod_calendar_event_data' AND column_name='protocolUid')<>'text'
+ OR (SELECT column_default FROM information_schema.columns WHERE table_schema='public'
+   AND table_name='serverpod_calendar_event_data' AND column_name='protocolUid') IS NOT NULL
+ OR EXISTS (SELECT 1 FROM pg_indexes WHERE indexname='calendar_event_data_uid_unique')
+ OR NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname='calendar_event_data_uid_candidates' AND indexdef NOT LIKE 'CREATE UNIQUE%')
+ THEN RAISE EXCEPTION 'Event storage upgrade lost data or invented source history'; END IF;
+END;
+$event_storage$;
+DROP TABLE event_before_storage;
+""")
         print("PASS: populated schema upgrades preserve identity, revisions, content, associations, protocol UID strings and opening identities and old cursor bindings.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

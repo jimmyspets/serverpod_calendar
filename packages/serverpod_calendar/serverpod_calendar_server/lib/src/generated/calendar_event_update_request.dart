@@ -23,13 +23,19 @@ abstract class CalendarEventUpdateRequest
     required this.expectedRevision,
     required this.content,
     bool? replaceRecurrenceDates,
-  }) : replaceRecurrenceDates = replaceRecurrenceDates ?? false;
+    bool? replacePeriods,
+    bool? replaceTextParameters,
+  }) : replaceRecurrenceDates = replaceRecurrenceDates ?? false,
+       replacePeriods = replacePeriods ?? false,
+       replaceTextParameters = replaceTextParameters ?? false;
 
   const factory CalendarEventUpdateRequest({
     required _is.UuidValue eventId,
     required int expectedRevision,
     required _id4cvk34.CalendarEventContent content,
     bool? replaceRecurrenceDates,
+    bool? replacePeriods,
+    bool? replaceTextParameters,
   }) = _CalendarEventUpdateRequestImpl;
 
   factory CalendarEventUpdateRequest.fromJson(
@@ -49,6 +55,14 @@ abstract class CalendarEventUpdateRequest
           : _is.BoolJsonExtension.fromJson(
               jsonSerialization['replaceRecurrenceDates'],
             ),
+      replacePeriods: jsonSerialization['replacePeriods'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(jsonSerialization['replacePeriods']),
+      replaceTextParameters: jsonSerialization['replaceTextParameters'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(
+              jsonSerialization['replaceTextParameters'],
+            ),
     );
   }
 
@@ -60,6 +74,10 @@ abstract class CalendarEventUpdateRequest
 
   final bool replaceRecurrenceDates;
 
+  final bool replacePeriods;
+
+  final bool replaceTextParameters;
+
   /// Returns a shallow copy of this [CalendarEventUpdateRequest]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -68,6 +86,8 @@ abstract class CalendarEventUpdateRequest
     int? expectedRevision,
     _id4cvk34.CalendarEventContent? content,
     bool? replaceRecurrenceDates,
+    bool? replacePeriods,
+    bool? replaceTextParameters,
   });
   @override
   bool operator ==(Object other) {
@@ -96,7 +116,17 @@ abstract class CalendarEventUpdateRequest
                   other.replaceRecurrenceDates,
                   replaceRecurrenceDates,
                 ) ||
-                other.replaceRecurrenceDates == replaceRecurrenceDates);
+                other.replaceRecurrenceDates == replaceRecurrenceDates) &&
+            (identical(
+                  other.replacePeriods,
+                  replacePeriods,
+                ) ||
+                other.replacePeriods == replacePeriods) &&
+            (identical(
+                  other.replaceTextParameters,
+                  replaceTextParameters,
+                ) ||
+                other.replaceTextParameters == replaceTextParameters);
   }
 
   @override
@@ -107,6 +137,8 @@ abstract class CalendarEventUpdateRequest
       expectedRevision,
       content,
       replaceRecurrenceDates,
+      replacePeriods,
+      replaceTextParameters,
     );
   }
 
@@ -118,6 +150,8 @@ abstract class CalendarEventUpdateRequest
       'expectedRevision': expectedRevision,
       'content': content.toJson(),
       'replaceRecurrenceDates': replaceRecurrenceDates,
+      'replacePeriods': replacePeriods,
+      'replaceTextParameters': replaceTextParameters,
     };
   }
 
@@ -129,6 +163,8 @@ abstract class CalendarEventUpdateRequest
       'expectedRevision': expectedRevision,
       'content': content.toJsonForProtocol(),
       'replaceRecurrenceDates': replaceRecurrenceDates,
+      'replacePeriods': replacePeriods,
+      'replaceTextParameters': replaceTextParameters,
     };
   }
 
@@ -144,11 +180,15 @@ class _CalendarEventUpdateRequestImpl extends CalendarEventUpdateRequest {
     required int expectedRevision,
     required _id4cvk34.CalendarEventContent content,
     bool? replaceRecurrenceDates,
+    bool? replacePeriods,
+    bool? replaceTextParameters,
   }) : super._(
          eventId: eventId,
          expectedRevision: expectedRevision,
          content: content,
          replaceRecurrenceDates: replaceRecurrenceDates,
+         replacePeriods: replacePeriods,
+         replaceTextParameters: replaceTextParameters,
        );
 
   /// Returns a shallow copy of this [CalendarEventUpdateRequest]
@@ -160,6 +200,8 @@ class _CalendarEventUpdateRequestImpl extends CalendarEventUpdateRequest {
     int? expectedRevision,
     _id4cvk34.CalendarEventContent? content,
     bool? replaceRecurrenceDates,
+    bool? replacePeriods,
+    bool? replaceTextParameters,
   }) {
     return CalendarEventUpdateRequest(
       eventId: eventId ?? this.eventId,
@@ -167,6 +209,9 @@ class _CalendarEventUpdateRequestImpl extends CalendarEventUpdateRequest {
       content: content ?? this.content.copyWith(),
       replaceRecurrenceDates:
           replaceRecurrenceDates ?? this.replaceRecurrenceDates,
+      replacePeriods: replacePeriods ?? this.replacePeriods,
+      replaceTextParameters:
+          replaceTextParameters ?? this.replaceTextParameters,
     );
   }
 }

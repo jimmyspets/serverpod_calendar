@@ -5,3 +5,5 @@ fields:
   expectedRevision: int
   content: CalendarEventContent
   replaceRecurrenceDates: bool, default=false
+  replacePeriods: bool, default=false
+  replaceTextParameters: bool, default=false

@@ -148,6 +148,7 @@ final class CalendarAuthorizationRequest {
     this.eventId,
     this.currentEvent,
     this.proposedEvent,
+    this.proposedEventProtocolState,
     this.occurrenceQuery,
     this.freeBusyQuery,
     this.availabilitySearchQuery,
@@ -174,6 +175,7 @@ final class CalendarAuthorizationRequest {
   final UuidValue? eventId;
   final CalendarEventPolicySnapshot? currentEvent;
   final CalendarEventContent? proposedEvent;
+  final CalendarEventProtocolState? proposedEventProtocolState;
   final CalendarEventOccurrenceQuery? occurrenceQuery;
   final CalendarFreeBusyQuery? freeBusyQuery;
   final CalendarAvailabilitySearchQuery? availabilitySearchQuery;
@@ -387,8 +389,10 @@ final class CalendarEventPolicySnapshot {
     this.protocolUid,
     this.updatedAt, {
     this.timingOverrides,
+    this.protocolState,
   });
   final CalendarEventTimingOverrides? timingOverrides;
+  final CalendarEventProtocolState? protocolState;
   final UuidValue eventId, calendarId;
   final int revision;
   final CalendarEventContent content;
