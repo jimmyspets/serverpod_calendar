@@ -1354,3 +1354,10 @@ The full `./tool/check.ps1` passed the following frozen runtime phases, then sto
 Owned interactive runners were restored without a development reset. Generated migration `20261029151703500-invitation-applications` applied successfully. Actual Serverpod MCP hot reload and Flutter MCP VM connection/hot reload succeeded; Flutter runtime-error inspection found none. The final phased evidence completes the agreed batch without describing the original failed browser invocation as a successful root run.
 
 Final static verification passed **2,906 relative links**, consecutive ADRs 0001–0139, **66 candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. The complete approved batch is ready for its single implementation commit.
+
+
+## Trusted cancellation review proposal — ADR 0140 (2026-10-29)
+
+Documentation-only proposal after the completed linked-update batch. Current durable/pure profiles and RFC 5546 cancellation constraints were inspected; all open issue/PR pages showed no overlapping cancellation-intake work. Explicit whole-meeting status, known correlation, recipient checks and accepted-version floors are proposed before source-kind generation. No source/model/schema/runtime changes or runtime suite repetition belong to this proposal. Relative links, consecutive ADRs, changed files, credentials, LICENSE and whitespace are verified before its documentation commit.
+
+Documentation validation passed **2,916 relative links**, consecutive ADRs 0001–0140, **11 Markdown-only candidate files**, the 17-value local credential scan, unchanged Apache 2.0 LICENSE and whitespace checks. Runtime suites were not repeated for this proposal; completed ADR 0139 phased runtime evidence remains separate.
