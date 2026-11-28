@@ -1128,6 +1128,10 @@ void main() {
         .widget<SelectableText>(find.byKey(const Key('event-export-source')))
         .data!;
     expect(exportedEvent, contains('UID:example-event@example.invalid'));
+    expect(exportedEvent, contains('CLASS:PRIVATE'));
+    expect(exportedEvent, contains('CATEGORIES;LANGUAGE=en:Demo,Demo'));
+    expect(exportedEvent, contains('Synthetic event desk'));
+    expect(exportedEvent, contains('cid:event-desk@example.invalid'));
     expect(
       exportedEvent,
       contains('SUMMARY;LANGUAGE=en:Imported example event'),

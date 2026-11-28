@@ -1,0 +1,6 @@
+class: CalendarEventSourceText
+serverOnly: true
+immutable: true
+fields:
+  value: String
+  parameters: CalendarTextParameters?

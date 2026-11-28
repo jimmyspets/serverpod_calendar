@@ -15,6 +15,12 @@ DTSTAMP:20261023T120000Z
 DTSTART:20261026T090000Z
 DURATION:PT1H
 SUMMARY;LANGUAGE=en:Imported example event
+URL:https://example.invalid/events/example
+CLASS:PRIVATE
+CATEGORIES;LANGUAGE=en:Demo,Demo
+CATEGORIES;LANGUAGE=sv:Exempel
+COMMENT;LANGUAGE=en:Read-only source metadata
+CONTACT;ALTREP="cid:event-desk@example.invalid":Synthetic event desk
 RRULE:FREQ=DAILY;COUNT=3
 RDATE;VALUE=PERIOD:20261030T090000Z/PT2H
 END:VEVENT
@@ -111,7 +117,7 @@ class _EventImportScreenState extends State<EventImportScreen> {
       padding: const EdgeInsets.all(16),
       children: [
         const Text(
-          'Paste a supported standalone event calendar. This creates new series; an existing UID rejects the whole import. Text line endings are converted to CRLF before sending. No invitations, feeds or reminders are started.',
+          'Paste a supported standalone event calendar. This creates new series; an existing UID rejects the whole import. Text line endings are converted to CRLF before sending. Imported text/link metadata stays read-only in native event editors and requires separate source-read permission for export. CLASS does not grant access; links and contact references are never fetched. No invitations, feeds or reminders are started.',
         ),
         if (_busy) const LinearProgressIndicator(),
         if (_error != null) Text(_error!, key: const Key('event-import-error')),

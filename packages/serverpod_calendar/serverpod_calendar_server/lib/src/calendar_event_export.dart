@@ -56,6 +56,7 @@ extension CalendarEventExportOperations on CalendarService {
         for (final e in members) ...[
           request(CalendarPermission.exportEvents, e),
           request(CalendarPermission.readEvent, e),
+          request(CalendarPermission.readEventSource, e),
         ],
       ];
       Future<void> authorize() async {

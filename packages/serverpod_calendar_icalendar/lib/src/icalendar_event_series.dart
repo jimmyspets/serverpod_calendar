@@ -11,6 +11,16 @@ final class IcalendarEventSeries {
     this.dateSeries,
     this.timedSeries,
   ) : overrides = List.unmodifiable(overrides);
+
+  /// Effective bounded metadata; the component retains its original omissions.
+  IcalendarEventMetadata metadataFor(IcalendarEvent component) {
+    if (identical(component, master)) return master.metadata;
+    if (!overrides.contains(component)) {
+      throw ArgumentError('Foreign event component');
+    }
+    return _inheritedEventMetadata(master.metadata, component.metadata);
+  }
+
   final IcalendarEvent master;
   final List<IcalendarEvent> overrides;
   final DateEventRangeSet? dateSeries;
@@ -29,6 +39,7 @@ IcalendarEventSeries _eventSeries(
     componentFail(IcalendarComponentError.invalidValue);
   }
   for (final o in overrides) {
+    _matchingEventMetadata(master.metadata, o.metadata);
     if ((o.transparency != null && o.isTransparent != master.isTransparent) ||
         (o.status != null &&
             o.status != master.status &&

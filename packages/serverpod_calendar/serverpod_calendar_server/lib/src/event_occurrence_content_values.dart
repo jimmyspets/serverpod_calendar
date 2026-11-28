@@ -20,12 +20,13 @@ CalendarEventTimingOverrides? eventDisclosedOverrides(
   for (final row in value.singles) {
     final own = eventDisclosedOccurrenceContent(row.contentOverrides, groups);
     if (row.cancelled || row.replacement != null || own != null) {
-      singles.add(row.copyWith(contentOverrides: own));
+      singles.add(row.copyWith(contentOverrides: own, sourceMetadata: null));
     }
   }
   final future = [
     for (final row in value.future)
       row.copyWith(
+        sourceMetadata: null,
         contentOverrides: eventDisclosedOccurrenceContent(
           row.contentOverrides,
           groups,
@@ -232,7 +233,10 @@ CalendarEventTimingOverrides? changeEventContentOverrides(
     future[r] = future[r].copyWith(contentOverrides: own);
   } else if (i >= 0) {
     final old = singles.removeAt(i);
-    if (old.replacement != null || old.cancelled || own != null) {
+    if (old.replacement != null ||
+        old.cancelled ||
+        own != null ||
+        old.sourceMetadata != null) {
       singles.add(old.copyWith(contentOverrides: own));
     }
   } else {

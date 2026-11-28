@@ -145,6 +145,7 @@ extension CalendarEventReplacementOperations on CalendarService {
           request(CalendarPermission.importEvents, event),
           request(CalendarPermission.replaceEventsFromImport, event),
           request(CalendarPermission.readEvent, event),
+          request(CalendarPermission.readEventSource, event),
         ],
       ];
       await authorize(

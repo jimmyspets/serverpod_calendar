@@ -16,6 +16,7 @@ import 'package:serverpod_calendar_server/src/generated/protocol.dart'
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
 import 'calendar_event_override_protocol_state.dart' as _iml0c566;
 import 'calendar_event_protocol_version.dart' as _iblfo3t0;
+import 'calendar_event_source_metadata.dart' as _ic57ts5d;
 
 @_is.immutable
 abstract class CalendarEventProtocolState
@@ -25,6 +26,7 @@ abstract class CalendarEventProtocolState
     bool? statusPresent,
     bool? transparencyPresent,
     required this.overrides,
+    this.sourceMetadata,
   }) : statusPresent = statusPresent ?? true,
        transparencyPresent = transparencyPresent ?? true;
 
@@ -33,6 +35,7 @@ abstract class CalendarEventProtocolState
     bool? statusPresent,
     bool? transparencyPresent,
     required List<_iml0c566.CalendarEventOverrideProtocolState> overrides,
+    _ic57ts5d.CalendarEventSourceMetadata? sourceMetadata,
   }) = _CalendarEventProtocolStateImpl;
 
   factory CalendarEventProtocolState.fromJson(
@@ -55,6 +58,12 @@ abstract class CalendarEventProtocolState
           .deserialize<List<_iml0c566.CalendarEventOverrideProtocolState>>(
             jsonSerialization['overrides'],
           ),
+      sourceMetadata: jsonSerialization['sourceMetadata'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<_ic57ts5d.CalendarEventSourceMetadata>(
+                  jsonSerialization['sourceMetadata'],
+                ),
     );
   }
 
@@ -66,6 +75,8 @@ abstract class CalendarEventProtocolState
 
   final List<_iml0c566.CalendarEventOverrideProtocolState> overrides;
 
+  final _ic57ts5d.CalendarEventSourceMetadata? sourceMetadata;
+
   /// Returns a shallow copy of this [CalendarEventProtocolState]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -74,6 +85,7 @@ abstract class CalendarEventProtocolState
     bool? statusPresent,
     bool? transparencyPresent,
     List<_iml0c566.CalendarEventOverrideProtocolState>? overrides,
+    _ic57ts5d.CalendarEventSourceMetadata? sourceMetadata,
   });
   @override
   bool operator ==(Object other) {
@@ -101,7 +113,12 @@ abstract class CalendarEventProtocolState
             const _iss.DeepCollectionEquality().equals(
               other.overrides,
               overrides,
-            );
+            ) &&
+            (identical(
+                  other.sourceMetadata,
+                  sourceMetadata,
+                ) ||
+                other.sourceMetadata == sourceMetadata);
   }
 
   @override
@@ -112,6 +129,7 @@ abstract class CalendarEventProtocolState
       statusPresent,
       transparencyPresent,
       const _iss.DeepCollectionEquality().hash(overrides),
+      sourceMetadata,
     );
   }
 
@@ -123,6 +141,7 @@ abstract class CalendarEventProtocolState
       'statusPresent': statusPresent,
       'transparencyPresent': transparencyPresent,
       'overrides': overrides.toJson(valueToJson: (v) => v.toJson()),
+      if (sourceMetadata != null) 'sourceMetadata': sourceMetadata?.toJson(),
     };
   }
 
@@ -137,17 +156,21 @@ abstract class CalendarEventProtocolState
   }
 }
 
+class _Undefined {}
+
 class _CalendarEventProtocolStateImpl extends CalendarEventProtocolState {
   const _CalendarEventProtocolStateImpl({
     required _iblfo3t0.CalendarEventProtocolVersion version,
     bool? statusPresent,
     bool? transparencyPresent,
     required List<_iml0c566.CalendarEventOverrideProtocolState> overrides,
+    _ic57ts5d.CalendarEventSourceMetadata? sourceMetadata,
   }) : super._(
          version: version,
          statusPresent: statusPresent,
          transparencyPresent: transparencyPresent,
          overrides: overrides,
+         sourceMetadata: sourceMetadata,
        );
 
   /// Returns a shallow copy of this [CalendarEventProtocolState]
@@ -159,6 +182,7 @@ class _CalendarEventProtocolStateImpl extends CalendarEventProtocolState {
     bool? statusPresent,
     bool? transparencyPresent,
     List<_iml0c566.CalendarEventOverrideProtocolState>? overrides,
+    Object? sourceMetadata = _Undefined,
   }) {
     return CalendarEventProtocolState(
       version: version ?? this.version.copyWith(),
@@ -166,6 +190,9 @@ class _CalendarEventProtocolStateImpl extends CalendarEventProtocolState {
       transparencyPresent: transparencyPresent ?? this.transparencyPresent,
       overrides:
           overrides ?? this.overrides.map((e0) => e0.copyWith()).toList(),
+      sourceMetadata: sourceMetadata is _ic57ts5d.CalendarEventSourceMetadata?
+          ? sourceMetadata
+          : this.sourceMetadata?.copyWith(),
     );
   }
 }

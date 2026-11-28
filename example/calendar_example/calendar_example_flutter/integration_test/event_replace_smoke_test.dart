@@ -110,6 +110,27 @@ void main() {
         )).description,
         'Focused replacement',
       );
+      final exported = await events.exportEvents(
+        cal.CalendarEventExportRequest(
+          calendarId: parent,
+          expectedRevision: 1,
+          selection: [
+            cal.CalendarEventExportSelection(
+              eventId: event.id,
+              expectedRevision: 2,
+            ),
+          ],
+        ),
+      );
+      final metadata = utf8.decode(
+        exported.buffer.asUint8List(
+          exported.offsetInBytes,
+          exported.lengthInBytes,
+        ),
+      );
+      expect(metadata, contains('CLASS:PRIVATE'));
+      expect(metadata, contains('Synthetic event desk'));
+      expect(metadata, contains('CATEGORIES;LANGUAGE=en:Demo,Demo'));
     } finally {
       final event = await events.getEvent(imported.eventId, []);
       await events.deleteEvent(event.id, event.revision);

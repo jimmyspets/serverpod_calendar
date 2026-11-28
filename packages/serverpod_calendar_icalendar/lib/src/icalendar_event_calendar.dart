@@ -11,6 +11,7 @@ import 'icalendar_time_zone.dart';
 import 'icalendar_event_recurrence.dart';
 
 part 'icalendar_event_series.dart';
+part 'icalendar_event_metadata.dart';
 part 'icalendar_task_calendar.dart';
 part 'icalendar_task_series.dart';
 part 'icalendar_task_metadata.dart';
@@ -39,6 +40,7 @@ final class IcalendarEvent {
     required this.stamp,
     required this.dateSpan,
     required this.timedSpan,
+    required this.metadata,
     this.created,
     this.lastModified,
     this.sequence,
@@ -52,6 +54,7 @@ final class IcalendarEvent {
     this.recurrenceTime,
     this.isThisAndFuture = false,
   });
+  final IcalendarEventMetadata metadata;
   final IcalendarSyntaxComponent source;
   final String uid;
   final DateTime stamp;
@@ -107,7 +110,7 @@ IcalendarEventCalendar parseIcalendarEventCalendar(
 /// Validates a complete supported source before returning any semantic results.
 ///
 /// Unsupported properties/parameters/components fail, including METHOD,
-/// content overrides, future cancellation, alarms and unprofiled metadata.
+/// future content/cancellation, alarms and unprofiled metadata.
 IcalendarEventCalendar validateIcalendarEventCalendar(
   IcalendarSyntaxDocument source, {
   IcalendarSyntaxLimits syntaxLimits = const IcalendarSyntaxLimits(),
@@ -250,8 +253,9 @@ IcalendarEvent _event(
       'RDATE',
       'EXDATE',
       'RECURRENCE-ID',
+      ..._eventMetadataProperties,
     },
-    repeated: {'RDATE', 'EXDATE'},
+    repeated: {'RDATE', 'EXDATE', ..._eventRepeatedMetadata},
   );
   final uid = componentText(requiredProperty(p, 'UID'));
   if (uid.isEmpty) componentFail(IcalendarComponentError.invalidValue);
@@ -367,6 +371,7 @@ IcalendarEvent _event(
         ? null
         : componentUtc(p['LAST-MODIFIED']!.single),
     sequence: sequence,
+    metadata: _eventMetadata(source, budget),
     summary: text('SUMMARY', 4096),
     description: text('DESCRIPTION', 16384),
     location: text('LOCATION', 4096),

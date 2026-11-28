@@ -3757,6 +3757,7 @@ void main() {
       CalendarPermission.importEvents,
       CalendarPermission.replaceEventsFromImport,
       CalendarPermission.readEvent,
+      CalendarPermission.readEventSource,
       CalendarPermission.updateEvent,
     ]) {
       test(
@@ -4626,6 +4627,321 @@ void main() {
     String exported(ByteData bytes) => utf8.decode(
       bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
     );
+    const richEventMetadata = [
+      'URL:https://example.invalid/event',
+      'CLASS:PRIVATE',
+      'CATEGORIES;LANGUAGE=en:Work,Work',
+      'CATEGORIES;LANGUAGE=sv:Arbete',
+      'COMMENT;LANGUAGE=sv:Source note',
+      'CONTACT;ALTREP="cid:desk@example.invalid":SOURCE-DESK',
+    ];
+    List<String> richEvent({String contact = 'SOURCE-DESK', bool own = true}) =>
+        [
+          eventSource(
+            'rich',
+            extra: [
+              'RRULE:FREQ=DAILY;COUNT=3',
+              ...richEventMetadata.map(
+                (v) => v.replaceFirst('SOURCE-DESK', contact),
+              ),
+            ],
+          ),
+          if (own)
+            eventSource(
+              'rich',
+              timing: 'DTSTART:20260330T110000Z',
+              extra: [
+                'RECURRENCE-ID:20260330T090000Z',
+                'SEQUENCE:3',
+                'CREATED:20260320T000000Z',
+                ...richEventMetadata.map(
+                  (v) => v.replaceFirst('SOURCE-DESK', contact),
+                ),
+              ],
+            ),
+        ];
+    CalendarEventTiming richOriginal() => CalendarEventTiming(
+      kind: CalendarEventTimeKind.utc,
+      start: CalendarEventCivil(year: 2026, month: 3, day: 30, hour: 9),
+    );
+    test('event source metadata persists server-only groups while ordinary views stay private', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final e = (await service.importEvents(eventImport(parent, richEvent())))
+          .receipts;
+      final row = await eventData(e.single.eventId), gen = await generation();
+      expect(
+        row.protocolState!.sourceMetadata!.contacts.single.value,
+        'SOURCE-DESK',
+      );
+      expect(
+        row
+            .timingOverrides!
+            .singles
+            .single
+            .sourceMetadata!
+            .categoryGroups
+            .first
+            .values,
+        ['Work', 'Work'],
+      );
+      expect(
+        jsonEncode(row.timingOverrides!.toJsonForProtocol()),
+        isNot(contains('SOURCE-DESK')),
+      );
+      final view = await service.getEvent(e.single.eventId, eventGroups);
+      expect(view.timingOverrides!.singles.single.sourceMetadata, isNull);
+      expect(
+        jsonEncode(view.toJsonForProtocol()),
+        isNot(contains('SOURCE-DESK')),
+      );
+      policy.onEventExport = (r) {
+        if (r.eventExport == null) return;
+        final member = r.eventExport!.members.first;
+        expect(
+          member.protocolState!.sourceMetadata!.contacts.single.value,
+          'SOURCE-DESK',
+        );
+        expect(
+          () => member
+              .protocolState!
+              .sourceMetadata!
+              .categoryGroups
+              .first
+              .values
+              .clear(),
+          throwsUnsupportedError,
+        );
+      };
+      final text = exported(await service.exportEvents(eventExport(e)));
+      expect('CONTACT'.allMatches(text).length, 2);
+      expect(text, contains('CLASS:PRIVATE'));
+      final round = eventStorageProposal(
+        parseIcalendarEventCalendar(utf8.encode(text)).series.single,
+      );
+      expect(
+        round.importBaseline.canonicalValue,
+        row.importBaseline!.canonicalValue,
+      );
+      expect(await generation(), gen);
+    });
+    test('event source metadata survives native edits without rewriting source history', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final id = (await service.importEvents(eventImport(parent, richEvent())))
+          .receipts
+          .single
+          .eventId;
+      final before = await eventData(id);
+      await service.updateEvent(
+        CalendarEventUpdateRequest(
+          eventId: id,
+          expectedRevision: 1,
+          content: before.content.copyWith(summary: 'Native title'),
+        ),
+      );
+      final after = await eventData(id);
+      expect(
+        after.protocolState!.sourceMetadata,
+        before.protocolState!.sourceMetadata,
+      );
+      expect(
+        after.timingOverrides!.singles.single.sourceMetadata,
+        before.timingOverrides!.singles.single.sourceMetadata,
+      );
+      expect(
+        after.protocolState!.overrides.single.version,
+        before.protocolState!.overrides.single.version,
+      );
+      expect(after.importBaseline, before.importBaseline);
+      await expectLater(
+        service.replaceEventsFromImport(
+          eventReplacement(
+            parent,
+            id,
+            richEvent(contact: 'Changed'),
+            revision: 2,
+          ),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+    });
+    test('event source metadata-only originals keep inheritance through timing scope transfers', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final receipt = (await service.importEvents(
+        eventImport(parent, richEvent()),
+      )).receipts.single;
+      final id = receipt.eventId, before = await eventData(id);
+      await service.changeOccurrence(
+        CalendarEventOccurrenceChange(
+          eventId: id,
+          expectedRevision: 1,
+          originalStart: richOriginal(),
+          action: CalendarEventOccurrenceAction.clearSingleTiming,
+        ),
+      );
+      final cleared = await eventData(id);
+      expect(cleared.timingOverrides!.singles.single.replacement, isNull);
+      expect(
+        cleared.timingOverrides!.singles.single.sourceMetadata,
+        before.timingOverrides!.singles.single.sourceMetadata,
+      );
+      final hidden = await service.getEvent(id, eventGroups);
+      expect(hidden.timingOverrides, isNull);
+      expect(hidden.occurrenceProtocolVersions, isEmpty);
+      await expectLater(
+        service.exportEvents(eventExport([receipt.copyWith(revision: 2)])),
+        failure(CalendarFailureCode.validation),
+      );
+      await service.changeOccurrence(
+        CalendarEventOccurrenceChange(
+          eventId: id,
+          expectedRevision: 2,
+          originalStart: richOriginal(),
+          action: CalendarEventOccurrenceAction.replaceFutureTiming,
+          replacement: richOriginal().copyWith(
+            start: richOriginal().start.copyWith(hour: 10),
+          ),
+        ),
+      );
+      final ranged = await eventData(id);
+      expect(
+        ranged.timingOverrides!.future.single.sourceMetadata,
+        before.timingOverrides!.singles.single.sourceMetadata,
+      );
+      expect(
+        ranged.protocolState!.overrides.single.version.created,
+        before.protocolState!.overrides.single.version.created,
+      );
+      final text = exported(
+        await service.exportEvents(
+          eventExport([receipt.copyWith(revision: 3)]),
+        ),
+      );
+      expect(text, contains('SOURCE-DESK'));
+      expect(text, contains('RANGE=THISANDFUTURE'));
+      await service.changeOccurrence(
+        CalendarEventOccurrenceChange(
+          eventId: id,
+          expectedRevision: 3,
+          originalStart: richOriginal(),
+          action: CalendarEventOccurrenceAction.clearFutureTiming,
+        ),
+      );
+      expect(
+        (await eventData(id)).timingOverrides!.singles.single.sourceMetadata,
+        isNotNull,
+      );
+    });
+    test('event source metadata replacement changes complete metadata and identical retry stays a no-op', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final id = (await service.importEvents(eventImport(parent, richEvent())))
+          .receipts
+          .single
+          .eventId;
+      final changed = await service.replaceEventsFromImport(
+        eventReplacement(parent, id, richEvent(contact: 'Replaced')),
+      );
+      expect(changed.receipts.single.changed, isTrue);
+      final before = await eventData(id), gen = await generation();
+      final same = await service.replaceEventsFromImport(
+        eventReplacement(
+          parent,
+          id,
+          richEvent(contact: 'Replaced'),
+          revision: 2,
+        ),
+      );
+      expect(same.receipts.single.changed, isFalse);
+      expect(await generation(), gen);
+      expect((await eventData(id)).toJson(), before.toJson());
+      policy.denied.add(CalendarPermission.readEventSource);
+      await expectLater(
+        service.replaceEventsFromImport(
+          eventReplacement(
+            parent,
+            id,
+            richEvent(contact: 'Replaced'),
+            revision: 2,
+          ),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+    test('event source metadata export rechecks independent source authority after serialization', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final e = (await service.importEvents(eventImport(parent, richEvent())))
+          .receipts;
+      var checks = 0;
+      policy.onEventExport = (r) {
+        if (r.eventId == null && ++checks == 2) {
+          policy.denied.add(CalendarPermission.readEventSource);
+        }
+      };
+      final gen = await generation();
+      await expectLater(
+        service.exportEvents(eventExport(e)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect(checks, 2);
+      expect(await generation(), gen);
+    });
+    test('event source metadata replacement final source-read denial rolls back batch', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final id = (await service.importEvents(eventImport(parent, richEvent())))
+          .receipts
+          .single
+          .eventId;
+      final before = await eventData(id), gen = await generation();
+      policy.onFinal = () =>
+          policy.denied.add(CalendarPermission.readEventSource);
+      await expectLater(
+        service.replaceEventsFromImport(
+          eventReplacement(parent, id, richEvent(contact: 'Denied')),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      expect((await eventData(id)).toJson(), before.toJson());
+      expect(await generation(), gen);
+    });
+    test('event source metadata late malformed input and aggregate budget reject without partial imports', () async {
+      final parent = (await service.create(createInput()))!.calendarId,
+          gen = await generation();
+      await expectLater(
+        service.importEvents(
+          eventImport(parent, [
+            eventSource('good', extra: richEventMetadata),
+            eventSource('bad', extra: ['URL:ftp://example.invalid/event']),
+          ]),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      final big = List.filled(4096, 'x').join();
+      await expectLater(
+        service.importEvents(
+          eventImport(parent, [
+            eventSource(
+              'oversized',
+              extra: [for (var i = 0; i < 17; i++) 'COMMENT:$big'],
+            ),
+          ]),
+        ),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      expect(await CalendarEventDataRecord.db.count(session), 0);
+      expect(await generation(), gen);
+    });
+    test('event source metadata deletion scrubs active source and private baseline', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final id = (await service.importEvents(eventImport(parent, richEvent())))
+          .receipts
+          .single
+          .eventId;
+      await service.deleteEvent(id, 1);
+      expect(await CalendarEventDataRecord.db.count(session), 0);
+      final marker = (await CalendarEventRecord.db.findById(session, id))!;
+      expect(jsonEncode(marker.toJson()), isNot(contains('SOURCE-DESK')));
+      expect(marker.deletedAt, isNotNull);
+    });
+
     CalendarTaskExportRequest taskExport(
       List<CalendarTaskReceipt> tasks, {
       UuidValue? parent,
@@ -6400,6 +6716,7 @@ void main() {
     for (final permission in [
       CalendarPermission.exportEvents,
       CalendarPermission.readEvent,
+      CalendarPermission.readEventSource,
     ]) {
       test('event export independently requires ${permission.name}', () async {
         final parent = (await service.create(createInput()))!.calendarId;

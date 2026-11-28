@@ -4,3 +4,4 @@ fields:
   originalStart: CalendarEventTiming
   replacement: CalendarEventTiming
   contentOverrides: CalendarEventOccurrenceContent?
+  sourceMetadata: CalendarEventSourceMetadata?, scope=serverOnly
