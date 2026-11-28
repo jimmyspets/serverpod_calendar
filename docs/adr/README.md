@@ -165,7 +165,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0154](0154-trusted-range-invitation-review.md) | Trusted range invitation intake and private review | Accepted 2026-11-01; scoped trusted range intake/private review; validation recorded separately |
 
-| [0155](0155-pure-range-invitation-projection.md) | Pure range REQUEST application projection | Proposed 2026-11-01; pure source/canonical mechanics require approval; no range mutation |
+| [0155](0155-pure-range-invitation-projection.md) | Pure range REQUEST application projection | Accepted 2026-11-01; scoped pure range REQUEST projection; no durable range mutation |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

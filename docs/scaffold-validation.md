@@ -1748,3 +1748,19 @@ Final relative links/consecutive ADRs, UTF-8/whitespace, credential scan and unc
 ## ADR 0155 documentation proposal, 2026-11-01
 
 Documentation-only proposal follows completed ADR 0154 implementation PR #139. Inspected existing detached invitation projection, ordinary event wire range mapping, native future/content/protocol carriers and master/instance composition; checked primary RFC 5545 RECURRENCE-ID and RFC 5546 REQUEST rules. The proposal preserves distinct source and canonical values and explicitly leaves current range-action guards in place. No runtime/generated/schema/dependency file changes; runtime tests are not rerun for this documentation-only proposal. Relative links/consecutive ADRs, changed-file scope, credentials, LICENSE and whitespace are checked before commit. Approval remains pending explicit maintainer agreement.
+
+## ADR 0155 focused development, 2026-11-01
+
+Maintainer explicitly approved PR #140 / ADR 0155. Added a separate pure range REQUEST helper and extracted the existing single request mapping unchanged into a shared private validator. No generated/schema/endpoint/dependency changes. Serverpod MCP log access and hot reload were connected/successful.
+
+`dart test test/unit/invitation_range_values_test.dart test/unit/invitation_occurrence_values_test.dart` passed 82 cases: 50 new range cases and all 32 existing single-projection regressions. Initial test-only corrections added a missing helper import and kept existing iTIP source restrictions explicit: REQUEST requires SUMMARY and VALARM is rejected even if it matches accepted master data. Accepted unarmed master alarms are separately preserved. No parser profile was widened. Earlier shell/script invocation errors produced no runtime result; the commands above were run from the package directory and passed. Broader grouped evidence follows when complete.
+
+## ADR 0155 grouped batch evidence, 2026-11-01
+
+Final-source formatting and workspace `dart analyze --fatal-infos` passed. Complete core VM/Chrome suites passed 506/506, iCalendar VM/Chrome 629/629 and calendar module VM/Chrome 321/17. The module VM suite includes all 50 new range cases and the 32 existing single-projection regressions. These tests retain separate default/end/duration forms, original identity and anchor-local content; preserve unrelated native components/versions up to 128 slots; reject collisions and invalid claims; and cover DST, horizon, source/work budgets, immutability and unarmed source boundaries.
+
+After `./tool/reset-test.ps1`, `dart test --concurrency=1 test/integration/instance_invitation_application_test.dart test/integration/range_invitations_test.dart` passed all 81 affected real database cases through the example host/module. Existing single application/master composition remains working, and authenticated range application/response guards remain unchanged. All commands use the pinned SDK and isolated synthetic test storage; development data/app were preserved. Serverpod MCP was connected and hot reload completed successfully.
+
+The grouped run used the commands above plus `dart test` / `dart test --platform chrome` in both pure packages and `dart test test/unit` / `dart test --platform chrome test/unit` in the calendar server package. No generated input, SQL/table, endpoint, client protocol, Flutter flow or dependency changed; generation/migrations and new client/browser journeys are unnecessary for this pure value increment. The full `./tool/check.ps1` entry point, unrelated worker/domain/client/UI checks and release build are deferred to exact-head hosted CI. Keep the implementation PR draft until that full gate succeeds; grouped local evidence is not labelled a full repository run.
+
+Repository-relative links/consecutive ADRs, UTF-8/whitespace, local credential scan and unchanged Apache 2.0 LICENSE are checked before the single completed-batch code commit. No real email, alarm activation or durable range application was added.

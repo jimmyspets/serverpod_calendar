@@ -260,3 +260,13 @@ dart run tool/host_smoke.dart --browser-only --flutter --ranges
 ```
 
 The full check includes range DB/process/client/browser coverage. Stop owned hosts before rebuilding their bundle; development storage is separate. The focused commands do not replace end-of-batch checks.
+
+Focused pure range development (VM-only Serverpod carrier boundary):
+
+```powershell
+Push-Location packages/serverpod_calendar/serverpod_calendar_server
+dart test test/unit/invitation_range_values_test.dart test/unit/invitation_occurrence_values_test.dart
+Pop-Location
+```
+
+End-of-batch checks include workspace formatting/analysis, complete core/iCalendar VM+Chrome and module suites plus affected example database application/guard tests. A full repository CI pass is still required before PR readiness; pure projection adds no Flutter control or range endpoint.
