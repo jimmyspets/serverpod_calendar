@@ -170,7 +170,7 @@ final class _InvitationResponseWorker {
       if (state.latestResponseId != row.id ||
           state.revision != row.generation ||
           entry.currentSourceId != row.sourceId ||
-          entry.kind != CalendarInvitationSourceKind.request) {
+          !s._irRequestKind(entry.kind)) {
         await s._irStop(
           row,
           tx,
@@ -180,11 +180,14 @@ final class _InvitationResponseWorker {
         );
         return false;
       }
-      final source = await s._irSource(row.sourceId, entry, tx);
-      s._irRecord(row, state, source, entry);
-      final basis = s._invStored(source, entry);
+      final work = _invBundleKind(entry.kind)
+          ? RecurrenceWorkBudget(maxWork: eventMaxCandidateWork)
+          : null;
+      final source = await s._irSource(row.sourceId, entry, tx, work: work);
+      s._irRecord(row, state, source, entry, work: work);
+      final basis = s._invStored(source, entry, sharedWorkBudget: work);
       if (basis.method != IcalendarSchedulingMethod.request ||
-          basis.events.single.status == IcalendarEventStatus.cancelled) {
+          _invHead(basis).status == IcalendarEventStatus.cancelled) {
         throw _failure(CalendarFailureCode.accessDenied);
       }
       final authority = s._irAuthority(
@@ -202,7 +205,7 @@ final class _InvitationResponseWorker {
       final context = s._irContext(
         operation: CalendarInvitationResponseOperation.dispatch,
         recipient: recipient,
-        invitation: await s._invView(entry, tx),
+        invitation: await s._invView(entry, tx, sharedWorkBudget: work),
         current: s._irView(entry, state),
         source: source,
         sourceRevision: row.sourceRevision,
@@ -428,7 +431,7 @@ final class _InvitationResponseWorker {
     if (state.latestResponseId != row.id ||
         state.revision != row.generation ||
         entry.currentSourceId != row.sourceId ||
-        entry.kind != CalendarInvitationSourceKind.request) {
+        !s._irRequestKind(entry.kind)) {
       await s._irStop(
         row,
         tx,

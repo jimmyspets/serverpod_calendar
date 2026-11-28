@@ -336,8 +336,9 @@ extension CalendarInvitationOperations on CalendarService {
 
   Future<CalendarInvitationView> _invView(
     CalendarInvitationRecord entry,
-    Transaction tx,
-  ) async {
+    Transaction tx, {
+    RecurrenceWorkBudget? sharedWorkBudget,
+  }) async {
     CalendarInvitationSourceRecord? source;
     IcalendarSchedulingEvent? event;
     if (entry.currentSourceId != null) {
@@ -352,7 +353,9 @@ extension CalendarInvitationOperations on CalendarService {
           source.digest != entry.digest) {
         throw _failure(CalendarFailureCode.unavailable);
       }
-      event = _invHead(_invStored(source, entry));
+      event = _invHead(
+        _invStored(source, entry, sharedWorkBudget: sharedWorkBudget),
+      );
     } else if (entry.dismissedAt == null) {
       throw _failure(CalendarFailureCode.unavailable);
     }

@@ -326,3 +326,10 @@ See [the approved implementation](restoration-range-applications.md). Grouped ch
 Current Serverpod dependency alignment is documented in [the 4.1.0 upgrade record](serverpod-4.1-upgrade.md); earlier tool observations retain their original dates and versions.
 
 The approved [pure re-cancellation batch](range-recancellation-projection.md) uses focused module test/unit/invitation_range_recancellation_values_test.dart plus complete module VM/Chrome checks. The selected native guard regressions assert that pure success does not enable durable repeated cycles. No model/endpoint generation or Flutter journey change is required by this pure helper.
+
+
+## Bundled master attendee response checks
+
+Accepted ADR 0176 reuses the private response tables. From the example server, run `dart test --concurrency=1 test/integration/bundled_invitation_responses_test.dart test/integration/invitation_responses_test.dart test/integration/instance_invitation_responses_test.dart`. The ordinary response file includes the synthetic bundle-master MIME-to-organizer loopback.
+
+From the root, `dart run tool/invitation_work_smoke.dart --bundle-responses` covers competing hosts, command loss before/after commit, worker loss before/after synthetic acceptance, stable MIME digests and source/access withdrawal. Build the owned host bundle, then run `dart run tool/host_smoke.dart --invitations-only --flutter --bundle-responses` for real JWT clients and the focused Flutter journey. `--browser-only --flutter --bundles` separately covers whole-bundle application/cancellation/reopening. Full checks retain both groups and the connected journey; keep database/host harnesses serial and preserve development storage. See [the response profile](bundled-master-attendee-responses.md).

@@ -42,7 +42,11 @@ final class LoopbackInvitationHost implements CalendarInvitationHost {
     IcalendarSchedulingMessage m,
   ) async {
     if (d.originReference != 'verified-alice' ||
-        m.events.single.participants.organizer!.address !=
+        m.events
+                .singleWhere((e) => !e.isOverride || m.events.length == 1)
+                .participants
+                .organizer!
+                .address !=
             'mailto:alice@example.invalid') {
       throw StateError('Unverified loopback fixture');
     }
@@ -568,13 +572,16 @@ void main() {
         CalendarInvitationResponseDeliveryState.expired,
       );
     });
-    for (final (recurring, instance) in [
-      (false, false),
-      (true, false),
-      (true, true),
+    for (final (recurring, instance, bundled) in [
+      (false, false, false),
+      (true, false, false),
+      (true, true, false),
+      (true, false, true),
     ]) {
       test(
-        'synthetic ${instance
+        'synthetic ${bundled
+            ? 'bundle-master'
+            : instance
             ? 'single-instance'
             : recurring
             ? 'recurring-master'
@@ -628,10 +635,27 @@ void main() {
               content: content('Loopback source'),
             ),
           ))!;
+          if (bundled) {
+            await service.changeOccurrence(
+              CalendarEventOccurrenceChange(
+                eventId: event.eventId,
+                expectedRevision: 1,
+                originalStart: CalendarEventTiming(
+                  kind: CalendarEventTimeKind.date,
+                  start: CalendarEventCivil(year: 2026, month: 3, day: 30),
+                ),
+                action: CalendarEventOccurrenceAction.replaceSingleTiming,
+                replacement: CalendarEventTiming(
+                  kind: CalendarEventTimeKind.date,
+                  start: CalendarEventCivil(year: 2026, month: 4, day: 2),
+                ),
+              ),
+            );
+          }
           final published = await service.saveAndNotify(
             CalendarSchedulingSaveRequest(
               eventId: event.eventId,
-              expectedRevision: 1,
+              expectedRevision: bundled ? 2 : 1,
               commandId: const Uuid().v4obj(),
               recipients: ['mailto:bob@example.invalid'],
               content: content('Loopback published'),
@@ -707,7 +731,16 @@ void main() {
             );
           }
 
-          await service.sendInvitationResponse(
+          if (bundled) {
+            expect(
+              (await service.getInvitation(received.entryId)).kind,
+              CalendarInvitationSourceKind.requestBundle,
+            );
+          }
+          final send = bundled
+              ? service.sendInvitationBundleResponse
+              : service.sendInvitationResponse;
+          await send(
             CalendarInvitationResponseRequest(
               invitationId: received.entryId,
               expectedInvitationRevision: received.entryRevision,
@@ -772,7 +805,7 @@ void main() {
             ),
           );
           await advance();
-          await service.sendInvitationResponse(
+          await send(
             CalendarInvitationResponseRequest(
               invitationId: received.entryId,
               expectedInvitationRevision: received.entryRevision,

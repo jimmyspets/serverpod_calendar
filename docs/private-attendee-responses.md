@@ -39,3 +39,6 @@ Focused database/MIME tests cover independent authority, rollback, sequence omis
 Recurring/instance/range attendee sending, delegation, counters, broader reconciliation, provider authentication, real transport and external scheduling interoperability remain required separate work. This profile does not claim complete RFC 5546/6047 support.
 
 Accepted [ADR 0153](adr/0153-explicit-single-instance-attendee-responses.md) supersedes earlier instance-send-unavailable statements only for [selected known-instance responses](single-instance-attendee-responses.md). It preserves independent target/source versions, known-series lifecycle, fresh authority and retained retries. There is no arbitrary original selection, RANGE or real mail.
+
+
+Accepted [ADR 0176](adr/0176-bundled-master-attendee-responses.md) extends the response contract with [dedicated bundle master responses](bundled-master-attendee-responses.md). Existing response tables/caps are reused, with independent authority and source-derived digest families. A master REPLY does not acknowledge independently versioned exceptions. Grouped implementation validation is recorded separately; occurrence/range bundle replies and real transport remain required separate work.

@@ -10,9 +10,11 @@ class InvitationResponseScreen extends StatefulWidget {
     super.key,
     required this.client,
     required this.id,
+    this.bundleMaster = false,
   });
   final Client client;
   final cal.UuidValue id;
+  final bool bundleMaster;
   @override
   State<InvitationResponseScreen> createState() =>
       _InvitationResponseScreenState();
@@ -58,8 +60,12 @@ class _InvitationResponseScreenState extends State<InvitationResponseScreen> {
 
   Future<void> _read() async {
     final invitation = await _api.getInvitation(widget.id);
-    final response = await _api.response(widget.id);
-    final activity = await _api.responseActivity(widget.id);
+    final response = await (widget.bundleMaster
+        ? _api.bundleResponse(widget.id)
+        : _api.response(widget.id));
+    final activity = await (widget.bundleMaster
+        ? _api.bundleResponseActivity(widget.id)
+        : _api.responseActivity(widget.id));
     if (mounted) {
       setState(() {
         _invitation = invitation;
@@ -79,7 +85,9 @@ class _InvitationResponseScreenState extends State<InvitationResponseScreen> {
       commandId: const cal.Uuid().v4obj(),
       choice: _choice!,
     );
-    final receipt = await _api.sendResponse(_pending!);
+    final receipt = await (widget.bundleMaster
+        ? _api.sendBundleResponse(_pending!)
+        : _api.sendResponse(_pending!));
     if (mounted) setState(() => _receipt = receipt);
     await _read();
   });
@@ -109,7 +117,11 @@ class _InvitationResponseScreenState extends State<InvitationResponseScreen> {
     final eligible = _response?.canSend ?? false;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Invitation response'),
+        title: Text(
+          widget.bundleMaster
+              ? 'Respond to series master'
+              : 'Invitation response',
+        ),
         bottom: _busy
             ? const PreferredSize(
                 preferredSize: Size.fromHeight(4),
@@ -130,7 +142,12 @@ class _InvitationResponseScreenState extends State<InvitationResponseScreen> {
           const Text(
             'Send an explicit participation response. Adding to a calendar, applying updates and dismissing the invitation are separate actions. This example records synthetic mail only.',
           ),
-          if (_response?.originalStart != null)
+          if (widget.bundleMaster)
+            const Text(
+              'Series master only: this response identifies the master version. Occurrence and range responses are separate.',
+              key: Key('response-bundle-master'),
+            )
+          else if (_response?.originalStart != null)
             Text(
               'This response is only for original occurrence: ${invitationTimingLabel(_response!.originalStart!)}',
               key: const Key('response-original'),

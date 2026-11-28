@@ -1098,6 +1098,32 @@ class EndpointCalendarInvitation extends _isc.EndpointRef {
     'sendResponse',
     {'request': request},
   );
+
+  _ida.Future<_ikd0esaz.CalendarInvitationResponseView> bundleResponse(
+    _isc.UuidValue id,
+  ) => caller.callServerEndpoint<_ikd0esaz.CalendarInvitationResponseView>(
+    'serverpod_calendar.calendarInvitation',
+    'bundleResponse',
+    {'id': id},
+  );
+
+  _ida.Future<List<_ihlye3x3.CalendarInvitationResponseActivityView>>
+  bundleResponseActivity(_isc.UuidValue id) =>
+      caller.callServerEndpoint<
+        List<_ihlye3x3.CalendarInvitationResponseActivityView>
+      >(
+        'serverpod_calendar.calendarInvitation',
+        'bundleResponseActivity',
+        {'id': id},
+      );
+
+  _ida.Future<_iepygmya.CalendarInvitationResponseReceipt> sendBundleResponse(
+    _ifakw2kz.CalendarInvitationResponseRequest request,
+  ) => caller.callServerEndpoint<_iepygmya.CalendarInvitationResponseReceipt>(
+    'serverpod_calendar.calendarInvitation',
+    'sendBundleResponse',
+    {'request': request},
+  );
 }
 
 /// {@category Endpoint}

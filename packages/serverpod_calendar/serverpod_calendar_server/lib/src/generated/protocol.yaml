@@ -92,6 +92,9 @@ calendarInvitation:
   - response:
   - responseActivity:
   - sendResponse:
+  - bundleResponse:
+  - bundleResponseActivity:
+  - sendBundleResponse:
 calendarTask:
   - updateTextMetadata:
   - replaceFromImport:

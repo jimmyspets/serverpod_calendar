@@ -2233,6 +2233,69 @@ class Endpoints extends _is.EndpointDispatch {
                         params['request'],
                       ),
         ),
+        'bundleResponse': _is.MethodConnector(
+          name: 'bundleResponse',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .bundleResponse(
+                        session,
+                        params['id'],
+                      ),
+        ),
+        'bundleResponseActivity': _is.MethodConnector(
+          name: 'bundleResponseActivity',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .bundleResponseActivity(
+                        session,
+                        params['id'],
+                      ),
+        ),
+        'sendBundleResponse': _is.MethodConnector(
+          name: 'sendBundleResponse',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_iemmwj8c.CalendarInvitationResponseRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarInvitation']
+                          as _iolttv0d.CalendarInvitationEndpoint)
+                      .sendBundleResponse(
+                        session,
+                        params['request'],
+                      ),
+        ),
       },
     );
     connectors['calendarTask'] = _is.EndpointConnector(

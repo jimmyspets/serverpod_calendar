@@ -67,6 +67,7 @@ void require(bool value, String message) {
 
 Future<void> main(List<String> args) async {
   final bundles = args.contains('--bundles');
+  final bundleResponses = args.contains('--bundle-responses');
   final nativeFuture = args.contains('--native-future');
   final rangeCycles = args.contains('--range-cycles');
   final restoredRanges = args.contains('--restored-ranges');
@@ -94,6 +95,7 @@ Future<void> main(List<String> args) async {
   final instance = args.contains('--instances') || ranges;
   final recurring =
       bundles ||
+      bundleResponses ||
       instanceResponses ||
       occurrenceApply ||
       instance ||
@@ -694,6 +696,261 @@ Future<void> main(List<String> args) async {
       }
       stdout.writeln(
         'PASS: actual two-host native cutoff races and before/after cancellation/restoration commit loss; survivor revision reconciliation.',
+      );
+      return;
+    }
+    if (bundleResponses) {
+      for (final pause in ['response-before', 'response-after']) {
+        final id = nextCase();
+        final incoming = await b.command({
+          'command': 'receive',
+          'caseId': id,
+          'key': 'bundle',
+          'bundle': true,
+          'sequence': 2,
+        }) as Map;
+        final request = cal.CalendarInvitationResponseRequest(
+          invitationId: cal.UuidValue.fromString(incoming['entryId'] as String),
+          sourceId: cal.UuidValue.fromString(incoming['sourceId'] as String),
+          expectedInvitationRevision: incoming['entryRevision'] as int,
+          expectedResponseRevision: 0,
+          commandId: const cal.Uuid().v4obj(),
+          choice: cal.CalendarInvitationResponseChoice.declined,
+        );
+        final raced = await Future.wait(
+          [a, b].map(
+            (p) => p.command({
+              'command': 'bundle-response',
+              'caseId': id,
+              'request': request.toJson(),
+            }),
+          ),
+        );
+        require(
+          (raced.first as Map)['id'] != null &&
+              (raced.first as Map)['id'] == (raced.last as Map)['id'],
+          'Bundle master response race duplicated result',
+        );
+        a.paused = Completer<Map<String, dynamic>>();
+        final lost = a
+            .command({'command': 'response-work', 'caseId': id, 'pause': pause})
+            .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+        final submitted = await a.paused!.future.timeout(
+          const Duration(seconds: 40),
+        );
+        await b.command({'command': 'response-work', 'caseId': id});
+        final visible =
+            await b.command({'command': 'inspect', 'caseId': id}) as Map;
+        require(
+          ((visible['responses'] as List).single as Map)['attempts'] == 1 &&
+              visible['events'] == 0 &&
+              visible['links'] == 0,
+          'Competing bundle-master worker bypassed lease or adopted a calendar',
+        );
+        await a.stop();
+        await lost;
+        await b.command({'command': 'response-expire-lease', 'caseId': id});
+        await b.command({'command': 'response-work', 'caseId': id});
+        final recovered =
+            await b.command({'command': 'inspect', 'caseId': id}) as Map;
+        final row = (recovered['responses'] as List).single as Map;
+        require(
+          row['state'] == 'accepted' &&
+              row['attempts'] == 2 &&
+              recovered['events'] == 0,
+          'Bundle master response recovery failed',
+        );
+        final records = await File(
+          '$root/.local/invitation-response-probe-$id.jsonl',
+        ).readAsLines();
+        require(
+          records.length == (pause == 'response-after' ? 2 : 1),
+          'Wrong uncertain bundle-master delivery evidence',
+        );
+        for (final line in records) {
+          final actual = jsonDecode(line) as Map;
+          require(
+            actual['key'] == submitted['key'] &&
+                actual['digest'] == submitted['digest'] &&
+                actual['mimeDigest'] == submitted['mimeDigest'],
+            'Bundle master retry changed delivery identity/bytes',
+          );
+        }
+        final retried = await b.command({
+          'command': 'bundle-response',
+          'caseId': id,
+          'request': request.toJson(),
+        }) as Map;
+        require(
+          retried['id'] == (raced.first as Map)['id'],
+          'Recovered bundle-master command lost historical receipt',
+        );
+        a = await start('a-bundle-master-response-recovered-$pause', 18780);
+      }
+      for (final pause in ['bundle-response-before', 'bundle-response-after']) {
+        final id = nextCase();
+        final incoming = await b.command({
+          'command': 'receive',
+          'caseId': id,
+          'key': 'bundle',
+          'bundle': true,
+          'sequence': 2,
+        }) as Map;
+        final request = cal.CalendarInvitationResponseRequest(
+          invitationId: cal.UuidValue.fromString(incoming['entryId'] as String),
+          sourceId: cal.UuidValue.fromString(incoming['sourceId'] as String),
+          expectedInvitationRevision: incoming['entryRevision'] as int,
+          expectedResponseRevision: 0,
+          commandId: const cal.Uuid().v4obj(),
+          choice: cal.CalendarInvitationResponseChoice.declined,
+        );
+        a.paused = Completer<Map<String, dynamic>>();
+        final lost = a
+            .command({
+              'command': 'bundle-response',
+              'caseId': id,
+              'pause': pause,
+              'request': request.toJson(),
+            })
+            .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+        final proposed = await a.paused!.future.timeout(
+          const Duration(seconds: 40),
+        );
+        await a.stop();
+        await lost;
+        final state =
+            await b.command({'command': 'inspect', 'caseId': id}) as Map;
+        require(
+          (state['responses'] as List).length ==
+              (pause.endsWith('before') ? 0 : 1),
+          'Bundle response command loss violated atomicity',
+        );
+        final retried = await b.command({
+          'command': 'bundle-response',
+          'caseId': id,
+          'request': request.toJson(),
+        }) as Map;
+        require(
+          retried['id'] != null &&
+              (pause.endsWith('before') || retried['id'] == proposed['id']),
+          'Bundle response retry lost committed identity',
+        );
+        a = await start('a-$pause-recovered', 18780);
+      }
+      for (final changedSource in [false, true]) {
+        final id = nextCase();
+        final source = await b.command({
+          'command': 'receive',
+          'caseId': id,
+          'key': 'initial',
+          'bundle': true,
+        }) as Map;
+        var revision = source['entryRevision'] as int;
+        if (changedSource) {
+          final calendar =
+              await b.command({'command': 'calendar', 'caseId': id}) as String;
+          final adopted = await b.command({
+            'command': 'adopt',
+            'caseId': id,
+            'request': {
+              'invitationId': source['entryId'],
+              'expectedRevision': revision,
+              'sourceId': source['sourceId'],
+              'calendarId': calendar,
+              'expectedCalendarRevision': 1,
+            },
+          }) as Map;
+          revision = adopted['invitationRevision'] as int;
+        }
+        final request = cal.CalendarInvitationResponseRequest(
+          invitationId: cal.UuidValue.fromString(source['entryId'] as String),
+          sourceId: cal.UuidValue.fromString(source['sourceId'] as String),
+          expectedInvitationRevision: revision,
+          expectedResponseRevision: 0,
+          commandId: const cal.Uuid().v4obj(),
+          choice: cal.CalendarInvitationResponseChoice.declined,
+        );
+        final receipt = await a.command({
+          'command': 'bundle-response',
+          'caseId': id,
+          'request': request.toJson(),
+        }) as Map;
+        if (changedSource) {
+          await a.command({
+            'command': 'receive',
+            'caseId': id,
+            'key': 'child-only',
+            'bundle': true,
+            'bundleChild': 1,
+          });
+        } else {
+          await a.command({'command': 'response-revoke', 'caseId': id});
+        }
+        await b.command({'command': 'response-work', 'caseId': id});
+        final state =
+            await b.command({'command': 'inspect', 'caseId': id}) as Map;
+        require(
+          ((state['responses'] as List).single as Map)['state'] ==
+                  'withdrawn' &&
+              !await File('$root/.local/invitation-response-probe-$id.jsonl')
+                  .exists(),
+          'Changed bundle source or recipient authority dispatched stale work',
+        );
+        if (changedSource) {
+          final retry = await b.command({
+            'command': 'bundle-response',
+            'caseId': id,
+            'request': request.toJson(),
+          }) as Map;
+          require(
+            retry['id'] == receipt['id'],
+            'Source change destroyed historical retry',
+          );
+        }
+      }
+      final raceId = nextCase();
+      final source = await b.command({
+        'command': 'receive',
+        'caseId': raceId,
+        'key': 'bundle',
+        'bundle': true,
+        'sequence': 2,
+      }) as Map;
+      final request = cal.CalendarInvitationResponseRequest(
+        invitationId: cal.UuidValue.fromString(source['entryId'] as String),
+        sourceId: cal.UuidValue.fromString(source['sourceId'] as String),
+        expectedInvitationRevision: source['entryRevision'] as int,
+        expectedResponseRevision: 0,
+        commandId: const cal.Uuid().v4obj(),
+        choice: cal.CalendarInvitationResponseChoice.accepted,
+      );
+      final choices = await Future.wait([
+        a.command({
+          'command': 'bundle-response',
+          'caseId': raceId,
+          'request': request.toJson(),
+        }),
+        b.command({
+          'command': 'bundle-response',
+          'caseId': raceId,
+          'request': request
+              .copyWith(
+                commandId: const cal.Uuid().v4obj(),
+                choice: cal.CalendarInvitationResponseChoice.declined,
+              )
+              .toJson(),
+        }),
+      ]);
+      require(
+        choices.where((v) => (v as Map)['id'] != null).length == 1 &&
+            choices
+                    .where((v) => (v as Map)['error'] == 'staleRevision')
+                    .length ==
+                1,
+        'Bundle master response choices bypassed revision fence',
+      );
+      stdout.writeln(
+        'PASS: independent bundle-master response hosts, same-command and competing-choice races, command loss before/after commit, competing leases, actual loss before/after acceptance and stable retry key/bytes without adoption.',
       );
       return;
     }
