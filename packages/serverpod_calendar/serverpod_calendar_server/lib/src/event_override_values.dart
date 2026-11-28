@@ -33,7 +33,7 @@ DateEventSeries _dateMaster(CalendarEventContent c) => DateEventSeries(
   span: validateEventTiming(c.timing).$1!,
   recurrence: DateRecurrenceSet(
     start: _date(c.timing.start),
-    rule: _dateRule(c.recurrence?.rule),
+    rule: eventDateRule(c.recurrence?.rule),
     inclusions:
         c.recurrence?.inclusions.map((v) => _date(v.start)).toList() ?? [],
     exclusions:
@@ -89,7 +89,7 @@ TimedEventSeries _timedOverrides(
     span: span,
     recurrence: TimedRecurrenceSet(
       start: span.start,
-      rule: _timedRule(c.recurrence?.rule),
+      rule: eventTimedRule(c.recurrence?.rule),
       inclusions:
           c.recurrence?.inclusions
               .map((v) => validateEventTiming(v).$2!.start)

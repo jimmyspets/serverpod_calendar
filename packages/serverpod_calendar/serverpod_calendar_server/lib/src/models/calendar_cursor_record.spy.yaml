@@ -16,6 +16,9 @@ fields:
   eventFieldGroups: List<CalendarEventFieldGroup>?
   categoryFilter: CalendarCategoryFilter?
   expiresAt: DateTime
+  taskHistoryTaskId: UuidValue?
+  taskHistoryOriginalKey: String?
+  taskHistoryAfterRevision: int?
 indexes:
   calendar_cursor_token_unique:
     fields: token

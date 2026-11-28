@@ -12,6 +12,7 @@ fields:
   assignees: List<CalendarTaskAssignee>
   createdAt: DateTime
   updatedAt: DateTime
+  hasRecordedProgress: bool?
 indexes:
   calendar_task_data_identity_unique:
     fields: taskId

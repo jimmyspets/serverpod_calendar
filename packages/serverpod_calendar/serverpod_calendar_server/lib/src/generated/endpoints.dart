@@ -69,6 +69,12 @@ import 'package:serverpod_calendar_server/src/generated/calendar_task_create_req
     as _i9cxsmu8;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_field_group.dart'
     as _ik0gz7r1;
+import 'package:serverpod_calendar_server/src/generated/calendar_task_history_query.dart'
+    as _issl6zlo;
+import 'package:serverpod_calendar_server/src/generated/calendar_task_occurrence_progress_request.dart'
+    as _ingyryea;
+import 'package:serverpod_calendar_server/src/generated/calendar_task_occurrence_query.dart'
+    as _i3q14sij;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_progress_request.dart'
     as _ilb9fjz5;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_update_request.dart'
@@ -1124,6 +1130,67 @@ class Endpoints extends _is.EndpointDispatch {
                         session,
                         params['taskId'],
                         params['expectedRevision'],
+                      ),
+        ),
+        'previewOccurrences': _is.MethodConnector(
+          name: 'previewOccurrences',
+          params: {
+            'query': _is.ParameterDescription(
+              name: 'query',
+              type: _is.getType<_i3q14sij.CalendarTaskOccurrenceQuery>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarTask'] as _i4tukef9.CalendarTaskEndpoint)
+                      .previewOccurrences(
+                        session,
+                        params['query'],
+                      ),
+        ),
+        'changeOccurrenceProgress': _is.MethodConnector(
+          name: 'changeOccurrenceProgress',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is
+                  .getType<_ingyryea.CalendarTaskOccurrenceProgressRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarTask'] as _i4tukef9.CalendarTaskEndpoint)
+                      .changeOccurrenceProgress(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'occurrenceHistory': _is.MethodConnector(
+          name: 'occurrenceHistory',
+          params: {
+            'query': _is.ParameterDescription(
+              name: 'query',
+              type: _is.getType<_issl6zlo.CalendarTaskHistoryQuery>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarTask'] as _i4tukef9.CalendarTaskEndpoint)
+                      .occurrenceHistory(
+                        session,
+                        params['query'],
                       ),
         ),
       },

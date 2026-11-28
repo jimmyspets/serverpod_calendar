@@ -1,0 +1,12 @@
+class: CalendarTaskOccurrenceRecord
+serverOnly: true
+table: serverpod_calendar_task_occurrence
+fields:
+  taskId: UuidValue, relation(parent=serverpod_calendar_task)
+  originalKey: String
+  originalStart: CalendarEventTiming
+  progress: CalendarTaskProgress
+indexes:
+  calendar_task_occurrence_identity_unique:
+    fields: taskId, originalKey
+    unique: true

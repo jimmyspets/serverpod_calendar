@@ -1,0 +1,8 @@
+class: CalendarTaskOccurrence
+immutable: true
+fields:
+  originalStart: CalendarEventTiming
+  startUtc: DateTime?
+  dueDate: CalendarEventCivil?
+  dueUtc: DateTime?
+  progress: CalendarTaskProgress

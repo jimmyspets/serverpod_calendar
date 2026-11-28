@@ -21,6 +21,12 @@ final class _Task {
       validateEventUid(data.protocolUid);
       data.content = validateTaskContent(data.content);
       data.progress = validateTaskProgress(data.progress);
+      if (data.content.recurrence != null &&
+          (data.progress.status != CalendarTaskStatus.needsAction ||
+              data.progress.percentComplete != 0 ||
+              data.progress.completedAt != null)) {
+        throw ArgumentError('Recurring master progress must stay neutral');
+      }
       data.assignees = validateTaskAssignees(data.assignees);
       validateTaskVersion(data.protocolVersion);
     } catch (_) {
@@ -40,6 +46,7 @@ final class _Task {
     protocolUid: data.protocolUid,
     protocolVersion: data.protocolVersion,
     updatedAt: data.updatedAt,
+    hasRecordedProgress: data.hasRecordedProgress,
   );
 }
 
@@ -61,6 +68,12 @@ extension CalendarTaskOperations on CalendarService {
     List<CalendarTaskAssignee>? assignees,
     CalendarTaskProtocolVersion? version,
     CalendarTaskProgressRequest? change,
+    CalendarTaskOccurrenceQuery? occurrenceQuery,
+    CalendarTaskOccurrenceProgressRequest? occurrenceChange,
+    CalendarTaskHistoryQuery? historyQuery,
+    CalendarTaskOccurrence? currentOccurrence,
+    CalendarTaskOccurrence? proposedOccurrence,
+    List<CalendarTaskOccurrence> recordedOccurrences = const [],
     Set<CalendarTaskFieldGroup> groups = const {},
   }) => CalendarAuthorizationRequest(
     key: '${op.name}:${task?.identity.id ?? newId ?? parent.identity.id}',
@@ -74,6 +87,12 @@ extension CalendarTaskOperations on CalendarService {
     proposedTaskAssignees: assignees,
     proposedTaskVersion: version,
     taskProgressChange: change,
+    taskOccurrenceQuery: occurrenceQuery,
+    taskOccurrenceProgressChange: occurrenceChange,
+    taskHistoryQuery: historyQuery,
+    currentTaskOccurrence: currentOccurrence,
+    proposedTaskOccurrence: proposedOccurrence,
+    recordedTaskOccurrences: recordedOccurrences,
     taskGroups: groups,
   );
   Future<_Task> _task(
@@ -147,6 +166,7 @@ extension CalendarTaskOperations on CalendarService {
           : null,
       location: has(CalendarTaskFieldGroup.location) ? c.location : null,
       timing: has(CalendarTaskFieldGroup.timing) ? c.timing : null,
+      recurrence: has(CalendarTaskFieldGroup.timing) ? c.recurrence : null,
       priority: has(CalendarTaskFieldGroup.priority) ? c.priority : null,
       progress: has(CalendarTaskFieldGroup.progress) ? d.progress : null,
       assignees: has(CalendarTaskFieldGroup.assignments) ? d.assignees : null,
@@ -243,6 +263,7 @@ extension CalendarTaskOperations on CalendarService {
           protocolVersion: version,
           content: content,
           progress: progress,
+          hasRecordedProgress: false,
           assignees: assignees,
           createdAt: now,
           updatedAt: now,
@@ -312,6 +333,7 @@ extension CalendarTaskOperations on CalendarService {
               : change != null
               ? CalendarPermission.changeTaskProgress
               : CalendarPermission.changeTaskAssignments;
+      final recorded = await _taskRecords(task, tx);
       final nextContent = content ?? task.data.content,
           nextAssignees = assignees ?? task.data.assignees;
       CalendarAuthorizationRequest request(
@@ -326,6 +348,7 @@ extension CalendarTaskOperations on CalendarService {
         assignees: nextAssignees,
         version: version,
         change: change,
+        recordedOccurrences: [for (final r in recorded) _taskRecordValue(r)],
       );
       await _decide(
         c,
@@ -334,6 +357,23 @@ extension CalendarTaskOperations on CalendarService {
         CalendarAuthorizationPhase.preliminaryWrite,
       );
       _taskRevision(task, expected);
+      if (change != null && task.data.content.recurrence != null) {
+        throw _failure(CalendarFailureCode.validation);
+      }
+      if (content != null) {
+        if (task.data.content.recurrence == null &&
+            content.recurrence != null &&
+            (task.data.hasRecordedProgress != false ||
+                task.data.progress.status != CalendarTaskStatus.needsAction ||
+                task.data.progress.percentComplete != 0)) {
+          throw _failure(CalendarFailureCode.validation);
+        }
+        _taskValue(
+          () => requireTaskOriginals(content, [
+            for (final r in recorded) r.originalStart,
+          ]),
+        );
+      }
       final now = await _revisionTime(tx, previous: task.data.updatedAt);
       final progress = change == null
           ? task.data.progress
@@ -361,6 +401,7 @@ extension CalendarTaskOperations on CalendarService {
         CalendarAuthorizationPhase.preliminaryWrite,
       );
       final decisions = await _final(c, [request(progress, version)], tx);
+      if (change != null && changed) task.data.hasRecordedProgress = true;
       task.data.content = nextContent;
       task.data.progress = progress;
       task.data.assignees = nextAssignees;
@@ -399,6 +440,18 @@ extension CalendarTaskOperations on CalendarService {
       );
       _taskRevision(task, expected);
       final decisions = await _final(c, [request], tx);
+      await CalendarTaskHistoryRecord.db.deleteWhere(
+        _session,
+        where: (t) => t.taskId.equals(id),
+        transaction: tx,
+        noReturn: true,
+      );
+      await CalendarTaskOccurrenceRecord.db.deleteWhere(
+        _session,
+        where: (t) => t.taskId.equals(id),
+        transaction: tx,
+        noReturn: true,
+      );
       await CalendarTaskDataRecord.db.deleteRow(
         _session,
         task.data,
@@ -459,6 +512,9 @@ extension CalendarTaskOperations on CalendarService {
           transaction: tx,
         );
         if (saved == null ||
+            saved.taskHistoryTaskId != null ||
+            saved.taskHistoryOriginalKey != null ||
+            saved.taskHistoryAfterRevision != null ||
             saved.eventCalendarId != null ||
             saved.eventFieldGroups != null ||
             saved.taskCalendarId != calendarId ||

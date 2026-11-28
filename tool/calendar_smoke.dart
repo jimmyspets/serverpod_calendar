@@ -2018,6 +2018,137 @@ Future<void> taskSmoke(List<Client> clients) async {
     );
     await remote.deleteTask(second.taskId, 1);
     ids.remove(second.taskId);
+    final series = (await tasks.create(
+      cal.CalendarTaskCreateRequest(
+        calendarId: calendar,
+        content: cal.CalendarTaskContent(
+          summary: 'Recurring host task',
+          timing: cal.CalendarTaskTiming(
+            kind: cal.CalendarTaskTimeKind.zoned,
+            zoneId: 'Europe/Stockholm',
+            start: cal.CalendarEventCivil(
+              year: 2026,
+              month: 3,
+              day: 28,
+              hour: 9,
+            ),
+            duration: cal.CalendarEventDuration(days: 1),
+          ),
+          recurrence: cal.CalendarEventRecurrence(
+            rule: cal.CalendarEventRule(
+              frequency: cal.CalendarEventFrequency.daily,
+              count: 3,
+              byDay: [],
+              byMonthDay: [],
+              byYearDay: [],
+              byWeekNo: [],
+              byMonth: [],
+              byHour: [],
+              byMinute: [],
+              bySetPosition: [],
+            ),
+            inclusions: [],
+            exclusions: [],
+          ),
+        ),
+        assignees: [],
+      ),
+    ))!;
+    ids.add(series.taskId);
+    cal.CalendarTaskOccurrenceQuery preview(int revision) =>
+        cal.CalendarTaskOccurrenceQuery(
+          taskId: series.taskId,
+          expectedRevision: revision,
+          fromUtc: DateTime.utc(2026, 3, 27),
+          untilUtc: DateTime.utc(2026, 3, 31),
+        );
+    final projected = await remote.previewOccurrences(preview(1)),
+        original = projected.occurrences.first.originalStart;
+    check(
+      projected.occurrences.first.dueUtc!
+              .difference(projected.occurrences.first.startUtc!)
+              .inHours ==
+          23,
+      'Task nominal day through DST across hosts',
+    );
+    await tasks.changeOccurrenceProgress(
+      cal.CalendarTaskOccurrenceProgressRequest(
+        taskId: series.taskId,
+        expectedRevision: 1,
+        originalStart: original,
+        action: cal.CalendarTaskProgressAction.complete,
+      ),
+    );
+    final observed = await remote.previewOccurrences(preview(2));
+    check(
+      observed.occurrences.first.progress.status ==
+              cal.CalendarTaskStatus.completed &&
+          observed.occurrences[1].progress.status ==
+              cal.CalendarTaskStatus.needsAction,
+      'Per-occurrence progress is independent across hosts',
+    );
+    final competing = await Future.wait(
+      [tasks, remote].map((api) async {
+        try {
+          await api.changeOccurrenceProgress(
+            cal.CalendarTaskOccurrenceProgressRequest(
+              taskId: series.taskId,
+              expectedRevision: 2,
+              originalStart: original,
+              action: cal.CalendarTaskProgressAction.reopen,
+            ),
+          );
+          return true;
+        } on cal.CalendarException catch (e) {
+          if (e.code == cal.CalendarFailureCode.staleRevision) return false;
+          rethrow;
+        }
+      }),
+    );
+    check(
+      competing.where((v) => v).length == 1,
+      'Competing occurrence progress has exactly one winner',
+    );
+    final historyQuery = cal.CalendarTaskHistoryQuery(
+      taskId: series.taskId,
+      expectedRevision: 3,
+      originalStart: original,
+      pageSize: 1,
+    );
+    final history = await tasks.occurrenceHistory(historyQuery);
+    check(
+      history.entries.single.action ==
+              cal.CalendarTaskProgressAction.complete &&
+          history.nextCursor != null,
+      'Durable task history initial authorized page',
+    );
+    check(
+      (await remote.occurrenceHistory(
+            historyQuery.copyWith(cursor: history.nextCursor),
+          )).entries.single.action ==
+          cal.CalendarTaskProgressAction.reopen,
+      'Task history continuation across hosts',
+    );
+    final currentSeries = await read(series.taskId);
+    await rejects(
+      () => tasks.update(
+        cal.CalendarTaskUpdateRequest(
+          taskId: series.taskId,
+          expectedRevision: 3,
+          content: cal.CalendarTaskContent(
+            timing: currentSeries.timing!,
+            recurrence: currentSeries.recurrence!.copyWith(
+              exclusions: [original],
+            ),
+          ),
+        ),
+      ),
+      cal.CalendarFailureCode.validation,
+    );
+    print(
+      'PASS: recurring task DST projections, independent progress, preserved history, cross-host cursors and competing occurrence writes.',
+    );
+
     final raceParent = await parent();
     final race = await Future.wait([
       () async {

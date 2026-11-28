@@ -1,0 +1,8 @@
+class: CalendarTaskHistoryQuery
+immutable: true
+fields:
+  taskId: UuidValue
+  expectedRevision: int
+  originalStart: CalendarEventTiming
+  pageSize: int
+  cursor: String?

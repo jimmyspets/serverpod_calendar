@@ -12,6 +12,7 @@ import 'generated/protocol.dart';
 import 'native_calendar_name.dart';
 import 'event_values.dart';
 import 'task_values.dart';
+import 'task_recurrence_values.dart';
 import 'event_protocol_values.dart';
 import 'event_wire_storage.dart';
 import 'event_wire_output.dart';
@@ -24,6 +25,7 @@ import 'availability_import_baseline.dart';
 
 part 'calendar_events.dart';
 part 'calendar_tasks.dart';
+part 'calendar_task_occurrences.dart';
 part 'calendar_event_import.dart';
 part 'calendar_event_export.dart';
 part 'calendar_free_busy.dart';
@@ -900,6 +902,9 @@ final class CalendarService {
           transaction: tx,
         );
         if (saved == null ||
+            saved.taskHistoryTaskId != null ||
+            saved.taskHistoryOriginalKey != null ||
+            saved.taskHistoryAfterRevision != null ||
             saved.taskCalendarId != null ||
             saved.taskFieldGroups != null ||
             saved.eventCalendarId != null ||

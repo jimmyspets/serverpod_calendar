@@ -6,13 +6,16 @@ import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart'
 import 'package:serverpod_calendar_core/serverpod_calendar_core.dart';
 
 import 'event_values.dart';
+import 'task_recurrence_values.dart';
 import 'event_protocol_values.dart';
 import 'generated/protocol.dart';
 
 const taskMaxAssignees = 128;
 CalendarTaskContent validateTaskContent(CalendarTaskContent value) {
-  if (value.recurrence != null) {
-    throw ArgumentError('Task recurrence is not implemented in this profile');
+  if (value.recurrence != null &&
+      (value.timing.start == null ||
+          value.timing.kind == CalendarTaskTimeKind.undated)) {
+    throw ArgumentError('Task recurrence requires an explicit start');
   }
   for (final item in [
     (value.summary, 4096),
@@ -83,7 +86,14 @@ CalendarTaskContent validateTaskContent(CalendarTaskContent value) {
       duration: duration,
     );
   }
-  return value;
+  return value.recurrence == null
+      ? value
+      : value.copyWith(
+          recurrence: validateEventRecurrence(
+            taskAnchor(value.timing),
+            value.recurrence,
+          ),
+        );
 }
 
 String taskAssigneeKey(CalendarTaskAssignee v) =>

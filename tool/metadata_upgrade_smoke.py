@@ -348,6 +348,41 @@ BEGIN
 END;
 $task_schema$;
 """)
+        sql(database, """
+INSERT INTO serverpod_calendar_task (id, "calendarId", revision)
+VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '11111111-1111-4111-8111-111111111111', 8);
+INSERT INTO serverpod_calendar_task_data ("taskId","calendarId","protocolUid","uidDigest","protocolVersion",content,progress,assignees,"createdAt","updatedAt")
+VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','11111111-1111-4111-8111-111111111111','legacy-task',encode(sha256(convert_to('legacy-task','UTF8')),'hex'),
+'{"sequence":2,"stamp":"2026-03-01T00:00:00.000Z"}', '{"summary":"Legacy task","timing":{"kind":"undated"}}',
+'{"status":"completed","percentComplete":100,"completedAt":"2026-03-01T00:00:00.000Z"}', '[]', '2026-02-01','2026-03-01');
+""")
+        task_preserved = [*preserved, "serverpod_calendar_task", "serverpod_calendar_task_data"]
+        for table in task_preserved:
+            sql(database, f"CREATE TABLE {table}_before_recurrence AS SELECT * FROM {table};")
+        sql(database, (SERVER / "migrations/20261023101136436-task-recurrence/migration.sql").read_text(encoding="utf-8"))
+        for table in task_preserved:
+            strip = "-'taskHistoryTaskId'-'taskHistoryOriginalKey'-'taskHistoryAfterRevision'" if table == "serverpod_calendar_cursor" else "-'hasRecordedProgress'" if table == "serverpod_calendar_task_data" else ""
+            sql(database, f"""
+DO $task_recurrence$
+BEGIN
+ IF (SELECT count(*) FROM {table}) <> (SELECT count(*) FROM {table}_before_recurrence)
+ OR EXISTS (SELECT 1 FROM {table} current JOIN {table}_before_recurrence old ON current.id=old.id
+ WHERE (to_jsonb(current){strip}) IS DISTINCT FROM to_jsonb(old))
+ THEN RAISE EXCEPTION 'Recurring task migration changed {table}'; END IF;
+END;
+$task_recurrence$;
+DROP TABLE {table}_before_recurrence;
+""")
+        sql(database, """
+DO $task_history$
+BEGIN
+ IF EXISTS (SELECT 1 FROM serverpod_calendar_task_occurrence) OR EXISTS (SELECT 1 FROM serverpod_calendar_task_history)
+ OR EXISTS (SELECT 1 FROM serverpod_calendar_task_data WHERE "hasRecordedProgress" IS NOT NULL)
+ OR EXISTS (SELECT 1 FROM serverpod_calendar_cursor WHERE "taskHistoryTaskId" IS NOT NULL OR "taskHistoryOriginalKey" IS NOT NULL OR "taskHistoryAfterRevision" IS NOT NULL)
+ THEN RAISE EXCEPTION 'Recurring task migration invented checkpoint, occurrence history or cursor state'; END IF;
+END;
+$task_history$;
+""")
         print("PASS: populated schema upgrades preserve identity, revisions, content, associations, protocol UID strings and opening identities and old cursor bindings.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

@@ -9,6 +9,7 @@ import 'package:serverpod_calendar_server/src/availability_storage_values.dart';
 import 'package:serverpod_calendar_server/src/availability_wire_storage.dart';
 import 'package:serverpod_calendar_server/src/event_wire_storage.dart';
 import 'package:serverpod_calendar_server/src/event_protocol_values.dart';
+import 'package:serverpod_calendar_server/src/task_recurrence_values.dart';
 
 import 'test_tools/serverpod_test_tools.dart';
 
@@ -216,6 +217,533 @@ void main() {
       percentComplete: percent,
     );
     const taskGroups = CalendarTaskFieldGroup.values;
+
+    Future<CalendarTaskReceipt> recurringTask() async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      return (await service.createTask(
+        CalendarTaskCreateRequest(
+          calendarId: parent,
+          content: CalendarTaskContent(
+            timing: CalendarTaskTiming(
+              kind: CalendarTaskTimeKind.date,
+              start: CalendarEventCivil(year: 2026, month: 3, day: 28),
+              duration: CalendarEventDuration(days: 1),
+            ),
+            recurrence: CalendarEventRecurrence(
+              rule: daily(),
+              inclusions: [],
+              exclusions: [],
+            ),
+          ),
+          assignees: [],
+        ),
+      ))!;
+    }
+
+    CalendarTaskOccurrenceQuery taskPreview(
+      CalendarTaskReceipt t, [
+      int revision = 1,
+    ]) => CalendarTaskOccurrenceQuery(
+      taskId: t.taskId,
+      expectedRevision: revision,
+      fromDate: CalendarEventCivil(year: 2026, month: 3, day: 27),
+      untilDate: CalendarEventCivil(year: 2026, month: 4, day: 1),
+    );
+    CalendarTaskOccurrenceProgressRequest occurrenceProgress(
+      CalendarTaskReceipt t,
+      CalendarEventTiming original,
+      int revision,
+      CalendarTaskProgressAction action, [
+      int? percentage,
+    ]) => CalendarTaskOccurrenceProgressRequest(
+      taskId: t.taskId,
+      expectedRevision: revision,
+      originalStart: original,
+      action: action,
+      percentComplete: percentage,
+    );
+    CalendarTaskHistoryQuery taskHistory(
+      CalendarTaskReceipt t,
+      CalendarEventTiming original,
+      int revision, {
+      int size = 1,
+      String? cursor,
+    }) => CalendarTaskHistoryQuery(
+      taskId: t.taskId,
+      expectedRevision: revision,
+      originalStart: original,
+      pageSize: size,
+      cursor: cursor,
+    );
+
+    test('recurring task progress is independent with retained history and true transition no-ops', () async {
+      final t = await recurringTask(),
+          initial = await service.previewTaskOccurrences(taskPreview(t));
+      final original = initial.occurrences.first.originalStart;
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(t, original, 1, CalendarTaskProgressAction.complete),
+      );
+      final completed = (await service.previewTaskOccurrences(
+        taskPreview(t, 2),
+      )).occurrences;
+      expect(completed.first.progress.status, CalendarTaskStatus.completed);
+      expect(
+        completed
+            .skip(1)
+            .every((o) => o.progress.status == CalendarTaskStatus.needsAction),
+        isTrue,
+      );
+      expect(
+        (await taskRead(t.taskId)).progress!.status,
+        CalendarTaskStatus.needsAction,
+      );
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(t, original, 2, CalendarTaskProgressAction.complete),
+      );
+      expect(await CalendarTaskHistoryRecord.db.count(session), 1);
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(t, original, 3, CalendarTaskProgressAction.cancel),
+      );
+      final cancelled = (await service.previewTaskOccurrences(
+        taskPreview(t, 4),
+      )).occurrences.first;
+      expect(cancelled.progress.percentComplete, 100);
+      expect(cancelled.progress.completedAt, isNull);
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(t, original, 4, CalendarTaskProgressAction.reopen),
+      );
+      final history = await service.taskOccurrenceHistory(
+        taskHistory(t, original, 5, size: 10),
+      );
+      expect(history.entries.map((e) => e.action), [
+        CalendarTaskProgressAction.complete,
+        CalendarTaskProgressAction.cancel,
+        CalendarTaskProgressAction.reopen,
+      ]);
+      expect(
+        history.entries.first.after.completedAt,
+        completed.first.progress.completedAt,
+      );
+      expect(history.entries.last.after.percentComplete, 0);
+      expect(
+        history.entries.every(
+          (e) =>
+              e.recordedAt.isUtc &&
+              e.recordedAt.microsecond == 0 &&
+              e.recordedAt.millisecond == 0,
+        ),
+        isTrue,
+      );
+      expect(await CalendarTaskOccurrenceRecord.db.count(session), 1);
+      await expectLater(
+        service.changeTaskProgress(
+          progressRequest(t.taskId, 5, CalendarTaskProgressAction.complete),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+    });
+    test('recurring task rule changes preserve exact recorded originals and reject exclusion or recurrence removal', () async {
+      final t = await recurringTask(),
+          original = (await service.previewTaskOccurrences(taskPreview(t)))
+              .occurrences
+              .first
+              .originalStart;
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(t, original, 1, CalendarTaskProgressAction.complete),
+      );
+      var current = await taskRead(t.taskId);
+      CalendarTaskContent content({CalendarEventRecurrence? recurrence}) =>
+          CalendarTaskContent(
+            summary: 'Edited',
+            timing: current.timing!,
+            recurrence: recurrence,
+          );
+      await expectLater(
+        service.updateTask(
+          CalendarTaskUpdateRequest(
+            taskId: t.taskId,
+            expectedRevision: 2,
+            content: content(
+              recurrence: current.recurrence!.copyWith(exclusions: [original]),
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      await expectLater(
+        service.updateTask(
+          CalendarTaskUpdateRequest(
+            taskId: t.taskId,
+            expectedRevision: 2,
+            content: content(),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      await service.updateTask(
+        CalendarTaskUpdateRequest(
+          taskId: t.taskId,
+          expectedRevision: 2,
+          content: content(
+            recurrence: current.recurrence!.copyWith(rule: daily(count: 4)),
+          ),
+        ),
+      );
+      expect(
+        policy.lastTaskRequest!.recordedTaskOccurrences.single.originalStart
+            .toJson(),
+        original.toJson(),
+      );
+      expect(
+        () => policy.lastTaskRequest!.recordedTaskOccurrences.clear(),
+        throwsUnsupportedError,
+      );
+      current = await taskRead(t.taskId);
+      expect(current.revision, 3);
+      expect(
+        (await service.taskOccurrenceHistory(taskHistory(t, original, 3)))
+            .entries,
+        hasLength(1),
+      );
+    });
+    for (final permission in [
+      CalendarPermission.readTask,
+      CalendarPermission.previewTaskOccurrences,
+    ]) {
+      test(
+        'recurring task preview independently requires ${permission.name}',
+        () async {
+          final t = await recurringTask();
+          policy.denied.add(permission);
+          await expectLater(
+            service.previewTaskOccurrences(taskPreview(t)),
+            failure(CalendarFailureCode.accessDenied),
+          );
+        },
+      );
+    }
+    for (final group in [
+      CalendarTaskFieldGroup.timing,
+      CalendarTaskFieldGroup.progress,
+    ]) {
+      test(
+        'recurring task preview/history require ${group.name} disclosure',
+        () async {
+          final t = await recurringTask(),
+              original = (await service.previewTaskOccurrences(taskPreview(t)))
+                  .occurrences
+                  .first
+                  .originalStart;
+          policy.taskGrants.remove(group);
+          await expectLater(
+            service.previewTaskOccurrences(taskPreview(t)),
+            failure(CalendarFailureCode.accessDenied),
+          );
+          await expectLater(
+            service.taskOccurrenceHistory(taskHistory(t, original, 1)),
+            failure(CalendarFailureCode.accessDenied),
+          );
+        },
+      );
+    }
+    test('task history requires independent authority with immutable actual original context', () async {
+      final t = await recurringTask(),
+          original = (await service.previewTaskOccurrences(taskPreview(t)))
+              .occurrences
+              .first
+              .originalStart;
+      policy.denied.add(CalendarPermission.readTaskHistory);
+      await expectLater(
+        service.taskOccurrenceHistory(taskHistory(t, original, 1)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denied.clear();
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(
+          t,
+          original,
+          1,
+          CalendarTaskProgressAction.setPercentage,
+          60,
+        ),
+      );
+      final context = policy.lastTaskRequest!;
+      expect(context.taskId, t.taskId);
+      expect(context.calendarId, t.calendarId);
+      expect(context.currentTaskOccurrence!.progress.percentComplete, 0);
+      expect(context.proposedTaskOccurrence!.progress.percentComplete, 60);
+      expect(
+        context.taskOccurrenceProgressChange!.originalStart.toJson(),
+        original.toJson(),
+      );
+      policy.denied.add(CalendarPermission.readTask);
+      await expectLater(
+        service.taskOccurrenceHistory(taskHistory(t, original, 2)),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+    test('task occurrence final denial stale nonexistent and excluded identities cannot append history', () async {
+      final t = await recurringTask(),
+          original = (await service.previewTaskOccurrences(taskPreview(t)))
+              .occurrences
+              .first
+              .originalStart;
+      policy.denyFinal = true;
+      await expectLater(
+        service.changeTaskOccurrenceProgress(
+          occurrenceProgress(
+            t,
+            original,
+            1,
+            CalendarTaskProgressAction.complete,
+          ),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denyFinal = false;
+      await expectLater(
+        service.changeTaskOccurrenceProgress(
+          occurrenceProgress(
+            t,
+            original,
+            2,
+            CalendarTaskProgressAction.complete,
+          ),
+        ),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      await expectLater(
+        service.changeTaskOccurrenceProgress(
+          occurrenceProgress(
+            t,
+            original.copyWith(
+              start: CalendarEventCivil(year: 2026, month: 3, day: 31),
+            ),
+            1,
+            CalendarTaskProgressAction.complete,
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      expect(await CalendarTaskHistoryRecord.db.count(session), 0);
+      expect(await CalendarTaskOccurrenceRecord.db.count(session), 0);
+      expect((await taskRead(t.taskId)).revision, 1);
+    });
+    test('task history continuations isolate original object query kind and changed generation', () async {
+      final t = await recurringTask(),
+          originals = (await service.previewTaskOccurrences(taskPreview(t)))
+              .occurrences;
+      final first = originals.first.originalStart,
+          second = originals[1].originalStart;
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(t, first, 1, CalendarTaskProgressAction.complete),
+      );
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(t, first, 2, CalendarTaskProgressAction.reopen),
+      );
+      final page = await service.taskOccurrenceHistory(
+            taskHistory(t, first, 3),
+          ),
+          cursor = page.nextCursor!;
+      expect(page.entries.single.action, CalendarTaskProgressAction.complete);
+      expect(
+        (await service.taskOccurrenceHistory(
+          taskHistory(t, first, 3, cursor: cursor),
+        )).entries.single.action,
+        CalendarTaskProgressAction.reopen,
+      );
+      await expectLater(
+        service.taskOccurrenceHistory(
+          taskHistory(t, second, 3, cursor: cursor),
+        ),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+      await expectLater(
+        service.taskOccurrenceHistory(
+          taskHistory(t, first, 3, size: 2, cursor: cursor),
+        ),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+      await expectLater(
+        service.listTasks(
+          t.calendarId,
+          pageSize: 1,
+          fieldGroups: [
+            CalendarTaskFieldGroup.timing,
+            CalendarTaskFieldGroup.progress,
+          ],
+          cursor: cursor,
+        ),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+      await expectLater(
+        service.listEvents(
+          t.calendarId,
+          pageSize: 1,
+          fieldGroups: [],
+          cursor: cursor,
+        ),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+      policy.epoch = 'changed';
+      await expectLater(
+        service.taskOccurrenceHistory(taskHistory(t, first, 3, cursor: cursor)),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+      policy.epoch = 'v1';
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(t, second, 3, CalendarTaskProgressAction.complete),
+      );
+      await expectLater(
+        service.taskOccurrenceHistory(taskHistory(t, first, 4, cursor: cursor)),
+        failure(CalendarFailureCode.invalidCursor),
+      );
+    });
+    test('task conversion rejects unknown or ever-recorded progress even after reopening', () async {
+      final parent = (await service.create(createInput()))!.calendarId,
+          task = await taskCreate(parent);
+      final recurring = CalendarTaskContent(
+        timing: CalendarTaskTiming(
+          kind: CalendarTaskTimeKind.date,
+          start: CalendarEventCivil(year: 2026, month: 3, day: 28),
+        ),
+        recurrence: CalendarEventRecurrence(
+          rule: daily(),
+          inclusions: [],
+          exclusions: [],
+        ),
+      );
+      await service.changeTaskProgress(
+        progressRequest(task.taskId, 1, CalendarTaskProgressAction.complete),
+      );
+      await service.changeTaskProgress(
+        progressRequest(task.taskId, 2, CalendarTaskProgressAction.reopen),
+      );
+      await expectLater(
+        service.updateTask(
+          CalendarTaskUpdateRequest(
+            taskId: task.taskId,
+            expectedRevision: 3,
+            content: recurring,
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      final data = (await CalendarTaskDataRecord.db.find(session)).single;
+      data.hasRecordedProgress = null;
+      await CalendarTaskDataRecord.db.updateRow(session, data);
+      await expectLater(
+        service.updateTask(
+          CalendarTaskUpdateRequest(
+            taskId: task.taskId,
+            expectedRevision: 3,
+            content: recurring,
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      final clean = await taskCreate(parent);
+      await service.updateTask(
+        CalendarTaskUpdateRequest(
+          taskId: clean.taskId,
+          expectedRevision: 1,
+          content: recurring,
+        ),
+      );
+      expect((await taskRead(clean.taskId)).recurrence, isNotNull);
+    });
+    test(
+      'task deletion scrubs occurrence state and all retained history',
+      () async {
+        final t = await recurringTask(),
+            original = (await service.previewTaskOccurrences(taskPreview(t)))
+                .occurrences
+                .first
+                .originalStart;
+        await service.changeTaskOccurrenceProgress(
+          occurrenceProgress(
+            t,
+            original,
+            1,
+            CalendarTaskProgressAction.complete,
+          ),
+        );
+        await service.changeTaskOccurrenceProgress(
+          occurrenceProgress(t, original, 2, CalendarTaskProgressAction.reopen),
+        );
+        await service.deleteTask(t.taskId, 3);
+        expect(await CalendarTaskOccurrenceRecord.db.count(session), 0);
+        expect(await CalendarTaskHistoryRecord.db.count(session), 0);
+        expect(await CalendarTaskDataRecord.db.count(session), 0);
+        expect(
+          (await CalendarTaskRecord.db.findById(session, t.taskId))!.deletedAt,
+          isNotNull,
+        );
+      },
+    );
+
+    test('recorded task originals are bounded without pruning history or partial state', () async {
+      final t = await recurringTask(), view = await taskRead(t.taskId);
+      await service.updateTask(
+        CalendarTaskUpdateRequest(
+          taskId: t.taskId,
+          expectedRevision: 1,
+          content: CalendarTaskContent(
+            timing: view.timing!,
+            recurrence: view.recurrence!.copyWith(rule: daily(count: 1001)),
+          ),
+        ),
+      );
+      final start = DateTime.utc(2026, 3, 28);
+      CalendarEventTiming original(int n) {
+        final d = start.add(Duration(days: n));
+        return CalendarEventTiming(
+          kind: CalendarEventTimeKind.date,
+          start: CalendarEventCivil(year: d.year, month: d.month, day: d.day),
+        );
+      }
+
+      await CalendarTaskOccurrenceRecord.db.insert(session, [
+        for (var i = 0; i < 1000; i++)
+          CalendarTaskOccurrenceRecord(
+            taskId: t.taskId,
+            originalKey: taskOriginalKey(original(i)),
+            originalStart: original(i),
+            progress: CalendarTaskProgress(),
+          ),
+      ]);
+      await expectLater(
+        service.changeTaskOccurrenceProgress(
+          occurrenceProgress(
+            t,
+            original(1000),
+            2,
+            CalendarTaskProgressAction.complete,
+          ),
+        ),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      expect(await CalendarTaskOccurrenceRecord.db.count(session), 1000);
+      expect(await CalendarTaskHistoryRecord.db.count(session), 0);
+      expect((await taskRead(t.taskId)).revision, 2);
+    });
+    test('task history rejects corrupted transition evidence instead of disclosing it', () async {
+      final t = await recurringTask(),
+          original = (await service.previewTaskOccurrences(taskPreview(t)))
+              .occurrences
+              .first
+              .originalStart;
+      await service.changeTaskOccurrenceProgress(
+        occurrenceProgress(t, original, 1, CalendarTaskProgressAction.complete),
+      );
+      final record = (await CalendarTaskHistoryRecord.db.find(session)).single;
+      record.action = CalendarTaskProgressAction.reopen;
+      await CalendarTaskHistoryRecord.db.updateRow(session, record);
+      await expectLater(
+        service.taskOccurrenceHistory(taskHistory(t, original, 2)),
+        failure(CalendarFailureCode.unavailable),
+      );
+    });
 
     test('task native lifecycle preserves chosen percentage and current completion semantics', () async {
       final parent = (await service.create(createInput()))!.calendarId;

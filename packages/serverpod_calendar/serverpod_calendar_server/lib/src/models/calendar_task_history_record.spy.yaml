@@ -1,0 +1,18 @@
+class: CalendarTaskHistoryRecord
+serverOnly: true
+table: serverpod_calendar_task_history
+fields:
+  taskId: UuidValue, relation(parent=serverpod_calendar_task)
+  originalKey: String
+  originalStart: CalendarEventTiming
+  revision: int
+  action: CalendarTaskProgressAction
+  before: CalendarTaskProgress
+  after: CalendarTaskProgress
+  recordedAt: DateTime
+indexes:
+  calendar_task_history_revision_unique:
+    fields: taskId, revision
+    unique: true
+  calendar_task_history_original_idx:
+    fields: taskId, originalKey, revision

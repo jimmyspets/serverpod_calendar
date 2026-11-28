@@ -14,3 +14,4 @@ fields:
   assignees: List<CalendarTaskAssignee>?
   protocolUid: String?
   protocolVersion: CalendarTaskProtocolVersion?
+  recurrence: CalendarEventRecurrence?

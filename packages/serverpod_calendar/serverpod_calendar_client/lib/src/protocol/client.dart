@@ -100,6 +100,16 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_task_create_requ
     as _iy2jl335;
 import 'package:serverpod_calendar_client/src/protocol/calendar_task_field_group.dart'
     as _i6s1er1y;
+import 'package:serverpod_calendar_client/src/protocol/calendar_task_history_page.dart'
+    as _ih2z634b;
+import 'package:serverpod_calendar_client/src/protocol/calendar_task_history_query.dart'
+    as _itbfo3vh;
+import 'package:serverpod_calendar_client/src/protocol/calendar_task_occurrence_preview.dart'
+    as _i9hybq8z;
+import 'package:serverpod_calendar_client/src/protocol/calendar_task_occurrence_progress_request.dart'
+    as _ibp8yihf;
+import 'package:serverpod_calendar_client/src/protocol/calendar_task_occurrence_query.dart'
+    as _iu7ssbk5;
 import 'package:serverpod_calendar_client/src/protocol/calendar_task_page.dart'
     as _il0k8fyg;
 import 'package:serverpod_calendar_client/src/protocol/calendar_task_progress_request.dart'
@@ -561,6 +571,30 @@ class EndpointCalendarTask extends _isc.EndpointRef {
       'taskId': taskId,
       'expectedRevision': expectedRevision,
     },
+  );
+
+  _ida.Future<_i9hybq8z.CalendarTaskOccurrencePreview> previewOccurrences(
+    _iu7ssbk5.CalendarTaskOccurrenceQuery query,
+  ) => caller.callServerEndpoint<_i9hybq8z.CalendarTaskOccurrencePreview>(
+    'serverpod_calendar.calendarTask',
+    'previewOccurrences',
+    {'query': query},
+  );
+
+  _ida.Future<_igkgk3pi.CalendarTaskReceipt?> changeOccurrenceProgress(
+    _ibp8yihf.CalendarTaskOccurrenceProgressRequest request,
+  ) => caller.callServerEndpoint<_igkgk3pi.CalendarTaskReceipt?>(
+    'serverpod_calendar.calendarTask',
+    'changeOccurrenceProgress',
+    {'request': request},
+  );
+
+  _ida.Future<_ih2z634b.CalendarTaskHistoryPage> occurrenceHistory(
+    _itbfo3vh.CalendarTaskHistoryQuery query,
+  ) => caller.callServerEndpoint<_ih2z634b.CalendarTaskHistoryPage>(
+    'serverpod_calendar.calendarTask',
+    'occurrenceHistory',
+    {'query': query},
   );
 }
 

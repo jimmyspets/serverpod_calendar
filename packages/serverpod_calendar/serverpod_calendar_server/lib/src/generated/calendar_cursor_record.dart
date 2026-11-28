@@ -36,6 +36,9 @@ abstract class CalendarCursorRecord
     this.eventFieldGroups,
     this.categoryFilter,
     required this.expiresAt,
+    this.taskHistoryTaskId,
+    this.taskHistoryOriginalKey,
+    this.taskHistoryAfterRevision,
   });
 
   factory CalendarCursorRecord({
@@ -54,6 +57,9 @@ abstract class CalendarCursorRecord
     List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups,
     _i9j129by.CalendarCategoryFilter? categoryFilter,
     required DateTime expiresAt,
+    _is.UuidValue? taskHistoryTaskId,
+    String? taskHistoryOriginalKey,
+    int? taskHistoryAfterRevision,
   }) = _CalendarCursorRecordImpl;
 
   factory CalendarCursorRecord.fromJson(
@@ -104,6 +110,15 @@ abstract class CalendarCursorRecord
       expiresAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['expiresAt'],
       ),
+      taskHistoryTaskId: jsonSerialization['taskHistoryTaskId'] == null
+          ? null
+          : _is.UuidValueJsonExtension.fromJson(
+              jsonSerialization['taskHistoryTaskId'],
+            ),
+      taskHistoryOriginalKey:
+          jsonSerialization['taskHistoryOriginalKey'] as String?,
+      taskHistoryAfterRevision:
+          jsonSerialization['taskHistoryAfterRevision'] as int?,
     );
   }
 
@@ -142,6 +157,12 @@ abstract class CalendarCursorRecord
 
   DateTime expiresAt;
 
+  _is.UuidValue? taskHistoryTaskId;
+
+  String? taskHistoryOriginalKey;
+
+  int? taskHistoryAfterRevision;
+
   @override
   _is.Table<int?> get table => t;
 
@@ -164,6 +185,9 @@ abstract class CalendarCursorRecord
     List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups,
     _i9j129by.CalendarCategoryFilter? categoryFilter,
     DateTime? expiresAt,
+    _is.UuidValue? taskHistoryTaskId,
+    String? taskHistoryOriginalKey,
+    int? taskHistoryAfterRevision,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -190,6 +214,12 @@ abstract class CalendarCursorRecord
         ),
       if (categoryFilter != null) 'categoryFilter': categoryFilter?.toJson(),
       'expiresAt': expiresAt.toJson(),
+      if (taskHistoryTaskId != null)
+        'taskHistoryTaskId': taskHistoryTaskId?.toJson(),
+      if (taskHistoryOriginalKey != null)
+        'taskHistoryOriginalKey': taskHistoryOriginalKey,
+      if (taskHistoryAfterRevision != null)
+        'taskHistoryAfterRevision': taskHistoryAfterRevision,
     };
   }
 
@@ -245,6 +275,9 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
     List<_iftiwkuj.CalendarEventFieldGroup>? eventFieldGroups,
     _i9j129by.CalendarCategoryFilter? categoryFilter,
     required DateTime expiresAt,
+    _is.UuidValue? taskHistoryTaskId,
+    String? taskHistoryOriginalKey,
+    int? taskHistoryAfterRevision,
   }) : super._(
          id: id,
          token: token,
@@ -261,6 +294,9 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
          eventFieldGroups: eventFieldGroups,
          categoryFilter: categoryFilter,
          expiresAt: expiresAt,
+         taskHistoryTaskId: taskHistoryTaskId,
+         taskHistoryOriginalKey: taskHistoryOriginalKey,
+         taskHistoryAfterRevision: taskHistoryAfterRevision,
        );
 
   /// Returns a shallow copy of this [CalendarCursorRecord]
@@ -283,6 +319,9 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
     Object? eventFieldGroups = _Undefined,
     Object? categoryFilter = _Undefined,
     DateTime? expiresAt,
+    Object? taskHistoryTaskId = _Undefined,
+    Object? taskHistoryOriginalKey = _Undefined,
+    Object? taskHistoryAfterRevision = _Undefined,
   }) {
     return CalendarCursorRecord(
       id: id is int? ? id : this.id,
@@ -312,6 +351,15 @@ class _CalendarCursorRecordImpl extends CalendarCursorRecord {
           ? categoryFilter
           : this.categoryFilter?.copyWith(),
       expiresAt: expiresAt ?? this.expiresAt,
+      taskHistoryTaskId: taskHistoryTaskId is _is.UuidValue?
+          ? taskHistoryTaskId
+          : this.taskHistoryTaskId,
+      taskHistoryOriginalKey: taskHistoryOriginalKey is String?
+          ? taskHistoryOriginalKey
+          : this.taskHistoryOriginalKey,
+      taskHistoryAfterRevision: taskHistoryAfterRevision is int?
+          ? taskHistoryAfterRevision
+          : this.taskHistoryAfterRevision,
     );
   }
 }
@@ -414,6 +462,25 @@ class CalendarCursorRecordUpdateTable
         table.expiresAt,
         value,
       );
+
+  _is.ColumnValue<_is.UuidValue, _is.UuidValue> taskHistoryTaskId(
+    _is.UuidValue? value,
+  ) => _is.ColumnValue(
+    table.taskHistoryTaskId,
+    value,
+  );
+
+  _is.ColumnValue<String, String> taskHistoryOriginalKey(String? value) =>
+      _is.ColumnValue(
+        table.taskHistoryOriginalKey,
+        value,
+      );
+
+  _is.ColumnValue<int, int> taskHistoryAfterRevision(int? value) =>
+      _is.ColumnValue(
+        table.taskHistoryAfterRevision,
+        value,
+      );
 }
 
 class CalendarCursorRecordTable extends _is.Table<int?> {
@@ -478,6 +545,18 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
       'expiresAt',
       this,
     );
+    taskHistoryTaskId = _is.ColumnUuid(
+      'taskHistoryTaskId',
+      this,
+    );
+    taskHistoryOriginalKey = _is.ColumnString(
+      'taskHistoryOriginalKey',
+      this,
+    );
+    taskHistoryAfterRevision = _is.ColumnInt(
+      'taskHistoryAfterRevision',
+      this,
+    );
   }
 
   late final CalendarCursorRecordUpdateTable updateTable;
@@ -514,6 +593,12 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
 
   late final _is.ColumnDateTime expiresAt;
 
+  late final _is.ColumnUuid taskHistoryTaskId;
+
+  late final _is.ColumnString taskHistoryOriginalKey;
+
+  late final _is.ColumnInt taskHistoryAfterRevision;
+
   @override
   List<_is.Column> get columns => [
     id,
@@ -531,6 +616,9 @@ class CalendarCursorRecordTable extends _is.Table<int?> {
     eventFieldGroups,
     categoryFilter,
     expiresAt,
+    taskHistoryTaskId,
+    taskHistoryOriginalKey,
+    taskHistoryAfterRevision,
   ];
 }
 

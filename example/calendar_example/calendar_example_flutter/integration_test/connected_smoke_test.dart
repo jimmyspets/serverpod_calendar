@@ -557,6 +557,64 @@ void main() {
       )).tasks,
       isEmpty,
     );
+    await _tap(tester, 'task-create');
+    await tester.enterText(
+      find.byKey(const Key('task-summary')),
+      'Recurring example task',
+    );
+    await _tap(tester, 'task-kind-undated');
+    await tester.tap(find.text('date').last);
+    await _idle(tester);
+    await tester.enterText(find.byKey(const Key('task-start')), '2026-03-28');
+    await _tap(tester, 'task-frequency-none');
+    await tester.tap(find.text('daily').last);
+    await _idle(tester);
+    await tester.enterText(find.byKey(const Key('task-count')), '3');
+    await _tap(tester, 'task-save');
+    await _waitFor(tester, find.text('Recurring example task'));
+    await tester.tap(find.text('Recurring example task'));
+    await _idle(tester);
+    await _tap(tester, 'task-occurrences');
+    await _tap(tester, 'task-preview-load');
+    await _tap(tester, 'task-occurrence-0-complete');
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('task-occurrence-state-0')))
+          .data,
+      'completed; 100%',
+    );
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('task-occurrence-state-1')))
+          .data,
+      'needsAction; 0%',
+    );
+    await _tap(tester, 'task-occurrence-1-complete');
+    await _tap(tester, 'task-occurrence-0-history');
+    expect(find.byKey(const Key('task-history-2')), findsOneWidget);
+    await tester.pageBack();
+    await _idle(tester);
+    await tester.enterText(find.byKey(const Key('task-count')), '1');
+    await _tap(tester, 'task-save');
+    await _waitFor(tester, find.byKey(const Key('task-error')));
+    final series = (await tasks.list(
+      calendar.id,
+      pageSize: 10,
+      fieldGroups: cal.CalendarTaskFieldGroup.values,
+    )).tasks.single;
+    expect(series.recurrence!.rule!.count, 3);
+    await _tap(tester, 'task-reload');
+    await _tap(tester, 'task-delete');
+    await _tap(tester, 'task-confirm-delete');
+    expect(
+      (await tasks.list(
+        calendar.id,
+        pageSize: 10,
+        fieldGroups: cal.CalendarTaskFieldGroup.values,
+      )).tasks,
+      isEmpty,
+    );
+
     await tester.pageBack();
     await _idle(tester);
 
