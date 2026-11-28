@@ -155,6 +155,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0144](0144-bounded-host-raw-imip-mime.md) | Bounded host-owned raw iMIP MIME extraction | Accepted 2026-10-30; scoped host extraction and local batch validation complete |
 | [0145](0145-host-mime-native-ingress.md) | Host-owned MIME ingress into existing scheduling handlers | Accepted 2026-10-30; scoped bridge and local batch validation complete |
 | [0146](0146-explicit-private-attendee-responses.md) | Explicit private attendee responses and durable synthetic delivery | Accepted 2026-10-30; scoped implementation and complete local batch validation complete |
+| [0147](0147-bounded-calendar-occurrence-queries.md) | Bounded calendar-wide event occurrence queries | Proposed; query/disclosure/bounds and nullable cursor JSON require review |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
