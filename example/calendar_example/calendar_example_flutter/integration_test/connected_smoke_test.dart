@@ -631,6 +631,18 @@ void main() {
     expect(importedTask.progress!.percentComplete, 25);
     expect(importedTask.assignees, isEmpty);
     expect(importedTask.protocolVersion!.sequence, isNull);
+    await _tap(tester, 'task-export-${importedTask.id}');
+    await _waitFor(tester, find.byKey(const Key('task-export-source')));
+    final taskExportText = tester
+        .widget<SelectableText>(find.byKey(const Key('task-export-source')))
+        .data!;
+    expect(taskExportText, contains('BEGIN:VTODO'));
+    expect(taskExportText, contains('BEGIN:VALARM'));
+    expect(taskExportText, contains('PERCENT-COMPLETE:25'));
+    expect(taskExportText, isNot(contains('STATUS:')));
+    expect(taskExportText, isNot(contains(importedTask.id.toString())));
+    await tester.pageBack();
+    await _idle(tester);
     await _tap(tester, 'task-import');
     await _tap(tester, 'task-import-example');
     await _tap(tester, 'task-import-submit');

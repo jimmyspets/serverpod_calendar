@@ -171,3 +171,7 @@ See [standalone availability wire adaptation](icalendar-availability-adapter.md)
 ## Create-only task import increment, 2026-10-23
 
 [ADR 0099](adr/0099-authenticated-create-only-task-import.md) and [the import guide](task-import.md#implemented-create-only-operation) add authenticated atomic task import, independent import/create/progress gates, complete immutable source proposals, private baselines and final-approved minimal receipts. Preserve independent source progress/versions and unknown prior history; source participants/alarms remain inert. Task export/replacement, metadata editors and alarm activation remain separate.
+
+## Current task export increment, 2026-10-23
+
+[ADR 0100](adr/0100-authenticated-current-task-export.md) and [the task export guide](task-export.md) add read-only current-state standalone VTODO output with explicit revision-bound complete-series selection. Export requires independent export, full ordinary task disclosure and rich-source-read authority, checked again after serialization. Preserve supported source metadata/progress/versions; exclude private baselines, native assignments/history and alarm activation. Native exceptions, source replacement/adoption, feeds/runtime and external-client evidence remain separate. This supersedes older task-export-pending wording only for this bounded profile.

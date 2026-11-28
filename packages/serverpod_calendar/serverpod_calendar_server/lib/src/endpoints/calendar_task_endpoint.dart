@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:serverpod/serverpod.dart';
 
 import '../calendar_module.dart';
@@ -6,6 +8,10 @@ import '../generated/protocol.dart';
 class CalendarTaskEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
+  Future<ByteData> exportTasks(
+    Session session,
+    CalendarTaskExportRequest request,
+  ) => CalendarModule.service(session).exportTasks(request);
   Future<CalendarTaskImportResult> importTasks(
     Session session,
     CalendarTaskImportRequest request,

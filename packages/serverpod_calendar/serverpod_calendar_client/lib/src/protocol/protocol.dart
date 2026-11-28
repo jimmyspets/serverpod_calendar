@@ -121,6 +121,8 @@ import 'calendar_task_assignee.dart' as _ih5e3u6u;
 import 'calendar_task_assignments_request.dart' as _ipa1soge;
 import 'calendar_task_content.dart' as _if7nbvl8;
 import 'calendar_task_create_request.dart' as _iipxdkwq;
+import 'calendar_task_export_request.dart' as _i10340hl;
+import 'calendar_task_export_selection.dart' as _i71mi7ri;
 import 'calendar_task_field_group.dart' as _isemqyyv;
 import 'calendar_task_history_entry.dart' as _idhalyap;
 import 'calendar_task_history_page.dart' as _ibsdsx6x;
@@ -242,6 +244,8 @@ export 'calendar_task_assignee.dart';
 export 'calendar_task_assignments_request.dart';
 export 'calendar_task_content.dart';
 export 'calendar_task_create_request.dart';
+export 'calendar_task_export_request.dart';
+export 'calendar_task_export_selection.dart';
 export 'calendar_task_field_group.dart';
 export 'calendar_task_history_entry.dart';
 export 'calendar_task_history_page.dart';
@@ -609,6 +613,12 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _iipxdkwq.CalendarTaskCreateRequest) {
       return _iipxdkwq.CalendarTaskCreateRequest.fromJson(data) as T;
+    }
+    if (t == _i10340hl.CalendarTaskExportRequest) {
+      return _i10340hl.CalendarTaskExportRequest.fromJson(data) as T;
+    }
+    if (t == _i71mi7ri.CalendarTaskExportSelection) {
+      return _i71mi7ri.CalendarTaskExportSelection.fromJson(data) as T;
     }
     if (t == _isemqyyv.CalendarTaskFieldGroup) {
       return _isemqyyv.CalendarTaskFieldGroup.fromJson(data) as T;
@@ -1254,6 +1264,18 @@ class Protocol extends _isc.SerializationManager {
               : null)
           as T;
     }
+    if (t == _isc.getType<_i10340hl.CalendarTaskExportRequest?>()) {
+      return (data != null
+              ? _i10340hl.CalendarTaskExportRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_i71mi7ri.CalendarTaskExportSelection?>()) {
+      return (data != null
+              ? _i71mi7ri.CalendarTaskExportSelection.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _isc.getType<_isemqyyv.CalendarTaskFieldGroup?>()) {
       return (data != null
               ? _isemqyyv.CalendarTaskFieldGroup.fromJson(data)
@@ -1717,6 +1739,12 @@ class Protocol extends _isc.SerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_i71mi7ri.CalendarTaskExportSelection>) {
+      return (data as List)
+              .map((e) => deserialize<_i71mi7ri.CalendarTaskExportSelection>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_idhalyap.CalendarTaskHistoryEntry>) {
       return (data as List)
               .map((e) => deserialize<_idhalyap.CalendarTaskHistoryEntry>(e))
@@ -1930,6 +1958,8 @@ class Protocol extends _isc.SerializationManager {
         'CalendarTaskAssignmentsRequest',
       _if7nbvl8.CalendarTaskContent => 'CalendarTaskContent',
       _iipxdkwq.CalendarTaskCreateRequest => 'CalendarTaskCreateRequest',
+      _i10340hl.CalendarTaskExportRequest => 'CalendarTaskExportRequest',
+      _i71mi7ri.CalendarTaskExportSelection => 'CalendarTaskExportSelection',
       _isemqyyv.CalendarTaskFieldGroup => 'CalendarTaskFieldGroup',
       _idhalyap.CalendarTaskHistoryEntry => 'CalendarTaskHistoryEntry',
       _ibsdsx6x.CalendarTaskHistoryPage => 'CalendarTaskHistoryPage',
@@ -2167,6 +2197,10 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarTaskContent';
       case _iipxdkwq.CalendarTaskCreateRequest():
         return 'CalendarTaskCreateRequest';
+      case _i10340hl.CalendarTaskExportRequest():
+        return 'CalendarTaskExportRequest';
+      case _i71mi7ri.CalendarTaskExportSelection():
+        return 'CalendarTaskExportSelection';
       case _isemqyyv.CalendarTaskFieldGroup():
         return 'CalendarTaskFieldGroup';
       case _idhalyap.CalendarTaskHistoryEntry():
@@ -2571,6 +2605,12 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'CalendarTaskCreateRequest') {
       return deserialize<_iipxdkwq.CalendarTaskCreateRequest>(data['data']);
+    }
+    if (dataClassName == 'CalendarTaskExportRequest') {
+      return deserialize<_i10340hl.CalendarTaskExportRequest>(data['data']);
+    }
+    if (dataClassName == 'CalendarTaskExportSelection') {
+      return deserialize<_i71mi7ri.CalendarTaskExportSelection>(data['data']);
     }
     if (dataClassName == 'CalendarTaskFieldGroup') {
       return deserialize<_isemqyyv.CalendarTaskFieldGroup>(data['data']);

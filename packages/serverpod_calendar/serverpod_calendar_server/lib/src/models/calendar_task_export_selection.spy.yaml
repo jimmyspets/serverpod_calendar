@@ -1,0 +1,5 @@
+class: CalendarTaskExportSelection
+immutable: true
+fields:
+  taskId: UuidValue
+  expectedRevision: int

@@ -1,0 +1,29 @@
+# Authenticated current task export
+
+Status: scoped implementation under [ADR 0100](adr/0100-authenticated-current-task-export.md). The maintainer confirmed the separate source-read permission; concrete API/selection mechanics remain under draft review.
+
+`calendarTask.exportTasks(CalendarTaskExportRequest)` returns standalone iCalendar bytes for an explicit selection of complete task series in one calendar. Supply the actual calendar UUID and expected revision, plus `CalendarTaskExportSelection` entries with task UUID and expected revision. Empty, duplicate, invalid, stale, foreign, missing, deleted or oversized selections reject the entire request. There is no implicit all-calendar or partial/redacted export.
+
+## Independent authorization
+
+Require `CalendarPermission.exportTasks` on the actual parent and every selected task, `readTask` with **all eight task field groups**, and **`readTaskSource` on every task**. The latter separately permits rich source participants, attachments, comments/contact and unarmed alarms that ordinary task views never disclose. Export permission alone implies neither detail nor source access. Hosts can map these independent gates to their own rules. Native-only tasks use the same gates so later imported metadata cannot silently expand access.
+
+Every full check carries actual parent/task context and a complete immutable `CalendarTaskExportIntent` with current source components and independent versions. Historical import baseline payloads are excluded. Trusted actor/scope/policy and all permissions are checked before output and again after serialization under the existing durable scope transaction. Policy batching never removes whole-selection context. Failure returns no bytes; there is no streaming partial result or successful visibility-filtered subset. The documented external fresh-check revocation race still applies; the module does not infer commit coordination from a database read.
+
+## Preserved data and boundaries
+
+Export current active state, including native edits, rather than old imported snapshots. Preserve supported undated, DATE, UTC and exact named-zone task forms, start/due/duration distinctions, recurrence/WKST/inclusions/exclusions, original progress components, independently optional STATUS/PERCENT-COMPLETE/COMPLETED and source versions/omissions. Preserve legal text annotations, source property groups, organizer/attendee parameters, unresolved relationships, inert URI attachments and unarmed DISPLAY/acknowledgement/sibling-snooze source data. Progress-only occurrence components retain raw omission and inheritance rules; no timing/content exception is invented.
+
+Native task assignments remain host state and are never converted to ORGANIZER/ATTENDEE. Native UUIDs, scope, API revisions, database audit time, progress history/checkpoints and private source baselines are not serialized as extra fields. Protocol UID/timestamps are their separate values. No consent, acknowledgement action, alarm activation, URI access, notification, scheduling METHOD or HTTP subscription follows from export. VTODO scheduling remains deferred.
+
+Regenerate VCALENDAR presentation and full-horizon VTIMEZONE definitions from the pinned IANA database. Original PRODID, unused zones and decorative timezone source fields are not archived. The [whole-second 1970–2099 profile](adr/0041-whole-second-1970-2100-profile.md) and [timezone update/limitation guide](timezone-data.md) remain unchanged; due values do not gain the event exclusive-end exception.
+
+Validate generated aggregate output with the same pure VTODO profile as import, then compare decoded current component semantics. Reject unsupported or lossy state. The initial cap is 128 raw VTODO components across the file, including at most 64 overrides per series, plus existing syntax/text/alarm/recurrence budgets. Native tasks may store more recorded originals; export never silently flattens or truncates them. Legacy native occurrence records without independent protocol versions reject until an explicit initialization/adoption policy is implemented; reads do not invent creation time or repair storage.
+
+Unchanged state/pins produce deterministic bytes, with exact protocol UIDs and zone identifiers sorted. Export leaves API/protocol versions, audit timestamps, baselines, progress history and scope generation unchanged.
+
+## Example and validation
+
+The Flutter task list offers export for one explicitly selected saved task series, displays the returned text and offers copy. The typed API also supports multi-series selection. Stale state rejects and can be refreshed through the existing task list. Source fields may appear in the export only after the independent server gates; ordinary task responses gain no rich-source fields.
+
+Focused database tests cover independent permissions and every field group, current rich metadata/sparse progress/component versions, no assignment mapping, immutable whole-selection/final revocation, selection boundaries, legacy rejection and read-only determinism. Focused serializer tests cover optional timing/due/duration shapes, regenerated matching named zones and aggregate raw-component limits. Full `./tool/check.ps1` passed: stable generation, formatting/fatal-info analysis, core 471 VM + 471 Chrome, wire 308 + 308, module 149 VM + 17 Chrome, widgets 3, database 265 (18 export cases), populated upgrades, independent two-host/JWT/generated-client checks, complete connected Flutter export journey and release Web build with successful Wasm dry run. See [validation](scaffold-validation.md) for commands and scope. Source replacement/adoption, native source editors, task timing/content exceptions, feeds and alarm runtime remain separate. Passing local tests is not external-client or clipboard interoperability evidence.

@@ -106,3 +106,5 @@ The [recurring VEVENT master adapter](docs/icalendar-recurring-masters.md) exten
 ## Authenticated task import
 
 [Create-only task import](docs/task-import.md#implemented-create-only-operation) now preserves the supported VTODO profile atomically under separate import/create/progress permissions, with destination-local UID conflicts, private baselines and source versions. Source participants assign nobody, alarms stay unarmed and no history is invented. The Flutter example explicitly normalizes pasted line endings while the byte API stays strict. Task export, source updates, native metadata editors and alarm runtime remain separate.
+
+Authenticated [task export](docs/task-export.md) now complements create-only task import. Explicit complete-series output requires separate export, full task-detail and rich-source-read authority; participants/attachments/unarmed alarms remain inert source data. Source replacement, native exceptions, HTTP feeds and alarm runtime remain separate.

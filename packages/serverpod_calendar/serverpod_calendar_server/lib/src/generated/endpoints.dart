@@ -67,6 +67,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_task_assignment
     as _iuliypfa;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_create_request.dart'
     as _i9cxsmu8;
+import 'package:serverpod_calendar_server/src/generated/calendar_task_export_request.dart'
+    as _iqudlnxz;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_field_group.dart'
     as _ik0gz7r1;
 import 'package:serverpod_calendar_server/src/generated/calendar_task_history_query.dart'
@@ -964,6 +966,26 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'calendarTask',
       endpoint: endpoints['calendarTask']!,
       methodConnectors: {
+        'exportTasks': _is.MethodConnector(
+          name: 'exportTasks',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_iqudlnxz.CalendarTaskExportRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarTask'] as _i4tukef9.CalendarTaskEndpoint)
+                      .exportTasks(
+                        session,
+                        params['request'],
+                      ),
+        ),
         'importTasks': _is.MethodConnector(
           name: 'importTasks',
           params: {

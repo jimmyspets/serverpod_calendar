@@ -319,3 +319,7 @@ The maintainer selected the timing/composition-first slice and positive opening 
 ## Create-only task import increment, 2026-10-23
 
 [ADR 0099](adr/0099-authenticated-create-only-task-import.md) implements the scoped authenticated standalone VTODO import portion of FR-25/27, with exact destination UID conflicts, independent final authority, unknown prior progress and preserved optional source versions/metadata. No imported history/assignment/activation is inferred. Task export, remaining native exception/editor work and alarm/runtime requirements remain open. See [the import guide](task-import.md#implemented-create-only-operation).
+
+## Current task export increment, 2026-10-23
+
+[ADR 0100](adr/0100-authenticated-current-task-export.md) and [the task export guide](task-export.md) add read-only current-state standalone VTODO output with explicit revision-bound complete-series selection. Export requires independent export, full ordinary task disclosure and rich-source-read authority, checked again after serialization. Preserve supported source metadata/progress/versions; exclude private baselines, native assignments/history and alarm activation. Native exceptions, source replacement/adoption, feeds/runtime and external-client evidence remain separate. This supersedes older task-export-pending wording only for this bounded profile.
