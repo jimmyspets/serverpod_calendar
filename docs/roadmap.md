@@ -1135,3 +1135,13 @@ through organizer review/resend and ordinary REQUEST intake.
 - [x] Obtain explicit maintainer approval of the source profile, permission, storage and retention contract.
 - [x] Implement and validate attendee REFRESH, including trusted synthetic loopback, generated clients, two hosts and Flutter. See the [attendee validation record](private-attendee-responses.md#attendee-refresh-validation).
 - [ ] Verify full exact-head hosted inspection and runtime.
+
+## Incoming VEVENT ADD for known recurring invitations
+
+[Proposed ADR 0192](adr/0192-known-series-event-add.md) advances the next
+VEVENT scheduling method. It groups verified private receipt and explicit
+application of one representable new original to an adopted recurring
+invitation.
+
+- [ ] Obtain explicit agreement on the first ADD profile, application and lifecycle contract, and bounded private storage.
+- [ ] Implement and validate the agreed ADD workflow with synthetic trusted transport, generated clients, two hosts and Flutter.
