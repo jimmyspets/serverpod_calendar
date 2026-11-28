@@ -1,0 +1,51 @@
+# ADR 0167: Single-instance source applications after range restoration
+
+Status: **Proposed. The maintainer confirmed that a new occurrence command supersedes the restoration retry receipt under the existing latest-only rule. The following v10, version, authority and composition mechanics require explicit agreement before implementation.**
+
+## Context and scope
+
+[ADR 0166](0166-master-lifecycle-after-source-range-restoration.md), implemented in PR #163, permits whole-master CANCEL/reopening after source restoration using one frozen historical acceptance and independent current bindings. All recorded local batch checks passed; exact-head hosted CI remains separate. New occurrence source applications still reject after restoration.
+
+Next implement explicit single-instance REQUEST/CANCEL through the existing preview/apply APIs after a verified v7/v8/v9 restoration, and subsequent single applications and master composition/lifecycle. Require an active accepted master and an absent native cutoff for each new single command. A whole-cancelled master must first reopen explicitly. Range REQUEST/CANCEL, repeated source-cutoff transitions, arbitrary overwrite/merge, replies and real mail remain separate. No automatic application, response, alarm adoption or new endpoint follows. Existing authenticated export/feed representability guards remain; never strip a follow-series cancellation or other unsupported state to manufacture wire output or a stale 304.
+
+Preserve all other canonical single/future components, independent versions, native inheritance and individual cancellations. Use the existing pure single projection and supported property/profile rules. Exact original identity, profile and recurrence membership remain mandatory, including PERIOD/exclusion/DST rules. Native local content/protocol/exception/cutoff changes conflict with the complete expected accepted series; no partial merge is inferred.
+
+## Independent versions and latest-only retries
+
+A new single REQUEST/CANCEL uses the existing effective-component freshness rule: exact single version first, then applicable range, then master. Restoration cleared a native cutoff without rewriting canonical component versions, so its historical SEQUENCE is not a global floor for a new single message. A single source version may therefore be below the historical restoration version when it is newer than its actual effective component. This deliberately differs from ADR 0166's conservative whole-CANCEL floor and requires agreement here. Preserve all source omissions/timestamps and existing single cancellation/reopening ordering; never invent an increment or replace API revision fencing with source clocks.
+
+The maintainer confirmed latest-only occurrence-command behavior. The first newly accepted single supersedes the restoration receipt; later single commands supersede that slot normally. The old restoration evidence/receipt remains privately frozen for validation but is no longer an independently retryable command. Such superseded commands reject without reapplying, dismissing newer notices or changing state. Master updates/cancellation/reopening continue to preserve whichever occurrence command is currently latest. The separate latest-master receipt keeps its existing non-mutating retry behavior.
+
+## Existing-table v10 representation
+
+Reuse the existing occurrence checkpoint row and byte ceilings. On first v7 transition, freeze its v7 checkpoint descriptor, cutoff-free baseline and nullable actual master descriptor exactly as in ADR 0165. From v8/v9, retain the same frozen descriptor unchanged. Do not wrap v8/v9/v10 histories or freeze a second full event snapshot.
+
+Add a v10 current target ledger and latest-target/request/receipt fields alongside current master baseline/digest, master kind, composed baseline/expected-native bindings and distinct composition/receipt digest namespaces. Keep the original restoration/cancellation descriptors derived from the unchanged frozen proof, separately from the latest current target. An original adoption can still have no master-application row; verify the adoption binding rather than inventing a row or provenance. Later actual master REQUEST/CANCEL kind/status must match its verified row.
+
+The current ledger retains the latest accepted source descriptor, exact original, independent version, lifecycle marker and canonical component binding for every current accepted target. Replacing one target replaces its current descriptor rather than appending history. Preserve current canonical data for minimal CANCEL exactly as the existing single profile does; a minimal cancellation is not proof of the prior timing/content and does not reconstruct discarded intermediate history. Validate source method/UID/participant/original/profile/version/digest and canonical component/baseline bindings using the existing checks, independently from replay of the historical v7 proof. Missing/contradictory/altered proof, unknown formats, nesting or receipt bindings fail unavailable without flattening, fallback or read-time upgrades. Keep strict legacy v1-v9 reads and unchanged retained retries before any new single commits.
+
+Some canonical source data may be present both in the unchanged historical proof and the current ledger. Count every persisted byte, including replaced historical content retained privately until event deletion. Preserve existing 4 MiB/link, 16 MiB/recipient, 64 MiB/scope hard ceilings and configurable lower limits, existing source/work limits and the 128-slot combined budget: current targets plus one retained range-history slot must not exceed 128. Frozen copies are not additional canonical targets but still consume byte and validation-work budgets. Reject capacity failures atomically; never drop evidence or raise caps implicitly. Deletion scrubs the entire active checkpoint. No SQL/table/column, generated model or dependency change is proposed.
+
+## Master composition and lifecycle
+
+Current master REQUEST composition must preserve the updated current ledger and exact historical restoration original, rejecting orphan/profile changes. Whole-master CANCEL must exceed the current master, every current canonical accepted component and the independently retained historical cancellation/restoration versions, even though the latest occurrence target now names a single. Reopening keeps the cutoff clear and individual cancellations intact. Retain the same frozen history through all current kind changes, with current v10 bindings rather than downgrading to an earlier format.
+
+A master command fences the actual occurrence revision. A new single must also fence the actual master/event/calendar/source/checkpoint revisions. A lost race cannot rebase silently. Accepted current source identities survive ordinary queue cleanup under existing retention rules; superseded private historical values do not become ordinary response/export fields.
+
+## Alternatives and consequences
+
+Keeping the current guards is safe but leaves selected source reconciliation incomplete. Dropping restoration proof or resetting the baseline would lose confirmed conflict/retry evidence. Nesting the entire current checkpoint after every change would accumulate private content without a stable bound. Instead retain one frozen historical proof and replace current target descriptors in place, charging any duplication against existing caps.
+
+A global historical-restoration SEQUENCE floor would be more restrictive than the existing per-component model and could reject a fresh independent single update. This proposal keeps effective-component freshness for singles while retaining the separately agreed conservative whole-CANCEL floor. That distinction must be documented and tested; it is not a claim that every sender implements the same version policy.
+
+## Authority and transactions
+
+Require existing independent occurrence read/apply or cancellation, summary/source/link/application/raw detail and native import/replacement/update/lifecycle rights, plus accepted-occurrence/cancellation/restoration composition authority whenever verified restoration history participates. Reauthorize the real historical and current source identities/bodies, including after queue pruning; private stored evidence grants no authority. Previews check eligibility and appropriate native/action/composition rights without mutation; actual commands recheck preliminary/final immutable current/proposed native and checkpoint context under the declared coordination guarantee.
+
+Atomically write the selected canonical component, ordinary cutoff-free import baseline, v10 acceptance and selected notice dismissal; advance event/occurrence revision and invalidate scope/feed/alarm generations/leases exactly once. Keep parent metadata time, independent component versions, personal definitions/actions and accepted-firing deduplication unchanged except where current eligibility actually changes. Require fresh dispatch expiry/access/status checks. Reuse existing generated-client APIs, history flags and Flutter single-instance controls; history must not imply a current suffix cutoff or an independently retryable restoration.
+
+## Validation and acceptance
+
+After explicit approval cover direct v7 and composed v8/v9 to v10, continued single REQUEST/CANCEL/reopening, DATE/UTC/named zones/DST and PERIOD originals, exact profile/membership/orphan conflicts, unchanged other targets and independent versions. Test the effective-component versus historical-restoration version distinction, omissions/backwards clocks, equal/lower/newer source versions and limits.
+
+Cover latest-only restoration/single supersession, master receipt independence, unchanged retries after native drafts and newer notices, subsequent master composition/CANCEL/reopening, native/host/read/preliminary/final denials, every frozen/current/kind/target/receipt binding, unknown/nested formats, quotas, source pruning/deletion and legacy reads. Exercise actual two-host same/competing commands, master/single revision races and loss before/after commit, generated clients/Flutter, fresh busy/query/feed validators and reminder suppression/actions/deduplication. Use focused tests, grouped checks before one complete-batch code commit and full implementation-head repository CI before readiness.
