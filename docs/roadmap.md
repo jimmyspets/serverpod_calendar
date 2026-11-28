@@ -1103,6 +1103,7 @@ Accepted [ADR 0182](adr/0182-native-event-information-publication.md) authorizes
 - [x] Exercise focused ordinary and exceptional database cases, source-proof corruption and limits, two-host process loss, and the connected exceptional-anchor Flutter journey. See [actual results](validation-durable-exceptional-range.md).
 - [x] Implement the scoped durable feature group and record its focused, database, two-host and Flutter validation.
 - [x] Verify the 4.1.2 upgrade PR's inspection and runtime jobs with the approved test exception.
+- [x] Validate a narrow Relic I/O patch against the strict two-host feed smoke in an isolated checkout. See [the candidate and actual result](feed-304-compatibility.md#adapter-candidate-and-local-validation).
 - [ ] Obtain full hosted inspection/runtime results for the merged stack.
 - [ ] Adopt a compatible fix for [Relic issue #454](https://github.com/serverpod/relic/issues/454), remove the exception and pass the strict two-host smoke test and full repository checks.
 

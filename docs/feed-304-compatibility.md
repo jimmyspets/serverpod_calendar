@@ -24,6 +24,36 @@ As of 2026-11-28, the upstream issue is open and the newest published
 `relic_io` version is 2.0.1.
 [Published versions](https://pub.dev/packages/relic_io/versions)
 
+## Adapter candidate and local validation
+
+In the Relic I/O response writer, the 304 path can commit the response head
+through a fresh empty stream after consuming the handler body. Shared framing
+still sets the response headers and disables chunking as appropriate. The
+adapter-specific change inside the existing body suppression branch is:
+
+```dart
+body.consume();
+if (statusCode == HttpStatus.notModified) {
+  await httpResponse.addStream(const Stream<List<int>>.empty());
+}
+```
+
+On 2026-11-28, an isolated checkout at `f6c2994` used a path override of
+`relic_io` 2.0.1 with this patch. The rest of the lockfile resolved to the
+same packages. The Serverpod 4.1.2 host built and the strict
+`dart run tool/host_smoke.dart --feeds-only` passed on two synthetic hosts
+after removing the test exception in that checkout. The conditional response
+omitted Content-Length and returned the matching ETag and zero body bytes
+for a 692-byte selected representation. The run also passed HEAD,
+revocation, publication withdrawal and competing writes. The first attempt
+passed the 304 assertion and stopped at the publisher-withdrawal fixture
+because the isolated checkout lacked the synthetic Compose configuration.
+The complete rerun used that configuration.
+
+The candidate is ready for dependency review. The checked-in lockfile and
+temporary feed-test exception remain on the released packages until a
+compatible release or a reviewed immutable patch is adopted.
+
 After adopting a compatible fix, remove the version-specific test exception
 and run `dart run tool/host_smoke.dart --feeds-only` on the two synthetic hosts.
 The smoke test requires the matching ETag, no body and either an absent
