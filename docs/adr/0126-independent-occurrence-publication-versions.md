@@ -1,6 +1,6 @@
 # ADR 0126: Independent occurrence publication versions and bounded REQUEST bundles
 
-Status: **Independent outgoing occurrence versions confirmed by the maintainer on 2026-10-26. The concrete durable bundle, checkpoint, lifecycle guards and host-interface changes below are proposed for approval; no runtime implementation is added.**
+Status: **Accepted by explicit maintainer approval on 2026-10-26, including the durable bundle, checkpoint, lifecycle guards and host-interface changes. Scoped implementation; validation is recorded in [the organizer guide](../native-organizer-scheduling.md) and [validation record](../scaffold-validation.md).**
 
 ## Confirmed policy and evidence
 
@@ -8,7 +8,7 @@ The maintainer selected independent outgoing occurrence versions: advance an occ
 
 [RFC 5546 message sequencing](https://www.rfc-editor.org/rfc/rfc5546.html#section-2.1.5) correlates instances by UID and RECURRENCE-ID and orders their SEQUENCE/DTSTAMP. Its [recurrence guidance](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.7.1) retains original identity when actual timing moves. The [REQUEST profile](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.2) permits same-UID component sets. These references were checked on 2026-10-26. The proposed persistence, significance and batching policies below are application decisions, not additional RFC requirements or external-client evidence.
 
-## Proposed first durable occurrence batch
+## Accepted first durable occurrence batch
 
 Extend explicit Save and notify to one native recurring event with its complete representable master and occurrence components in one immutable REQUEST. Reuse fixed verified organizer/recipients, ordinary edit/source/detail/lifecycle rights, transaction locks, command keys and delivery tables. Ordinary edits still send nothing. Keep native inheritance live and canonical versions intact; apply approved required-field projection only to outgoing candidates.
 
@@ -16,7 +16,7 @@ Support existing single timing/content exceptions and timing-only THISANDFUTURE 
 
 Before publication, compare the previously published occurrence identities with the complete new set. Reject removal, changed original identity, single/range-kind replacement or a rule change that excludes a previously published anchor. Native local edits remain possible under their existing rules; publication explains that remote reset/reconciliation is still unavailable. Omitting an old component never resets a subscriber's exception. Initial additions and changes retaining the published identities are supported. Instance CANCEL/reset, detached delivery, recipient changes and imported adoption remain separate required batches.
 
-## Proposed version allocation
+## Accepted version allocation
 
 Use an exact key consisting of protocol UID and original typed recurrence identity; the master has a distinct master key. RANGE is retained as a checked projection attribute, not an alternative identity namespace. Compare deterministic, source-aware outgoing component projections after approved required-field materialization, excluding only scheduling SEQUENCE and DTSTAMP. Preserve text spelling/parameters and source distinctions that appear in outgoing data; never compare UI placeholders or expanded preview geometry.
 
@@ -26,7 +26,7 @@ The master retains its existing native/publication version rules under ADRs 0122
 
 Keep exact retained-command retry behavior and full reauthorization. A true no-op requires unchanged requested canonical state and complete normalized outgoing projection, and keeps the existing receipt, versions, API revision and generation. A canonical distinction that changes while outgoing values stay equal is not silently erased: save it under ordinary API rules; any new explicit publication/checkpoint retains unchanged outgoing component versions. Record canonical comparison separately from outgoing comparison so native inheritance does not become pinned or appear falsely synchronized.
 
-## Proposed private checkpoint and existing storage
+## Accepted private checkpoint and existing storage
 
 Reuse the four approved scheduling tables; add no table, column or migration. Write a versioned private JSON checkpoint in the existing publication `snapshot` string and a versioned comparison value in `projection`. The new checkpoint contains the complete canonical publication-time snapshot, including native override/source presence, plus a bounded list of outgoing component identities, normalized projections and independent outgoing versions. Store exact final ICS only in the existing payload field, with its digest. The row's sequence/stamp fields continue to describe the outgoing master; generation remains the intent fence.
 
@@ -34,19 +34,19 @@ Decode current unversioned master-only records as legacy checkpoints with one ma
 
 Keep the existing private latest-checkpoint lifetime while its binding is active, superseded-terminal 30-day configurable cleanup and all recipient/attempt limits. The latest checkpoint must be self-contained: no reference to a superseded row that cleanup may remove. It may retain old private canonical text until superseded, under the already approved snapshot policy. Ordinary views, exports and feeds never expose it. No new source-document archive or provider data is added.
 
-## Proposed whole-series cancellation coordination
+## Accepted whole-series cancellation coordination
 
 Keep whole-series Cancel and notify available using the last published master, preserving current native draft/exception state. When occurrences have been published, its outgoing cancellation sequence must exceed the master and every retained outgoing occurrence sequence, as well as the relevant current native floor. The cancellation checkpoint carries the last REQUEST's full occurrence identity/version ledger, even though CANCEL emits only the master. This prevents cleanup or cancellation from losing the versions needed for reopening.
 
 A later explicit REQUEST reopening must retain those occurrence identities and advance every emitted component beyond the whole-series cancellation floor. This lifecycle transition is significant even when ordinary content is unchanged. Reject unsupported removals/cancellations rather than guessing a remote reset. Local reopen still sends nothing; current leases, generation withdrawal and uncertain-submission limits remain unchanged.
 
-## Proposed host and worker integration
+## Accepted host and worker integration
 
 Break the unpublished scheduling host interface explicitly: provide complete immutable current/final native snapshots, canonical publication snapshot, typed final outgoing message and exact serialized bytes/digest. Replace the single-component disclosure assumption; require hosts to implement approval of the entire bundle for every recipient at preliminary/final command and background-dispatch phases. Never silently adapt an old host that only approved the master. Preliminary context must explicitly distinguish a not-yet-built candidate from the final exact message.
 
 Workers validate checkpoint schema, full component identity/version/projection sets, immutable payload digest, exact fixed organizer/attendee roster on every component, current native origin/parent/mode, authority, routes, generation, cancellation and expiry. Compare decoded payload against the stored publication projection, not unpublished live drafts. Revalidate actual current native state and complete outgoing disclosure before every submission/retry. No network I/O occurs under the scope lock; existing database leases/fences, stable delivery keys and at-least-once uncertainty still apply. The example remains synthetic transport only.
 
-## Proposed acceptance gates
+## Acceptance gates
 
 Cover DATE/UTC/named zones, DST, PERIOD, single/future identity, inherited/own/empty annotations, separate canonical/outgoing versions, occurrence-only and inherited-master changes, independent no-ops, overflow and clock floors. Verify published-removal/range/cancellation/unrepresentable rejection without local data loss, legacy/unknown/corrupt checkpoints, bounded snapshot/output growth and complete policy context with per-recipient denial/rollback. Test whole-series cancellation/reopening floors and ledger retention after cleanup.
 

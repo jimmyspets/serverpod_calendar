@@ -200,7 +200,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
             'Ordinary event edits remain local. Save and notify publishes the content below with the currently saved timing.',
           ),
           const Text(
-            'This workflow supports native single events and recurring masters with fixed recipients. Cancel and notify uses the last published version and keeps saved local fields. It does not save unsaved form edits; reloading discards those edits.',
+            'This workflow supports native events and representable recurring exceptions with fixed recipients. Cancel and notify uses the last published version and keeps saved local fields. It does not save unsaved form edits; reloading discards those edits.',
           ),
           if (_busy) const LinearProgressIndicator(),
           if (_error != null) Text(_error!, key: const Key('scheduling-error')),
@@ -229,7 +229,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
           ],
           if (hasExceptions)
             const Text(
-              'Saved occurrence exceptions cannot be published in this master-only profile. They stay saved; whole-series cancellation preserves them.',
+              'Saved exceptions are included when representable. Follow-series content without explicit timing and individual cancellations cannot be published yet. Removing a previously published exception requires a future reset workflow. A rejected publication keeps your saved edits.',
               key: Key('scheduling-exception-limit'),
             ),
           TextField(
@@ -263,11 +263,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
           ),
           FilledButton(
             key: const Key('scheduling-publish'),
-            onPressed:
-                _busy ||
-                    !eligible ||
-                    _pendingCancel != null ||
-                    (hasExceptions && _pending == null)
+            onPressed: _busy || !eligible || _pendingCancel != null
                 ? null
                 : _publish,
             child: Text(

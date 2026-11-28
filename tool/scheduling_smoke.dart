@@ -45,9 +45,24 @@ Future<void> schedulingSmoke(List<Client> clients) async {
       content: content('Local draft'),
     ),
   ))!;
+  await b.calendarEvent.changeOccurrence(
+    cal.CalendarEventOccurrenceChange(
+      eventId: event.eventId,
+      expectedRevision: 1,
+      originalStart: cal.CalendarEventTiming(
+        kind: cal.CalendarEventTimeKind.utc,
+        start: cal.CalendarEventCivil(year: 2026, month: 11, day: 2, hour: 9),
+      ),
+      action: cal.CalendarEventOccurrenceAction.replaceSingleTiming,
+      replacement: cal.CalendarEventTiming(
+        kind: cal.CalendarEventTimeKind.utc,
+        start: cal.CalendarEventCivil(year: 2026, month: 11, day: 2, hour: 10),
+      ),
+    ),
+  );
   final command = cal.CalendarSchedulingSaveRequest(
     eventId: event.eventId,
-    expectedRevision: 1,
+    expectedRevision: 2,
     content: content('Explicit invitation'),
     recipients: ['mailto:bob@example.invalid'],
     commandId: cal.Uuid().v4obj(),
@@ -61,7 +76,7 @@ Future<void> schedulingSmoke(List<Client> clients) async {
     throw StateError('Concurrent idempotent publication was not atomic');
   }
   final status = await b.calendarEvent.schedulingStatus(event.eventId);
-  if (status.eventRevision != 2 ||
+  if (status.eventRevision != 3 ||
       status.hasLocalChanges ||
       status.origin != cal.CalendarEventOrigin.native) {
     throw StateError('Cross-host publication checkpoint differs');
@@ -72,7 +87,7 @@ Future<void> schedulingSmoke(List<Client> clients) async {
         try {
           await api.calendarEvent.saveAndNotify(
             command.copyWith(
-              expectedRevision: 2,
+              expectedRevision: 3,
               commandId: cal.Uuid().v4obj(),
               content: content('Concurrent update ${api == a ? 'A' : 'B'}'),
             ),
@@ -149,7 +164,7 @@ Future<void> schedulingSmoke(List<Client> clients) async {
     throw StateError('Explicit reopening did not publish REQUEST');
   }
   stdout.writeln(
-    'PASS: two-host recurring-master organizer publication, idempotency/revision races, local draft isolation, cancellation/reopening and synthetic acceptance.',
+    'PASS: two-host recurring occurrence-bundle publication, idempotency/revision races, local draft isolation, cancellation/reopening and synthetic acceptance.',
   );
   // Bindings deliberately reject deletion in the first profile. Isolated test
   // storage is reset by the root harness; no public cleanup backdoor is added.

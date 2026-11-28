@@ -54,7 +54,7 @@ final class DemoSchedulingHost implements CalendarSchedulingHost {
   }
 
   @override
-  Future<CalendarAuthorizationVerdict> authorize(
+  Future<CalendarAuthorizationVerdict> authorizeMessage(
     Session session,
     CalendarSchedulingPolicyContext context,
     Transaction transaction,
@@ -76,8 +76,19 @@ final class DemoSchedulingHost implements CalendarSchedulingHost {
         context.intent.organizerAddress != context.authority.organizerAddress ||
         context.currentEvent.eventId != context.proposedEvent.eventId ||
         context.currentEvent.calendarId != context.proposedEvent.calendarId ||
-        context.currentEvent.eventId != context.outgoingEvent.eventId ||
-        context.currentEvent.calendarId != context.outgoingEvent.calendarId) {
+        context.currentEvent.eventId != context.publicationEvent.eventId ||
+        context.currentEvent.calendarId !=
+            context.publicationEvent.calendarId ||
+        context.outgoingMessage.events.any(
+          (event) =>
+              event.participants.organizer?.address !=
+                  context.authority.organizerAddress ||
+              event.participants.attendees.any(
+                (a) => !context.authority.routes.any(
+                  (r) => r.address == a.address,
+                ),
+              ),
+        )) {
       return CalendarAuthorizationVerdict.deny;
     }
     // Private-user demo grants all event detail/source/publication operations

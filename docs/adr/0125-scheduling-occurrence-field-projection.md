@@ -1,6 +1,6 @@
 # ADR 0125: Scheduling-only occurrence field projection
 
-Status: **Accepted field-projection decision, confirmed 2026-10-26; pure prerequisite implemented. Durable occurrence publication and physical storage design remain unapproved.**
+Status: **Accepted field-projection decision, confirmed 2026-10-26; pure prerequisite implemented. Accepted ADR 0126 subsequently adds the scoped durable bundle/version/checkpoint integration; instance reset/CANCEL remain separate.**
 
 ## Context and source evidence
 
@@ -22,7 +22,7 @@ Before implementing occurrence publication, specify per-instance version advance
 
 Instance cancellations need CANCEL semantics and reviewed transactional message coordination. Removing a previously published exception or changing its original membership also needs an explicit reset/reconciliation policy; silently omitting it is not an approved remote-state reset. A single/future pair sharing one original identity requires separate review before publication. These lifecycle, version, bundle/storage and retention mechanics remain unapproved. Complete occurrence/instance/range scheduling stays a first-release requirement.
 
-The maintainer subsequently selected independent outgoing occurrence versions, with unchanged occurrences retaining their versions and native versions separate. [ADR 0126](0126-independent-occurrence-publication-versions.md) records that confirmed policy and proposes the complete bundle/checkpoint/lifecycle/host-interface mechanics for review before durable implementation.
+The maintainer subsequently approved [ADR 0126](0126-independent-occurrence-publication-versions.md), including independent outgoing occurrence versions and the bounded durable bundle/checkpoint/lifecycle/host-interface mechanics. That scoped implementation supersedes the earlier pending mechanics above only for its declared REQUEST/whole-series cancellation profile; instance reset/CANCEL and unrepresentable source mappings remain separate.
 
 Continue current fixed organizer/recipients, independent publish/lifecycle/detail/source authority, bounded work/payloads, stable retry identity, fresh authorization and fencing. Whole-series cancellation remains governed by ADR 0124. No new endpoint, model, migration, delivery capability or real mail is introduced by this document.
 

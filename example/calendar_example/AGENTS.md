@@ -38,3 +38,5 @@ Under accepted ADR 0123, the example also demonstrates explicit Cancel and notif
 
 
 Under accepted ADR 0124, the meeting screen can publish saved recurring-master patterns. It keeps fixed recipients and explicitly disables new REQUEST publication while native occurrence exceptions exist; those exceptions remain saved and whole-series cancellation preserves them. Worker probes and two-host/Flutter journeys now cover recurring REQUEST/CANCEL. Source data and delivery remain synthetic-only, with no new migration or provider setup.
+
+Accepted ADR 0126 now permits complete representable occurrence REQUEST bundles. The example host implements `authorizeMessage` with the complete outgoing message/digest and canonical snapshot; the editor explains unsupported cancellation, follow-series timing and published-reset boundaries. Rejection preserves saved edits; cancelling the whole series preserves native drafts and independent publication-version history. Process-loss, generated-client and Flutter journeys now exercise occurrence bundles. Keep every transport synthetic and preserve development storage.

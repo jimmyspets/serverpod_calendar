@@ -37,6 +37,7 @@ part 'calendar_alarm_actions.dart';
 part 'calendar_alarm_worker.dart';
 part 'calendar_events.dart';
 part 'calendar_scheduling.dart';
+part 'calendar_scheduling_bundle.dart';
 part 'calendar_scheduling_worker.dart';
 part 'calendar_event_occurrence_content.dart';
 part 'calendar_tasks.dart';

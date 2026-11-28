@@ -132,17 +132,13 @@ final class _SchedulingWorker {
         _schedulingDigest(p.payload) != p.payloadDigest) {
       throw _failure(CalendarFailureCode.accessDenied);
     }
-    final published = _schedulingPublished(p);
+    final checkpoint = _schedulingReadCheckpoint(p);
+    final published = checkpoint.outgoing;
     if (_schedulingRecurring(published.content) !=
             _schedulingRecurring(e.data.content) ||
-        _schedulingOverrides(published.timingOverrides) ||
-        published.protocolState!.overrides.isNotEmpty ||
         published.eventId != e.identity.id ||
         published.calendarId != e.identity.calendarId ||
-        published.protocolUid != p.protocolUid ||
-        published.protocolState?.version.sequence != p.sequence ||
-        _schedulingProjection(published.content, published.protocolState!) !=
-            p.projection) {
+        published.protocolUid != p.protocolUid) {
       throw _failure(CalendarFailureCode.unavailable);
     }
     // Revalidate immutable bytes too; corrupt state cannot become transport input.
@@ -158,21 +154,17 @@ final class _SchedulingWorker {
             (published.content.status != CalendarEventStatus.cancelled ||
                 parsed.events.single.status !=
                     IcalendarEventStatus.cancelled) ||
-        parsed.events.length != 1 ||
-        parsed.events.single.originalDate != null ||
-        parsed.events.single.originalTime != null ||
-        parsed.events.single.isThisAndFuture ||
         parsed.uid != p.protocolUid ||
-        parsed.events.single.sequence != p.sequence ||
-        parsed.events.single.participants.organizer?.address !=
-            meeting.organizerAddress ||
-        jsonEncode(
-              (parsed.events.single.participants.attendees
-                  .map((a) => a.address)
-                  .toList()
-                ..sort()),
-            ) !=
-            jsonEncode(p.recipients)) {
+        parsed.events.any(
+          (event) =>
+              event.participants.organizer?.address !=
+                  meeting.organizerAddress ||
+              jsonEncode(
+                    (event.participants.attendees.map((a) => a.address).toList()
+                      ..sort()),
+                  ) !=
+                  jsonEncode(p.recipients),
+        )) {
       throw _failure(CalendarFailureCode.unavailable);
     }
     final deliveries = await CalendarSchedulingDeliveryRecord.db.find(
@@ -201,7 +193,9 @@ final class _SchedulingWorker {
       calendar: e.parent.snapshot,
       currentEvent: e.snapshot,
       proposedEvent: e.snapshot,
-      outgoingEvent: published,
+      publicationEvent: checkpoint.canonical,
+      outgoingMessage: parsed,
+      payloadDigest: p.payloadDigest,
       authority: authority,
       intent: CalendarSchedulingIntent(
         method: p.method,
