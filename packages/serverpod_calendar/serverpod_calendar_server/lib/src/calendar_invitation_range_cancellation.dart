@@ -1,7 +1,7 @@
 part of 'calendar_module.dart';
 
 bool _occHasRangeCancellation(Map<String, dynamic>? state) =>
-    {4, 5, 6, 7, 8}.contains(state?['version']);
+    {4, 5, 6, 7, 8, 9}.contains(state?['version']);
 
 Map<String, dynamic> _occLatestTarget(Map<String, dynamic> state) {
   if (_occHasRangeRestoration(state)) {

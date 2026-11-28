@@ -161,7 +161,7 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
             ),
             if (view.hasAcceptedRangeRestoration)
               const Text(
-                'An explicit source restoration cleared the suffix cutoff. Individual cancellations remain. Eligible master updates preserve restoration; whole-series lifecycle and further range source actions remain unavailable.',
+                'An explicit source restoration cleared the suffix cutoff. Individual cancellations remain. Explicit master updates, cancellation and reopening preserve restoration history. Reopening keeps the old suffix cutoff cleared and individual cancellations intact. Further range source actions remain unavailable.',
                 key: Key('invitation-master-range-restoration'),
               ),
             if (view.hasAcceptedRangeCancellation &&

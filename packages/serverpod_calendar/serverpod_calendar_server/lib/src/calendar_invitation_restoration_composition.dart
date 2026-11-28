@@ -3,9 +3,11 @@ part of 'calendar_module.dart';
 extension CalendarInvitationRestorationComposition on CalendarService {
   void _occCheckRestoredMember(
     CalendarEventImportMember member,
-    Map<String, dynamic> state,
-  ) {
-    if (member.content.status == CalendarEventStatus.cancelled ||
+    Map<String, dynamic> state, {
+    bool allowCancelled = false,
+  }) {
+    if (member.content.status == CalendarEventStatus.cancelled &&
+            !allowCancelled ||
         member.timingOverrides?.cancelledFrom != null ||
         !eventSchedulingMember(
           member.content,
@@ -22,7 +24,8 @@ extension CalendarInvitationRestorationComposition on CalendarService {
     CalendarInvitationLinkRecord link,
     Map<String, dynamic> state,
   ) => _invitationHash([
-    'restored-composition-v8',
+    state['version'] == 9 ? 'restored-lifecycle-v9' : 'restored-composition-v8',
+    if (state['version'] == 9) state['masterKind'] as String,
     link.scopeKey,
     link.recipientKey,
     link.id.toString(),
@@ -47,11 +50,22 @@ extension CalendarInvitationRestorationComposition on CalendarService {
     required CalendarEventImportBaseline masterBaseline,
     required CalendarEventImportBaseline baseline,
     required CalendarEventImportMember member,
+    required CalendarInvitationSourceKind kind,
   }) {
-    _occCheckRestoredMember(member, state);
+    final cancelled = kind == CalendarInvitationSourceKind.meetingCancellation;
+    if ((member.content.status == CalendarEventStatus.cancelled) != cancelled) {
+      throw ArgumentError('Invalid restored lifecycle');
+    }
+    _occCheckRestoredMember(member, state, allowCancelled: cancelled);
+    final lifecycle =
+        cancelled ||
+        previousMaster?.kind ==
+            CalendarInvitationSourceKind.meetingCancellation ||
+        state['version'] == 9;
     final next = <String, dynamic>{
-      'version': 8,
-      'frozenRestoration': state['version'] == 8
+      'version': lifecycle ? 9 : 8,
+      if (lifecycle) 'masterKind': kind.name,
+      'frozenRestoration': {8, 9}.contains(state['version'])
           ? state['frozenRestoration']
           : {
               'baseline': event.data.importBaseline!.toJson(),
@@ -105,7 +119,14 @@ extension CalendarInvitationRestorationComposition on CalendarService {
         (descriptor['eventRevision'] as int) >= row.eventRevision ||
         DateTime.parse(descriptor['updatedAt']).isAfter(row.updatedAt) ||
         master == null ||
-        master.kind != CalendarInvitationSourceKind.request ||
+        !{
+          CalendarInvitationSourceKind.request,
+          CalendarInvitationSourceKind.meetingCancellation,
+        }.contains(master.kind) ||
+        state['version'] == 8 &&
+            (master.kind != CalendarInvitationSourceKind.request ||
+                state.containsKey('masterKind')) ||
+        state['version'] == 9 && state['masterKind'] != master.kind.name ||
         state['masterDigest'] != _occMasterDigest(link, master) ||
         state['baselineDigest'] !=
             _invBaselineDigest(event.data.importBaseline!)) {
@@ -159,7 +180,12 @@ extension CalendarInvitationRestorationComposition on CalendarService {
       historicalEvent,
       accepted,
     );
-    _occCheckRestoredMember(composed, accepted);
+    _occCheckRestoredMember(
+      composed,
+      accepted,
+      allowCancelled:
+          master.kind == CalendarInvitationSourceKind.meetingCancellation,
+    );
     final actual = eventImportBaseline(
       link.uid,
       composed.content,

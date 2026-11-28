@@ -368,6 +368,54 @@ Future<void> runRangeInvitationApplicationJourney(
     );
     navigator.pop();
     await tester.pumpAndSettle();
+    for (final cancelled in [true, false]) {
+      if (cancelled) {
+        await client.invitationDemo.simulateCancellation(
+          id,
+          const cal.Uuid().v4obj(),
+          10,
+        );
+      } else {
+        await client.invitationDemo.simulateRecurring(
+          id,
+          const cal.Uuid().v4obj(),
+          11,
+          'Reopened restored meeting',
+        );
+      }
+      navigator.push(
+        MaterialPageRoute<void>(
+          builder: (_) => InvitationUpdateScreen(
+            client: client,
+            invitationId: master.entryId,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await loaded();
+      expect(
+        find.byKey(const Key('invitation-master-range-restoration')),
+        findsOneWidget,
+      );
+      await tap(
+        cancelled ? 'invitation-cancellation-apply' : 'invitation-update-apply',
+      );
+      final current = await api.calendarInvitation.application(master.entryId);
+      expect(current.hasAcceptedRangeRestoration, isTrue);
+      expect(current.hasLocalChanges, isFalse);
+      expect(
+        current.currentContent.status,
+        cancelled
+            ? cal.CalendarEventStatus.cancelled
+            : cal.CalendarEventStatus.confirmed,
+      );
+      final history = await api.calendarInvitation.rangeRestorationApplication(
+        source.entryId,
+      );
+      expect(history.acceptedVersion.sequence, 8);
+      navigator.pop();
+      await tester.pumpAndSettle();
+    }
   } finally {
     final event = await api.calendarEvent.getEvent(link.eventId, []);
     await api.calendarEvent.deleteEvent(link.eventId, event.revision);

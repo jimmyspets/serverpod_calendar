@@ -342,3 +342,7 @@ Accepted [ADR 0159](adr/0159-pure-range-cancellation-projection.md) implements a
 ## Master lifecycle preserving the range cutoff
 
 [Accepted ADR 0162](adr/0162-master-lifecycle-with-accepted-range-cancellation.md) implements explicit whole-series CANCEL/reopening while preserving the accepted range cutoff, canonical exceptions and original source receipts. Existing JSON v6 binds current master kind/composition separately from frozen cancellation evidence. The conservative whole-CANCEL floor includes the historical range version; existing APIs/views/SQL and caps are reused. Source-cutoff restoration and new occurrence applications remain separate. See [the implementation profile](range-cancellation-master-lifecycle.md) and actual validation.
+
+## Master lifecycle after source range restoration
+
+[Accepted ADR 0166](adr/0166-master-lifecycle-after-source-range-restoration.md) supports explicit whole-series cancellation/reopening with a clear native cutoff and preserved individual cancellations. Existing JSON v9 binds current kind/status independently from frozen restoration proof, with strict conservative source floors, complete authority checks and stable historical retries. No SQL/API/cap expansion. See [the profile](restoration-master-lifecycle.md); new range transitions and remaining scheduling stay separate.

@@ -1,6 +1,6 @@
 # ADR 0166: Master lifecycle after accepted source range restoration
 
-Status: **Proposed. Active-master restoration preservation is approved under ADR 0165; extending it to whole-series lifecycle and the following v9/source-floor mechanics requires explicit agreement.**
+Status: **Accepted. The maintainer explicitly approved the lifecycle/version batch, including the existing-table v9 and conservative source-floor mechanics, on 2026-11-03. Implementation and validation evidence are tracked separately.**
 
 ## Context and first scope
 

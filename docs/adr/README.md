@@ -181,7 +181,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0163](0163-pure-restore-only-range-source-projection.md) | Pure restore-only range source projection | Accepted; pure exact matching/source floor with unchanged canonical versions; durable restoration separate |
 | [0164](0164-first-durable-source-range-restoration.md) | First durable source range restoration | Accepted; explicit clean-series restoration, bounded predecessor/evidence v7, independent authority and stable retries |
 | [0165](0165-master-updates-after-source-range-restoration.md) | Master updates after accepted source range restoration | Accepted; active master REQUEST composition preserves restoration/originals with bounded frozen evidence and v8 current bindings |
-| [0166](0166-master-lifecycle-after-source-range-restoration.md) | Master lifecycle after accepted source range restoration | Proposed; preserved clear cutoff/individual flags, conservative lifecycle floor and current-kind v9 binding |
+| [0166](0166-master-lifecycle-after-source-range-restoration.md) | Master lifecycle after accepted source range restoration | Accepted; preserved clear cutoff/individual flags, conservative lifecycle floor and current-kind v9 binding |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

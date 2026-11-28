@@ -9,7 +9,7 @@ typedef _OccurrenceAccepted = ({
 String _occLatestKey(
   Map<String, dynamic> state,
   CalendarInvitationOccurrenceApplyReceipt receipt,
-) => {3, 4, 5, 6, 7, 8}.contains(state['version'])
+) => {3, 4, 5, 6, 7, 8, 9}.contains(state['version'])
     ? state['latestTargetKey'] as String
     : _invTargetKey(receipt.originalStart);
 
@@ -221,7 +221,7 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
         throw StateError('Invalid checkpoint');
       }
       final state = jsonDecode(row.stateJson) as Map<String, dynamic>;
-      if (state['version'] == 8) {
+      if ({8, 9}.contains(state['version'])) {
         return _occDecodeRestorationComposition(
           link,
           event,
@@ -259,7 +259,7 @@ extension CalendarInvitationOccurrenceApplicationOperations on CalendarService {
         }
         final original = CalendarEventTiming.fromJson(target['original']);
         final range = (target['key'] as String).startsWith('range-v1:');
-        if (range && !{3, 4, 5, 6, 7, 8}.contains(state['version'])) {
+        if (range && !{3, 4, 5, 6, 7, 8, 9}.contains(state['version'])) {
           throw StateError('Legacy range target');
         }
         final key = _invTargetKey(original, range: range);
