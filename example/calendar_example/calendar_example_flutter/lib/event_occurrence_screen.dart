@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'occurrence_timing_editor.dart';
 import 'event_content_editor.dart';

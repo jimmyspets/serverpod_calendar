@@ -4,7 +4,7 @@ import 'invitation_bundle_update_screen.dart';
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
     as cal;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class InvitationAdoptionScreen extends StatefulWidget {
   const InvitationAdoptionScreen({

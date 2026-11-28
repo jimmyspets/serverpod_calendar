@@ -5,7 +5,7 @@ import 'personal_alarm_screen.dart';
 import 'event_scheduling_screen.dart';
 import 'event_information_screen.dart';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'event_occurrence_screen.dart';
 import 'event_import_screen.dart';
