@@ -1,6 +1,6 @@
 # ADR 0178: Pure effective-notice selection for recurring invitation responses
 
-Status: **Proposed, 2026-11-06.** The maintainer confirmed using the effective separately received instance/range notice and its version when selecting an original from an ordinary recurring invitation. The bounded pure mechanics below require explicit agreement before implementation. They do not authorize durable response changes.
+Status: **Accepted by explicit maintainer agreement, 2026-11-06**, including the bounded pure selector and complete validation group. The maintainer confirmed using the effective separately received instance/range notice and its version when selecting an original from an ordinary recurring invitation. The bounded pure mechanics below are explicitly approved. They do not authorize durable response changes. Actual implementation checks are recorded separately.
 
 ## Context and inspected evidence
 
@@ -12,7 +12,7 @@ Inspected response foreground/worker evidence, ordinary known-series membership,
 
 [RFC 5546 section 3.2.3](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.3) describes instance REPLY identity and request SEQUENCE; [section 3.7.1](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.7.1) discusses recurrence instances. Primary text checked 2026-11-06. The combined selection and bounded-input rules here are application policy, not an RFC database algorithm or a rule to select the largest timestamp/SEQUENCE across independent targets.
 
-## Proposed grouped prerequisite
+## Accepted grouped prerequisite
 
 Implement and test one pure `resolveRecurringInvitationResponseTarget` helper in the server adaptation package, using pure core/codec semantics. It selects a response source from supplied membership/request/notice evidence and returns an immutable semantic result. It performs no session/database read, history lookup, persistence, authorization, command admission, payload delivery or calendar mutation. Keep canonical calendar composition separate from deciding which source a minimal reply would answer.
 
@@ -49,3 +49,5 @@ Run focused pure tests during development, then complete core/iCalendar/module V
 A master-only selector contradicts the confirmed effective-notice policy. A synthetic combined file could change legal source omissions/versions or fail at otherwise independently valid same-anchor roles. Largest-sequence or newest-receipt selection conflates independent targets. A storage-backed selector now would hide unresolved multi-source retention and authority mechanics. The pure prerequisite makes those decisions reviewable before a separately approved durable group.
 
 RANGE participation replies, source-restoration history inference, durable arbitrary-original selection, new scheduling methods, delegation, provider trust, real mail and external-client interoperability remain separate required work. Pure selector success is not a release-complete response workflow.
+
+Implementation profile clarification: the existing scheduling codec rejects REQUEST with STATUS:CANCELLED, and a whole CANCEL cannot supply the required recurring membership basis. Both reject before any eligible result; this selector does not relax those rules or add a whole-cancellation input. The defensive master-cancelled guard cannot make an invalid packet valid. Known whole-cancellation/current-history eligibility remains a durable integration responsibility. See [the scoped guide](../recurring-response-source-selection.md) and [actual validation](../scaffold-validation.md).

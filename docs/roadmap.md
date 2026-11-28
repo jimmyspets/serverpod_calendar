@@ -962,9 +962,12 @@ ADR 0177 passed 467 serial invitation/MIME SDK cases, the complete core/iCalenda
 
 ## Ordinary recurring invitation response selection prerequisite
 
-The maintainer confirmed selecting the effective separately received instance/range notice and its version when responding to an original from an ordinary recurring invitation. [Proposed ADR 0178](adr/0178-pure-recurring-response-source-selection.md) profiles a bounded pure selector with complete packet/membership validation, single/range/master precedence and explicit cancellation blocking. It changes no stored response state, generated API, worker eligibility or Flutter flow. Durable multi-source proof/retention/authority and RANGE participation remain separate required work; this proposal is not implemented behavior.
+The maintainer confirmed selecting the effective separately received instance/range notice and its version when responding to an original from an ordinary recurring invitation. [Accepted ADR 0178](adr/0178-pure-recurring-response-source-selection.md) profiles a bounded pure selector with complete packet/membership validation, single/range/master precedence and explicit cancellation blocking. The pure selector is implemented without changing stored response state, generated API, worker eligibility or Flutter flow. Durable multi-source proof/retention/authority and RANGE participation remain separate required work. Actual checks are recorded separately.
 
 - [x] Confirm effective-notice rather than stale-master selection.
-- [ ] Obtain agreement on the concrete bounded pure selector contract.
-- [ ] Implement and validate the complete pure group before one code commit.
+- [x] Obtain agreement on the concrete bounded pure selector contract.
+- [x] Implement and validate the pure selector, with actual batch checks recorded separately.
+- [ ] Observe successful full exact-head hosted checks before readiness.
 - [ ] Review durable multi-source selection/evidence/retention and client integration separately.
+
+See [pure selection behavior and limits](recurring-response-source-selection.md). This does not enable a new response endpoint.
