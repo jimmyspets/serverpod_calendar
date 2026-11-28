@@ -1,0 +1,29 @@
+# Bounded repeated source range cycles
+
+[Accepted ADR 0170](adr/0170-bounded-repeated-source-range-cycles.md) extends the existing explicit range preview/application/restoration APIs. After a verified restoration, another authenticated range CANCEL can suppress every original at or after its selected anchor, including moved exceptions. A matching restore-only REQUEST at that exact anchor clears the entire cutoff. Timing, content, inheritance, individual cancellations, unarmed alarms and canonical component versions remain intact. Receiving or dismissing a notice changes no calendar state and sends nothing.
+
+An active accepted master, a clean entire linked series, exact original membership, current revisions and independently authorized actual sources remain mandatory. Only one accepted cutoff may be active. While active, new single/range source edits reject; master updates and whole-series cancellation/reopening preserve it. After restoration, single/range applications continue. Master changes must preserve every historical cycle anchor and current target; orphaning/profile changes reject. Restoration matches the current retained uncancelled values, including eligible master changes accepted while masked.
+
+## Versions and retries
+
+Re-cancellation requires an explicit SEQUENCE above both the last verified restoration and every affected canonical component, including the underlying master/range beneath an anchor single. Restoration must exceed its cancellation and the current affected canonical floor. Subsequent range REQUESTs exceed the effective component and last restoration; independent single commands use their effective component's version. Whole-master CANCEL exceeds current and retained control/component versions. These conservative application rules are stricter than universal RFC requirements. Source timestamps and omissions remain independent of database revisions.
+
+One latest-only occurrence receipt covers single/range edits and cancellation/restoration controls. A new occurrence command supersedes the preceding receipt, while retaining historical proof. Master commands preserve that receipt and keep their separate latest-master receipt. Exact current retries reauthorize and return the original result without replaying over local drafts or newer notices. Clients retain the same request after an uncertain response; they refresh before creating a different command.
+
+## Private storage and bounds
+
+Existing checkpoint JSON uses version 12 after the first repeated cancellation. Reads of legacy versions remain strict and do not upgrade storage. Entering v12 also requires the actual current accepted master body; missing evidence rejects without inventing source claims. One unchanged frozen legacy restoration sits beside a flat cycle list, current master/targets and the latest command. Each cycle retains cancellation and optional restoration evidence, actual source identities/bodies and standalone cutoff-free comparison bases. Bases contain no growing cycle history. Historical pure candidates, versions, command receipts and current composition are independently reconstructed; hashes alone do not establish validity or authority.
+
+All retained proof remains private until event deletion, including superseded content and bodies pruned from the ordinary review queue. There is no automatic compaction. Current targets plus one legacy slot plus one slot per additional cycle must fit 128 slots. Existing hard byte limits remain 4 MiB/link, 16 MiB/recipient and 64 MiB/scope, and hosts may lower them. Duplicated source/basis bytes count. A shared raw/recurrence work budget covers the complete reconstruction, including historical proof, before deduplication. Trusted shared budgets cannot widen a selected ceiling; corrupt proof nesting also rejects before recursive stack use can grow without bound. The complete proposed state, including a master composition, is validated before commit; exhausted capacity/work rejects atomically without dropping history.
+
+No SQL table, column, migration, endpoint signature or dependency is added. The two application view DTOs are regenerated with the approved derived boolean.
+
+## Protected views and authority
+
+`hasAcceptedRangeCancellation` and `hasAcceptedRangeRestoration` describe history. `hasActiveAcceptedRangeCancellation` describes the currently accepted suffix: true for verified legacy masked states and the final open v12 cycle, false for verified restored states. It does not report the master's active status or a locally edited native cutoff. Required missing/denied proof fails the protected read rather than becoming false. The flag never authorizes an action; fresh `canApply` and all write checks remain necessary.
+
+Existing independent action, source/raw-read, native lifecycle/import/replacement and composition permissions apply at preliminary/final phases. Retained sources are checked using their actual identities and bodies after queue pruning. The host receives immutable current/proposed native and private checkpoint context under its declared consistency guarantee; external fresh checks retain their documented revocation race.
+
+The event, cutoff-free baseline, checkpoint, selected notice dismissal, revisions and scope/feed/alarm invalidation commit together. Personal alarm actions and accepted-firing deduplication remain independent; restoration does not replay accepted reminders. Masked export/feed projections reject, including stale conditional responses. Source alarms remain unarmed.
+
+Overlapping cutoffs, partial or rescheduling restoration, outgoing range lifecycle, RANGE participation replies and real mail remain separate roadmap work. Validation commands and observed conclusions are recorded in [the validation record](scaffold-validation.md); implementation does not establish external-client certification or package readiness.

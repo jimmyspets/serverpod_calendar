@@ -1,5 +1,8 @@
 # Pure cancellation after source restoration
 
+Later [ADR 0170](adr/0170-bounded-repeated-source-range-cycles.md) implements [bounded repeated source range cycles](bounded-source-range-cycles.md). Its verified v12 path supersedes earlier temporary repeated-cycle guards below while preserving strict legacy reads/retries and all stated source, authority and retention boundaries. Historical validation remains evidence for its original batch.
+
+
 Accepted [ADR 0169](adr/0169-pure-range-cancellation-after-source-restoration.md) adds projectInvitationRangeRecancellation to the exported invitation-values library. It validates a new THISANDFUTURE CANCEL against current canonical values and an independently supplied previousRestorationVersion. It does not apply a calendar change or prove that a restoration was accepted.
 
 Incoming explicit SEQUENCE must be strictly greater than the maximum of the historical restoration sequence and the existing affected-component floor. That floor includes the underlying master/range beneath an anchor single and every affected later component in original order. Equal sequence with a later DTSTAMP rejects; exhaustion rejects without allocating an increment. This is our conservative application policy, not a universal RFC rule.

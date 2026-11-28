@@ -72,6 +72,22 @@ Future<void> runRangeInvitationApplicationJourney(
     await loaded();
   }
 
+  Future<void> shown(String text) async {
+    final target = find.text(text);
+    if (target.evaluate().isEmpty) {
+      await tester.scrollUntilVisible(
+        target,
+        -300,
+        scrollable: find.byType(Scrollable).first,
+        maxScrolls: 30,
+      );
+    } else {
+      await tester.ensureVisible(target);
+    }
+    await tester.pumpAndSettle();
+    expect(target, findsOneWidget);
+  }
+
   try {
     navigator.push(
       MaterialPageRoute<void>(
@@ -490,6 +506,71 @@ Future<void> runRangeInvitationApplicationJourney(
     );
     navigator.pop();
     await tester.pumpAndSettle();
+    for (final sequence in [20, 22]) {
+      await client.invitationDemo.simulateRange(
+        id,
+        const cal.Uuid().v4obj(),
+        sequence,
+        true,
+      );
+      navigator.push(
+        MaterialPageRoute<void>(
+          builder: (_) => InvitationOccurrenceApplicationScreen(
+            client: client,
+            id: source.entryId,
+            range: true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await loaded();
+      await tap('invitation-occurrence-apply');
+      expect(
+        (await api.calendarInvitation.rangeApplication(source.entryId))
+            .hasActiveAcceptedRangeCancellation,
+        isTrue,
+      );
+      await shown('Accepted suffix cancellation: active.');
+      navigator.pop();
+      await tester.pumpAndSettle();
+      await client.invitationDemo.simulateRange(
+        id,
+        const cal.Uuid().v4obj(),
+        sequence + 1,
+        false,
+      );
+      navigator.push(
+        MaterialPageRoute<void>(
+          builder: (_) => InvitationOccurrenceApplicationScreen(
+            client: client,
+            id: source.entryId,
+            range: true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await loaded();
+      await tap('invitation-range-review-restoration');
+      await loaded();
+      await tap('invitation-occurrence-apply');
+      final restored = await api.calendarInvitation.rangeRestorationApplication(
+        source.entryId,
+      );
+      expect(restored.hasActiveAcceptedRangeCancellation, isFalse);
+      expect(restored.hasAcceptedRangeCancellation, isTrue);
+      expect(restored.hasAcceptedRangeRestoration, isTrue);
+      expect(restored.acceptedVersion.sequence, sequence + 1);
+      expect(restored.hasLocalChanges, isFalse);
+      await shown('Accepted suffix cancellation: none active.');
+      expect(
+        (await api.calendarInvitation.occurrenceApplication(singleEntry))
+            .acceptedVersion
+            .sequence,
+        14,
+      );
+      navigator.pop();
+      await tester.pumpAndSettle();
+    }
   } finally {
     final event = await api.calendarEvent.getEvent(link.eventId, []);
     await api.calendarEvent.deleteEvent(link.eventId, event.revision);

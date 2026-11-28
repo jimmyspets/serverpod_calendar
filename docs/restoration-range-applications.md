@@ -1,5 +1,8 @@
 # Range REQUEST application after source restoration
 
+Later [ADR 0170](adr/0170-bounded-repeated-source-range-cycles.md) implements [bounded repeated source range cycles](bounded-source-range-cycles.md). Its verified v12 path supersedes earlier temporary repeated-cycle guards below while preserving strict legacy reads/retries and all stated source, authority and retention boundaries. Historical validation remains evidence for its original batch.
+
+
 Accepted [ADR 0168](adr/0168-range-request-applications-after-source-restoration.md) permits explicit THISANDFUTURE REQUEST application after verified restoration history. Receiving a notice remains review-only. Applying it requires an active accepted master, no native cutoff, a clean entire series and exact original/profile membership.
 
 Incoming SEQUENCE must be explicit and strictly greater than both the effective anchor component and the historical restoration version. Missing retained sequence compares as zero without rewriting its omission. A later DTSTAMP cannot waive either sequence floor. This is our conservative application policy, not a universal RFC requirement. Single-instance commands retain their separate effective-component freshness rule.

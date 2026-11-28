@@ -29,3 +29,4 @@ fields:
   occurrenceRevision: int, default=0
   hasAcceptedRangeCancellation: bool, default=false
   hasAcceptedRangeRestoration: bool, default=false
+  hasActiveAcceptedRangeCancellation: bool, default=false

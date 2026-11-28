@@ -1,5 +1,8 @@
 # Master lifecycle after source range restoration
 
+Later [ADR 0170](adr/0170-bounded-repeated-source-range-cycles.md) implements [bounded repeated source range cycles](bounded-source-range-cycles.md). Its verified v12 path supersedes earlier temporary repeated-cycle guards below while preserving strict legacy reads/retries and all stated source, authority and retention boundaries. Historical validation remains evidence for its original batch.
+
+
 Accepted [ADR 0166](adr/0166-master-lifecycle-after-source-range-restoration.md) extends the explicit master applyCancellation/applyUpdate workflow after [restoration](source-range-restoration.md) and [master composition](restoration-master-composition.md). Receiving or reviewing messages changes no event and sends no response.
 
 Whole-series CANCEL suppresses the master while preserving the cleared range cutoff, canonical timing/content exceptions and individual cancellations. Later explicit active REQUEST reopening restores retained current values; it never reinstates the historical suffix cutoff or reopens individual cancellations. The entire linked native series must still match its verified accepted state. Local edits conflict rather than being overwritten.

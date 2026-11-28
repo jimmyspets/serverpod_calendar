@@ -1,5 +1,8 @@
 # Single-instance source application after range restoration
 
+Later [ADR 0170](adr/0170-bounded-repeated-source-range-cycles.md) implements [bounded repeated source range cycles](bounded-source-range-cycles.md). Its verified v12 path supersedes earlier temporary repeated-cycle guards below while preserving strict legacy reads/retries and all stated source, authority and retention boundaries. Historical validation remains evidence for its original batch.
+
+
 Accepted [ADR 0167](adr/0167-single-instance-applications-after-source-range-restoration.md) extends explicit single REQUEST/CANCEL application after [source restoration](source-range-restoration.md) and [master lifecycle](restoration-master-lifecycle.md). Receiving/reviewing a message still changes no calendar and sends no reply.
 
 A new single command requires an active accepted master, no native cutoff, a clean complete accepted series and exact original/profile/membership. Other single/future components, individual cancellations and source versions remain intact. Existing bounded source profiles apply; same-anchor single/range collisions reject explicitly. A whole-cancelled master must reopen before a pending instance can be applied; current intake already rejects new instance notices for that inactive basis.

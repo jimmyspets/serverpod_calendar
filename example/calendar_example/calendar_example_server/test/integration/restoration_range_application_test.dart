@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_calendar_server/serverpod_calendar_server.dart';
 import 'package:test/test.dart';
+import 'package:crypto/crypto.dart';
+import 'package:serverpod_calendar_server/src/event_values.dart';
 import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 
 import 'calendar_test.dart'
@@ -282,59 +284,661 @@ void main() {
       return service.invitationRangeApplication(r.entryId);
     }
 
-    for (final advanced in [false, true]) {
+    String wirePoint(CalendarEventCivil c, bool date, bool utc) {
+      String pad(int n, int width) => n.toString().padLeft(width, '0');
+      final day = '${pad(c.year, 4)}${pad(c.month, 2)}${pad(c.day, 2)}';
+      if (date) return day;
+      final clock = '${pad(c.hour, 2)}${pad(c.minute, 2)}${pad(c.second, 2)}';
+      return '${day}T$clock${utc ? 'Z' : ''}';
+    }
+
+    Future<CalendarInvitationOccurrenceApplicationView> currentRestoration(
+      int sequence, {
+      int day = 2,
+      bool date = false,
+      String? zone,
+    }) async {
+      final d = await data();
+      final original = CalendarEventTiming(
+        kind: d.content.timing.kind,
+        zoneId: zone,
+        start: d.content.timing.start.copyWith(day: day),
+      );
+      final edits = d.timingOverrides?.copyWith(
+        cancelledFrom: null,
+        singles: [
+          for (final v in d.timingOverrides!.singles)
+            v.copyWith(cancelled: false),
+        ],
+      );
+      final effective = eventSchedulingOccurrence(d.content, edits, original)!;
+      final timing = effective.timing;
+      final text = utf8.decode(
+        rangeInvitationBytes(
+          sequence: sequence,
+          date: date,
+          zone: zone,
+          original: wirePoint(original.start, date, zone == null),
+        ),
+      );
+      final lines = <String>[];
+      var inEvent = false;
+      for (final line in text.split('\r\n')) {
+        if (line == 'BEGIN:VEVENT') inEvent = true;
+        if (!inEvent ||
+            !line.startsWith('DTSTART') && !line.startsWith('SUMMARY:')) {
+          lines.add(line);
+        }
+        if (line == 'END:VEVENT') inEvent = false;
+      }
+      String property(String name, CalendarEventCivil c) =>
+          '$name${date
+              ? ";VALUE=DATE"
+              : zone == null
+              ? ""
+              : ";TZID=$zone"}:${wirePoint(c, date, zone == null)}';
+      final own = [
+        property('DTSTART', timing.start),
+        'SUMMARY:${encodeIcalendarText(effective.summary ?? "")}',
+        if (timing.end != null) property('DTEND', timing.end!),
+      ];
+      if (timing.duration != null) {
+        final spans = validateEventTiming(timing);
+        own.add(
+          'DURATION:${serializeIcalendarDuration(spans.$1?.duration ?? spans.$2!.duration!)}',
+        );
+      }
+      lines.insertAll(lines.indexOf('END:VEVENT'), own);
+      final notice = await receive(
+        Uint8List.fromList(utf8.encode(lines.join('\r\n'))),
+      );
+      return service.invitationRangeRestorationApplication(notice.entryId);
+    }
+
+    Future<void> nextCycle(
+      int sequence, {
+      int day = 2,
+      bool date = false,
+      String? zone,
+    }) async {
+      final input = await cancel(
+        sequence: sequence,
+        date: date,
+        zone: zone,
+        original: date
+            ? '2030010$day'
+            : zone == null
+            ? '2030010${day}T090000Z'
+            : '2030010${day}T090000',
+      );
+      await service.applyInvitationRangeCancellation(input);
+      final preview = await currentRestoration(
+        sequence + 1,
+        day: day,
+        date: date,
+        zone: zone,
+      );
+      expect(preview.canApply, isTrue);
+      await service.applyInvitationRangeRestoration(command(preview));
+    }
+
+    for (final profile in ['utc', 'date', 'Europe/Stockholm']) {
+      for (final initial in [7, 8, 9, 10, 11]) {
+        test(
+          'repeated durable cycles preserve $profile v$initial history and canonical values',
+          () async {
+            final date = profile == 'date',
+                zone = profile == 'Europe/Stockholm' ? profile : null;
+            await ready(date: date, zone: zone, composed: initial == 8);
+            if (initial == 9) {
+              final notice = await receive(
+                Uint8List.fromList(
+                  utf8.encode(
+                    utf8
+                        .decode(
+                          invitationBytes(
+                            sequence: 11,
+                            date: date,
+                            zone: zone,
+                            extra: const [],
+                          ),
+                        )
+                        .replaceFirst('METHOD:REQUEST', 'METHOD:CANCEL')
+                        .replaceFirst(
+                          'BEGIN:VEVENT\r\n',
+                          'BEGIN:VEVENT\r\nSTATUS:CANCELLED\r\n',
+                        )
+                        .split('\r\n')
+                        .where(
+                          (l) => !l.startsWith('SUMMARY'),
+                        )
+                        .join('\r\n'),
+                  ),
+                ),
+              );
+              await service.applyInvitationCancellation(
+                masterCommand(
+                  await service.invitationApplication(notice.entryId),
+                ),
+              );
+              await service.applyInvitationUpdate(
+                masterCommand(
+                  await newerMaster(sequence: 12, date: date, zone: zone),
+                ),
+              );
+            }
+            if (initial == 10) {
+              await service.applyInvitationOccurrenceUpdate(
+                command(await single(sequence: 2, date: date, zone: zone)),
+              );
+            }
+            if (initial == 11) {
+              final incoming = await currentRestoration(
+                11,
+                date: date,
+                zone: zone,
+              );
+              await service.applyInvitationRangeUpdate(
+                command(
+                  await service.invitationRangeApplication(
+                    incoming.invitationId,
+                  ),
+                ),
+              );
+            }
+            final canonical = await data();
+            String? frozen;
+            for (var i = 0; i < 3; i++) {
+              final day = i == 1 ? 3 : 2, seq = 20 + i * 2;
+              final cancelInput = await cancel(
+                sequence: seq,
+                date: date,
+                zone: zone,
+                original: date
+                    ? '2030010$day'
+                    : zone == null
+                    ? '2030010${day}T090000Z'
+                    : '2030010${day}T090000',
+              );
+              final cancelled = await service.applyInvitationRangeCancellation(
+                cancelInput,
+              );
+              final masked = await data(),
+                  state = jsonDecode((await row()).stateJson) as Map;
+              expect(state['version'], 12);
+              expect((state['cycles'] as List).length, i + 1);
+              expect(state['activeCycleKey'], isNotNull);
+              frozen ??= jsonEncode(state['frozenRestoration']);
+              expect(jsonEncode(state['frozenRestoration']), frozen);
+              expect(
+                masked.protocolState!.toJson(),
+                canonical.protocolState!.toJson(),
+              );
+              expect(
+                (await service.invitationRangeApplication(
+                  cancelInput.invitationId,
+                )).hasActiveAcceptedRangeCancellation,
+                isTrue,
+              );
+              expect(
+                (await service.applyInvitationRangeCancellation(cancelInput))
+                    .id,
+                cancelled.id,
+              );
+              final preview = await currentRestoration(
+                seq + 1,
+                day: day,
+                date: date,
+                zone: zone,
+              );
+              expect(preview.canApply, isTrue);
+              expect(preview.hasActiveAcceptedRangeCancellation, isTrue);
+              final request = command(preview),
+                  restored = await service.applyInvitationRangeRestoration(
+                    request,
+                  );
+              final clean = await data();
+              expect(clean.content.toJson(), canonical.content.toJson());
+              expect(
+                clean.timingOverrides?.toJson(),
+                canonical.timingOverrides?.toJson(),
+              );
+              expect(
+                clean.protocolState!.toJson(),
+                canonical.protocolState!.toJson(),
+              );
+              expect(
+                (await service.invitationRangeRestorationApplication(
+                  request.invitationId,
+                )).hasActiveAcceptedRangeCancellation,
+                isFalse,
+              );
+              expect(
+                (await service.applyInvitationRangeRestoration(request)).id,
+                restored.id,
+              );
+            }
+          },
+          timeout: const Timeout(Duration(minutes: 2)),
+        );
+      }
+    }
+    test(
+      'v12 composes masters, whole lifecycle and subsequent canonical targets',
+      () async {
+        await ready();
+        final cancellation = await cancel(sequence: 20);
+        await service.applyInvitationRangeCancellation(cancellation);
+        await service.applyInvitationUpdate(
+          masterCommand(await newerMaster(sequence: 21)),
+        );
+        expect((await data()).timingOverrides!.cancelledFrom, isNotNull);
+        await service.applyInvitationCancellation(
+          masterCommand(await whole(sequence: 22)),
+        );
+        expect(
+          (await service.invitationRangeApplication(cancellation.invitationId))
+              .hasActiveAcceptedRangeCancellation,
+          isTrue,
+        );
+        await service.applyInvitationUpdate(
+          masterCommand(await newerMaster(sequence: 23)),
+        );
+        final restore = command(await currentRestoration(24));
+        await service.applyInvitationRangeRestoration(restore);
+        final singleInput = command(
+          await single(sequence: 25, original: '20300104T090000Z'),
+        );
+        await service.applyInvitationOccurrenceUpdate(singleInput);
+        await service.applyInvitationRangeUpdate(
+          command(await rangeUpdate(sequence: 26)),
+        );
+        await nextCycle(30);
+        await service.applyInvitationUpdate(
+          masterCommand(await newerMaster(sequence: 40)),
+        );
+        await nextCycle(50, day: 3);
+        expect(
+          (jsonDecode((await row()).stateJson) as Map)['cycles'].length,
+          3,
+        );
+        expect(
+          (await service.invitationOccurrenceApplication(
+            singleInput.invitationId,
+          )).acceptedVersion.sequence,
+          25,
+        );
+      },
+      timeout: const Timeout(Duration(minutes: 2)),
+    );
+
+    test(
+      'v12 master edits cannot orphan a closed historical cycle anchor',
+      () async {
+        await ready();
+        await nextCycle(20, day: 3);
+        final before = (await data()).toJson(),
+            checkpoint = (await row()).toJson();
+        final pending = await newerMaster(
+          sequence: 30,
+          extra: ['RRULE:FREQ=DAILY;COUNT=2'],
+        );
+        expect(pending.canApply, isFalse);
+        await expectLater(
+          service.applyInvitationUpdate(masterCommand(pending)),
+          failure(CalendarFailureCode.validation),
+        );
+        expect((await data()).toJson(), before);
+        expect((await row()).toJson(), checkpoint);
+      },
+    );
+
+    test('v12 authorizes superseded canonical sources retained only in legacy proof', () async {
+      await setup();
+      final old = command(
+        await single(sequence: 2, original: '20300104T090000Z'),
+      );
+      await service.applyInvitationOccurrenceUpdate(old);
+      await service.applyInvitationRangeCancellation(await cancel(sequence: 5));
+      await service.applyInvitationRangeRestoration(
+        command(await restoration(sequence: 10)),
+      );
+      await service.applyInvitationOccurrenceUpdate(
+        command(await single(sequence: 3, original: '20300104T090000Z')),
+      );
+      await nextCycle(20);
+      host.onAuthorize = (c, tx, phase) async {
+        if (c.operation == CalendarInvitationOperation.readSource &&
+            c.sourceId == old.sourceId) {
+          host.denied.add(CalendarInvitationOperation.readSource);
+        }
+      };
+      final receipt = CalendarInvitationOccurrenceApplyReceipt.fromJson(
+        (jsonDecode((await row()).stateJson) as Map)['receipt'],
+      );
+      await expectLater(
+        service.invitationRangeRestorationApplication(receipt.invitationId),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    }, timeout: const Timeout(Duration(minutes: 2)));
+
+    String hashParts(List<String> parts) {
+      final bytes = BytesBuilder(copy: false);
+      for (final p in parts) {
+        final v = utf8.encode(p);
+        bytes.add(utf8.encode('${v.length}:'));
+        bytes.add(v);
+      }
+      return sha256.convert(bytes.takeBytes()).toString();
+    }
+
+    Object? ordered(Object? v) {
+      if (v is Map) {
+        final keys = v.keys.cast<String>().toList()..sort();
+        return {for (final k in keys) k: ordered(v[k])};
+      }
+      if (v is List) return v.map(ordered).toList();
+      return v;
+    }
+
+    Future<void> reseal(Map<String, dynamic> state) async {
+      final link = (await CalendarInvitationLinkRecord.db.find(session)).single;
+      final body = Map<String, dynamic>.of(state)
+        ..remove('compositionDigest')
+        ..remove('receiptDigest');
+      state['compositionDigest'] = hashParts([
+        'range-cycles-v12',
+        link.scopeKey,
+        link.recipientKey,
+        link.id.toString(),
+        link.calendarId.toString(),
+        link.eventId.toString(),
+        link.uid,
+        link.organizer,
+        jsonEncode(ordered(body)),
+      ]);
+      state['receiptDigest'] = hashParts([
+        'range-cycle-receipt-v12',
+        state['compositionDigest'],
+        state['latestLayer'],
+        '${state['latestCycleKey']}',
+        state['requestDigest'],
+        jsonEncode(ordered(state['receipt'])),
+        jsonEncode(ordered(state['latestTarget'])),
+      ]);
+    }
+
+    for (final corruption in [
+      'active',
+      'duplicate',
+      'nestedLegacy',
+      'nestedBasis',
+      'floor',
+      'version',
+      'native',
+      'masterSource',
+      'basisRevision',
+      'sourceIdentity',
+      'receipt',
+      'layer',
+      'order',
+      'unknown',
+      'slots',
+      'rawWork',
+      'depth',
+    ]) {
       test(
-        'pure re-cancellation never enables durable cycle at ${advanced ? "v11" : "v7"}',
+        'v12 independently rejects rehashed $corruption proof corruption',
         () async {
           await ready();
-          if (advanced) {
-            await service.applyInvitationRangeUpdate(
-              command(await rangeUpdate(sequence: 11)),
-            );
+          await nextCycle(20);
+          if (corruption == 'order') await nextCycle(22, day: 3);
+          final stored = await row(),
+              state = jsonDecode(stored.stateJson) as Map<String, dynamic>;
+          final c = state['cycles'][0] as Map;
+          switch (corruption) {
+            case 'active':
+              state['activeCycleKey'] = c['key'];
+            case 'duplicate':
+              state['cycles'].add(jsonDecode(jsonEncode(c)));
+            case 'nestedLegacy':
+              state['frozenRestoration']['checkpoint']['state']['cycles'] = [];
+            case 'nestedBasis':
+              c['cancellationBasis']['cycles'] = [];
+            case 'floor':
+              c['cancellation']['requiredAfterSequence'] = 0;
+            case 'version':
+              c['restoration']['version']['sequence'] = 200;
+            case 'native':
+              c['restoration']['nativeDigest'] = '0' * 64;
+            case 'masterSource':
+              c['cancellationBasis']['masterSource']['digest'] = '0' * 64;
+            case 'basisRevision':
+              c['restorationBasis']['checkpointRevision'] = 1;
+            case 'sourceIdentity':
+              c['restoration']['sourceId'] = const Uuid().v4();
+            case 'receipt':
+              c['restoration']['receipt']['eventRevision'] = 9999;
+            case 'layer':
+              state['latestLayer'] = 'unexpected';
+            case 'order':
+              state['cycles'] = (state['cycles'] as List).reversed.toList();
+            case 'unknown':
+              state['unregistered'] = true;
+            case 'slots':
+              state['cycles'] = List.filled(128, c);
+            case 'rawWork':
+              c['cancellationBasis']['targets'] = List.filled(
+                eventMaxCandidateWork,
+                null,
+              );
+            case 'depth':
+              Object? nested;
+              for (var i = 0; i < 100; i++) {
+                nested = [nested];
+              }
+              c['cancellationBasis']['targets'] = nested;
           }
-          final bytes = Uint8List.fromList(
-            utf8.encode(
-              utf8
-                  .decode(rangeInvitationBytes(cancel: true, sequence: 20))
-                  .split('\r\n')
-                  .where((line) => !line.startsWith('SUMMARY:'))
-                  .join('\r\n'),
-            ),
+          if (state['latestLayer'] == 'rangeRestoration') {
+            final selected = (state['cycles'] as List).firstWhere(
+              (v) => v['key'] == state['latestCycleKey'],
+            );
+            state['latestTarget'] = selected['restoration'];
+          }
+          await reseal(state);
+          await CalendarInvitationOccurrenceApplicationRecord.db.updateRow(
+            session,
+            stored.copyWith(stateJson: jsonEncode(state)),
           );
-          final received = await receive(bytes),
-              d = await data(),
-              checkpoint = await row();
-          final pure = projectInvitationRangeRecancellation(
-            protocolUid: d.protocolUid,
-            content: d.content,
-            timingOverrides: d.timingOverrides,
-            protocolState: d.protocolState!,
-            previousRestorationVersion: CalendarEventProtocolVersion(
-              sequence: 10,
-              stamp: DateTime.utc(2026),
-            ),
-            message: parseIcalendarSchedulingMessage(bytes),
-            recipientAddress: 'mailto:alice@example.invalid',
-          );
-          expect(pure.timingOverrides.cancelledFrom, isNotNull);
-          final v = await service.invitationRangeApplication(received.entryId);
-          expect(v.canApply, isFalse);
+          final entry = UuidValue.fromString(c['restoration']['invitationId']);
           await expectLater(
-            service.applyInvitationRangeCancellation(command(v)),
-            failure(CalendarFailureCode.dependencyConflict),
-          );
-          expect((await data()).toJson(), d.toJson());
-          expect((await row()).toJson(), checkpoint.toJson());
-          expect(
-            (await CalendarInvitationRecord.db.findById(
-              session,
-              received.entryId,
-            ))!.dismissedAt,
-            isNull,
+            service.invitationRangeRestorationApplication(entry),
+            failure(CalendarFailureCode.unavailable),
           );
         },
       );
     }
+    for (final restore in [false, true]) {
+      for (final op in [
+        CalendarInvitationOperation.applyRangeCancellation,
+        CalendarInvitationOperation.applyRangeRestoration,
+        CalendarInvitationOperation.composeAcceptedOccurrences,
+        CalendarInvitationOperation.composeAcceptedRangeCancellation,
+        CalendarInvitationOperation.composeAcceptedRangeRestoration,
+        CalendarInvitationOperation.readSource,
+      ]) {
+        if (restore &&
+                op == CalendarInvitationOperation.applyRangeCancellation ||
+            !restore &&
+                op == CalendarInvitationOperation.applyRangeRestoration) {
+          continue;
+        }
+        test(
+          'v12 final $op denial rolls back ${restore ? "restoration" : "cancellation"}',
+          () async {
+            await ready();
+            CalendarInvitationOccurrenceApplyRequest input;
+            if (restore) {
+              await service.applyInvitationRangeCancellation(
+                await cancel(sequence: 20),
+              );
+              input = command(await currentRestoration(21));
+            } else {
+              input = await cancel(sequence: 20);
+            }
+            final before = (await data()).toJson(),
+                checkpoint = (await row()).toJson();
+            host.onAuthorize = (c, tx, phase) async {
+              if (c.operation == op &&
+                  phase == CalendarAuthorizationPhase.finalWrite) {
+                host.denied.add(op);
+              }
+            };
+            await expectLater(
+              (restore
+                  ? service.applyInvitationRangeRestoration
+                  : service.applyInvitationRangeCancellation)(input),
+              failure(CalendarFailureCode.accessDenied),
+            );
+            expect((await data()).toJson(), before);
+            expect((await row()).toJson(), checkpoint);
+            expect(
+              (await CalendarInvitationRecord.db.findById(
+                session,
+                input.invitationId,
+              ))!.dismissedAt,
+              isNull,
+            );
+          },
+        );
+      }
+    }
+    test(
+      'v12 retained retry never replays a control over local edits',
+      () async {
+        await ready();
+        final input = await cancel(sequence: 20),
+            receipt = await service.applyInvitationRangeCancellation(input);
+        final d = await data();
+        d.content = d.content.copyWith(summary: 'Local unpublished');
+        await CalendarEventDataRecord.db.updateRow(session, d);
+        final before = d.toJson(), checkpoint = (await row()).toJson();
+        expect(
+          (await service.applyInvitationRangeCancellation(input)).id,
+          receipt.id,
+        );
+        expect((await data()).toJson(), before);
+        expect((await row()).toJson(), checkpoint);
+        final v = await currentRestoration(21);
+        expect(v.hasLocalChanges, isTrue);
+        expect(v.canApply, isFalse);
+        await expectLater(
+          service.applyInvitationRangeRestoration(command(v)),
+          failure(CalendarFailureCode.dependencyConflict),
+        );
+      },
+    );
+    test('v12 native update authority controls preview without concealing the active flag', () async {
+      await ready();
+      final cancelInput = await cancel(sequence: 20);
+      policy.denied.add(CalendarPermission.updateEvent);
+      expect(
+        (await service.invitationRangeApplication(cancelInput.invitationId))
+            .canApply,
+        isFalse,
+      );
+      policy.denied.clear();
+      await service.applyInvitationRangeCancellation(cancelInput);
+      final preview = await currentRestoration(21);
+      policy.denied.add(CalendarPermission.updateEvent);
+      final v = await service.invitationRangeRestorationApplication(
+        preview.invitationId,
+      );
+      expect(v.hasActiveAcceptedRangeCancellation, isTrue);
+      expect(v.canApply, isFalse);
+    });
+    test('v12 all required proof survives pruning and deletion scrubs the checkpoint', () async {
+      await ready();
+      await nextCycle(20);
+      await service.applyInvitationUpdate(
+        masterCommand(await newerMaster(sequence: 30)),
+      );
+      await nextCycle(40);
+      final saved = await row();
+      final latestReceipt = CalendarInvitationOccurrenceApplyReceipt.fromJson(
+        (jsonDecode(saved.stateJson) as Map)['receipt'],
+      );
+      final latest = CalendarInvitationOccurrenceApplyRequest.fromJson(
+        (jsonDecode(
+          saved.stateJson,
+        ) as Map)['cycles'].last['restoration']['request'],
+      );
+      for (final e in await CalendarInvitationRecord.db.find(session)) {
+        await CalendarInvitationRecord.db.updateRow(
+          session,
+          e.copyWith(currentSourceId: null),
+        );
+      }
+      await CalendarInvitationReceiptRecord.db.deleteWhere(
+        session,
+        where: (t) => t.id.notEquals(null),
+      );
+      await CalendarInvitationSourceRecord.db.deleteWhere(
+        session,
+        where: (t) => t.id.notEquals(null),
+      );
+      expect(
+        (await service.applyInvitationRangeRestoration(latest)).sourceId,
+        latest.sourceId,
+      );
+      final deniedSource = UuidValue.fromString(
+        (jsonDecode(
+          saved.stateJson,
+        ) as Map)['cycles'][0]['cancellationBasis']['masterSource']['sourceId'],
+      );
+      host.onAuthorize = (c, tx, phase) async {
+        if (c.operation == CalendarInvitationOperation.readSource &&
+            c.sourceId == deniedSource) {
+          host.denied.add(CalendarInvitationOperation.readSource);
+        }
+      };
+      await expectLater(
+        service.applyInvitationRangeRestoration(latest),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      host.onAuthorize = null;
+      host.denied.clear();
+      await nextCycle(50, day: 3);
+      await service.deleteEvent(
+        latestReceipt.eventId,
+        (await CalendarEventRecord.db.findById(
+          session,
+          latestReceipt.eventId,
+        ))!.revision,
+      );
+      expect(
+        await CalendarInvitationOccurrenceApplicationRecord.db.find(session),
+        isEmpty,
+      );
+    }, timeout: const Timeout(Duration(minutes: 2)));
+    test('v12 configured capacity refuses another cycle without discarding history', () async {
+      await ready();
+      await nextCycle(20);
+      final stored = await row(), before = (await data()).toJson();
+      install(
+        options: CalendarInvitationOptions(
+          maxOccurrenceCheckpointBytes:
+              utf8.encode(stored.stateJson).length + 100,
+        ),
+      );
+      final input = await cancel(sequence: 22, original: '20300103T090000Z');
+      await expectLater(
+        service.applyInvitationRangeCancellation(input),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      expect((await row()).toJson(), stored.toJson());
+      expect((await data()).toJson(), before);
+    });
 
     for (final profile in ['utc', 'date', 'Europe/Stockholm']) {
       for (final initial in [7, 8, 9, 10]) {
@@ -912,12 +1516,53 @@ void main() {
               .every((p) => p.startUtc.hour == 11),
           isTrue,
         );
+        for (final sequence in [20, 22]) {
+          await service.applyInvitationRangeCancellation(
+            await cancel(sequence: sequence),
+          );
+          final masked = await service.freeBusy(query);
+          expect(masked.coverage, CalendarFreeBusyCoverage.complete);
+          final occurrences = await service.listEventOccurrences(
+            CalendarEventOccurrenceListQuery(
+              calendarId: link.calendarId,
+              fromUtc: query.fromUtc,
+              untilUtc: query.untilUtc,
+              pageSize: 20,
+              includeCancelled: true,
+              fieldGroups: [],
+            ),
+          );
+          expect(occurrences.occurrences, hasLength(6));
+          expect(
+            occurrences.occurrences
+                .where(
+                  (v) => v.status == CalendarEventStatus.cancelled,
+                )
+                .length,
+            5,
+          );
+          expect(
+            masked.periods
+                .where((p) => p.kind == CalendarFreeBusyKind.busy)
+                .length,
+            1,
+          );
+          await service.applyInvitationRangeRestoration(
+            command(await currentRestoration(sequence + 1)),
+          );
+          final reopened = await service.freeBusy(query);
+          expect(reopened.coverage, CalendarFreeBusyCoverage.complete);
+          expect(
+            reopened.periods.map((p) => p.toJson()).toList(),
+            busy.periods.map((p) => p.toJson()).toList(),
+          );
+        }
       },
     );
     for (final mode in ['relative', 'absolute', 'snooze']) {
       final absolute = mode == 'absolute';
       test(
-        'v11 whole cancellation withdraws $mode reminders and reopening preserves actions without replay',
+        'v12 repeated cycles and whole lifecycle preserve $mode actions without replay',
         () async {
           final delivery = TestAlarmDeliveryPort();
           install(
@@ -1036,8 +1681,43 @@ void main() {
             );
             action = (await CalendarAlarmActionRecord.db.find(session)).single;
           }
+          for (final sequence in [20, 22]) {
+            await service.applyInvitationRangeCancellation(
+              await cancel(sequence: sequence, original: point(due)),
+            );
+            expect(
+              await CalendarModule.checkAlarmDelivery(session, intent),
+              absolute
+                  ? isNot(CalendarAlarmDeliveryCheck.eligible)
+                  : CalendarAlarmDeliveryCheck.withdrawn,
+            );
+            await CalendarModule.runAlarmMaintenance(session);
+            expect(delivery.calls, 1);
+            final text = utf8
+                .decode(
+                  rangeInvitationBytes(
+                    sequence: sequence + 1,
+                    original: point(due),
+                    extra: ['DURATION:PT1H'],
+                  ),
+                )
+                .replaceFirst(
+                  'DTSTART:20300101T090000Z',
+                  'DTSTART:${point(due)}',
+                );
+            final source = await receive(Uint8List.fromList(utf8.encode(text)));
+            await service.applyInvitationRangeRestoration(
+              command(
+                await service.invitationRangeRestorationApplication(
+                  source.entryId,
+                ),
+              ),
+            );
+            await CalendarModule.runAlarmMaintenance(session);
+            expect(delivery.calls, 1);
+          }
           await service.applyInvitationCancellation(
-            masterCommand(await whole(sequence: 13)),
+            masterCommand(await whole(sequence: 30)),
           );
           expect(
             await CalendarModule.checkAlarmDelivery(session, intent),
@@ -1048,7 +1728,7 @@ void main() {
           final bytes = utf8
               .decode(
                 invitationBytes(
-                  sequence: 14,
+                  sequence: 31,
                   extra: ['RRULE:FREQ=DAILY;COUNT=6', 'DURATION:PT1H'],
                 ),
               )
@@ -1082,9 +1762,10 @@ void main() {
             1,
           );
         },
+        timeout: const Timeout(Duration(minutes: 2)),
       );
     }
-    test('explicit DST gap original survives v11 and an orphaning master still rejects', () async {
+    test('explicit DST gap original survives v12 cycles and an orphaning master still rejects', () async {
       const zone = 'Europe/Stockholm',
           inclusion = 'RDATE;TZID=Europe/Stockholm:20300331T023000';
       await setup(
@@ -1133,13 +1814,33 @@ void main() {
       expect(current.originalStart.start.hour, 2);
       expect(current.originalStart.start.minute, 30);
       expect(current.originalStart.zoneId, zone);
-      final orphan = await receive(bytes(6, include: false)),
+      for (final sequence in [20, 22]) {
+        await service.applyInvitationRangeCancellation(
+          await cancel(
+            sequence: sequence,
+            zone: zone,
+            original: '20300331T023000',
+          ),
+        );
+        final source = await receive(bytes(sequence + 1, range: true));
+        await service.applyInvitationRangeRestoration(
+          command(
+            await service.invitationRangeRestorationApplication(source.entryId),
+          ),
+        );
+        expect((await data()).timingOverrides?.cancelledFrom, isNull);
+        expect(
+          (await data()).protocolState!.overrides.single.version.sequence,
+          5,
+        );
+      }
+      final orphan = await receive(bytes(30, include: false)),
           blocked = await service.invitationApplication(orphan.entryId);
       expect(blocked.canApply, isFalse);
       await expectLater(
         service.applyInvitationUpdate(masterCommand(blocked)),
         failure(CalendarFailureCode.validation),
       );
-    });
+    }, timeout: const Timeout(Duration(minutes: 2)));
   });
 }

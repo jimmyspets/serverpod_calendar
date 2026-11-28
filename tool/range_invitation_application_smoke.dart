@@ -672,8 +672,101 @@ Future<void> rangeInvitationApplicationSmoke(List<Client> clients) async {
           rangeRace.first.id,
       'Master lost current range receipt',
     );
+    var cycleFeed = await fetch(url, null);
+    for (final sequence in [20, 22]) {
+      await a.invitationDemo.simulateRange(
+        id,
+        const cal.Uuid().v4obj(),
+        sequence,
+        true,
+      );
+      final pending = await api.calendarInvitation.rangeApplication(entry);
+      require(
+        pending.canApply && !pending.hasActiveAcceptedRangeCancellation,
+        'Historical cancellation incorrectly marked active',
+      );
+      final cancelInput = command(pending);
+      final cancelled = await Future.wait(
+        clients.map(
+          (c) => c.modules.serverpod_calendar.calendarInvitation
+              .applyRangeCancellation(cancelInput),
+        ),
+      );
+      require(
+        cancelled.first.id == cancelled.last.id,
+        'Cycle cancellation duplicated effect',
+      );
+      require(
+        (await api.calendarInvitation.rangeApplication(entry))
+                .hasActiveAcceptedRangeCancellation &&
+            (await api.calendarInvitation.application(master.entryId))
+                .hasActiveAcceptedRangeCancellation,
+        'Active accepted cutoff missing from protected views',
+      );
+      require(
+        (await fetch(url, cycleFeed.$2)).$1 != 304 &&
+            (await fetch(url, null)).$1 != 200,
+        'Masked cycle served content or stale 304',
+      );
+      await a.invitationDemo.simulateRange(
+        id,
+        const cal.Uuid().v4obj(),
+        sequence + 1,
+        false,
+      );
+      final restoreView = await api.calendarInvitation
+          .rangeRestorationApplication(entry);
+      require(
+        restoreView.canApply && restoreView.hasActiveAcceptedRangeCancellation,
+        'Repeated restoration preview blocked',
+      );
+      final input = command(restoreView);
+      final restored = await Future.wait(
+        clients.map(
+          (c) => c.modules.serverpod_calendar.calendarInvitation
+              .applyRangeRestoration(input),
+        ),
+      );
+      require(
+        restored.first.id == restored.last.id,
+        'Cycle restoration duplicated effect',
+      );
+      final current = await api.calendarInvitation.rangeRestorationApplication(
+        entry,
+      );
+      require(
+        current.hasAcceptedRangeCancellation &&
+            current.hasAcceptedRangeRestoration &&
+            !current.hasActiveAcceptedRangeCancellation &&
+            !current.hasLocalChanges &&
+            current.acceptedVersion.sequence == sequence + 1,
+        'Repeated restoration lost current/history distinction',
+      );
+      require(
+        (await api.calendarInvitation.occurrenceApplication(currentSingle))
+                .acceptedVersion
+                .sequence ==
+            14,
+        'Cycle rewrote independent canonical source version',
+      );
+      require(
+        (await api.calendarInvitation.applyRangeRestoration(input)).id ==
+            restored.first.id,
+        'Cycle lost latest retry receipt',
+      );
+      // A restored byte-identical representation may reuse its strong ETag.
+      // Masked requests above must still reject before conditional handling.
+      final fresh = await fetch(url);
+      require(
+        fresh.$1 == 200 &&
+            fresh.$3.isNotEmpty &&
+            (await fetch(url, fresh.$2)).$1 == 304,
+        'Repeated restoration left stale validator',
+      );
+      cycleFeed = fresh;
+    }
     stdout.writeln(
-      'PASS: generated-client two-host range preview/apply and master races, preserved source versions/retries, receipt-only versus applied feed ETags and explicit range cancellation, masked-feed rejection, v5/v6 master composition/cancellation/reopening and stable independent retries, explicit v7 restoration and restored feed validators.',
+      'PASS: generated-client two-host range preview/apply and master races, preserved source versions/retries, receipt-only versus applied feed ETags and explicit range cancellation, masked-feed rejection, v5/v6 master composition/cancellation/reopening and stable independent retries, explicit v7 restoration, repeated v12 controls and protected active/history flags, and restored feed validators.',
     );
   } finally {
     if (subscription != null) {

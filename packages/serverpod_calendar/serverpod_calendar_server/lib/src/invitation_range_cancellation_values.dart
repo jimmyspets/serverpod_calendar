@@ -13,6 +13,18 @@ final class CalendarInvitationRangeCancellationProjection {
     this.requiredAfterSequence,
     this.sourceMessage,
   );
+  factory CalendarInvitationRangeCancellationProjection.fromRecancellation(
+    CalendarInvitationRangeRecancellationProjection p,
+  ) => CalendarInvitationRangeCancellationProjection._(
+    p.protocolUid,
+    p.content,
+    p.timingOverrides,
+    p.protocolState,
+    p.originalStart,
+    p.cancellationVersion,
+    p.requiredAfterSequence,
+    p.sourceMessage,
+  );
   final String protocolUid;
   final CalendarEventContent content;
   final CalendarEventTimingOverrides timingOverrides;
@@ -38,6 +50,7 @@ projectInvitationRangeCancellation({
   required IcalendarSchedulingMessage message,
   required String recipientAddress,
   int maxCandidateWork = eventMaxCandidateWork,
+  RecurrenceWorkBudget? sharedWorkBudget,
 }) {
   return _projectRangeCancellation(
     protocolUid: protocolUid,
@@ -47,6 +60,7 @@ projectInvitationRangeCancellation({
     message: message,
     recipientAddress: recipientAddress,
     maxCandidateWork: maxCandidateWork,
+    sharedWorkBudget: sharedWorkBudget,
   ).proposal;
 }
 
@@ -86,6 +100,7 @@ projectInvitationRangeRecancellation({
   required IcalendarSchedulingMessage message,
   required String recipientAddress,
   int maxCandidateWork = eventMaxCandidateWork,
+  RecurrenceWorkBudget? sharedWorkBudget,
 }) {
   final result = _projectRangeCancellation(
     protocolUid: protocolUid,
@@ -96,6 +111,7 @@ projectInvitationRangeRecancellation({
     message: message,
     recipientAddress: recipientAddress,
     maxCandidateWork: maxCandidateWork,
+    sharedWorkBudget: sharedWorkBudget,
   );
   final p = result.proposal;
   return CalendarInvitationRangeRecancellationProjection._(
@@ -124,9 +140,14 @@ _projectRangeCancellation({
   required IcalendarSchedulingMessage message,
   required String recipientAddress,
   required int maxCandidateWork,
+  RecurrenceWorkBudget? sharedWorkBudget,
 }) {
   try {
     RangeError.checkValueInInterval(maxCandidateWork, 1, eventMaxCandidateWork);
+    if (sharedWorkBudget != null &&
+        sharedWorkBudget.maxWork > maxCandidateWork) {
+      throw ArgumentError('Shared work exceeds selected ceiling');
+    }
     final previous = previousRestorationVersion == null
         ? null
         : validateEventProtocolVersion(previousRestorationVersion).copyWith();
@@ -140,7 +161,8 @@ _projectRangeCancellation({
     if (timingOverrides?.cancelledFrom != null) {
       throw ArgumentError('Existing cutoff requires reconciliation');
     }
-    final work = RecurrenceWorkBudget(maxWork: maxCandidateWork);
+    final work =
+        sharedWorkBudget ?? RecurrenceWorkBudget(maxWork: maxCandidateWork);
     validateEventUid(protocolUid);
     final accepted = validateEventContent(content, sharedWorkBudget: work);
     final edits = validateEventOverrides(

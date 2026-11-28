@@ -1,10 +1,10 @@
 # ADR 0170: Bounded repeated source range cycles
 
-Status: **Proposed.** This groups authenticated re-cancellation, restore-only acceptance and continued composition/lifecycle into one reviewable feature batch. Existing storage/authority/retention constraints remain; the v12 mechanics and derived view fields below require explicit agreement.
+Status: **Accepted by explicit maintainer agreement on 2026-11-04.** This groups authenticated re-cancellation, restore-only acceptance and continued composition/lifecycle into one reviewable feature batch. Existing storage/authority/retention constraints remain; the v12 mechanics and derived view fields below were explicitly approved.
 
 ## Context and scope
 
-[ADR 0169](0169-pure-range-cancellation-after-source-restoration.md), implemented in PR #170, supplies the pure re-cancellation/version prerequisite and repeated pure round trips. Authenticated second cancellations remain guarded. Instead of separate reviews for each subsequent state transition, implement a bounded repeating cycle and its master/single/range integration together.
+[ADR 0169](0169-pure-range-cancellation-after-source-restoration.md), implemented in PR #170, supplies the pure re-cancellation/version prerequisite and repeated pure round trips. Before this ADR, authenticated second cancellations remained guarded. Instead of separate reviews for each subsequent state transition, this batch implements a bounded repeating cycle and its master/single/range integration together.
 
 Permit a new explicit range CANCEL after verified restored v7/v8/v9/v10/v11 history, then explicit same-cutoff restore-only REQUEST, followed by further cycles. Preserve the full accepted history under existing hard limits. Use existing range preview/apply/restoration endpoints; receipt remains review-only and sends nothing. An active accepted master, clean complete series and correct exact original/source/revisions are mandatory. Overlapping active cutoffs, partial suffix restoration, restore-plus-reschedule, outgoing range messages, RANGE participation replies and real transport remain separate.
 

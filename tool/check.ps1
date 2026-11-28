@@ -100,6 +100,7 @@ try {
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--restored-lifecycle')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--restored-singles')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--restored-ranges')
+  Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--range-cycles')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--native-future')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--instance-responses')
   Invoke-Checked dart @('run', 'tool/alarm_work_smoke.dart')

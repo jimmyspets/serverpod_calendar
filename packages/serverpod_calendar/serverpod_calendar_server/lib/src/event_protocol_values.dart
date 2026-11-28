@@ -302,11 +302,20 @@ CalendarEventImportBaseline eventImportBaseline(
   String uid,
   CalendarEventContent content,
   CalendarEventTimingOverrides? edits,
-  CalendarEventProtocolState state,
-) {
+  CalendarEventProtocolState state, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
+  if (sharedWorkBudget != null &&
+      sharedWorkBudget.maxWork > eventMaxCandidateWork) {
+    throw ArgumentError('Shared work exceeds ceiling');
+  }
   validateEventUid(uid);
-  content = validateEventContent(content);
-  edits = validateEventOverrides(content, edits);
+  content = validateEventContent(content, sharedWorkBudget: sharedWorkBudget);
+  edits = validateEventOverrides(
+    content,
+    edits,
+    sharedWorkBudget: sharedWorkBudget,
+  );
   state = validateEventProtocolState(state, content, edits);
   final canonical = jsonEncode(
     _ordered({
@@ -328,8 +337,9 @@ CalendarEventImportBaseline eventImportBaseline(
 
 void validateEventImportBaseline(
   CalendarEventImportBaseline value,
-  String uid,
-) {
+  String uid, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
   if (value.profile != eventBaselineProfile ||
       utf8.encode(value.canonicalValue).length > eventBaselineMaxBytes) {
     throw StateError('Incompatible event baseline');
@@ -386,6 +396,7 @@ void validateEventImportBaseline(
     CalendarEventProtocolState.fromJson(
       decoded['protocol'] as Map<String, dynamic>,
     ),
+    sharedWorkBudget: sharedWorkBudget,
   );
   if (expected.canonicalValue != value.canonicalValue ||
       expected.sourceSequence != value.sourceSequence) {

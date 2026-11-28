@@ -4,6 +4,7 @@ fields:
   isThisAndFuture: bool, default=false
   hasAcceptedRangeCancellation: bool, default=false
   hasAcceptedRangeRestoration: bool, default=false
+  hasActiveAcceptedRangeCancellation: bool, default=false
   linkId: UuidValue
   invitationId: UuidValue
   calendarId: UuidValue

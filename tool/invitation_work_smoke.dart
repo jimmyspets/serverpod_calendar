@@ -55,6 +55,7 @@ void require(bool value, String message) {
 
 Future<void> main(List<String> args) async {
   final nativeFuture = args.contains('--native-future');
+  final rangeCycles = args.contains('--range-cycles');
   final restoredRanges = args.contains('--restored-ranges');
   final restoredSingles = args.contains('--restored-singles');
   final restoredLifecycle = args.contains('--restored-lifecycle');
@@ -62,7 +63,8 @@ Future<void> main(List<String> args) async {
       args.contains('--restoration-compositions') ||
       restoredLifecycle ||
       restoredSingles ||
-      restoredRanges;
+      restoredRanges ||
+      rangeCycles;
   final rangeRestoration =
       args.contains('--range-restorations') || restoredCompose;
   final rangeLifecycle = args.contains('--range-lifecycle');
@@ -567,6 +569,244 @@ Future<void> main(List<String> args) async {
               return {'request': request, 'id': result['id']};
             }
 
+            if (rangeCycles) {
+              Future<Map<String, dynamic>> controlInput(
+                String id,
+                int sequence, {
+                required bool cancel,
+                String? original,
+              }) async {
+                final incoming = await b.command({
+                  'command': 'receive',
+                  'caseId': id,
+                  'key': 'cycle-$sequence',
+                  'instance': true,
+                  'range': true,
+                  'cancel': cancel,
+                  'restore': !cancel,
+                  'sequence': sequence,
+                  'original': original,
+                }) as Map;
+                final view = await b.command({
+                  'command': 'occurrence-view',
+                  'caseId': id,
+                  'entryId': incoming['entryId'],
+                  'range': true,
+                  'restore': !cancel,
+                }) as Map;
+                require(
+                  view['canApply'] == true,
+                  'Cycle preview blocked: $view',
+                );
+                return {
+                  'invitationId': view['invitationId'],
+                  'sourceId': view['incomingSourceId'],
+                  'linkId': view['linkId'],
+                  for (final name in [
+                    'Invitation',
+                    'Event',
+                    'Calendar',
+                    'Application',
+                    'Occurrence',
+                  ])
+                    'expected${name}Revision':
+                        view['${name[0].toLowerCase()}${name.substring(1)}Revision'],
+                };
+              }
+
+              Future<Map> control(
+                _Probe p,
+                String id,
+                Map request, {
+                required bool cancel,
+                String? pause,
+              }) async => await p.command({
+                'command': 'occurrence-apply',
+                'caseId': id,
+                'request': request,
+                'range': true,
+                'cancel': cancel,
+                'restore': !cancel,
+                'pause': pause,
+              }) as Map;
+              Future<void> state(String id, bool active, int revision) async {
+                final value = await b.command({
+                  'command': 'inspect',
+                  'caseId': id,
+                }) as Map;
+                require(
+                  value['checkpointVersion'] == 12 &&
+                      (value['cutoff'] != null) == active &&
+                      value['eventRevision'] == revision,
+                  'Cycle commit was lost or partially visible: $value',
+                );
+              }
+
+              final id = nextCase();
+              await seed(id);
+              for (final sequence in [10, 12, 14]) {
+                for (final cancel in [true, false]) {
+                  final request = await controlInput(
+                    id,
+                    sequence + (cancel ? 0 : 1),
+                    cancel: cancel,
+                  );
+                  final raced = await Future.wait([
+                    control(a, id, request, cancel: cancel),
+                    control(b, id, request, cancel: cancel),
+                  ]);
+                  require(
+                    raced.first['id'] != null &&
+                        raced.first['id'] == raced.last['id'],
+                    'Cycle competitors duplicated or lost transition: $raced',
+                  );
+                  await state(id, cancel, 4 + sequence - 10 + (cancel ? 0 : 1));
+                }
+              }
+              for (final cancel in [true, false]) {
+                for (final stage in ['before', 'after']) {
+                  final id = nextCase();
+                  await seed(id);
+                  if (!cancel) {
+                    await control(
+                      b,
+                      id,
+                      await controlInput(id, 10, cancel: true),
+                      cancel: true,
+                    );
+                  }
+                  final request = await controlInput(
+                    id,
+                    cancel ? 10 : 11,
+                    cancel: cancel,
+                  );
+                  a.paused = Completer<Map<String, dynamic>>();
+                  final lost = control(
+                    a,
+                    id,
+                    request,
+                    cancel: cancel,
+                    pause: 'occurrence-$stage',
+                  ).then<void>((_) {}, onError: (Object _, StackTrace _) {});
+                  final proposed = await a.paused!.future.timeout(
+                    const Duration(seconds: 40),
+                  );
+                  final visible = await b.command({
+                    'command': 'inspect',
+                    'caseId': id,
+                  }) as Map;
+                  final committed = stage == 'after';
+                  require(
+                    (visible['cutoff'] != null) == (cancel == committed) &&
+                        visible['eventRevision'] ==
+                            3 + (cancel ? 0 : 1) + (committed ? 1 : 0),
+                    'Cycle loss crossed commit boundary: $visible',
+                  );
+                  await a.stop();
+                  await lost;
+                  final recovered = await control(
+                    b,
+                    id,
+                    request,
+                    cancel: cancel,
+                  );
+                  require(
+                    recovered['id'] != null &&
+                        committed == (recovered['id'] == proposed['id']),
+                    'Cycle recovery lost exact receipt identity: $recovered',
+                  );
+                  await state(id, cancel, cancel ? 4 : 5);
+                  a = await start('a-cycle-$cancel-$stage', 18780);
+                }
+              }
+              for (final other in ['cancel', 'master', 'single']) {
+                final id = nextCase();
+                await seed(id);
+                final older = await controlInput(id, 10, cancel: true);
+                Map<String, dynamic> newer;
+                if (other == 'single') {
+                  final source = await b.command({
+                    'command': 'receive',
+                    'caseId': id,
+                    'key': 'single-12',
+                    'instance': true,
+                    'original': '20300105T090000Z',
+                    'sequence': 12,
+                  }) as Map;
+                  final view = await b.command({
+                    'command': 'occurrence-view',
+                    'caseId': id,
+                    'entryId': source['entryId'],
+                  }) as Map;
+                  require(
+                    view['canApply'] == true,
+                    'Competing canonical preview blocked',
+                  );
+                  newer = {
+                    'invitationId': view['invitationId'],
+                    'sourceId': view['incomingSourceId'],
+                    'linkId': view['linkId'],
+                    for (final name in [
+                      'Invitation',
+                      'Event',
+                      'Calendar',
+                      'Application',
+                      'Occurrence',
+                    ])
+                      'expected${name}Revision':
+                          view['${name[0].toLowerCase()}${name.substring(1)}Revision'],
+                  };
+                } else {
+                  newer = other == 'master'
+                      ? await masterInput(id, 12)
+                      : await controlInput(
+                          id,
+                          11,
+                          cancel: true,
+                          original: '20300105T090000Z',
+                        );
+                }
+                final raced = await Future.wait([
+                  control(a, id, older, cancel: true),
+                  other == 'single'
+                      ? b
+                            .command({
+                              'command': 'occurrence-apply',
+                              'caseId': id,
+                              'request': newer,
+                            })
+                            .then((v) => v as Map)
+                      : other == 'master'
+                      ? apply(b, id, newer)
+                      : control(b, id, newer, cancel: true),
+                ]);
+                require(
+                  raced.where((r) => r['id'] != null).length == 1 &&
+                      raced
+                              .where(
+                                (r) => {
+                                  'staleRevision',
+                                  'dependencyConflict',
+                                }.contains(r['error']),
+                              )
+                              .length ==
+                          1,
+                  'Competing cycle/$other bypassed revision fence: $raced',
+                );
+                final current = await b.command({
+                  'command': 'inspect',
+                  'caseId': id,
+                }) as Map;
+                require(
+                  current['eventRevision'] == 4,
+                  'Competing cycle/$other silently rebased a second write: $current',
+                );
+              }
+              stdout.writeln(
+                'PASS: three durable range cycles, competing same/different controls and master commands, actual process loss before/after CANCEL and restoration, atomic cutoff/checkpoint/revisions and stable retry identities.',
+              );
+              return;
+            }
             if (restoredRanges) {
               Future<Map<String, dynamic>> input(
                 String id,
