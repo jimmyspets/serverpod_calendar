@@ -890,3 +890,7 @@ The scoped implementation is described in [published range controls](published-r
 
 
 The approved source-model additions are `CalendarSchedulingFutureCancelRequest` and `CalendarSchedulingFutureRestoreRequest` (event UUID, expected revision, command UUID and exact original); `rangeCancel`/`rangeRestore` publication kinds; and protected `hasPublishedRangeCancellation`/`publishedRangeStart` view fields. They add no SQL columns/tables. Outgoing v7 remains private existing-column JSON: actual native snapshot, expected published-native comparison, flat ordinary/individual facts, current message/versions/masks and active/closed control with optional revision-owned installation binding. Legacy readers remain; v7/v6 predecessors are never recursively embedded. Each snapshot/projection/payload still has the existing 512 KiB ceiling, with one shared 64-original slot bound.
+
+## Proposed initial bundled REQUEST adoption
+
+[Proposed ADR 0173](adr/0173-initial-bundled-invitation-adoption.md) closes the first-invitation producer/recipient gap with full REQUEST-bundle review and atomic one-event calendar adoption. It proposes a requestBundle kind, one immutable private link-profile boolean plus read-only receipt/host evidence, dedicated bundle authority, preserved source components/versions and guarded older paths. Existing limits and synthetic transport remain. Different subsequent messages/known-series updates, bundle replies/cancellations and vector reconciliation remain required separately; this is not implementation or full scheduling completion.
