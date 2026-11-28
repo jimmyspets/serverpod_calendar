@@ -1,13 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_calendar_server/serverpod_calendar_server.dart';
 import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 import 'package:calendar_example_server/src/generated/serverpod.dart'
     as generated;
+
+import 'package:calendar_example_server/src/imip_ingress.dart';
+import 'package:calendar_example_server/src/synthetic_imip_input.dart';
 
 final class _Host implements CalendarInvitationHost {
   String scope = '', pause = '';
@@ -172,13 +174,17 @@ Future<void> main(List<String> args) async {
               'END:VCALENDAR',
               '',
             ].join('\r\n');
-            final receipt = await CalendarModule.receiveSchedulingInvitation(
+            final receipt = await receiveHostImipInvitation(
               session,
-              CalendarInvitationDelivery(
-                namespace: 'process-loss',
-                deliveryKey: input['key'] as String,
-                originReference: 'verified-probe',
-                bytes: Uint8List.fromList(utf8.encode(body)),
+              namespace: 'process-loss',
+              deliveryKey: input['key'] as String,
+              originReference: 'verified-probe',
+              outerProtection: ImipProtection.none,
+              raw: composeSyntheticIngressMime(
+                utf8.encode(body),
+                method: input['cancel'] == true
+                    ? IcalendarSchedulingMethod.cancel
+                    : IcalendarSchedulingMethod.request,
               ),
             );
             if (host.pause == 'after') {

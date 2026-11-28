@@ -208,3 +208,9 @@ The invitation probe also races explicit adoption and kills its owner before/aft
 SDK integration-test groups use ephemeral databases by default, but still bind configured HTTP ports. Database isolation alone does not make them independent of a running host/worker/browser harness. Keep both storage and ports separate, or run the root sequence serially; do not overlap a focused withServerpod suite with final smoke-host startup on 18180.
 
 The invitation process probe now also races explicit updates and kills their owner before/after commit. `python tool/metadata_upgrade_smoke.py --applications-only` verifies populated checkpoint upgrades with immutable creation receipts and no invented history. Use `dart run tool/host_smoke.dart --invitations-only --invitations --flutter` for focused JWT/client/Flutter update work. Run SDK integration groups serially with HTTP harnesses because ephemeral databases do not isolate the configured API ports.
+
+
+For host MIME ingress work, run `dart test test/unit/imip_ingress_test.dart` and `dart test --concurrency=1 test/integration/imip_ingress_test.dart` in the example server. The complete root check includes these cases. Existing invitation/reply process probes and generated-client/Flutter selectors now exercise MIME wrappers without opening a raw-mail client endpoint; use those focused selectors before the broader batch check.
+
+
+If Dart package-exploration MCP reports no registered roots, register this workspace through its roots tool before retrying read_package_uris/rip_grep_packages. The searchDir argument is a directory; select a file with ripgrep -g instead. This package-access registration is separate from the DTD/VM connection used for runtime reloads.
