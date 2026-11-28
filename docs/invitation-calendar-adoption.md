@@ -1,5 +1,7 @@
 # Explicit invitation calendar addition
 
+Accepted [ADR 0148](adr/0148-recurring-master-invitation-workflow.md) extends this workflow to the bounded [recurring-master recipient profile](recurring-master-invitations.md). Its earlier non-recurring-only statements below are superseded for that slice; instance/range/bundled reconciliation and real mail remain separate. Actual batch checks are recorded in the validation guide.
+
 Accepted [ADR 0138](adr/0138-explicit-single-event-invitation-adoption.md) adds one explicit local event for a reviewed non-recurring invitation. The scoped implementation and phased feature-batch checks are complete; see [the validation record](scaffold-validation.md). Receiving an invitation still creates only [private review state](invitation-intake-and-review.md).
 
 Adding an invitation does not accept participation or send a reply. The local event can occupy time under the ordinary STATUS/TRANSP and free/busy rules; this is not an exclusive reservation. Source participants grant no host authority, imported origin cannot publish as a native organizer meeting, and source alarms are never armed.

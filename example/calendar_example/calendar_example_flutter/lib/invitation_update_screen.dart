@@ -133,6 +133,11 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
               key: const Key('invitation-update-result'),
             ),
           if (view != null) ...[
+            if (view.currentContent.recurrence != null ||
+                view.incomingContent?.recurrence != null)
+              const Text(
+                'Recurring series: application, cancellation and reopening below affect the whole series.',
+              ),
             Text(
               'Current local event: ${view.currentContent.summary ?? 'Untitled event'}',
             ),

@@ -1,5 +1,7 @@
 # Calendar example host and Flutter Web app
 
+Accepted ADR 0148 extends recipient REQUEST review/adoption/application, whole-series CANCEL/reopening and explicit master replies to one supported recurring master. Preserve the private mode flag through pruning/cancellation, verify surviving-link accepted baselines before queue reconstruction, reject mode conversion/instance/range/bundled input and retain clean-baseline local-edit protection. Imported alarms stay unarmed; all transport remains synthetic. See ../../docs/recurring-master-invitations.md.
+
 Accepted ADR 0147 adds the calendar occurrence window view and focused --occurrences-only/--occurrences harness routes. Keep UTC inputs whole-second without silently truncating nanoseconds, DATE/zone/original/cancelled meaning explicit, edited criteria separate from retained continuations, and stale/denied pages cleared before refresh. No totals, implicit free-time claim or reusable GUI package is added. See ../../docs/calendar-occurrence-queries.md.
 
 Accepted ADR 0146 adds separate explicit participation-response controls and synthetic attendee-sender MIME recording. Keep original command IDs across uncertain retries and require an explicit refreshed new command for another send. Never infer participation from Add/Apply/dismiss or claim organizer receipt from transport acceptance. The maintenance future call runs the optional response worker; host identity/route checks remain development/test-only and example.invalid-bound. See ../../docs/private-attendee-responses.md.

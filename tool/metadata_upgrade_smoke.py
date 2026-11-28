@@ -379,12 +379,55 @@ DROP TABLE occurrence_upgrade_guard;
 """)
 
 
+def verify_recurring_invitation_upgrade(database):
+    sql(database, """
+INSERT INTO serverpod_calendar_invitation
+ (id,"scopeKey","recipientKey","correlationDigest",kind,uid,organizer,revision,sequence,stamp,digest,"createdAt","updatedAt","dismissedAt")
+VALUES
+ ('14801480-1480-4480-8480-148014801480','recurring-upgrade','recipient',repeat('1',64),'request','synthetic-request','mailto:organizer@example.invalid',1,NULL,'2026-01-01',repeat('2',64),'2026-01-01','2026-01-01',NULL),
+ ('14801480-1480-4480-8480-148014801481','recurring-upgrade','recipient',repeat('3',64),'meetingCancellation','synthetic-cancel','mailto:organizer@example.invalid',2,1,'2026-01-02',repeat('4',64),'2026-01-01','2026-01-02','2026-01-02');
+CREATE TABLE recurring_invitation_upgrade_guard(table_name text, rows jsonb);
+DO $snapshot_recurring$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+  AND (tablename LIKE 'serverpod_calendar_%' OR tablename LIKE 'serverpod_notifications_%') LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s', item.tablename) INTO contents;
+  INSERT INTO recurring_invitation_upgrade_guard VALUES(item.tablename, contents);
+ END LOOP;
+END;
+$snapshot_recurring$;
+""")
+    sql(database, (SERVER / "migrations/20261030224037775/migration.sql").read_text(encoding="utf-8"))
+    sql(database, """
+DO $verify_recurring$
+DECLARE item record; contents jsonb; projection text;
+BEGIN
+ FOR item IN SELECT * FROM recurring_invitation_upgrade_guard LOOP
+  projection := CASE WHEN item.table_name='serverpod_calendar_invitation'
+    THEN 'to_jsonb(t)-''recurring''' ELSE 'to_jsonb(t)' END;
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT %s AS v FROM %I t) s', projection,item.table_name) INTO contents;
+  IF contents IS DISTINCT FROM item.rows THEN RAISE EXCEPTION 'Recurring invitation migration changed %',item.table_name; END IF;
+ END LOOP;
+ IF EXISTS (SELECT 1 FROM serverpod_calendar_invitation WHERE recurring IS DISTINCT FROM false)
+ THEN RAISE EXCEPTION 'Upgrade invented recurring invitation history'; END IF;
+END;
+$verify_recurring$;
+DROP TABLE recurring_invitation_upgrade_guard;
+""")
+
+
 def main():
     # Drop only a database this process successfully creates on the test service.
     database = f"calendar_metadata_upgrade_{os.getpid()}"
     assert re.fullmatch(r"calendar_metadata_upgrade_[0-9]+", database)
     sql("postgres", f"CREATE DATABASE {database};")
     try:
+        if "--recurring-invitations-only" in __import__("sys").argv:
+            sql(database, (SERVER / "migrations/20261030180336464/definition.sql").read_text(encoding="utf-8"))
+            verify_recurring_invitation_upgrade(database)
+            print("PASS: populated non-recurring invitation markers and prior rows survive the recurring-mode addition without invented history.")
+            return
         if "--occurrence-cursors-only" in __import__("sys").argv:
             sql(database, (SERVER / "migrations/20261030125640323/definition.sql").read_text(encoding="utf-8"))
             verify_occurrence_cursor_upgrade(database)
@@ -1055,7 +1098,8 @@ DROP TABLE reply_upgrade_guard;
         verify_cancellation_application_upgrade(database)
         verify_invitation_response_upgrade(database)
         verify_occurrence_cursor_upgrade(database)
-        print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated replies/invitations/links/checkpoints through instance, adoption, cancellation and private attendee-response upgrades; no personal response history is invented and ordinary cursor rows survive the occurrence-state addition without invented query state.")
+        verify_recurring_invitation_upgrade(database)
+        print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated replies/invitations/links/checkpoints through instance, adoption, cancellation and private attendee-response upgrades; no personal response history is invented and ordinary cursor rows survive the occurrence-state addition without invented query state; known old invitation modes remain false without invented recurrence history.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")
 

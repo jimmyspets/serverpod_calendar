@@ -122,9 +122,8 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
     return event;
   }
 
-  CalendarEventImportMember _invImportMember(
+  EventStorageProposal _invRequestProposal(
     IcalendarSchedulingMessage message,
-    UuidValue id,
   ) => _eventReplacementValue(() {
     if (message.method != IcalendarSchedulingMethod.request) {
       throw _failure(CalendarFailureCode.validation);
@@ -144,7 +143,14 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
     if (parsed.series.length != 1) {
       throw _failure(CalendarFailureCode.validation);
     }
-    final proposal = eventStorageProposal(parsed.series.single);
+    return eventStorageProposal(parsed.series.single);
+  });
+
+  CalendarEventImportMember _invImportMember(
+    IcalendarSchedulingMessage message,
+    UuidValue id,
+  ) {
+    final proposal = _invRequestProposal(message);
     return CalendarEventImportMember(
       eventId: id,
       protocolUid: proposal.protocolUid,
@@ -152,7 +158,7 @@ extension CalendarInvitationAdoptionOperations on CalendarService {
       protocolState: proposal.protocolState,
       timingOverrides: proposal.edits,
     );
-  });
+  }
 
   Future<void> _invEventAuthority(
     CalendarHostContext actor,

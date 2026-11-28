@@ -22,6 +22,7 @@ abstract class CalendarInvitationView
   const CalendarInvitationView._({
     required this.id,
     _ilccsff7.CalendarInvitationSourceKind? kind,
+    bool? recurring,
     required this.revision,
     required this.uid,
     required this.organizer,
@@ -32,11 +33,13 @@ abstract class CalendarInvitationView
     this.timing,
     this.receivedAt,
     this.dismissedAt,
-  }) : kind = kind ?? _ilccsff7.CalendarInvitationSourceKind.request;
+  }) : kind = kind ?? _ilccsff7.CalendarInvitationSourceKind.request,
+       recurring = recurring ?? false;
 
   const factory CalendarInvitationView({
     required _is.UuidValue id,
     _ilccsff7.CalendarInvitationSourceKind? kind,
+    bool? recurring,
     required int revision,
     required String uid,
     required String organizer,
@@ -59,6 +62,9 @@ abstract class CalendarInvitationView
           : _ilccsff7.CalendarInvitationSourceKind.fromJson(
               (jsonSerialization['kind'] as String),
             ),
+      recurring: jsonSerialization['recurring'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(jsonSerialization['recurring']),
       revision: jsonSerialization['revision'] as int,
       uid: jsonSerialization['uid'] as String,
       organizer: jsonSerialization['organizer'] as String,
@@ -85,6 +91,8 @@ abstract class CalendarInvitationView
   }
 
   final _ilccsff7.CalendarInvitationSourceKind kind;
+
+  final bool recurring;
 
   final _is.UuidValue id;
 
@@ -114,6 +122,7 @@ abstract class CalendarInvitationView
   CalendarInvitationView copyWith({
     _is.UuidValue? id,
     _ilccsff7.CalendarInvitationSourceKind? kind,
+    bool? recurring,
     int? revision,
     String? uid,
     String? organizer,
@@ -143,6 +152,11 @@ abstract class CalendarInvitationView
                   kind,
                 ) ||
                 other.kind == kind) &&
+            (identical(
+                  other.recurring,
+                  recurring,
+                ) ||
+                other.recurring == recurring) &&
             (identical(
                   other.revision,
                   revision,
@@ -201,6 +215,7 @@ abstract class CalendarInvitationView
       runtimeType,
       id,
       kind,
+      recurring,
       revision,
       uid,
       organizer,
@@ -220,6 +235,7 @@ abstract class CalendarInvitationView
       '__className__': 'serverpod_calendar.CalendarInvitationView',
       'id': id.toJson(),
       'kind': kind.toJson(),
+      'recurring': recurring,
       'revision': revision,
       'uid': uid,
       'organizer': organizer,
@@ -239,6 +255,7 @@ abstract class CalendarInvitationView
       '__className__': 'serverpod_calendar.CalendarInvitationView',
       'id': id.toJson(),
       'kind': kind.toJson(),
+      'recurring': recurring,
       'revision': revision,
       'uid': uid,
       'organizer': organizer,
@@ -264,6 +281,7 @@ class _CalendarInvitationViewImpl extends CalendarInvitationView {
   const _CalendarInvitationViewImpl({
     required _is.UuidValue id,
     _ilccsff7.CalendarInvitationSourceKind? kind,
+    bool? recurring,
     required int revision,
     required String uid,
     required String organizer,
@@ -277,6 +295,7 @@ class _CalendarInvitationViewImpl extends CalendarInvitationView {
   }) : super._(
          id: id,
          kind: kind,
+         recurring: recurring,
          revision: revision,
          uid: uid,
          organizer: organizer,
@@ -296,6 +315,7 @@ class _CalendarInvitationViewImpl extends CalendarInvitationView {
   CalendarInvitationView copyWith({
     _is.UuidValue? id,
     _ilccsff7.CalendarInvitationSourceKind? kind,
+    bool? recurring,
     int? revision,
     String? uid,
     String? organizer,
@@ -310,6 +330,7 @@ class _CalendarInvitationViewImpl extends CalendarInvitationView {
     return CalendarInvitationView(
       id: id ?? this.id,
       kind: kind ?? this.kind,
+      recurring: recurring ?? this.recurring,
       revision: revision ?? this.revision,
       uid: uid ?? this.uid,
       organizer: organizer ?? this.organizer,

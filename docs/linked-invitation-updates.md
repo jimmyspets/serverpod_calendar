@@ -1,5 +1,7 @@
 # Explicit linked invitation updates
 
+Accepted [ADR 0148](adr/0148-recurring-master-invitation-workflow.md) extends this workflow to the bounded [recurring-master recipient profile](recurring-master-invitations.md). Its earlier non-recurring-only statements below are superseded for that slice; instance/range/bundled reconciliation and real mail remain separate. Actual batch checks are recorded in the validation guide.
+
 Accepted [ADR 0139](adr/0139-explicit-linked-invitation-updates.md) extends [calendar addition](invitation-calendar-adoption.md) with explicit Apply update for a linked non-recurring REQUEST. The scoped implementation and batch validation are complete; see [the validation record](scaffold-validation.md). Receipt still only reopens private review. Applying sends no participation reply, creates no second event and grants no organizer authority.
 
 ## API and source ordering

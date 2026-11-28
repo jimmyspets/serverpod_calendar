@@ -7,8 +7,12 @@ import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
 
 Future<void> runInvitationCancellationApplicationJourney(
   WidgetTester tester,
-  Client client,
-) async {
+  Client client, {
+  bool recurring = false,
+}) async {
+  final simulate = recurring
+      ? client.invitationDemo.simulateRecurring
+      : client.invitationDemo.simulate;
   final api = client.modules.serverpod_calendar;
   final calendar = (await api.calendar.create(
     cal.CalendarCreateRequest(
@@ -18,7 +22,7 @@ Future<void> runInvitationCancellationApplicationJourney(
     ),
   ))!;
   final id = const cal.Uuid().v4obj();
-  final source = await client.invitationDemo.simulate(
+  final source = await simulate(
     id,
     const cal.Uuid().v4obj(),
     null,
@@ -69,6 +73,14 @@ Future<void> runInvitationCancellationApplicationJourney(
     );
     await tester.pumpAndSettle();
     await ready();
+    if (recurring) {
+      expect(
+        find.text(
+          'Recurring series: application, cancellation and reopening below affect the whole series.',
+        ),
+        findsOneWidget,
+      );
+    }
     expect(find.text('Current status: confirmed'), findsOneWidget);
     final view = await api.calendarInvitation.application(source.entryId);
     await api.calendarEvent.update(
@@ -97,7 +109,7 @@ Future<void> runInvitationCancellationApplicationJourney(
     var current = await api.calendarInvitation.application(source.entryId);
     expect(current.hasLocalChanges, isFalse);
     expect(current.currentContent.summary, 'Flutter retained content');
-    await client.invitationDemo.simulate(
+    await simulate(
       id,
       const cal.Uuid().v4obj(),
       2,

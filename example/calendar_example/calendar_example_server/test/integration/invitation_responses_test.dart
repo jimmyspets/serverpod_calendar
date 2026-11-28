@@ -568,134 +568,164 @@ void main() {
         CalendarInvitationResponseDeliveryState.expired,
       );
     });
-    test('synthetic minimal response traverses MIME and trusted organizer reconciliation', () async {
-      CalendarModule.install(
-        session.serverpod,
-        policy: policy,
-        options: const CalendarModuleOptions(
-          requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
-        ),
-        scheduling: CalendarSchedulingRuntime(
-          host: SchedulingHost(),
-          transport: SchedulingTransport(),
-          replies: CalendarSchedulingReplyRuntime(host: ReplyHost()),
-        ),
-        invitations: CalendarInvitationRuntime(
-          host: LoopbackInvitationHost(),
-          responses: CalendarInvitationResponseRuntime(
-            host: host,
-            transport: transport,
-          ),
-        ),
+    for (final recurring in [false, true]) {
+      test(
+        'synthetic ${recurring ? 'recurring-master' : 'non-recurring'} response traverses MIME and trusted organizer reconciliation',
+        () async {
+          CalendarModule.install(
+            session.serverpod,
+            policy: policy,
+            options: const CalendarModuleOptions(
+              requiredWriteGuarantee: CalendarAuthorizationGuarantee.freshCheck,
+            ),
+            scheduling: CalendarSchedulingRuntime(
+              host: SchedulingHost(),
+              transport: SchedulingTransport(),
+              replies: CalendarSchedulingReplyRuntime(host: ReplyHost()),
+            ),
+            invitations: CalendarInvitationRuntime(
+              host: LoopbackInvitationHost(),
+              responses: CalendarInvitationResponseRuntime(
+                host: host,
+                transport: transport,
+              ),
+            ),
+          );
+          service = CalendarModule.service(session);
+          CalendarEventContent content(String summary) =>
+              eventInput(summary: summary).copyWith(
+                recurrence: recurring
+                    ? CalendarEventRecurrence(
+                        rule: CalendarEventRule(
+                          frequency: CalendarEventFrequency.daily,
+                          count: 3,
+                          byDay: [],
+                          byMonthDay: [],
+                          byYearDay: [],
+                          byWeekNo: [],
+                          byMonth: [],
+                          byHour: [],
+                          byMinute: [],
+                          bySetPosition: [],
+                        ),
+                        inclusions: [],
+                        exclusions: [],
+                      )
+                    : null,
+              );
+          final parent = (await service.create(createInput()))!.calendarId;
+          final event = (await service.createEvent(
+            CalendarEventCreateRequest(
+              calendarId: parent,
+              content: content('Loopback source'),
+            ),
+          ))!;
+          final published = await service.saveAndNotify(
+            CalendarSchedulingSaveRequest(
+              eventId: event.eventId,
+              expectedRevision: 1,
+              commandId: const Uuid().v4obj(),
+              recipients: ['mailto:bob@example.invalid'],
+              content: content('Loopback published'),
+            ),
+          );
+          final publication = (await CalendarSchedulingPublicationRecord.db
+              .findById(session, published.publicationId))!;
+          final received = await CalendarModule.receiveSchedulingInvitation(
+            session,
+            CalendarInvitationDelivery(
+              namespace: 'loopback',
+              deliveryKey: 'request',
+              originReference: 'verified-alice',
+              bytes: Uint8List.fromList(utf8.encode(publication.payload)),
+            ),
+          );
+          expect(
+            (await service.getInvitation(received.entryId)).recurring,
+            recurring,
+          );
+          await service.sendInvitationResponse(
+            CalendarInvitationResponseRequest(
+              invitationId: received.entryId,
+              expectedInvitationRevision: received.entryRevision,
+              sourceId: received.sourceId,
+              expectedResponseRevision: 0,
+              commandId: const Uuid().v4obj(),
+              choice: CalendarInvitationResponseChoice.accepted,
+            ),
+          );
+          await CalendarModule.runInvitationResponseMaintenance(session);
+          final submission = transport.submissions.single;
+          var raw = composeSyntheticInvitationResponseMime(
+            submission,
+            requireProtection: false,
+          );
+          Future<CalendarSchedulingReplyReceipt> reconcile(
+            String key,
+            String proof,
+          ) => receiveHostImipReply(
+            session,
+            raw: utf8.encode(raw),
+            outerProtection: ImipProtection.none,
+            scopeKey: 'test:alice',
+            eventId: event.eventId,
+            namespace: 'loopback',
+            deliveryKey: key,
+            originReference: proof,
+          );
+          await expectLater(
+            reconcile('forged', 'unverified'),
+            failure(CalendarFailureCode.accessDenied),
+          );
+          final first = await reconcile('verified', 'verified-bob');
+          expect(first.outcome, CalendarSchedulingReplyOutcome.applied);
+          expect(
+            (await service.schedulingResponses(event.eventId))
+                .responses
+                .single
+                .effectiveParticipation,
+            CalendarSchedulingParticipation.accepted,
+          );
+          expect(
+            (await reconcile('verified', 'verified-bob')).receiptId,
+            first.receiptId,
+          );
+          final current = (await CalendarEventRecord.db.findById(
+            session,
+            event.eventId,
+          ))!;
+          await service.saveAndNotify(
+            CalendarSchedulingSaveRequest(
+              eventId: event.eventId,
+              expectedRevision: current.revision,
+              commandId: const Uuid().v4obj(),
+              content: content('Changed invitation'),
+              recipients: ['mailto:bob@example.invalid'],
+            ),
+          );
+          await advance();
+          await service.sendInvitationResponse(
+            CalendarInvitationResponseRequest(
+              invitationId: received.entryId,
+              expectedInvitationRevision: received.entryRevision,
+              sourceId: received.sourceId,
+              expectedResponseRevision: 1,
+              commandId: const Uuid().v4obj(),
+              choice: CalendarInvitationResponseChoice.declined,
+            ),
+          );
+          await CalendarModule.runInvitationResponseMaintenance(session);
+          raw = composeSyntheticInvitationResponseMime(
+            transport.submissions.last,
+            requireProtection: false,
+          );
+          expect(
+            (await reconcile('older-source', 'verified-bob')).outcome,
+            CalendarSchedulingReplyOutcome.stale,
+          );
+        },
       );
-      service = CalendarModule.service(session);
-      final parent = (await service.create(createInput()))!.calendarId;
-      final event = (await service.createEvent(
-        CalendarEventCreateRequest(
-          calendarId: parent,
-          content: eventInput(summary: 'Loopback source'),
-        ),
-      ))!;
-      final published = await service.saveAndNotify(
-        CalendarSchedulingSaveRequest(
-          eventId: event.eventId,
-          expectedRevision: 1,
-          commandId: const Uuid().v4obj(),
-          recipients: ['mailto:bob@example.invalid'],
-          content: eventInput(summary: 'Loopback published'),
-        ),
-      );
-      final publication = (await CalendarSchedulingPublicationRecord.db
-          .findById(session, published.publicationId))!;
-      final received = await CalendarModule.receiveSchedulingInvitation(
-        session,
-        CalendarInvitationDelivery(
-          namespace: 'loopback',
-          deliveryKey: 'request',
-          originReference: 'verified-alice',
-          bytes: Uint8List.fromList(utf8.encode(publication.payload)),
-        ),
-      );
-      await service.sendInvitationResponse(
-        CalendarInvitationResponseRequest(
-          invitationId: received.entryId,
-          expectedInvitationRevision: received.entryRevision,
-          sourceId: received.sourceId,
-          expectedResponseRevision: 0,
-          commandId: const Uuid().v4obj(),
-          choice: CalendarInvitationResponseChoice.accepted,
-        ),
-      );
-      await CalendarModule.runInvitationResponseMaintenance(session);
-      final submission = transport.submissions.single;
-      var raw = composeSyntheticInvitationResponseMime(
-        submission,
-        requireProtection: false,
-      );
-      Future<CalendarSchedulingReplyReceipt> reconcile(
-        String key,
-        String proof,
-      ) => receiveHostImipReply(
-        session,
-        raw: utf8.encode(raw),
-        outerProtection: ImipProtection.none,
-        scopeKey: 'test:alice',
-        eventId: event.eventId,
-        namespace: 'loopback',
-        deliveryKey: key,
-        originReference: proof,
-      );
-      await expectLater(
-        reconcile('forged', 'unverified'),
-        failure(CalendarFailureCode.accessDenied),
-      );
-      final first = await reconcile('verified', 'verified-bob');
-      expect(first.outcome, CalendarSchedulingReplyOutcome.applied);
-      expect(
-        (await service.schedulingResponses(event.eventId))
-            .responses
-            .single
-            .effectiveParticipation,
-        CalendarSchedulingParticipation.accepted,
-      );
-      expect(
-        (await reconcile('verified', 'verified-bob')).receiptId,
-        first.receiptId,
-      );
-      final current = (await CalendarEventRecord.db.findById(
-        session,
-        event.eventId,
-      ))!;
-      await service.saveAndNotify(
-        CalendarSchedulingSaveRequest(
-          eventId: event.eventId,
-          expectedRevision: current.revision,
-          commandId: const Uuid().v4obj(),
-          content: eventInput(summary: 'Changed invitation'),
-          recipients: ['mailto:bob@example.invalid'],
-        ),
-      );
-      await advance();
-      await service.sendInvitationResponse(
-        CalendarInvitationResponseRequest(
-          invitationId: received.entryId,
-          expectedInvitationRevision: received.entryRevision,
-          sourceId: received.sourceId,
-          expectedResponseRevision: 1,
-          commandId: const Uuid().v4obj(),
-          choice: CalendarInvitationResponseChoice.declined,
-        ),
-      );
-      await CalendarModule.runInvitationResponseMaintenance(session);
-      raw = composeSyntheticInvitationResponseMime(
-        transport.submissions.last,
-        requireProtection: false,
-      );
-      expect(
-        (await reconcile('older-source', 'verified-bob')).outcome,
-        CalendarSchedulingReplyOutcome.stale,
-      );
-    });
+    }
     test('new source during submission withdraws work and records actual acceptance', () async {
       await service.sendInvitationResponse(request());
       transport.entered = Completer<void>();

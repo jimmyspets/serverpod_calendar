@@ -264,11 +264,11 @@ void main() {
         expect(await receipts(), isEmpty);
       },
     );
-    test('unsupported recurrence methods delegation and fractional input reject atomically', () async {
+    test('unsupported recurrence profiles methods delegation and fractions reject atomically', () async {
       for (final extra in [
-        <String>['RRULE:FREQ=DAILY;COUNT=2'],
-        <String>['RDATE:20300102T090000Z'],
-        <String>['EXDATE:20300102T090000Z'],
+        <String>['RRULE:FREQ=SECONDLY;COUNT=2'],
+        <String>['RDATE;VALUE=DATE:20300102'],
+        <String>['EXDATE:20300102T090000'],
       ]) {
         await expectLater(
           receive(bytes: invitationBytes(extra: extra)),

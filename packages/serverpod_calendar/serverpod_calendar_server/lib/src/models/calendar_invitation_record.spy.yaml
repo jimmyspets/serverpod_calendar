@@ -3,6 +3,7 @@ serverOnly: true
 table: serverpod_calendar_invitation
 fields:
   kind: CalendarInvitationSourceKind, default=request
+  recurring: bool, default=false
   id: UuidValue?, defaultPersist=random
   scopeKey: String
   recipientKey: String

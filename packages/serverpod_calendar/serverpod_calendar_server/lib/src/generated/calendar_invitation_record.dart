@@ -18,6 +18,7 @@ abstract class CalendarInvitationRecord
   CalendarInvitationRecord._({
     this.id,
     _ilccsff7.CalendarInvitationSourceKind? kind,
+    bool? recurring,
     required this.scopeKey,
     required this.recipientKey,
     required this.correlationDigest,
@@ -31,11 +32,13 @@ abstract class CalendarInvitationRecord
     required this.createdAt,
     required this.updatedAt,
     this.dismissedAt,
-  }) : kind = kind ?? _ilccsff7.CalendarInvitationSourceKind.request;
+  }) : kind = kind ?? _ilccsff7.CalendarInvitationSourceKind.request,
+       recurring = recurring ?? false;
 
   factory CalendarInvitationRecord({
     _is.UuidValue? id,
     _ilccsff7.CalendarInvitationSourceKind? kind,
+    bool? recurring,
     required String scopeKey,
     required String recipientKey,
     required String correlationDigest,
@@ -63,6 +66,9 @@ abstract class CalendarInvitationRecord
           : _ilccsff7.CalendarInvitationSourceKind.fromJson(
               (jsonSerialization['kind'] as String),
             ),
+      recurring: jsonSerialization['recurring'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(jsonSerialization['recurring']),
       scopeKey: jsonSerialization['scopeKey'] as String,
       recipientKey: jsonSerialization['recipientKey'] as String,
       correlationDigest: jsonSerialization['correlationDigest'] as String,
@@ -100,6 +106,8 @@ abstract class CalendarInvitationRecord
 
   _ilccsff7.CalendarInvitationSourceKind kind;
 
+  bool recurring;
+
   String scopeKey;
 
   String recipientKey;
@@ -135,6 +143,7 @@ abstract class CalendarInvitationRecord
   CalendarInvitationRecord copyWith({
     _is.UuidValue? id,
     _ilccsff7.CalendarInvitationSourceKind? kind,
+    bool? recurring,
     String? scopeKey,
     String? recipientKey,
     String? correlationDigest,
@@ -155,6 +164,7 @@ abstract class CalendarInvitationRecord
       '__className__': 'serverpod_calendar.CalendarInvitationRecord',
       if (id != null) 'id': id?.toJson(),
       'kind': kind.toJson(),
+      'recurring': recurring,
       'scopeKey': scopeKey,
       'recipientKey': recipientKey,
       'correlationDigest': correlationDigest,
@@ -210,6 +220,7 @@ class _CalendarInvitationRecordImpl extends CalendarInvitationRecord {
   _CalendarInvitationRecordImpl({
     _is.UuidValue? id,
     _ilccsff7.CalendarInvitationSourceKind? kind,
+    bool? recurring,
     required String scopeKey,
     required String recipientKey,
     required String correlationDigest,
@@ -226,6 +237,7 @@ class _CalendarInvitationRecordImpl extends CalendarInvitationRecord {
   }) : super._(
          id: id,
          kind: kind,
+         recurring: recurring,
          scopeKey: scopeKey,
          recipientKey: recipientKey,
          correlationDigest: correlationDigest,
@@ -248,6 +260,7 @@ class _CalendarInvitationRecordImpl extends CalendarInvitationRecord {
   CalendarInvitationRecord copyWith({
     Object? id = _Undefined,
     _ilccsff7.CalendarInvitationSourceKind? kind,
+    bool? recurring,
     String? scopeKey,
     String? recipientKey,
     String? correlationDigest,
@@ -265,6 +278,7 @@ class _CalendarInvitationRecordImpl extends CalendarInvitationRecord {
     return CalendarInvitationRecord(
       id: id is _is.UuidValue? ? id : this.id,
       kind: kind ?? this.kind,
+      recurring: recurring ?? this.recurring,
       scopeKey: scopeKey ?? this.scopeKey,
       recipientKey: recipientKey ?? this.recipientKey,
       correlationDigest: correlationDigest ?? this.correlationDigest,
@@ -294,6 +308,11 @@ class CalendarInvitationRecordUpdateTable
   >
   kind(_ilccsff7.CalendarInvitationSourceKind value) => _is.ColumnValue(
     table.kind,
+    value,
+  );
+
+  _is.ColumnValue<bool, bool> recurring(bool value) => _is.ColumnValue(
+    table.recurring,
     value,
   );
 
@@ -379,6 +398,11 @@ class CalendarInvitationRecordTable extends _is.Table<_is.UuidValue?> {
       _is.EnumSerialization.byName,
       hasDefault: true,
     );
+    recurring = _is.ColumnBool(
+      'recurring',
+      this,
+      hasDefault: true,
+    );
     scopeKey = _is.ColumnString(
       'scopeKey',
       this,
@@ -437,6 +461,8 @@ class CalendarInvitationRecordTable extends _is.Table<_is.UuidValue?> {
 
   late final _is.ColumnEnum<_ilccsff7.CalendarInvitationSourceKind> kind;
 
+  late final _is.ColumnBool recurring;
+
   late final _is.ColumnString scopeKey;
 
   late final _is.ColumnString recipientKey;
@@ -467,6 +493,7 @@ class CalendarInvitationRecordTable extends _is.Table<_is.UuidValue?> {
   List<_is.Column> get columns => [
     id,
     kind,
+    recurring,
     scopeKey,
     recipientKey,
     correlationDigest,

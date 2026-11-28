@@ -19,6 +19,7 @@ class InvitationScreen extends StatefulWidget {
 class _InvitationScreenState extends State<InvitationScreen> {
   List<cal.CalendarInvitationView> _entries = [];
   bool _busy = true;
+  bool? _simulationRecurring;
   String? _error;
   cal.UuidValue? _simulationId, _simulationCommand, _cancellationCommand;
   cal.CalendarInvitationView? _cancellationEntry;
@@ -70,14 +71,20 @@ class _InvitationScreenState extends State<InvitationScreen> {
         .list();
     if (mounted) setState(() => _entries = entries);
   });
-  Future<void> _simulate() => _run(() async {
+  Future<void> _simulate({bool recurring = false}) => _run(() async {
+    _simulationRecurring ??= recurring;
     _simulationId ??= const cal.Uuid().v4obj();
     _simulationCommand ??= const cal.Uuid().v4obj();
-    await widget.client.invitationDemo.simulate(
+    final simulate = _simulationRecurring!
+        ? widget.client.invitationDemo.simulateRecurring
+        : widget.client.invitationDemo.simulate;
+    await simulate(
       _simulationId!,
       _simulationCommand!,
       null,
-      'Synthetic invitation for review',
+      _simulationRecurring!
+          ? 'Synthetic recurring invitation'
+          : 'Synthetic invitation for review',
     );
     final entries = await widget
         .client
@@ -90,6 +97,7 @@ class _InvitationScreenState extends State<InvitationScreen> {
         _entries = entries;
         _simulationId = null;
         _simulationCommand = null;
+        _simulationRecurring = null;
       });
     }
   });
@@ -132,11 +140,26 @@ class _InvitationScreenState extends State<InvitationScreen> {
         ),
         TextButton(
           key: const Key('invitation-simulate'),
-          onPressed: _busy ? null : _simulate,
+          onPressed: _busy || _simulationId != null ? null : () => _simulate(),
           child: const Text(
             'Create synthetic invitation (development/test only)',
           ),
         ),
+        TextButton(
+          key: const Key('invitation-simulate-recurring'),
+          onPressed: _busy || _simulationId != null
+              ? null
+              : () => _simulate(recurring: true),
+          child: const Text('Create synthetic recurring invitation'),
+        ),
+        if (_simulationId != null)
+          TextButton(
+            key: const Key('invitation-simulate-retry'),
+            onPressed: _busy
+                ? null
+                : () => _simulate(recurring: _simulationRecurring!),
+            child: const Text('Retry the same synthetic invitation'),
+          ),
         if (_cancellationEntry != null)
           TextButton(
             key: const Key('invitation-cancel-retry'),
@@ -161,6 +184,7 @@ class _InvitationScreenState extends State<InvitationScreen> {
                         ? 'Meeting cancellation notice'
                         : entry.summary ?? 'Source unavailable',
                   ),
+                  if (entry.recurring) const Text('Recurring series'),
                   if (entry.kind ==
                       cal.CalendarInvitationSourceKind.meetingCancellation)
                     const Text('Review only. The calendar event is unchanged.'),

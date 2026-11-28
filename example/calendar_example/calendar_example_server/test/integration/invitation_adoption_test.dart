@@ -336,7 +336,8 @@ void main() {
       await expireInbox();
       final unavailable = <bool>[];
       host.onAuthorize = (c, tx, phase) async {
-        if (c.link != null) {
+        if (c.link != null &&
+            c.operation != CalendarInvitationOperation.receive) {
           unavailable.add(c.historicalSourceUnavailable!);
           expect(c.linkSource!.uid, 'meeting');
           expect(c.linkSource!.organizer, 'mailto:organizer@example.invalid');

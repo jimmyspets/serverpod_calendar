@@ -7,11 +7,15 @@ import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
 
 Future<void> runInvitationResponseJourney(
   WidgetTester tester,
-  Client client,
-) async {
+  Client client, {
+  bool recurring = false,
+}) async {
+  final simulate = recurring
+      ? client.invitationDemo.simulateRecurring
+      : client.invitationDemo.simulate;
   final api = client.modules.serverpod_calendar.calendarInvitation;
   final id = const cal.Uuid().v4obj();
-  final incoming = await client.invitationDemo.simulate(
+  final incoming = await simulate(
     id,
     const cal.Uuid().v4obj(),
     null,
@@ -45,6 +49,14 @@ Future<void> runInvitationResponseJourney(
     );
     await tester.pumpAndSettle();
     await loaded();
+    if (recurring) {
+      expect(
+        find.text(
+          'Recurring series: this response applies to the whole series.',
+        ),
+        findsOneWidget,
+      );
+    }
     expect(find.text('Response revision: 0'), findsOneWidget);
     expect(
       tester
@@ -68,7 +80,7 @@ Future<void> runInvitationResponseJourney(
     // newer source; refreshing does not implicitly create another response.
     await tap(find.byKey(const Key('response-send')));
     expect((await api.responseActivity(incoming.entryId)).single.id, first.id);
-    await client.invitationDemo.simulate(
+    await simulate(
       id,
       const cal.Uuid().v4obj(),
       1,

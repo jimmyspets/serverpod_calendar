@@ -32,6 +32,13 @@ extension CalendarInvitationApplicationOperations on CalendarService {
   ]);
   String _invBaselineDigest(CalendarEventImportBaseline b) =>
       _invitationHash([b.profile, b.canonicalValue]);
+  bool _invAcceptedRecurring(_Event event) => _eventProtocolValue(() {
+    final baseline = jsonDecode(
+      event.data.importBaseline!.canonicalValue,
+    ) as Map<String, dynamic>;
+    return (baseline['content'] as Map<String, dynamic>)['recurrence'] != null;
+  });
+
   bool _invLocalChanges(_Event e) => _eventProtocolValue(
     () =>
         eventImportBaseline(
@@ -68,8 +75,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
     if ((kind == CalendarInvitationSourceKind.meetingCancellation &&
             (content['status'] != 'cancelled' ||
                 protocol['statusPresent'] != true ||
-                sequence == null ||
-                content['recurrence'] != null)) ||
+                sequence == null)) ||
         (kind == CalendarInvitationSourceKind.request &&
             content['status'] == 'cancelled') ||
         version['sequence'] != sequence ||
@@ -430,7 +436,6 @@ extension CalendarInvitationApplicationOperations on CalendarService {
           message?.method == IcalendarSchedulingMethod.cancel &&
           entry!.dismissedAt == null &&
           !dirty &&
-          event.data.content.recurrence == null &&
           _invSourceOrder(
                 source!.sequence,
                 source.stamp,
@@ -460,7 +465,6 @@ extension CalendarInvitationApplicationOperations on CalendarService {
     _Event event,
   ) => _eventProtocolValue(() {
     if (message.method != IcalendarSchedulingMethod.cancel ||
-        event.data.content.recurrence != null ||
         message.events.single.status != IcalendarEventStatus.cancelled) {
       throw _failure(CalendarFailureCode.validation);
     }

@@ -120,14 +120,18 @@ extension CalendarInvitationOperations on CalendarService {
       if (message.method == IcalendarSchedulingMethod.cancel &&
               event.status != IcalendarEventStatus.cancelled ||
           event.isOverride ||
-          event.recurrence != null ||
+          message.method == IcalendarSchedulingMethod.cancel &&
+              event.recurrence != null ||
           event.source.entries.whereType<IcalendarSyntaxProperty>().any(
-            (p) => {
-              'RRULE',
-              'RDATE',
-              'EXDATE',
-              'RECURRENCE-ID',
-            }.contains(p.canonicalName),
+            (p) =>
+                {
+                  'RRULE',
+                  'RDATE',
+                  'EXDATE',
+                  'RECURRENCE-ID',
+                }.contains(p.canonicalName) &&
+                (p.canonicalName == 'RECURRENCE-ID' ||
+                    message.method == IcalendarSchedulingMethod.cancel),
           ) ||
           event.participants.organizer == null ||
           event.participants.organizer!.sentBy != null ||
@@ -138,6 +142,10 @@ extension CalendarInvitationOperations on CalendarService {
                 a.delegatedFrom.isNotEmpty ||
                 a.participationStatus?.toUpperCase() == 'DELEGATED',
           )) {
+        throw _failure(CalendarFailureCode.validation);
+      }
+      if (event.recurrence != null &&
+          _invRequestProposal(message).content.recurrence == null) {
         throw _failure(CalendarFailureCode.validation);
       }
       return message;
@@ -163,6 +171,8 @@ extension CalendarInvitationOperations on CalendarService {
     if ((entry.currentSourceId == source.id &&
             _invKind(message) != entry.kind) ||
         message.uid != entry.uid ||
+        message.method == IcalendarSchedulingMethod.request &&
+            (event.recurrence != null) != entry.recurring ||
         event.participants.organizer!.address != entry.organizer ||
         event.sequence != source.sequence ||
         event.stamp != source.stamp ||
@@ -197,6 +207,7 @@ extension CalendarInvitationOperations on CalendarService {
     }
     return CalendarInvitationView(
       kind: entry.kind,
+      recurring: entry.recurring,
       id: entry.id!,
       revision: entry.revision,
       uid: entry.uid,
@@ -466,7 +477,7 @@ extension CalendarInvitationOperations on CalendarService {
       }
       final current = entry == null ? null : await _invView(entry, tx);
       final cancellation = message.method == IcalendarSchedulingMethod.cancel;
-      if (cancellation) {
+      if (cancellation || entry == null) {
         final candidate = await CalendarInvitationLinkRecord.db.findFirstRow(
           _session,
           where: (t) =>
@@ -512,9 +523,24 @@ extension CalendarInvitationOperations on CalendarService {
         if (linkedUnavailable == true) {
           throw _failure(CalendarFailureCode.unavailable);
         }
-        if (entry == null && linked == null) {
+        if (cancellation && entry == null && linked == null) {
           throw _failure(CalendarFailureCode.accessDenied);
         }
+      }
+      final linkedRecurring = linkedEvent == null
+          ? null
+          : _invAcceptedRecurring(linkedEvent);
+      if (entry != null &&
+          linkedRecurring != null &&
+          entry.recurring != linkedRecurring) {
+        throw _failure(CalendarFailureCode.unavailable);
+      }
+      final knownRecurring = entry?.recurring ?? linkedRecurring;
+      final recurring = cancellation
+          ? knownRecurring!
+          : event.recurrence != null;
+      if (knownRecurring != null && knownRecurring != recurring) {
+        throw _failure(CalendarFailureCode.validation);
       }
       final retained = await CalendarInvitationReceiptRecord.db.findFirstRow(
         _session,
@@ -682,6 +708,7 @@ extension CalendarInvitationOperations on CalendarService {
             recipientKey: recipient.key,
             correlationDigest: correlation,
             kind: _invKind(message),
+            recurring: recurring,
             uid: message.uid,
             organizer: event.participants.organizer!.address,
             revision: 1,
