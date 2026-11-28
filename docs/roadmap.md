@@ -1123,4 +1123,14 @@ non-recurring published REQUEST.
 
 - [x] Obtain maintainer agreement on the first profile and its permission, storage and retention contract.
 - [x] Implement and validate approved ingress, review and durable synthetic resend across the generated client, two hosts and Flutter. See the [organizer guide and validation](native-organizer-scheduling.md#invitation-refresh-requests).
-- [ ] Observe full exact-head hosted inspection and runtime before readiness.
+- [x] Verify full exact-head hosted inspection and runtime at `9ef1651` in [run 46144717756](https://github.com/jimmyspets/serverpod_calendar/actions/runs/46144717756).
+
+## Explicit attendee VEVENT REFRESH
+
+[Proposed ADR 0191](adr/0191-attendee-event-refresh.md) covers the other
+direction of the same non-recurring profile. It groups an
+explicit attendee action, pinned-source delivery and a synthetic round trip
+through organizer review/resend and ordinary REQUEST intake.
+
+- [ ] Obtain explicit maintainer approval of the source profile, permission, storage and retention contract.
+- [ ] Implement and validate attendee REFRESH, including trusted synthetic loopback, generated clients, two hosts and Flutter.
