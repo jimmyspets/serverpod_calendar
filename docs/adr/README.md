@@ -163,6 +163,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0152](0152-master-invitation-application-with-accepted-occurrences.md) | Master invitation application with accepted occurrences | Accepted 2026-10-31; scoped master/instance composition implemented; validation recorded separately |
 | [0153](0153-explicit-single-instance-attendee-responses.md) | Explicit single-instance attendee responses | Accepted 2026-10-31; bounded target-aware response implementation; actual validation recorded separately |
 
+| [0154](0154-trusted-range-invitation-review.md) | Trusted range invitation intake and private review | Proposed 2026-11-01; target/authority/model review required; no range runtime implementation |
+
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
 Use the next consecutive number for a new ADR covering a material decision. Include context, proposal/decision, alternatives, consequences, and acceptance conditions. Preserve committed/accepted decision history; supersede accepted decisions with a linked ADR. Superseded uncommitted drafts may be removed under the maintainer-authorized cleanup. Mark an ADR accepted only after explicit maintainer agreement recorded in the PR or issue.

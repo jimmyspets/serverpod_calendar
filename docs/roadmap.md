@@ -657,3 +657,12 @@ Completed ADR 0152 implementation is in PR #135. Accepted [ADR 0153](adr/0153-ex
 - [x] Review selected-notice admission, exact target/version projection, known-series lifecycle checks, separate authority, reused storage and protected view/host refinements.
 - [x] Implement approved native/worker/MIME/client/Flutter behavior; focused and complete batch checks passed across the documented full run and browser/build continuation.
 - [ ] Keep arbitrary master-original selection, RANGE, delegation, wider reconciliation and real mail as separate required work.
+
+## Trusted range invitation review (proposed)
+
+Completed selected-instance response implementation is in PR #137; local batch checks passed and hosted CI is a separate result. Proposed [ADR 0154](adr/0154-trusted-range-invitation-review.md) is the next bounded prerequisite for original-scope range reconciliation.
+
+- [x] Inspect existing intake/target/source/receipt, known-series, MIME, response and application boundaries plus primary RFC range rules.
+- [ ] Obtain explicit review of target separation, source-kind/view changes, receive authority and guarded review-only behavior.
+- [ ] After approval, implement and verify trusted range intake/private review, source binding, every master/single action guard, synthetic MIME, generated clients and Flutter.
+- [ ] Review range calendar application/cancellation/restoration, overlap/version coordination and participation separately. This intake proposal completes none of those runtime paths.
