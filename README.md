@@ -193,3 +193,7 @@ Accepted [ADR 0132](docs/adr/0132-recurring-master-attendee-replies.md) extends 
 ## Single-instance replies
 
 Accepted [ADR 0133](docs/adr/0133-single-instance-attendee-replies.md) adds scoped trusted single-instance replies to any validated published original, with effective single/range/master versions and separate target response state. Existing reply tables gain source targetKey/originalStart/targetBasisKey and response targetKey, with a meeting/attendee/target uniqueness index. Legacy rows default to master; an explicit newer Save and notify upgrades legacy publication version profiles. New outgoing components cannot reuse earlier effective versions, range applicability changes advance affected versions, and native inheritance/source versions stay separate. Host contexts identify the exact original, selected component and effective occurrence; no source identity grants authority. Instance queries and private source review remain independently authorized. RANGE replies, broader inbound methods and mail remain separate. Validation evidence is recorded separately.
+
+## Next proposed event batch
+
+Exact bounded decimal coordinate strings are confirmed. [ADR 0134](docs/adr/0134-native-event-descriptive-fields.md) proposes native event priority, coordinates and grouped descriptive resources with independent disclosure, faithful interchange and scheduling versions. The concrete mechanics await approval; no new runtime support is claimed.
