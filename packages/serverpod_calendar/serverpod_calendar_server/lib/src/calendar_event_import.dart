@@ -1,6 +1,50 @@
 part of 'calendar_module.dart';
 
 extension CalendarEventImportOperations on CalendarService {
+  // Persistence only. Callers hold the shared scope lock, validate destination
+  // capacity/UID conflicts and independently authorize complete proposals.
+  Future<_Event> _insertImportedEvent(
+    CalendarEventImportMember m,
+    _Active parent,
+    Transaction tx,
+    DateTime now,
+  ) async {
+    final identity = await CalendarEventRecord.db.insertRow(
+      _session,
+      CalendarEventRecord(
+        id: m.eventId,
+        calendarId: parent.identity.id!,
+        revision: 1,
+      ),
+      transaction: tx,
+    );
+    final data = await CalendarEventDataRecord.db.insertRow(
+      _session,
+      CalendarEventDataRecord(
+        eventId: m.eventId,
+        calendarId: parent.identity.id!,
+        origin: CalendarEventOrigin.imported,
+        protocolUid: m.protocolUid,
+        uidDigest: eventUidDigest(m.protocolUid),
+        content: m.content,
+        timingOverrides: m.timingOverrides,
+        protocolState: m.protocolState,
+        importBaseline: _eventProtocolValue(
+          () => eventImportBaseline(
+            m.protocolUid,
+            m.content,
+            m.timingOverrides,
+            m.protocolState,
+          ),
+        ),
+        createdAt: now,
+        updatedAt: now,
+      ),
+      transaction: tx,
+    );
+    return _Event(identity, data, parent);
+  }
+
   /// Authenticated create-only import; no scheduling or publication side effects.
   Future<CalendarEventImportResult> importEvents(
     CalendarEventImportRequest input,
@@ -163,40 +207,8 @@ extension CalendarEventImportOperations on CalendarService {
       final now = await _revisionTime(tx);
       final receipts = <CalendarEventReceipt>[];
       for (final m in intent.members) {
-        final identity = await CalendarEventRecord.db.insertRow(
-          _session,
-          CalendarEventRecord(
-            id: m.eventId,
-            calendarId: input.calendarId,
-            revision: 1,
-          ),
-          transaction: tx,
-        );
-        final data = await CalendarEventDataRecord.db.insertRow(
-          _session,
-          CalendarEventDataRecord(
-            eventId: m.eventId,
-            calendarId: input.calendarId,
-            origin: CalendarEventOrigin.imported,
-            protocolUid: m.protocolUid,
-            uidDigest: eventUidDigest(m.protocolUid),
-            content: m.content,
-            timingOverrides: m.timingOverrides,
-            protocolState: m.protocolState,
-            importBaseline: _eventProtocolValue(
-              () => eventImportBaseline(
-                m.protocolUid,
-                m.content,
-                m.timingOverrides,
-                m.protocolState,
-              ),
-            ),
-            createdAt: now,
-            updatedAt: now,
-          ),
-          transaction: tx,
-        );
-        final receipt = _eventReceipt(_Event(identity, data, parent), [
+        final imported = await _insertImportedEvent(m, parent, tx, now);
+        final receipt = _eventReceipt(imported, [
           decisions[batch.key]!,
           for (final r in requests[m.eventId]!) decisions[r.key]!,
         ]);

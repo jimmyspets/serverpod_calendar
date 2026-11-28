@@ -141,6 +141,8 @@ import 'calendar_free_busy_period.dart' as _i82zcrxb;
 import 'calendar_free_busy_query.dart' as _idid5g6i;
 import 'calendar_free_busy_view.dart' as _i3b615hg;
 import 'calendar_image_link.dart' as _igf45b52;
+import 'calendar_invitation_adoption_receipt.dart' as _ib1s0vrr;
+import 'calendar_invitation_adoption_request.dart' as _imimov8l;
 import 'calendar_invitation_document.dart' as _iwcng7rp;
 import 'calendar_invitation_outcome.dart' as _i98zwsq8;
 import 'calendar_invitation_receipt.dart' as _iy372k0z;
@@ -333,6 +335,8 @@ export 'calendar_free_busy_period.dart';
 export 'calendar_free_busy_query.dart';
 export 'calendar_free_busy_view.dart';
 export 'calendar_image_link.dart';
+export 'calendar_invitation_adoption_receipt.dart';
+export 'calendar_invitation_adoption_request.dart';
 export 'calendar_invitation_document.dart';
 export 'calendar_invitation_outcome.dart';
 export 'calendar_invitation_receipt.dart';
@@ -794,6 +798,12 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _igf45b52.CalendarImageLink) {
       return _igf45b52.CalendarImageLink.fromJson(data) as T;
+    }
+    if (t == _ib1s0vrr.CalendarInvitationAdoptionReceipt) {
+      return _ib1s0vrr.CalendarInvitationAdoptionReceipt.fromJson(data) as T;
+    }
+    if (t == _imimov8l.CalendarInvitationAdoptionRequest) {
+      return _imimov8l.CalendarInvitationAdoptionRequest.fromJson(data) as T;
     }
     if (t == _iwcng7rp.CalendarInvitationDocument) {
       return _iwcng7rp.CalendarInvitationDocument.fromJson(data) as T;
@@ -1690,6 +1700,18 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _isc.getType<_igf45b52.CalendarImageLink?>()) {
       return (data != null ? _igf45b52.CalendarImageLink.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ib1s0vrr.CalendarInvitationAdoptionReceipt?>()) {
+      return (data != null
+              ? _ib1s0vrr.CalendarInvitationAdoptionReceipt.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_imimov8l.CalendarInvitationAdoptionRequest?>()) {
+      return (data != null
+              ? _imimov8l.CalendarInvitationAdoptionRequest.fromJson(data)
+              : null)
           as T;
     }
     if (t == _isc.getType<_iwcng7rp.CalendarInvitationDocument?>()) {
@@ -2925,6 +2947,10 @@ class Protocol extends _isc.SerializationManager {
       _idid5g6i.CalendarFreeBusyQuery => 'CalendarFreeBusyQuery',
       _i3b615hg.CalendarFreeBusyView => 'CalendarFreeBusyView',
       _igf45b52.CalendarImageLink => 'CalendarImageLink',
+      _ib1s0vrr.CalendarInvitationAdoptionReceipt =>
+        'CalendarInvitationAdoptionReceipt',
+      _imimov8l.CalendarInvitationAdoptionRequest =>
+        'CalendarInvitationAdoptionRequest',
       _iwcng7rp.CalendarInvitationDocument => 'CalendarInvitationDocument',
       _i98zwsq8.CalendarInvitationOutcome => 'CalendarInvitationOutcome',
       _iy372k0z.CalendarInvitationReceipt => 'CalendarInvitationReceipt',
@@ -3274,6 +3300,10 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarFreeBusyView';
       case _igf45b52.CalendarImageLink():
         return 'CalendarImageLink';
+      case _ib1s0vrr.CalendarInvitationAdoptionReceipt():
+        return 'CalendarInvitationAdoptionReceipt';
+      case _imimov8l.CalendarInvitationAdoptionRequest():
+        return 'CalendarInvitationAdoptionRequest';
       case _iwcng7rp.CalendarInvitationDocument():
         return 'CalendarInvitationDocument';
       case _i98zwsq8.CalendarInvitationOutcome():
@@ -3838,6 +3868,16 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'CalendarImageLink') {
       return deserialize<_igf45b52.CalendarImageLink>(data['data']);
+    }
+    if (dataClassName == 'CalendarInvitationAdoptionReceipt') {
+      return deserialize<_ib1s0vrr.CalendarInvitationAdoptionReceipt>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarInvitationAdoptionRequest') {
+      return deserialize<_imimov8l.CalendarInvitationAdoptionRequest>(
+        data['data'],
+      );
     }
     if (dataClassName == 'CalendarInvitationDocument') {
       return deserialize<_iwcng7rp.CalendarInvitationDocument>(data['data']);

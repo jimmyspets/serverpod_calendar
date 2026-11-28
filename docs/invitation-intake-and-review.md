@@ -41,6 +41,6 @@ The example review screen renders inert text and source history, supports refres
 Focused database, populated-upgrade, real two-process loss/race and connected client/Flutter evidence is recorded in [validation](scaffold-validation.md). Generated sources and migrations come from the pinned CLI; participating hosts/clients must upgrade together. This increment establishes no MIME, external calendar-client or complete iTIP conformance.
 
 
-## Next proposed batch
+## Explicit calendar addition
 
-The maintainer selected one linked event in one explicitly chosen calendar per recipient invitation, with stable retries. [ADR 0138](adr/0138-explicit-single-event-invitation-adoption.md) proposes the new binding model, atomic Add to calendar operation and independent authority/retention checks. It awaits explicit model review; this guide describes only implemented review/dismissal.
+The separately accepted [calendar-addition batch](invitation-calendar-adoption.md) adds an explicit local copy and stable link under ADR 0138. Receipt/review/dismissal remain separate and never create that event automatically. Source updates and participation replies remain unimplemented reconciliation work.

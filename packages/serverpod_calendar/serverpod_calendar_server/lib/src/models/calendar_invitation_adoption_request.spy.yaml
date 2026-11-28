@@ -1,0 +1,8 @@
+class: CalendarInvitationAdoptionRequest
+immutable: true
+fields:
+  invitationId: UuidValue
+  expectedRevision: int
+  sourceId: UuidValue
+  calendarId: UuidValue
+  expectedCalendarRevision: int

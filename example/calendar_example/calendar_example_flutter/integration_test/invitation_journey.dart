@@ -1,3 +1,5 @@
+import 'invitation_adoption_journey.dart';
+
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:calendar_example_flutter/invitation_screen.dart';
 import 'package:flutter/material.dart';
@@ -44,7 +46,10 @@ Future<void> runInvitationJourney(WidgetTester tester, Client client) async {
       findsOneWidget,
     );
     expect(find.text('Synthetic invitation review'), findsOneWidget);
-    expect(find.text('Add to calendar'), findsNothing);
+    expect(
+      find.byKey(ValueKey('invitation-add-${receipt.entryId}')),
+      findsOneWidget,
+    );
     await tap(find.byKey(ValueKey('invitation-source-${receipt.entryId}')));
     await tap(find.byKey(ValueKey('invitation-history-${receipt.sourceId}')));
     final document = tester
@@ -84,4 +89,5 @@ Future<void> runInvitationJourney(WidgetTester tester, Client client) async {
       await api.dismiss(current.id, current.revision);
     }
   }
+  await runInvitationAdoptionJourney(tester, client);
 }

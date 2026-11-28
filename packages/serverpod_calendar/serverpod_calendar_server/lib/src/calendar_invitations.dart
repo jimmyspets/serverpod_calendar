@@ -630,8 +630,22 @@ extension CalendarInvitationOperations on CalendarService {
     )
     body,
   ) async {
+    return _invNativeScoped(
+      (actor, recipient, tx, _) => body(actor, recipient, tx),
+    );
+  }
+
+  Future<T> _invNativeScoped<T>(
+    Future<T> Function(
+      CalendarHostContext,
+      CalendarInvitationRecipient,
+      Transaction,
+      CalendarScopeRecord,
+    )
+    body,
+  ) async {
     final actor = await _context();
-    return _transaction(actor, (tx, _) async {
+    return _transaction(actor, (tx, scope) async {
       _invGuarantee();
       final recipient = _invRecipient(
         await _bounded(
@@ -641,7 +655,7 @@ extension CalendarInvitationOperations on CalendarService {
       if (recipient.scopeKey != actor.scopeKey) {
         throw _failure(CalendarFailureCode.accessDenied);
       }
-      final result = await body(actor, recipient, tx);
+      final result = await body(actor, recipient, tx, scope);
       final finalRecipient = _invRecipient(
         await _bounded(
           () => _invitations.host.resolveCurrent(_session, actor, tx),

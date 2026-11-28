@@ -54,6 +54,12 @@ final class _Host implements CalendarInvitationHost {
       stdout.writeln('INVITATION_PAUSED ${jsonEncode(c.receipt!.toJson())}');
       await Completer<void>().future;
     }
+    if (pause == 'adopt-before' &&
+        c.operation == CalendarInvitationOperation.adopt &&
+        phase == CalendarAuthorizationPhase.finalWrite) {
+      stdout.writeln('INVITATION_PAUSED ${jsonEncode(c.link!.toJson())}');
+      await Completer<void>().future;
+    }
     return CalendarAuthorizationVerdict.allow;
   }
 }
@@ -67,6 +73,25 @@ final class _Policy implements CalendarHostPolicy {
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw StateError('Unexpected synthetic policy operation');
+  @override
+  Future<List<CalendarAuthorizationDecision>> authorizeBatch(
+    Session s,
+    CalendarHostContext c,
+    List<CalendarAuthorizationRequest> requests,
+    Transaction tx,
+    CalendarAuthorizationPhase phase,
+  ) async => [
+    for (final r in requests)
+      CalendarAuthorizationDecision(
+        key: r.key,
+        verdict: c.scopeKey == host.scope
+            ? CalendarAuthorizationVerdict.allow
+            : CalendarAuthorizationVerdict.deny,
+        discloseMutationReceipt: true,
+        disclosedGroups: CalendarFieldGroup.values,
+        eventDisclosedGroups: CalendarEventFieldGroup.values,
+      ),
+  ];
   @override
   Future<CalendarHostContext> resolveContext(Session s) async =>
       CalendarHostContext(
@@ -145,6 +170,42 @@ Future<void> main(List<String> args) async {
               await Completer<void>().future;
             }
             result = receipt.toJson();
+          case 'calendar':
+            session.updateAuthenticated(
+              AuthenticationInfo('recipient', {}, authId: 'invitation-probe'),
+            );
+            try {
+              result = (await CalendarModule.service(session).create(
+                CalendarCreateRequest(
+                  displayName: 'Synthetic adoption',
+                  availabilityZoneId: 'UTC',
+                  noRuleFallback: CalendarNoRuleFallback.free,
+                ),
+              ))!.calendarId.toString();
+            } finally {
+              session.updateAuthenticated(null);
+            }
+          case 'adopt':
+            session.updateAuthenticated(
+              AuthenticationInfo('recipient', {}, authId: 'invitation-probe'),
+            );
+            try {
+              final receipt = await CalendarModule.service(session)
+                  .adoptInvitation(
+                    CalendarInvitationAdoptionRequest.fromJson(
+                      input['request'] as Map<String, dynamic>,
+                    ),
+                  );
+              if (host.pause == 'adopt-after') {
+                stdout.writeln(
+                  'INVITATION_PAUSED ${jsonEncode(receipt.toJson())}',
+                );
+                await Completer<void>().future;
+              }
+              result = receipt.toJson();
+            } finally {
+              session.updateAuthenticated(null);
+            }
           case 'inspect':
             final entries = await CalendarInvitationRecord.db.find(
               session,
@@ -158,6 +219,16 @@ Future<void> main(List<String> args) async {
                         t.entryId.inSet(entries.map((e) => e.id!).toSet()),
                   );
             result = {
+              'events': await session.db
+                  .unsafeQuery(
+                    'SELECT e.id FROM serverpod_calendar_event e JOIN serverpod_calendar_identity c ON c.id=e."calendarId" WHERE c."scopeKey"=@scope',
+                    parameters: QueryParameters.named({'scope': host.scope}),
+                  )
+                  .then((r) => r.length),
+              'links': await CalendarInvitationLinkRecord.db.count(
+                session,
+                where: (t) => t.scopeKey.equals(host.scope),
+              ),
               'entries': entries.length,
               'sources': sources.length,
               'receipts': await CalendarInvitationReceiptRecord.db.count(
@@ -182,6 +253,29 @@ Future<void> main(List<String> args) async {
             }
             result = true;
           case 'cleanup':
+            await CalendarInvitationLinkRecord.db.deleteWhere(
+              session,
+              where: (t) => t.scopeKey.equals(host.scope),
+            );
+            final calendars = await CalendarIdentityRecord.db.find(
+              session,
+              where: (t) => t.scopeKey.equals(host.scope),
+            );
+            for (final c in calendars) {
+              await CalendarEventDataRecord.db.deleteWhere(
+                session,
+                where: (t) => t.calendarId.equals(c.id!),
+              );
+              await CalendarEventRecord.db.deleteWhere(
+                session,
+                where: (t) => t.calendarId.equals(c.id!),
+              );
+              await CalendarDataRecord.db.deleteWhere(
+                session,
+                where: (t) => t.calendarId.equals(c.id!),
+              );
+              await CalendarIdentityRecord.db.deleteRow(session, c);
+            }
             final entries = await CalendarInvitationRecord.db.find(
               session,
               where: (t) => t.scopeKey.equals(host.scope),

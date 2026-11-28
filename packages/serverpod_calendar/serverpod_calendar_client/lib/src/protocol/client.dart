@@ -106,6 +106,10 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_free_busy_query.
     as _isyn5yvo;
 import 'package:serverpod_calendar_client/src/protocol/calendar_free_busy_view.dart'
     as _i2cb1v6y;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_adoption_receipt.dart'
+    as _il1wwrqd;
+import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_adoption_request.dart'
+    as _iclj8t3x;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_document.dart'
     as _ig6t0ro8;
 import 'package:serverpod_calendar_client/src/protocol/calendar_invitation_source_view.dart'
@@ -860,6 +864,22 @@ class EndpointCalendarInvitation extends _isc.EndpointRef {
       'id': id,
       'expectedRevision': expectedRevision,
     },
+  );
+
+  _ida.Future<_il1wwrqd.CalendarInvitationAdoptionReceipt?> link(
+    _isc.UuidValue id,
+  ) => caller.callServerEndpoint<_il1wwrqd.CalendarInvitationAdoptionReceipt?>(
+    'serverpod_calendar.calendarInvitation',
+    'link',
+    {'id': id},
+  );
+
+  _ida.Future<_il1wwrqd.CalendarInvitationAdoptionReceipt> adopt(
+    _iclj8t3x.CalendarInvitationAdoptionRequest request,
+  ) => caller.callServerEndpoint<_il1wwrqd.CalendarInvitationAdoptionReceipt>(
+    'serverpod_calendar.calendarInvitation',
+    'adopt',
+    {'request': request},
   );
 }
 

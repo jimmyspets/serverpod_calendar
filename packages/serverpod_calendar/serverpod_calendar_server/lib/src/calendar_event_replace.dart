@@ -164,6 +164,17 @@ extension CalendarEventReplacementOperations on CalendarService {
         baseRequests(),
         CalendarAuthorizationPhase.preliminaryWrite,
       );
+      // Enforce on every host, independently of optional invitation ingress.
+      for (final event in events) {
+        if (await CalendarInvitationLinkRecord.db.findFirstRow(
+              _session,
+              where: (t) => t.eventId.equals(event.identity.id!),
+              transaction: tx,
+            ) !=
+            null) {
+          throw _failure(CalendarFailureCode.dependencyConflict);
+        }
+      }
       for (final event in events) {
         await _rejectSchedulingBinding(event.identity.id!, tx);
       }

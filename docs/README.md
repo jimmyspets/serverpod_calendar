@@ -264,3 +264,5 @@ Accepted ADR 0136 implements scoped per-calendar event/task master-category filt
 The maintainer confirmed a private review queue before adding a new authenticated invitation to a calendar. [ADR 0137](adr/0137-trusted-invitation-intake-and-review.md) implements the approved trusted non-recurring REQUEST intake/review/dismissal batch, including three private tables and bounded retention. Calendar adoption, updates, responses and mail follow separately; receipt alone never books time or sends a reply.
 
 Accepted ADR 0137 implements bounded trusted non-recurring REQUEST intake and private review/dismissal, with separate source access, retained source ordering/receipts and three private tables. Receipt creates no calendar event, booking or reply. See [the implementation and limits](invitation-intake-and-review.md); calendar adoption, updates, recurrence/CANCEL and mail remain separate.
+
+- [Explicit invitation calendar addition](invitation-calendar-adoption.md): stable local copy, atomic writes, authority and retention limits.

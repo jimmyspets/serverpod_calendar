@@ -102,34 +102,21 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0096](0096-source-preserving-native-task-progress.md) | Source-preserving native task progress | Scoped confirmed optional progress/master-default implementation; concrete mechanics under draft review |
 | [0097](0097-create-only-task-import-contract.md) | Create-only task import contract | Accepted create-only/gates/source versions/private baseline; concrete storage/service mechanics proposed |
 | [0098](0098-task-source-storage-model.md) | Task source storage model | Scoped confirmed source-retention/assignment-version storage implementation; concrete mechanics under draft review |
-
 | [0099](0099-authenticated-create-only-task-import.md) | Authenticated create-only task import | Scoped confirmed contract implementation; concrete mechanics under draft review |
-
 | [0100](0100-authenticated-current-task-export.md) | Authenticated current task export | Confirmed separate source-read gate; concrete mechanics under draft review |
-
 | [0101](0101-single-task-occurrence-timing.md) | Single task occurrence timing | Confirmed single scope, complete replacements and completed-history preservation; captured progress and complete explicit timing confirmed |
-
 | [0102](0102-task-future-timing.md) | Task this-and-future timing | Scoped implementation of confirmed range timing and anchor-only progress; concrete mechanics under draft review |
 | [0103](0103-single-task-content-overrides.md) | Selected single-task content overrides | Scoped implementation of confirmed per-field/anchor-local content; mechanics under draft review |
-
 | [0104](0104-task-source-replacements.md) | Explicit task source replacements | Confirmed reuse of baseline/conflict/no-op policy; concrete mechanics under draft review |
-
 | [0105](0105-event-source-replacements.md) | Explicit event source replacements | Confirmed baseline/conflict/no-op policy and lifecycle gates; concrete mechanics under draft review |
-
 | [0106](0106-single-event-content-overrides.md) | Selected single-event content overrides | Confirmed field/anchor-only content and preserved timing inheritance; mechanics under draft review |
-
 | [0107](0107-read-only-event-source-metadata.md) | Read-only event source metadata | Confirmed source-first preservation, independent source-read and bounded occurrence matching; mechanics under draft review |
-
 | [0108](0108-inert-event-source-participants.md) | Inert event source participants | Confirmed source preservation and host identity separation; bounded mechanics under draft review |
-
 | [0109](0109-inert-event-source-references.md) | Inert event source references | Confirmed task-style unresolved relationships and URI-only attachments; bounded mechanics under draft review |
-
 | [0110](0110-unarmed-event-source-alarms.md) | Unarmed event source DISPLAY alarms | Confirmed task-style DISPLAY/source state and bounded sibling snoozes; mechanics under draft review |
 | [0111](0111-native-personal-alarm-definitions.md) | Native personal alarm definitions | Confirmed private recipient, DATE zone, lifecycle and bounded table choices; mechanics under draft review |
 | [0112](0112-bounded-durable-alarm-planning.md) | Bounded durable alarm planning and handoff | Execution policies, storage boundaries and retention confirmed; scoped planner/handoff implementation under review |
-
 | [0113](0113-native-alarm-actions.md) | Native personal alarm actions | Due/accepted snooze, future-only reset and additive storage approved; scoped action/activity implementation under review |
-
 | [0114](0114-reusable-notification-delivery.md) | Reusable notification delivery and connected recovery | Live profile, three tables and defaults approved; scoped implementation/batch validation under review |
 | [0115](0115-timing-only-source-alarm-adoption.md) | Timing-only source alarm adoption | Timing/current-text choice confirmed; API mechanics under draft review, no table changes |
 | [0116](0116-optional-event-subscription-contract.md) | Optional event subscriptions and storage | Stable publication UIDs, no alarms and four tables/defaults approved; scoped full local validation passed; integration mechanics under review |
@@ -152,11 +139,9 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0133](0133-single-instance-attendee-replies.md) | Single-instance attendee replies | Accepted 2026-10-28; scoped single-instance replies, target storage/index and collision-safe outgoing/legacy-upgrade mechanics |
 | [0134](0134-native-event-descriptive-fields.md) | Native event descriptive fields and interchange | Accepted 2026-10-28; native descriptive metadata/editor/disclosure, faithful wire/source storage and effective outgoing versions |
 | [0135](0135-native-item-text-metadata-editors.md) | Native event and task text/link metadata editors | Accepted 2026-10-28, including the native task metadata-only refinement; selected-field editing/disclosure and source/version preservation |
-
 | [0136](0136-authorized-item-category-search.md) | Authorized event and task category search | Accepted 2026-10-28; bounded authorized master-category queries and criteria-bound cursors |
-
 | [0137](0137-trusted-invitation-intake-and-review.md) | Trusted non-recurring invitation intake and private review | Accepted 2026-10-28; trusted non-recurring intake and three-table private review profile |
-| [0138](0138-explicit-single-event-invitation-adoption.md) | Explicit single-event invitation calendar adoption | Proposed; one-event policy confirmed, concrete binding/API/retention mechanics await review |
+| [0138](0138-explicit-single-event-invitation-adoption.md) | Explicit single-event invitation calendar adoption | Accepted 2026-10-29; explicit stable-link calendar adoption and bounded retention/retry profile |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

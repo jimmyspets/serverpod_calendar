@@ -1,0 +1,31 @@
+class: CalendarInvitationLinkRecord
+serverOnly: true
+table: serverpod_calendar_invitation_link
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  recipientKey: String
+  uid: String
+  organizer: String
+  correlationDigest: String
+  invitationId: UuidValue
+  sourceId: UuidValue
+  sourceDigest: String
+  sequence: int?
+  stamp: DateTime
+  calendarId: UuidValue, relation(parent=serverpod_calendar_identity)
+  eventId: UuidValue, relation(parent=serverpod_calendar_event)
+  requestDigest: String
+  eventRevision: int
+  invitationRevision: int
+  adoptedAt: DateTime
+indexes:
+  calendar_invitation_link_correlation_unique:
+    fields: scopeKey, recipientKey, correlationDigest
+    unique: true
+  calendar_invitation_link_original_unique:
+    fields: scopeKey, recipientKey, invitationId
+    unique: true
+  calendar_invitation_link_event_unique:
+    fields: eventId
+    unique: true

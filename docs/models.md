@@ -704,6 +704,18 @@ Accepted ADR 0136 implements scoped per-calendar event/task master-category filt
 Accepted ADR 0137 implements bounded trusted non-recurring REQUEST intake and private review/dismissal, with separate source access, retained source ordering/receipts and three private tables. Receipt creates no calendar event, booking or reply. See [the implementation and limits](invitation-intake-and-review.md); calendar adoption, updates, recurrence/CANCEL and mail remain separate.
 
 
-## Proposed invitation calendar adoption
+## Explicit invitation calendar adoption
 
-The maintainer confirmed one linked event in one explicitly chosen calendar per recipient invitation, with stable retries. [ADR 0138](adr/0138-explicit-single-event-invitation-adoption.md) proposes the concrete explicit Add to calendar batch: one private immutable binding table, atomic event/link/review state, independent source/create/import/link authority and retained retry checks. These mechanics await model/ADR approval and are not implemented. It creates a local imported-origin copy without a participation reply or organizer authority; existing-meeting reconciliation remains separate.
+Accepted [ADR 0138](adr/0138-explicit-single-event-invitation-adoption.md) implements explicit Add to calendar with one private stable-link table, atomic imported-origin event/link/review writes, independent source/create/import/link authority and retained retry checks. The maintainer approved the complete model/API/retention batch on 2026-10-29. See [the scoped guide](invitation-calendar-adoption.md) and the separate batch validation record. Adding a local copy sends no participation reply and grants no organizer authority; existing-meeting reconciliation remains separate.
+
+The generated adoption models are:
+
+| Model | Role | Stored fields/boundary |
+| --- | --- | --- |
+| CalendarInvitationAdoptionRequest | Immutable public command, no table | Invitation/source/calendar UUIDs and expected invitation/calendar revisions |
+| CalendarInvitationAdoptionReceipt | Immutable public creation receipt, no table | Link/invitation/source/calendar/event UUIDs, created revisions and adoption time |
+| CalendarInvitationLinkRecord | Server-only table | Trusted scope/recipient, source UID/organizer and correlation digest, historical inbox/source references/digest/version, calendar/event identity FKs, original request digest, created revisions and adoption time |
+
+The approved link references content-minimal identities, has unique logical correlation/original-inbox/event indexes, and retains no copied source body. Nullable source version remains distinct from zero. See the guide for permissions, capacity and deletion/purge limits.
+
+`CalendarInvitationLinkSource` is an immutable host-only runtime descriptor, not a table or generated-client model. It supplies original inbox/source IDs, UID/organizer, digest, nullable source SEQUENCE and DTSTAMP independently of current native versions when the original body expires. It contains no reconstructed message.

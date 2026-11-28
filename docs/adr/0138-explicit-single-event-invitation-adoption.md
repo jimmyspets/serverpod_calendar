@@ -1,6 +1,6 @@
 # ADR 0138: Explicit single-event invitation calendar adoption
 
-Status: **Proposed. The maintainer confirmed review before calendar addition and one linked event in one explicitly chosen calendar per recipient invitation, with retries returning that event. The concrete API, binding storage, permission, retention and conversion mechanics below require explicit agreement.**
+Status: **Accepted by explicit maintainer approval on 2026-10-29 for the complete adoption batch and binding storage/API/retention design. The scoped implementation and phased complete-batch validation finished on 2026-10-29; see the guide and validation record.**
 
 ## Context and selected boundary
 
@@ -10,7 +10,7 @@ The confirmed one-event policy applies to the logical scope/recipient/exact UID/
 
 Primary sources checked 2026-10-29: [Serverpod model guidance](https://docs.serverpod.dev/concepts/data-and-the-database/models), against the pinned 4.0.4 generator, and [RFC 5546 REQUEST/message sequencing](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.2). The link lifecycle and permission/retention limits below are application choices, not new RFC requirements.
 
-## Proposed request and creation
+## Approved request and creation
 
 Add a native request containing invitation UUID, expected invitation revision, exact selected current source UUID, destination calendar UUID and expected calendar revision. Resolve the actual actor/recipient and actual source/parent in the same trusted host scope. Require a pending, readable, current non-recurring source for first adoption; a manually dismissed version or unavailable/expired source cannot be newly adopted. Input fields are frozen before awaits, with bounded exact revision/UUID validation.
 
@@ -22,7 +22,7 @@ Reject an exact protocol UID already active in the destination calendar unless t
 
 On successful first adoption, mark only that selected inbox version reviewed/dismissed and advance its revision atomically with the new event/link. A concurrently newer REQUEST causes expected-source/revision rejection when it wins first; if adoption wins first, a later newer source can reopen private review under ADR 0137, but cannot automatically update or create another event. Existing native event edits remain local and retain their import baseline for future conflict detection. Generic file-based source replacements on linked events reject in this first profile, including hosts without active invitation ingress; ordinary local edits/deletion remain supported. A later explicit reconciliation policy can change the adopted baseline. Unlinked ordinary import/replacement behavior is unchanged.
 
-## Proposed host authority
+## Approved host authority
 
 Add independent invitation adopt/read-link operations. Require ordinary inbox summary/source authority and explicit host approval of the stored source for the current origin/recipient mapping; a persisted address alone is insufficient. Require destination-calendar import/create permission and the applicable event lifecycle/source gates. The first profile also requires full ordinary event disclosure plus event source-read authority for the resulting linked event, so it cannot create an invisible local copy or return a hidden event reference. Hosts may map gates to common rules; blind creation/redacted adoption can be reviewed separately.
 
@@ -30,9 +30,9 @@ Host contexts identify the actual inbox/source, normalized REQUEST/digest, selec
 
 Keep recipient resolution/current actor policy-epoch checks and the existing shared scope lock. All participating hosts must enforce link/correlation semantics even if their optional invitation runtime is disabled for user ingress. No process-local lock/cache/sticky routing may establish uniqueness or permission. Cross-scope adoption remains unavailable in the initial profile.
 
-## One proposed private binding table
+## Approved private binding table
 
-Propose **CalendarInvitationLinkRecord**, server-only, containing server link UUID; trusted scope/recipient; exact source UID/organizer plus fixed correlation digest; original inbox/source UUID references and source digest/SEQUENCE presence/DTSTAMP; destination calendar and native event identity UUIDs; original request digest; created event/inbox revisions and database adoption time. There is no copied source body/title/location, provider credential or address-to-host-user directory.
+Use **CalendarInvitationLinkRecord**, server-only, containing server link UUID; trusted scope/recipient; exact source UID/organizer plus fixed correlation digest; original inbox/source UUID references and source digest/SEQUENCE presence/DTSTAMP; destination calendar and native event identity UUIDs; original request digest; created event/inbox revisions and database adoption time. There is no copied source body/title/location, provider credential or address-to-host-user directory.
 
 Use unique scope/recipient/correlation-digest and scope/recipient/original-inbox keys, with retained-value verification; use unique native event UUID to prevent accidental many-link association. Raw source identifiers are not index keys. Calendar/event references target identity rows so ordinary active payload deletion can still scrub event content. Inbox/source UUIDs are historical references rather than foreign keys: ADR 0137 retains its independent source/body/marker cleanup and caps. The binding survives that cleanup and still enforces one logical link.
 
@@ -54,4 +54,4 @@ Allowing independent copies conflicts with the selected one-event policy and com
 
 Before implementation, review the binding model, immutable receipt/context/query fields and exact event write-helper adaptation. Test source/version/annotation/DATE/UTC/named-zone preservation, native/imported origin separation and unchanged participation/outbound/alarm state; independent source/create/import/read/link permissions and final rollback; active UID conflicts, quotas/overflow and scope/recipient isolation; exact retry after source/native changes and inbox expiry; different destinations/new equivalent inbox UUIDs; deleted links and no recreation; native deletion payload scrubbing; two real hosts racing adoption, import/UID conflict, source updates and parent deletion; actual before/after-commit process loss; fresh/upgrade schema and generated-client/Flutter journeys. Run focused checks during feature work, then full batch checks before one code commit. Mail, response/adoption authority, source replacements/relink/removal and release interoperability remain required separate work.
 
-Open issues/PRs were checked across all pages; no overlapping invitation calendar-addition work was found. This documentation proposal follows completed invitation-review implementation PR #104. It adds no model source, generated code, migration or runtime behavior before explicit agreement.
+Open issues/PRs were checked across all pages; no overlapping invitation calendar-addition work was found. The original documentation proposal followed completed invitation-review implementation PR #104. The maintainer subsequently approved the complete model/API/retention batch before source changes; see [the scoped guide](../invitation-calendar-adoption.md).

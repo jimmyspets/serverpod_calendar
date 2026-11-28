@@ -1,3 +1,5 @@
+import 'invitation_adoption_smoke.dart';
+
 import 'dart:io';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
@@ -127,4 +129,5 @@ Future<void> invitationSmoke(List<Client> clients) async {
       }
     }
   }
+  await invitationAdoptionSmoke(clients);
 }

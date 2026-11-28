@@ -182,6 +182,102 @@ Future<void> main() async {
       state['entries'] == 1 && state['sources'] == 1 && state['receipts'] == 1,
       'Conflicting ingress left partial state',
     );
+    final adoptionCase = nextCase();
+    final received = await a.command({
+      'command': 'receive',
+      'caseId': adoptionCase,
+      'key': 'adopt',
+    }) as Map;
+    final calendar = await a.command({
+      'command': 'calendar',
+      'caseId': adoptionCase,
+    }) as String;
+    Map<String, Object?> adoptionRequest(Map received, String calendar) => {
+      'invitationId': received['entryId'],
+      'sourceId': received['sourceId'],
+      'expectedRevision': 1,
+      'calendarId': calendar,
+      'expectedCalendarRevision': 1,
+    };
+    final body = adoptionRequest(received, calendar);
+    final adopted = await Future.wait(
+      [a, b].map(
+        (p) => p.command({
+          'command': 'adopt',
+          'caseId': adoptionCase,
+          'request': body,
+        }),
+      ),
+    );
+    require(
+      (adopted.first as Map)['id'] != null &&
+          (adopted.first as Map)['id'] == (adopted.last as Map)['id'],
+      'Concurrent adoption failed stable one-event identity',
+    );
+    final adoptionState =
+        await b.command({'command': 'inspect', 'caseId': adoptionCase}) as Map;
+    require(
+      adoptionState['events'] == 1 &&
+          adoptionState['links'] == 1 &&
+          adoptionState['dismissed'] == true,
+      'Adoption was not atomic',
+    );
+    for (final pause in ['adopt-before', 'adopt-after']) {
+      final id = nextCase();
+      final source = await b.command({
+        'command': 'receive',
+        'caseId': id,
+        'key': 'source',
+      }) as Map;
+      final parent =
+          await b.command({'command': 'calendar', 'caseId': id}) as String;
+      final request = adoptionRequest(source, parent);
+      a.paused = Completer<Map<String, dynamic>>();
+      final lost = a
+          .command({
+            'command': 'adopt',
+            'caseId': id,
+            'request': request,
+            'pause': pause,
+          })
+          .catchError((Object _) => null);
+      final submitted = await a.paused!.future.timeout(
+        const Duration(seconds: 40),
+      );
+      final visible =
+          await b.command({'command': 'inspect', 'caseId': id}) as Map;
+      final committed = pause == 'adopt-after';
+      require(
+        visible['events'] == (committed ? 1 : 0) &&
+            visible['links'] == (committed ? 1 : 0) &&
+            visible['dismissed'] == committed,
+        'Partial adoption visible across commit boundary',
+      );
+      await a.stop();
+      await lost;
+      final recovered = await b.command({
+        'command': 'adopt',
+        'caseId': id,
+        'request': request,
+      }) as Map;
+      require(
+        recovered['id'] != null &&
+            (committed == (recovered['id'] == submitted['id'])),
+        'Adoption process loss did not recover the correct retained receipt',
+      );
+      final state =
+          await b.command({'command': 'inspect', 'caseId': id}) as Map;
+      require(
+        state['events'] == 1 &&
+            state['links'] == 1 &&
+            state['dismissed'] == true,
+        'Adoption recovery duplicated or lost state',
+      );
+      a = await start(
+        'a-adoption-recovered-${committed ? 'after' : 'before'}',
+        18780,
+      );
+    }
     for (final pause in ['before', 'after']) {
       final id = nextCase();
       a.paused = Completer<Map<String, dynamic>>();
@@ -224,7 +320,7 @@ Future<void> main() async {
       if (pause == 'before') a = await start('a-recovered', 18780);
     }
     stdout.writeln(
-      'PASS: independent invitation hosts, duplicate/conflicting ingress and dismissal races, actual loss before/after commit, stable receipt recovery and no partial state.',
+      'PASS: independent invitation hosts, duplicate/conflicting ingress and dismissal races, actual loss before/after commit, stable receipt recovery, one-event adoption races/loss and no partial state.',
     );
   } finally {
     final live = probes.where((p) => !p.stopped && !p.exited).toList();
