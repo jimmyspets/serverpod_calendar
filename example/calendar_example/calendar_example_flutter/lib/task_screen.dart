@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'task_occurrence_screen.dart';
+import 'task_progress_label.dart';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
@@ -118,7 +119,7 @@ class _TaskScreenState extends State<TaskScreen> {
             subtitle: task.progress == null
                 ? null
                 : Text(
-                    '${task.progress!.status.name}: ${task.progress!.percentComplete}%',
+                    taskProgressLabel(task.progress!),
                   ),
             onTap: _busy ? null : () => _open(task),
           ),
@@ -212,7 +213,7 @@ class _TaskEditorState extends State<TaskEditor> {
     _interval.text = (_view?.recurrence?.rule?.interval ?? 1).toString();
     _count.text = _view?.recurrence?.rule?.count?.toString() ?? '';
     _weekStart.text = (_view?.recurrence?.rule?.weekStart ?? 1).toString();
-    _percent.text = (_view?.progress?.percentComplete ?? 0).toString();
+    _percent.text = _view?.progress?.percentComplete?.toString() ?? '';
     _dirty = false;
     _stale = false;
   }
@@ -610,13 +611,9 @@ class _TaskEditorState extends State<TaskEditor> {
               ),
             if (_view?.progress != null && _view?.recurrence == null) ...[
               Text(
-                'Status: ${_view!.progress!.status.name}; ${_view!.progress!.percentComplete}%',
+                'Status: ${taskProgressLabel(_view!.progress!)}',
                 key: const Key('task-progress-state'),
               ),
-              if (_view!.progress!.completedAt != null)
-                Text(
-                  'Completed: ${_view!.progress!.completedAt!.toIso8601String()}',
-                ),
               TextField(
                 key: const Key('task-percentage'),
                 controller: _percent,

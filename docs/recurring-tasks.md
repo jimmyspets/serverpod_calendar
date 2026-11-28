@@ -1,5 +1,6 @@
 # Durable recurring tasks and occurrence progress
 
+> Progress follow-up: [source-preserving native progress](task-source-progress.md) under ADR 0096 supersedes earlier mandatory status/percentage and neutral-recurring-master read rules. Native create/reopen defaults and command separation remain; imported source-shaped fields stay independently optional, and unrecorded occurrences use the master value. Full task source import remains separate.
 This increment implements the confirmed choices in [ADR 0085](adr/0085-recurring-task-progress-and-history.md), with concrete schema/API/query mechanics under draft review in [ADR 0086](adr/0086-durable-task-recurrence-implementation.md). It extends [native non-recurring tasks](native-tasks.md). VTODO parsing/export, timing/content exceptions, all-series lifecycle changes, scheduling and alarms remain separate. Core recurrence calculations alone never establish wire/client compatibility.
 
 ## Recurrence and previews
@@ -14,7 +15,7 @@ Calendar presentation uses ISO 8601 Monday-first week numbering; an explicit rec
 
 ## Independent progress and history
 
-The series-level progress stays neutral NEEDS-ACTION/0 without completion time. Whole-task progress commands reject for a recurring series. `changeOccurrenceProgress` instead takes expected task revision and an exact original typed start. Original identity never follows a deadline, completion timestamp or display position. Missing, excluded, wrong-profile or interval-valued originals reject. Each occurrence independently uses the existing complete/cancel/reopen/percentage rules; completing one leaves the others unchanged. Task assignment remains series-level.
+Native series creation starts NEEDS-ACTION/0 without completion time. Under ADR 0096, stored source-shaped master progress may be independently optional/unusual and supplies the complete default for originals with no own progress row; explicit rows replace that value without field merging. Whole-task progress commands reject for a recurring series. `changeOccurrenceProgress` instead takes expected task revision and an exact original typed start. Original identity never follows a deadline, completion timestamp or display position. Missing, excluded, wrong-profile or interval-valued originals reject. Each occurrence independently uses the existing complete/cancel/reopen/percentage rules; completing one leaves the others unchanged. Task assignment remains series-level.
 
 Actual progress changes persist current state and one transition with action, before/after progress, resulting task revision and whole-second server-recorded time. Repeating an already satisfied action does not invent history or change protocol version, although an accepted write advances API revision/audit/scope generation as before. Reopening clears current completion time but retains the earlier completion transition. A later cancellation clears the active timestamp while retaining percentage and historical completion evidence. No actor identity appears in the initial history projection.
 

@@ -120,7 +120,9 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
         occurrences: [
           for (final o in values)
             o.copyWith(
-              progress: records[taskOriginalKey(o.originalStart)] ?? o.progress,
+              progress:
+                  records[taskOriginalKey(o.originalStart)] ??
+                  task.data.progress,
             ),
         ],
       );
@@ -141,7 +143,7 @@ extension CalendarTaskOccurrenceOperations on CalendarService {
       for (final r in rows) {
         if (r.originalKey == key) row = r;
       }
-      final before = row?.progress ?? CalendarTaskProgress();
+      final before = row?.progress ?? task.data.progress;
       CalendarAuthorizationRequest request(
         CalendarTaskProgress after, [
         CalendarTaskProtocolVersion? version,

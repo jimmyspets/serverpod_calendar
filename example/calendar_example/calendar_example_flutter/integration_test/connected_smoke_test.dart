@@ -509,10 +509,13 @@ void main() {
     await _tap(tester, 'task-progress-setPercentage');
     expect(find.text('Status: inProcess; 65%'), findsOneWidget);
     await _tap(tester, 'task-progress-complete');
-    expect(find.text('Status: completed; 100%'), findsOneWidget);
+    expect(
+      find.textContaining('Status: completed; 100%; completion '),
+      findsOneWidget,
+    );
     await _tap(tester, 'task-progress-cancel');
     expect(find.text('Status: cancelled; 100%'), findsOneWidget);
-    expect(find.textContaining('Completed:'), findsNothing);
+    expect(find.textContaining('; completion '), findsNothing);
     await _tap(tester, 'task-progress-reopen');
     expect(find.text('Status: needsAction; 0%'), findsOneWidget);
     final tasks = client.modules.serverpod_calendar.calendarTask;
@@ -581,7 +584,7 @@ void main() {
       tester
           .widget<Text>(find.byKey(const Key('task-occurrence-state-0')))
           .data,
-      'completed; 100%',
+      startsWith('completed; 100%; completion '),
     );
     expect(
       tester

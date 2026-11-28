@@ -121,15 +121,8 @@ List<CalendarTaskAssignee> validateTaskAssignees(
 }
 
 CalendarTaskProgress validateTaskProgress(CalendarTaskProgress value) {
-  RangeError.checkValueInInterval(value.percentComplete, 0, 100);
-  final completed = value.status == CalendarTaskStatus.completed;
-  if (completed != (value.completedAt != null) ||
-      completed && value.percentComplete != 100 ||
-      value.status == CalendarTaskStatus.needsAction &&
-          value.percentComplete != 0 ||
-      value.status == CalendarTaskStatus.inProcess &&
-          value.percentComplete == 100) {
-    throw ArgumentError('Inconsistent task progress');
+  if (value.percentComplete != null) {
+    RangeError.checkValueInInterval(value.percentComplete!, 0, 100);
   }
   if (value.completedAt != null) {
     if (!value.completedAt!.isUtc) {
@@ -153,14 +146,19 @@ CalendarTaskProgress changeTaskProgressValue(
     CalendarTaskProgressAction.complete =>
       before.status == CalendarTaskStatus.cancelled
           ? throw ArgumentError('Reopen before completing')
-          : before.status == CalendarTaskStatus.completed
+          : before.status == CalendarTaskStatus.completed &&
+                before.percentComplete == 100 &&
+                before.completedAt != null
           ? before
           : CalendarTaskProgress(
               status: CalendarTaskStatus.completed,
               percentComplete: 100,
               completedAt: eventProtocolInstant(now),
             ),
-    CalendarTaskProgressAction.reopen => CalendarTaskProgress(),
+    CalendarTaskProgressAction.reopen => CalendarTaskProgress(
+      status: CalendarTaskStatus.needsAction,
+      percentComplete: 0,
+    ),
     CalendarTaskProgressAction.cancel => CalendarTaskProgress(
       status: CalendarTaskStatus.cancelled,
       percentComplete: before.percentComplete,
