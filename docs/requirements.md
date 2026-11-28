@@ -646,3 +646,8 @@ Accepted [ADR 0180](adr/0180-authenticated-bounded-freebusy-exchanges.md) adds t
 ## Subject/common-free snapshot downloads
 
 Accepted [ADR 0181](adr/0181-subject-common-freebusy-export.md) implements stateless authenticated subject/common-free VFREEBUSY download: ordered per-target components or one complete aggregate, independent subject export authority, exact final source/resolution checks, shared budgets and anonymous snapshot identities. Unknown or denied contributors reject the whole file. One immutable request DTO and a generated endpoint extend the Flutter example without SQL, durable mail, workers or feed changes. See [the implemented profile](subject-freebusy-export.md) and the separate validation record. Subject/common-free mail and remaining release requirements stay separate.
+
+
+## Proposed native event information publication
+
+[Proposed ADR 0182](adr/0182-native-event-information-publication.md) groups outgoing VEVENT PUBLISH/update and whole cancellation/reopening for native non-recurring events and supported recurring masters. It keeps fixed private routing recipients separate from attendees, preserves private drafts and exact retry bytes, and proposes one binding-purpose column plus purpose/action API/context refinements using the existing four outbox tables. Independent permissions, strict cross-purpose rejection, synthetic MIME, migrations, two-host/process-loss and Flutter validation form one batch. No model source or implementation is authorized by this proposal; incoming publication adoption, occurrence publication, other selected methods and real mail remain separate.

@@ -211,6 +211,8 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0181](0181-subject-common-freebusy-export.md) | Complete subject and common-free VFREEBUSY exports | Accepted by explicit maintainer agreement; stateless subject/common download with independent export authority and complete final checks; no SQL/mail |
 
+| [0182](0182-native-event-information-publication.md) | Explicit native event information publication | Proposed; grouped VEVENT PUBLISH/update/whole lifecycle, binding-purpose discriminator, existing outbox/MIME/client/worker validation; no implementation before agreement |
+
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
 Use the next consecutive number for a new ADR covering a material decision. Include context, proposal/decision, alternatives, consequences, and acceptance conditions. Preserve committed/accepted decision history; supersede accepted decisions with a linked ADR. Superseded uncommitted drafts may be removed under the maintainer-authorized cleanup. Mark an ADR accepted only after explicit maintainer agreement recorded in the PR or issue.
