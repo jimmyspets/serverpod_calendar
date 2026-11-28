@@ -920,26 +920,26 @@ packages:
     dependency: transitive
     description:
       name: relic_core
-      sha256: e96cb1cc25cc9e44a77e448990182a42f21fc2af02b286e96469df77c4741c9d
+      sha256: de206d8eed714ada4c7e6471fe312cd5162af51e712203df68e59d9b0983d0ba
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.0"
+    version: "2.0.1"
   relic_headers:
     dependency: transitive
     description:
       name: relic_headers
-      sha256: ba020689327bfbadf27639dd583d3955f2e32ee373e97cfbdaac6d818d5a262f
+      sha256: "797ae5aa914b117e78a6e76ed515df81e6df137a7abba8879b6486e2a5b5bcb5"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.0"
+    version: "2.0.1"
   relic_io:
     dependency: transitive
     description:
       name: relic_io
-      sha256: "90c76671cc46f3294d8296658ef2b642d37ee181b380f68c7e3b51320e8d3aed"
+      sha256: "6010128f05c03376e74de7e071564a3d35215c09eaea7dd9bc4cc966b39948cb"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.0"
+    version: "2.0.1"
   rfc_6901:
     dependency: transitive
     description:

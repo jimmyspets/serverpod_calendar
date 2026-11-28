@@ -8,6 +8,8 @@ Use Flutter **3.50.1 stable**, bundled Dart **3.14.0**, and Serverpod CLI/runtim
 
 The Flutter example and its tests import standalone `material_ui` after Flutter 3.50 deprecated the SDK Material library. [Flutter migration guide](https://docs.flutter.dev/release/breaking-changes/material-ui-and-cupertino-ui)
 
+The two-host feed smoke test accepts the known 304 zero Content-Length only for the locked Serverpod 4.1.2 and relic_io 2.0.1 pair. [Calendar issue #209](https://github.com/jimmyspets/serverpod_calendar/issues/209)
+
 The connected host smoke test uses ChromeDriver port 18444 by default. Set
 `CALENDAR_TEST_CHROMEDRIVER_PORT` to an available port when another application
 uses it.

@@ -1,8 +1,9 @@
 # Serverpod 4.1.2 dependency alignment
 
-The workspace is updating its pinned CLI, runtime, client, Flutter,
-authentication and test packages from 4.1.0 to 4.1.2. Flutter 3.47.7 and
-Dart 3.13.5 remain selected. The [upstream changelog](https://pub.dev/packages/serverpod/changelog)
+This record covers the initial upgrade of the pinned CLI, runtime, client,
+Flutter integration, authentication and test packages from Serverpod 4.1.0
+to 4.1.2 with Flutter 3.47.7 and Dart 3.13.5. See the
+[current upgrade record](serverpod-4.1-upgrade.md#serverpod-412). The [upstream changelog](https://pub.dev/packages/serverpod/changelog)
 describes the 4.1.1 and 4.1.2 changes. The [4.1.0 upgrade record](serverpod-4.1-upgrade.md)
 retains its historical validation and migration evidence.
 
@@ -28,8 +29,7 @@ representation length of zero for a nonempty representation. A local raw
 closes a 304 without sending a body; an empty stream before close avoids it,
 but the resolved Relic adapter consumes rather than writes that stream and
 suppresses application-supplied framing on 304.
-This HTTP compatibility failure remains open. The feed smoke test continues
-to reject the incorrect header rather than accepting it as valid.
+The feed smoke test rejected the incorrect header in this validation run.
 The hosted check for commit `4d4b735` also failed at this same feed smoke
 assertion: its 304 carried `Content-Length: 0` for a 692-byte representation.
 The inspection job passed, and the runtime job reached the feed check after
@@ -38,6 +38,6 @@ its earlier database and two-host checks passed. See
 Existing-database upgrades, feed snapshot reconciliation and a successful
 full hosted check remain outstanding.
 
-The maintainer chose to keep the 4.1.2 upgrade in draft while waiting for a
-framework fix, and to continue independent roadmap work. The invalid 304
-header is not accepted as a release exception.
+The maintainer initially held the upgrade in draft. The later approval for
+the version-specific test exception is recorded in
+[calendar issue #209](https://github.com/jimmyspets/serverpod_calendar/issues/209).
