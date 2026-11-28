@@ -11,12 +11,14 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import 'calendar_invitation_source_kind.dart' as _ilccsff7;
 
 @_isc.immutable
 abstract class CalendarInvitationApplyReceipt
     implements _isc.SerializableModel, _isc.ProtocolSerialization {
   const CalendarInvitationApplyReceipt._({
     required this.id,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     required this.linkId,
     required this.invitationId,
     required this.sourceId,
@@ -26,10 +28,11 @@ abstract class CalendarInvitationApplyReceipt
     required this.eventRevision,
     required this.invitationRevision,
     required this.appliedAt,
-  });
+  }) : kind = kind ?? _ilccsff7.CalendarInvitationSourceKind.request;
 
   const factory CalendarInvitationApplyReceipt({
     required _isc.UuidValue id,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     required _isc.UuidValue linkId,
     required _isc.UuidValue invitationId,
     required _isc.UuidValue sourceId,
@@ -46,6 +49,11 @@ abstract class CalendarInvitationApplyReceipt
   ) {
     return CalendarInvitationApplyReceipt(
       id: _isc.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
+      kind: jsonSerialization['kind'] == null
+          ? null
+          : _ilccsff7.CalendarInvitationSourceKind.fromJson(
+              (jsonSerialization['kind'] as String),
+            ),
       linkId: _isc.UuidValueJsonExtension.fromJson(jsonSerialization['linkId']),
       invitationId: _isc.UuidValueJsonExtension.fromJson(
         jsonSerialization['invitationId'],
@@ -67,6 +75,8 @@ abstract class CalendarInvitationApplyReceipt
       ),
     );
   }
+
+  final _ilccsff7.CalendarInvitationSourceKind kind;
 
   final _isc.UuidValue id;
 
@@ -93,6 +103,7 @@ abstract class CalendarInvitationApplyReceipt
   @_isc.useResult
   CalendarInvitationApplyReceipt copyWith({
     _isc.UuidValue? id,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     _isc.UuidValue? linkId,
     _isc.UuidValue? invitationId,
     _isc.UuidValue? sourceId,
@@ -116,6 +127,11 @@ abstract class CalendarInvitationApplyReceipt
                   id,
                 ) ||
                 other.id == id) &&
+            (identical(
+                  other.kind,
+                  kind,
+                ) ||
+                other.kind == kind) &&
             (identical(
                   other.linkId,
                   linkId,
@@ -168,6 +184,7 @@ abstract class CalendarInvitationApplyReceipt
     return Object.hash(
       runtimeType,
       id,
+      kind,
       linkId,
       invitationId,
       sourceId,
@@ -185,6 +202,7 @@ abstract class CalendarInvitationApplyReceipt
     return {
       '__className__': 'serverpod_calendar.CalendarInvitationApplyReceipt',
       'id': id.toJson(),
+      'kind': kind.toJson(),
       'linkId': linkId.toJson(),
       'invitationId': invitationId.toJson(),
       'sourceId': sourceId.toJson(),
@@ -202,6 +220,7 @@ abstract class CalendarInvitationApplyReceipt
     return {
       '__className__': 'serverpod_calendar.CalendarInvitationApplyReceipt',
       'id': id.toJson(),
+      'kind': kind.toJson(),
       'linkId': linkId.toJson(),
       'invitationId': invitationId.toJson(),
       'sourceId': sourceId.toJson(),
@@ -224,6 +243,7 @@ class _CalendarInvitationApplyReceiptImpl
     extends CalendarInvitationApplyReceipt {
   const _CalendarInvitationApplyReceiptImpl({
     required _isc.UuidValue id,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     required _isc.UuidValue linkId,
     required _isc.UuidValue invitationId,
     required _isc.UuidValue sourceId,
@@ -235,6 +255,7 @@ class _CalendarInvitationApplyReceiptImpl
     required DateTime appliedAt,
   }) : super._(
          id: id,
+         kind: kind,
          linkId: linkId,
          invitationId: invitationId,
          sourceId: sourceId,
@@ -252,6 +273,7 @@ class _CalendarInvitationApplyReceiptImpl
   @override
   CalendarInvitationApplyReceipt copyWith({
     _isc.UuidValue? id,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     _isc.UuidValue? linkId,
     _isc.UuidValue? invitationId,
     _isc.UuidValue? sourceId,
@@ -264,6 +286,7 @@ class _CalendarInvitationApplyReceiptImpl
   }) {
     return CalendarInvitationApplyReceipt(
       id: id ?? this.id,
+      kind: kind ?? this.kind,
       linkId: linkId ?? this.linkId,
       invitationId: invitationId ?? this.invitationId,
       sourceId: sourceId ?? this.sourceId,

@@ -63,7 +63,16 @@ extension CalendarInvitationApplicationOperations on CalendarService {
     // Preserve an omitted accepted sequence instead of falling back to creation.
     final sequence = row == null ? link.sequence : row.sequence;
     final stamp = row?.stamp ?? link.stamp;
-    if (version['sequence'] != sequence ||
+    final kind = row?.kind ?? CalendarInvitationSourceKind.request;
+    final content = decoded['content'] as Map<String, dynamic>;
+    if ((kind == CalendarInvitationSourceKind.meetingCancellation &&
+            (content['status'] != 'cancelled' ||
+                protocol['statusPresent'] != true ||
+                sequence == null ||
+                content['recurrence'] != null)) ||
+        (kind == CalendarInvitationSourceKind.request &&
+            content['status'] == 'cancelled') ||
+        version['sequence'] != sequence ||
         DateTime.tryParse(version['stamp'] as String? ?? '') != stamp ||
         organizer?['address'] != link.organizer) {
       throw _failure(CalendarFailureCode.unavailable);
@@ -99,6 +108,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
     CalendarInvitationLinkRecord link,
     CalendarInvitationApplicationRecord r,
   ) => CalendarInvitationApplyReceipt(
+    kind: r.kind,
     id: r.resultId,
     linkId: link.id!,
     invitationId: r.invitationId,
@@ -116,6 +126,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
     _Event event,
     CalendarInvitationApplicationRecord? r,
   ) => CalendarInvitationApplicationState(
+    kind: r?.kind ?? CalendarInvitationSourceKind.request,
     linkId: link.id!,
     revision: r?.revision ?? 0,
     invitationId: r?.invitationId ?? link.invitationId,
@@ -159,7 +170,11 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       CalendarInvitationOperation.readSource,
       CalendarInvitationOperation.readLink,
       CalendarInvitationOperation.readApplication,
-      if (operation == CalendarInvitationOperation.apply) operation,
+      if ({
+        CalendarInvitationOperation.apply,
+        CalendarInvitationOperation.applyCancellation,
+      }.contains(operation))
+        operation,
     ]) {
       await _invAuthorize(
         CalendarInvitationPolicyContext(
@@ -201,6 +216,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
     Transaction tx,
     CalendarAuthorizationPhase phase, {
     bool writing = false,
+    bool cancellation = false,
     CalendarEventImportMember? member,
     CalendarEventPolicySnapshot? before,
   }) async {
@@ -225,8 +241,10 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       ],
       CalendarPermission.readEvent,
       CalendarPermission.readEventSource,
-      if (member != null) ...[
+      if (writing && cancellation) CalendarPermission.changeEventStatus,
+      if (member != null || writing && cancellation)
         CalendarPermission.updateEvent,
+      if (member != null) ...[
         if (itemTextChanges(
               eventTextState(oldMetadata, current.timingOverrides),
               eventTextState(member.protocolState, member.timingOverrides),
@@ -242,7 +260,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
               member.timingOverrides,
             ))
           CalendarPermission.updateEventDescriptiveMetadata,
-        if (current.content.status != member.content.status)
+        if (!cancellation && current.content.status != member.content.status)
           CalendarPermission.changeEventStatus,
       ],
     ];
@@ -311,7 +329,11 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         source.stamp != state.stamp) {
       throw _failure(CalendarFailureCode.unavailable);
     }
-    return (source, _invStored(source, entry));
+    final message = _invStored(source, entry);
+    if (_invKind(message) != state.kind) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
+    return (source, message);
   }
 
   Future<CalendarInvitationApplicationView> invitationApplication(
@@ -385,6 +407,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       calendarRevision: event.parent.identity.revision,
       eventRevision: event.identity.revision,
       applicationRevision: accepted.revision,
+      acceptedKind: accepted.kind,
       acceptedInvitationId: accepted.invitationId,
       acceptedSourceId: accepted.sourceId,
       acceptedSequence: accepted.sequence,
@@ -402,6 +425,21 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       incomingSourceText: entry?.currentSourceId == null
           ? null
           : source?.normalizedSource,
+      canApplyCancellation:
+          entry?.currentSourceId != null &&
+          message?.method == IcalendarSchedulingMethod.cancel &&
+          entry!.dismissedAt == null &&
+          !dirty &&
+          event.data.content.recurrence == null &&
+          _invSourceOrder(
+                source!.sequence,
+                source.stamp,
+                accepted.sequence,
+                accepted.stamp,
+              ) >
+              0 &&
+          (accepted.kind == CalendarInvitationSourceKind.meetingCancellation ||
+              (source.sequence ?? 0) > (accepted.sequence ?? 0)),
       canApply:
           incoming != null &&
           entry!.dismissedAt == null &&
@@ -417,9 +455,57 @@ extension CalendarInvitationApplicationOperations on CalendarService {
     );
   });
 
+  CalendarEventImportMember _invCancellationMember(
+    IcalendarSchedulingMessage message,
+    _Event event,
+  ) => _eventProtocolValue(() {
+    if (message.method != IcalendarSchedulingMethod.cancel ||
+        event.data.content.recurrence != null ||
+        message.events.single.status != IcalendarEventStatus.cancelled) {
+      throw _failure(CalendarFailureCode.validation);
+    }
+    final source = message.events.single;
+    final content = validateEventContent(
+      event.data.content.copyWith(status: CalendarEventStatus.cancelled),
+    );
+    final state = validateEventProtocolState(
+      event.data.protocolState!.copyWith(
+        statusPresent: true,
+        version: CalendarEventProtocolVersion(
+          sequence: source.sequence,
+          stamp: source.stamp,
+          created: source.created,
+          lastModified: source.lastModified,
+        ),
+      ),
+      content,
+      event.data.timingOverrides,
+    );
+    return CalendarEventImportMember(
+      eventId: event.identity.id!,
+      protocolUid: event.data.protocolUid,
+      content: content,
+      protocolState: state,
+      timingOverrides: event.data.timingOverrides,
+    );
+  });
+
   Future<CalendarInvitationApplyReceipt> applyInvitationUpdate(
     CalendarInvitationApplyRequest input,
-  ) {
+  ) => _applyInvitationSource(input, cancellation: false);
+  Future<CalendarInvitationApplyReceipt> applyInvitationCancellation(
+    CalendarInvitationApplyRequest input,
+  ) => _applyInvitationSource(input, cancellation: true);
+  Future<CalendarInvitationApplyReceipt> _applyInvitationSource(
+    CalendarInvitationApplyRequest input, {
+    required bool cancellation,
+  }) {
+    final kind = cancellation
+        ? CalendarInvitationSourceKind.meetingCancellation
+        : CalendarInvitationSourceKind.request;
+    final operation = cancellation
+        ? CalendarInvitationOperation.applyCancellation
+        : CalendarInvitationOperation.apply;
     if ([
           input.expectedInvitationRevision,
           input.expectedEventRevision,
@@ -430,6 +516,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       throw _failure(CalendarFailureCode.validation);
     }
     final requestDigest = _invitationHash([
+      if (cancellation) 'apply-cancellation-v1',
       input.invitationId.toString(),
       input.sourceId.toString(),
       '${input.expectedInvitationRevision}',
@@ -446,11 +533,31 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         recipient,
         tx,
         CalendarAuthorizationPhase.preliminaryWrite,
-        operation: CalendarInvitationOperation.apply,
+        operation: operation,
         view: view,
         input: input,
       );
-      final link = await _invFindLink(input.invitationId, entry, recipient, tx);
+      var link = await _invFindLink(input.invitationId, entry, recipient, tx);
+      if (link == null && entry == null) {
+        // A retained latest command carries the durable link even when a
+        // later inbox epoch has been pruned. It must still pass full authority
+        // and exact digest checks; no new write may use a missing entry.
+        final candidate = await CalendarInvitationLinkRecord.db.findById(
+          _session,
+          input.linkId,
+          transaction: tx,
+        );
+        if (candidate != null &&
+            candidate.scopeKey == recipient.scopeKey &&
+            candidate.recipientKey == recipient.key) {
+          link = await _invFindLink(
+            candidate.invitationId,
+            null,
+            recipient,
+            tx,
+          );
+        }
+      }
       if (link == null || link.id != input.linkId) {
         throw _failure(CalendarFailureCode.accessDenied);
       }
@@ -464,9 +571,13 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         tx,
         CalendarAuthorizationPhase.preliminaryWrite,
         writing: true,
+        cancellation: cancellation,
       );
       final dirty = _invLocalChanges(event);
       if (checkpoint != null && checkpoint.requestDigest == requestDigest) {
+        if (checkpoint.kind != kind) {
+          throw _failure(CalendarFailureCode.unavailable);
+        }
         final (source, message) = await _invAcceptedBody(
           accepted,
           link,
@@ -478,13 +589,20 @@ extension CalendarInvitationApplicationOperations on CalendarService {
           CalendarAuthorizationPhase.preliminaryWrite,
           CalendarAuthorizationPhase.finalWrite,
         ]) {
-          await _invApplicationNative(actor, event, tx, phase, writing: true);
+          await _invApplicationNative(
+            actor,
+            event,
+            tx,
+            phase,
+            writing: true,
+            cancellation: cancellation,
+          );
           await _invApplicationHost(
             actor,
             recipient,
             tx,
             phase,
-            operation: CalendarInvitationOperation.apply,
+            operation: operation,
             view: view,
             link: link,
             parent: event.parent,
@@ -506,7 +624,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         recipient,
         tx,
         CalendarAuthorizationPhase.preliminaryWrite,
-        operation: CalendarInvitationOperation.apply,
+        operation: operation,
         view: view,
         link: link,
         parent: event.parent,
@@ -531,8 +649,16 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       if (source == null || source.entryId != entry.id) {
         throw _failure(CalendarFailureCode.accessDenied);
       }
-      final message = _invStored(source, entry),
-          member = _invImportMember(message, event.identity.id!);
+      final message = _invStored(source, entry);
+      if (_invKind(message) != kind ||
+          message.uid != link.uid ||
+          message.events.single.participants.organizer?.address !=
+              link.organizer) {
+        throw _failure(CalendarFailureCode.validation);
+      }
+      final member = cancellation
+          ? _invCancellationMember(message, event)
+          : _invImportMember(message, event.identity.id!);
       if (member.protocolUid != link.uid ||
           member.protocolState.sourceMetadata?.organizer?.address !=
               link.organizer) {
@@ -556,6 +682,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
           : entry.updatedAt;
       final now = await _revisionTime(tx, previous: previous);
       final next = CalendarInvitationApplicationRecord(
+        kind: kind,
         id: checkpoint?.id ?? const Uuid().v4obj(),
         scopeKey: recipient.scopeKey,
         recipientKey: recipient.key,
@@ -587,6 +714,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         protocolState: member.protocolState,
       );
       final nextState = CalendarInvitationApplicationState(
+        kind: kind,
         linkId: link.id!,
         revision: next.revision,
         invitationId: next.invitationId,
@@ -605,7 +733,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         recipient,
         tx,
         CalendarAuthorizationPhase.preliminaryWrite,
-        operation: CalendarInvitationOperation.apply,
+        operation: operation,
         view: view,
         link: link,
         parent: event.parent,
@@ -621,6 +749,9 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         dirty: dirty,
       );
       if (dirty ||
+          (cancellation &&
+              accepted.kind == CalendarInvitationSourceKind.request &&
+              (source.sequence ?? 0) <= (accepted.sequence ?? 0)) ||
           _invSourceOrder(
                 source.sequence,
                 source.stamp,
@@ -636,6 +767,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         tx,
         CalendarAuthorizationPhase.preliminaryWrite,
         writing: true,
+        cancellation: cancellation,
         member: member,
         before: before,
       );
@@ -697,6 +829,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         tx,
         CalendarAuthorizationPhase.finalWrite,
         writing: true,
+        cancellation: cancellation,
         member: member,
         before: before,
       );
@@ -705,7 +838,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         recipient,
         tx,
         CalendarAuthorizationPhase.finalWrite,
-        operation: CalendarInvitationOperation.apply,
+        operation: operation,
         view: view,
         link: link,
         parent: event.parent,

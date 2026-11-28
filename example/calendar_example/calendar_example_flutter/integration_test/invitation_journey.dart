@@ -1,3 +1,4 @@
+import 'invitation_cancellation_application_journey.dart';
 import 'invitation_adoption_journey.dart';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
@@ -115,4 +116,5 @@ Future<void> runInvitationJourney(WidgetTester tester, Client client) async {
     }
   }
   await runInvitationAdoptionJourney(tester, client);
+  await runInvitationCancellationApplicationJourney(tester, client);
 }

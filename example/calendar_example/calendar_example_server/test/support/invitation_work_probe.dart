@@ -68,6 +68,14 @@ final class _Host implements CalendarInvitationHost {
       );
       await Completer<void>().future;
     }
+    if (pause == 'cancel-apply-before' &&
+        c.operation == CalendarInvitationOperation.applyCancellation &&
+        phase == CalendarAuthorizationPhase.finalWrite) {
+      stdout.writeln(
+        'INVITATION_PAUSED ${jsonEncode(c.applicationReceipt!.toJson())}',
+      );
+      await Completer<void>().future;
+    }
     return CalendarAuthorizationVerdict.allow;
   }
 }
@@ -233,13 +241,15 @@ Future<void> main(List<String> args) async {
               AuthenticationInfo('recipient', {}, authId: 'invitation-probe'),
             );
             try {
-              final receipt = await CalendarModule.service(session)
-                  .applyInvitationUpdate(
-                    CalendarInvitationApplyRequest.fromJson(
-                      input['request'] as Map<String, dynamic>,
-                    ),
-                  );
-              if (host.pause == 'apply-after') {
+              final service = CalendarModule.service(session);
+              final request = CalendarInvitationApplyRequest.fromJson(
+                input['request'] as Map<String, dynamic>,
+              );
+              final receipt = input['cancel'] == true
+                  ? await service.applyInvitationCancellation(request)
+                  : await service.applyInvitationUpdate(request);
+              if (host.pause == 'apply-after' ||
+                  host.pause == 'cancel-apply-after') {
                 stdout.writeln(
                   'INVITATION_PAUSED ${jsonEncode(receipt.toJson())}',
                 );
@@ -261,7 +271,25 @@ Future<void> main(List<String> args) async {
                     where: (t) =>
                         t.entryId.inSet(entries.map((e) => e.id!).toSet()),
                   );
+            final calendars = await CalendarIdentityRecord.db.find(
+              session,
+              where: (t) => t.scopeKey.equals(host.scope),
+            );
+            final eventRows = calendars.isEmpty
+                ? <CalendarEventDataRecord>[]
+                : await CalendarEventDataRecord.db.find(
+                    session,
+                    where: (t) =>
+                        t.calendarId.inSet(calendars.map((c) => c.id!).toSet()),
+                  );
+            final application = await CalendarInvitationApplicationRecord.db
+                .findFirstRow(
+                  session,
+                  where: (t) => t.scopeKey.equals(host.scope),
+                );
             result = {
+              'acceptedKind': application?.kind.name,
+              'eventStatus': eventRows.firstOrNull?.content.status.name,
               'events': await session.db
                   .unsafeQuery(
                     'SELECT e.id FROM serverpod_calendar_event e JOIN serverpod_calendar_identity c ON c.id=e."calendarId" WHERE c."scopeKey"=@scope',

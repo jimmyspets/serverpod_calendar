@@ -37,4 +37,8 @@ class CalendarInvitationEndpoint extends Endpoint {
     Session session,
     CalendarInvitationApplyRequest request,
   ) => CalendarModule.service(session).applyInvitationUpdate(request);
+  Future<CalendarInvitationApplyReceipt> applyCancellation(
+    Session session,
+    CalendarInvitationApplyRequest request,
+  ) => CalendarModule.service(session).applyInvitationCancellation(request);
 }

@@ -281,23 +281,55 @@ DROP TABLE cancellation_guard;
 """)
 
 
+
+def verify_cancellation_application_upgrade(database):
+    sql(database, """
+CREATE TABLE cancellation_application_guard AS
+ SELECT id,to_jsonb(t) payload FROM serverpod_calendar_invitation_application t;
+""")
+    sql(database, (SERVER / "migrations/20261029183508485-cancellation-application/migration.sql").read_text(encoding="utf-8"))
+    sql(database, """
+DO $verify_cancellation_application$
+BEGIN
+ IF EXISTS (SELECT 1 FROM cancellation_application_guard g
+   LEFT JOIN serverpod_calendar_invitation_application a USING(id)
+   WHERE a.id IS NULL OR (to_jsonb(a)-'kind') IS DISTINCT FROM g.payload OR a.kind<>'request')
+ THEN RAISE EXCEPTION 'Accepted-kind upgrade changed REQUEST state or retry digest'; END IF;
+ IF (SELECT count(*) FROM serverpod_calendar_invitation_application) <>
+    (SELECT count(*) FROM cancellation_application_guard)
+ THEN RAISE EXCEPTION 'Upgrade invented accepted source history'; END IF;
+ BEGIN
+  UPDATE serverpod_calendar_invitation_application SET kind=NULL;
+  RAISE EXCEPTION 'Nullable accepted source kind';
+ EXCEPTION WHEN not_null_violation THEN NULL;
+ END;
+END;
+$verify_cancellation_application$;
+DROP TABLE cancellation_application_guard;
+""")
+
+
 def main():
     # Drop only a database this process successfully creates on the test service.
     database = f"calendar_metadata_upgrade_{os.getpid()}"
     assert re.fullmatch(r"calendar_metadata_upgrade_[0-9]+", database)
     sql("postgres", f"CREATE DATABASE {database};")
     try:
-        if any(arg in __import__("sys").argv for arg in ["--instance-replies-only", "--invitations-only", "--adoption-only", "--applications-only", "--cancellations-only"]):
+        if any(arg in __import__("sys").argv for arg in ["--instance-replies-only", "--invitations-only", "--adoption-only", "--applications-only", "--cancellations-only", "--cancellation-applications-only"]):
             sql(database, (SERVER / "migrations/20261027194429192-attendee-replies/definition.sql").read_text(encoding="utf-8"))
             verify_instance_reply_upgrade(database)
-            if any(arg in __import__("sys").argv for arg in ["--invitations-only", "--adoption-only", "--applications-only", "--cancellations-only"]):
+            if any(arg in __import__("sys").argv for arg in ["--invitations-only", "--adoption-only", "--applications-only", "--cancellations-only", "--cancellation-applications-only"]):
                 verify_invitation_upgrade(database)
-                if any(arg in __import__("sys").argv for arg in ["--adoption-only", "--applications-only", "--cancellations-only"]):
+                if any(arg in __import__("sys").argv for arg in ["--adoption-only", "--applications-only", "--cancellations-only", "--cancellation-applications-only"]):
                     verify_invitation_adoption_upgrade(database)
-                    if any(arg in __import__("sys").argv for arg in ["--applications-only", "--cancellations-only"]):
+                    if any(arg in __import__("sys").argv for arg in ["--applications-only", "--cancellations-only", "--cancellation-applications-only"]):
                         verify_invitation_application_upgrade(database)
-                        if "--cancellations-only" in __import__("sys").argv:
+                        if any(arg in __import__("sys").argv for arg in ["--cancellations-only", "--cancellation-applications-only"]):
                             verify_invitation_cancellation_upgrade(database)
+                            if "--cancellation-applications-only" in __import__("sys").argv:
+                                verify_cancellation_application_upgrade(database)
+                                print("PASS: accepted-kind upgrade preserves populated REQUEST checkpoints, exact retry digests and results without invented history.")
+                                return
                             print("PASS: populated cancellation upgrade preserves all prior rows and classifies legacy REQUEST markers without invented native state.")
                             return
                         print("PASS: populated application upgrade preserves immutable links, invents no history and enforces one bounded checkpoint per link.")
@@ -945,6 +977,7 @@ DROP TABLE reply_upgrade_guard;
         verify_invitation_adoption_upgrade(database)
         verify_invitation_application_upgrade(database)
         verify_invitation_cancellation_upgrade(database)
+        verify_cancellation_application_upgrade(database)
         print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated master replies/receipts through the instance-target, invitation-review and stable-link adoption upgrades.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

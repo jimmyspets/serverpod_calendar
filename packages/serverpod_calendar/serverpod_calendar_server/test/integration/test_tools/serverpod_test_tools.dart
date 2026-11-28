@@ -2683,6 +2683,37 @@ class _CalendarInvitationEndpoint {
       }
     });
   }
+
+  _ida.Future<_imp6ds4w.CalendarInvitationApplyReceipt> applyCancellation(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i3h34hei.CalendarInvitationApplyRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarInvitation',
+            method: 'applyCancellation',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarInvitation',
+          methodName: 'applyCancellation',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_imp6ds4w.CalendarInvitationApplyReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 }
 
 class _CalendarTaskEndpoint {

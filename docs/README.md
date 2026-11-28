@@ -271,4 +271,4 @@ Accepted ADR 0137 implements bounded trusted non-recurring REQUEST intake and pr
 
 - [Cancellation intake/private review](invitation-cancellation-review.md): source kind, authority, known correlation, ordering and unchanged native state.
 
-- [Proposed linked cancellation application](adr/0141-explicit-linked-cancellation-application.md): confirmed clean-baseline policy; concrete mechanics await explicit agreement.
+- [Explicit linked cancellation/reopening](linked-invitation-cancellation.md): clean baseline, status/version projection, accepted kind and stable action retries.

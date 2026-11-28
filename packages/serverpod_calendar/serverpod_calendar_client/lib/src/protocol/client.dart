@@ -903,6 +903,14 @@ class EndpointCalendarInvitation extends _isc.EndpointRef {
     'applyUpdate',
     {'request': request},
   );
+
+  _ida.Future<_iephig57.CalendarInvitationApplyReceipt> applyCancellation(
+    _ilrmykvj.CalendarInvitationApplyRequest request,
+  ) => caller.callServerEndpoint<_iephig57.CalendarInvitationApplyReceipt>(
+    'serverpod_calendar.calendarInvitation',
+    'applyCancellation',
+    {'request': request},
+  );
 }
 
 /// {@category Endpoint}

@@ -73,6 +73,7 @@ calendarInvitation:
   - adopt:
   - application:
   - applyUpdate:
+  - applyCancellation:
 calendarTask:
   - updateTextMetadata:
   - replaceFromImport:

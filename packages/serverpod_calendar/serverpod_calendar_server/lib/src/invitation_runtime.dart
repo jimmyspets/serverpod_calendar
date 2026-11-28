@@ -48,6 +48,7 @@ enum CalendarInvitationOperation {
   adopt,
   readLink,
   apply,
+  applyCancellation,
   readApplication,
 }
 
@@ -72,6 +73,7 @@ final class CalendarInvitationLinkSource {
 /// Current accepted source, distinct from the immutable creation descriptor.
 final class CalendarInvitationApplicationState {
   const CalendarInvitationApplicationState({
+    this.kind = CalendarInvitationSourceKind.request,
     required this.linkId,
     required this.revision,
     required this.invitationId,
@@ -85,6 +87,7 @@ final class CalendarInvitationApplicationState {
     required this.appliedAt,
     this.latestResult,
   });
+  final CalendarInvitationSourceKind kind;
   final UuidValue linkId, invitationId, sourceId;
   final int revision, eventRevision, invitationRevision;
   final String digest, baselineDigest;
