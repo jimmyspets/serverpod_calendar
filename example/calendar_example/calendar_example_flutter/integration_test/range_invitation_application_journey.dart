@@ -325,7 +325,47 @@ Future<void> runRangeInvitationApplicationJourney(
       master.entryId,
     );
     expect(masterRestored.hasAcceptedRangeRestoration, isTrue);
-    expect(masterRestored.occurrenceCompositionBlocked, isTrue);
+    expect(masterRestored.occurrenceCompositionBlocked, isFalse);
+    navigator.pop();
+    await tester.pumpAndSettle();
+    await client.invitationDemo.simulateRecurring(
+      id,
+      const cal.Uuid().v4obj(),
+      9,
+      'Master preserves restored state',
+    );
+    navigator.push(
+      MaterialPageRoute<void>(
+        builder: (_) => InvitationUpdateScreen(
+          client: client,
+          invitationId: master.entryId,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await loaded();
+    expect(
+      find.byKey(const Key('invitation-master-range-restoration')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('invitation-master-composition-guard')),
+      findsNothing,
+    );
+    await tap('invitation-update-apply');
+    final composed = await api.calendarInvitation.application(master.entryId);
+    expect(composed.hasAcceptedRangeRestoration, isTrue);
+    expect(composed.acceptedSequence, 9);
+    expect(composed.hasLocalChanges, isFalse);
+    final retainedRestoration = await api.calendarInvitation
+        .rangeRestorationApplication(
+          source.entryId,
+        );
+    expect(retainedRestoration.acceptedVersion.sequence, 8);
+    expect(
+      retainedRestoration.currentOccurrence!.status,
+      cal.CalendarEventStatus.confirmed,
+    );
     navigator.pop();
     await tester.pumpAndSettle();
   } finally {

@@ -1,6 +1,6 @@
 # ADR 0165: Master updates after accepted source range restoration
 
-Status: **Proposed. The maintainer confirmed preservation of explicit restoration and individual cancellations, with rejection of updates orphaning its original. Concrete frozen-evidence/composition mechanics await explicit approval.**
+Status: **Accepted — explicit maintainer agreement on 2026-11-02 covering bounded frozen v7/baseline/master evidence, v8 composition, independent authority and stable retries. Actual implementation evidence is recorded separately.**
 
 ## Context and bounded scope
 
@@ -42,4 +42,4 @@ The latest master-command slot follows existing supersession. Its expected occur
 
 After approval, cover v7-to-v8 and continuing v8 REQUESTs for DATE/UTC/named zones/DST, same/different master-versus-restoration sequences, exact source clocks/omissions and retained canonical exceptions/individual cancellations. Verify orphan/exclusion/profile conflicts, local cutoff/content/protocol conflicts, native/host/preliminary/final authority, snapshot/current/receipt corruption, nested/unknown formats, limits, pruning/deletion and unchanged legacy reads/retries.
 
-Exercise same/competing master sources, occurrence-revision fencing, atomic cross-host visibility and actual loss before/after commit. Verify original restoration retries after master composition and local drafts, generated-client/Flutter history labels, fresh feed validators, busy/query projections and reminder action/dedup fencing. Use focused tests, grouped checks before one code commit and full implementation-head repository CI before readiness. Proposed v8 mechanics require explicit maintainer agreement before implementation.
+Exercise same/competing master sources, occurrence-revision fencing, atomic cross-host visibility and actual loss before/after commit. Verify original restoration retries after master composition and local drafts, generated-client/Flutter history labels, fresh feed validators, busy/query projections and reminder action/dedup fencing. Use focused tests, grouped checks before one code commit and full implementation-head repository CI before readiness. The maintainer explicitly approved these v8 mechanics; see [the scoped implementation](../restoration-master-composition.md) and actual validation.

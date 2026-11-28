@@ -1,11 +1,14 @@
 part of 'calendar_module.dart';
 
 bool _occHasRangeRestoration(Map<String, dynamic>? state) =>
-    state?['version'] == 7;
+    {7, 8}.contains(state?['version']);
 
 String _occRestorationReceiptDigest(Map<String, dynamic> state) =>
     _invitationHash([
-      'range-restore-receipt-v7',
+      state['version'] == 8
+          ? 'restored-receipt-v8'
+          : 'range-restore-receipt-v7',
+      if (state['version'] == 8) state['compositionDigest'] as String,
       state['requestDigest'] as String,
       jsonEncode(_occOrdered(state['receipt'])),
       (state['restoration'] as Map)['binding'] as String,

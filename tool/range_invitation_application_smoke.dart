@@ -421,6 +421,54 @@ Future<void> rangeInvitationApplicationSmoke(List<Client> clients) async {
           restoredRace.first.id,
       'Restoration retry changed receipt',
     );
+    await a.invitationDemo.simulateRecurring(
+      id,
+      const cal.Uuid().v4obj(),
+      9,
+      'Master after restoration',
+    );
+    final nextMaster = await api.calendarInvitation.application(master.entryId);
+    require(
+      nextMaster.canApply &&
+          !nextMaster.occurrenceCompositionBlocked &&
+          nextMaster.hasAcceptedRangeRestoration,
+      'Restored master preview blocked',
+    );
+    final restoredMasterInput = masterCommand(nextMaster);
+    final masterRace = await Future.wait(
+      clients.map(
+        (c) => c.modules.serverpod_calendar.calendarInvitation.applyUpdate(
+          restoredMasterInput,
+        ),
+      ),
+    );
+    require(
+      masterRace.first.id == masterRace.last.id &&
+          masterRace.first.eventRevision == 9,
+      'Restored master duplicated effect',
+    );
+    final kept = await api.calendarInvitation.rangeRestorationApplication(
+      entry,
+    );
+    require(
+      kept.hasAcceptedRangeRestoration &&
+          !kept.hasLocalChanges &&
+          kept.acceptedVersion.sequence == 8 &&
+          kept.currentOccurrence!.status == cal.CalendarEventStatus.confirmed,
+      'Master altered accepted restoration',
+    );
+    require(
+      (await api.calendarInvitation.applyRangeRestoration(restoreInput)).id ==
+          restoredRace.first.id,
+      'Master superseded restoration retry',
+    );
+    final composedFeed = await fetch(url, restoredFeed.$2);
+    require(
+      composedFeed.$1 == 200 &&
+          composedFeed.$2 != restoredFeed.$2 &&
+          composedFeed.$3.contains('Master after restoration'),
+      'Restored master feed did not update',
+    );
     stdout.writeln(
       'PASS: generated-client two-host range preview/apply and master races, preserved source versions/retries, receipt-only versus applied feed ETags and explicit range cancellation, masked-feed rejection, v5/v6 master composition/cancellation/reopening and stable independent retries, explicit v7 restoration and restored feed validators.',
     );

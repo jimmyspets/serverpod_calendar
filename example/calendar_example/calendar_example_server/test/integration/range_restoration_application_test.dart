@@ -294,11 +294,8 @@ void main() {
               zone: zone,
             );
             expect(master.hasAcceptedRangeRestoration, isTrue);
-            expect(master.canApply, isFalse);
-            await expectLater(
-              service.applyInvitationUpdate(masterCommand(master)),
-              failure(CalendarFailureCode.dependencyConflict),
-            );
+            expect(master.canApply, isTrue);
+            expect(master.occurrenceCompositionBlocked, isFalse);
           },
         );
       }

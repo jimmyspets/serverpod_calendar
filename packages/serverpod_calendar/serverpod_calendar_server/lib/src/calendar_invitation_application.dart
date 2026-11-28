@@ -76,6 +76,16 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         : CalendarEventImportBaseline.fromJson(
             occurrenceState['masterBaseline'],
           );
+    _invValidateMasterCheckpoint(link, event, row, baseline);
+    return row;
+  }
+
+  void _invValidateMasterCheckpoint(
+    CalendarInvitationLinkRecord link,
+    _Event event,
+    CalendarInvitationApplicationRecord? row,
+    CalendarEventImportBaseline baseline,
+  ) {
     final decoded = jsonDecode(baseline.canonicalValue) as Map<String, dynamic>;
     final protocol = decoded['protocol'] as Map<String, dynamic>;
     final version = protocol['version'] as Map<String, dynamic>;
@@ -103,7 +113,8 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       throw _failure(CalendarFailureCode.unavailable);
     }
     if (row != null &&
-        (row.scopeKey != link.scopeKey ||
+        (row.linkId != link.id ||
+            row.scopeKey != link.scopeKey ||
             row.recipientKey != link.recipientKey ||
             row.revision < 1 ||
             row.revision > CalendarService._maxRevision ||
@@ -126,7 +137,6 @@ extension CalendarInvitationApplicationOperations on CalendarService {
             ].any((s) => !RegExp(r'^[0-9a-f]{64}$').hasMatch(s)))) {
       throw _failure(CalendarFailureCode.unavailable);
     }
-    return row;
   }
 
   CalendarInvitationApplyReceipt _invApplyReceipt(
@@ -207,6 +217,11 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         _occHasRangeCancellation(
           jsonDecode(occurrence.stateJson) as Map<String, dynamic>,
         );
+    final restored =
+        occurrence != null &&
+        _occHasRangeRestoration(
+          jsonDecode(occurrence.stateJson) as Map<String, dynamic>,
+        );
     for (final op in [
       CalendarInvitationOperation.readSummary,
       CalendarInvitationOperation.readSource,
@@ -220,6 +235,8 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         CalendarInvitationOperation.composeAcceptedOccurrences,
       if (masked && (input != null || compositionPreview))
         CalendarInvitationOperation.composeAcceptedRangeCancellation,
+      if (restored && (input != null || compositionPreview))
+        CalendarInvitationOperation.composeAcceptedRangeRestoration,
       if (compositionPreview)
         message?.method == IcalendarSchedulingMethod.cancel
             ? CalendarInvitationOperation.applyCancellation
@@ -460,10 +477,14 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       (source, message) = await _invAcceptedBody(accepted, link, recipient, tx);
     }
     if (occurrenceState != null &&
-        !_occHasRangeRestoration(occurrenceState) &&
         message != null &&
         entry?.currentSourceId != null) {
       try {
+        if (_occHasRangeRestoration(occurrenceState) &&
+            (message.method != IcalendarSchedulingMethod.request ||
+                accepted.kind != CalendarInvitationSourceKind.request)) {
+          throw ArgumentError('Restored lifecycle remains guarded');
+        }
         final master =
             incoming ??
             _invCancellationMember(
@@ -492,7 +513,19 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         );
         final preview = occurrenceRow!.copyWith(
           stateJson: jsonEncode(
-            masked
+            _occHasRangeRestoration(occurrenceState)
+                ? _occComposeRestoration(
+                    link: link,
+                    event: event,
+                    row: occurrenceRow,
+                    state: occurrenceState,
+                    previousMaster: await _invCheckpoint(link, event, tx),
+                    master: null,
+                    masterBaseline: masterBaseline,
+                    baseline: composedBaseline,
+                    member: candidate,
+                  )
+                : masked
                 ? _occComposeCancellation(
                     link: link,
                     event: event,
@@ -989,7 +1022,9 @@ extension CalendarInvitationApplicationOperations on CalendarService {
               link.organizer) {
         throw _failure(CalendarFailureCode.validation);
       }
-      if (_occHasRangeRestoration(occurrenceState)) {
+      if (_occHasRangeRestoration(occurrenceState) &&
+          (cancellation ||
+              accepted.kind != CalendarInvitationSourceKind.request)) {
         throw _failure(CalendarFailureCode.dependencyConflict);
       }
       final masterMember = cancellation
@@ -1014,6 +1049,12 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       final composed = occurrenceState == null
           ? masterMember
           : _invCompose(masterMember, event, occurrenceState);
+      if (_occHasRangeRestoration(occurrenceState)) {
+        _eventReplacementValue(() {
+          _occCheckRestoredMember(composed, occurrenceState!);
+          return true;
+        });
+      }
       final masked = _occHasRangeCancellation(occurrenceState);
       final member = masked
           ? _eventReplacementValue(
@@ -1074,7 +1115,19 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         eventRevision: next.eventRevision,
         updatedAt: now,
         stateJson: jsonEncode(
-          masked
+          _occHasRangeRestoration(occurrenceState)
+              ? _occComposeRestoration(
+                  link: link,
+                  event: event,
+                  row: occurrenceRow,
+                  state: occurrenceState!,
+                  previousMaster: checkpoint,
+                  master: next,
+                  masterBaseline: masterBaseline,
+                  baseline: baseline,
+                  member: member,
+                )
+              : masked
               ? _occComposeCancellation(
                   link: link,
                   event: event,

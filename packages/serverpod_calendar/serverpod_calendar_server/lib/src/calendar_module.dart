@@ -46,6 +46,7 @@ part 'calendar_invitation_application.dart';
 part 'calendar_invitation_occurrence_application.dart';
 part 'calendar_invitation_range_cancellation.dart';
 part 'calendar_invitation_range_restoration.dart';
+part 'calendar_invitation_restoration_composition.dart';
 part 'calendar_alarms.dart';
 part 'calendar_alarm_adoption.dart';
 part 'calendar_alarm_actions.dart';

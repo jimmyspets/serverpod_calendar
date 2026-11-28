@@ -236,4 +236,4 @@ See [CI checks](docs/continuous-integration.md) for pull-request documentation/r
 
 [Single-instance invitation review](docs/single-instance-invitation-review.md) adds known-series occurrence updates/cancellations as private unapplied notices. Receiving or dismissing them changes no calendar or participation state; instance application and replies remain separate work.
 
-A [pure restore-only source validator](docs/range-restoration-projection.md) can now match the saved cutoff and retained values without rewriting exceptions. [Explicit durable source restoration](docs/source-range-restoration.md) now adds verified acceptance with safe retries; subsequent source composition remains guarded.
+A [pure restore-only source validator](docs/range-restoration-projection.md) can now match the saved cutoff and retained values without rewriting exceptions. [Explicit durable source restoration](docs/source-range-restoration.md) now adds verified acceptance with safe retries; [active master updates preserve restoration](docs/restoration-master-composition.md), while broader source transitions remain guarded.

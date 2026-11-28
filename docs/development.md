@@ -306,3 +306,7 @@ For [ADR 0162 lifecycle](range-cancellation-master-lifecycle.md), focus on `dart
 ## Source range-restoration verification
 
 ADR 0164 adds `test/integration/range_restoration_application_test.dart` to the serial scheduling group and `dart run tool/invitation_work_smoke.dart --range-restorations` to the full check. The latter owns two independent test hosts and exercises same/competing-source commands and actual process loss before/after restoration commit. The generated-client invitation smoke and connected range Flutter journey now include explicit restoration and restored feed validators. Run SDK integration suites and compiled-host/browser harnesses serially because they share test API ports. Preserve development storage and stop the owned host bundle before rebuilding it. See [the scoped service](source-range-restoration.md).
+
+## Restored-master composition verification
+
+ADR 0165 adds `test/integration/restoration_master_composition_test.dart` to the serial source group and `dart run tool/invitation_work_smoke.dart --restoration-compositions` to full checks. The synthetic two-host mode covers same/competing master commands, continued v8 writes, before/after-commit process loss and preserved original restoration receipts. Generated-client/feed and connected Flutter range journeys include the subsequent explicit master update. Run SDK integration and compiled-host/browser harnesses serially on shared test ports. See [the scoped profile](restoration-master-composition.md).
