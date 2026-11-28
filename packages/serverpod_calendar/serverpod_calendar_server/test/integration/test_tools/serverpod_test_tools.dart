@@ -49,6 +49,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_create_request.
     as _i287wpc6;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_create_request.dart'
     as _ixcfd9h0;
+import 'package:serverpod_calendar_server/src/generated/calendar_event_export_request.dart'
+    as _i6dxskz2;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_field_group.dart'
     as _il5gdr09;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_import_request.dart'
@@ -1154,6 +1156,37 @@ class _CalendarEventEndpoint {
   final _is.EndpointDispatch _endpointDispatch;
 
   final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_idt.ByteData> exportEvents(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i6dxskz2.CalendarEventExportRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarEvent',
+            method: 'exportEvents',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarEvent',
+          methodName: 'exportEvents',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_idt.ByteData>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 
   _ida.Future<_iaw5gnbe.CalendarEventImportResult> importEvents(
     _ist.TestSessionBuilder sessionBuilder,

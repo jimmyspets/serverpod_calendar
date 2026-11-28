@@ -758,6 +758,24 @@ void main() {
     expect(imported.periods!.single.duration!.hours, 2);
     expect(imported.protocolVersion!.sequence, isNull);
     expect(imported.textParameters!.summary!.language, 'en');
+    await tester.tap(find.text('Imported example event'));
+    await _idle(tester);
+    await _tap(tester, 'event-export');
+    await _waitFor(tester, find.byKey(const Key('event-export-source')));
+    final exportedEvent = tester
+        .widget<SelectableText>(find.byKey(const Key('event-export-source')))
+        .data!;
+    expect(exportedEvent, contains('UID:example-event@example.invalid'));
+    expect(
+      exportedEvent,
+      contains('SUMMARY;LANGUAGE=en:Imported example event'),
+    );
+    expect(exportedEvent, isNot(contains(imported.id.toString())));
+    await tester.pageBack();
+    await _idle(tester);
+    await tester.pageBack();
+    await _idle(tester);
+
     await _tap(tester, 'event-import');
     await _tap(tester, 'event-import-example');
     await _tap(tester, 'event-import-submit');

@@ -62,6 +62,8 @@ import 'calendar_event_civil.dart' as _i1bb5k1r;
 import 'calendar_event_content.dart' as _id4cvk34;
 import 'calendar_event_create_request.dart' as _i0orp171;
 import 'calendar_event_duration.dart' as _idn2i48l;
+import 'calendar_event_export_request.dart' as _ifgpnp3a;
+import 'calendar_event_export_selection.dart' as _ijug927r;
 import 'calendar_event_field_group.dart' as _iftiwkuj;
 import 'calendar_event_frequency.dart' as _i2q54gr5;
 import 'calendar_event_future_override.dart' as _imbjv41e;
@@ -156,6 +158,8 @@ export 'calendar_event_civil.dart';
 export 'calendar_event_content.dart';
 export 'calendar_event_create_request.dart';
 export 'calendar_event_duration.dart';
+export 'calendar_event_export_request.dart';
+export 'calendar_event_export_selection.dart';
 export 'calendar_event_field_group.dart';
 export 'calendar_event_frequency.dart';
 export 'calendar_event_future_override.dart';
@@ -379,6 +383,12 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _idn2i48l.CalendarEventDuration) {
       return _idn2i48l.CalendarEventDuration.fromJson(data) as T;
+    }
+    if (t == _ifgpnp3a.CalendarEventExportRequest) {
+      return _ifgpnp3a.CalendarEventExportRequest.fromJson(data) as T;
+    }
+    if (t == _ijug927r.CalendarEventExportSelection) {
+      return _ijug927r.CalendarEventExportSelection.fromJson(data) as T;
     }
     if (t == _iftiwkuj.CalendarEventFieldGroup) {
       return _iftiwkuj.CalendarEventFieldGroup.fromJson(data) as T;
@@ -782,6 +792,18 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_idn2i48l.CalendarEventDuration?>()) {
       return (data != null
               ? _idn2i48l.CalendarEventDuration.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ifgpnp3a.CalendarEventExportRequest?>()) {
+      return (data != null
+              ? _ifgpnp3a.CalendarEventExportRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ijug927r.CalendarEventExportSelection?>()) {
+      return (data != null
+              ? _ijug927r.CalendarEventExportSelection.fromJson(data)
               : null)
           as T;
     }
@@ -1314,6 +1336,14 @@ class Protocol extends _isc.SerializationManager {
               : null)
           as T;
     }
+    if (t == List<_ijug927r.CalendarEventExportSelection>) {
+      return (data as List)
+              .map(
+                (e) => deserialize<_ijug927r.CalendarEventExportSelection>(e),
+              )
+              .toList()
+          as T;
+    }
     if (t == List<_i500bvo7.CalendarEventReceipt>) {
       return (data as List)
               .map((e) => deserialize<_i500bvo7.CalendarEventReceipt>(e))
@@ -1513,6 +1543,8 @@ class Protocol extends _isc.SerializationManager {
       _id4cvk34.CalendarEventContent => 'CalendarEventContent',
       _i0orp171.CalendarEventCreateRequest => 'CalendarEventCreateRequest',
       _idn2i48l.CalendarEventDuration => 'CalendarEventDuration',
+      _ifgpnp3a.CalendarEventExportRequest => 'CalendarEventExportRequest',
+      _ijug927r.CalendarEventExportSelection => 'CalendarEventExportSelection',
       _iftiwkuj.CalendarEventFieldGroup => 'CalendarEventFieldGroup',
       _i2q54gr5.CalendarEventFrequency => 'CalendarEventFrequency',
       _imbjv41e.CalendarEventFutureOverride => 'CalendarEventFutureOverride',
@@ -1673,6 +1705,10 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarEventCreateRequest';
       case _idn2i48l.CalendarEventDuration():
         return 'CalendarEventDuration';
+      case _ifgpnp3a.CalendarEventExportRequest():
+        return 'CalendarEventExportRequest';
+      case _ijug927r.CalendarEventExportSelection():
+        return 'CalendarEventExportSelection';
       case _iftiwkuj.CalendarEventFieldGroup():
         return 'CalendarEventFieldGroup';
       case _i2q54gr5.CalendarEventFrequency():
@@ -1954,6 +1990,12 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'CalendarEventDuration') {
       return deserialize<_idn2i48l.CalendarEventDuration>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventExportRequest') {
+      return deserialize<_ifgpnp3a.CalendarEventExportRequest>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventExportSelection') {
+      return deserialize<_ijug927r.CalendarEventExportSelection>(data['data']);
     }
     if (dataClassName == 'CalendarEventFieldGroup') {
       return deserialize<_iftiwkuj.CalendarEventFieldGroup>(data['data']);

@@ -1,0 +1,5 @@
+class: CalendarEventExportSelection
+immutable: true
+fields:
+  eventId: UuidValue
+  expectedRevision: int
