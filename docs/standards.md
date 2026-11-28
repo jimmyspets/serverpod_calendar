@@ -224,3 +224,8 @@ Accepted [ADR 0176](adr/0176-bundled-master-attendee-responses.md) extends the r
 [Accepted ADR 0177](adr/0177-bundled-occurrence-attendee-responses.md) implements the approved any-validated-original/effective-component-version policy in one grouped durable API/Flutter/recovery batch. The mechanics add a private target key and typed response original to each of the two existing response state/delivery tables, replace the state uniqueness index, and retain old target/hash identity and aggregate caps. The complete grouped mechanics have explicit maintainer agreement; actual implementation validation is recorded separately. Master and occurrence responses remain independent; RANGE/real mail stay separate.
 
 See [the scoped occurrence-response guide](bundled-occurrence-attendee-responses.md) for the selected-original API, current versus recorded versions, independent authority/state, generated migration and unchanged shared quotas.
+
+
+## Ordinary recurring invitation response selection prerequisite
+
+The maintainer confirmed selecting the effective separately received instance/range notice and its version when responding to an original from an ordinary recurring invitation. [Proposed ADR 0178](adr/0178-pure-recurring-response-source-selection.md) profiles a bounded pure selector with complete packet/membership validation, single/range/master precedence and explicit cancellation blocking. It changes no stored response state, generated API, worker eligibility or Flutter flow. Durable multi-source proof/retention/authority and RANGE participation remain separate required work; this proposal is not implemented behavior.

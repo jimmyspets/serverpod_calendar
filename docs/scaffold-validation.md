@@ -2377,3 +2377,14 @@ Final confirmation, 2026-11-06: after resetting only disposable test storage, th
 Prerequisite [hosted run 42103864853](https://github.com/jimmyspets/serverpod_calendar/actions/runs/42103864853) at **5e08bf2b6c2bd6420405467e317c84862bc335ea** completed with **inspect: success / runtime: success**. This establishes the complete prerequisite head, not the new ADR 0177 implementation head. The latter remains draft until its own full hosted checks conclude.
 
 Final static checks passed: **3,813** relative Markdown targets, consecutive ADRs 0001-0177, **68** candidate files, explicit UTF-8/whitespace and absence of **17** local credential values. LICENSE and dependency/workflow pins are unchanged. Migration changes are restricted to the two approved generated directories and their registries.
+
+
+## ADR 0178 proposal inspection, 2026-11-06
+
+The maintainer confirmed effective separately received notice/version selection for ordinary recurring invitation originals. Inspected current selected-entry evidence, master/accepted-baseline membership, recipient correlation/retention, bundle selection and pure occurrence/range projections. Existing helpers do not prove current combined notice selection. Primary RFC 5546 sections 3.2.3/3.7.1 were consulted; proposed application precedence/limits remain distinct from RFC requirements. Current open PRs contain the prerequisite and no overlapping selector work; open issues returned none.
+
+Prerequisite ADR 0177 application **ab4f20f72160257f12aac442e2cac4e5bb7b119a**, [PR #186](https://github.com/jimmyspets/serverpod_calendar/pull/186), passed full hosted **inspect: success / runtime: success** in [run 42169918438](https://github.com/jimmyspets/serverpod_calendar/actions/runs/42169918438). The earlier local timeout and successful 467-case serial rerun remain recorded above. This successful full run establishes that exact prerequisite head only; no merge/publication/deployment follows.
+
+ADR 0178 is a documentation-only proposal for a pure combined semantic selector. No source, generated model/client, migration, endpoint, runtime guard, dependency or Flutter file changes. The effective-notice product policy is confirmed; concrete mechanics require explicit maintainer agreement before implementation. Actual documentation checks follow; no runtime rerun is claimed for this Markdown-only proposal.
+
+Proposal checks passed: **3,824** repository-relative Markdown targets, consecutive ADRs 0001-0178, **10 Markdown-only** candidate files, explicit UTF-8/whitespace, unchanged LICENSE and absence of **17** local credential values. No runtime or migration changes are included.
