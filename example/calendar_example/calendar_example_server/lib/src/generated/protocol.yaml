@@ -10,6 +10,7 @@ emailIdp:
 refreshJwtTokens:
   - refreshAccessToken:
 invitationDemo:
+  - simulateOccurrence:
   - simulate:
   - simulateRecurring:
   - simulateCancellation:

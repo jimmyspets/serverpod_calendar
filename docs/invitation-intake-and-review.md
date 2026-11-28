@@ -1,5 +1,7 @@
 # Trusted invitation intake and private review
 
+Accepted [ADR 0149](adr/0149-trusted-single-instance-invitation-review.md) adds separate [single-instance review](single-instance-invitation-review.md) after known recurring-series validation. This supersedes instance-intake rejection only for that bounded profile; instance calendar application/replies, RANGE and bundled reconciliation remain separate.
+
 Accepted [ADR 0148](adr/0148-recurring-master-invitation-workflow.md) extends this workflow to the bounded [recurring-master recipient profile](recurring-master-invitations.md). Its earlier non-recurring-only statements below are superseded for that slice; instance/range/bundled reconciliation and real mail remain separate. Actual batch checks are recorded in the validation guide.
 
 Accepted [ADR 0137](adr/0137-trusted-invitation-intake-and-review.md) adds a bounded attendee-side queue for authenticated non-recurring organizer REQUESTs. Receiving or dismissing one creates no event, booking, participation response, notification or outbound message. Calendar addition, existing-meeting updates, recurrence/CANCEL reconciliation and mail remain separate requirements. This calendar scheduling queue is separate from the reusable notification module.

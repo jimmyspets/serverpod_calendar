@@ -278,9 +278,12 @@ Future<void> main(List<String> args) async {
               'UID:invitation:$caseId',
               'DTSTAMP:20260101T000000Z',
               if (input['sequence'] != null) 'SEQUENCE:${input['sequence']}',
+              if (input['instance'] == true)
+                'RECURRENCE-ID:${input['original'] ?? '20300103T090000Z'}',
               if (input['cancel'] == true) 'STATUS:CANCELLED',
               if (input['cancel'] != true) 'DTSTART:20300101T090000Z',
               if (input['cancel'] != true &&
+                  input['instance'] != true &&
                   Platform.environment['CALENDAR_INVITATION_PROBE_RECURRING'] ==
                       'true') ...[
                 'DTEND:20300101T100000Z',
@@ -449,6 +452,16 @@ Future<void> main(List<String> args) async {
                   )
                   .then((r) => r.firstOrNull?.first),
               'kind': entries.firstOrNull?.kind.name,
+              'targets': [
+                for (final e in entries)
+                  {
+                    'id': e.id.toString(),
+                    'target': e.targetKey,
+                    'original': e.originalStart?.toJson(),
+                    'revision': e.revision,
+                    'kind': e.kind.name,
+                  },
+              ],
               'entries': entries.length,
               'sources': sources.length,
               'receipts': await CalendarInvitationReceiptRecord.db.count(

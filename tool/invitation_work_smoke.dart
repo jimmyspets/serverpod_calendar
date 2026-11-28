@@ -54,7 +54,8 @@ void require(bool value, String message) {
 }
 
 Future<void> main(List<String> args) async {
-  final recurring = args.contains('--recurring');
+  final instance = args.contains('--instances');
+  final recurring = instance || args.contains('--recurring');
   final root = Directory.current.absolute.path,
       probes = <_Probe>[],
       cases = <String>[];
@@ -94,6 +95,104 @@ Future<void> main(List<String> args) async {
   try {
     var a = await start('a', 18780);
     final b = await start('b', 18880);
+    if (instance) {
+      final id = nextCase();
+      await b.command({'command': 'receive', 'caseId': id, 'key': 'master'});
+      final incoming = {
+        'command': 'receive',
+        'caseId': id,
+        'key': 'instance',
+        'instance': true,
+        'sequence': 1,
+      };
+      final raced = await Future.wait([a, b].map((p) => p.command(incoming)));
+      require(
+        (raced.first as Map)['id'] != null &&
+            (raced.first as Map)['id'] == (raced.last as Map)['id'],
+        'Instance ingress race duplicated receipt',
+      );
+      final distinct = await Future.wait([
+        a.command({
+          ...incoming,
+          'key': 'cancel',
+          'cancel': true,
+          'sequence': 2,
+        }),
+        b.command({
+          ...incoming,
+          'key': 'period',
+          'original': '20300105T090000Z',
+        }),
+      ]);
+      require(
+        distinct.every((v) => (v as Map)['id'] != null),
+        'Independent targets blocked each other',
+      );
+      final state =
+          await b.command({'command': 'inspect', 'caseId': id}) as Map;
+      require(
+        state['entries'] == 3 &&
+            state['events'] == 0 &&
+            state['links'] == 0 &&
+            (state['targets'] as List)
+                    .where((v) => (v as Map)['target'] == 'master')
+                    .length ==
+                1,
+        'Instance target race changed master/native state',
+      );
+      for (final pause in ['before', 'after']) {
+        final lossId = nextCase();
+        await b.command({
+          'command': 'receive',
+          'caseId': lossId,
+          'key': 'master',
+        });
+        a.paused = Completer<Map<String, dynamic>>();
+        final input = {
+          'command': 'receive',
+          'caseId': lossId,
+          'key': 'loss',
+          'instance': true,
+          'sequence': 1,
+        };
+        final lost = a
+            .command({...input, 'pause': pause})
+            .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+        final submitted = await a.paused!.future.timeout(
+          const Duration(seconds: 40),
+        );
+        final visible =
+            await b.command({'command': 'inspect', 'caseId': lossId}) as Map;
+        require(
+          visible['entries'] == (pause == 'before' ? 1 : 2) &&
+              visible['receipts'] == (pause == 'before' ? 1 : 2),
+          'Instance source/target partially visible around commit',
+        );
+        await a.stop();
+        await lost;
+        final recovered = await b.command(input) as Map;
+        require(
+          recovered['id'] != null &&
+              ((pause == 'after') == (recovered['id'] == submitted['id'])),
+          'Instance loss recovery retargeted retained receipt',
+        );
+        final complete =
+            await b.command({'command': 'inspect', 'caseId': lossId}) as Map;
+        require(
+          complete['entries'] == 2 &&
+              complete['sources'] == 2 &&
+              complete['receipts'] == 2 &&
+              complete['events'] == 0 &&
+              complete['applications'] == 0,
+          'Instance recovery duplicated intent or mutated native state',
+        );
+        a = await start('a-instance-recovered-$pause', 18780);
+      }
+      stdout.writeln(
+        'PASS: independent instance invitation hosts, shared-key and distinct-original races, master/native isolation, actual loss before/after commit and exact retained receipt recovery through synthetic MIME.',
+      );
+      return;
+    }
     // Explicit responses run in real independent hosts against the same storage.
     for (final pause in ['response-before', 'response-after']) {
       final id = nextCase();

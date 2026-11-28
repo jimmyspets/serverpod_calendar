@@ -36,6 +36,7 @@ import 'availability_import_baseline.dart';
 
 part 'calendar_publication.dart';
 part 'calendar_invitations.dart';
+part 'calendar_invitation_occurrences.dart';
 part 'calendar_invitation_responses.dart';
 part 'calendar_invitation_response_worker.dart';
 part 'calendar_invitation_adoption.dart';

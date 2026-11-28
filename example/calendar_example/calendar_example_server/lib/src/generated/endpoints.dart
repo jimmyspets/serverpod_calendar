@@ -283,6 +283,45 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'invitationDemo',
       endpoint: endpoints['invitationDemo']!,
       methodConnectors: {
+        'simulateOccurrence': _is.MethodConnector(
+          name: 'simulateOccurrence',
+          params: {
+            'invitationId': _is.ParameterDescription(
+              name: 'invitationId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'commandId': _is.ParameterDescription(
+              name: 'commandId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'sequence': _is.ParameterDescription(
+              name: 'sequence',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'cancel': _is.ParameterDescription(
+              name: 'cancel',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['invitationDemo']
+                          as _i9j0zg07.InvitationDemoEndpoint)
+                      .simulateOccurrence(
+                        session,
+                        params['invitationId'],
+                        params['commandId'],
+                        params['sequence'],
+                        params['cancel'],
+                      ),
+        ),
         'simulate': _is.MethodConnector(
           name: 'simulate',
           params: {

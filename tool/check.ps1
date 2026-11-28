@@ -83,11 +83,12 @@ try {
   try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/occurrence_queries_test.dart') }
   finally { Pop-Location }
   Push-Location $ExampleServer
-  try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/recurring_invitations_test.dart') }
+  try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/recurring_invitations_test.dart', 'test/integration/instance_invitations_test.dart') }
   finally { Pop-Location }
   Invoke-Checked python @('tool/metadata_upgrade_smoke.py')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--recurring')
+  Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--instances')
   Invoke-Checked dart @('run', 'tool/alarm_work_smoke.dart')
   Invoke-Checked dart @('run', 'tool/notification_work_smoke.dart')
   Invoke-Checked dart @('run', 'tool/scheduling_work_smoke.dart')

@@ -3,6 +3,7 @@ immutable: true
 fields:
   kind: CalendarInvitationSourceKind, default=request
   recurring: bool, default=false
+  originalStart: CalendarEventTiming?
   id: UuidValue
   revision: int
   uid: String

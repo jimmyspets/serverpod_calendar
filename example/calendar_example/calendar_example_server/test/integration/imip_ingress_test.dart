@@ -327,7 +327,7 @@ void main() {
       await emptyInvitations();
     });
     test(
-      'native detached-instance invitation restriction is not bypassed',
+      'native unknown-series instance restriction is not bypassed',
       () async {
         final bytes = invitationBytes(
           extra: ['RECURRENCE-ID:20300101T090000Z'],
@@ -341,7 +341,7 @@ void main() {
         );
         await expectLater(
           intake(mime(bytes)),
-          failure(CalendarFailureCode.validation),
+          failure(CalendarFailureCode.accessDenied),
         );
         await emptyInvitations();
       },

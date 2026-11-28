@@ -8,6 +8,8 @@ fields:
   scopeKey: String
   recipientKey: String
   correlationDigest: String
+  targetKey: String, default="master"
+  originalStart: CalendarEventTiming?
   uid: String
   organizer: String
   revision: int
@@ -20,7 +22,7 @@ fields:
   dismissedAt: DateTime?
 indexes:
   calendar_invitation_correlation_unique:
-    fields: scopeKey, recipientKey, correlationDigest
+    fields: scopeKey, recipientKey, correlationDigest, targetKey
     unique: true
   calendar_invitation_recipient_idx:
     fields: scopeKey, recipientKey

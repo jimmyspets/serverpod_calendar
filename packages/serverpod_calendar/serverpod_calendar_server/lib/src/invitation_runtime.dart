@@ -42,6 +42,7 @@ final class CalendarInvitationRecipient {
 enum CalendarInvitationOperation {
   receive,
   receiveCancellation,
+  receiveOccurrence,
   list,
   readSummary,
   readSource,
@@ -97,6 +98,36 @@ final class CalendarInvitationApplicationState {
   final CalendarInvitationApplyReceipt? latestResult;
 }
 
+enum CalendarInvitationOccurrenceBasisKind { retainedMaster, acceptedBaseline }
+
+/// Actual trusted admission evidence, never reconstructed source bytes.
+final class CalendarInvitationOccurrenceBasis {
+  const CalendarInvitationOccurrenceBasis({
+    required this.kind,
+    required this.originalStart,
+    required this.content,
+    required this.sequence,
+    required this.stamp,
+    this.master,
+    this.message,
+    this.sourceId,
+    this.link,
+    this.accepted,
+    this.baseline,
+  });
+  final CalendarInvitationOccurrenceBasisKind kind;
+  final CalendarEventTiming originalStart;
+  final CalendarEventContent content;
+  final int? sequence;
+  final DateTime stamp;
+  final CalendarInvitationView? master;
+  final IcalendarSchedulingMessage? message;
+  final UuidValue? sourceId;
+  final CalendarInvitationAdoptionReceipt? link;
+  final CalendarInvitationApplicationState? accepted;
+  final CalendarEventImportBaseline? baseline;
+}
+
 /// Immutable actual source/target context; absent current means not yet loaded.
 final class CalendarInvitationPolicyContext {
   const CalendarInvitationPolicyContext({
@@ -130,6 +161,7 @@ final class CalendarInvitationPolicyContext {
     this.proposedBaseline,
     this.localChanges,
     this.linkedEventUnavailable,
+    this.occurrenceBasis,
   });
   final CalendarInvitationOperation operation;
   final CalendarInvitationRecipient recipient;
@@ -159,6 +191,7 @@ final class CalendarInvitationPolicyContext {
   final CalendarEventImportBaseline? proposedBaseline;
   final bool? localChanges;
   final bool? linkedEventUnavailable;
+  final CalendarInvitationOccurrenceBasis? occurrenceBasis;
 
   CalendarInvitationPolicyContext forOperation(
     CalendarInvitationOperation value,
@@ -193,6 +226,7 @@ final class CalendarInvitationPolicyContext {
     proposedBaseline: proposedBaseline,
     localChanges: localChanges,
     linkedEventUnavailable: linkedEventUnavailable,
+    occurrenceBasis: occurrenceBasis,
   );
 }
 

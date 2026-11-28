@@ -2,3 +2,4 @@ enum: CalendarInvitationSourceKind
 values:
   - request
   - meetingCancellation
+  - instanceCancellation

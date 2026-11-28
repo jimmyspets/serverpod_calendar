@@ -1,5 +1,7 @@
 # Host MIME ingress into native scheduling
 
+The wrapper now carries the approved [single-instance review profile](single-instance-invitation-review.md) under ADR 0149 into the existing trusted native intake. Exact decoded bytes, independent origin/recipient/occurrence authority and known-series membership checks still apply. A successfully received instance notice changes no calendar or participation state and sends nothing.
+
 Accepted [ADR 0145](adr/0145-host-mime-native-ingress.md) adds two example-server functions in lib/src/imip_ingress.dart. They connect [bounded raw MIME extraction](raw-imip-extraction.md) to existing server-only calendar APIs. No table, migration, generated endpoint, new dependency, production mail receiver or network sending is added.
 
 | Function | Explicit host input beyond original MIME/protection | Existing native destination |

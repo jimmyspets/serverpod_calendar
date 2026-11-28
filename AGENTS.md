@@ -1,5 +1,7 @@
 # Repository guidance
 
+Accepted ADR 0149 adds known-series single-instance REQUEST/CANCEL intake and private review with separate typed target identities. Preserve exact original membership, accepted-baseline versus local-draft separation, independent occurrence authority, bounded shared retention and historical receipt retries before new admission. Master-only link/application/response paths must reject instance entries before correlation fallback. Receipt/dismissal changes no calendar or participation state; instance application/replies and RANGE remain separate. Complete validation is recorded separately.
+
 CI now wires the existing complete checks into .github/workflows/check.yml; see docs/continuous-integration.md. Keep token permissions read-only, use disposable synthetic storage/configuration, retain real two-host/process-loss and connected Flutter coverage, and record actual hosted conclusions per commit. Markdown-only checks do not establish runtime success. No deployment or package publication is configured.
 
 Accepted ADR 0148 extends recipient REQUEST review/adoption/application, whole-series CANCEL/reopening and explicit master replies to one supported recurring master. Preserve the private mode flag through pruning/cancellation, verify surviving-link accepted baselines before queue reconstruction, reject mode conversion/instance/range/bundled input and retain clean-baseline local-edit protection. Imported alarms stay unarmed; all transport remains synthetic. See docs/recurring-master-invitations.md.
