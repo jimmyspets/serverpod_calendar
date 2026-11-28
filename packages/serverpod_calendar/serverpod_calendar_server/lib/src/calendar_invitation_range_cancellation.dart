@@ -1,13 +1,13 @@
 part of 'calendar_module.dart';
 
 bool _occHasRangeCancellation(Map<String, dynamic>? state) =>
-    {4, 5, 6, 7, 8, 9}.contains(state?['version']);
+    {4, 5, 6, 7, 8, 9, 10}.contains(state?['version']);
 
 Map<String, dynamic> _occLatestTarget(Map<String, dynamic> state) {
-  if (_occHasRangeRestoration(state)) {
+  if (_occHasRangeRestoration(state) && state['version'] != 10) {
     return state['restoration'] as Map<String, dynamic>;
   }
-  if (_occHasRangeCancellation(state)) {
+  if (_occHasRangeCancellation(state) && state['version'] != 10) {
     return state['rangeCancellation'] as Map<String, dynamic>;
   }
   final receipt = CalendarInvitationOccurrenceApplyReceipt.fromJson(
@@ -302,6 +302,21 @@ extension CalendarInvitationRangeCancellationOperations on CalendarService {
         row,
         {'version': 4, 'rangeCancellation': state['restoration']},
       );
+      if (state['version'] == 10) {
+        for (final target
+            in (state['targets'] as List).cast<Map<String, dynamic>>()) {
+          await _occAuthorizeCancellation(
+            actor,
+            recipient,
+            tx,
+            phase,
+            link,
+            event,
+            row,
+            {'version': 4, 'rangeCancellation': target},
+          );
+        }
+      }
       return;
     }
     final layer = _occLatestTarget(state!);
@@ -326,7 +341,9 @@ extension CalendarInvitationRangeCancellationOperations on CalendarService {
       CalendarInvitationOperation.readSummary,
       CalendarInvitationOperation.readSource,
       CalendarInvitationOperation.readLink,
-      CalendarInvitationOperation.readRangeApplication,
+      (layer['key'] as String).startsWith('range-v1:')
+          ? CalendarInvitationOperation.readRangeApplication
+          : CalendarInvitationOperation.readOccurrenceApplication,
     }) {
       await _invAuthorize(
         CalendarInvitationPolicyContext(

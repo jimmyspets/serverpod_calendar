@@ -59,7 +59,7 @@ Future<void> instanceInvitationApplicationSmoke(List<Client> clients) async {
     entry = incoming.entryId;
     final view = await api.calendarInvitation.occurrenceApplication(entry);
     require(
-      view.canApply && view.originalStart.start.day == 3,
+      view.canApply && view.originalStart.start.day == 5,
       'Generated occurrence preview lost original',
     );
     final input = command(view);

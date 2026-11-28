@@ -66,6 +66,7 @@ Future<void> rangeInvitationApplicationSmoke(List<Client> clients) async {
   ))!.calendarId;
   cal.CalendarInvitationAdoptionReceipt? link;
   cal.UuidValue? entry;
+  cal.UuidValue? singleEntry;
   feed.CalendarFeedView? subscription;
   try {
     link = await api.calendarInvitation.adopt(
@@ -532,6 +533,85 @@ Future<void> rangeInvitationApplicationSmoke(List<Client> clients) async {
         'Restored lifecycle superseded original receipt',
       );
     }
+    for (final sequence in [12, 13, 14]) {
+      final cancelled = sequence == 13;
+      final received = await a.invitationDemo.simulateOccurrence(
+        id,
+        const cal.Uuid().v4obj(),
+        sequence,
+        cancelled,
+      );
+      singleEntry = received.entryId;
+      final view = await api.calendarInvitation.occurrenceApplication(
+        singleEntry,
+      );
+      require(
+        view.canApply && view.originalStart.start.day == 5,
+        'Restored PERIOD single preview blocked',
+      );
+      final input = command(view);
+      final results = await Future.wait(
+        clients.map(
+          (c) => cancelled
+              ? c.modules.serverpod_calendar.calendarInvitation
+                    .applyOccurrenceCancellation(input)
+              : c.modules.serverpod_calendar.calendarInvitation
+                    .applyOccurrenceUpdate(input),
+        ),
+      );
+      require(
+        results.first.id == results.last.id,
+        'Restored single duplicated effect',
+      );
+      final current = await api.calendarInvitation.occurrenceApplication(
+        singleEntry,
+      );
+      require(
+        current.hasAcceptedRangeRestoration &&
+            !current.hasLocalChanges &&
+            current.acceptedVersion.sequence == sequence &&
+            current.currentOccurrence!.status ==
+                (cancelled
+                    ? cal.CalendarEventStatus.cancelled
+                    : cal.CalendarEventStatus.confirmed),
+        'Restored single lost source/status/history',
+      );
+      try {
+        await api.calendarInvitation.applyRangeRestoration(restoreInput);
+        throw StateError('Superseded restoration remained retryable');
+      } on cal.CalendarException catch (e) {
+        require(
+          e.code == cal.CalendarFailureCode.dependencyConflict,
+          'Wrong restoration supersession error',
+        );
+      }
+      final nextFeed = await fetch(url, lifecycleFeed.$2);
+      require(
+        nextFeed.$1 == 200 && nextFeed.$2 != lifecycleFeed.$2,
+        'Single change left stale feed validator',
+      );
+      require(
+        (await fetch(url, nextFeed.$2)).$1 == 304,
+        'Single feed validator failed',
+      );
+      lifecycleFeed = nextFeed;
+    }
+    await a.invitationDemo.simulateRecurring(
+      id,
+      const cal.Uuid().v4obj(),
+      15,
+      'Master after restored singles',
+    );
+    await api.calendarInvitation.applyUpdate(
+      masterCommand(await api.calendarInvitation.application(master.entryId)),
+    );
+    require(
+      (await api.calendarInvitation.occurrenceApplication(singleEntry!))
+              .acceptedVersion
+              .sequence ==
+          14,
+      'Master erased latest single version',
+    );
     stdout.writeln(
       'PASS: generated-client two-host range preview/apply and master races, preserved source versions/retries, receipt-only versus applied feed ETags and explicit range cancellation, masked-feed rejection, v5/v6 master composition/cancellation/reopening and stable independent retries, explicit v7 restoration and restored feed validators.',
     );
@@ -545,7 +625,7 @@ Future<void> rangeInvitationApplicationSmoke(List<Client> clients) async {
       await api.calendarEvent.deleteEvent(link.eventId, event.revision);
     }
     await api.calendar.delete(calendar, 1);
-    for (final e in [master.entryId, ?entry]) {
+    for (final e in [master.entryId, ?entry, ?singleEntry]) {
       final current = await api.calendarInvitation.getInvitation(e);
       if (current.dismissedAt == null) {
         await api.calendarInvitation.dismiss(e, current.revision);

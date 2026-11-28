@@ -55,7 +55,7 @@ Future<void> runInstanceInvitationJourney(
     );
     final response = await api.response(instance.id);
     expect(response.canSend, isTrue);
-    expect(response.originalStart!.start.day, 3);
+    expect(response.originalStart!.start.day, 5);
     expect(find.byKey(ValueKey('invitation-add-${instance.id}')), findsNothing);
     await tap(find.byKey(ValueKey('invitation-source-${instance.id}')));
     await tap(find.byKey(ValueKey('invitation-history-${instance.sourceId}')));
@@ -63,7 +63,7 @@ Future<void> runInstanceInvitationJourney(
       tester
           .widget<SelectableText>(find.byKey(const Key('invitation-document')))
           .data,
-      contains('RECURRENCE-ID:20300103T090000Z'),
+      contains('RECURRENCE-ID:20300105T090000Z'),
     );
     navigator.pop();
     await tester.pumpAndSettle();
@@ -71,7 +71,7 @@ Future<void> runInstanceInvitationJourney(
     expect(find.text('Unapplied occurrence cancellation'), findsOneWidget);
     final current = await api.getInvitation(instance.id);
     expect(current.timing, isNull);
-    expect(current.originalStart!.start.day, 3);
+    expect(current.originalStart!.start.day, 5);
     await tap(find.byKey(ValueKey('invitation-dismiss-${instance.id}')));
     expect(find.byKey(ValueKey('invitation-${instance.id}')), findsNothing);
     expect((await api.getInvitation(master.entryId)).revision, 1);

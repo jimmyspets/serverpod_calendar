@@ -1,6 +1,6 @@
 # ADR 0167: Single-instance source applications after range restoration
 
-Status: **Proposed. The maintainer confirmed that a new occurrence command supersedes the restoration retry receipt under the existing latest-only rule. The following v10, version, authority and composition mechanics require explicit agreement before implementation.**
+Status: **Accepted. The maintainer explicitly approved the single-instance batch, including v10, effective-component version, authority and composition mechanics, on 2026-11-03. Latest-only occurrence receipt supersession was confirmed separately. Implementation and validation evidence are tracked separately.**
 
 ## Context and scope
 

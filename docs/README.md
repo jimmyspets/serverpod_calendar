@@ -346,3 +346,7 @@ Accepted [ADR 0159](adr/0159-pure-range-cancellation-projection.md) implements a
 ## Master lifecycle after source range restoration
 
 [Accepted ADR 0166](adr/0166-master-lifecycle-after-source-range-restoration.md) supports explicit whole-series cancellation/reopening with a clear native cutoff and preserved individual cancellations. Existing JSON v9 binds current kind/status independently from frozen restoration proof, with strict conservative source floors, complete authority checks and stable historical retries. No SQL/API/cap expansion. See [the profile](restoration-master-lifecycle.md); new range transitions and remaining scheduling stay separate.
+
+## Single-instance applications after restoration
+
+[Accepted ADR 0167](adr/0167-single-instance-applications-after-source-range-restoration.md) adds explicit active-master single REQUEST/CANCEL with effective-component freshness and latest-only occurrence receipts. Existing JSON v10 binds current targets beside unchanged frozen restoration proof, preserving subsequent master lifecycle and independent permissions under unchanged caps. See [the profile](restoration-single-applications.md); new range transitions and remaining scheduling stay separate.

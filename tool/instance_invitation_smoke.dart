@@ -45,7 +45,7 @@ Future<void> instanceInvitationSmoke(List<Client> clients) async {
     );
     final v = await api.getInvitation(instance.entryId);
     require(
-      v.originalStart?.start.day == 3 &&
+      v.originalStart?.start.day == 5 &&
           v.timing?.start.hour == 11 &&
           (await api.getInvitation(master.entryId)).revision == 1,
       'Instance source changed original or master',
@@ -54,7 +54,7 @@ Future<void> instanceInvitationSmoke(List<Client> clients) async {
     await rejects(() => api.application(instance!.entryId));
     final response = await api.response(instance.entryId);
     require(
-      response.canSend && response.originalStart?.start.day == 3,
+      response.canSend && response.originalStart?.start.day == 5,
       'Instance response lost its original or source eligibility',
     );
     final cancelled = await a.invitationDemo.simulateOccurrence(
@@ -67,7 +67,7 @@ Future<void> instanceInvitationSmoke(List<Client> clients) async {
     require(
       cancelled.entryId == instance.entryId &&
           notice.timing == null &&
-          notice.originalStart?.start.day == 3 &&
+          notice.originalStart?.start.day == 5 &&
           notice.kind == cal.CalendarInvitationSourceKind.instanceCancellation,
       'Cancellation lost original or manufactured start',
     );

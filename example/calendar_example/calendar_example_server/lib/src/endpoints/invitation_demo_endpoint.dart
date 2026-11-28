@@ -73,7 +73,8 @@ class InvitationDemoEndpoint extends Endpoint {
       'UID:synthetic-invitation:$user:$invitationId',
       'DTSTAMP:20260101T000000Z',
       'SEQUENCE:$sequence',
-      'RECURRENCE-ID${range ? ';RANGE=THISANDFUTURE' : ''}:20300103T090000Z',
+      // Keep single demos on the PERIOD original, separate from range anchors.
+      'RECURRENCE-ID${range ? ';RANGE=THISANDFUTURE' : ''}:203001${range ? '03' : '05'}T090000Z',
       if (cancel)
         'STATUS:CANCELLED'
       else ...[

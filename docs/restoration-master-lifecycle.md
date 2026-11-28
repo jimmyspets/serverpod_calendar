@@ -14,4 +14,4 @@ Native/master/checkpoint writes, revisions, selected notice dismissal and scope/
 
 Existing complete-state byte/work/slot limits and private deletion scrubbing apply. No SQL, generated model/endpoint, dependency or cap expansion is added. New occurrence/range applications and repeated source cutoff transitions remain guarded pending separate review. Real mail and external-client certification remain separate. See [actual validation](scaffold-validation.md).
 
-The next [single-instance application proposal](adr/0167-single-instance-applications-after-source-range-restoration.md) is under review. Its v10/effective-version mechanics do not lift the current occurrence guard.
+[Accepted ADR 0167](adr/0167-single-instance-applications-after-source-range-restoration.md) lifts the single-instance guard through the separately approved [v10 application profile](restoration-single-applications.md). New range transitions remain guarded.

@@ -314,3 +314,7 @@ ADR 0165 adds `test/integration/restoration_master_composition_test.dart` to the
 ## Restored-master lifecycle verification
 
 ADR 0166 adds `test/integration/restoration_master_lifecycle_test.dart` to the serial integration group and `dart run tool/invitation_work_smoke.dart --restored-lifecycle` to full checks. The two-host mode covers cancellation/reopening, competing commands and actual process loss before/after each commit. Generated-client/feed and Flutter range journeys exercise both existing explicit actions after restoration. Keep SDK database and compiled-host/browser checks serial on shared test ports; stop owned bundles before rebuilding and preserve development data. See [the scoped profile](restoration-master-lifecycle.md).
+
+## Restored single-instance verification
+
+ADR 0167 adds `test/integration/restoration_single_application_test.dart` to the serial affected group and `dart run tool/invitation_work_smoke.dart --restored-singles` to full checks. Actual two-host probes cover same/competing/mixed-master commands and process loss before/after single update/cancel commits. Existing generated-client/feed and connected range Flutter journeys then apply/cancel/reopen the PERIOD original after restoration. SDK database suites and compiled-host/browser checks remain serial on shared ports; preserve development storage and stop owned bundles before rebuilding. See [the scoped implementation](restoration-single-applications.md).

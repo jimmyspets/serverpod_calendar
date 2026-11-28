@@ -11,7 +11,9 @@ extension CalendarInvitationRestorationComposition on CalendarService {
         member.timingOverrides?.cancelledFrom != null ||
         !eventSchedulingMember(
           member.content,
-          CalendarEventTiming.fromJson(_occLatestTarget(state)['original']),
+          CalendarEventTiming.fromJson(
+            (state['restoration'] as Map)['original'],
+          ),
           sharedWorkBudget: RecurrenceWorkBudget(
             maxWork: eventMaxCandidateWork,
           ),
@@ -52,6 +54,25 @@ extension CalendarInvitationRestorationComposition on CalendarService {
     required CalendarEventImportMember member,
     required CalendarInvitationSourceKind kind,
   }) {
+    if (state['version'] == 10) {
+      return _occRestoredTargetsState(
+        link: link,
+        event: event,
+        row: row,
+        state: state,
+        master: master,
+        previousMaster: previousMaster,
+        kind: kind,
+        masterBaseline: masterBaseline,
+        baseline: baseline,
+        member: member,
+        targets: (state['targets'] as List).cast<Map<String, dynamic>>(),
+        receipt: CalendarInvitationOccurrenceApplyReceipt.fromJson(
+          state['receipt'],
+        ),
+        requestDigest: state['requestDigest'] as String,
+      );
+    }
     final cancelled = kind == CalendarInvitationSourceKind.meetingCancellation;
     if ((member.content.status == CalendarEventStatus.cancelled) != cancelled) {
       throw ArgumentError('Invalid restored lifecycle');
@@ -92,11 +113,10 @@ extension CalendarInvitationRestorationComposition on CalendarService {
     return next;
   }
 
-  Map<String, dynamic> _occDecodeRestorationComposition(
+  ({_Event event, Map<String, dynamic> state}) _occFrozenRestoration(
     CalendarInvitationLinkRecord link,
     _Event event,
     CalendarInvitationOccurrenceApplicationRecord row,
-    CalendarInvitationApplicationRecord? master,
     Map<String, dynamic> state,
   ) {
     final frozen = state['frozenRestoration'] as Map<String, dynamic>;
@@ -109,27 +129,11 @@ extension CalendarInvitationRestorationComposition on CalendarService {
         : CalendarInvitationApplicationRecord.fromJson(frozen['master']);
     if (original['version'] != 7 ||
         original.containsKey('frozenRestoration') ||
-        state.containsKey('targets') ||
-        state.containsKey('restoration') ||
-        state.containsKey('receipt') ||
-        state.containsKey('preRestoration') ||
         descriptor['revision'] is! int ||
         (descriptor['revision'] as int) >= row.revision ||
         descriptor['eventRevision'] is! int ||
         (descriptor['eventRevision'] as int) >= row.eventRevision ||
-        DateTime.parse(descriptor['updatedAt']).isAfter(row.updatedAt) ||
-        master == null ||
-        !{
-          CalendarInvitationSourceKind.request,
-          CalendarInvitationSourceKind.meetingCancellation,
-        }.contains(master.kind) ||
-        state['version'] == 8 &&
-            (master.kind != CalendarInvitationSourceKind.request ||
-                state.containsKey('masterKind')) ||
-        state['version'] == 9 && state['masterKind'] != master.kind.name ||
-        state['masterDigest'] != _occMasterDigest(link, master) ||
-        state['baselineDigest'] !=
-            _invBaselineDigest(event.data.importBaseline!)) {
+        DateTime.parse(descriptor['updatedAt']).isAfter(row.updatedAt)) {
       throw StateError('Invalid restored composition');
     }
     final historical = _occAccepted(baseline);
@@ -160,6 +164,36 @@ extension CalendarInvitationRestorationComposition on CalendarService {
       recordedMaster,
       CalendarEventImportBaseline.fromJson(accepted['masterBaseline']),
     );
+    return (event: historicalEvent, state: accepted);
+  }
+
+  Map<String, dynamic> _occDecodeRestorationComposition(
+    CalendarInvitationLinkRecord link,
+    _Event event,
+    CalendarInvitationOccurrenceApplicationRecord row,
+    CalendarInvitationApplicationRecord? master,
+    Map<String, dynamic> state,
+  ) {
+    if (state.containsKey('targets') ||
+        state.containsKey('restoration') ||
+        state.containsKey('receipt') ||
+        state.containsKey('preRestoration') ||
+        master == null ||
+        !{
+          CalendarInvitationSourceKind.request,
+          CalendarInvitationSourceKind.meetingCancellation,
+        }.contains(master.kind) ||
+        state['version'] == 8 &&
+            (master.kind != CalendarInvitationSourceKind.request ||
+                state.containsKey('masterKind')) ||
+        state['version'] == 9 && state['masterKind'] != master.kind.name ||
+        state['masterDigest'] != _occMasterDigest(link, master) ||
+        state['baselineDigest'] !=
+            _invBaselineDigest(event.data.importBaseline!)) {
+      throw StateError('Invalid restored composition');
+    }
+    final replay = _occFrozenRestoration(link, event, row, state);
+    final historicalEvent = replay.event, accepted = replay.state;
     final currentMaster = CalendarEventImportBaseline.fromJson(
       state['masterBaseline'],
     );
