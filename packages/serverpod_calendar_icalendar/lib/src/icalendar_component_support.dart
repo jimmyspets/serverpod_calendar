@@ -62,6 +62,8 @@ T componentGuard<T>(T Function() action) {
 final class IcalendarComponentLimits {
   const IcalendarComponentLimits({
     this.maxEvents = 128,
+    this.maxTasks = 128,
+    this.maxTaskMetadataCodePoints = 65536,
     this.maxZones = 32,
     this.maxObservances = 128,
     this.maxOnsets = 8192,
@@ -77,6 +79,7 @@ final class IcalendarComponentLimits {
     this.maxAvailableOverrides = 64,
     this.maxAvailabilityMetadataCodePoints = 65536,
   });
+  final int maxTasks, maxTaskMetadataCodePoints;
   final int maxEvents, maxZones, maxObservances, maxOnsets, maxCandidates;
   final int maxExplicitDates,
       maxRuleValues,
@@ -90,6 +93,8 @@ final class IcalendarComponentLimits {
   void validate() {
     for (final n in [
       maxEvents,
+      maxTasks,
+      maxTaskMetadataCodePoints,
       maxZones,
       maxObservances,
       maxOnsets,
@@ -117,6 +122,14 @@ final class ComponentBudget {
   final RecurrenceWorkBudget sharedWork;
   int observances = 0, onsets = 0, explicitDates = 0, ruleValues = 0;
   int metadataCodePoints = 0;
+  int taskMetadataCodePoints = 0;
+  void taskMetadata(int amount) {
+    taskMetadataCodePoints += amount;
+    if (taskMetadataCodePoints > limits.maxTaskMetadataCodePoints) {
+      componentFail(IcalendarComponentError.limitExceeded);
+    }
+  }
+
   void metadata(int amount) {
     metadataCodePoints += amount;
     if (metadataCodePoints > limits.maxAvailabilityMetadataCodePoints) {
