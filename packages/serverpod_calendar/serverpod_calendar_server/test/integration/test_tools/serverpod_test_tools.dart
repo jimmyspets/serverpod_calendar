@@ -31,6 +31,10 @@ import 'package:serverpod_calendar_server/src/generated/calendar_availability_oc
     as _idgpm5rc;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_receipt.dart'
     as _i6vowhmw;
+import 'package:serverpod_calendar_server/src/generated/calendar_availability_replace_request.dart'
+    as _iu4nsjvo;
+import 'package:serverpod_calendar_server/src/generated/calendar_availability_replace_result.dart'
+    as _ibom5eka;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_search_query.dart'
     as _iirwhdxv;
 import 'package:serverpod_calendar_server/src/generated/calendar_availability_search_view.dart'
@@ -273,6 +277,37 @@ class _CalendarAvailabilityEndpoint {
   final _is.EndpointDispatch _endpointDispatch;
 
   final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_ibom5eka.CalendarAvailabilityReplaceResult> replaceFromImport(
+    _ist.TestSessionBuilder sessionBuilder,
+    _iu4nsjvo.CalendarAvailabilityReplaceRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarAvailability',
+            method: 'replaceFromImport',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarAvailability',
+          methodName: 'replaceFromImport',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ibom5eka.CalendarAvailabilityReplaceResult>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 
   _ida.Future<_idt.ByteData> exportCalendar(
     _ist.TestSessionBuilder sessionBuilder,

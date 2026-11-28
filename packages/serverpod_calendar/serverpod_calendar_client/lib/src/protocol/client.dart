@@ -28,6 +28,10 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_availability_occ
     as _iafnzhwk;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_receipt.dart'
     as _izuu9p5h;
+import 'package:serverpod_calendar_client/src/protocol/calendar_availability_replace_request.dart'
+    as _iw2usnc9;
+import 'package:serverpod_calendar_client/src/protocol/calendar_availability_replace_result.dart'
+    as _ihsoxc70;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_search_query.dart'
     as _inwpo91l;
 import 'package:serverpod_calendar_client/src/protocol/calendar_availability_search_view.dart'
@@ -94,6 +98,14 @@ class EndpointCalendarAvailability extends _isc.EndpointRef {
 
   @override
   String get name => 'serverpod_calendar.calendarAvailability';
+
+  _ida.Future<_ihsoxc70.CalendarAvailabilityReplaceResult> replaceFromImport(
+    _iw2usnc9.CalendarAvailabilityReplaceRequest request,
+  ) => caller.callServerEndpoint<_ihsoxc70.CalendarAvailabilityReplaceResult>(
+    'serverpod_calendar.calendarAvailability',
+    'replaceFromImport',
+    {'request': request},
+  );
 
   _ida.Future<_idt.ByteData> exportCalendar(
     _izvtbziu.CalendarAvailabilityExportRequest request,

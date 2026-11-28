@@ -126,3 +126,5 @@ The root batch check also runs the dedicated `serverpod_calendar_icalendar` synt
 ## Pre-beta database compatibility
 
 Breaking APIs/schema and fresh-database requirements are authorized before beta. A feature may document a reset instead of preserving unpublished compatibility. Use only the identified local development or isolated synthetic test database, and record which reset is required. Existing historical upgrade checks remain evidence of their own batches. ADR 0073 import uses the existing schema and requires no reset.
+
+ADR 0076 adds an additive nullable availability baseline column; no reset is required. Existing/native-created definitions remain ineligible for replacement without a recorded source baseline. Focus replacement checks with `dart test test/integration/calendar_test.dart --plain-name "availability replacement"` from the example server. The populated upgrade helper also verifies old availability content is unchanged and baselines remain null.

@@ -9,6 +9,7 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  replaceAvailabilityFromImport,
   exportAvailability,
   importAvailability,
   previewAvailabilityOccurrences,
@@ -160,6 +161,7 @@ final class CalendarAuthorizationRequest {
     this.availabilityCategoryFilter,
     this.availabilityImport,
     this.availabilityExport,
+    this.availabilityReplacement,
     this.occurrenceChange,
     this.proposedTimingOverrides,
     Iterable<CalendarEventFieldGroup> eventGroups = const [],
@@ -187,6 +189,7 @@ final class CalendarAuthorizationRequest {
   /// Full immutable batch, absent on the cheap pre-parse authority check.
   final CalendarAvailabilityImportIntent? availabilityImport;
   final CalendarAvailabilityExportIntent? availabilityExport;
+  final CalendarAvailabilityReplacementIntent? availabilityReplacement;
   final CalendarEventOccurrenceChange? occurrenceChange;
   final CalendarEventTimingOverrides? proposedTimingOverrides;
   final Set<CalendarEventFieldGroup> eventGroups;
@@ -228,6 +231,30 @@ final class CalendarAvailabilityExportIntent {
     Iterable<CalendarAvailabilityPolicySnapshot> members,
   ) : members = List.unmodifiable(members);
   final List<CalendarAvailabilityPolicySnapshot> members;
+}
+
+/// Current/proposed data only: historical baseline payload is never disclosed.
+final class CalendarAvailabilityReplacementMember {
+  const CalendarAvailabilityReplacementMember({
+    required this.current,
+    required this.proposed,
+    required this.baselineProfile,
+    required this.baselineSequence,
+    this.changed,
+    this.localChanges,
+  });
+  final CalendarAvailabilityPolicySnapshot current;
+  final CalendarAvailabilityImportMember proposed;
+  final String? baselineProfile;
+  final int? baselineSequence;
+  final bool? changed, localChanges;
+}
+
+final class CalendarAvailabilityReplacementIntent {
+  CalendarAvailabilityReplacementIntent(
+    Iterable<CalendarAvailabilityReplacementMember> members,
+  ) : members = List.unmodifiable(members);
+  final List<CalendarAvailabilityReplacementMember> members;
 }
 
 final class CalendarAuthorizationDecision {

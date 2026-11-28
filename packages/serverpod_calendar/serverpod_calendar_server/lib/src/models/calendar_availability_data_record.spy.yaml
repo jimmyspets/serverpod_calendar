@@ -7,6 +7,7 @@ fields:
   calendarId: UuidValue, relation(parent=serverpod_calendar_identity)
   uidDigest: String
   protocolState: CalendarAvailabilityProtocolState?
+  importBaseline: CalendarAvailabilityImportBaseline?
   timingOverrides: List<CalendarAvailabilityOpeningEdits>?
   content: CalendarAvailabilityContent
   createdAt: DateTime

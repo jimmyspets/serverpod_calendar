@@ -1,6 +1,6 @@
 # Create-only availability import and storage contract
 
-Status: **scoped create-only import implemented under ADR 0073; concrete mechanics under draft review**. Date: 2026-10-22. [ADR 0071](adr/0071-create-only-availability-import.md) records accepted product decisions, [ADR 0072](adr/0072-source-preserving-availability-storage.md) implements the storage prerequisite and [ADR 0073](adr/0073-authenticated-create-only-availability-import.md) implements the endpoint. Earlier design sections below record the proposal that led to this implementation; the [implemented operation](#implemented-create-only-operation) is the current API/transaction reference. Authenticated export is implemented under ADR 0074; source replacement is now designed under ADR 0075 and remains unimplemented.
+Status: **scoped create-only import implemented under ADR 0073; concrete mechanics under draft review**. Date: 2026-10-22. [ADR 0071](adr/0071-create-only-availability-import.md) records accepted product decisions, [ADR 0072](adr/0072-source-preserving-availability-storage.md) implements the storage prerequisite and [ADR 0073](adr/0073-authenticated-create-only-availability-import.md) implements the endpoint. Earlier design sections below record the proposal that led to this implementation; the [implemented operation](#implemented-create-only-operation) is the current API/transaction reference. Authenticated export is implemented under ADR 0074; baseline-aware source replacement is implemented separately under ADR 0076.
 
 ## Confirmed scope
 
@@ -142,4 +142,4 @@ No schema change/reset is required by this batch. For future pre-beta changes th
 
 ## Explicit replacement follow-up
 
-[ADR 0075](adr/0075-availability-update-reconciliation-contract.md) and [the update contract](availability-update.md) record confirmed choices for a separate existing-definition replacement API. Baseline storage and runtime are not implemented. The current create-only endpoint still rejects active UID conflicts; it does not silently become an upsert or establish import baselines retroactively.
+[ADR 0076](adr/0076-availability-replacement-implementation.md) and [the update guide](availability-update.md#implemented-operation) implement the separate existing-definition replacement API. Create-only imports now record one private normalized source baseline transactionally. The create-only endpoint still rejects active UID conflicts; it does not become an upsert or establish baselines retroactively. Earlier no-schema-change statements describe ADR 0073; ADR 0076 adds the nullable baseline column without requiring a reset.

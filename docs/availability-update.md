@@ -1,6 +1,6 @@
 # Explicit availability replacement contract
 
-Status: **maintainer-confirmed product choices; proposed baseline/schema/API/transaction mechanics**. Date: 2026-10-22. [ADR 0075](adr/0075-availability-update-reconciliation-contract.md) records accepted choices. This is a documentation/design batch; there is no update endpoint, new model, migration or runtime behavior yet. [Create-only import](availability-import.md) and [authenticated export](availability-export.md) remain implemented under ADRs 0073/0074.
+Status: **scoped implementation under ADR 0076; concrete mechanics under draft PR review**. Date: 2026-10-22. [ADR 0075](adr/0075-availability-update-reconciliation-contract.md) records confirmed product choices; [ADR 0076](adr/0076-availability-replacement-implementation.md) records the approved private active-row snapshot/raw-read choices and concrete implementation. The [implemented operation](#implemented-operation) below supersedes pending wording in the historical design sections. Create-only import and authenticated export remain separate operations.
 
 ## Selected first scope
 
@@ -110,6 +110,40 @@ Required tests for the later implementation batch:
 - Independent permissions, actual parent/scope, hidden current/source data, frozen policy context, preliminary/final denial, organizer removal and registry/callback failures, no-op disclosure and external-policy changes.
 - Two independent hosts competing to replace/edit/delete, explicit expected-revision winners, baseline/data coherence, generated-client and Flutter update/replay/conflict journeys, relevant fresh database/model checks and the full repository batch checks.
 
-Source updates remain unimplemented until that evidence exists. This contract adds no CalDAV sync, iTIP/iMIP availability-update protocol, HTTP feed, automatic source trust, delivery or real-client interoperability claim. Relevant requirements are FR-06/07/08/18 and NFR-03/14/15; none becomes complete from documentation alone.
+The scoped replacement implementation below supplies its own validation evidence; the preceding list records the original design gates. This contract adds no CalDAV sync, iTIP/iMIP availability-update protocol, HTTP feed, automatic source trust, delivery or real-client interoperability claim. Relevant requirements are FR-06/07/08/18 and NFR-03/14/15; none becomes complete from documentation alone.
 
 Primary sources: [RFC 7953 component grammar](https://www.rfc-editor.org/rfc/rfc7953.html#section-3.1) and [RFC 5545 change-management properties](https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.7). Source properties do not specify the repository's baseline, host authority, no-op, identity or transaction protocol.
+
+
+## Implemented operation
+
+`CalendarAvailabilityEndpoint.replaceFromImport` accepts `CalendarAvailabilityReplaceRequest`: actual calendar UUID, expected calendar revision, explicit availability UUID/revision selection and copied `ByteData` source. The immutable selection reuses `CalendarAvailabilityExportSelection`; request bytes are copied using their actual offset/length before awaiting. Input is bounded to 1 MiB and 1–64 unique targets, subject to the existing aggregate wire/storage/query limits. Every source master must match exactly one selected current protocol UID. No source byte, UID, organizer or client identity grants authority.
+
+The server resolves current actor/scope, authorizes the actual parent before parsing, then reloads all selected active definitions in the durable scope transaction. Current member raw-read and replacement authority precede revision/equality/conflict classification. Complete immutable current/proposed batch context is checked before classification and again with changed/local-change results; the historical baseline payload stays private. Final checks repeat import/replacement/raw-read authority, applicable edit rights and dedicated organizer/extension approval, including removals and no-op requests. External fresh checks retain their documented after-check revocation race.
+
+| Change | Additional permission |
+| --- | --- |
+| Timing, recurrence, priority, closed-time type or opening structure | `updateAvailability` |
+| Metadata or component protocol-state changes | `updateAvailabilityMetadata` |
+| Opening occurrence timing/cancellation state | `changeAvailabilityOccurrence` |
+| True canonical no-op | No edit gate; import, replacement, raw-read and organizer/extension checks still apply |
+
+`CalendarAvailabilityReplacementIntent` carries all current snapshots and validated proposals, profile/source-sequence evidence and nullable pre-classification flags. Each proposal contains complete mapped opening identities, making retained/new/removed comparisons available to the host. It never includes a historical source snapshot. Comparing a source file is not a preview authorization grant.
+
+### Stored comparison state and limits
+
+A nullable `CalendarAvailabilityImportBaseline` is stored only on `CalendarAvailabilityDataRecord`, which is server-only active data. It contains `profile`, exact `canonicalValue` and optional `sourceSequence`. New create-only imports and changed replacements store it transactionally. Old imports and native-created rows remain null and reject replacement with `dependencyConflict`; no migration guesses history or adopts current data. The additive generated JSON-column migration requires no database reset. Reimporting into an empty/different calendar remains create-only import, not identity-preserving adoption.
+
+The current profile is `availability-source-v1/<pinned IANA version>` (currently 2026e); incompatible/corrupt baselines fail closed with `unavailable`. Each canonical payload is limited to 2 MiB UTF-8; wire input and existing aggregate validation budgets independently constrain work. Compare exact strings, without a hash shortcut. Canonicalization excludes native UUIDs/audit fields, maps only opening-reference fields to exact protocol UIDs, sorts map keys/opening/component identities and unordered recurrence date/period lists, and normalizes supported native category representations. It preserves ordered metadata groups/duplicates/annotations, exact zone spelling, end/duration forms, independent source protocol versions/omissions and original occurrence identities. Arbitrary text resembling a UUID is never rewritten.
+
+Only one last-accepted baseline is retained. Local edits leave it intact, even if it contains text removed from current values. Ordinary views/export omit it; active-data deletion scrubs it. Changed replacements replace it. A no-op matching current local data does not adopt or reset the older baseline. A native accepted no-op advances its ordinary API revision without manufacturing a canonical local-content change.
+
+### Mutation and results
+
+Require valid baseline and source-version gates even for no-ops. Lower effective source SEQUENCE rejects; equal values may change clean targets. Source timestamps/omissions are stored exactly, including regressions, while database audit update time remains separate and nondecreasing. Changed members retain creation time and identities, advance API revision once and install complete source content/edits/protocol/baseline. One changed batch advances scope generation once. Parent metadata and unchanged members remain untouched. Absent source openings are removed only within each explicitly selected full replacement; matching current protocol UIDs retain UUIDs, and reintroduced removed UIDs get new UUIDs.
+
+`CalendarAvailabilityReplaceResult` contains only final host-approved `CalendarAvailabilityReplaceReceipt` values: the existing minimal mutation receipt plus `changed`. Final import/replacement/applicable-edit receipt disclosure controls visibility; raw-read receipt flags do not become mutation disclosure flags. There are no totals, baseline payloads or hidden-current-content diagnostics. Failure is atomic, using existing sanitized codes: `staleRevision`, `accessDenied`, `validation`, `dependencyConflict`, `unavailable` or `limitExceeded`. Failed response delivery after commit remains distinct from rollback.
+
+The example offers an explicit per-definition replacement form. It shares the import textarea's visibly documented CRLF conversion, retains input on rejection, and requires reopening after stale revision. It supports authorized replay and reports conflict without overwriting native changes. The API accepts multiple selected definitions; the example form selects one.
+
+Validation evidence is recorded in [the batch validation record](scaffold-validation.md#baseline-aware-availability-replacement-2026-10-22). Broader source adoption/overwrite, synchronization, other component import/export, HTTP feeds, scheduling and external-client interoperability remain outside this increment.

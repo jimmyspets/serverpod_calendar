@@ -1,6 +1,6 @@
 # Source-preserving availability storage
 
-[ADR 0072](adr/0072-source-preserving-availability-storage.md) implements the storage prerequisites selected in [ADR 0071](adr/0071-create-only-availability-import.md). This extends native storage, validation, protocol lifecycle and calculation. Authenticated create-only import now uses this representation under [ADR 0073](adr/0073-authenticated-create-only-availability-import.md) and [the import guide](availability-import.md). Authenticated export now follows ADR 0074; source replacement/reconciliation and publication remain pending.
+[ADR 0072](adr/0072-source-preserving-availability-storage.md) implements the storage prerequisites selected in [ADR 0071](adr/0071-create-only-availability-import.md). This extends native storage, validation, protocol lifecycle and calculation. Authenticated create-only import now uses this representation under [ADR 0073](adr/0073-authenticated-create-only-availability-import.md) and [the import guide](availability-import.md). Authenticated export now follows ADR 0074; explicit source replacement follows ADR 0076; broader reconciliation and publication remain pending.
 
 ## Native identity and source UID
 
@@ -57,6 +57,6 @@ New nested JSON fields are optional, so old category/comment/protocol representa
 [Validation evidence](scaffold-validation.md) records actual focused and broader commands/results. Tests cover no-loss mapping, source dates/sequence, groups/CONTACT, periods and native edits, injected candidate-index digest collisions, long Unicode UIDs, independent destination copies, policy/stale rollback, deletion and populated upgrades. Two-host generated-client smoke checks exercise new groups, opening UID and PERIOD projections. These are storage/native tests, not authenticated import or external-client interoperability evidence.
 
 
-## Proposed replacement baseline
+## Private replacement baseline
 
-[ADR 0075](adr/0075-availability-update-reconciliation-contract.md) proposes server-owned comparison baselines for explicit replacements. Current storage has no such baseline; source versions and database audit times alone do not establish one. Older/native-created rows must not be silently adopted. Proposed snapshot retention, canonicalization and deletion scrubbing require review before models change. No schema or migration is introduced by that documentation batch.
+[ADR 0076](adr/0076-availability-replacement-implementation.md) adds nullable server-only `importBaseline` inside each active-data row. New imports and changed replacements record one exact normalized source snapshot, profile and optional source sequence. It may retain values removed by local edits; ordinary views/exports never expose it. Deletion scrubs it with active data. The additive generated migration leaves old/native rows null; source versions/audit times alone never establish a baseline. See [comparison and limits](availability-update.md#implemented-operation).

@@ -204,6 +204,14 @@ extension CalendarAvailabilityImportOperations on CalendarService {
             content: m.content,
             timingOverrides: m.timingOverrides,
             protocolState: m.protocolState,
+            importBaseline: _availabilityValue(
+              () => availabilityImportBaseline(
+                m.protocolUid,
+                m.content,
+                m.timingOverrides,
+                m.protocolState,
+              ),
+            ),
             createdAt: now,
             updatedAt: now,
           ),

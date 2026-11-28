@@ -216,6 +216,24 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                           },
                     child: const Text('Export definition'),
                   ),
+                  TextButton(
+                    key: Key('availability-replace-${rule.id}'),
+                    onPressed: _busy
+                        ? null
+                        : () async {
+                            await Navigator.of(context).push<void>(
+                              MaterialPageRoute(
+                                builder: (_) => AvailabilityImportScreen(
+                                  client: widget.client,
+                                  calendarId: widget.calendarId,
+                                  replacement: rule,
+                                ),
+                              ),
+                            );
+                            if (mounted) await _load();
+                          },
+                    child: const Text('Replace from source file'),
+                  ),
                   for (final o in rule.content.openings) ...[
                     TextButton(
                       key: Key('opening-preview-${o.uid}'),

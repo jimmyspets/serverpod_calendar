@@ -1,0 +1,5 @@
+class: CalendarAvailabilityReplaceReceipt
+immutable: true
+fields:
+  receipt: CalendarAvailabilityReceipt
+  changed: bool

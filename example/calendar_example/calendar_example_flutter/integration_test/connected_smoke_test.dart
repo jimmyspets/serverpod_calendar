@@ -651,6 +651,47 @@ void main() {
     await tester.pageBack();
     await _idle(tester);
 
+    await _tap(tester, 'availability-replace-${importedHours.id}');
+    await _tap(tester, 'availability-import-example');
+    await _tap(tester, 'availability-import-submit');
+    await _waitFor(tester, find.text('Imported example hours'));
+    expect((await rulesApi.getRule(importedHours.id)).revision, 1);
+    await _tap(tester, 'availability-replace-${importedHours.id}');
+    await tester.enterText(
+      find.byKey(const Key('availability-import-source')),
+      exportedText.replaceAll(
+        'Imported example hours',
+        'Replaced example hours',
+      ),
+    );
+    await _tap(tester, 'availability-import-submit');
+    await _waitFor(tester, find.text('Replaced example hours'));
+    final replacedHours = await rulesApi.getRule(importedHours.id);
+    expect(replacedHours.revision, 2);
+    expect(
+      replacedHours.content.openings.single.uid,
+      importedHours.content.openings.single.uid,
+    );
+    await rulesApi.updateMetadata(
+      cal.CalendarAvailabilityUpdateRequest(
+        availabilityId: replacedHours.id,
+        expectedRevision: 2,
+        content: replacedHours.content.copyWith(summary: 'Local hours edit'),
+      ),
+    );
+    await _tap(tester, 'availability-reload');
+    await _waitFor(tester, find.text('Local hours edit'));
+    await _tap(tester, 'availability-replace-${importedHours.id}');
+    await _tap(tester, 'availability-import-example');
+    await _tap(tester, 'availability-import-submit');
+    await _waitFor(tester, find.byKey(const Key('availability-import-error')));
+    expect(
+      (await rulesApi.getRule(importedHours.id)).content.summary,
+      'Local hours edit',
+    );
+    await tester.pageBack();
+    await _idle(tester);
+
     await _tap(tester, 'availability-delete-${importedHours.id}');
     await _idle(tester);
     expect(await rulesApi.list(calendar.id), isEmpty);
