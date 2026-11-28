@@ -803,3 +803,7 @@ ADR 0151 now implements the [one-row occurrence acceptance contract](instance-in
 ## Master/occurrence composition state
 
 Accepted [ADR 0152](adr/0152-master-invitation-application-with-accepted-occurrences.md) implements version-two JSON in the existing occurrence table, with separate current master/composed baselines, actual master binding, retained targets and a source/request/result-bound historical receipt. No SQL table/column or retention change is added. Master apply requests carry default-zero expectedOccurrenceRevision; protected previews expose occurrenceRevision. Version-one reads remain valid; conversion requires an actual authorized composition. See [the guide](master-invitation-occurrence-composition.md) for concurrency, authority and retry semantics.
+
+## Proposed single-instance response carrier refinement
+
+[ADR 0153](adr/0153-explicit-single-instance-attendee-responses.md) proposes reusing the three existing entry-keyed private response tables and current quotas/retention. Protected response views would become immutable and add optional originalStart plus derived canSend; host context would add known-series basis/explicit unavailable evidence, with separate occurrence send/dispatch operations. No SQL table/column is proposed. Generate only after explicit review; current master-only response runtime remains unchanged.

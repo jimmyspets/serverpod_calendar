@@ -306,3 +306,5 @@ Accepted [ADR 0151](adr/0151-explicit-single-instance-invitation-application.md)
 Accepted [ADR 0152](adr/0152-master-invitation-application-with-accepted-occurrences.md) supersedes that guard with explicit preserved-layer composition, revision fencing, independent authority and historical retries. Its conservative whole-cancellation version rule is an application safeguard; no broader interoperability follows.
 
 [Master invitation/occurrence composition](master-invitation-occurrence-composition.md) describes the accepted ADR 0152 implementation, independent versions, orphan protection and historical retries.
+
+Proposed [ADR 0153](adr/0153-explicit-single-instance-attendee-responses.md) groups explicit recipient single-instance replies, target-aware minimal output, independent authority, reused durable response storage and example/recovery checks. It does not add runtime support until maintainer review.
