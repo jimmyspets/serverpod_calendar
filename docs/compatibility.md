@@ -475,3 +475,6 @@ Accepted [ADR 0146](adr/0146-explicit-private-attendee-responses.md) implements 
 ## Calendar occurrence window queries
 
 Accepted [ADR 0147](adr/0147-bounded-calendar-occurrence-queries.md) implements native one-calendar occurrence pages across the supported DATE/UTC/named-zone and recurrence/exception profiles, including explicit cancellation-aware read projections. See [the bounded API guide](calendar-occurrence-queries.md) and actual validation evidence. ISO presentation and recurrence WKST remain distinct. This does not establish subscription-client compatibility, task/multi-calendar querying or free time.
+
+
+Proposed [ADR 0148](adr/0148-recurring-master-invitation-workflow.md) describes the next recurring-master recipient batch, including source review, explicit calendar application and synthetic master REPLYs. No recurring intake/application/sending support is claimed yet. Detached/bundled instance and range reconciliation, delegation, provider transport and external-client validation remain separate requirements.
