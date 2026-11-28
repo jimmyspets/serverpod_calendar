@@ -456,3 +456,7 @@ Accepted ADR 0131 now adds the scoped non-recurring organizer-side attendee REPL
 ## Recurring master replies
 
 Accepted [ADR 0132](adr/0132-recurring-master-attendee-replies.md) extends trusted organizer-side REPLY to recurring masters. The runtime resolves the actual master from validated self-contained publication evidence, including partial messages and v6 exclusion masks; it preserves private native drafts, complete host context and source distinctions. Responses describe the whole series, never inferred instance acceptance. Master-changing commits update source inactivity atomically; unchanged master versions retain ordering across occurrence publications. Existing tables/caps are reused with no migration. Generated views add `recurring`; trusted adapters receive the complete published message, selected master and carrier kind. Validation evidence is recorded separately. Instance/range replies, other inbound methods and mail remain required separate work.
+
+## Proposed single-instance replies
+
+Next proposed batch: trusted single-instance replies to any validated published original. The selected effective component precedence needs a reviewed version-collision/legacy publication upgrade and additive reply-target/index changes. Runtime implementation remains master-only until approval; RANGE replies, attendee-side invitations, other methods and mail remain separate required work. See [ADR 0133](adr/0133-single-instance-attendee-replies.md).
