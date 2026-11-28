@@ -341,7 +341,13 @@ final class _SchedulingCheckpoint {
     this.rangeComparison,
     this.exceptionalRangeProof,
     this.exceptionalFrozen,
+    this.cutoffPredecessor,
+    this.suffixExclusions,
+    this.cutoffRequest,
   });
+  final CalendarSchedulingPublicationRecord? cutoffPredecessor;
+  final List<CalendarEventTiming>? suffixExclusions;
+  final CalendarEventPolicySnapshot? cutoffRequest;
   final ExceptionalRangeProof? exceptionalRangeProof;
   final Map<String, dynamic>? exceptionalFrozen;
   final _SchedulingRangeControl? rangeControl;
@@ -364,8 +370,9 @@ final class _SchedulingCheckpoint {
 }
 
 _SchedulingCheckpoint _schedulingReadCheckpoint(
-  CalendarSchedulingPublicationRecord p,
-) {
+  CalendarSchedulingPublicationRecord p, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
   try {
     _schedulingBound(p.snapshot);
     _schedulingBound(p.projection);
@@ -374,17 +381,31 @@ _SchedulingCheckpoint _schedulingReadCheckpoint(
         header['version'] != 3) {
       throw const FormatException();
     }
-    if (header['version'] == 4) return _schedulingReadV4(p, header);
-    if (header['version'] == 5) return _schedulingReadV5(p, header);
-    if (header['version'] == 6) return _schedulingReadV6(p, header);
-    if (header['version'] == 7) return _schedulingReadV7(p, header);
-    if (header['version'] == 8) return _schedulingReadV8(p);
+    switch (header['version']) {
+      case 4:
+        return _schedulingReadV4(p, header, sharedWorkBudget: sharedWorkBudget);
+      case 5:
+        return _schedulingReadV5(p, header, sharedWorkBudget: sharedWorkBudget);
+      case 6:
+        return _schedulingReadV6(p, header, sharedWorkBudget: sharedWorkBudget);
+      case 7:
+        return _schedulingReadV7(p, header, sharedWorkBudget: sharedWorkBudget);
+      case 8:
+        return _schedulingReadV8(p, sharedWorkBudget: sharedWorkBudget);
+      case 9:
+        return _schedulingReadV9(
+          p,
+          sharedWorkBudget ??
+              RecurrenceWorkBudget(maxWork: eventMaxCandidateWork),
+        );
+    }
     if (p.payload.length > _schedulingCheckpointBytes ||
         _schedulingDigest(p.payload) != p.payloadDigest) {
       throw const FormatException();
     }
     final message = parseIcalendarSchedulingMessage(
       utf8.encode(p.payload),
+      sharedWorkBudget: sharedWorkBudget,
       syntaxLimits: const IcalendarSyntaxLimits(
         maxBytes: _schedulingCheckpointBytes,
       ),
@@ -411,10 +432,14 @@ _SchedulingCheckpoint _schedulingReadCheckpoint(
     if (projectionOriginals.length > 64) throw const FormatException();
     final canonical = _schedulingReadSnapshot(
       legacy ? value : value['canonical'],
+      sharedWorkBudget: sharedWorkBudget,
     );
     final outgoing = legacy
         ? canonical
-        : _schedulingReadSnapshot(value['outgoing']);
+        : _schedulingReadSnapshot(
+            value['outgoing'],
+            sharedWorkBudget: sharedWorkBudget,
+          );
     final ledger = legacy
         ? components
         : (value['ledger'] as List)
@@ -460,8 +485,10 @@ _SchedulingCheckpoint _schedulingReadCheckpoint(
           _schedulingCheckpointBytes,
           method: p.method,
           projectionOriginals: projectionOriginals,
+          sharedWorkBudget: sharedWorkBudget,
         ),
       ),
+      sharedWorkBudget: sharedWorkBudget,
     );
     final expectedComponents = _schedulingComponents(expected);
     if (jsonEncode(
@@ -516,7 +543,10 @@ _SchedulingCheckpoint _schedulingReadCheckpoint(
     // cancellation master. Never invent a prior active component for them.
     final List<EventSchedulingOriginal> originals;
     {
-      final validatedLedger = validateIcalendarSchedulingMessage(ledgerSource);
+      final validatedLedger = validateIcalendarSchedulingMessage(
+        ledgerSource,
+        sharedWorkBudget: sharedWorkBudget,
+      );
       if (validatedLedger.uid != p.protocolUid ||
           !legacy &&
               p.method == 'CANCEL' &&
@@ -551,6 +581,7 @@ _SchedulingCheckpoint _schedulingReadCheckpoint(
           null,
           projectionOriginals,
           membershipOnly: true,
+          sharedWorkBudget: sharedWorkBudget,
         );
       }
     }

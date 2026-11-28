@@ -85,7 +85,14 @@ extension CalendarSchedulingRangeOperations on CalendarService {
           e.data.importBaseline != null) {
         throw _failure(CalendarFailureCode.validation);
       }
-      final previous = _schedulingReadCheckpoint(last);
+      final active = _schedulingReadCheckpoint(
+        last,
+        sharedWorkBudget: _schedulingIsCutoffLifecycle(last) ? work : null,
+      );
+      final frozen = active.cutoffPredecessor;
+      final previous = frozen == null
+          ? active
+          : _schedulingReadCheckpoint(frozen, sharedWorkBudget: work);
       if (previous.canonical.eventId != e.identity.id ||
           previous.canonical.calendarId != e.identity.calendarId ||
           previous.outgoing.protocolUid != e.data.protocolUid) {
@@ -104,10 +111,10 @@ extension CalendarSchedulingRangeOperations on CalendarService {
               _schedulingReadCheckpoint(retry).kind != kind)) {
         throw _failure(CalendarFailureCode.validation);
       }
-      final range = previous.rangeControl;
+      final range = active.rangeControl;
       CalendarSchedulingPublicationRecord? receipt = retry;
       final basis = _schedulingReadCheckpoint(
-        previous.basisRecord ?? _schedulingRangeCurrent(last),
+        previous.basisRecord ?? _schedulingRangeCurrent(frozen ?? last),
       );
       ExceptionalRangeProof? exceptionalProof = restore
           ? previous.exceptionalRangeProof
@@ -116,7 +123,8 @@ extension CalendarSchedulingRangeOperations on CalendarService {
         _eventRevision(e, expectedRevision);
         if (!_schedulingRecurring(previous.outgoing.content) ||
             e.data.content.status == CalendarEventStatus.cancelled ||
-            previous.kind == CalendarSchedulingPublicationKind.seriesCancel) {
+            active.kind == CalendarSchedulingPublicationKind.seriesCancel ||
+            frozen != null && !restore) {
           throw _failure(CalendarFailureCode.dependencyConflict);
         }
         if (range != null &&
@@ -293,20 +301,27 @@ extension CalendarSchedulingRangeOperations on CalendarService {
       var sequence = 0;
       var stamp = eventProtocolInstant(now);
       CalendarSchedulingPublicationRecord current = _schedulingRangeCurrent(
-        last,
+        frozen ?? last,
       );
       _SchedulingRangeControl? control;
       String payload;
       if (receipt != null) {
         payload = receipt.payload;
       } else {
-        for (final v in previous.ledger.followedBy(
-          previous.individuals.map((s) => s.version),
-        )) {
+        for (final v
+            in previous.ledger
+                .followedBy(
+                  previous.individuals.map((s) => s.version),
+                )
+                .followedBy(frozen == null ? const [] : active.ledger)) {
           sequence = max(sequence, v.sequence);
           if (v.stamp.isAfter(stamp)) stamp = v.stamp;
         }
         sequence = max(sequence, range?.sequence ?? 0);
+        if (frozen != null) {
+          sequence = max(sequence, last.sequence);
+          if (last.stamp.isAfter(stamp)) stamp = last.stamp;
+        }
         if (range != null && range.stamp.isAfter(stamp)) stamp = range.stamp;
         for (final v in [
           e.data.protocolState!.version,
@@ -323,7 +338,7 @@ extension CalendarSchedulingRangeOperations on CalendarService {
         if (restore) {
           current = _schedulingValue(
             () => _schedulingRangeRestored(
-              last,
+              frozen ?? last,
               previous,
               proposed,
               point,
@@ -331,10 +346,14 @@ extension CalendarSchedulingRangeOperations on CalendarService {
               stamp,
               options.maxPayloadBytes,
               sharedWorkBudget: work,
+              sharedCheckpointWorkBudget: frozen == null ? null : work,
               exceptionalProof: exceptionalProof,
             ),
           );
-          _schedulingReadCheckpoint(current);
+          _schedulingReadCheckpoint(
+            current,
+            sharedWorkBudget: frozen == null ? null : work,
+          );
           payload = current.payload;
           sequence = current.sequence;
           control = _SchedulingRangeControl(point, false, sequence, stamp);
@@ -416,9 +435,16 @@ extension CalendarSchedulingRangeOperations on CalendarService {
         currentEvent: e.snapshot,
         proposedEvent: proposed,
         publicationEvent: checkedReceipt?.canonical ?? proposed,
-        publishedRequest: basis.outgoing,
+        publishedRequest: frozen == null
+            ? basis.outgoing
+            : _schedulingValue(() => _schedulingCutoffBasis(previous, work)),
         exactNativeMatch: matches,
-        publicationExclusions: previous.publicationExclusions ?? const [],
+        publicationExclusions:
+            (frozen == null ? previous : active).publicationExclusions ??
+            const [],
+        suffixMask: frozen == null
+            ? null
+            : CalendarSchedulingSuffixMask(point, const []),
         outgoingMessage: outgoing,
         payloadDigest: _schedulingDigest(payload),
         authority: authority,
@@ -537,7 +563,10 @@ extension CalendarSchedulingRangeOperations on CalendarService {
         transaction: tx,
       );
       // Run the complete private validator before committing any checkpoint.
-      _schedulingReadCheckpoint(p);
+      _schedulingReadCheckpoint(
+        p,
+        sharedWorkBudget: frozen == null ? null : work,
+      );
       await CalendarSchedulingDeliveryRecord.db.insert(_session, [
         for (final r in authority.routes)
           CalendarSchedulingDeliveryRecord(

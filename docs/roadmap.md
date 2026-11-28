@@ -50,10 +50,10 @@ passed inspection but failed its runtime job at the same 304 length assertion:
 zero reported for a 692-byte representation. It does not establish a passing
 full repository check.
 
-The next scheduling design is [draft ADR 0189](adr/0189-whole-series-lifecycle-with-published-cutoff.md).
+The next scheduling implementation is [accepted ADR 0189](adr/0189-whole-series-lifecycle-with-published-cutoff.md).
 [PR #207](https://github.com/jimmyspets/serverpod_calendar/pull/207) merged the
-investigation. The proposed bounded checkpoint, version and restoration proof
-still require explicit maintainer approval before durable implementation.
+investigation. The maintainer subsequently approved the bounded checkpoint,
+version and restoration proof contract.
 
 Tasks have a [confirmed create-only import contract](task-import.md) under ADR 0097 and [implemented source storage](task-source-storage.md) under ADR 0098. Create-only authenticated import follows under ADR 0099; explicitly authorized [current-state task export](task-export.md) follows under ADR 0100, with separate rich-source disclosure. Imported non-recurring tasks retain unknown prior progress, so neutral source values do not enable recurrence conversion. Selected event occurrence content is implemented under ADR 0106. Native metadata editors and exact master-category search now extend events/tasks under ADRs 0134–0136. Trusted non-recurring invitation review, stable calendar addition and explicit conflict-protected REQUEST/CANCEL application/reopening extend scheduling under ADRs 0137–0141; receipt alone changes no calendar data. Broader source adoption/overwrite and future content/cancellation remain open; scoped alarm runtime, live delivery and timing-only source adoption have implementation evidence under ADRs 0112–0115.
 
@@ -1109,5 +1109,7 @@ Accepted [ADR 0182](adr/0182-native-event-information-publication.md) authorizes
 ## Whole-series lifecycle with a published cutoff
 
 - [x] Merge the approved pure finite-suffix projection under ADR 0188 and the draft durable investigation under ADR 0189.
-- [ ] Obtain maintainer agreement on the bounded v9 proof, version/reply authority and restoration contract in ADR 0189.
-- [ ] Prove exact v7/v8 restoration round trips and shared reader budgets, then complete the approved runtime and recovery batch.
+- [x] Obtain maintainer agreement on the bounded v9 proof, version/reply authority and restoration contract in ADR 0189.
+- [x] Implement the finite-cutoff lifecycle, prove exact v7/v8 restoration after pruning and validate two-host process-loss recovery. See the [implementation and validation record](published-range-controls.md#adr-0189-validation).
+- [x] Verify the connected Flutter scheduling journey against the freshly built example.
+- [ ] Verify full exact-head hosted inspection and runtime results before readiness.

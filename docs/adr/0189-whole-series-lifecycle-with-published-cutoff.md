@@ -1,6 +1,6 @@
 # ADR 0189: Whole-series lifecycle with a published cutoff
 
-Status: **Draft investigation; not approved for implementation.**
+Status: **Accepted by explicit maintainer agreement on 2026-11-28. The scoped implementation and validation are recorded in the [published range controls guide](../published-range-controls.md#whole-series-lifecycle-with-a-finite-cutoff).**
 
 ## Problem
 
@@ -264,9 +264,10 @@ original range-CANCEL row as well.
 
 ## Review and validation before implementation
 
-Obtain explicit maintainer agreement on the proposed checkpoint, transition,
-version and reply rules. Prove both closed-reader bridges and the shared
-reader budget before enabling the new public paths. Test normal and exceptional anchors, individually
+The maintainer approved the bounded checkpoint, transition, version and reply
+rules in [draft PR #211's proposal](https://github.com/jimmyspets/serverpod_calendar/pull/211).
+Prove both closed-reader bridges and the shared reader budget before enabling
+the new public paths. Test normal and exceptional anchors, individually
 cancelled originals, source EXDATEs, COUNT/UNTIL and exhaustion, DATE/UTC/exact
 zones and DST, stale/private native edits, malformed proof, caps and overflow,
 pruning, retained retries, two-host races and worker loss around each commit.

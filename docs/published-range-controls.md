@@ -16,7 +16,48 @@ Cancellation sends one minimal CANCEL bundle: the primary THISANDFUTURE target a
 
 Restoration names the exact active cutoff and sends one complete REQUEST, including an explicit active range projection and the needed later components. It clears the whole outgoing cutoff, preserves individual cancellations through module-owned publication EXDATE masks, and preserves ordinary source exclusions. It does not claim to delete a remote exception record or infer that a newer master alone removed range state. Added publication identities remain bounded and are re-projected on later explicit publications without pinning native inheritance.
 
-Only one outgoing cutoff may be active. Restore it before a new complete REQUEST, individual control, whole-series cancel/reopen or another range cancellation. Retained exact retries remain available and reauthorize without queueing or advancing generation. Ordinary native edits remain private. After restoration, existing publication/lifecycle operations and subsequent eligible cycles continue; retained identity/profile/orphan and representability guards still apply.
+Only one outgoing cutoff may be active. Restore it before Save and notify, a new individual control or another range cancellation. Retained exact retries reauthorize without queueing or advancing generation. Ordinary native edits remain private. After restoration, existing publication/lifecycle operations and subsequent eligible cycles continue under the same identity, orphan and representability guards.
+
+## Whole-series lifecycle with a finite cutoff
+
+[ADR 0189](adr/0189-whole-series-lifecycle-with-published-cutoff.md) adds
+explicit whole-series cancellation, reopening and subsequent restoration
+for a provable finite published suffix. Cancel and notify uses the retained
+published source. Reopen published series and notify keeps the suffix
+suppressed and retains individual cancellations. The coordinator validates
+the finite projection before cancellation and again before reopening.
+Earlier deliveries must be terminal before each new transition.
+
+The private v9 checkpoint freezes one validated active v7 or v8 cancellation
+record. It reconstructs the outgoing message and generated mask identities
+under a shared work budget. Source EXDATEs, individual cancellations and
+generated suffix masks retain their distinct meanings. Restoring the suffix
+clears the v9 state and returns to a validated closed v7 or v8 checkpoint.
+Only a matching publication-owned native cutoff is cleared. The example
+offers the existing whole-series actions and separate suffix restoration
+through the generated client. No SQL migration or provider integration is
+required.
+
+### ADR 0189 validation
+
+Workspace `dart analyze --fatal-infos` passed. The complete core and
+iCalendar suites passed 540 and 642 cases, respectively, on each of VM and
+Chrome. The calendar module passed 820 VM unit cases and 31 Chrome unit cases.
+The focused unit tests cover version and work limits, overlap between a suffix
+and an individual cancellation, and rejection of source EXDATEs as individual
+cancellation proof. Full hosted validation is tracked in the [roadmap](roadmap.md).
+
+The focused scheduling and recurring-reply SDK cases passed against synthetic
+storage after correcting the restored reply target to use the actual outgoing
+message. They verified v7 and v8 restoration after predecessor pruning, exact
+receipt retries, corruption rejection and independent individual masks.
+`dart run tool/scheduling_work_smoke.dart --cutoff-lifecycle` passed on two
+independent processes with actual process loss before and after whole cancel,
+reopen and range restoration commits. All nine Flutter widget tests passed.
+The freshly built example passed
+`dart run tool/host_smoke.dart --flutter --scheduling --browser-only`.
+The connected Flutter journey completed whole cancellation, masked reopening
+and separate suffix restoration through the generated client.
 
 ## Native state versus what attendees were sent
 
@@ -44,4 +85,7 @@ Workers revalidate current generation, parent lifecycle, recipient/organizer aut
 
 ## Remaining boundaries
 
-Arbitrary single-only anchors, active-cutoff whole-series lifecycle, overlapping/partial suffix controls, bundled recipient reconciliation, RANGE replies, wider selected scheduling methods, organizer adoption/recipient changes and external-client interoperability remain separate roadmap work. Existing pure codecs do not establish those runtime capabilities.
+Arbitrary single-only anchors, unbounded whole-series lifecycle with an active
+cutoff, overlapping/partial suffix controls, bundled recipient reconciliation,
+RANGE replies, wider selected scheduling methods, organizer adoption/recipient
+changes and external-client interoperability remain separate roadmap work.

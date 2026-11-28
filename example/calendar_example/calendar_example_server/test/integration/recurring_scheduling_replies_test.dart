@@ -944,6 +944,68 @@ void main() {
       },
     );
 
+    test('cutoff reopening classifies suppressed reply originals from retained membership', () async {
+      await seed();
+      final prior = await reply(original: timing(4));
+      await terminal();
+      await service.cancelFutureAndNotify(
+        CalendarSchedulingFutureCancelRequest(
+          eventId: id,
+          expectedRevision: await revision(),
+          commandId: const Uuid().v4obj(),
+          originalStart: timing(4),
+        ),
+      );
+      await terminal();
+      await capture(
+        await service.cancelAndNotify(
+          CalendarSchedulingCancelRequest(
+            eventId: id,
+            expectedRevision: await revision(),
+            commandId: const Uuid().v4obj(),
+          ),
+        ),
+      );
+      await terminal();
+      await capture(
+        await service.reopenPublishedAndNotify(
+          CalendarSchedulingReopenRequest(
+            eventId: id,
+            expectedRevision: await revision(),
+            commandId: const Uuid().v4obj(),
+          ),
+        ),
+      );
+      final masked = await service.schedulingInstanceResponses(id, timing(4));
+      expect(masked.publishedCancelled, isTrue);
+      expect(masked.responses.single.isCurrent, isFalse);
+      expect((await source(prior.sourceId)).inactiveAt, isNotNull);
+      final outside = await service.schedulingInstanceResponses(id, timing(6));
+      expect(outside.publishedSequence, isNull);
+      expect(
+        (await reply(original: timing(3))).outcome,
+        CalendarSchedulingReplyOutcome.applied,
+      );
+      await terminal();
+      await capture(
+        await service.restoreFutureAndNotify(
+          CalendarSchedulingFutureRestoreRequest(
+            eventId: id,
+            expectedRevision: await revision(),
+            commandId: const Uuid().v4obj(),
+            originalStart: timing(4),
+          ),
+        ),
+      );
+      final restored = await service.schedulingInstanceResponses(id, timing(4));
+      expect(restored.publishedCancelled, isFalse);
+      expect(
+        restored.publishedSequence,
+        greaterThan(masked.publishedSequence!),
+      );
+      expect(restored.responses.single.isCurrent, isFalse);
+    });
+
     test('instance stable keys cannot cross originals or overwrite a newer checkpoint', () async {
       await seed();
       final first = await reply(

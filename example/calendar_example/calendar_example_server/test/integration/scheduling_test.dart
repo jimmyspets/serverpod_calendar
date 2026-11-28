@@ -5017,6 +5017,138 @@ void main() {
         },
       );
     }
+    for (final exceptional in [false, true]) {
+      test(
+        'published cutoff whole lifecycle restores the ${exceptional ? 'v8' : 'v7'} basis',
+        () async {
+          final content = masterContent();
+          final id = await masterEvent(content);
+          if (exceptional) {
+            await moveOccurrence(id, CalendarEventTimeKind.date, 28);
+          }
+          await notifyCurrent(id, content);
+          await CalendarModule.runSchedulingMaintenance(session);
+          if (exceptional) {
+            await service.cancelOccurrenceAndNotify(
+              await instanceCommand(id, originalDay(30)),
+            );
+            await CalendarModule.runSchedulingMaintenance(session);
+          }
+          final point = originalDay(28);
+          final cutoff = await service.cancelFutureAndNotify(
+            CalendarSchedulingFutureCancelRequest(
+              eventId: id,
+              expectedRevision: (await service.schedulingStatus(id))
+                  .eventRevision,
+              commandId: Uuid().v4obj(),
+              originalStart: point,
+            ),
+          );
+          final cancel = cancelRequest(id, revision: cutoff.eventRevision);
+          await expectLater(
+            service.cancelAndNotify(cancel),
+            failure(CalendarFailureCode.dependencyConflict),
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          final whole = await service.cancelAndNotify(cancel);
+          final wholeRow = await publication(whole.publicationId);
+          expect((jsonDecode(wholeRow.snapshot) as Map)['version'], 9);
+          expect((await messageFor(whole)).events.single.isOverride, isFalse);
+          final reopen = await reopenCommand(id);
+          await expectLater(
+            service.reopenPublishedAndNotify(reopen),
+            failure(CalendarFailureCode.dependencyConflict),
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          final reopened = await service.reopenPublishedAndNotify(reopen);
+          final wire = await messageFor(reopened);
+          expect(wire.events.single.sequence, greaterThan(wholeRow.sequence));
+          expect(
+            props(wire.events.single, 'EXDATE').map((value) => value.value),
+            [
+              '20260328',
+              '20260329',
+              '20260330',
+            ],
+          );
+          expect(
+            (await service.schedulingStatus(id)).hasPublishedRangeCancellation,
+            isTrue,
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          expect(
+            (await service.schedulingStatus(id)).deliveries.single.state,
+            CalendarSchedulingDeliveryState.accepted,
+          );
+          final reopenedRow = await publication(reopened.publicationId);
+          final validSnapshot = reopenedRow.snapshot;
+          final corrupt = jsonDecode(validSnapshot) as Map<String, dynamic>;
+          corrupt['suffix'] = [];
+          reopenedRow.snapshot = jsonEncode(corrupt);
+          await CalendarSchedulingPublicationRecord.db.updateRow(
+            session,
+            reopenedRow,
+          );
+          await expectLater(
+            service.schedulingStatus(id),
+            failure(CalendarFailureCode.unavailable),
+          );
+          reopenedRow.snapshot = validSnapshot;
+          await CalendarSchedulingPublicationRecord.db.updateRow(
+            session,
+            reopenedRow,
+          );
+          final cutoffRow = await publication(cutoff.publicationId);
+          cutoffRow.completedAt = DateTime.utc(2000);
+          await CalendarSchedulingPublicationRecord.db.updateRow(
+            session,
+            cutoffRow,
+          );
+          await CalendarModule.runSchedulingMaintenance(session);
+          expect(
+            await CalendarSchedulingPublicationRecord.db.findById(
+              session,
+              cutoff.publicationId,
+            ),
+            isNull,
+          );
+          final restored = await service.restoreFutureAndNotify(
+            CalendarSchedulingFutureRestoreRequest(
+              eventId: id,
+              expectedRevision: reopened.eventRevision,
+              commandId: Uuid().v4obj(),
+              originalStart: point,
+            ),
+          );
+          final restoredRow = await publication(restored.publicationId);
+          expect(
+            (jsonDecode(restoredRow.snapshot) as Map)['version'],
+            exceptional ? 8 : 7,
+          );
+          expect(
+            restoredRow.sequence,
+            greaterThan(wire.events.single.sequence!),
+          );
+          expect((await eventData(id)).timingOverrides?.cancelledFrom, isNull);
+          if (exceptional) {
+            expect(
+              (await service.schedulingStatus(id)).hasOccurrenceCancellations,
+              true,
+            );
+            expect(restoredRow.payload, contains('EXDATE;VALUE=DATE:20260330'));
+          }
+          expect(
+            (await service.cancelAndNotify(cancel)).publicationId,
+            whole.publicationId,
+          );
+          expect(
+            (await service.reopenPublishedAndNotify(reopen)).publicationId,
+            reopened.publicationId,
+          );
+        },
+      );
+    }
+
     test('durable exceptional range rejects a source-only exclusion', () async {
       final point = masterTiming(day: 28).copyWith(duration: null);
       final base = masterContent().copyWith(

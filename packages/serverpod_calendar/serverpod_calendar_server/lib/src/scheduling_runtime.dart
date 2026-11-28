@@ -22,6 +22,25 @@ final class CalendarSchedulingAuthority {
   final List<CalendarSchedulingRoute> routes;
 }
 
+/// Generated publication-only suffix masks, independent of individual masks.
+final class CalendarSchedulingSuffixMask {
+  CalendarSchedulingSuffixMask(
+    CalendarEventTiming cutoff,
+    Iterable<CalendarEventTiming> exclusions,
+  ) : _cutoff = cutoff.toJson(),
+      _exclusions = List.unmodifiable(
+        exclusions.map((point) => point.toJson()),
+      );
+
+  final Map<String, dynamic> _cutoff;
+  final List<Map<String, dynamic>> _exclusions;
+
+  CalendarEventTiming get cutoff => CalendarEventTiming.fromJson(_cutoff);
+  List<CalendarEventTiming> get exclusions => List.unmodifiable(
+    _exclusions.map(CalendarEventTiming.fromJson),
+  );
+}
+
 /// Dedicated execution context; background work never fabricates a login.
 final class CalendarSchedulingPolicyContext {
   CalendarSchedulingPolicyContext({
@@ -39,6 +58,7 @@ final class CalendarSchedulingPolicyContext {
     this.recipient,
     this.publishedRequest,
     this.exactNativeMatch,
+    this.suffixMask,
     Iterable<CalendarEventTiming> publicationExclusions = const [],
   }) : publicationExclusions = List.unmodifiable(publicationExclusions);
   final CalendarSchedulingBindingPurpose purpose;
@@ -71,6 +91,7 @@ final class CalendarSchedulingPolicyContext {
   /// Module-created exclusions in the last complete published REQUEST. These
   /// are publication state, never canonical recurrence exclusions or authority.
   final List<CalendarEventTiming> publicationExclusions;
+  final CalendarSchedulingSuffixMask? suffixMask;
 }
 
 abstract interface class CalendarSchedulingHost {

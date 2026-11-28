@@ -31,8 +31,9 @@ List<EventSchedulingOriginal> _schedulingActiveOriginals(
 IcalendarSchedulingMessage _schedulingRestorationSource(
   _SchedulingCheckpoint basis,
   Iterable<CalendarEventTiming> points,
-  int maxBytes,
-) {
+  int maxBytes, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
   final markers = {
     for (final o in basis.projectionOriginals) _schedulingOriginalKey(o): o,
   };
@@ -46,9 +47,11 @@ IcalendarSchedulingMessage _schedulingRestorationSource(
         basis.outgoing,
         maxBytes,
         projectionOriginals: markers.values.toList(),
+        sharedWorkBudget: sharedWorkBudget,
       ),
     ),
     syntaxLimits: IcalendarSyntaxLimits(maxBytes: maxBytes),
+    sharedWorkBudget: sharedWorkBudget,
   );
 }
 
@@ -59,9 +62,16 @@ String _schedulingRestorationPayload(
   DateTime stamp,
   int maxBytes, {
   IcalendarSchedulingMessage? projected,
+  RecurrenceWorkBudget? sharedWorkBudget,
 }) {
   final source =
-      projected ?? _schedulingRestorationSource(basis, [point], maxBytes);
+      projected ??
+      _schedulingRestorationSource(
+        basis,
+        [point],
+        maxBytes,
+        sharedWorkBudget: sharedWorkBudget,
+      );
   final key = _schedulingWirePointKey(point);
   final event = source.events.singleWhere(
     (e) => _schedulingComponent(e).key == key && !e.isThisAndFuture,
@@ -89,6 +99,7 @@ String _schedulingRestorationPayload(
       validateIcalendarSchedulingMessage(
         document,
         syntaxLimits: IcalendarSyntaxLimits(maxBytes: maxBytes),
+        sharedWorkBudget: sharedWorkBudget,
       ),
       syntaxLimits: IcalendarSyntaxLimits(maxBytes: maxBytes),
     ),
@@ -127,15 +138,22 @@ String _schedulingWriteV5({
 
 _SchedulingCheckpoint _schedulingReadV5(
   CalendarSchedulingPublicationRecord p,
-  Map<String, dynamic> v,
-) {
+  Map<String, dynamic> v, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
   final kind = CalendarSchedulingPublicationKind.values.byName(
     v['kind'] as String,
   );
   final basisRecord = _schedulingBasisRecord(p, v['basis']);
   if (basisRecord.method != 'REQUEST') throw const FormatException();
-  final basis = _schedulingReadCheckpoint(basisRecord);
-  final canonical = _schedulingReadSnapshot(v['canonical']);
+  final basis = _schedulingReadCheckpoint(
+    basisRecord,
+    sharedWorkBudget: sharedWorkBudget,
+  );
+  final canonical = _schedulingReadSnapshot(
+    v['canonical'],
+    sharedWorkBudget: sharedWorkBudget,
+  );
   if (canonical.eventId != basis.canonical.eventId ||
       canonical.calendarId != basis.canonical.calendarId ||
       canonical.protocolUid != p.protocolUid) {
@@ -158,7 +176,8 @@ _SchedulingCheckpoint _schedulingReadV5(
       union = basis.originals
           .map((o) => eventComponentKey(o.originalStart, false))
           .toSet();
-  final work = RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
+  final work =
+      sharedWorkBudget ?? RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
   for (final state in states) {
     final key = eventComponentKey(state.point, false);
     if (!keys.add(key)) throw const FormatException();
@@ -174,6 +193,7 @@ _SchedulingCheckpoint _schedulingReadV5(
     basis,
     states.where((s) => s.active != null).map((s) => s.point),
     _schedulingCheckpointBytes,
+    sharedWorkBudget: sharedWorkBudget,
   );
   final old = {for (final value in basis.ledger) value.key: value};
   final active = <String, _SchedulingComponentVersion>{};
@@ -190,9 +210,13 @@ _SchedulingCheckpoint _schedulingReadV5(
         a.stamp,
         _schedulingCheckpointBytes,
         projected: projected,
+        sharedWorkBudget: sharedWorkBudget,
       );
       final actual = _schedulingComponent(
-        parseIcalendarSchedulingMessage(utf8.encode(payload)).events.single,
+        parseIcalendarSchedulingMessage(
+          utf8.encode(payload),
+          sharedWorkBudget: sharedWorkBudget,
+        ).events.single,
       );
       if (jsonEncode(actual.toJson()) != jsonEncode(a.toJson()) ||
           a.sequence < floor.sequence ||
@@ -215,9 +239,13 @@ _SchedulingCheckpoint _schedulingReadV5(
         state.version.sequence,
         state.version.stamp,
         _schedulingCheckpointBytes,
+        sharedWorkBudget: sharedWorkBudget,
       );
       final actual = _schedulingComponent(
-        parseIcalendarSchedulingMessage(utf8.encode(payload)).events.single,
+        parseIcalendarSchedulingMessage(
+          utf8.encode(payload),
+          sharedWorkBudget: sharedWorkBudget,
+        ).events.single,
       );
       if (jsonEncode(actual.toJson()) != jsonEncode(state.version.toJson()) ||
           state.version.sequence <= max(floor.sequence, a?.sequence ?? -1) ||
@@ -248,7 +276,10 @@ _SchedulingCheckpoint _schedulingReadV5(
     final original = EventSchedulingOriginal(state.point, false);
     originals[_schedulingOriginalKey(original)] = original;
   }
-  final message = parseIcalendarSchedulingMessage(utf8.encode(p.payload));
+  final message = parseIcalendarSchedulingMessage(
+    utf8.encode(p.payload),
+    sharedWorkBudget: sharedWorkBudget,
+  );
   final target = v['target'] == null
       ? null
       : CalendarEventTiming.fromJson(v['target'] as Map<String, dynamic>);
@@ -277,6 +308,7 @@ _SchedulingCheckpoint _schedulingReadV5(
             state.version.stamp,
             _schedulingCheckpointBytes,
             projected: projected,
+            sharedWorkBudget: sharedWorkBudget,
           )
         : _schedulingInstancePayload(
             basis,
@@ -284,6 +316,7 @@ _SchedulingCheckpoint _schedulingReadV5(
             state.version.sequence,
             state.version.stamp,
             _schedulingCheckpointBytes,
+            sharedWorkBudget: sharedWorkBudget,
           );
     final nativeCancelled =
         canonical.timingOverrides?.singles.any(
@@ -300,7 +333,12 @@ _SchedulingCheckpoint _schedulingReadV5(
         p.stamp != state.version.stamp ||
         p.method != (restoring ? 'REQUEST' : 'CANCEL') ||
         state.version.sequence <= floor.sequence ||
-        nativeMatch != eventSchedulingMember(canonical.content, target) ||
+        nativeMatch !=
+            eventSchedulingMember(
+              canonical.content,
+              target,
+              sharedWorkBudget: sharedWorkBudget,
+            ) ||
         restoring &&
             (nativeCancelled ||
                 canonical.content.status == CalendarEventStatus.cancelled) ||
@@ -333,7 +371,10 @@ _SchedulingCheckpoint _schedulingReadV5(
       throw const FormatException();
     }
     final record = _schedulingBasisRecord(p, v['masterMessage']);
-    final full = _schedulingReadCheckpoint(record);
+    final full = _schedulingReadCheckpoint(
+      record,
+      sharedWorkBudget: sharedWorkBudget,
+    );
     if (p.method != 'CANCEL' ||
         record.method != 'CANCEL' ||
         p.payload != record.payload ||
