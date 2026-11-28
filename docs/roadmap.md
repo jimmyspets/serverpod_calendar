@@ -428,3 +428,8 @@ The maintainer explicitly approved [ADR 0123](adr/0123-explicit-native-organizer
 ## Recurring organizer master increment
 
 The maintainer approved [ADR 0124](adr/0124-recurring-organizer-masters.md). [The implementation](native-organizer-scheduling.md#recurring-masters) adds recurring-master REQUEST and whole-series CANCEL using existing patterns and delivery storage. Native local exceptions remain editable and are preserved on cancellation; new REQUEST publication rejects stored occurrence components until its separate profile. Bound mode conversions remain blocked while local edits within recurring mode are allowed. See validation for actual results. Complete occurrence/instance/range scheduling, participant changes, inbound reconciliation and mail remain first-release work.
+
+
+## Next occurrence scheduling design question
+
+[ADR 0125](adr/0125-scheduling-occurrence-field-projection.md) proposes materializing required inherited SUMMARY/organizer/attendee values only in outgoing occurrence REQUESTs. Native inheritance and ordinary canonical export would retain their current behavior. Review that mapping before designing occurrence versioning, remote reset/cancellation coordination and physical message storage. Those mechanics remain unapproved and all first-release occurrence scheduling requirements stay open.
