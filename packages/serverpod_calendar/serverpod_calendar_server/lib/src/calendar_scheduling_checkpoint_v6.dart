@@ -24,13 +24,18 @@ CalendarSchedulingPublicationRecord _schedulingPrivateStateRecord(
 }
 
 IcalendarSchedulingMessage _schedulingUnmaskedSource(
-  _SchedulingCheckpoint state,
-) {
-  final basis = _schedulingReadCheckpoint(state.basisRecord!);
+  _SchedulingCheckpoint state, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
+  final basis = _schedulingReadCheckpoint(
+    state.basisRecord!,
+    sharedWorkBudget: sharedWorkBudget,
+  );
   return _schedulingRestorationSource(
     basis,
     state.individuals.where((s) => s.active != null).map((s) => s.point),
     _schedulingCheckpointBytes,
+    sharedWorkBudget: sharedWorkBudget,
   );
 }
 
@@ -38,12 +43,16 @@ String _schedulingMaskedPayload(
   _SchedulingCheckpoint state,
   List<_SchedulingComponentVersion> ledger,
   List<CalendarEventTiming> masks,
-  int maxBytes,
-) {
+  int maxBytes, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
   if (masks.length > 64 || ledger.length > 65) {
     throw _failure(CalendarFailureCode.limitExceeded);
   }
-  final source = _schedulingUnmaskedSource(state);
+  final source = _schedulingUnmaskedSource(
+    state,
+    sharedWorkBudget: sharedWorkBudget,
+  );
   final versions = {for (final v in ledger) v.key: v};
   final hidden = masks.map(_schedulingWirePointKey).toSet();
   if (hidden.length != masks.length) throw const FormatException();
@@ -84,6 +93,7 @@ String _schedulingMaskedPayload(
       validateIcalendarSchedulingMessage(
         document,
         syntaxLimits: IcalendarSyntaxLimits(maxBytes: maxBytes),
+        sharedWorkBudget: sharedWorkBudget,
       ),
       syntaxLimits: IcalendarSyntaxLimits(maxBytes: maxBytes),
     ),
@@ -92,12 +102,17 @@ String _schedulingMaskedPayload(
 
 CalendarEventPolicySnapshot _schedulingUnmaskedOutgoing(
   _SchedulingCheckpoint state,
-  List<_SchedulingComponentVersion> ledger,
-) {
-  final basis = _schedulingReadCheckpoint(state.basisRecord!);
+  List<_SchedulingComponentVersion> ledger, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
+  final basis = _schedulingReadCheckpoint(
+    state.basisRecord!,
+    sharedWorkBudget: sharedWorkBudget,
+  );
   final source = _schedulingProjectionSource(
     basis.outgoing,
     state.projectionOriginals,
+    sharedWorkBudget: sharedWorkBudget,
   );
   final versions = {for (final v in ledger) v.key: v};
   final master = versions['master']!;
@@ -161,14 +176,21 @@ String _schedulingWriteV6({
 
 _SchedulingCheckpoint _schedulingReadV6(
   CalendarSchedulingPublicationRecord p,
-  Map<String, dynamic> v,
-) {
+  Map<String, dynamic> v, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
   final kind = CalendarSchedulingPublicationKind.values.byName(
     v['kind'] as String,
   );
   final proofRecord = _schedulingPrivateStateRecord(p, v['state']);
-  final state = _schedulingReadCheckpoint(proofRecord);
-  final canonical = _schedulingReadSnapshot(v['canonical']);
+  final state = _schedulingReadCheckpoint(
+    proofRecord,
+    sharedWorkBudget: sharedWorkBudget,
+  );
+  final canonical = _schedulingReadSnapshot(
+    v['canonical'],
+    sharedWorkBudget: sharedWorkBudget,
+  );
   if (state.individuals.isEmpty ||
       state.basisRecord == null ||
       canonical.eventId != state.canonical.eventId ||
@@ -228,6 +250,7 @@ _SchedulingCheckpoint _schedulingReadV6(
         ledger,
         masks,
         _schedulingCheckpointBytes,
+        sharedWorkBudget: sharedWorkBudget,
       )) {
     throw const FormatException();
   }
@@ -235,10 +258,14 @@ _SchedulingCheckpoint _schedulingReadV6(
       ? null
       : CalendarEventTiming.fromJson(v['target'] as Map<String, dynamic>);
   final nativeMatch = v['nativeMatch'] as bool?;
-  final message = parseIcalendarSchedulingMessage(utf8.encode(p.payload));
+  final message = parseIcalendarSchedulingMessage(
+    utf8.encode(p.payload),
+    sharedWorkBudget: sharedWorkBudget,
+  );
   CalendarEventPolicySnapshot outgoing = _schedulingUnmaskedOutgoing(
     state,
     ledger,
+    sharedWorkBudget: sharedWorkBudget,
   );
   List<_SchedulingComponentVersion> components;
   if (kind == CalendarSchedulingPublicationKind.seriesReopen ||
@@ -264,7 +291,12 @@ _SchedulingCheckpoint _schedulingReadV6(
       if (maskKeys.contains(key) ||
           jsonEncode(restored.version.toJson()) !=
               jsonEncode(actual[key]!.toJson()) ||
-          nativeMatch != eventSchedulingMember(canonical.content, point) ||
+          nativeMatch !=
+              eventSchedulingMember(
+                canonical.content,
+                point,
+                sharedWorkBudget: sharedWorkBudget,
+              ) ||
           (canonical.timingOverrides?.singles.any(
                 (s) =>
                     s.cancelled &&
@@ -295,7 +327,10 @@ _SchedulingCheckpoint _schedulingReadV6(
     components = [_schedulingComponent(message.events.single)];
   } else if (kind == CalendarSchedulingPublicationKind.seriesCancel) {
     final masterRecord = _schedulingBasisRecord(p, v['masterMessage']);
-    final master = _schedulingReadCheckpoint(masterRecord);
+    final master = _schedulingReadCheckpoint(
+      masterRecord,
+      sharedWorkBudget: sharedWorkBudget,
+    );
     if (target != null ||
         nativeMatch != null ||
         p.method != 'CANCEL' ||

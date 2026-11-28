@@ -94,16 +94,24 @@ String _schedulingWriteV7(
   );
 }
 
-IcalendarSyntaxDocument _schedulingRangeSource(_SchedulingCheckpoint value) {
+IcalendarSyntaxDocument _schedulingRangeSource(
+  _SchedulingCheckpoint value, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
   final source = value.individuals.isEmpty
       ? value.outgoing
-      : _schedulingUnmaskedOutgoing(value, value.ledger);
+      : _schedulingUnmaskedOutgoing(
+          value,
+          value.ledger,
+          sharedWorkBudget: sharedWorkBudget,
+        );
   return parseIcalendarSyntax(
     utf8.encode(
       _schedulingPayload(
         source,
         _schedulingCheckpointBytes,
         projectionOriginals: value.projectionOriginals,
+        sharedWorkBudget: sharedWorkBudget,
       ),
     ),
   );
@@ -192,11 +200,16 @@ CalendarSchedulingPublicationRecord _schedulingRangeRestored(
   DateTime stamp,
   int maxBytes, {
   RecurrenceWorkBudget? sharedWorkBudget,
+  RecurrenceWorkBudget? sharedCheckpointWorkBudget,
   ExceptionalRangeProof? exceptionalProof,
 }) {
   final source = previous.individuals.isEmpty
       ? previous.outgoing
-      : _schedulingUnmaskedOutgoing(previous, previous.ledger);
+      : _schedulingUnmaskedOutgoing(
+          previous,
+          previous.ledger,
+          sharedWorkBudget: sharedCheckpointWorkBudget,
+        );
   final List<EventSchedulingOriginal> markers;
   if (exceptionalProof == null) {
     markers = eventSchedulingRangeRestoration(
@@ -243,7 +256,11 @@ CalendarSchedulingPublicationRecord _schedulingRangeRestored(
     }
     markers = List.unmodifiable(all.values);
   }
-  final outgoing = _schedulingProjectionSource(source, markers);
+  final outgoing = _schedulingProjectionSource(
+    source,
+    markers,
+    sharedWorkBudget: sharedCheckpointWorkBudget,
+  );
   final raw = parseIcalendarSchedulingMessage(
     utf8.encode(
       _schedulingPayload(
@@ -341,12 +358,20 @@ CalendarSchedulingPublicationRecord _schedulingRangeRestored(
   // Expand the fixed low-version source basis with the new projection marker.
   // The independent individual facts retain their original actual versions;
   // the current complete ledger is stored separately at its newer versions.
-  final oldBasis = _schedulingReadCheckpoint(previous.basisRecord!);
-  final basisOutgoing = _schedulingProjectionSource(oldBasis.outgoing, markers);
+  final oldBasis = _schedulingReadCheckpoint(
+    previous.basisRecord!,
+    sharedWorkBudget: sharedCheckpointWorkBudget,
+  );
+  final basisOutgoing = _schedulingProjectionSource(
+    oldBasis.outgoing,
+    markers,
+    sharedWorkBudget: sharedCheckpointWorkBudget,
+  );
   final basisPayload = _schedulingPayload(
     basisOutgoing,
     maxBytes,
     projectionOriginals: markers,
+    sharedWorkBudget: sharedCheckpointWorkBudget,
   );
   final basisMessage = parseIcalendarSchedulingMessage(
     utf8.encode(basisPayload),
@@ -376,7 +401,10 @@ CalendarSchedulingPublicationRecord _schedulingRangeRestored(
   final rebuilt = proof.copyWith(
     snapshot: _schedulingBound(jsonEncode(proofFacts)),
   );
-  final state = _schedulingReadCheckpoint(rebuilt);
+  final state = _schedulingReadCheckpoint(
+    rebuilt,
+    sharedWorkBudget: sharedCheckpointWorkBudget,
+  );
   final masks = state.cancelled.map((s) => s.point).toList()
     ..sort(
       (a, b) =>
@@ -391,7 +419,13 @@ CalendarSchedulingPublicationRecord _schedulingRangeRestored(
       else
         v,
   ];
-  final payload = _schedulingMaskedPayload(state, actual, masks, maxBytes);
+  final payload = _schedulingMaskedPayload(
+    state,
+    actual,
+    masks,
+    maxBytes,
+    sharedWorkBudget: sharedCheckpointWorkBudget,
+  );
   return last.copyWith(
     method: 'REQUEST',
     payload: payload,
@@ -411,7 +445,10 @@ CalendarSchedulingPublicationRecord _schedulingRangeRestored(
       CalendarSchedulingPublicationKind.seriesReopen,
       null,
       _schedulingComponents(
-        parseIcalendarSchedulingMessage(utf8.encode(payload)),
+        parseIcalendarSchedulingMessage(
+          utf8.encode(payload),
+          sharedWorkBudget: sharedCheckpointWorkBudget,
+        ),
       ),
       version: 6,
     ),
@@ -456,15 +493,25 @@ _SchedulingCheckpoint _schedulingReadV7(
   Map<String, dynamic> v, {
   ExceptionalRangeProof? exceptionalProof,
   Map<String, dynamic>? exceptionalFrozen,
+  RecurrenceWorkBudget? sharedWorkBudget,
 }) {
   final control = _SchedulingRangeControl.read(v['range']);
   final kind = CalendarSchedulingPublicationKind.values.byName(
     v['kind'] as String,
   );
   final currentRecord = _schedulingV7Current(p, v);
-  final current = _schedulingReadCheckpoint(currentRecord);
-  final canonical = _schedulingReadSnapshot(v['canonical']);
-  final comparison = _schedulingReadSnapshot(v['comparison']);
+  final current = _schedulingReadCheckpoint(
+    currentRecord,
+    sharedWorkBudget: sharedWorkBudget,
+  );
+  final canonical = _schedulingReadSnapshot(
+    v['canonical'],
+    sharedWorkBudget: sharedWorkBudget,
+  );
+  final comparison = _schedulingReadSnapshot(
+    v['comparison'],
+    sharedWorkBudget: sharedWorkBudget,
+  );
   final rangeKind =
       kind == CalendarSchedulingPublicationKind.rangeCancel ||
       kind == CalendarSchedulingPublicationKind.rangeRestore;
@@ -505,6 +552,7 @@ _SchedulingCheckpoint _schedulingReadV7(
   }
   final message = parseIcalendarSchedulingMessage(
     utf8.encode(_schedulingBound(p.payload)),
+    sharedWorkBudget: sharedWorkBudget,
   );
   if (control.active) {
     for (final version in [
@@ -524,12 +572,16 @@ _SchedulingCheckpoint _schedulingReadV7(
         throw const FormatException();
       }
     }
-    final source = _schedulingRangeSource(current);
+    final source = _schedulingRangeSource(
+      current,
+      sharedWorkBudget: sharedWorkBudget,
+    );
     final expected = projectPublishedRangeCancellation(
       basis: source,
       originalStart: control.anchor,
       sequence: control.sequence,
       stamp: control.stamp,
+      sharedWorkBudget: sharedWorkBudget,
     );
     final payload = utf8.decode(
       serializeIcalendarSchedulingMessage(expected.message),
@@ -593,7 +645,11 @@ _SchedulingCheckpoint _schedulingReadV7(
     privateStateRecord: current.privateStateRecord,
     fullRequestPayload:
         current.fullRequestPayload ??
-        utf8.decode(serializeIcalendarSyntax(_schedulingRangeSource(current))),
+        utf8.decode(
+          serializeIcalendarSyntax(
+            _schedulingRangeSource(current, sharedWorkBudget: sharedWorkBudget),
+          ),
+        ),
     reopenFloor: current.reopenFloor,
     instanceVersionProfile: current.instanceVersionProfile,
     rangeControl: control,
@@ -605,13 +661,20 @@ _SchedulingCheckpoint _schedulingReadV7(
 
 /// Version 8 binds the exceptional candidate to the retained unmasked source,
 /// individual ledger and, after restoration, a self-contained frozen result.
-_SchedulingCheckpoint _schedulingReadV8(CalendarSchedulingPublicationRecord p) {
-  final envelope = ExceptionalRangeEnvelope.read(p.snapshot);
+_SchedulingCheckpoint _schedulingReadV8(
+  CalendarSchedulingPublicationRecord p, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
+  final envelope = ExceptionalRangeEnvelope.read(
+    p.snapshot,
+    sharedWorkBudget: sharedWorkBudget,
+  );
   final current = _schedulingReadV7(
     p,
     envelope.v7,
     exceptionalProof: envelope.proof,
     exceptionalFrozen: envelope.frozen,
+    sharedWorkBudget: sharedWorkBudget,
   );
   final range = current.rangeControl;
   if (range == null) throw const FormatException();
@@ -634,7 +697,10 @@ _SchedulingCheckpoint _schedulingReadV8(CalendarSchedulingPublicationRecord p) {
       sequence: value['sequence'] as int,
       stamp: DateTime.parse(value['stamp'] as String),
     );
-    frozen = _schedulingReadCheckpoint(record);
+    frozen = _schedulingReadCheckpoint(
+      record,
+      sharedWorkBudget: sharedWorkBudget,
+    );
     final master = frozen.ledger.singleWhere((value) => value.key == 'master');
     if (frozen.canonical.eventId != current.canonical.eventId ||
         frozen.canonical.calendarId != current.canonical.calendarId ||
@@ -648,7 +714,9 @@ _SchedulingCheckpoint _schedulingReadV8(CalendarSchedulingPublicationRecord p) {
     }
   }
   final source = utf8.decode(
-    serializeIcalendarSyntax(_schedulingRangeSource(frozen)),
+    serializeIcalendarSyntax(
+      _schedulingRangeSource(frozen, sharedWorkBudget: sharedWorkBudget),
+    ),
   );
   envelope.proof.requireBindings(
     basis: range.active ? source : envelope.proof.basis,
@@ -656,8 +724,14 @@ _SchedulingCheckpoint _schedulingReadV8(CalendarSchedulingPublicationRecord p) {
     masks: [for (final row in frozen.cancelled) row.point],
   );
   if (!range.active) {
-    envelope.proof.requireUnmaskedLineage(source);
-    final message = parseIcalendarSchedulingMessage(utf8.encode(frozenPayload));
+    envelope.proof.requireUnmaskedLineage(
+      source,
+      sharedWorkBudget: sharedWorkBudget,
+    );
+    final message = parseIcalendarSchedulingMessage(
+      utf8.encode(frozenPayload),
+      sharedWorkBudget: sharedWorkBudget,
+    );
     final versions = <String, (int, DateTime)>{};
     for (final event in message.events) {
       final component = _schedulingComponent(event);
@@ -683,7 +757,11 @@ _SchedulingCheckpoint _schedulingReadV8(CalendarSchedulingPublicationRecord p) {
       if (versions.containsKey(name)) throw const FormatException();
       versions[name] = (stored.sequence, stored.stamp);
     }
-    envelope.proof.requireCommittedRequest(frozenPayload, versions);
+    envelope.proof.requireCommittedRequest(
+      frozenPayload,
+      versions,
+      sharedWorkBudget: sharedWorkBudget,
+    );
   }
   return current;
 }

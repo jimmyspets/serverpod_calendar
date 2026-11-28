@@ -200,7 +200,10 @@ Accepted ADR 0135 adds selected-field native event/task URL, classification, cat
 
 ## Durable outgoing range controls
 
-[ADR 0172](adr/0172-durable-published-range-controls.md) and [the scoped range guide](published-range-controls.md) supersede earlier blanket outgoing-range rejection only for the approved faithful-anchor cancel/restore/cycle profile. Existing active-cutoff guards, arbitrary-anchor restrictions and remaining recipient/client boundaries still apply. Full validation is recorded separately.
+[ADR 0172](adr/0172-durable-published-range-controls.md) adds the faithful-anchor
+cancel/restore/cycle profile. [ADR 0189](adr/0189-whole-series-lifecycle-with-published-cutoff.md)
+extends it with explicit whole-series cancellation and reopening while a
+provable finite suffix remains cancelled. See [the scoped range guide](published-range-controls.md).
 
 
 ## Separate information-publication purpose

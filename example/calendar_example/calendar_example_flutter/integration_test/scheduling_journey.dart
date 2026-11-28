@@ -576,6 +576,26 @@ Future<void> runSchedulingJourney(WidgetTester tester, Client client) async {
       true,
     );
     await rangeTerminal();
+    if (cycle == 0) {
+      await _tap(tester, 'scheduling-cancel');
+      expect(find.byKey(const Key('scheduling-error')), findsNothing);
+      var status = await api.calendarEvent.schedulingStatus(rangeEvent.eventId);
+      expect(
+        status.publicationKind,
+        cal.CalendarSchedulingPublicationKind.seriesCancel,
+      );
+      expect(status.hasPublishedRangeCancellation, isTrue);
+      await rangeTerminal();
+      await _tap(tester, 'scheduling-reopen-published');
+      expect(find.byKey(const Key('scheduling-error')), findsNothing);
+      status = await api.calendarEvent.schedulingStatus(rangeEvent.eventId);
+      expect(
+        status.publicationKind,
+        cal.CalendarSchedulingPublicationKind.seriesReopen,
+      );
+      expect(status.hasPublishedRangeCancellation, isTrue);
+      await rangeTerminal();
+    }
     await _tap(tester, 'scheduling-restore-future');
     expect(find.byKey(const Key('scheduling-error')), findsNothing);
     expect(

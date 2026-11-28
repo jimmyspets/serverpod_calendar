@@ -1,6 +1,7 @@
 import 'package:serverpod_calendar_core/serverpod_calendar_core.dart';
 import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 
+import 'event_protocol_values.dart';
 import 'event_values.dart';
 import 'event_wire_output.dart';
 import 'event_wire_storage.dart';
@@ -10,12 +11,14 @@ import 'generated/protocol.dart';
 final class PublishedFiniteSuffixProjection {
   PublishedFiniteSuffixProjection._(
     this.candidate,
+    this._content,
     List<CalendarEventTiming> originals,
     Iterable<IcalendarSyntaxComponent> suppressed,
   ) : _originals = List.unmodifiable(originals.map((v) => v.toJson())),
       suppressedComponents = List.unmodifiable(suppressed);
 
   final IcalendarSyntaxDocument candidate;
+  final CalendarEventContent _content;
   final List<Map<String, dynamic>> _originals;
 
   /// Immutable source components omitted from the candidate.
@@ -135,24 +138,13 @@ PublishedFiniteSuffixProjection projectPublishedFiniteSuffix({
     v.start.minute,
     v.start.second,
   );
-  CalendarEventTiming point(Object value) => value is CalendarDate
-      ? CalendarEventTiming(
-          kind: CalendarEventTimeKind.date,
-          start: eventDate(value),
-        )
-      : CalendarEventTiming(
-          kind: (value as TimedValue).zoneId == null
-              ? CalendarEventTimeKind.utc
-              : CalendarEventTimeKind.zoned,
-          zoneId: value.zoneId,
-          start: eventCivil(value.civil),
-        );
   final master = message.events.singleWhere((e) => !e.isOverride);
   final omitted = message.events
       .where(
         (e) =>
             e.isOverride &&
-            !order(point(e.originalStart!)).isBefore(order(originalStart)),
+            !order(_finiteSuffixPoint(e.originalStart!))
+                .isBefore(order(originalStart)),
       )
       .map((e) => e.source)
       .toSet();
@@ -190,5 +182,121 @@ PublishedFiniteSuffixProjection projectPublishedFiniteSuffix({
     ]),
     sharedWorkBudget: work,
   );
-  return PublishedFiniteSuffixProjection._(candidate, originals, omitted);
+  return PublishedFiniteSuffixProjection._(
+    candidate,
+    content,
+    originals,
+    omitted,
+  );
+}
+
+CalendarEventTiming _finiteSuffixPoint(Object value) => value is CalendarDate
+    ? CalendarEventTiming(
+        kind: CalendarEventTimeKind.date,
+        start: eventDate(value),
+      )
+    : CalendarEventTiming(
+        kind: (value as TimedValue).zoneId == null
+            ? CalendarEventTimeKind.utc
+            : CalendarEventTimeKind.zoned,
+        zoneId: value.zoneId,
+        start: eventCivil(value.civil),
+      );
+
+/// Compose the exact finite reopening message from a validated unmasked basis.
+/// The caller must establish publication history and authenticate individual
+/// masks before invoking this projection.
+(IcalendarSchedulingMessage, PublishedFiniteSuffixProjection)
+composePublishedCutoffReopening({
+  required IcalendarSyntaxDocument basis,
+  required CalendarEventTiming cutoff,
+  required List<CalendarEventTiming> individualMasks,
+  required int sequenceFloor,
+  required DateTime stamp,
+  required int maxBytes,
+  required RecurrenceWorkBudget work,
+}) {
+  if (individualMasks.length > 64 ||
+      sequenceFloor < 0 ||
+      !stamp.isUtc ||
+      eventProtocolInstant(stamp) != stamp) {
+    throw ArgumentError('Invalid reopening proof');
+  }
+  final suffix = projectPublishedFiniteSuffix(
+    basis: basis,
+    originalStart: cutoff,
+    sharedWorkBudget: work,
+  );
+  final writer = EventComponentWriter();
+  final suffixKeys = suffix.exclusions
+      .map((p) => eventComponentKey(p, false))
+      .toSet();
+  final masks = <String, CalendarEventTiming>{};
+  for (final mask in individualMasks) {
+    final key = eventComponentKey(mask, false);
+    if (mask.end != null ||
+        mask.duration != null ||
+        masks.containsKey(key) ||
+        !eventSchedulingMember(suffix._content, mask, sharedWorkBudget: work)) {
+      throw ArgumentError('Invalid individual cancellation');
+    }
+    masks[key] = mask;
+  }
+  final root = suffix.candidate.components.single;
+  final events = validateIcalendarSchedulingMessage(
+    suffix.candidate,
+    sharedWorkBudget: work,
+  ).events;
+  final retained = [events.singleWhere((event) => !event.isOverride)];
+  for (final event in events.where((event) => event.isOverride)) {
+    final key = eventComponentKey(
+      _finiteSuffixPoint(event.originalStart!),
+      false,
+    );
+    if (!masks.containsKey(key)) {
+      retained.add(event);
+    } else if (event.isThisAndFuture) {
+      throw ArgumentError('Individual cancellation conflicts with a range');
+    }
+  }
+  if (sequenceFloor + retained.length > eventMaxSequence) {
+    throw const RecurrenceLimitException('schedulingSequence');
+  }
+  var sequence = sequenceFloor;
+  final outgoing = IcalendarSyntaxDocument([
+    IcalendarSyntaxComponent(root.name, [
+      ...root.entries.where(
+        (entry) =>
+            entry is! IcalendarSyntaxComponent ||
+            entry.canonicalName != 'VEVENT',
+      ),
+      for (final event in retained)
+        IcalendarSyntaxComponent(event.source.name, [
+          ...event.source.entries.where(
+            (entry) =>
+                entry is! IcalendarSyntaxProperty ||
+                !{'SEQUENCE', 'DTSTAMP'}.contains(entry.canonicalName),
+          ),
+          if (!event.isOverride)
+            for (final mask in masks.entries)
+              if (!suffixKeys.contains(mask.key))
+                writer.time('EXDATE', mask.value),
+          IcalendarSyntaxProperty('SEQUENCE', '${++sequence}'),
+          IcalendarSyntaxProperty('DTSTAMP', writer.utc(stamp)),
+        ]),
+    ]),
+  ]);
+  final limits = IcalendarSyntaxLimits(maxBytes: maxBytes);
+  final bytes = serializeIcalendarSyntax(outgoing, limits: limits);
+  for (var i = 0; i < bytes.length; i += 64) {
+    work.charge();
+  }
+  return (
+    parseIcalendarSchedulingMessage(
+      bytes,
+      syntaxLimits: limits,
+      sharedWorkBudget: work,
+    ),
+    suffix,
+  );
 }

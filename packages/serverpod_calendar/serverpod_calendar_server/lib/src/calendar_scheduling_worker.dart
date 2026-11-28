@@ -137,7 +137,10 @@ final class _SchedulingWorker {
         _schedulingDigest(p.payload) != p.payloadDigest) {
       throw _failure(CalendarFailureCode.accessDenied);
     }
-    final checkpoint = _schedulingReadCheckpoint(p);
+    final work = _schedulingIsCutoffLifecycle(p)
+        ? RecurrenceWorkBudget(maxWork: eventMaxCandidateWork)
+        : null;
+    final checkpoint = _schedulingReadCheckpoint(p, sharedWorkBudget: work);
     final published = checkpoint.outgoing;
     if (_schedulingRecurring(published.content) !=
             _schedulingRecurring(e.data.content) ||
@@ -147,10 +150,17 @@ final class _SchedulingWorker {
       throw _failure(CalendarFailureCode.unavailable);
     }
     // Revalidate immutable bytes too; corrupt state cannot become transport input.
-    final parsed = parseIcalendarSchedulingMessage(
-      utf8.encode(p.payload),
-      syntaxLimits: IcalendarSyntaxLimits(maxBytes: options.maxPayloadBytes),
-    );
+    if (utf8.encode(p.payload).length > options.maxPayloadBytes) {
+      throw _failure(CalendarFailureCode.limitExceeded);
+    }
+    final parsed = checkpoint.cutoffPredecessor != null
+        ? checkpoint.message
+        : parseIcalendarSchedulingMessage(
+            utf8.encode(p.payload),
+            syntaxLimits: IcalendarSyntaxLimits(
+              maxBytes: options.maxPayloadBytes,
+            ),
+          );
     if (parsed.method !=
             (p.method == 'CANCEL'
                 ? IcalendarSchedulingMethod.cancel
@@ -203,12 +213,24 @@ final class _SchedulingWorker {
       proposedEvent: e.snapshot,
       publicationEvent: checkpoint.canonical,
       publicationExclusions: checkpoint.publicationExclusions ?? const [],
-      publishedRequest: checkpoint.basisRecord == null
+      publishedRequest:
+          checkpoint.cutoffRequest ??
+          (checkpoint.basisRecord == null
+              ? null
+              : _schedulingReadCheckpoint(checkpoint.basisRecord!).outgoing),
+      suffixMask: checkpoint.suffixExclusions == null
           ? null
-          : _schedulingReadCheckpoint(checkpoint.basisRecord!).outgoing,
+          : CalendarSchedulingSuffixMask(
+              checkpoint.rangeControl!.anchor,
+              checkpoint.suffixExclusions!,
+            ),
       exactNativeMatch: checkpoint.target == null
           ? null
-          : eventSchedulingMember(e.data.content, checkpoint.target!),
+          : eventSchedulingMember(
+              e.data.content,
+              checkpoint.target!,
+              sharedWorkBudget: work,
+            ),
       outgoingMessage: parsed,
       payloadDigest: p.payloadDigest,
       authority: authority,

@@ -44,12 +44,13 @@ final class _Host implements CalendarSchedulingHost {
   ) async {
     if (pause == 'before' &&
         phase == CalendarAuthorizationPhase.finalWrite &&
-        {
-          CalendarSchedulingPublicationKind.rangeCancel,
-          CalendarSchedulingPublicationKind.rangeRestore,
-          CalendarSchedulingPublicationKind.informationCancel,
-          CalendarSchedulingPublicationKind.informationReopen,
-        }.contains(c.intent.publicationKind)) {
+        (c.suffixMask != null ||
+            {
+              CalendarSchedulingPublicationKind.rangeCancel,
+              CalendarSchedulingPublicationKind.rangeRestore,
+              CalendarSchedulingPublicationKind.informationCancel,
+              CalendarSchedulingPublicationKind.informationReopen,
+            }.contains(c.intent.publicationKind))) {
       stdout.writeln('SCHEDULING_SUBMITTED');
       await Completer<void>().future;
     }
@@ -260,23 +261,42 @@ Future<void> main(List<String> args) async {
               start: CalendarEventCivil(year: 2026, month: 11, day: 4, hour: 9),
             );
             final service = CalendarModule.service(s);
-            final receipt = input['restore'] == true
-                ? await service.restoreFutureAndNotify(
-                    CalendarSchedulingFutureRestoreRequest(
-                      eventId: id,
-                      expectedRevision: input['revision'] as int,
-                      commandId: UuidValue.fromString(input['key'] as String),
-                      originalStart: point,
-                    ),
-                  )
-                : await service.cancelFutureAndNotify(
-                    CalendarSchedulingFutureCancelRequest(
-                      eventId: id,
-                      expectedRevision: input['revision'] as int,
-                      commandId: UuidValue.fromString(input['key'] as String),
-                      originalStart: point,
-                    ),
-                  );
+            final commandId = UuidValue.fromString(input['key'] as String);
+            final revision = input['revision'] as int;
+            final receipt = switch (input['wholeAction']) {
+              'cancel' => await service.cancelAndNotify(
+                CalendarSchedulingCancelRequest(
+                  eventId: id,
+                  expectedRevision: revision,
+                  commandId: commandId,
+                ),
+              ),
+              'reopen' => await service.reopenPublishedAndNotify(
+                CalendarSchedulingReopenRequest(
+                  eventId: id,
+                  expectedRevision: revision,
+                  commandId: commandId,
+                ),
+              ),
+              _ =>
+                input['restore'] == true
+                    ? await service.restoreFutureAndNotify(
+                        CalendarSchedulingFutureRestoreRequest(
+                          eventId: id,
+                          expectedRevision: revision,
+                          commandId: commandId,
+                          originalStart: point,
+                        ),
+                      )
+                    : await service.cancelFutureAndNotify(
+                        CalendarSchedulingFutureCancelRequest(
+                          eventId: id,
+                          expectedRevision: revision,
+                          commandId: commandId,
+                          originalStart: point,
+                        ),
+                      ),
+            };
             if (host.pause == 'after') {
               stdout.writeln('SCHEDULING_SUBMITTED');
               await Completer<void>().future;

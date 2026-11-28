@@ -141,7 +141,8 @@ _ReplyTarget _replyTarget(
       rangeCancelled) {
     if (cancellation == null &&
         !eventSchedulingMember(
-          publication.wire.content,
+          publication.checkpoint.cutoffRequest?.content ??
+              publication.wire.content,
           point,
           sharedWorkBudget: publication.work,
         )) {

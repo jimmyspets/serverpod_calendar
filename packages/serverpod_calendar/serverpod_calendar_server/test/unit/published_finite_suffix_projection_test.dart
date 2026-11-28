@@ -6,11 +6,90 @@ import 'dart:convert';
 import 'package:serverpod_calendar_core/serverpod_calendar_core.dart';
 import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 import 'package:serverpod_calendar_server/serverpod_calendar_server.dart';
+import 'package:serverpod_calendar_server/src/event_protocol_values.dart'
+    show eventMaxSequence;
+import 'package:serverpod_calendar_server/src/event_values.dart'
+    show eventMaxCandidateWork;
+import 'package:serverpod_calendar_server/src/published_finite_suffix_projection.dart'
+    show composePublishedCutoffReopening;
 import 'package:test/test.dart';
 
 import 'published_range_cancellation_values_test.dart' as fixture;
 
 void main() {
+  test(
+    'reopening versions retained components and deduplicates wire masks',
+    () {
+      final basis = parseIcalendarSyntax(
+        utf8.encode(
+          fixture.raw(
+            date: true,
+            rule: 'FREQ=DAILY;COUNT=7',
+            extra: ['EXDATE;VALUE=DATE:20300106'],
+            own: [(2, 3, false, 8), (3, 2, false, 9), (5, 1, false, 10)],
+          ),
+        ),
+      );
+      final stamp = DateTime.utc(2030, 1, 1, 12);
+      final (message, suffix) = composePublishedCutoffReopening(
+        basis: basis,
+        cutoff: fixture.point(4, date: true),
+        individualMasks: [
+          fixture.point(3, date: true),
+          fixture.point(5, date: true),
+        ],
+        sequenceFloor: 20,
+        stamp: stamp,
+        maxBytes: 65536,
+        work: RecurrenceWorkBudget(maxWork: eventMaxCandidateWork),
+      );
+      expect(suffix.exclusions.map((point) => point.start.day), [4, 5, 7]);
+      expect(message.events.map((event) => event.sequence), [21, 22]);
+      expect(message.events.map((event) => event.stamp), everyElement(stamp));
+      expect(message.events.last.originalDate!.day, 2);
+      final wire = utf8.decode(serializeIcalendarSchedulingMessage(message));
+      for (final day in [3, 4, 5, 6, 7]) {
+        expect(
+          RegExp('EXDATE;VALUE=DATE:2030010$day').allMatches(wire),
+          hasLength(1),
+        );
+      }
+    },
+  );
+
+  test(
+    'reopening rejects source exclusions as individual proof and overflow',
+    () {
+      final basis = parseIcalendarSyntax(
+        utf8.encode(
+          fixture.raw(
+            date: true,
+            rule: 'FREQ=DAILY;COUNT=5',
+            extra: ['EXDATE;VALUE=DATE:20300104'],
+          ),
+        ),
+      );
+      Object project(List<CalendarEventTiming> masks, int floor) =>
+          composePublishedCutoffReopening(
+            basis: basis,
+            cutoff: fixture.point(3, date: true),
+            individualMasks: masks,
+            sequenceFloor: floor,
+            stamp: DateTime.utc(2030, 1, 1),
+            maxBytes: 65536,
+            work: RecurrenceWorkBudget(maxWork: eventMaxCandidateWork),
+          );
+      expect(
+        () => project([fixture.point(4, date: true)], 20),
+        throwsArgumentError,
+      );
+      expect(
+        () => project([], eventMaxSequence),
+        throwsA(isA<RecurrenceLimitException>()),
+      );
+    },
+  );
+
   test('masks finite originals and removes only suffix components', () {
     final basis = parseIcalendarSyntax(
       utf8.encode(

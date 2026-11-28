@@ -4,13 +4,19 @@ part of 'calendar_module.dart';
 /// The checkpoint reader validates the whole retained message and its proof.
 final class _ReplyMaster {
   _ReplyMaster(this.carrier) {
-    checkpoint = _schedulingReadCheckpoint(carrier);
+    checkpoint = _schedulingReadCheckpoint(
+      carrier,
+      sharedWorkBudget: _schedulingIsCutoffLifecycle(carrier) ? work : null,
+    );
     final cancelled =
         checkpoint.kind == CalendarSchedulingPublicationKind.seriesCancel;
+    final completeRangeMessage =
+        checkpoint.cutoffPredecessor != null ||
+        checkpoint.kind == CalendarSchedulingPublicationKind.rangeRestore;
     final basis = checkpoint.basisRecord == null
         ? null
         : _schedulingReadCheckpoint(checkpoint.basisRecord!);
-    message = cancelled
+    message = cancelled || completeRangeMessage
         ? checkpoint.message
         : checkpoint.fullRequestPayload != null
         ? _schedulingValue(
@@ -21,7 +27,7 @@ final class _ReplyMaster {
         : checkpoint.target != null
         ? (basis ?? (throw _failure(CalendarFailureCode.unavailable))).message
         : checkpoint.message;
-    published = cancelled
+    published = cancelled || completeRangeMessage
         ? checkpoint.outgoing
         : checkpoint.target != null || checkpoint.fullRequestPayload != null
         ? (basis ?? (throw _failure(CalendarFailureCode.unavailable))).canonical
@@ -62,8 +68,15 @@ final class _ReplyMaster {
         ),
       ),
     ]);
-    final calendar = validateIcalendarEventCalendar(document);
-    return eventWireProjection(calendar.series.single);
+    final budget = checkpoint.cutoffPredecessor != null ? work : null;
+    final calendar = validateIcalendarEventCalendar(
+      document,
+      sharedWorkBudget: budget,
+    );
+    return eventWireProjection(
+      calendar.series.single,
+      sharedWorkBudget: budget,
+    );
   })();
 }
 

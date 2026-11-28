@@ -236,6 +236,57 @@ Future<void> main(List<String> args) async {
       );
       return;
     }
+    if (args.contains('--cutoff-lifecycle')) {
+      for (final pause in ['before', 'after']) {
+        final fixture = (await b.command({
+          'command': 'seed',
+          'method': 'REQUEST',
+          'exceptionalRange': pause == 'after',
+        })) as Map<String, dynamic>;
+        fixtures.add(fixture);
+        await drainPublication(b, fixture);
+        var revision = 2;
+        var expectedPublications = 1;
+        for (final action in ['range', 'cancel', 'reopen', 'restore']) {
+          final command = {
+            'command': 'range-command',
+            ...fixture,
+            'wholeAction': action == 'cancel' || action == 'reopen'
+                ? action
+                : null,
+            'restore': action == 'restore',
+            'revision': revision,
+            'key': Uuid().v4(),
+          };
+          if (action != 'range') {
+            a.submitted = Completer<void>();
+            final lost = a
+                .command({...command, 'pause': pause})
+                .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+            await a.submitted!.future.timeout(const Duration(seconds: 30));
+            await a.stop();
+            await lost;
+          }
+          final receipt = (await b.command(command)) as Map;
+          if (receipt['publications'] != ++expectedPublications ||
+              receipt['revision'] != ++revision ||
+              receipt['unchanged'] != (action != 'range' && pause == 'after')) {
+            throw StateError('Cutoff lifecycle recovery violated atomicity');
+          }
+          await drainPublication(b, {
+            ...fixture,
+            'publicationId': receipt['publicationId'],
+          });
+          if (action != 'range') {
+            a = await start('a-cutoff-$action-$pause', 18580);
+          }
+        }
+      }
+      stdout.writeln(
+        'PASS: cutoff whole-series cancel, reopening and range restoration recover on another host after actual process loss.',
+      );
+      return;
+    }
     if (args.isEmpty ||
         args.contains('--range-commands') ||
         args.contains('--range-group') ||

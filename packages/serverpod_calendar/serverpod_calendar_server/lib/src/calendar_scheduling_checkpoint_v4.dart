@@ -34,7 +34,7 @@ CalendarSchedulingPublicationRecord _schedulingBasisRecord(
 ) {
   final v = input as Map<String, dynamic>;
   final snapshot = v['snapshot'] as String;
-  if ({4, 5, 6, 7}.contains((jsonDecode(snapshot) as Map)['version'])) {
+  if ({4, 5, 6, 7, 8, 9}.contains((jsonDecode(snapshot) as Map)['version'])) {
     throw const FormatException();
   }
   final payload = v['payload'] as String;
@@ -54,8 +54,9 @@ String _schedulingInstancePayload(
   CalendarEventTiming point,
   int sequence,
   DateTime stamp,
-  int maxBytes,
-) {
+  int maxBytes, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
   final writer = EventComponentWriter();
   final rid = writer.time('RECURRENCE-ID', point);
   final master = basis.message.events.singleWhere((e) => !e.isOverride).source;
@@ -83,6 +84,7 @@ String _schedulingInstancePayload(
       validateIcalendarSchedulingMessage(
         document,
         syntaxLimits: IcalendarSyntaxLimits(maxBytes: maxBytes),
+        sharedWorkBudget: sharedWorkBudget,
       ),
       syntaxLimits: IcalendarSyntaxLimits(maxBytes: maxBytes),
     ),
@@ -149,8 +151,9 @@ void _schedulingHistoricalTarget(
 
 _SchedulingCheckpoint _schedulingReadV4(
   CalendarSchedulingPublicationRecord p,
-  Map<String, dynamic> v,
-) {
+  Map<String, dynamic> v, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
   final kind = CalendarSchedulingPublicationKind.values.byName(
     v['kind'] as String,
   );
@@ -160,8 +163,14 @@ _SchedulingCheckpoint _schedulingReadV4(
   }
   final basisRecord = _schedulingBasisRecord(p, v['basis']);
   if (basisRecord.method != 'REQUEST') throw const FormatException();
-  final basis = _schedulingReadCheckpoint(basisRecord);
-  final canonical = _schedulingReadSnapshot(v['canonical']);
+  final basis = _schedulingReadCheckpoint(
+    basisRecord,
+    sharedWorkBudget: sharedWorkBudget,
+  );
+  final canonical = _schedulingReadSnapshot(
+    v['canonical'],
+    sharedWorkBudget: sharedWorkBudget,
+  );
   if (canonical.eventId != basis.canonical.eventId ||
       canonical.calendarId != basis.canonical.calendarId ||
       canonical.protocolUid != p.protocolUid) {
@@ -176,7 +185,8 @@ _SchedulingCheckpoint _schedulingReadV4(
   }).toList();
   if (cancelled.isEmpty || cancelled.length > 64) throw const FormatException();
   final keys = <String>{};
-  final work = RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
+  final work =
+      sharedWorkBudget ?? RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
   final union = basis.originals
       .map((o) => eventComponentKey(o.originalStart, false))
       .toSet();
@@ -191,9 +201,13 @@ _SchedulingCheckpoint _schedulingReadV4(
       row.version.sequence,
       row.version.stamp,
       _schedulingCheckpointBytes,
+      sharedWorkBudget: sharedWorkBudget,
     );
     final actual = _schedulingComponent(
-      parseIcalendarSchedulingMessage(utf8.encode(payload)).events.single,
+      parseIcalendarSchedulingMessage(
+        utf8.encode(payload),
+        sharedWorkBudget: sharedWorkBudget,
+      ).events.single,
     );
     final floor = basis.ledger.firstWhere(
       (e) => e.key == actual.key,
@@ -210,7 +224,10 @@ _SchedulingCheckpoint _schedulingReadV4(
       utf8.encode(p.payload).length > _schedulingCheckpointBytes) {
     throw const FormatException();
   }
-  final message = parseIcalendarSchedulingMessage(utf8.encode(p.payload));
+  final message = parseIcalendarSchedulingMessage(
+    utf8.encode(p.payload),
+    sharedWorkBudget: sharedWorkBudget,
+  );
   final target = v['target'] == null
       ? null
       : CalendarEventTiming.fromJson(v['target'] as Map<String, dynamic>);
@@ -235,11 +252,17 @@ _SchedulingCheckpoint _schedulingReadV4(
               row.version.sequence,
               row.version.stamp,
               _schedulingCheckpointBytes,
+              sharedWorkBudget: sharedWorkBudget,
             ) ||
         p.sequence != row.version.sequence ||
         p.stamp != row.version.stamp ||
         p.method != 'CANCEL' ||
-        nativeMatch != eventSchedulingMember(canonical.content, target)) {
+        nativeMatch !=
+            eventSchedulingMember(
+              canonical.content,
+              target,
+              sharedWorkBudget: sharedWorkBudget,
+            )) {
       throw const FormatException();
     }
     if (nativeMatch &&
@@ -264,7 +287,10 @@ _SchedulingCheckpoint _schedulingReadV4(
         p.method != 'CANCEL') {
       throw const FormatException();
     }
-    final master = _schedulingReadCheckpoint(masterRecord);
+    final master = _schedulingReadCheckpoint(
+      masterRecord,
+      sharedWorkBudget: sharedWorkBudget,
+    );
     if (_schedulingCanonicalKey(master.canonical) !=
             _schedulingCanonicalKey(canonical) ||
         _schedulingBundleProjection(master.ledger) !=

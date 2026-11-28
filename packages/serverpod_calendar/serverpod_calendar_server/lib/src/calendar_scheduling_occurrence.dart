@@ -101,6 +101,36 @@ extension CalendarSchedulingOccurrenceOperations on CalendarService {
           e.data.importBaseline != null) {
         throw _failure(CalendarFailureCode.validation);
       }
+      final retry = await CalendarSchedulingPublicationRecord.db.findFirstRow(
+        _session,
+        where: (t) =>
+            t.scopeKey.equals(c.scopeKey) & t.commandId.equals(commandId),
+        transaction: tx,
+      );
+      if (retry != null &&
+          (retry.requestDigest != digest ||
+              retry.actorId != c.principalId ||
+              retry.meetingId != meeting.id)) {
+        throw _failure(CalendarFailureCode.validation);
+      }
+      if (reopen &&
+          (retry == null
+              ? _schedulingMayHaveActiveCutoff(last)
+              : _schedulingIsCutoffLifecycle(retry))) {
+        return _changeWholePublishedCutoff(
+          c,
+          tx,
+          scope,
+          e,
+          meeting,
+          last,
+          retry,
+          expectedRevision,
+          commandId,
+          digest,
+          reopen: true,
+        );
+      }
       final previous = _schedulingReadCheckpoint(last);
       if (previous.canonical.eventId != e.identity.id ||
           previous.canonical.calendarId != e.identity.calendarId ||
@@ -114,23 +144,13 @@ extension CalendarSchedulingOccurrenceOperations on CalendarService {
       if (restore && projected) {
         kind = CalendarSchedulingPublicationKind.occurrenceRestoreWithMaster;
       }
-      final retry = await CalendarSchedulingPublicationRecord.db.findFirstRow(
-        _session,
-        where: (t) =>
-            t.scopeKey.equals(c.scopeKey) & t.commandId.equals(commandId),
-        transaction: tx,
-      );
       if (retry != null &&
-          (retry.requestDigest != digest ||
-              retry.actorId != c.principalId ||
-              retry.meetingId != meeting.id ||
-              !(restore
-                  ? {
-                      CalendarSchedulingPublicationKind.occurrenceRestore,
-                      CalendarSchedulingPublicationKind
-                          .occurrenceRestoreWithMaster,
-                    }.contains(_schedulingReadCheckpoint(retry).kind)
-                  : _schedulingReadCheckpoint(retry).kind == kind))) {
+          !(restore
+              ? {
+                  CalendarSchedulingPublicationKind.occurrenceRestore,
+                  CalendarSchedulingPublicationKind.occurrenceRestoreWithMaster,
+                }.contains(_schedulingReadCheckpoint(retry).kind)
+              : _schedulingReadCheckpoint(retry).kind == kind)) {
         throw _failure(CalendarFailureCode.validation);
       }
       final receiptCheckpoint = retry == null

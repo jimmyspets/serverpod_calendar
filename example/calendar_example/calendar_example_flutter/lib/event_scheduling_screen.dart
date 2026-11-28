@@ -411,6 +411,10 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
   @override
   Widget build(BuildContext context) {
     final eligible = _status?.origin == cal.CalendarEventOrigin.native;
+    final hasCutoff = _status?.hasPublishedRangeCancellation == true;
+    final wholeSeriesCancelled =
+        _status?.publicationKind ==
+        cal.CalendarSchedulingPublicationKind.seriesCancel;
     final hasExceptions =
         (_event.timingOverrides?.singles.isNotEmpty ?? false) ||
         (_event.timingOverrides?.future.isNotEmpty ?? false);
@@ -466,7 +470,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
             'This workflow supports native events and representable recurring exceptions with fixed recipients. Cancel and notify uses the last published version and keeps saved local fields. It does not save unsaved form edits; reloading discards those edits.',
           ),
           const Text(
-            'Range controls use retained published values. Only ordinary or future-timing anchors without a published single override or individual cancellation are supported. Restore the published suffix before another publication control.',
+            'Range controls use retained published values. A finite published suffix can stay cancelled through whole-series cancellation and reopening. Wait for earlier deliveries before each action.',
           ),
           Text(
             _status?.hasPublishedRangeCancellation == true
@@ -561,15 +565,14 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
                   : 'Save and notify',
             ),
           ),
-          if (_status?.hasOccurrenceCancellations ?? false) ...[
+          if (hasCutoff || (_status?.hasOccurrenceCancellations ?? false)) ...[
             const Text(
-              'Reopen the last published series while keeping individual cancellations. Newer saved drafts are not published by this action.',
+              'Reopen the last published series and retain any published suffix or individual cancellations. Newer drafts stay local.',
             ),
             FilledButton(
               key: const Key('scheduling-reopen-published'),
               onPressed:
                   _busy ||
-                      _status?.hasPublishedRangeCancellation == true ||
                       _pendingFutureCancel != null ||
                       _pendingFutureRestore != null ||
                       !eligible ||
@@ -577,8 +580,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
                       _pendingCancel != null ||
                       _pendingOccurrenceCancel != null ||
                       _pendingOccurrenceRestore != null ||
-                      _status?.publicationKind !=
-                          cal.CalendarSchedulingPublicationKind.seriesCancel
+                      !wholeSeriesCancelled
                   ? null
                   : _reopenPublished,
               child: Text(
@@ -597,7 +599,6 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
               key: const Key('scheduling-cancel'),
               onPressed:
                   _busy ||
-                      _status?.hasPublishedRangeCancellation == true ||
                       _pendingFutureCancel != null ||
                       _pendingFutureRestore != null ||
                       !eligible ||
@@ -693,6 +694,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
                   _busy ||
                       !eligible ||
                       _status?.hasPublishedRangeCancellation != true ||
+                      wholeSeriesCancelled ||
                       _pendingFutureCancel != null ||
                       _pending != null ||
                       _pendingCancel != null ||

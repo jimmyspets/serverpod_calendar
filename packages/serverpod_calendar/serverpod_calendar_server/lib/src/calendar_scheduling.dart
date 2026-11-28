@@ -410,6 +410,38 @@ extension CalendarSchedulingOperations on CalendarService {
         tx,
         CalendarAuthorizationPhase.preliminaryWrite,
       );
+      final retry = await CalendarSchedulingPublicationRecord.db.findFirstRow(
+        _session,
+        where: (t) =>
+            t.scopeKey.equals(c.scopeKey) & t.commandId.equals(commandId),
+        transaction: tx,
+      );
+      if (retry != null &&
+          (retry.method != method ||
+              retry.actorId != c.principalId ||
+              retry.requestDigest != digest ||
+              retry.meetingId != meeting?.id)) {
+        throw _failure(CalendarFailureCode.validation);
+      }
+      if (cancellation &&
+          last != null &&
+          (retry == null
+              ? _schedulingMayHaveActiveCutoff(last)
+              : _schedulingIsCutoffLifecycle(retry))) {
+        return _changeWholePublishedCutoff(
+          c,
+          tx,
+          scope,
+          e,
+          meeting!,
+          last,
+          retry,
+          expectedRevision,
+          commandId,
+          digest,
+          reopen: false,
+        );
+      }
       final previousCheckpoint = last == null
           ? null
           : _schedulingReadCheckpoint(last);
@@ -442,19 +474,6 @@ extension CalendarSchedulingOperations on CalendarService {
           _schedulingRecurring(content) !=
               _schedulingRecurring(e.data.content) ||
           !cancellation && content.status == CalendarEventStatus.cancelled) {
-        throw _failure(CalendarFailureCode.validation);
-      }
-      final retry = await CalendarSchedulingPublicationRecord.db.findFirstRow(
-        _session,
-        where: (t) =>
-            t.scopeKey.equals(c.scopeKey) & t.commandId.equals(commandId),
-        transaction: tx,
-      );
-      if (retry != null &&
-          (retry.method != method ||
-              retry.actorId != c.principalId ||
-              retry.requestDigest != digest ||
-              retry.meetingId != meeting?.id)) {
         throw _failure(CalendarFailureCode.validation);
       }
       if (retry == null && previousCheckpoint?.rangeControl?.active == true) {
