@@ -468,12 +468,56 @@ DROP TABLE instance_invitation_upgrade_guard;
 """)
 
 
+def verify_occurrence_application_upgrade(database):
+    sql(database, """
+INSERT INTO serverpod_calendar_identity(id,"scopeKey",revision)
+ VALUES ('15101510-1510-4510-8510-151015101510','occurrence-upgrade',1);
+INSERT INTO serverpod_calendar_event(id,"calendarId",revision)
+ VALUES ('15101510-1510-4510-8510-151015101511','15101510-1510-4510-8510-151015101510',1);
+INSERT INTO serverpod_calendar_invitation_link
+ (id,"scopeKey","recipientKey",uid,organizer,"correlationDigest","invitationId","sourceId","sourceDigest",stamp,"calendarId","eventId","requestDigest","eventRevision","invitationRevision","adoptedAt")
+ VALUES ('15101510-1510-4510-8510-151015101512','occurrence-upgrade','recipient','synthetic','mailto:organizer@example.invalid',repeat('1',64),'15101510-1510-4510-8510-151015101513','15101510-1510-4510-8510-151015101514',repeat('2',64),'2026-01-01','15101510-1510-4510-8510-151015101510','15101510-1510-4510-8510-151015101511',repeat('3',64),1,2,'2026-01-01');
+INSERT INTO serverpod_calendar_invitation_application
+ (id,"scopeKey","recipientKey","linkId",revision,"invitationId","sourceId",digest,stamp,"baselineDigest","creationDigest","eventRevision","invitationRevision","appliedAt","requestDigest","resultId")
+ VALUES ('15101510-1510-4510-8510-151015101515','occurrence-upgrade','recipient','15101510-1510-4510-8510-151015101512',1,'15101510-1510-4510-8510-151015101513','15101510-1510-4510-8510-151015101514',repeat('4',64),'2026-01-02',repeat('5',64),repeat('6',64),2,3,'2026-01-02',repeat('7',64),'15101510-1510-4510-8510-151015101516');
+CREATE TABLE occurrence_application_upgrade_guard(table_name text, rows jsonb);
+DO $snapshot$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+ AND (tablename LIKE 'serverpod_calendar_%' OR tablename LIKE 'serverpod_notifications_%') LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s',item.tablename) INTO contents;
+  INSERT INTO occurrence_application_upgrade_guard VALUES(item.tablename,contents);
+ END LOOP;
+END;$snapshot$;
+""")
+    sql(database, (SERVER / "migrations/20261031120641063-instance-invitation-application/migration.sql").read_text(encoding="utf-8"))
+    sql(database, """
+DO $verify$
+DECLARE item record; contents jsonb;
+BEGIN
+ FOR item IN SELECT * FROM occurrence_application_upgrade_guard LOOP
+  EXECUTE format('SELECT COALESCE(jsonb_agg(v ORDER BY v::text), ''[]''::jsonb) FROM (SELECT to_jsonb(t) AS v FROM %I t) s',item.table_name) INTO contents;
+  IF contents IS DISTINCT FROM item.rows THEN RAISE EXCEPTION 'Occurrence acceptance migration changed %',item.table_name; END IF;
+ END LOOP;
+ IF EXISTS(SELECT 1 FROM serverpod_calendar_invitation_occurrence_application)
+ THEN RAISE EXCEPTION 'Upgrade invented occurrence acceptance'; END IF;
+END;$verify$;
+DROP TABLE occurrence_application_upgrade_guard;
+""")
+
+
 def main():
     # Drop only a database this process successfully creates on the test service.
     database = f"calendar_metadata_upgrade_{os.getpid()}"
     assert re.fullmatch(r"calendar_metadata_upgrade_[0-9]+", database)
     sql("postgres", f"CREATE DATABASE {database};")
     try:
+        if "--occurrence-applications-only" in __import__("sys").argv:
+            sql(database, (SERVER / "migrations/20261031085639016/definition.sql").read_text(encoding="utf-8"))
+            verify_occurrence_application_upgrade(database)
+            print("PASS: populated invitation/link/master-acceptance rows survive additive occurrence-checkpoint migration; no instance acceptance history is invented.")
+            return
         if "--instance-invitations-only" in __import__("sys").argv:
             sql(database, (SERVER / "migrations/20261030180336464/definition.sql").read_text(encoding="utf-8"))
             verify_recurring_invitation_upgrade(database)
@@ -1157,6 +1201,7 @@ DROP TABLE reply_upgrade_guard;
         verify_occurrence_cursor_upgrade(database)
         verify_recurring_invitation_upgrade(database)
         verify_instance_invitation_upgrade(database)
+        verify_occurrence_application_upgrade(database)
         print("PASS: populated schema upgrades preserve prior rows, initialize feed/scheduling/reply tables without invented state, retain unknown legacy provenance, and preserve populated replies/invitations/links/checkpoints through instance, adoption, cancellation and private attendee-response upgrades; no personal response history is invented and ordinary cursor rows survive the occurrence-state addition without invented query state; known old invitation modes remain false without invented recurrence history.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

@@ -25,3 +25,4 @@ fields:
   canApplyCancellation: bool, default=false
   canApply: bool
   latestResult: CalendarInvitationApplyReceipt?
+  occurrenceCompositionBlocked: bool, default=false

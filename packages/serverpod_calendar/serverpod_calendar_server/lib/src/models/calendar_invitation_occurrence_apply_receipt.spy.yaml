@@ -1,0 +1,15 @@
+class: CalendarInvitationOccurrenceApplyReceipt
+immutable: true
+fields:
+  id: UuidValue
+  kind: CalendarInvitationSourceKind
+  originalStart: CalendarEventTiming
+  linkId: UuidValue
+  invitationId: UuidValue
+  sourceId: UuidValue
+  calendarId: UuidValue
+  eventId: UuidValue
+  occurrenceRevision: int
+  eventRevision: int
+  invitationRevision: int
+  appliedAt: DateTime

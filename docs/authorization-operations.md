@@ -207,3 +207,6 @@ Implemented under accepted ADR 0130: reopenScheduling is independent of ordinary
 ## Authenticated attendee replies
 
 Accepted ADR 0131 adds separate `readSchedulingResponses` and `readSchedulingReplySource` gates plus existing complete scheduling/event/source authority. Source requests carry actual parent/event/source UUID, metadata and normalized body; a bounded list fails completely when any source is withheld. Generated clients cannot ingest verified-origin claims. Trusted server ingress independently verifies the exact attendee origin through preliminary and final host checks; native lifecycle/publication rights are not attendee identity or consent. See [the reply guide](authenticated-attendee-replies.md).
+
+
+Accepted [ADR 0151 occurrence application](instance-invitation-application.md) adds independent invitation readOccurrenceApplication, applyOccurrenceUpdate and applyOccurrenceCancellation operations alongside summary/source/link/application access. Native full event/source read, import/replacement/update and applicable metadata/lifecycle checks remain required; reopening is a lifecycle transition. Final native and invitation policy contexts distinguish the actual before-state, validated proposal and retained exact retries. Private accepted source bodies and sibling state remain outside ordinary event/export responses.

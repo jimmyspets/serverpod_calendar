@@ -815,6 +815,7 @@ extension CalendarEventOperations on CalendarService {
         id,
         tx,
       );
+      await _deleteOccurrenceAcceptance(id, tx);
       await CalendarEventDataRecord.db.deleteRow(
         _session,
         e.data,

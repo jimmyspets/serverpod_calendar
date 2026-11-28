@@ -46,9 +46,11 @@ abstract class CalendarInvitationApplicationView
     bool? canApplyCancellation,
     required this.canApply,
     this.latestResult,
+    bool? occurrenceCompositionBlocked,
   }) : acceptedKind =
            acceptedKind ?? _ilccsff7.CalendarInvitationSourceKind.request,
-       canApplyCancellation = canApplyCancellation ?? false;
+       canApplyCancellation = canApplyCancellation ?? false,
+       occurrenceCompositionBlocked = occurrenceCompositionBlocked ?? false;
 
   const factory CalendarInvitationApplicationView({
     required _is.UuidValue linkId,
@@ -75,6 +77,7 @@ abstract class CalendarInvitationApplicationView
     bool? canApplyCancellation,
     required bool canApply,
     _ic2yh4ry.CalendarInvitationApplyReceipt? latestResult,
+    bool? occurrenceCompositionBlocked,
   }) = _CalendarInvitationApplicationViewImpl;
 
   factory CalendarInvitationApplicationView.fromJson(
@@ -152,6 +155,12 @@ abstract class CalendarInvitationApplicationView
                 .deserialize<_ic2yh4ry.CalendarInvitationApplyReceipt>(
                   jsonSerialization['latestResult'],
                 ),
+      occurrenceCompositionBlocked:
+          jsonSerialization['occurrenceCompositionBlocked'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(
+              jsonSerialization['occurrenceCompositionBlocked'],
+            ),
     );
   }
 
@@ -203,6 +212,8 @@ abstract class CalendarInvitationApplicationView
 
   final _ic2yh4ry.CalendarInvitationApplyReceipt? latestResult;
 
+  final bool occurrenceCompositionBlocked;
+
   /// Returns a shallow copy of this [CalendarInvitationApplicationView]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -231,6 +242,7 @@ abstract class CalendarInvitationApplicationView
     bool? canApplyCancellation,
     bool? canApply,
     _ic2yh4ry.CalendarInvitationApplyReceipt? latestResult,
+    bool? occurrenceCompositionBlocked,
   });
   @override
   bool operator ==(Object other) {
@@ -359,7 +371,13 @@ abstract class CalendarInvitationApplicationView
                   other.latestResult,
                   latestResult,
                 ) ||
-                other.latestResult == latestResult);
+                other.latestResult == latestResult) &&
+            (identical(
+                  other.occurrenceCompositionBlocked,
+                  occurrenceCompositionBlocked,
+                ) ||
+                other.occurrenceCompositionBlocked ==
+                    occurrenceCompositionBlocked);
   }
 
   @override
@@ -390,6 +408,7 @@ abstract class CalendarInvitationApplicationView
       canApplyCancellation,
       canApply,
       latestResult,
+      occurrenceCompositionBlocked,
     ]);
   }
 
@@ -422,6 +441,7 @@ abstract class CalendarInvitationApplicationView
       'canApplyCancellation': canApplyCancellation,
       'canApply': canApply,
       if (latestResult != null) 'latestResult': latestResult?.toJson(),
+      'occurrenceCompositionBlocked': occurrenceCompositionBlocked,
     };
   }
 
@@ -456,6 +476,7 @@ abstract class CalendarInvitationApplicationView
       'canApply': canApply,
       if (latestResult != null)
         'latestResult': latestResult?.toJsonForProtocol(),
+      'occurrenceCompositionBlocked': occurrenceCompositionBlocked,
     };
   }
 
@@ -494,6 +515,7 @@ class _CalendarInvitationApplicationViewImpl
     bool? canApplyCancellation,
     required bool canApply,
     _ic2yh4ry.CalendarInvitationApplyReceipt? latestResult,
+    bool? occurrenceCompositionBlocked,
   }) : super._(
          linkId: linkId,
          invitationId: invitationId,
@@ -519,6 +541,7 @@ class _CalendarInvitationApplicationViewImpl
          canApplyCancellation: canApplyCancellation,
          canApply: canApply,
          latestResult: latestResult,
+         occurrenceCompositionBlocked: occurrenceCompositionBlocked,
        );
 
   /// Returns a shallow copy of this [CalendarInvitationApplicationView]
@@ -550,6 +573,7 @@ class _CalendarInvitationApplicationViewImpl
     bool? canApplyCancellation,
     bool? canApply,
     Object? latestResult = _Undefined,
+    bool? occurrenceCompositionBlocked,
   }) {
     return CalendarInvitationApplicationView(
       linkId: linkId ?? this.linkId,
@@ -590,6 +614,8 @@ class _CalendarInvitationApplicationViewImpl
       latestResult: latestResult is _ic2yh4ry.CalendarInvitationApplyReceipt?
           ? latestResult
           : this.latestResult?.copyWith(),
+      occurrenceCompositionBlocked:
+          occurrenceCompositionBlocked ?? this.occurrenceCompositionBlocked,
     );
   }
 }

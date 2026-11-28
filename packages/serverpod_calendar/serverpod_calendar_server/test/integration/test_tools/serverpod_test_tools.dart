@@ -125,6 +125,12 @@ import 'package:serverpod_calendar_server/src/generated/calendar_invitation_appl
     as _i3h34hei;
 import 'package:serverpod_calendar_server/src/generated/calendar_invitation_document.dart'
     as _i0si9ea3;
+import 'package:serverpod_calendar_server/src/generated/calendar_invitation_occurrence_application_view.dart'
+    as _ib1sbzev;
+import 'package:serverpod_calendar_server/src/generated/calendar_invitation_occurrence_apply_receipt.dart'
+    as _ihn04pvw;
+import 'package:serverpod_calendar_server/src/generated/calendar_invitation_occurrence_apply_request.dart'
+    as _ituh8bkh;
 import 'package:serverpod_calendar_server/src/generated/calendar_invitation_response_activity_view.dart'
     as _icy7qc8h;
 import 'package:serverpod_calendar_server/src/generated/calendar_invitation_response_receipt.dart'
@@ -2751,6 +2757,108 @@ class _CalendarInvitationEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_imp6ds4w.CalendarInvitationApplyReceipt>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ib1sbzev.CalendarInvitationOccurrenceApplicationView>
+  occurrenceApplication(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue id,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarInvitation',
+            method: 'occurrenceApplication',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarInvitation',
+          methodName: 'occurrenceApplication',
+          parameters: _ist.testObjectToJson({'id': id}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<
+                  _ib1sbzev.CalendarInvitationOccurrenceApplicationView
+                >);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ihn04pvw.CalendarInvitationOccurrenceApplyReceipt>
+  applyOccurrenceUpdate(
+    _ist.TestSessionBuilder sessionBuilder,
+    _ituh8bkh.CalendarInvitationOccurrenceApplyRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarInvitation',
+            method: 'applyOccurrenceUpdate',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarInvitation',
+          methodName: 'applyOccurrenceUpdate',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<
+                  _ihn04pvw.CalendarInvitationOccurrenceApplyReceipt
+                >);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ihn04pvw.CalendarInvitationOccurrenceApplyReceipt>
+  applyOccurrenceCancellation(
+    _ist.TestSessionBuilder sessionBuilder,
+    _ituh8bkh.CalendarInvitationOccurrenceApplyRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarInvitation',
+            method: 'applyOccurrenceCancellation',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarInvitation',
+          methodName: 'applyOccurrenceCancellation',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<
+                  _ihn04pvw.CalendarInvitationOccurrenceApplyReceipt
+                >);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

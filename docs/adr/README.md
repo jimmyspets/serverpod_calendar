@@ -159,7 +159,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0148](0148-recurring-master-invitation-workflow.md) | Recurring-master invitation review, application and responses | Accepted 2026-10-30; scoped implementation and complete batch validation finished 2026-10-31 |
 | [0149](0149-trusted-single-instance-invitation-review.md) | Trusted single-instance invitation intake and private review | Accepted 2026-10-31; scoped review-only implementation, complete batch validation recorded separately |
 | [0150](0150-pure-instance-invitation-projection.md) | Pure single-instance invitation application projection | Accepted 2026-10-31; pure source/canonical projection implemented; no durable mutation |
-| [0151](0151-explicit-single-instance-invitation-application.md) | Explicit single-instance invitation application | Proposed 2026-10-31; one private aggregate checkpoint, clean series, independent versions/retries and temporary master-composition guard |
+| [0151](0151-explicit-single-instance-invitation-application.md) | Explicit single-instance invitation application | Accepted 2026-10-31; explicit application/checkpoint implementation; clean entire series and temporary master-composition guard |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

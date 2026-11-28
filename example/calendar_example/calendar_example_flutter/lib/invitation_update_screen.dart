@@ -153,6 +153,11 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
             Text(
               'Accepted source SEQUENCE: ${view.acceptedSequence?.toString() ?? 'omitted (effective 0)'}; DTSTAMP: ${view.acceptedStamp.toIso8601String()}',
             ),
+            if (view.occurrenceCompositionBlocked)
+              const Text(
+                'Accepted occurrence updates exist. New whole-series application is guarded until master/instance composition is implemented.',
+                key: Key('invitation-master-composition-guard'),
+              ),
             if (view.hasLocalChanges)
               const Text(
                 'Local changes exist. This incoming update cannot replace them.',
@@ -186,7 +191,8 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
             ],
             if (!view.canApply &&
                 !view.canApplyCancellation &&
-                !view.hasLocalChanges)
+                !view.hasLocalChanges &&
+                !view.occurrenceCompositionBlocked)
               const Text('There is no pending newer source to apply.'),
             ElevatedButton(
               key: const Key('invitation-update-apply'),

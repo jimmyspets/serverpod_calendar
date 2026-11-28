@@ -179,6 +179,10 @@ import 'calendar_invitation_apply_receipt.dart' as _ic2yh4ry;
 import 'calendar_invitation_apply_request.dart' as _iivrx0vm;
 import 'calendar_invitation_document.dart' as _iwcng7rp;
 import 'calendar_invitation_link_record.dart' as _ibnm4ujx;
+import 'calendar_invitation_occurrence_application_record.dart' as _i48y6d6c;
+import 'calendar_invitation_occurrence_application_view.dart' as _i15b7t0e;
+import 'calendar_invitation_occurrence_apply_receipt.dart' as _iyajy5op;
+import 'calendar_invitation_occurrence_apply_request.dart' as _ioottw62;
 import 'calendar_invitation_outcome.dart' as _i98zwsq8;
 import 'calendar_invitation_receipt.dart' as _iy372k0z;
 import 'calendar_invitation_receipt_record.dart' as _i1bc5dpy;
@@ -442,6 +446,10 @@ export 'calendar_invitation_apply_receipt.dart';
 export 'calendar_invitation_apply_request.dart';
 export 'calendar_invitation_document.dart';
 export 'calendar_invitation_link_record.dart';
+export 'calendar_invitation_occurrence_application_record.dart';
+export 'calendar_invitation_occurrence_application_view.dart';
+export 'calendar_invitation_occurrence_apply_receipt.dart';
+export 'calendar_invitation_occurrence_apply_request.dart';
 export 'calendar_invitation_outcome.dart';
 export 'calendar_invitation_receipt.dart';
 export 'calendar_invitation_receipt_record.dart';
@@ -2411,6 +2419,92 @@ class Protocol extends _is.DatabaseSerializationManager {
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
               definition: 'eventId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'serverpod_calendar_invitation_occurrence_application',
+      dartName: 'CalendarInvitationOccurrenceApplicationRecord',
+      schema: 'public',
+      module: 'serverpod_calendar',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'random',
+        ),
+        _isp.ColumnDefinition(
+          name: 'scopeKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'recipientKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'linkId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'revision',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'stateJson',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'eventRevision',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName:
+              'serverpod_calendar_invitation_occurrence_application_fk_0',
+          columns: ['linkId'],
+          referenceTable: 'serverpod_calendar_invitation_link',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'calendar_invitation_occurrence_application_link_unique',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'linkId',
             ),
           ],
           type: 'btree',
@@ -5342,6 +5436,26 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _ibnm4ujx.CalendarInvitationLinkRecord) {
       return _ibnm4ujx.CalendarInvitationLinkRecord.fromJson(data) as T;
     }
+    if (t == _i48y6d6c.CalendarInvitationOccurrenceApplicationRecord) {
+      return _i48y6d6c.CalendarInvitationOccurrenceApplicationRecord.fromJson(
+            data,
+          )
+          as T;
+    }
+    if (t == _i15b7t0e.CalendarInvitationOccurrenceApplicationView) {
+      return _i15b7t0e.CalendarInvitationOccurrenceApplicationView.fromJson(
+            data,
+          )
+          as T;
+    }
+    if (t == _iyajy5op.CalendarInvitationOccurrenceApplyReceipt) {
+      return _iyajy5op.CalendarInvitationOccurrenceApplyReceipt.fromJson(data)
+          as T;
+    }
+    if (t == _ioottw62.CalendarInvitationOccurrenceApplyRequest) {
+      return _ioottw62.CalendarInvitationOccurrenceApplyRequest.fromJson(data)
+          as T;
+    }
     if (t == _i98zwsq8.CalendarInvitationOutcome) {
       return _i98zwsq8.CalendarInvitationOutcome.fromJson(data) as T;
     }
@@ -6556,6 +6670,46 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_ibnm4ujx.CalendarInvitationLinkRecord?>()) {
       return (data != null
               ? _ibnm4ujx.CalendarInvitationLinkRecord.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t ==
+        _is
+            .getType<
+              _i48y6d6c.CalendarInvitationOccurrenceApplicationRecord?
+            >()) {
+      return (data != null
+              ? _i48y6d6c
+                    .CalendarInvitationOccurrenceApplicationRecord.fromJson(
+                  data,
+                )
+              : null)
+          as T;
+    }
+    if (t ==
+        _is.getType<_i15b7t0e.CalendarInvitationOccurrenceApplicationView?>()) {
+      return (data != null
+              ? _i15b7t0e.CalendarInvitationOccurrenceApplicationView.fromJson(
+                  data,
+                )
+              : null)
+          as T;
+    }
+    if (t ==
+        _is.getType<_iyajy5op.CalendarInvitationOccurrenceApplyReceipt?>()) {
+      return (data != null
+              ? _iyajy5op.CalendarInvitationOccurrenceApplyReceipt.fromJson(
+                  data,
+                )
+              : null)
+          as T;
+    }
+    if (t ==
+        _is.getType<_ioottw62.CalendarInvitationOccurrenceApplyRequest?>()) {
+      return (data != null
+              ? _ioottw62.CalendarInvitationOccurrenceApplyRequest.fromJson(
+                  data,
+                )
               : null)
           as T;
     }
@@ -8247,6 +8401,14 @@ class Protocol extends _is.DatabaseSerializationManager {
         'CalendarInvitationApplyRequest',
       _iwcng7rp.CalendarInvitationDocument => 'CalendarInvitationDocument',
       _ibnm4ujx.CalendarInvitationLinkRecord => 'CalendarInvitationLinkRecord',
+      _i48y6d6c.CalendarInvitationOccurrenceApplicationRecord =>
+        'CalendarInvitationOccurrenceApplicationRecord',
+      _i15b7t0e.CalendarInvitationOccurrenceApplicationView =>
+        'CalendarInvitationOccurrenceApplicationView',
+      _iyajy5op.CalendarInvitationOccurrenceApplyReceipt =>
+        'CalendarInvitationOccurrenceApplyReceipt',
+      _ioottw62.CalendarInvitationOccurrenceApplyRequest =>
+        'CalendarInvitationOccurrenceApplyRequest',
       _i98zwsq8.CalendarInvitationOutcome => 'CalendarInvitationOutcome',
       _iy372k0z.CalendarInvitationReceipt => 'CalendarInvitationReceipt',
       _i1bc5dpy.CalendarInvitationReceiptRecord =>
@@ -8723,6 +8885,14 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'CalendarInvitationDocument';
       case _ibnm4ujx.CalendarInvitationLinkRecord():
         return 'CalendarInvitationLinkRecord';
+      case _i48y6d6c.CalendarInvitationOccurrenceApplicationRecord():
+        return 'CalendarInvitationOccurrenceApplicationRecord';
+      case _i15b7t0e.CalendarInvitationOccurrenceApplicationView():
+        return 'CalendarInvitationOccurrenceApplicationView';
+      case _iyajy5op.CalendarInvitationOccurrenceApplyReceipt():
+        return 'CalendarInvitationOccurrenceApplyReceipt';
+      case _ioottw62.CalendarInvitationOccurrenceApplyRequest():
+        return 'CalendarInvitationOccurrenceApplyRequest';
       case _i98zwsq8.CalendarInvitationOutcome():
         return 'CalendarInvitationOutcome';
       case _iy372k0z.CalendarInvitationReceipt():
@@ -9499,6 +9669,26 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (dataClassName == 'CalendarInvitationLinkRecord') {
       return deserialize<_ibnm4ujx.CalendarInvitationLinkRecord>(data['data']);
     }
+    if (dataClassName == 'CalendarInvitationOccurrenceApplicationRecord') {
+      return deserialize<
+        _i48y6d6c.CalendarInvitationOccurrenceApplicationRecord
+      >(data['data']);
+    }
+    if (dataClassName == 'CalendarInvitationOccurrenceApplicationView') {
+      return deserialize<_i15b7t0e.CalendarInvitationOccurrenceApplicationView>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarInvitationOccurrenceApplyReceipt') {
+      return deserialize<_iyajy5op.CalendarInvitationOccurrenceApplyReceipt>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'CalendarInvitationOccurrenceApplyRequest') {
+      return deserialize<_ioottw62.CalendarInvitationOccurrenceApplyRequest>(
+        data['data'],
+      );
+    }
     if (dataClassName == 'CalendarInvitationOutcome') {
       return deserialize<_i98zwsq8.CalendarInvitationOutcome>(data['data']);
     }
@@ -10051,6 +10241,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return _i29jhvb3.CalendarInvitationApplicationRecord.t;
       case _ibnm4ujx.CalendarInvitationLinkRecord:
         return _ibnm4ujx.CalendarInvitationLinkRecord.t;
+      case _i48y6d6c.CalendarInvitationOccurrenceApplicationRecord:
+        return _i48y6d6c.CalendarInvitationOccurrenceApplicationRecord.t;
       case _i1bc5dpy.CalendarInvitationReceiptRecord:
         return _i1bc5dpy.CalendarInvitationReceiptRecord.t;
       case _igigle43.CalendarInvitationRecord:

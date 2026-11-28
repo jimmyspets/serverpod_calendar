@@ -60,7 +60,15 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       where: (t) => t.linkId.equals(link.id!),
       transaction: tx,
     );
-    final baseline = event.data.importBaseline!;
+    final occurrence = await _occRow(link.id!, tx);
+    final occurrenceState = occurrence == null
+        ? null
+        : _occDecode(link, event, occurrence, row);
+    final baseline = occurrenceState == null
+        ? event.data.importBaseline!
+        : CalendarEventImportBaseline.fromJson(
+            occurrenceState['masterBaseline'],
+          );
     final decoded = jsonDecode(baseline.canonicalValue) as Map<String, dynamic>;
     final protocol = decoded['protocol'] as Map<String, dynamic>;
     final version = protocol['version'] as Map<String, dynamic>;
@@ -131,26 +139,35 @@ extension CalendarInvitationApplicationOperations on CalendarService {
     appliedAt: r.appliedAt,
   );
 
-  CalendarInvitationApplicationState _invApplicationState(
+  Future<CalendarInvitationApplicationState> _invApplicationState(
     CalendarInvitationLinkRecord link,
     _Event event,
     CalendarInvitationApplicationRecord? r,
-  ) => CalendarInvitationApplicationState(
-    kind: r?.kind ?? CalendarInvitationSourceKind.request,
-    linkId: link.id!,
-    revision: r?.revision ?? 0,
-    invitationId: r?.invitationId ?? link.invitationId,
-    sourceId: r?.sourceId ?? link.sourceId,
-    digest: r?.digest ?? link.sourceDigest,
-    sequence: r == null ? link.sequence : r.sequence,
-    stamp: r?.stamp ?? link.stamp,
-    baselineDigest:
-        r?.baselineDigest ?? _invBaselineDigest(event.data.importBaseline!),
-    eventRevision: r?.eventRevision ?? link.eventRevision,
-    invitationRevision: r?.invitationRevision ?? link.invitationRevision,
-    appliedAt: r?.appliedAt ?? link.adoptedAt,
-    latestResult: r == null ? null : _invApplyReceipt(link, r),
-  );
+    Transaction tx,
+  ) async {
+    final occurrence = await _occRow(link.id!, tx);
+    final state = occurrence == null
+        ? null
+        : _occDecode(link, event, occurrence, r);
+    final baseline = state == null
+        ? event.data.importBaseline!
+        : CalendarEventImportBaseline.fromJson(state['masterBaseline']);
+    return CalendarInvitationApplicationState(
+      kind: r?.kind ?? CalendarInvitationSourceKind.request,
+      linkId: link.id!,
+      revision: r?.revision ?? 0,
+      invitationId: r?.invitationId ?? link.invitationId,
+      sourceId: r?.sourceId ?? link.sourceId,
+      digest: r?.digest ?? link.sourceDigest,
+      sequence: r == null ? link.sequence : r.sequence,
+      stamp: r?.stamp ?? link.stamp,
+      baselineDigest: r?.baselineDigest ?? _invBaselineDigest(baseline),
+      eventRevision: r?.eventRevision ?? link.eventRevision,
+      invitationRevision: r?.invitationRevision ?? link.invitationRevision,
+      appliedAt: r?.appliedAt ?? link.adoptedAt,
+      latestResult: r == null ? null : _invApplyReceipt(link, r),
+    );
+  }
 
   Future<void> _invApplicationHost(
     CalendarHostContext actor,
@@ -363,10 +380,11 @@ extension CalendarInvitationApplicationOperations on CalendarService {
     final link = await _invFindLink(id, entry, recipient, tx);
     if (link == null) throw _failure(CalendarFailureCode.accessDenied);
     final event = await _invLinkedEvent(link, actor, tx);
-    final accepted = _invApplicationState(
+    final accepted = await _invApplicationState(
       link,
       event,
       await _invCheckpoint(link, event, tx),
+      tx,
     );
     await _invApplicationNative(
       actor,
@@ -375,6 +393,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       CalendarAuthorizationPhase.read,
     );
     final dirty = _invLocalChanges(event);
+    final compositionBlocked = await _occRow(link.id!, tx) != null;
     CalendarInvitationSourceRecord? source;
     IcalendarSchedulingMessage? message;
     CalendarEventImportMember? incoming;
@@ -435,7 +454,9 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       incomingSourceText: entry?.currentSourceId == null
           ? null
           : source?.normalizedSource,
+      occurrenceCompositionBlocked: compositionBlocked,
       canApplyCancellation:
+          !compositionBlocked &&
           entry?.currentSourceId != null &&
           message?.method == IcalendarSchedulingMethod.cancel &&
           entry!.dismissedAt == null &&
@@ -450,6 +471,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
           (accepted.kind == CalendarInvitationSourceKind.meetingCancellation ||
               (source.sequence ?? 0) > (accepted.sequence ?? 0)),
       canApply:
+          !compositionBlocked &&
           incoming != null &&
           entry!.dismissedAt == null &&
           !dirty &&
@@ -572,7 +594,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       final event = await _invLinkedEvent(link, actor, tx),
           before = event.snapshot;
       final checkpoint = await _invCheckpoint(link, event, tx),
-          accepted = _invApplicationState(link, event, checkpoint);
+          accepted = await _invApplicationState(link, event, checkpoint, tx);
       await _invApplicationNative(
         actor,
         event,
@@ -640,6 +662,9 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         accepted: accepted,
         input: input,
       );
+      if (await _occRow(link.id!, tx) != null) {
+        throw _failure(CalendarFailureCode.dependencyConflict);
+      }
       if (entry == null ||
           entry.revision != input.expectedInvitationRevision ||
           entry.currentSourceId != input.sourceId ||

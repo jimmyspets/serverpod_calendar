@@ -511,4 +511,6 @@ The maintainer confirmed a clean entire linked series for future explicit instan
 
 ADR 0150 pure projection implementation and its bounded source/canonical distinctions are documented in [the guide](instance-invitation-projection.md). FR-20/23 durable instance application and replies remain incomplete; this helper neither authorizes nor writes.
 
-Proposed [ADR 0151](adr/0151-explicit-single-instance-invitation-application.md) profiles the next FR-20/23 durable instance-application increment. Clean entire-series protection is confirmed; one-table acceptance/retention, version/retry/API rules and temporary master-composition guards await review. No remaining application, composition, instance reply or RANGE requirement is marked complete by this proposal.
+Accepted [ADR 0151](adr/0151-explicit-single-instance-invitation-application.md) profiles the next FR-20/23 durable instance-application increment. Clean entire-series protection is confirmed; one-table acceptance/retention, version/retry/API rules and the temporary master-composition guard are approved and implemented in the scoped batch. Master composition, instance reply and RANGE requirements remain incomplete.
+
+The scoped [ADR 0151 implementation](instance-invitation-application.md) now supports explicit clean-series occurrence update/cancellation application and later explicit reopening. Master composition, instance responses and RANGE remain incomplete FR-20/23 work. Its accepted table/quotas/retention are implemented; actual broad validation is recorded independently.
