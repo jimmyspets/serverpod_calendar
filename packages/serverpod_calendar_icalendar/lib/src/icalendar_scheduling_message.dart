@@ -2,13 +2,30 @@ part of 'icalendar_event_calendar.dart';
 
 enum IcalendarSchedulingMethod { publish, request, reply, cancel }
 
-/// A validated, untrusted message. No authority or reconciliation is implied.
-/// Optional source values remain absent, including timing in REPLY/CANCEL.
+/// One UID's untrusted scheduling envelope and independently versioned components.
+/// Parsing establishes neither stored membership nor permission to reconcile.
 final class IcalendarSchedulingMessage {
-  IcalendarSchedulingMessage._({
+  IcalendarSchedulingMessage._(
+    this.source,
+    this.productId,
+    this.method,
+    this.uid,
+    Iterable<IcalendarSchedulingEvent> events,
+    Map<String, IcalendarValidatedTimeZone> timeZones,
+  ) : events = List.unmodifiable(events),
+      timeZones = Map.unmodifiable(timeZones);
+  final IcalendarSyntaxDocument source;
+  final String productId, uid;
+  final IcalendarSchedulingMethod method;
+  final List<IcalendarSchedulingEvent> events;
+  final Map<String, IcalendarValidatedTimeZone> timeZones;
+}
+
+/// Untrusted component claims. No authority or reconciliation is implied.
+/// Optional source values remain absent, including timing in REPLY/CANCEL.
+final class IcalendarSchedulingEvent {
+  IcalendarSchedulingEvent._({
     required this.source,
-    required this.productId,
-    required this.method,
     required this.uid,
     required this.stamp,
     required this.participants,
@@ -16,7 +33,6 @@ final class IcalendarSchedulingMessage {
     required this.references,
     required Iterable<IcalendarSchedulingRequestStatus> requestStatuses,
     required Iterable<IcalendarSchedulingResourceGroup> resources,
-    required Map<String, IcalendarValidatedTimeZone> timeZones,
     this.sequence,
     this.created,
     this.lastModified,
@@ -34,13 +50,21 @@ final class IcalendarSchedulingMessage {
     this.transparency,
     this.priority,
     this.geographicPosition,
-  }) : timeZones = Map.unmodifiable(timeZones),
-       requestStatuses = List.unmodifiable(requestStatuses),
+    this.recurrence,
+    this.originalDate,
+    this.originalTime,
+    this.isThisAndFuture = false,
+  }) : requestStatuses = List.unmodifiable(requestStatuses),
        resources = List.unmodifiable(resources);
 
-  final IcalendarSyntaxDocument source;
-  final String productId, uid;
-  final IcalendarSchedulingMethod method;
+  final IcalendarSyntaxComponent source;
+  final String uid;
+  final IcalendarEventRecurrence? recurrence;
+  final CalendarDate? originalDate;
+  final TimedValue? originalTime;
+  final bool isThisAndFuture;
+  Object? get originalStart => originalDate ?? originalTime;
+  bool get isOverride => originalStart != null;
   final DateTime stamp;
   final int? sequence;
   final DateTime? created, lastModified;
@@ -62,7 +86,6 @@ final class IcalendarSchedulingMessage {
   final List<IcalendarSchedulingResourceGroup> resources;
   final int? priority;
   final IcalendarSchedulingGeographicPosition? geographicPosition;
-  final Map<String, IcalendarValidatedTimeZone> timeZones;
 }
 
 IcalendarSchedulingMessage parseIcalendarSchedulingMessage(
@@ -75,7 +98,7 @@ IcalendarSchedulingMessage parseIcalendarSchedulingMessage(
   limits: limits,
 );
 
-/// One non-recurring VEVENT; deliberately separate from ordinary import.
+/// One source UID; recurring and detached components are distinct from import.
 IcalendarSchedulingMessage validateIcalendarSchedulingMessage(
   IcalendarSyntaxDocument source, {
   IcalendarSyntaxLimits syntaxLimits = const IcalendarSyntaxLimits(),
@@ -102,7 +125,9 @@ IcalendarSchedulingMessage validateIcalendarSchedulingMessage(
       componentFail(IcalendarComponentError.invalidValue);
     }
     final producer = componentText(requiredProperty(envelope, 'PRODID'));
-    if (producer.isEmpty) componentFail(IcalendarComponentError.invalidValue);
+    if (producer.isEmpty) {
+      componentFail(IcalendarComponentError.invalidValue);
+    }
     final scale = envelope['CALSCALE']?.single;
     if (scale != null) {
       componentParameters(scale, {});
@@ -121,7 +146,7 @@ IcalendarSchedulingMessage validateIcalendarSchedulingMessage(
     };
     final budget = ComponentBudget(limits);
     final zones = <String, IcalendarValidatedTimeZone>{};
-    IcalendarSyntaxComponent? event;
+    final rawEvents = <IcalendarSyntaxComponent>[];
     for (final c in calendar.entries.whereType<IcalendarSyntaxComponent>()) {
       if (c.canonicalName == 'VTIMEZONE') {
         // RFC 5546's REPLY table additionally restricts VTIMEZONE to at most one.
@@ -129,219 +154,342 @@ IcalendarSchedulingMessage validateIcalendarSchedulingMessage(
             method == IcalendarSchedulingMethod.reply && zones.isNotEmpty) {
           componentFail(IcalendarComponentError.limitExceeded);
         }
+        // RFC 5546 common restrictions, including verified erratum 3932,
+        // forbid mixing explicit and rule onsets within one observance.
+        // Ordinary RFC 5545 source adaptation intentionally keeps its profile.
+        for (final observance
+            in c.entries.whereType<IcalendarSyntaxComponent>()) {
+          final names = observance.entries
+              .whereType<IcalendarSyntaxProperty>()
+              .map((p) => p.canonicalName)
+              .toSet();
+          if (names.contains('RRULE') && names.contains('RDATE')) {
+            componentFail(IcalendarComponentError.invalidValue);
+          }
+        }
         final zone = validateComponentTimeZone(c, budget);
         if (zones.containsKey(zone.zoneId)) {
           componentFail(IcalendarComponentError.duplicate);
         }
         zones[zone.zoneId] = zone;
       } else if (c.canonicalName == 'VEVENT') {
-        if (event != null) {
-          componentFail(IcalendarComponentError.unsupportedComponent);
+        if (rawEvents.length >= limits.maxEvents) {
+          componentFail(IcalendarComponentError.limitExceeded);
         }
-        event = c;
+        rawEvents.add(c);
       } else {
         componentFail(IcalendarComponentError.unsupportedComponent);
       }
     }
-    if (event == null) componentFail(IcalendarComponentError.missing);
-    if (event.entries.any((e) => e is IcalendarSyntaxComponent)) {
-      componentFail(IcalendarComponentError.unsupportedComponent);
-    }
-    final p = componentProperties(
-      event,
-      {
-        'UID',
-        'DTSTAMP',
-        'DTSTART',
-        'DTEND',
-        'DURATION',
-        'SUMMARY',
-        'DESCRIPTION',
-        'LOCATION',
-        'STATUS',
-        'TRANSP',
-        'CREATED',
-        'LAST-MODIFIED',
-        'SEQUENCE',
-        'ORGANIZER',
-        'ATTENDEE',
-        'RELATED-TO',
-        'ATTACH',
-        'PRIORITY',
-        'GEO',
-        'RESOURCES',
-        if (method == IcalendarSchedulingMethod.reply) 'REQUEST-STATUS',
-        ..._eventMetadataProperties,
-      },
-      repeated: {
-        'ATTENDEE',
-        'RELATED-TO',
-        'ATTACH',
-        'RESOURCES',
-        if (method == IcalendarSchedulingMethod.reply) 'REQUEST-STATUS',
-        ..._eventRepeatedMetadata,
-      },
-    );
-    final uid = componentText(requiredProperty(p, 'UID'));
-    if (uid.isEmpty) componentFail(IcalendarComponentError.invalidValue);
-    final stamp = componentUtc(requiredProperty(p, 'DTSTAMP'));
-    requiredProperty(p, 'ORGANIZER');
-    final participants = _eventParticipants(event, budget, isOverride: false);
-    final count = participants.attendees.length;
-    switch (method) {
-      case IcalendarSchedulingMethod.publish:
-        if (count != 0) {
-          componentFail(IcalendarComponentError.unsupportedProperty);
-        }
-        if ((p['CONTACT']?.length ?? 0) > 1) {
-          componentFail(IcalendarComponentError.duplicate);
-        }
-      case IcalendarSchedulingMethod.request:
-        if (count == 0) componentFail(IcalendarComponentError.missing);
-      case IcalendarSchedulingMethod.reply:
-        if (count != 1) componentFail(IcalendarComponentError.invalidValue);
-        // Delegated responses require a separately profiled multi-attendee
-        // workflow (RFC 5546 3.2.2.3), not ordinary one-attendee REPLY handling.
-        if (participants.attendees.single.participationStatus?.toUpperCase() ==
-            'DELEGATED') {
-          componentFail(IcalendarComponentError.unsupportedParameter);
-        }
-      case IcalendarSchedulingMethod.cancel:
-        requiredProperty(p, 'SEQUENCE');
-    }
-    if (method == IcalendarSchedulingMethod.publish ||
-        method == IcalendarSchedulingMethod.request) {
-      requiredProperty(p, 'DTSTART');
-      requiredProperty(p, 'SUMMARY');
-    }
-    String? token(String name) {
-      final property = p[name]?.single;
-      if (property == null) return null;
-      componentParameters(property, {});
-      return componentToken(property.value);
-    }
-
-    final status = switch (token('STATUS')) {
-      null => null,
-      'TENTATIVE' => IcalendarEventStatus.tentative,
-      'CONFIRMED' => IcalendarEventStatus.confirmed,
-      'CANCELLED' => IcalendarEventStatus.cancelled,
-      _ => componentFail(IcalendarComponentError.invalidValue),
-    };
-    if (method == IcalendarSchedulingMethod.request &&
-            status == IcalendarEventStatus.cancelled ||
-        method == IcalendarSchedulingMethod.cancel &&
-            status != null &&
-            status != IcalendarEventStatus.cancelled) {
-      componentFail(IcalendarComponentError.invalidValue);
-    }
-    // Without STATUS:CANCELLED this is attendee removal, not whole cancellation.
-    if (method == IcalendarSchedulingMethod.cancel &&
-        status == null &&
-        count == 0) {
+    if (rawEvents.isEmpty) {
       componentFail(IcalendarComponentError.missing);
     }
-    final transparency = switch (token('TRANSP')) {
-      null => null,
-      'OPAQUE' => IcalendarEventTransparency.opaque,
-      'TRANSPARENT' => IcalendarEventTransparency.transparent,
-      _ => componentFail(IcalendarComponentError.invalidValue),
-    };
-    final start = p['DTSTART'] == null
-        ? null
-        : _temporal(p['DTSTART']!.single, zones);
-    final end = p['DTEND'] == null
-        ? null
-        : _temporal(p['DTEND']!.single, zones, exclusiveEnd: true);
-    CalendarDuration? duration;
-    if (p['DURATION'] != null) {
-      final property = p['DURATION']!.single;
-      componentParameters(property, {});
-      duration = parseIcalendarDuration(property.value);
-      if (duration.sign < 0 || duration.isZero) {
+    final events = [
+      for (final raw in rawEvents) _schedulingEvent(raw, method, zones, budget),
+    ];
+    final uid = events.first.uid;
+    final identities = <(Object?, bool)>{};
+    var overrides = 0;
+    IcalendarSchedulingEvent? master;
+    for (final event in events) {
+      if (event.uid != uid) {
         componentFail(IcalendarComponentError.invalidValue);
       }
-      if (start == null) componentFail(IcalendarComponentError.missing);
-      if (start is CalendarDate &&
-          !RegExp(r'^\+?P[0-9]+[DW]$').hasMatch(property.value)) {
-        componentFail(IcalendarComponentError.invalidValue);
+      if (!identities.add((event.originalStart, event.isThisAndFuture))) {
+        componentFail(IcalendarComponentError.duplicate);
+      }
+      if (event.isOverride) {
+        if (++overrides > limits.maxOverridesPerEvent) {
+          componentFail(IcalendarComponentError.limitExceeded);
+        }
+      } else {
+        master = event;
       }
     }
-    if (end != null && duration != null) {
-      componentFail(IcalendarComponentError.invalidValue);
-    }
-    DateEventSpan? dateSpan;
-    TimedEventSpan? timedSpan;
-    if (start is CalendarDate) {
-      if (end != null && end is! CalendarDate) {
-        componentFail(IcalendarComponentError.invalidValue);
+    final anchor = master?.startDate ?? master?.startTime;
+    if (anchor != null) {
+      for (final event in events.where((e) => e.isOverride)) {
+        final original = event.originalStart;
+        if (anchor is CalendarDate && original is! CalendarDate ||
+            anchor is TimedValue &&
+                (original is! TimedValue || !anchor.sameProfile(original))) {
+          componentFail(IcalendarComponentError.invalidValue);
+        }
       }
-      dateSpan = DateEventSpan(
-        start: start,
-        end: end as CalendarDate?,
-        duration: duration,
-      );
-    } else if (start is TimedValue) {
-      if (end != null && end is! TimedValue) {
-        componentFail(IcalendarComponentError.invalidValue);
-      }
-      timedSpan = TimedEventSpan(
-        start: start,
-        end: end as TimedValue?,
-        duration: duration,
-      );
     }
-    IcalendarEventText? text(String name, int limit) {
-      final value = _componentTextValue(p[name]?.single, limit);
-      if (value != null) {
-        budget.eventMetadata(
-          value.value.runes.length +
-              (value.language?.runes.length ?? 0) +
-              (value.alternativeUri?.runes.length ?? 0),
-        );
-      }
-      return value;
-    }
-
     return IcalendarSchedulingMessage._(
-      source: source,
-      productId: producer,
-      method: method,
-      uid: uid,
-      stamp: stamp,
-      participants: participants,
-      metadata: _eventMetadata(event, budget),
-      references: _eventReferences(event, budget),
-      requestStatuses: _schedulingRequestStatuses(
-        p['REQUEST-STATUS'] ?? [],
-        budget,
-      ),
-      resources: _schedulingResources(p['RESOURCES'] ?? [], budget),
-      priority: _componentInteger(p['PRIORITY']?.single, maximum: 9),
-      geographicPosition: _schedulingGeographicPosition(
-        p['GEO']?.single,
-        budget,
-      ),
-      timeZones: zones,
-      sequence: _componentInteger(p['SEQUENCE']?.single),
-      created: p['CREATED'] == null ? null : componentUtc(p['CREATED']!.single),
-      lastModified: p['LAST-MODIFIED'] == null
-          ? null
-          : componentUtc(p['LAST-MODIFIED']!.single),
-      startDate: start is CalendarDate ? start : null,
-      startTime: start is TimedValue ? start : null,
-      endDate: end is CalendarDate ? end : null,
-      endTime: end is TimedValue ? end : null,
-      duration: duration,
-      dateSpan: dateSpan,
-      timedSpan: timedSpan,
-      summary: text('SUMMARY', 4096),
-      description: text('DESCRIPTION', 16384),
-      location: text('LOCATION', 4096),
-      status: status,
-      transparency: transparency,
+      source,
+      producer,
+      method,
+      uid,
+      events,
+      zones,
     );
   });
+}
+
+IcalendarSchedulingEvent _schedulingEvent(
+  IcalendarSyntaxComponent event,
+  IcalendarSchedulingMethod method,
+  Map<String, IcalendarValidatedTimeZone> zones,
+  ComponentBudget budget,
+) {
+  if (event.entries.any((e) => e is IcalendarSyntaxComponent)) {
+    componentFail(IcalendarComponentError.unsupportedComponent);
+  }
+  final p = componentProperties(
+    event,
+    {
+      'UID',
+      'DTSTAMP',
+      'DTSTART',
+      'RRULE',
+      'RDATE',
+      'EXDATE',
+      'RECURRENCE-ID',
+      'DTEND',
+      'DURATION',
+      'SUMMARY',
+      'DESCRIPTION',
+      'LOCATION',
+      'STATUS',
+      'TRANSP',
+      'CREATED',
+      'LAST-MODIFIED',
+      'SEQUENCE',
+      'ORGANIZER',
+      'ATTENDEE',
+      'RELATED-TO',
+      'ATTACH',
+      'PRIORITY',
+      'GEO',
+      'RESOURCES',
+      if (method == IcalendarSchedulingMethod.reply) 'REQUEST-STATUS',
+      ..._eventMetadataProperties,
+    },
+    repeated: {
+      'RDATE',
+      'EXDATE',
+      'ATTENDEE',
+      'RELATED-TO',
+      'ATTACH',
+      'RESOURCES',
+      if (method == IcalendarSchedulingMethod.reply) 'REQUEST-STATUS',
+      ..._eventRepeatedMetadata,
+    },
+  );
+  final uid = componentText(requiredProperty(p, 'UID'));
+  if (uid.isEmpty) {
+    componentFail(IcalendarComponentError.invalidValue);
+  }
+  final stamp = componentUtc(requiredProperty(p, 'DTSTAMP'));
+  requiredProperty(p, 'ORGANIZER');
+  final participants = _eventParticipants(event, budget, isOverride: false);
+  final count = participants.attendees.length;
+  switch (method) {
+    case IcalendarSchedulingMethod.publish:
+      if (count != 0) {
+        componentFail(IcalendarComponentError.unsupportedProperty);
+      }
+      if ((p['CONTACT']?.length ?? 0) > 1) {
+        componentFail(IcalendarComponentError.duplicate);
+      }
+    case IcalendarSchedulingMethod.request:
+      if (count == 0) {
+        componentFail(IcalendarComponentError.missing);
+      }
+    case IcalendarSchedulingMethod.reply:
+      if (count != 1) {
+        componentFail(IcalendarComponentError.invalidValue);
+      }
+      // Delegated responses require a separately profiled multi-attendee
+      // workflow (RFC 5546 3.2.2.3), not ordinary one-attendee REPLY handling.
+      if (participants.attendees.single.participationStatus?.toUpperCase() ==
+          'DELEGATED') {
+        componentFail(IcalendarComponentError.unsupportedParameter);
+      }
+    case IcalendarSchedulingMethod.cancel:
+      requiredProperty(p, 'SEQUENCE');
+  }
+  if (method == IcalendarSchedulingMethod.publish ||
+      method == IcalendarSchedulingMethod.request) {
+    requiredProperty(p, 'DTSTART');
+    requiredProperty(p, 'SUMMARY');
+  }
+  String? token(String name) {
+    final property = p[name]?.single;
+    if (property == null) return null;
+    componentParameters(property, {});
+    return componentToken(property.value);
+  }
+
+  final status = switch (token('STATUS')) {
+    null => null,
+    'TENTATIVE' => IcalendarEventStatus.tentative,
+    'CONFIRMED' => IcalendarEventStatus.confirmed,
+    'CANCELLED' => IcalendarEventStatus.cancelled,
+    _ => componentFail(IcalendarComponentError.invalidValue),
+  };
+  if (method == IcalendarSchedulingMethod.request &&
+          status == IcalendarEventStatus.cancelled ||
+      method == IcalendarSchedulingMethod.cancel &&
+          status != null &&
+          status != IcalendarEventStatus.cancelled) {
+    componentFail(IcalendarComponentError.invalidValue);
+  }
+  // Without STATUS:CANCELLED this is attendee removal, not whole cancellation.
+  if (method == IcalendarSchedulingMethod.cancel &&
+      status == null &&
+      count == 0) {
+    componentFail(IcalendarComponentError.missing);
+  }
+  final transparency = switch (token('TRANSP')) {
+    null => null,
+    'OPAQUE' => IcalendarEventTransparency.opaque,
+    'TRANSPARENT' => IcalendarEventTransparency.transparent,
+    _ => componentFail(IcalendarComponentError.invalidValue),
+  };
+  final start = p['DTSTART'] == null
+      ? null
+      : _temporal(p['DTSTART']!.single, zones);
+  final end = p['DTEND'] == null
+      ? null
+      : _temporal(p['DTEND']!.single, zones, exclusiveEnd: true);
+  CalendarDuration? duration;
+  if (p['DURATION'] != null) {
+    final property = p['DURATION']!.single;
+    componentParameters(property, {});
+    duration = parseIcalendarDuration(property.value);
+    if (duration.sign < 0 || duration.isZero) {
+      componentFail(IcalendarComponentError.invalidValue);
+    }
+    if (start == null) {
+      componentFail(IcalendarComponentError.missing);
+    }
+    if (start is CalendarDate &&
+        !RegExp(r'^\+?P[0-9]+[DW]$').hasMatch(property.value)) {
+      componentFail(IcalendarComponentError.invalidValue);
+    }
+  }
+  if (end != null && duration != null) {
+    componentFail(IcalendarComponentError.invalidValue);
+  }
+  Object? original;
+  var future = false;
+  final recurrenceId = p['RECURRENCE-ID']?.single;
+  if (recurrenceId != null) {
+    if (['RRULE', 'RDATE', 'EXDATE'].any(p.containsKey)) {
+      componentFail(IcalendarComponentError.unsupportedProperty);
+    }
+    final parameters = componentParameters(recurrenceId, {
+      'VALUE',
+      'TZID',
+      'RANGE',
+    });
+    if (parameters['RANGE'] != null) {
+      if (componentToken(parameters['RANGE']!) != 'THISANDFUTURE') {
+        componentFail(IcalendarComponentError.invalidValue);
+      }
+      future = true;
+    }
+    original = _temporal(
+      IcalendarSyntaxProperty(
+        recurrenceId.name,
+        recurrenceId.value,
+        parameters: recurrenceId.parameters.where(
+          (p) => p.canonicalName != 'RANGE',
+        ),
+      ),
+      zones,
+    );
+    if (start != null &&
+        (start is CalendarDate && original is! CalendarDate ||
+            start is TimedValue &&
+                (original is! TimedValue || !start.sameProfile(original)))) {
+      componentFail(IcalendarComponentError.invalidValue);
+    }
+  }
+  IcalendarEventRecurrence? recurrence;
+  if (['RRULE', 'RDATE', 'EXDATE'].any(p.containsKey)) {
+    if (start == null) {
+      componentFail(IcalendarComponentError.missing);
+    }
+    recurrence = componentEventRecurrence(
+      start,
+      p,
+      budget,
+      (property, end) => _temporal(property, zones, exclusiveEnd: end),
+    );
+  }
+  DateEventSpan? dateSpan;
+  TimedEventSpan? timedSpan;
+  if (start is CalendarDate) {
+    if (end != null && end is! CalendarDate) {
+      componentFail(IcalendarComponentError.invalidValue);
+    }
+    dateSpan = DateEventSpan(
+      start: start,
+      end: end as CalendarDate?,
+      duration: duration,
+    );
+  } else if (start is TimedValue) {
+    if (end != null && end is! TimedValue) {
+      componentFail(IcalendarComponentError.invalidValue);
+    }
+    timedSpan = TimedEventSpan(
+      start: start,
+      end: end as TimedValue?,
+      duration: duration,
+    );
+  }
+  IcalendarEventText? text(String name, int limit) {
+    final value = _componentTextValue(p[name]?.single, limit);
+    if (value != null) {
+      budget.eventMetadata(
+        value.value.runes.length +
+            (value.language?.runes.length ?? 0) +
+            (value.alternativeUri?.runes.length ?? 0),
+      );
+    }
+    return value;
+  }
+
+  return IcalendarSchedulingEvent._(
+    source: event,
+    recurrence: recurrence,
+    originalDate: original is CalendarDate ? original : null,
+    originalTime: original is TimedValue ? original : null,
+    isThisAndFuture: future,
+    uid: uid,
+    stamp: stamp,
+    participants: participants,
+    metadata: _eventMetadata(event, budget),
+    references: _eventReferences(event, budget),
+    requestStatuses: _schedulingRequestStatuses(
+      p['REQUEST-STATUS'] ?? [],
+      budget,
+    ),
+    resources: _schedulingResources(p['RESOURCES'] ?? [], budget),
+    priority: _componentInteger(p['PRIORITY']?.single, maximum: 9),
+    geographicPosition: _schedulingGeographicPosition(p['GEO']?.single, budget),
+    sequence: _componentInteger(p['SEQUENCE']?.single),
+    created: p['CREATED'] == null ? null : componentUtc(p['CREATED']!.single),
+    lastModified: p['LAST-MODIFIED'] == null
+        ? null
+        : componentUtc(p['LAST-MODIFIED']!.single),
+    startDate: start is CalendarDate ? start : null,
+    startTime: start is TimedValue ? start : null,
+    endDate: end is CalendarDate ? end : null,
+    endTime: end is TimedValue ? end : null,
+    duration: duration,
+    dateSpan: dateSpan,
+    timedSpan: timedSpan,
+    summary: text('SUMMARY', 4096),
+    description: text('DESCRIPTION', 16384),
+    location: text('LOCATION', 4096),
+    status: status,
+    transparency: transparency,
+  );
 }
 
 /// Re-emits only this validated source profile, preserving omissions and claims.
@@ -349,4 +497,7 @@ IcalendarSchedulingMessage validateIcalendarSchedulingMessage(
 Uint8List serializeIcalendarSchedulingMessage(
   IcalendarSchedulingMessage value, {
   IcalendarSyntaxLimits syntaxLimits = const IcalendarSyntaxLimits(),
-}) => serializeIcalendarSyntax(value.source, limits: syntaxLimits);
+}) => serializeIcalendarSyntax(
+  IcalendarSyntaxDocument(value.source.components.map(_outputComponent)),
+  limits: syntaxLimits,
+);
