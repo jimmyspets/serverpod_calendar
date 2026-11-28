@@ -27,3 +27,8 @@ The latest exact cancellation retry remains write-free after repeated master upd
 The master view's protected `hasAcceptedRangeCancellation` is independent of `occurrenceCompositionBlocked`: an eligible master update can preserve cancellation while being applicable. Incoming content remains the source master projection; the flag describes the retained mask separately. Flutter explains this distinction and preserves the same command across an uncertain response. An accepted cancelled master requires a separate reopening workflow, and ordinary native restoration never implicitly accepts source reopening.
 
 Existing active-cutoff export/feed/new organizer REQUEST rejection remains. HTTP checks must not return stale 304 or publish a lossy 200. No participation response, alarm activation or real mail follows. See [validation](scaffold-validation.md) and [development](development.md) for scoped synthetic evidence and remaining gates.
+
+
+## Proposed master lifecycle preserving the range cutoff
+
+[Proposed ADR 0162](adr/0162-master-lifecycle-with-accepted-range-cancellation.md) would add explicit whole-series CANCEL/reopening while retaining the original range cutoff, canonical exceptions and stable source receipts. It proposes v6 current-kind/composition bindings in existing JSON, a conservative whole-CANCEL floor including the accepted range source, and reuse of existing authority/view/API/retention boundaries. No SQL, new view field or cap expansion is proposed. Source restoration and new occurrence applications remain separate; concrete mechanics are unapproved and unimplemented.
