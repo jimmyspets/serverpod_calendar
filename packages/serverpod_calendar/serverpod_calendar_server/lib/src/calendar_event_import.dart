@@ -177,6 +177,7 @@ extension CalendarEventImportOperations on CalendarService {
           CalendarEventDataRecord(
             eventId: m.eventId,
             calendarId: input.calendarId,
+            origin: CalendarEventOrigin.imported,
             protocolUid: m.protocolUid,
             uidDigest: eventUidDigest(m.protocolUid),
             content: m.content,

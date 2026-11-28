@@ -71,6 +71,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_presentation_up
     as _i1sjay6c;
 import 'package:serverpod_calendar_server/src/generated/calendar_protocol_metadata_update_request.dart'
     as _i53ouodu;
+import 'package:serverpod_calendar_server/src/generated/calendar_scheduling_save_request.dart'
+    as _igziosqt;
 import 'package:serverpod_calendar_server/src/generated/calendar_settings_update_request.dart'
     as _i3f5mgyk;
 import 'package:serverpod_calendar_server/src/generated/calendar_subject_change_request.dart'
@@ -1020,6 +1022,48 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'calendarEvent',
       endpoint: endpoints['calendarEvent']!,
       methodConnectors: {
+        'saveAndNotify': _is.MethodConnector(
+          name: 'saveAndNotify',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_igziosqt.CalendarSchedulingSaveRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .saveAndNotify(
+                        session,
+                        params['request'],
+                      ),
+        ),
+        'schedulingStatus': _is.MethodConnector(
+          name: 'schedulingStatus',
+          params: {
+            'eventId': _is.ParameterDescription(
+              name: 'eventId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .schedulingStatus(
+                        session,
+                        params['eventId'],
+                      ),
+        ),
         'replaceFromImport': _is.MethodConnector(
           name: 'replaceFromImport',
           params: {

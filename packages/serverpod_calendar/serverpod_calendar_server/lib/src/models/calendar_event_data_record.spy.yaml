@@ -4,6 +4,7 @@ table: serverpod_calendar_event_data
 fields:
   eventId: UuidValue, relation(parent=serverpod_calendar_event)
   calendarId: UuidValue
+  origin: CalendarEventOrigin, default=unknown
   protocolUid: String
   uidDigest: String
   protocolState: CalendarEventProtocolState?

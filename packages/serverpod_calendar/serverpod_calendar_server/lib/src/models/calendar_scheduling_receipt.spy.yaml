@@ -1,0 +1,6 @@
+class: CalendarSchedulingReceipt
+immutable: true
+fields:
+  publicationId: UuidValue
+  eventRevision: int
+  unchanged: bool

@@ -8,6 +8,14 @@ import '../generated/protocol.dart';
 class CalendarEventEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
+  Future<CalendarSchedulingReceipt> saveAndNotify(
+    Session session,
+    CalendarSchedulingSaveRequest request,
+  ) => CalendarModule.service(session).saveAndNotify(request);
+  Future<CalendarSchedulingView> schedulingStatus(
+    Session session,
+    UuidValue eventId,
+  ) => CalendarModule.service(session).schedulingStatus(eventId);
   Future<CalendarEventReplaceResult> replaceFromImport(
     Session session,
     CalendarEventReplaceRequest request,

@@ -11,6 +11,7 @@ import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 import 'calendar_authorization.dart';
 import 'alarm_values.dart';
 import 'alarm_runtime.dart';
+import 'scheduling_runtime.dart';
 import 'alarm_work_store.dart';
 import 'generated/protocol.dart';
 import 'native_calendar_name.dart';
@@ -35,6 +36,8 @@ part 'calendar_alarm_adoption.dart';
 part 'calendar_alarm_actions.dart';
 part 'calendar_alarm_worker.dart';
 part 'calendar_events.dart';
+part 'calendar_scheduling.dart';
+part 'calendar_scheduling_worker.dart';
 part 'calendar_event_occurrence_content.dart';
 part 'calendar_tasks.dart';
 part 'calendar_task_occurrences.dart';
@@ -70,6 +73,7 @@ abstract final class CalendarModule {
     required CalendarHostPolicy policy,
     required CalendarModuleOptions options,
     CalendarAlarmRuntime? alarms,
+    CalendarSchedulingRuntime? scheduling,
     CalendarPublicationPolicy? publicationPolicy,
     List<CalendarDependencyProvider> dependencies = const [],
     List<CalendarAvailabilityExtensionRegistration> availabilityExtensions =
@@ -115,6 +119,13 @@ abstract final class CalendarModule {
         'Publication policy cannot supply required guarantee',
       );
     }
+    if (scheduling != null &&
+        options.requiredWriteGuarantee ==
+            CalendarAuthorizationGuarantee.coordinated &&
+        scheduling.host.guarantee !=
+            CalendarAuthorizationGuarantee.coordinated) {
+      throw ArgumentError('Scheduling host cannot supply required guarantee');
+    }
     final registry = <String, CalendarAvailabilityExtensionRegistration>{};
     if (availabilityExtensions.length > 32) {
       throw ArgumentError('Too many extension registrations');
@@ -134,7 +145,17 @@ abstract final class CalendarModule {
       Map.unmodifiable(registry),
       alarms,
       publicationPolicy,
+      scheduling,
     );
+  }
+
+  /// Trusted bounded scheduling worker; no client or fabricated login.
+  static Future<void> runSchedulingMaintenance(Session session) async {
+    final runtime = _installed[session.serverpod];
+    if (runtime?.scheduling == null) {
+      throw _failure(CalendarFailureCode.unavailable);
+    }
+    await _SchedulingWorker(CalendarService._(session, runtime!)).run();
   }
 
   /// Trusted server maintenance entry point; never a client endpoint.
@@ -248,9 +269,11 @@ final class _Runtime {
     this.availabilityExtensions,
     this.alarms,
     this.publicationPolicy,
+    this.scheduling,
   );
   final Map<String, CalendarAvailabilityExtensionRegistration>
   availabilityExtensions;
+  final CalendarSchedulingRuntime? scheduling;
   final CalendarAlarmRuntime? alarms;
   final CalendarPublicationPolicy? publicationPolicy;
   final CalendarHostPolicy policy;

@@ -21,3 +21,6 @@ Projects that depend on this module reference its types as `module:serverpod_cal
 This is the serverpod_calendar scaffold. Native calendar CRUD/association endpoints, host-policy enforcement and module migrations now exist under docs/adr/0049-first-calendar-crud-implementation.md. Other domain behavior and delivery semantics are pending; follow the root requirements and model review gates.
 
 Native description/RGB and scoped decoded NAME/DESCRIPTION/COLOR metadata extend this slice under root docs/adr/0050-calendar-presentation-and-protocol-text.md. Preserve separate permissions/groups and native/protocol values; immutable adapter validation is not wire parsing or feed support.
+
+
+ADR 0122's first non-recurring REQUEST workflow, four scheduling tables, origin enum, retention and worker defaults have explicit maintainer approval. The optional scheduling host/transport ports and trusted maintenance entry point are scoped in ../../docs/native-organizer-scheduling.md. Keep immutable publication bytes separate from local edits, reauthorize exact payload/recipients before dispatch and use database leases/fencing. Do not infer native origin from a missing import baseline. Real mail, recurring runtime, cancellation and inbound reconciliation remain separate requirements.

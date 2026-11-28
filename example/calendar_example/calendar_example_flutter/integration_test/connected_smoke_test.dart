@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'feed_journey.dart';
+import 'scheduling_journey.dart';
 
 import 'package:calendar_example_flutter/personal_alarm_screen.dart';
 import 'package:calendar_example_client/calendar_example_client.dart';
@@ -1286,6 +1287,7 @@ void main() {
     await _idle(tester);
     await _alarmAdoptionJourney(tester, client);
     await runFeedJourney(tester, client);
+    await runSchedulingJourney(tester, client);
     await _liveReminderJourney(tester, client);
     await tester.tap(find.byKey(const Key('sign-out')));
     await _waitFor(tester, find.byKey(const Key('sign-in')));

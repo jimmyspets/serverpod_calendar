@@ -1,0 +1,18 @@
+class: CalendarSchedulingAttemptRecord
+serverOnly: true
+table: serverpod_calendar_scheduling_attempt
+fields:
+  id: UuidValue?, defaultPersist=random
+  deliveryId: UuidValue, relation(parent=serverpod_calendar_scheduling_delivery)
+  attemptNumber: int
+  leaseToken: UuidValue
+  leaseFence: int
+  startedAt: DateTime
+  finishedAt: DateTime?
+  outcome: String
+  adapterReceipt: String?
+  resultCode: String?
+indexes:
+  calendar_scheduling_attempt_number_unique:
+    fields: deliveryId, attemptNumber
+    unique: true

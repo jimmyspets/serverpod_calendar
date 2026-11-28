@@ -152,6 +152,9 @@ extension CalendarEventReplacementOperations on CalendarService {
         baseRequests(),
         CalendarAuthorizationPhase.preliminaryWrite,
       );
+      for (final event in events) {
+        await _rejectSchedulingBinding(event.identity.id!, tx);
+      }
       if (parent.identity.revision != input.expectedRevision ||
           events.any(
             (e) =>

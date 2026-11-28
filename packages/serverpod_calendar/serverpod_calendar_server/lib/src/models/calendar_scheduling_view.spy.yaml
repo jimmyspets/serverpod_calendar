@@ -1,0 +1,11 @@
+class: CalendarSchedulingView
+immutable: true
+fields:
+  eventId: UuidValue
+  eventRevision: int
+  origin: CalendarEventOrigin
+  organizerAddress: String?
+  publicationId: UuidValue?
+  publishedAt: DateTime?
+  hasLocalChanges: bool
+  deliveries: List<CalendarSchedulingDeliveryView>

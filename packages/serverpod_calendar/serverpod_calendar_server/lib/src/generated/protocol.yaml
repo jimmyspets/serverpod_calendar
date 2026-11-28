@@ -39,6 +39,8 @@ calendar:
   - changeSubject:
   - delete:
 calendarEvent:
+  - saveAndNotify:
+  - schedulingStatus:
   - replaceFromImport:
   - exportEvents:
   - importEvents:

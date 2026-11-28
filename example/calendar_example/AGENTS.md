@@ -29,3 +29,6 @@ Flutter launches from calendar_example_flutter/lib/main.dart. Browser automation
 ## Reusable live notification increment, 2026-10-25
 
 [ADR 0114](../../docs/adr/0114-reusable-notification-delivery.md) approves the generic three-table storage/defaults and live-reminder profile. The [delivery guide](../../docs/reusable-notification-delivery.md) describes durable idempotent acceptance, fenced retry/publication, fresh authorized source projection and the example Redis/Flutter streaming path. This supersedes earlier unconnected-delivery/scaffold-only wording for this scoped increment; the full local batch checks passed, with actual evidence recorded in the validation guide. Imported alarms remain unarmed; provider delivery, adoption and the remaining first-release requirements stay separate.
+
+
+Under accepted ADR 0122, the example also installs the bounded non-recurring REQUEST organizer runtime and **Meeting invitations** editor. It derives organizer authority from the current demo user and approves synthetic `example.invalid` recipients only. Transport writes ignored fixtures and sends no real mail. Ordinary event edits do not send. Existing migrated events remain unknown-origin; never reset development storage or infer provenance to enable publication. See ../../docs/native-organizer-scheduling.md for the exact scope and future lifecycle restrictions.

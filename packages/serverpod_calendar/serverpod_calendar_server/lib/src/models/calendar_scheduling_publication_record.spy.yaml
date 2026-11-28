@@ -1,0 +1,35 @@
+class: CalendarSchedulingPublicationRecord
+serverOnly: true
+table: serverpod_calendar_scheduling_publication
+fields:
+  id: UuidValue?, defaultPersist=random
+  scopeKey: String
+  meetingId: UuidValue, relation(parent=serverpod_calendar_scheduling_meeting)
+  generation: int
+  method: String
+  protocolUid: String
+  sequence: int
+  stamp: DateTime
+  snapshot: String
+  projection: String
+  payload: String
+  payloadDigest: String
+  recipients: List<String>
+  commandId: UuidValue
+  actorId: String
+  requestDigest: String
+  expectedRevision: int
+  eventRevision: int
+  createdAt: DateTime
+  expiresAt: DateTime
+  completedAt: DateTime?
+  outcome: String
+indexes:
+  calendar_scheduling_publication_generation_unique:
+    fields: meetingId, generation
+    unique: true
+  calendar_scheduling_publication_command_unique:
+    fields: scopeKey, commandId
+    unique: true
+  calendar_scheduling_publication_cleanup_idx:
+    fields: completedAt

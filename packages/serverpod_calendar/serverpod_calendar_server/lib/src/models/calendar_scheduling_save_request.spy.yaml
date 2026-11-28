@@ -1,0 +1,8 @@
+class: CalendarSchedulingSaveRequest
+immutable: true
+fields:
+  eventId: UuidValue
+  expectedRevision: int
+  content: CalendarEventContent
+  recipients: List<String>
+  commandId: UuidValue
