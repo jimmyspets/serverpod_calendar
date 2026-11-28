@@ -155,3 +155,8 @@ flowchart TD
 ```
 
 The example labels restoration as using published values, retains uncertain commands for exact retry, shows delivery conflicts and preserves newer drafts. The connected journey restores a historical excluded original and a current original, verifies that the private exclusion remains, then explicitly repairs it before complete publication. Tests establish scoped module behavior through synthetic transport, not external-client or real-mail interoperability. See [validation](scaffold-validation.md) for actual commands/results.
+
+
+## Proposed retained-cancellation reopening
+
+The maintainer confirmed preserving individual cancellations on whole-series reopening. ADR 0130 proposes a separate published-value action, publication-only EXDATE masks, complete master-updating restoration and bounded v6 state. It preserves newer native drafts and uses existing tables. None of these mechanics is approved or implemented; cancelled-master restoration/reopening guards remain. See [ADR 0130](adr/0130-preserved-cancellations-reopening.md).
