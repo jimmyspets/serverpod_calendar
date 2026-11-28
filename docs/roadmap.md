@@ -490,3 +490,12 @@ The bounded query implementation is now present; validation is recorded separate
 - [ ] Implement separately reviewed calendar adoption, existing-meeting updates, participation responses, recurrence/CANCEL correlation and remaining mail/release requirements.
 
 The approved review queue is calendar scheduling state, separate from the reusable notification module; it does not add a persistent notification inbox. The scoped implementation now exists; validation is recorded separately.
+
+
+## Explicit invitation calendar addition
+
+- [x] Confirm one linked event in one explicitly chosen calendar per recipient invitation, with stable retries.
+- [ ] Review [ADR 0138](adr/0138-explicit-single-event-invitation-adoption.md): binding storage, atomic adoption, authority, retention and deletion/retry boundaries.
+- [ ] Implement and validate the separately approved batch before one implementation commit.
+
+The maintainer confirmed one linked event in one explicitly chosen calendar per recipient invitation, with stable retries. [ADR 0138](adr/0138-explicit-single-event-invitation-adoption.md) proposes the concrete explicit Add to calendar batch: one private immutable binding table, atomic event/link/review state, independent source/create/import/link authority and retained retry checks. These mechanics await model/ADR approval and are not implemented. It creates a local imported-origin copy without a participation reply or organizer authority; existing-meeting reconciliation remains separate.
