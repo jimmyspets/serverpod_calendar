@@ -109,6 +109,9 @@ extension CalendarSchedulingRangeOperations on CalendarService {
       final basis = _schedulingReadCheckpoint(
         previous.basisRecord ?? _schedulingRangeCurrent(last),
       );
+      ExceptionalRangeProof? exceptionalProof = restore
+          ? previous.exceptionalRangeProof
+          : null;
       if (retry == null) {
         _eventRevision(e, expectedRevision);
         if (!_schedulingRecurring(previous.outgoing.content) ||
@@ -130,13 +133,42 @@ extension CalendarSchedulingRangeOperations on CalendarService {
             (range == null || !_replySamePoint(range.anchor, point))) {
           throw _failure(CalendarFailureCode.validation);
         }
+        final unmasked = previous.individuals.isEmpty
+            ? previous.outgoing
+            : _schedulingUnmaskedOutgoing(previous, previous.ledger);
         if (!restore &&
-            previous.individuals.any((s) => _replySamePoint(s.point, point))) {
-          throw _failure(CalendarFailureCode.validation);
+            (previous.individuals.any((s) => _replySamePoint(s.point, point)) ||
+                previous.projectionOriginals.any(
+                  (s) =>
+                      !s.isThisAndFuture &&
+                      _replySamePoint(s.originalStart, point),
+                ) ||
+                (unmasked.timingOverrides?.singles.any(
+                      (s) => _replySamePoint(s.originalStart, point),
+                    ) ??
+                    false))) {
+          final source = _schedulingValue(
+            () => _schedulingPayload(
+              unmasked,
+              options.maxPayloadBytes,
+              projectionOriginals: previous.projectionOriginals,
+              sharedWorkBudget: work,
+            ),
+          );
+          exceptionalProof = _schedulingValue(
+            () => ExceptionalRangeProof.create(
+              basis: source,
+              anchor: point,
+              masks: [for (final row in previous.cancelled) row.point],
+              sharedWorkBudget: work,
+            ),
+          );
         }
         if (!_schedulingValue(
           () => eventSchedulingMember(
-            previous.outgoing.content,
+            exceptionalProof == null
+                ? previous.outgoing.content
+                : unmasked.content,
             point,
             sharedWorkBudget: work,
           ),
@@ -299,6 +331,7 @@ extension CalendarSchedulingRangeOperations on CalendarService {
               stamp,
               options.maxPayloadBytes,
               sharedWorkBudget: work,
+              exceptionalProof: exceptionalProof,
             ),
           );
           _schedulingReadCheckpoint(current);
@@ -321,6 +354,7 @@ extension CalendarSchedulingRangeOperations on CalendarService {
               stamp,
               options.maxPayloadBytes,
               sharedWorkBudget: work,
+              exceptionalProof: exceptionalProof,
             ),
           );
           _schedulingReadCheckpoint(restored);
@@ -455,13 +489,20 @@ extension CalendarSchedulingRangeOperations on CalendarService {
           scopePending + proposals.length > options.maxScopeDeliveries) {
         throw _failure(CalendarFailureCode.limitExceeded);
       }
-      final snapshot = _schedulingWriteV7(
+      final legacySnapshot = _schedulingWriteV7(
         current,
         control!,
         kind,
         canonical: proposed,
         comparison: _schedulingRangeComparison(previous, control),
       );
+      final snapshot = exceptionalProof == null
+          ? legacySnapshot
+          : ExceptionalRangeEnvelope.write(
+              jsonDecode(legacySnapshot) as Map<String, dynamic>,
+              exceptionalProof,
+              frozen: restore ? _schedulingBasisMap(current) : null,
+            );
       final p = await CalendarSchedulingPublicationRecord.db.insertRow(
         _session,
         CalendarSchedulingPublicationRecord(

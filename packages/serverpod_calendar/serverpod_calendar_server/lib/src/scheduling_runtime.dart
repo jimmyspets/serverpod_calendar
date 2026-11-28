@@ -87,7 +87,9 @@ abstract interface class CalendarSchedulingHost {
 
   /// Approve the exact payload and roster for every recipient. During background
   /// dispatch this also enforces current method-specific lifecycle/publication
-  /// and full detail/source-disclosure rights.
+  /// and full detail/source-disclosure rights. The actor is absent at dispatch;
+  /// verify [CalendarSchedulingPolicyContext.recipient] against the host's
+  /// current routing policy rather than treating its stored route as authority.
   Future<CalendarAuthorizationVerdict> authorizeMessage(
     Session session,
     CalendarSchedulingPolicyContext context,

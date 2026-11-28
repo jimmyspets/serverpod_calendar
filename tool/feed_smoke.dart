@@ -215,7 +215,8 @@ Future<void> feedSmoke(
       contentLength == null ||
           contentLength == '${get.bytes.length}' ||
           knownRelicZeroLength,
-      '304 reported an incorrect representation length',
+      '304 reported an incorrect representation length: '
+      '$contentLength for ${get.bytes.length} bytes',
     );
     final precondition = await _fetch(
       url,

@@ -119,6 +119,7 @@ try {
   Invoke-Checked dart @('run', 'tool/alarm_work_smoke.dart')
   Invoke-Checked dart @('run', 'tool/notification_work_smoke.dart')
   Invoke-Checked dart @('run', 'tool/scheduling_work_smoke.dart')
+  Invoke-Checked dart @('run', 'tool/scheduling_work_smoke.dart', '--exceptional-range')
   Invoke-Checked dart @('run', 'tool/scheduling_work_smoke.dart', '--replies')
   Invoke-Checked dart @('run', 'tool/scheduling_work_smoke.dart', '--replies', '--recurring')
   Invoke-Checked dart @('run', 'tool/scheduling_work_smoke.dart', '--replies', '--instances')

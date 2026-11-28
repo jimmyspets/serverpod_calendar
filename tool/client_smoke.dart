@@ -109,6 +109,24 @@ Future<void> main(List<String> args) async {
         auth.refreshToken == null) {
       throw StateError('Expected JWT access and refresh credentials.');
     }
+    if (args.contains('--feeds-only')) {
+      await feedSmoke(
+        clients,
+        setPublisherBlocked: mode != 'test'
+            ? null
+            : (blocked) async {
+                final result = await Process.run('python', [
+                  'tool/notification_access_probe.py',
+                  '${auth.authUserId}',
+                  blocked ? 'block' : 'unblock',
+                ]);
+                if (result.exitCode != 0) {
+                  throw StateError('Synthetic publisher fixture failed');
+                }
+              },
+      );
+      return;
+    }
     if (args.contains('--notifications-only')) {
       await notificationSmoke(clients);
       return;

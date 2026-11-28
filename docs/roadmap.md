@@ -14,6 +14,41 @@ Checked items describe only the stated implemented slice or explicitly selected 
 
 ## Current delivery position
 
+**In progress, 2026-11-16:** Serverpod 4.1.2 dependency alignment has resolved
+the workspace lockfile, regenerated all modules and passed workspace analysis,
+core/iCalendar VM and Chrome suites, calendar VM and focused scheduling tests.
+A fresh example-host migration succeeded. The full isolated run passed its
+database and two-host checks but failed a feed 304 representation-length
+assertion. A local raw Dart HTTP probe reproduced the zero-length 304 header;
+that [compatibility issue](feed-304-compatibility.md) and the stale
+imported-schema snapshot remain open.
+ADR 0187's approved exceptional-anchor durable implementation is available for
+draft review in [PR #205](https://github.com/jimmyspets/serverpod_calendar/pull/205).
+Focused checks, two-host process-loss recovery and command races, and the
+connected exceptional-anchor Flutter journey passed; the full exact-head check
+and hosted conclusion remain outstanding, as recorded in
+[its validation record](validation-durable-exceptional-range.md). The earlier
+pure projection's hosted free/busy Flutter failure remains open; focused
+retries passed twice after the journey's tap visibility was strengthened.
+The [hosted check for commit 4d4b735](https://github.com/jimmyspets/serverpod_calendar/actions/runs/43927075625)
+failed at the same 4.1.2 feed 304 length assertion after its earlier database
+and two-host checks passed; the inspection job passed. This is not a full
+runtime success or a successful check for a later commit.
+
+The next independent scheduling increment is [ADR 0188](adr/0188-published-whole-series-lifecycle-with-active-range.md): the maintainer approved its finite-suffix pure projection, which is implemented for review in [draft PR #206](https://github.com/jimmyspets/serverpod_calendar/pull/206). Durable delivery ordering and checkpoint mechanics remain undecided. Existing whole-series lifecycle guards remain in force.
+The [pure implementation](published-finite-suffix-projection.md) has twenty-one
+focused VM tests covering finite DATE/UTC/zoned series, DST, source exclusions
+and RDATE/PERIOD additions, detached results and bounded rejection. The complete
+module unit suites passed locally (815 VM and 31 browser-compatible Chrome
+tests before the last three focused cases were added); workspace analysis passed.
+Review and full exact-head checks remain separate.
+The [hosted run for PR #206 at commit 213f112](https://github.com/jimmyspets/serverpod_calendar/actions/runs/44041990550)
+passed inspection but failed its runtime job at the same 304 length assertion:
+zero reported for a 692-byte representation. It does not establish a passing
+full repository check.
+
+The next lifecycle investigation is [draft ADR 0189](adr/0189-whole-series-lifecycle-with-published-cutoff.md), in [draft PR #207](https://github.com/jimmyspets/serverpod_calendar/pull/207). Existing checkpoint readers require an active range to remain bound to its exact range-CANCEL payload, so whole-series transitions need a separately reviewed, self-contained proof rather than simply removing an API guard. No durable change is approved or implemented.
+
 Tasks have a [confirmed create-only import contract](task-import.md) under ADR 0097 and [implemented source storage](task-source-storage.md) under ADR 0098. Create-only authenticated import follows under ADR 0099; explicitly authorized [current-state task export](task-export.md) follows under ADR 0100, with separate rich-source disclosure. Imported non-recurring tasks retain unknown prior progress, so neutral source values do not enable recurrence conversion. Selected event occurrence content is implemented under ADR 0106. Native metadata editors and exact master-category search now extend events/tasks under ADRs 0134–0136. Trusted non-recurring invitation review, stable calendar addition and explicit conflict-protected REQUEST/CANCEL application/reopening extend scheduling under ADRs 0137–0141; receipt alone changes no calendar data. Broader source adoption/overwrite and future content/cancellation remain open; scoped alarm runtime, live delivery and timing-only source adoption have implementation evidence under ADRs 0112–0115.
 
 | Area | Implemented and locally validated | Remaining for the first release |
@@ -34,7 +69,7 @@ The timing-only single/future batch is implemented under [ADR 0055](adr/0055-nat
 
 The maintainer explicitly permits dependency-driven reordering of this roadmap. Use these lanes as the working priority, preserving the full selected release scope and the explicit ADR/model review gates:
 
-1. Establish the current baseline: resolve hosted checks for delivered batches and the 4.1.0 toolchain before treating them as release evidence. Fix failures ahead of new implementation.
+1. Establish the current baseline: resolve hosted checks for delivered batches and validate the 4.1.2 toolchain before treating them as release evidence. Fix failures ahead of new implementation.
 2. Finish shared recurring scheduling primitives, then their durable workflows. ADRs 0169–0170 now implement the scoped incoming repeated-cycle prerequisites/workflow, with full exact-head hosted success for PR #172. ADRs 0171–0172 implement the bounded outgoing range cancellation/restoration group. Initial REQUEST-bundle review/adoption under accepted ADR 0173 passed full exact-head hosted checks in PR #178. Accepted ADR 0174 implements the scoped complete-update slice, with actual batch validation recorded separately; ADR 0175 adds scoped whole-series cancellation/reopening; ADRs 0176–0177 add bundle master/original replies, and ADRs 0178–0179 add pure/durable ordinary recurring effective-notice responses. Preserve guards for partial bundle updates, component-wise lifecycle, suffix participation and other unimplemented reconciliation. Group code that shares original identity, version, source retention and retry machinery instead of repeatedly rebuilding the same boundary.
 3. Complete the other selected authenticated VEVENT/VFREEBUSY methods and participant/lifecycle reconciliation, reusing the stable series and outbox machinery. Pure parser support alone does not complete these operation rows. Host/provider trust and real-mail trials require their own concrete configuration and authorization.
 4. Close remaining native task/event metadata, future-content/cancellation, disclosure-safe query and availability gaps in coherent service/client/Flutter batches. Time-indexed candidates, timezone-update invalidation and production authorization coordination must retain existing completeness and concurrency guarantees.
@@ -212,7 +247,7 @@ The optional module now has a scoped event-subscription implementation under [AD
 
 - [x] Implement bounded authorized feed/calendar selection, server-only identity/active/selection/credential rows, multiple independently revocable 256-bit URLs, digest-only storage, one-time disclosure and revision checks. Add model-approved retention and private management views.
 - [x] Implement the server-only calendar publication/policy/transaction port and dependency/change observer, stable native-event-derived publication UIDs across feeds/URLs, whole-series rejection and alarm exclusion. Native labels and credentials do not change publication bytes; selected event changes/deletion update publication time transactionally.
-- [x] Implement read-only GET/HEAD and the scoped [ADR 0016](adr/0016-subscription-http-profile.md) identity-encoding profile: fixed ICS, strong ETags, If-Match precedence/412, weak/list/wildcard If-None-Match/304, bodyless HEAD/304, optional host Content-Language, no date validators/ranges/redirects or partial output.
+- [ ] Restore the read-only GET/HEAD [ADR 0016](adr/0016-subscription-http-profile.md) identity-encoding profile on the current 4.1.2 stack. The implemented profile includes fixed ICS, strong ETags, If-Match precedence/412, weak/list/wildcard If-None-Match/304, bodyless HEAD/304, optional host Content-Language, and no date validators/ranges/redirects or partial output; the [304 Content-Length regression](feed-304-compatibility.md) blocks verification on 4.1.2.
 - [x] Add privacy-safe no-store errors and invalid/revoked-token 404s; require whole-startup console redaction in addition to a token-free route session. Focused two-host tests verify equal bytes/ETags, independent revocation before 304, publisher withdrawal, actual post-handler error redaction and unchanged authenticated exports.
 - [x] Add example settings, explicit presentation, one-time URL and revocation screens, stale-edit recovery and a focused Flutter journey. The focused browser journey passed locally; final batch evidence is tracked below.
 - [x] Complete full-batch validation, including concurrent cap/settings/selection-delete checks, populated upgrades, independent worker recovery and the combined browser journey. Keep the implementation PR draft while detailed mechanics remain under review.
@@ -1053,3 +1088,12 @@ Accepted [ADR 0182](adr/0182-native-event-information-publication.md) authorizes
 - [x] Implement and validate the pure projection's bounded supported profile and explicit rejection cases as one batch.
 - [ ] Inspect the full exact-commit hosted result before marking the feature PR ready.
 - [ ] Review durable publication, authority and interoperability separately.
+
+## Durable exceptional range controls
+
+[ADR 0187](adr/0187-durable-exceptional-range-controls.md) approves grouped exceptional-anchor cancellation, restoration and repeated cycles with provenance, collision-safe outgoing versions and bounded v8 checkpoint proof. The [scoped implementation](durable-exceptional-range-controls.md) is for draft review and is not merged or release-ready. No new SQL or real mail is proposed.
+
+- [x] Review and approve the concrete checkpoint, source-exclusion versus individual-cancellation provenance, version and transaction contract.
+- [x] Exercise focused ordinary and exceptional database cases, source-proof corruption and limits, two-host process loss, and the connected exceptional-anchor Flutter journey. See [actual results](validation-durable-exceptional-range.md).
+- [x] Implement the scoped durable feature group and record its focused, database, two-host and Flutter validation.
+- [ ] Resolve the separate 4.1.2 feed 304 failure and complete full exact-head hosted checks before readiness.
