@@ -18,6 +18,22 @@ Future<void> schedulingSmoke(List<Client> clients) async {
   ))!;
   cal.CalendarEventContent content(String title) => cal.CalendarEventContent(
     summary: title,
+    recurrence: cal.CalendarEventRecurrence(
+      rule: cal.CalendarEventRule(
+        frequency: cal.CalendarEventFrequency.daily,
+        count: 4,
+        byDay: [],
+        byMonthDay: [],
+        byYearDay: [],
+        byWeekNo: [],
+        byMonth: [],
+        byHour: [],
+        byMinute: [],
+        bySetPosition: [],
+      ),
+      inclusions: [],
+      exclusions: [],
+    ),
     timing: cal.CalendarEventTiming(
       kind: cal.CalendarEventTimeKind.utc,
       start: cal.CalendarEventCivil(year: 2026, month: 11, day: 1, hour: 9),
@@ -133,7 +149,7 @@ Future<void> schedulingSmoke(List<Client> clients) async {
     throw StateError('Explicit reopening did not publish REQUEST');
   }
   stdout.writeln(
-    'PASS: two-host explicit organizer publication, idempotency/revision races, local draft isolation, cancellation/reopening and synthetic acceptance.',
+    'PASS: two-host recurring-master organizer publication, idempotency/revision races, local draft isolation, cancellation/reopening and synthetic acceptance.',
   );
   // Bindings deliberately reject deletion in the first profile. Isolated test
   // storage is reset by the root harness; no public cleanup backdoor is added.

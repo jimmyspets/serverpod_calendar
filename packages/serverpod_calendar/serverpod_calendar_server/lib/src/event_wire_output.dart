@@ -65,9 +65,19 @@ Uint8List eventExportBytes(List<CalendarEventPolicySnapshot> selection) {
     final decoded = eventStorageProposal(
       validated.series.singleWhere((s) => s.master.uid == source.protocolUid),
     );
+    // A PERIOD-only wire RDATE necessarily creates an empty recurrence wrapper
+    // when decoded; the periods themselves live in a separate native field.
+    // Compare that source-equivalent shape without changing native data/baselines.
+    final expectedContent =
+        source.content.recurrence == null &&
+            (source.content.periods?.isNotEmpty ?? false)
+        ? source.content.copyWith(
+            recurrence: CalendarEventRecurrence(inclusions: [], exclusions: []),
+          )
+        : source.content;
     final expected = eventImportBaseline(
       source.protocolUid,
-      source.content,
+      expectedContent,
       source.timingOverrides,
       source.protocolState!,
     );

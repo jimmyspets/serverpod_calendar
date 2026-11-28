@@ -1,10 +1,10 @@
 # ADR 0124: Recurring organizer masters and whole-series cancellation
 
-Status: **Proposed; maintainer review required before implementation.**
+Status: **Accepted by explicit maintainer approval on 2026-10-26. Scoped implementation and validation are documented in [the organizer guide](../native-organizer-scheduling.md).**
 
-## Context and proposed batch
+## Context and accepted batch
 
-[ADR 0122](0122-explicit-native-organizer-publication.md) and [ADR 0123](0123-explicit-native-organizer-cancellation.md) implement explicit non-recurring native REQUEST/CANCEL through bounded durable delivery. The next batch would extend that workflow to recurring masters, using the already implemented native recurrence and pure message profiles. First-class occurrence-component publication and instance/range scheduling follow as separate required work; this increment would not complete recurring scheduling.
+[ADR 0122](0122-explicit-native-organizer-publication.md) and [ADR 0123](0123-explicit-native-organizer-cancellation.md) implement explicit non-recurring native REQUEST/CANCEL through bounded durable delivery. This batch extends that workflow to recurring masters, using the already implemented native recurrence and pure message profiles. First-class occurrence-component publication and instance/range scheduling follow as separate required work; this increment does not complete recurring scheduling.
 
 Accept native recurring masters with the supported RRULE, start-valued RDATE/EXDATE and timed PERIOD additions, DATE/UTC/named-zone timing and fixed verified organizer/recipients. Publish source patterns rather than flattening occurrences. Preserve the existing whole-second horizon, nominal durations, exact zone identifiers, ISO presentation and rule-specific WKST behavior without new temporal policies. Existing pure method/property/zone/resource limits remain mandatory; unsupported content rejects atomically rather than being dropped.
 
@@ -22,7 +22,7 @@ Ordinary local reopen sends nothing and leaves the published CANCEL eligible. Ex
 
 ## Versions, storage and authority
 
-Reuse the approved binding/publication/delivery/attempt tables, private snapshot retention, finite capacities and fencing. No new table/column or retention expansion is proposed. The snapshot/projection retains recurrence source meaning and periods; complete native override state is supplied to policy even when excluded from the outgoing master. New publications use SEQUENCE greater than the previous publication, preserving an already newer saved component version when applicable; CANCEL advances beyond both prior states. Retained exact retries and normalized no-ops keep their current semantics.
+Reuse the approved binding/publication/delivery/attempt tables, private snapshot retention, finite capacities and fencing. No new table/column or retention expansion is required. The snapshot/projection retains recurrence source meaning and periods; complete native override state is supplied to policy even when excluded from the outgoing master. New publications use SEQUENCE greater than the previous publication, preserving an already newer saved component version when applicable; CANCEL advances beyond both prior states. Retained exact retries and normalized no-ops keep their current semantics.
 
 Preserve independent publish/cancel/lifecycle/edit/detail/source authority plus current dedicated organizer/recipient approval. Background work checks the exact stored master, current origin/parent/authority, publication generation, route and expiry. Local drafts never regenerate queued bytes. A cancelled native parent blocks REQUEST; local reopen does not silently retract published CANCEL. Stable retry keys and at-least-once uncertainty remain unchanged.
 
@@ -31,3 +31,8 @@ Preserve independent publish/cancel/lifecycle/edit/detail/source authority plus 
 Publishing only expanded dates would lose pattern/DST semantics and create unbounded work. Dropping native exceptions would erase canonical intent. Publishing arbitrary occurrence components before defining their inherited fields and independent versions would overstate support. A master-only increment retains existing safe boundaries while full recurring scheduling remains required.
 
 Test RRULE/RDATE/EXDATE/PERIOD source round trips, COUNT/UNTIL and WKST, earlier inclusions, DATE/UTC/named-zone DST behavior, pattern/timing draft isolation, mode-change rejection, unsupported exception publication, preservation of native exceptions on whole-series cancellation, explicit reopening/no-op/retry, version/capacity/authorization rollback, current-generation withdrawal and independent-worker recovery. Add generated-client and Flutter recurring publication/cancel/reopen journeys and run broader checks after the batch. Instance/range messages, authenticated inbound reconciliation, real email and external-client evidence remain separate.
+
+
+## Implementation note
+
+Recurring mode is derived from actual rule/inclusion/exclusion/PERIOD properties, not an empty native wrapper. PERIOD-only faithful wire comparison accounts for the decoder's structurally empty recurrence wrapper without changing native content, source baselines or stored protocol versions. REQUEST emits one master; dedicated and ordinary host context retain full proposed native exceptions for whole-series cancellation and retained retries. See the linked guide for validation scope and remaining work.

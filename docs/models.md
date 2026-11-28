@@ -655,3 +655,6 @@ The maintainer approved the [ADR 0112](adr/0112-bounded-durable-alarm-planning.m
 
 
 Accepted [ADR 0123](adr/0123-explicit-native-organizer-cancellation.md) reuses ADR 0122's four physical tables for CANCEL and reopening. Existing publication.method stores REQUEST/CANCEL; no new table/column, migration or retention expansion is added. Public cancellation-request/status DTO generation is separate from database schema. A cancellation publication snapshot deliberately differs from preserved native draft content, and the host adapter receives both explicitly.
+
+
+Accepted [ADR 0124](adr/0124-recurring-organizer-masters.md) reuses the same four scheduling tables, existing snapshot/projection JSON and public DTOs for recurring masters. No model source, migration or retention change is added. Recurring mode derives from actual rule/date/PERIOD properties. Full proposed native overrides are supplied to host policy, while the stored outgoing snapshot remains one master. PERIOD-only wire equivalence adjusts only the expected comparison shape; native content, protocol versions and stored import baselines are unchanged.

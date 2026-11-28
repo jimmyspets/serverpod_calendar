@@ -48,6 +48,22 @@ Future<void> runSchedulingJourney(WidgetTester tester, Client client) async {
   ))!;
   cal.CalendarEventContent content(String title) => cal.CalendarEventContent(
     summary: title,
+    recurrence: cal.CalendarEventRecurrence(
+      rule: cal.CalendarEventRule(
+        frequency: cal.CalendarEventFrequency.daily,
+        count: 4,
+        byDay: [],
+        byMonthDay: [],
+        byYearDay: [],
+        byWeekNo: [],
+        byMonth: [],
+        byHour: [],
+        byMinute: [],
+        bySetPosition: [],
+      ),
+      inclusions: [],
+      exclusions: [],
+    ),
     timing: cal.CalendarEventTiming(
       kind: cal.CalendarEventTimeKind.date,
       start: cal.CalendarEventCivil(year: 2026, month: 11, day: 2),
@@ -137,6 +153,42 @@ Future<void> runSchedulingJourney(WidgetTester tester, Client client) async {
   expect(reopened.method, 'REQUEST');
   expect(reopened.eventRevision, 7);
   expect(reopened.hasLocalChanges, false);
+  await api.calendarEvent.changeOccurrence(
+    cal.CalendarEventOccurrenceChange(
+      eventId: event.id,
+      expectedRevision: 7,
+      originalStart: cal.CalendarEventTiming(
+        kind: cal.CalendarEventTimeKind.date,
+        start: cal.CalendarEventCivil(year: 2026, month: 11, day: 3),
+      ),
+      action: cal.CalendarEventOccurrenceAction.cancelSingle,
+    ),
+  );
+  await _tap(tester, 'scheduling-reload');
+  final publishButton = find.byKey(const Key('scheduling-publish'));
+  if (publishButton.evaluate().isEmpty) {
+    await tester.scrollUntilVisible(
+      publishButton,
+      250,
+      scrollable: find.byType(Scrollable).last,
+      maxScrolls: 20,
+    );
+  }
+  await tester.ensureVisible(publishButton);
+  expect(tester.widget<FilledButton>(publishButton).onPressed, isNull);
+  await _tap(tester, 'scheduling-cancel');
+  expect(find.byKey(const Key('scheduling-error')), findsNothing);
+  final withException = await api.calendarEvent.getEvent(
+    event.id,
+    cal.CalendarEventFieldGroup.values,
+  );
+  expect(withException.revision, 9);
+  expect(withException.status, cal.CalendarEventStatus.cancelled);
+  expect(withException.timingOverrides!.singles.single.cancelled, true);
+  expect(
+    withException.timingOverrides!.singles.single.originalStart.start.day,
+    3,
+  );
   await tester.pageBack();
   await tester.pumpAndSettle();
   // This profile deliberately has no binding deletion API. The root harness

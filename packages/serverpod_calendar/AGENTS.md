@@ -27,3 +27,6 @@ ADR 0122's first non-recurring REQUEST workflow, four scheduling tables, origin 
 
 
 ADR 0123's explicit non-recurring cancellation/reopening batch is approved. Keep cancelled native drafts distinct from the outgoing published snapshot, expose both in trusted host context and retain independent cancellation/lifecycle authority. A local reopen sends nothing and does not withdraw an eligible published CANCEL; a newer explicit REQUEST supersedes it. Reuse the existing delivery tables/retention and keep bound deletion/recurrence/source replacement restrictions. See ../../docs/native-organizer-scheduling.md.
+
+
+Accepted ADR 0124 extends the existing scheduling runtime to recurring masters with source RRULE/RDATE/EXDATE/PERIOD meaning. Keep bound recurring/non-recurring mode changes blocked, permit validated local pattern edits and retain native orphan checks. New REQUEST publication rejects stored occurrence state; retained exact retries and whole-series cancellation preserve full native overrides/protocol checkpoints. Both ordinary and dedicated host contexts receive those proposed overrides. Outgoing snapshots stay single masters, with no new schema/DTO/retention. See ../../docs/native-organizer-scheduling.md.

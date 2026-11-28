@@ -24,6 +24,15 @@ T _schedulingValue<T>(T Function() action) {
   }
 }
 
+bool _schedulingRecurring(CalendarEventContent value) =>
+    value.recurrence?.rule != null ||
+    (value.recurrence?.inclusions.isNotEmpty ?? false) ||
+    (value.recurrence?.exclusions.isNotEmpty ?? false) ||
+    (value.periods?.isNotEmpty ?? false);
+
+bool _schedulingOverrides(CalendarEventTimingOverrides? value) =>
+    (value?.singles.isNotEmpty ?? false) || (value?.future.isNotEmpty ?? false);
+
 String _schedulingDigest(String value) =>
     sha256.convert(utf8.encode(value)).toString();
 
@@ -50,19 +59,23 @@ String _schedulingSnapshot(CalendarEventPolicySnapshot value) => jsonEncode({
 CalendarEventPolicySnapshot _schedulingPublished(
   CalendarSchedulingPublicationRecord p,
 ) {
-  final v = jsonDecode(p.snapshot) as Map<String, dynamic>;
-  return CalendarEventPolicySnapshot(
-    UuidValue.fromString(v['eventId'] as String),
-    UuidValue.fromString(v['calendarId'] as String),
-    v['revision'] as int,
-    CalendarEventContent.fromJson(v['content'] as Map<String, dynamic>),
-    v['protocolUid'] as String,
-    DateTime.parse(v['updatedAt'] as String),
-    origin: CalendarEventOrigin.native,
-    protocolState: CalendarEventProtocolState.fromJson(
-      v['state'] as Map<String, dynamic>,
-    ),
-  );
+  try {
+    final v = jsonDecode(p.snapshot) as Map<String, dynamic>;
+    return CalendarEventPolicySnapshot(
+      UuidValue.fromString(v['eventId'] as String),
+      UuidValue.fromString(v['calendarId'] as String),
+      v['revision'] as int,
+      CalendarEventContent.fromJson(v['content'] as Map<String, dynamic>),
+      v['protocolUid'] as String,
+      DateTime.parse(v['updatedAt'] as String),
+      origin: CalendarEventOrigin.native,
+      protocolState: CalendarEventProtocolState.fromJson(
+        v['state'] as Map<String, dynamic>,
+      ),
+    );
+  } catch (_) {
+    throw _failure(CalendarFailureCode.unavailable);
+  }
 }
 
 List<String> _schedulingAddresses(Iterable<String> input, int limit) {
@@ -172,6 +185,20 @@ extension CalendarSchedulingOperations on CalendarService {
     }
   }
 
+  Future<void> _requireSchedulingMode(
+    UuidValue eventId,
+    CalendarEventContent proposed,
+    Transaction tx,
+  ) async {
+    final meeting = await _meeting(eventId, tx);
+    if (meeting == null) return;
+    final last = await _latest(meeting, tx);
+    if (_schedulingRecurring(_schedulingPublished(last!).content) !=
+        _schedulingRecurring(proposed)) {
+      throw _failure(CalendarFailureCode.dependencyConflict);
+    }
+  }
+
   Future<CalendarSchedulingPublicationRecord?> _latest(
     CalendarSchedulingMeetingRecord? meeting,
     Transaction tx,
@@ -222,6 +249,7 @@ extension CalendarSchedulingOperations on CalendarService {
         currentEvent: e.snapshot,
         proposedEvent: proposed?.content,
         proposedEventProtocolState: proposed?.protocolState,
+        proposedTimingOverrides: proposed?.timingOverrides,
         scheduling: intent,
         eventGroups: CalendarEventFieldGroup.values,
       ),
@@ -359,12 +387,33 @@ extension CalendarSchedulingOperations on CalendarService {
 
       if (e.data.origin != CalendarEventOrigin.native ||
           e.data.importBaseline != null ||
-          content.recurrence != null ||
-          e.data.content.recurrence != null ||
-          e.data.timingOverrides != null ||
-          (content.periods?.isNotEmpty ?? false) ||
+          _schedulingRecurring(content) !=
+              _schedulingRecurring(e.data.content) ||
           !cancellation && content.status == CalendarEventStatus.cancelled) {
         throw _failure(CalendarFailureCode.validation);
+      }
+      final retry = await CalendarSchedulingPublicationRecord.db.findFirstRow(
+        _session,
+        where: (t) =>
+            t.scopeKey.equals(c.scopeKey) & t.commandId.equals(commandId),
+        transaction: tx,
+      );
+      if (retry != null &&
+          (retry.method != method ||
+              retry.actorId != c.principalId ||
+              retry.requestDigest != digest ||
+              retry.meetingId != meeting?.id)) {
+        throw _failure(CalendarFailureCode.validation);
+      }
+      if (!cancellation &&
+          retry == null &&
+          _schedulingOverrides(e.data.timingOverrides)) {
+        throw _failure(CalendarFailureCode.validation);
+      }
+      if (last != null &&
+          _schedulingRecurring(_schedulingPublished(last).content) !=
+              _schedulingRecurring(e.data.content)) {
+        throw _failure(CalendarFailureCode.unavailable);
       }
       final authority = _schedulingAuthority(
         await _bounded(
@@ -417,19 +466,6 @@ extension CalendarSchedulingOperations on CalendarService {
             )
           : content;
       final projection = _schedulingProjection(content, baseState);
-      final retry = await CalendarSchedulingPublicationRecord.db.findFirstRow(
-        _session,
-        where: (t) =>
-            t.scopeKey.equals(c.scopeKey) & t.commandId.equals(commandId),
-        transaction: tx,
-      );
-      if (retry != null &&
-          (retry.method != method ||
-              retry.actorId != c.principalId ||
-              retry.requestDigest != digest ||
-              retry.meetingId != meeting?.id)) {
-        throw _failure(CalendarFailureCode.validation);
-      }
       final unchanged =
           last != null &&
           last.method == method &&
@@ -487,7 +523,7 @@ extension CalendarSchedulingOperations on CalendarService {
                   ),
                 ),
                 content,
-                null,
+                e.data.timingOverrides,
               ),
             );
       final proposed = CalendarEventPolicySnapshot(
@@ -500,6 +536,7 @@ extension CalendarSchedulingOperations on CalendarService {
         e.data.protocolUid,
         retry != null || unchanged ? e.data.updatedAt : now,
         origin: e.data.origin,
+        timingOverrides: e.data.timingOverrides,
         protocolState: state,
       );
       final receiptPublication = retry ?? (unchanged ? last : null);
@@ -781,6 +818,7 @@ extension CalendarSchedulingOperations on CalendarService {
         method: p?.method,
         hasLocalChanges:
             p == null ||
+            _schedulingOverrides(e.data.timingOverrides) ||
             p.projection !=
                 _schedulingProjection(e.data.content, e.data.protocolState!),
         deliveries: [

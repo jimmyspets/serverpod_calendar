@@ -189,3 +189,6 @@ The approved [ADR 0122 implementation](native-organizer-scheduling.md) adds inde
 
 
 Accepted [ADR 0123](adr/0123-explicit-native-organizer-cancellation.md) adds `cancelScheduling` independently of `publishScheduling`. `cancelAndNotify` requires cancellation/lifecycle, complete event disclosure and source-read authority, plus dedicated host approval; text editing and REQUEST publication are not required. Native proposed state and the distinct outgoing published cancellation are explicit in the dedicated adapter context. Retries/no-ops still reauthorize. Background checks enforce the exact method, snapshot and roster; a local reopen does not implicitly withdraw a published CANCEL.
+
+
+Accepted [ADR 0124](adr/0124-recurring-organizer-masters.md) retains all existing scheduling rights for recurring masters. Ordinary and dedicated policy context now includes complete proposed native timing/content/cancellation overrides even when the outgoing master omits them. A new REQUEST rejects stored occurrence components; whole-series CANCEL and retained exact retries preserve those states. Bound mode conversions fail after ordinary authorization/revision checks, while supported local pattern edits retain native orphan checks. Private checkpoint decoding fails unavailable with non-echo diagnostics.
