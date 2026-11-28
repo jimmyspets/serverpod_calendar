@@ -269,4 +269,4 @@ Accepted ADR 0137 implements bounded trusted non-recurring REQUEST intake and pr
 
 - [Explicit linked invitation updates](linked-invitation-updates.md): conflict checks, current accepted source, immutable creation and latest-result retry limits.
 
-- [Proposed cancellation intake/review](adr/0140-trusted-cancellation-intake-and-review.md): source kind and known-correlation review; requires maintainer agreement before implementation.
+- [Cancellation intake/private review](invitation-cancellation-review.md): source kind, authority, known correlation, ordering and unchanged native state.

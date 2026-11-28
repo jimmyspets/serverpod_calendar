@@ -272,6 +272,20 @@ class EndpointInvitationDemo extends _isc.EndpointRef {
       'summary': summary,
     },
   );
+
+  _ida.Future<_imrxcdin.CalendarInvitationReceipt> simulateCancellation(
+    _isc.UuidValue invitationId,
+    _isc.UuidValue commandId,
+    int sequence,
+  ) => caller.callServerEndpoint<_imrxcdin.CalendarInvitationReceipt>(
+    'invitationDemo',
+    'simulateCancellation',
+    {
+      'invitationId': invitationId,
+      'commandId': commandId,
+      'sequence': sequence,
+    },
+  );
 }
 
 /// Transient authorized hints only. Recovery reads the durable generic module.

@@ -144,6 +144,19 @@ class _InvitationUpdateScreenState extends State<InvitationUpdateScreen> {
                 'Local changes exist. This incoming update cannot replace them.',
                 key: Key('invitation-update-conflict'),
               ),
+            if (view.incomingKind ==
+                cal.CalendarInvitationSourceKind.meetingCancellation)
+              const Text(
+                'Cancellation notice: review only. The calendar event is unchanged.',
+                key: Key('invitation-update-cancellation'),
+              ),
+            if (view.incomingKind ==
+                    cal.CalendarInvitationSourceKind.meetingCancellation &&
+                view.incomingSourceText != null)
+              SelectableText(
+                view.incomingSourceText!,
+                key: const Key('invitation-cancellation-source'),
+              ),
             if (view.incomingContent != null) ...[
               Text(
                 'Incoming event: ${view.incomingContent!.summary ?? 'Untitled event'}',

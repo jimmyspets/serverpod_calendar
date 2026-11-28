@@ -1,5 +1,6 @@
 class: CalendarInvitationDocument
 immutable: true
 fields:
+  kind: CalendarInvitationSourceKind, default=request
   sourceId: UuidValue
   text: String

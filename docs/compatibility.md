@@ -438,6 +438,6 @@ Accepted [ADR 0138](adr/0138-explicit-single-event-invitation-adoption.md) imple
 Accepted [ADR 0139](adr/0139-explicit-linked-invitation-updates.md) implements explicit conflict-protected application of newer linked non-recurring REQUEST sources. One private checkpoint tracks current acceptance and the latest retry result, while the creation receipt stays unchanged. See [the scope, permissions and retry limits](linked-invitation-updates.md) and separate batch validation. Receipt remains review-only; local changes reject replacement and no participation reply is sent.
 
 
-## Proposed incoming whole-meeting cancellations
+## Incoming whole-meeting cancellation review
 
-Proposed [ADR 0140](adr/0140-trusted-cancellation-intake-and-review.md) covers trusted non-recurring whole-meeting CANCEL intake and private review only. It proposes current source-kind storage/DTOs, independent cancellation-ingress authority, known correlation and accepted-version ordering. No implementation is approved: receipt would change no linked event/baseline/checkpoint/alarm or outbound intent. Explicit application, attendee removal, recurring intake and mail remain separate.
+Accepted [ADR 0140](adr/0140-trusted-cancellation-intake-and-review.md) adds scoped trusted non-recurring whole-meeting CANCEL intake/private review, current source-kind storage/DTOs, independent cancellation authority and known-correlation/accepted-version ordering. Receipt leaves native events, baselines/checkpoints, personal alarms and outbound intent unchanged. See [the supported profile and limits](invitation-cancellation-review.md) and separate batch validation; explicit cancellation application, attendee removal, recurring intake and mail remain separate.

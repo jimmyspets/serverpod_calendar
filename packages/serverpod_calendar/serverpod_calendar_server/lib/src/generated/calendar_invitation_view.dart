@@ -14,12 +14,14 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'calendar_event_timing.dart' as _ieswiaty;
+import 'calendar_invitation_source_kind.dart' as _ilccsff7;
 
 @_is.immutable
 abstract class CalendarInvitationView
     implements _is.SerializableModel, _is.ProtocolSerialization {
   const CalendarInvitationView._({
     required this.id,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     required this.revision,
     required this.uid,
     required this.organizer,
@@ -30,10 +32,11 @@ abstract class CalendarInvitationView
     this.timing,
     this.receivedAt,
     this.dismissedAt,
-  });
+  }) : kind = kind ?? _ilccsff7.CalendarInvitationSourceKind.request;
 
   const factory CalendarInvitationView({
     required _is.UuidValue id,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     required int revision,
     required String uid,
     required String organizer,
@@ -51,6 +54,11 @@ abstract class CalendarInvitationView
   ) {
     return CalendarInvitationView(
       id: _is.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
+      kind: jsonSerialization['kind'] == null
+          ? null
+          : _ilccsff7.CalendarInvitationSourceKind.fromJson(
+              (jsonSerialization['kind'] as String),
+            ),
       revision: jsonSerialization['revision'] as int,
       uid: jsonSerialization['uid'] as String,
       organizer: jsonSerialization['organizer'] as String,
@@ -75,6 +83,8 @@ abstract class CalendarInvitationView
             ),
     );
   }
+
+  final _ilccsff7.CalendarInvitationSourceKind kind;
 
   final _is.UuidValue id;
 
@@ -103,6 +113,7 @@ abstract class CalendarInvitationView
   @_is.useResult
   CalendarInvitationView copyWith({
     _is.UuidValue? id,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     int? revision,
     String? uid,
     String? organizer,
@@ -127,6 +138,11 @@ abstract class CalendarInvitationView
                   id,
                 ) ||
                 other.id == id) &&
+            (identical(
+                  other.kind,
+                  kind,
+                ) ||
+                other.kind == kind) &&
             (identical(
                   other.revision,
                   revision,
@@ -184,6 +200,7 @@ abstract class CalendarInvitationView
     return Object.hash(
       runtimeType,
       id,
+      kind,
       revision,
       uid,
       organizer,
@@ -202,6 +219,7 @@ abstract class CalendarInvitationView
     return {
       '__className__': 'serverpod_calendar.CalendarInvitationView',
       'id': id.toJson(),
+      'kind': kind.toJson(),
       'revision': revision,
       'uid': uid,
       'organizer': organizer,
@@ -220,6 +238,7 @@ abstract class CalendarInvitationView
     return {
       '__className__': 'serverpod_calendar.CalendarInvitationView',
       'id': id.toJson(),
+      'kind': kind.toJson(),
       'revision': revision,
       'uid': uid,
       'organizer': organizer,
@@ -244,6 +263,7 @@ class _Undefined {}
 class _CalendarInvitationViewImpl extends CalendarInvitationView {
   const _CalendarInvitationViewImpl({
     required _is.UuidValue id,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     required int revision,
     required String uid,
     required String organizer,
@@ -256,6 +276,7 @@ class _CalendarInvitationViewImpl extends CalendarInvitationView {
     DateTime? dismissedAt,
   }) : super._(
          id: id,
+         kind: kind,
          revision: revision,
          uid: uid,
          organizer: organizer,
@@ -274,6 +295,7 @@ class _CalendarInvitationViewImpl extends CalendarInvitationView {
   @override
   CalendarInvitationView copyWith({
     _is.UuidValue? id,
+    _ilccsff7.CalendarInvitationSourceKind? kind,
     int? revision,
     String? uid,
     String? organizer,
@@ -287,6 +309,7 @@ class _CalendarInvitationViewImpl extends CalendarInvitationView {
   }) {
     return CalendarInvitationView(
       id: id ?? this.id,
+      kind: kind ?? this.kind,
       revision: revision ?? this.revision,
       uid: uid ?? this.uid,
       organizer: organizer ?? this.organizer,

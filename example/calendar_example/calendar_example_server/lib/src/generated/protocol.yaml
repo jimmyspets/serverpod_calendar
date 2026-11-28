@@ -11,6 +11,7 @@ refreshJwtTokens:
   - refreshAccessToken:
 invitationDemo:
   - simulate:
+  - simulateCancellation:
 notificationStream:
   - watch:
 schedulingDemo:

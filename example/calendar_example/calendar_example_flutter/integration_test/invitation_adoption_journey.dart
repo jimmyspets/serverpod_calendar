@@ -174,6 +174,41 @@ Future<void> runInvitationAdoptionJourney(
       (await module.calendarInvitation.getInvitation(entry.id)).dismissedAt,
       isNull,
     );
+
+    final beforeCancellation = await module.calendarInvitation.application(
+      entry.id,
+    );
+    await client.invitationDemo.simulateCancellation(
+      id,
+      const cal.Uuid().v4obj(),
+      3,
+    );
+    await tap(find.byKey(const Key('invitation-update-refresh')));
+    expect(
+      find.byKey(const Key('invitation-update-cancellation')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('invitation-cancellation-source')),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<ElevatedButton>(
+            find.byKey(const Key('invitation-update-apply')),
+          )
+          .onPressed,
+      isNull,
+    );
+    final afterCancellation = await module.calendarInvitation.application(
+      entry.id,
+    );
+    expect(afterCancellation.currentContent.summary, 'Local Flutter draft');
+    expect(afterCancellation.eventRevision, beforeCancellation.eventRevision);
+    expect(
+      afterCancellation.applicationRevision,
+      beforeCancellation.applicationRevision,
+    );
     navigator.pop();
     await tester.pumpAndSettle();
     navigator.pop();

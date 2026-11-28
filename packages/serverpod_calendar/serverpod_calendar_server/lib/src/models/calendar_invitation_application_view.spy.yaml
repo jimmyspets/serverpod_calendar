@@ -16,6 +16,7 @@ fields:
   hasLocalChanges: bool
   currentContent: CalendarEventContent
   currentVersion: CalendarEventProtocolVersion
+  incomingKind: CalendarInvitationSourceKind?
   incomingSourceId: UuidValue?
   invitationRevision: int?
   incomingContent: CalendarEventContent?

@@ -19,7 +19,8 @@ class _InvitationScreenState extends State<InvitationScreen> {
   List<cal.CalendarInvitationView> _entries = [];
   bool _busy = true;
   String? _error;
-  cal.UuidValue? _simulationId, _simulationCommand;
+  cal.UuidValue? _simulationId, _simulationCommand, _cancellationCommand;
+  cal.CalendarInvitationView? _cancellationEntry;
   @override
   void initState() {
     super.initState();
@@ -91,6 +92,25 @@ class _InvitationScreenState extends State<InvitationScreen> {
       });
     }
   });
+  Future<void> _cancel(cal.CalendarInvitationView entry) => _run(() async {
+    _cancellationEntry ??= entry;
+    _cancellationCommand ??= const cal.Uuid().v4obj();
+    final selected = _cancellationEntry!;
+    await widget.client.invitationDemo.simulateCancellation(
+      cal.UuidValue.fromString(selected.uid.split(':').last),
+      _cancellationCommand!,
+      (selected.sequence ?? 0) + 1,
+    );
+    _cancellationEntry = null;
+    _cancellationCommand = null;
+    final entries = await widget
+        .client
+        .modules
+        .serverpod_calendar
+        .calendarInvitation
+        .list();
+    if (mounted) setState(() => _entries = entries);
+  });
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
@@ -116,6 +136,12 @@ class _InvitationScreenState extends State<InvitationScreen> {
             'Create synthetic invitation (development/test only)',
           ),
         ),
+        if (_cancellationEntry != null)
+          TextButton(
+            key: const Key('invitation-cancel-retry'),
+            onPressed: _busy ? null : () => _cancel(_cancellationEntry!),
+            child: const Text('Retry the same synthetic cancellation'),
+          ),
         if (_busy) const LinearProgressIndicator(),
         if (_error != null) Text(_error!, key: const Key('invitation-error')),
         if (!_busy && _entries.isEmpty && _error == null)
@@ -128,7 +154,19 @@ class _InvitationScreenState extends State<InvitationScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(entry.summary ?? 'Source unavailable'),
+                  Text(
+                    entry.kind ==
+                            cal.CalendarInvitationSourceKind.meetingCancellation
+                        ? 'Meeting cancellation notice'
+                        : entry.summary ?? 'Source unavailable',
+                  ),
+                  if (entry.kind ==
+                      cal.CalendarInvitationSourceKind.meetingCancellation)
+                    const Text('Review only. The calendar event is unchanged.'),
+                  if (entry.sourceId == null)
+                    const Text('Source body unavailable.')
+                  else if (entry.timing == null)
+                    const Text('No start time supplied.'),
                   Text('Organizer address: ${entry.organizer}'),
                   Text('UID: ${entry.uid}'),
                   Text(
@@ -140,6 +178,16 @@ class _InvitationScreenState extends State<InvitationScreen> {
                     ),
                   Wrap(
                     children: [
+                      if (entry.kind ==
+                              cal.CalendarInvitationSourceKind.request &&
+                          _cancellationEntry == null)
+                        TextButton(
+                          key: ValueKey('invitation-cancel-${entry.id}'),
+                          onPressed: _busy ? null : () => _cancel(entry),
+                          child: const Text(
+                            'Simulate cancellation (development/test only)',
+                          ),
+                        ),
                       TextButton(
                         key: ValueKey('invitation-add-${entry.id}'),
                         onPressed: _busy
@@ -157,7 +205,11 @@ class _InvitationScreenState extends State<InvitationScreen> {
                                   await _load();
                                 }
                               },
-                        child: const Text('Add to calendar / view link'),
+                        child: Text(
+                          entry.kind == cal.CalendarInvitationSourceKind.request
+                              ? 'Add to calendar / view link'
+                              : 'View existing link',
+                        ),
                       ),
                       TextButton(
                         key: ValueKey('invitation-source-${entry.id}'),
@@ -263,7 +315,7 @@ class _InvitationSourceScreenState extends State<InvitationSourceScreen> {
           ListTile(
             key: ValueKey('invitation-history-${source.id}'),
             title: Text(
-              '${source.outcome.name}; current: ${source.isCurrent}; SEQUENCE: ${source.sequence?.toString() ?? 'omitted'}',
+              '${source.kind.name}; ${source.outcome.name}; current: ${source.isCurrent}; SEQUENCE: ${source.sequence?.toString() ?? 'omitted'}',
             ),
             subtitle: Text(source.stamp.toIso8601String()),
             onTap: _busy ? null : () => _load(source.id),

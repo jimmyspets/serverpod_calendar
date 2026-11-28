@@ -66,7 +66,10 @@ final class DemoInvitationHost implements CalendarInvitationHost {
     if (user == null || user.blocked || !recipient.same(context.recipient)) {
       return CalendarAuthorizationVerdict.deny;
     }
-    if (context.operation == CalendarInvitationOperation.receive) {
+    if ({
+      CalendarInvitationOperation.receive,
+      CalendarInvitationOperation.receiveCancellation,
+    }.contains(context.operation)) {
       final resolved = await resolveDelivery(
         session,
         context.delivery!,

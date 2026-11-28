@@ -354,7 +354,9 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       );
       if (source == null) throw _failure(CalendarFailureCode.unavailable);
       message = _invStored(source, entry);
-      incoming = _invImportMember(message, link.eventId);
+      if (message.method == IcalendarSchedulingMethod.request) {
+        incoming = _invImportMember(message, link.eventId);
+      }
     } else {
       (source, message) = await _invAcceptedBody(accepted, link, recipient, tx);
     }
@@ -391,10 +393,15 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       hasLocalChanges: dirty,
       currentContent: event.data.content,
       currentVersion: event.data.protocolState!.version,
-      incomingSourceId: incoming == null ? null : source!.id,
+      incomingKind: entry?.currentSourceId == null || message == null
+          ? null
+          : _invKind(message),
+      incomingSourceId: entry?.currentSourceId == null ? null : source?.id,
       invitationRevision: entry?.revision,
       incomingContent: incoming?.content,
-      incomingSourceText: incoming == null ? null : source!.normalizedSource,
+      incomingSourceText: entry?.currentSourceId == null
+          ? null
+          : source?.normalizedSource,
       canApply:
           incoming != null &&
           entry!.dismissedAt == null &&

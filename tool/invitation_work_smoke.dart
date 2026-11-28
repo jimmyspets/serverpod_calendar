@@ -379,6 +379,88 @@ Future<void> main() async {
         18780,
       );
     }
+
+    final cancellationRace = nextCase();
+    await b.command({
+      'command': 'receive',
+      'caseId': cancellationRace,
+      'key': 'seed',
+    });
+    await Future.wait([
+      a.command({
+        'command': 'receive',
+        'caseId': cancellationRace,
+        'key': 'request2',
+        'sequence': 2,
+      }),
+      b.command({
+        'command': 'receive',
+        'caseId': cancellationRace,
+        'key': 'cancel3',
+        'sequence': 3,
+        'cancel': true,
+      }),
+    ]);
+    final racedCancellation = await b.command({
+      'command': 'inspect',
+      'caseId': cancellationRace,
+    }) as Map;
+    require(
+      racedCancellation['kind'] == 'meetingCancellation' &&
+          racedCancellation['events'] == 0,
+      'REQUEST/CANCEL race selected wrong kind or created native state',
+    );
+    for (final pause in ['before', 'after']) {
+      final id = nextCase();
+      await b.command({'command': 'receive', 'caseId': id, 'key': 'seed'});
+      a.paused = Completer<Map<String, dynamic>>();
+      final lost = a
+          .command({
+            'command': 'receive',
+            'caseId': id,
+            'key': 'cancel-loss',
+            'sequence': 1,
+            'cancel': true,
+            'pause': pause,
+          })
+          .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+      final submitted = await a.paused!.future.timeout(
+        const Duration(seconds: 40),
+      );
+      final visible =
+          await b.command({'command': 'inspect', 'caseId': id}) as Map;
+      require(
+        visible['kind'] ==
+                (pause == 'before' ? 'request' : 'meetingCancellation') &&
+            visible['sources'] == (pause == 'before' ? 1 : 2),
+        'Cancellation crossed commit boundary partially',
+      );
+      await a.stop();
+      await lost;
+      final recovered = await b.command({
+        'command': 'receive',
+        'caseId': id,
+        'key': 'cancel-loss',
+        'sequence': 1,
+        'cancel': true,
+      }) as Map;
+      require(
+        (pause == 'after') == (recovered['id'] == submitted['id']),
+        'Cancellation retry identity changed',
+      );
+      final state =
+          await b.command({'command': 'inspect', 'caseId': id}) as Map;
+      require(
+        state['kind'] == 'meetingCancellation' &&
+            state['entries'] == 1 &&
+            state['sources'] == 2 &&
+            state['receipts'] == 2 &&
+            state['events'] == 0 &&
+            state['applications'] == 0,
+        'Cancellation loss duplicated source or mutated native state',
+      );
+      a = await start('a-cancel-recovered-$pause', 18780);
+    }
     for (final pause in ['before', 'after']) {
       final id = nextCase();
       a.paused = Completer<Map<String, dynamic>>();
@@ -421,7 +503,7 @@ Future<void> main() async {
       if (pause == 'before') a = await start('a-recovered', 18780);
     }
     stdout.writeln(
-      'PASS: independent invitation hosts, duplicate/conflicting ingress and dismissal races, actual loss before/after commit, stable receipt recovery, one-event adoption and latest-update races/loss with no partial state.',
+      'PASS: independent invitation hosts, duplicate/conflicting ingress and dismissal races, actual loss before/after commit, stable receipt recovery, one-event adoption and latest-update races/loss plus REQUEST/CANCEL races and cancellation loss/retry with no native mutation or partial state.',
     );
   } finally {
     final live = probes.where((p) => !p.stopped && !p.exited).toList();

@@ -16,6 +16,7 @@ import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'calendar_event_content.dart' as _id4cvk34;
 import 'calendar_event_protocol_version.dart' as _iblfo3t0;
 import 'calendar_invitation_apply_receipt.dart' as _ic2yh4ry;
+import 'calendar_invitation_source_kind.dart' as _ilccsff7;
 
 @_isc.immutable
 abstract class CalendarInvitationApplicationView
@@ -36,6 +37,7 @@ abstract class CalendarInvitationApplicationView
     required this.hasLocalChanges,
     required this.currentContent,
     required this.currentVersion,
+    this.incomingKind,
     this.incomingSourceId,
     this.invitationRevision,
     this.incomingContent,
@@ -60,6 +62,7 @@ abstract class CalendarInvitationApplicationView
     required bool hasLocalChanges,
     required _id4cvk34.CalendarEventContent currentContent,
     required _iblfo3t0.CalendarEventProtocolVersion currentVersion,
+    _ilccsff7.CalendarInvitationSourceKind? incomingKind,
     _isc.UuidValue? incomingSourceId,
     int? invitationRevision,
     _id4cvk34.CalendarEventContent? incomingContent,
@@ -109,6 +112,11 @@ abstract class CalendarInvitationApplicationView
           .deserialize<_iblfo3t0.CalendarEventProtocolVersion>(
             jsonSerialization['currentVersion'],
           ),
+      incomingKind: jsonSerialization['incomingKind'] == null
+          ? null
+          : _ilccsff7.CalendarInvitationSourceKind.fromJson(
+              (jsonSerialization['incomingKind'] as String),
+            ),
       incomingSourceId: jsonSerialization['incomingSourceId'] == null
           ? null
           : _isc.UuidValueJsonExtension.fromJson(
@@ -161,6 +169,8 @@ abstract class CalendarInvitationApplicationView
 
   final _iblfo3t0.CalendarEventProtocolVersion currentVersion;
 
+  final _ilccsff7.CalendarInvitationSourceKind? incomingKind;
+
   final _isc.UuidValue? incomingSourceId;
 
   final int? invitationRevision;
@@ -192,6 +202,7 @@ abstract class CalendarInvitationApplicationView
     bool? hasLocalChanges,
     _id4cvk34.CalendarEventContent? currentContent,
     _iblfo3t0.CalendarEventProtocolVersion? currentVersion,
+    _ilccsff7.CalendarInvitationSourceKind? incomingKind,
     _isc.UuidValue? incomingSourceId,
     int? invitationRevision,
     _id4cvk34.CalendarEventContent? incomingContent,
@@ -283,6 +294,11 @@ abstract class CalendarInvitationApplicationView
                 ) ||
                 other.currentVersion == currentVersion) &&
             (identical(
+                  other.incomingKind,
+                  incomingKind,
+                ) ||
+                other.incomingKind == incomingKind) &&
+            (identical(
                   other.incomingSourceId,
                   incomingSourceId,
                 ) ||
@@ -333,6 +349,7 @@ abstract class CalendarInvitationApplicationView
       hasLocalChanges,
       currentContent,
       currentVersion,
+      incomingKind,
       incomingSourceId,
       invitationRevision,
       incomingContent,
@@ -361,6 +378,7 @@ abstract class CalendarInvitationApplicationView
       'hasLocalChanges': hasLocalChanges,
       'currentContent': currentContent.toJson(),
       'currentVersion': currentVersion.toJson(),
+      if (incomingKind != null) 'incomingKind': incomingKind?.toJson(),
       if (incomingSourceId != null)
         'incomingSourceId': incomingSourceId?.toJson(),
       if (invitationRevision != null) 'invitationRevision': invitationRevision,
@@ -390,6 +408,7 @@ abstract class CalendarInvitationApplicationView
       'hasLocalChanges': hasLocalChanges,
       'currentContent': currentContent.toJsonForProtocol(),
       'currentVersion': currentVersion.toJsonForProtocol(),
+      if (incomingKind != null) 'incomingKind': incomingKind?.toJson(),
       if (incomingSourceId != null)
         'incomingSourceId': incomingSourceId?.toJson(),
       if (invitationRevision != null) 'invitationRevision': invitationRevision,
@@ -428,6 +447,7 @@ class _CalendarInvitationApplicationViewImpl
     required bool hasLocalChanges,
     required _id4cvk34.CalendarEventContent currentContent,
     required _iblfo3t0.CalendarEventProtocolVersion currentVersion,
+    _ilccsff7.CalendarInvitationSourceKind? incomingKind,
     _isc.UuidValue? incomingSourceId,
     int? invitationRevision,
     _id4cvk34.CalendarEventContent? incomingContent,
@@ -450,6 +470,7 @@ class _CalendarInvitationApplicationViewImpl
          hasLocalChanges: hasLocalChanges,
          currentContent: currentContent,
          currentVersion: currentVersion,
+         incomingKind: incomingKind,
          incomingSourceId: incomingSourceId,
          invitationRevision: invitationRevision,
          incomingContent: incomingContent,
@@ -478,6 +499,7 @@ class _CalendarInvitationApplicationViewImpl
     bool? hasLocalChanges,
     _id4cvk34.CalendarEventContent? currentContent,
     _iblfo3t0.CalendarEventProtocolVersion? currentVersion,
+    Object? incomingKind = _Undefined,
     Object? incomingSourceId = _Undefined,
     Object? invitationRevision = _Undefined,
     Object? incomingContent = _Undefined,
@@ -503,6 +525,9 @@ class _CalendarInvitationApplicationViewImpl
       hasLocalChanges: hasLocalChanges ?? this.hasLocalChanges,
       currentContent: currentContent ?? this.currentContent.copyWith(),
       currentVersion: currentVersion ?? this.currentVersion.copyWith(),
+      incomingKind: incomingKind is _ilccsff7.CalendarInvitationSourceKind?
+          ? incomingKind
+          : this.incomingKind,
       incomingSourceId: incomingSourceId is _isc.UuidValue?
           ? incomingSourceId
           : this.incomingSourceId,
