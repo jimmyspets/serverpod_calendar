@@ -997,3 +997,11 @@ Accepted [ADR 0180](adr/0180-authenticated-bounded-freebusy-exchanges.md) adds t
 - [ ] Require exact-head full hosted inspect/runtime success before this implementation is ready.
 
 This next method-family contract is dependency-driven work in the scheduling lane. It does not defer the remaining bundle/range lifecycle, other selected methods, operational cleanup or release evidence.
+
+
+## Proposed subject/common-free snapshot downloads
+
+[Proposed ADR 0181](adr/0181-subject-common-freebusy-export.md) closes the existing authenticated export gap: per-target ordered VFREEBUSY components or one common-free aggregate, with complete all-or-nothing coverage and independent subject export authority plus existing summary/source rights. It proposes one immutable generated request DTO and a stateless endpoint, shared budgets/final resolution and source rechecks, anonymous wire identities, and grouped client/Flutter/two-host validation. No SQL, durable scheduling, mailbox, worker, HTTP-feed change or implementation is approved by this proposal. Subject/common-free mail, larger/cross-scope queries and remaining release requirements stay separate.
+
+- [ ] Review the complete ADR 0181 query/API/disclosure/budget contract before implementation.
+- [ ] After agreement, implement and validate this stateless export group once; retain full exact-head hosted readiness.
