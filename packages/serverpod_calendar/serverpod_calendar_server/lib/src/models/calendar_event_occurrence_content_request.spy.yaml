@@ -1,0 +1,7 @@
+class: CalendarEventOccurrenceContentRequest
+immutable: true
+fields:
+  eventId: UuidValue
+  expectedRevision: int
+  originalStart: CalendarEventTiming
+  changes: List<CalendarEventOccurrenceContentChange>

@@ -1,7 +1,8 @@
 part of 'icalendar_event_calendar.dart';
 
 /// One complete in-file master and supported timing/cancellation components.
-/// Common content is on [master]; [overrides] retains source omission/versions.
+/// Omitted text inherits [master]; explicit override text remains local, including
+/// at timing-range anchors. [overrides] retains source omission/versions.
 /// Core projections provide timing only, not status/transparency or authority.
 final class IcalendarEventSeries {
   IcalendarEventSeries._(
@@ -27,17 +28,8 @@ IcalendarEventSeries _eventSeries(
   if (overrides.isNotEmpty && master.recurrence == null) {
     componentFail(IcalendarComponentError.invalidValue);
   }
-  bool sameText(IcalendarEventText? a, IcalendarEventText? b) =>
-      a == null ||
-      (b != null &&
-          a.value == b.value &&
-          a.language == b.language &&
-          a.alternativeUri == b.alternativeUri);
   for (final o in overrides) {
-    if (!sameText(o.summary, master.summary) ||
-        !sameText(o.description, master.description) ||
-        !sameText(o.location, master.location) ||
-        (o.transparency != null && o.isTransparent != master.isTransparent) ||
+    if ((o.transparency != null && o.isTransparent != master.isTransparent) ||
         (o.status != null &&
             o.status != master.status &&
             o.status != IcalendarEventStatus.cancelled)) {

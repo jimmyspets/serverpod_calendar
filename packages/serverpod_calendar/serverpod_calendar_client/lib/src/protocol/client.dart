@@ -56,6 +56,8 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_event_import_res
     as _ilwtfn8h;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_occurrence_change.dart'
     as _ir37u2ww;
+import 'package:serverpod_calendar_client/src/protocol/calendar_event_occurrence_content_request.dart'
+    as _ifjtl7wd;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_occurrence_preview.dart'
     as _iz6iah5n;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_occurrence_query.dart'
@@ -504,6 +506,14 @@ class EndpointCalendarEvent extends _isc.EndpointRef {
   ) => caller.callServerEndpoint<_ieh64e0q.CalendarEventReceipt?>(
     'serverpod_calendar.calendarEvent',
     'changeOccurrence',
+    {'request': request},
+  );
+
+  _ida.Future<_ieh64e0q.CalendarEventReceipt?> changeOccurrenceContent(
+    _ifjtl7wd.CalendarEventOccurrenceContentRequest request,
+  ) => caller.callServerEndpoint<_ieh64e0q.CalendarEventReceipt?>(
+    'serverpod_calendar.calendarEvent',
+    'changeOccurrenceContent',
     {'request': request},
   );
 

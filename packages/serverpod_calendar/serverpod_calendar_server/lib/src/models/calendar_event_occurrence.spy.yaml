@@ -5,3 +5,5 @@ fields:
   endDate: CalendarEventCivil?
   startUtc: DateTime?
   endUtc: DateTime?
+  content: CalendarEventOccurrenceContent?
+  contentOverrides: CalendarEventOccurrenceContent?

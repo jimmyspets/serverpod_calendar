@@ -14,6 +14,7 @@ import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'calendar_event_civil.dart' as _i1bb5k1r;
+import 'calendar_event_occurrence_content.dart' as _io4uvjqi;
 
 abstract class CalendarEventOccurrence
     implements _isc.SerializableModel, _isc.ProtocolSerialization {
@@ -23,6 +24,8 @@ abstract class CalendarEventOccurrence
     this.endDate,
     this.startUtc,
     this.endUtc,
+    this.content,
+    this.contentOverrides,
   });
 
   factory CalendarEventOccurrence({
@@ -31,6 +34,8 @@ abstract class CalendarEventOccurrence
     _i1bb5k1r.CalendarEventCivil? endDate,
     DateTime? startUtc,
     DateTime? endUtc,
+    _io4uvjqi.CalendarEventOccurrenceContent? content,
+    _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides,
   }) = _CalendarEventOccurrenceImpl;
 
   factory CalendarEventOccurrence.fromJson(
@@ -55,6 +60,18 @@ abstract class CalendarEventOccurrence
       endUtc: jsonSerialization['endUtc'] == null
           ? null
           : _isc.DateTimeJsonExtension.fromJson(jsonSerialization['endUtc']),
+      content: jsonSerialization['content'] == null
+          ? null
+          : _ie4a1wrz.Protocol()
+                .deserialize<_io4uvjqi.CalendarEventOccurrenceContent>(
+                  jsonSerialization['content'],
+                ),
+      contentOverrides: jsonSerialization['contentOverrides'] == null
+          ? null
+          : _ie4a1wrz.Protocol()
+                .deserialize<_io4uvjqi.CalendarEventOccurrenceContent>(
+                  jsonSerialization['contentOverrides'],
+                ),
     );
   }
 
@@ -68,6 +85,10 @@ abstract class CalendarEventOccurrence
 
   DateTime? endUtc;
 
+  _io4uvjqi.CalendarEventOccurrenceContent? content;
+
+  _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides;
+
   /// Returns a shallow copy of this [CalendarEventOccurrence]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -77,6 +98,8 @@ abstract class CalendarEventOccurrence
     _i1bb5k1r.CalendarEventCivil? endDate,
     DateTime? startUtc,
     DateTime? endUtc,
+    _io4uvjqi.CalendarEventOccurrenceContent? content,
+    _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -87,6 +110,9 @@ abstract class CalendarEventOccurrence
       if (endDate != null) 'endDate': endDate?.toJson(),
       if (startUtc != null) 'startUtc': startUtc?.toJson(),
       if (endUtc != null) 'endUtc': endUtc?.toJson(),
+      if (content != null) 'content': content?.toJson(),
+      if (contentOverrides != null)
+        'contentOverrides': contentOverrides?.toJson(),
     };
   }
 
@@ -99,6 +125,9 @@ abstract class CalendarEventOccurrence
       if (endDate != null) 'endDate': endDate?.toJsonForProtocol(),
       if (startUtc != null) 'startUtc': startUtc?.toJson(),
       if (endUtc != null) 'endUtc': endUtc?.toJson(),
+      if (content != null) 'content': content?.toJsonForProtocol(),
+      if (contentOverrides != null)
+        'contentOverrides': contentOverrides?.toJsonForProtocol(),
     };
   }
 
@@ -117,12 +146,16 @@ class _CalendarEventOccurrenceImpl extends CalendarEventOccurrence {
     _i1bb5k1r.CalendarEventCivil? endDate,
     DateTime? startUtc,
     DateTime? endUtc,
+    _io4uvjqi.CalendarEventOccurrenceContent? content,
+    _io4uvjqi.CalendarEventOccurrenceContent? contentOverrides,
   }) : super._(
          originalStart: originalStart,
          start: start,
          endDate: endDate,
          startUtc: startUtc,
          endUtc: endUtc,
+         content: content,
+         contentOverrides: contentOverrides,
        );
 
   /// Returns a shallow copy of this [CalendarEventOccurrence]
@@ -135,6 +168,8 @@ class _CalendarEventOccurrenceImpl extends CalendarEventOccurrence {
     Object? endDate = _Undefined,
     Object? startUtc = _Undefined,
     Object? endUtc = _Undefined,
+    Object? content = _Undefined,
+    Object? contentOverrides = _Undefined,
   }) {
     return CalendarEventOccurrence(
       originalStart: originalStart ?? this.originalStart.copyWith(),
@@ -144,6 +179,13 @@ class _CalendarEventOccurrenceImpl extends CalendarEventOccurrence {
           : this.endDate?.copyWith(),
       startUtc: startUtc is DateTime? ? startUtc : this.startUtc,
       endUtc: endUtc is DateTime? ? endUtc : this.endUtc,
+      content: content is _io4uvjqi.CalendarEventOccurrenceContent?
+          ? content
+          : this.content?.copyWith(),
+      contentOverrides:
+          contentOverrides is _io4uvjqi.CalendarEventOccurrenceContent?
+          ? contentOverrides
+          : this.contentOverrides?.copyWith(),
     );
   }
 }

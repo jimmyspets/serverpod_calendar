@@ -4,4 +4,5 @@ fields:
   revision: int
   kind: CalendarEventTimeKind
   zoneId: String?
+  disclosedGroups: List<CalendarEventFieldGroup>
   occurrences: List<CalendarEventOccurrence>

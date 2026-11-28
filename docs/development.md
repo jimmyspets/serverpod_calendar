@@ -146,3 +146,11 @@ After the host bundle is built and isolated test storage is ready, `dart run too
 If an owned web-server preview serves the page but its debug proxy returns HTML where metadata JSON was expected, inspect Serverpod/Dart MCP logs rather than assuming a valid app VM. The task replacement batch verified the fallback `flutter run --no-pub -d chrome --web-hostname=localhost --web-port=18083 --web-browser-flag=--headless=new --web-browser-flag=--disable-gpu` after stopping the owned failed Flutter process. Connect Dart MCP to that Flutter DTD and target its app URI; Serverpod MCP remains available for the separately running server. Never stop unrelated IDE apps or reset development storage to fix a preview.
 
 For the analogous focused event source editor journey, use `dart run tool/host_smoke.dart --flutter --event-replacement` with a current host bundle and dedicated synthetic test storage. It selects `integration_test/event_replace_smoke_test.dart`; the default complete journey remains unchanged.
+
+## Focused event content browser checks
+
+After an interrupted browser journey, run `./tool/reset-test.ps1` before rerunning the real-host harness; it resets only the dedicated synthetic test database. Interrupted Flutter fixtures may otherwise remain and invalidate clean-list assertions. Never reset the development database for a test retry.
+
+`dart run tool/host_smoke.dart --flutter --event-content` runs the existing two-host/generated-client checks followed by the focused event occurrence-content editor journey. The full `--flutter` target retains the complete journey, including selected content and timing edits. Tests use the supported simulated keyboard for dialog/source text and scroll lazy preview rows explicitly; this is not physical keyboard or clipboard compatibility evidence.
+
+The full Flutter journey has a six-minute outer process guard, including compilation and shutdown; focused targets retain four minutes. Individual widget/action waits remain bounded. The larger full guard follows a run that reported passing tests/application completion but exceeded the previous four-minute shutdown deadline.

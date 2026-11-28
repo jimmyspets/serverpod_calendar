@@ -55,3 +55,5 @@ See [validation evidence](scaffold-validation.md). Pure computation, service/nat
 
 
 [ADR 0078](adr/0078-create-only-event-import-and-storage.md) and [the event import contract](event-import.md) now record selected source-preserving storage/create-only import choices. Current runtime is unchanged: event PERIOD persistence, imported text annotations/component versions and authenticated event import remain unimplemented. Preserve existing native timing/lifecycle/authorization behavior until the separately reviewed storage increment extends it.
+
+Selected occurrence content and optional preview content-disclosure groups now follow under [ADR 0106](adr/0106-single-event-content-overrides.md); see [the guide](event-occurrence-content.md) for exact field inheritance, original identity, independent permission checks and export limits.

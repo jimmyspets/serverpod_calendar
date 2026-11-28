@@ -319,6 +319,363 @@ void main() {
           where: (t) => t.scopeKey.equals('test:alice'),
         ))!.revision;
 
+    Future<CalendarEventReceipt> contentEvent() async {
+      final parent = (await service.create(createInput()))!;
+      return (await service.createEvent(
+        CalendarEventCreateRequest(
+          calendarId: parent.calendarId,
+          content: eventInput(summary: 'Master').copyWith(
+            description: 'Details',
+            location: 'Room',
+            recurrence: CalendarEventRecurrence(
+              rule: daily(),
+              inclusions: [],
+              exclusions: [],
+            ),
+          ),
+        ),
+      ))!;
+    }
+
+    CalendarEventOccurrenceContentRequest eventContentChange(
+      UuidValue id, {
+      int revision = 1,
+      CalendarEventContentField field = CalendarEventContentField.summary,
+      CalendarEventContentAction action = CalendarEventContentAction.setValue,
+      String? text = 'Own',
+    }) => CalendarEventOccurrenceContentRequest(
+      eventId: id,
+      expectedRevision: revision,
+      originalStart: day(30),
+      changes: [
+        CalendarEventOccurrenceContentChange(
+          field: field,
+          action: action,
+          text: text,
+        ),
+      ],
+    );
+    test('event content preserves timing and occupancy while content follows selected groups', () async {
+      final e = await contentEvent();
+      final baseline = await service.previewOccurrences(preview(e.eventId));
+      await service.changeOccurrenceContent(eventContentChange(e.eventId));
+      final hidden = await service.previewOccurrences(
+        preview(e.eventId, revision: 2),
+      );
+      expect(
+        hidden.occurrences.map((o) => o.toJson()).toList(),
+        baseline.occurrences.map((o) => o.toJson()).toList(),
+      );
+      final visible = await service.previewOccurrences(
+        preview(e.eventId, revision: 2).copyWith(
+          fieldGroups: [
+            CalendarEventFieldGroup.summary,
+            CalendarEventFieldGroup.description,
+          ],
+        ),
+      );
+      expect(visible.occurrences[1].content!.summary, 'Own');
+      expect(visible.occurrences[1].content!.description, 'Details');
+      expect(visible.occurrences[1].content!.location, isNull);
+      expect(visible.occurrences[2].content!.summary, 'Master');
+      final view = await service.getEvent(e.eventId, eventGroups);
+      expect(view.timingOverrides!.singles.single.replacement, isNull);
+      expect(view.protocolVersion!.sequence, 0);
+      expect(view.occurrenceProtocolVersions!.single.version.sequence, 0);
+      final timing = await service.getEvent(e.eventId, [
+        CalendarEventFieldGroup.timing,
+        CalendarEventFieldGroup.protocolIdentity,
+      ]);
+      expect(timing.timingOverrides, isNull);
+      expect(timing.occurrenceProtocolVersions, isEmpty);
+      await expectLater(
+        service.exportEvents(
+          CalendarEventExportRequest(
+            calendarId: e.calendarId,
+            expectedRevision: 1,
+            selection: [
+              CalendarEventExportSelection(
+                eventId: e.eventId,
+                expectedRevision: 2,
+              ),
+            ],
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+    });
+    test(
+      'event content clear inherit and master edits preserve own fields',
+      () async {
+        final e = await contentEvent();
+        await service.changeOccurrenceContent(eventContentChange(e.eventId));
+        final current = await service.getEvent(e.eventId, eventGroups);
+        final raw = (await CalendarEventDataRecord.db.findFirstRow(
+          session,
+          where: (t) => t.eventId.equals(e.eventId),
+        ))!;
+        await service.updateEvent(
+          CalendarEventUpdateRequest(
+            eventId: e.eventId,
+            expectedRevision: 2,
+            content: raw.content.copyWith(
+              summary: 'Changed',
+              description: 'New details',
+            ),
+          ),
+        );
+        final v = await service.previewOccurrences(
+          preview(e.eventId, revision: 3).copyWith(
+            fieldGroups: [
+              CalendarEventFieldGroup.summary,
+              CalendarEventFieldGroup.description,
+            ],
+          ),
+        );
+        expect(v.occurrences[1].content!.summary, 'Own');
+        expect(v.occurrences[1].content!.description, 'New details');
+        expect(
+          (await service.getEvent(
+            e.eventId,
+            eventGroups,
+          )).occurrenceProtocolVersions!.single.version,
+          current.occurrenceProtocolVersions!.single.version,
+        );
+        await service.changeOccurrenceContent(
+          eventContentChange(
+            e.eventId,
+            revision: 3,
+            action: CalendarEventContentAction.clearValue,
+            text: null,
+          ),
+        );
+        expect(
+          (await service.getEvent(
+            e.eventId,
+            eventGroups,
+          )).timingOverrides!.singles.single.contentOverrides!.summary,
+          '',
+        );
+        await service.changeOccurrenceContent(
+          eventContentChange(
+            e.eventId,
+            revision: 4,
+            action: CalendarEventContentAction.inheritSeries,
+            text: null,
+          ),
+        );
+        expect(
+          (await service.getEvent(e.eventId, eventGroups)).timingOverrides,
+          isNull,
+        );
+      },
+    );
+    test(
+      'event content needs update authority independently of lifecycle',
+      () async {
+        final e = await contentEvent();
+        policy.denied.add(CalendarPermission.updateEvent);
+        await expectLater(
+          service.changeOccurrenceContent(eventContentChange(e.eventId)),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        policy.denied.clear();
+        policy.denied.add(CalendarPermission.changeEventStatus);
+        await service.changeOccurrenceContent(eventContentChange(e.eventId));
+        expect((await service.getEvent(e.eventId, eventGroups)).revision, 2);
+      },
+    );
+    for (final group in [
+      CalendarEventFieldGroup.summary,
+      CalendarEventFieldGroup.description,
+      CalendarEventFieldGroup.location,
+    ]) {
+      test(
+        'event content preview requires requested ${group.name} disclosure',
+        () async {
+          final e = await contentEvent();
+          await service.changeOccurrenceContent(
+            eventContentChange(
+              e.eventId,
+              field: CalendarEventContentField.values.byName(group.name),
+            ),
+          );
+          policy.eventGrants.remove(group);
+          await expectLater(
+            service.previewOccurrences(
+              preview(e.eventId, revision: 2).copyWith(fieldGroups: [group]),
+            ),
+            failure(CalendarFailureCode.accessDenied),
+          );
+          final view = await service.getEvent(e.eventId, eventGroups);
+          expect(view.timingOverrides, isNull);
+          expect(view.occurrenceProtocolVersions, isEmpty);
+          expect(
+            (await service.previewOccurrences(preview(e.eventId, revision: 2)))
+                .occurrences
+                .every((v) => v.content == null && v.contentOverrides == null),
+            isTrue,
+          );
+        },
+      );
+    }
+    test(
+      'event content freezes request and preview lists before callbacks',
+      () async {
+        final e = await contentEvent();
+        final changes = [...eventContentChange(e.eventId).changes];
+        final future = service.changeOccurrenceContent(
+          eventContentChange(e.eventId).copyWith(changes: changes),
+        );
+        changes.clear();
+        await future;
+        final fields = [CalendarEventFieldGroup.summary];
+        final pending = service.previewOccurrences(
+          preview(e.eventId, revision: 2).copyWith(fieldGroups: fields),
+        );
+        fields.add(CalendarEventFieldGroup.location);
+        final result = await pending;
+        expect(
+          result.disclosedGroups,
+          contains(CalendarEventFieldGroup.summary),
+        );
+        expect(
+          result.disclosedGroups,
+          isNot(contains(CalendarEventFieldGroup.location)),
+        );
+        expect(result.occurrences[1].content!.summary, 'Own');
+      },
+    );
+    test(
+      'event content final actual context stale denial and rollback',
+      () async {
+        final e = await contentEvent();
+        final gen = await generation();
+        policy.onFinal = () {
+          final request = policy.lastEventRequest!;
+          expect(request.calendarId, e.calendarId);
+          expect(request.currentEvent!.eventId, e.eventId);
+          expect(request.eventOccurrenceContentChange!.originalStart, day(30));
+          expect(
+            request
+                .proposedTimingOverrides!
+                .singles
+                .single
+                .contentOverrides!
+                .summary,
+            'Own',
+          );
+          expect(
+            () => request.eventOccurrenceContentChange!.changes.clear(),
+            throwsUnsupportedError,
+          );
+        };
+        policy.denyFinal = true;
+        await expectLater(
+          service.changeOccurrenceContent(eventContentChange(e.eventId)),
+          failure(CalendarFailureCode.accessDenied),
+        );
+        expect(await generation(), gen);
+        expect(
+          (await service.getEvent(e.eventId, eventGroups)).timingOverrides,
+          isNull,
+        );
+        policy.denyFinal = false;
+        await service.changeOccurrenceContent(eventContentChange(e.eventId));
+        policy.onFinal = null;
+        await expectLater(
+          service.changeOccurrenceContent(eventContentChange(e.eventId)),
+          failure(CalendarFailureCode.staleRevision),
+        );
+      },
+    );
+    test('event content rejects orphaning master edits without dropping stored content', () async {
+      final e = await contentEvent();
+      await service.changeOccurrenceContent(eventContentChange(e.eventId));
+      final raw = (await CalendarEventDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.eventId.equals(e.eventId),
+      ))!;
+      await expectLater(
+        service.updateEvent(
+          CalendarEventUpdateRequest(
+            eventId: e.eventId,
+            expectedRevision: 2,
+            content: raw.content.copyWith(
+              recurrence: raw.content.recurrence!.copyWith(
+                exclusions: [day(30)],
+              ),
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      expect(
+        (await service.getEvent(
+          e.eventId,
+          eventGroups,
+        )).timingOverrides!.singles.single.contentOverrides!.summary,
+        'Own',
+      );
+    });
+
+    test('event content identical native save keeps protocol version while API revision advances', () async {
+      final e = await contentEvent();
+      await service.changeOccurrenceContent(eventContentChange(e.eventId));
+      final before = await service.getEvent(e.eventId, eventGroups),
+          gen = await generation();
+      await service.changeOccurrenceContent(
+        eventContentChange(e.eventId, revision: 2),
+      );
+      final after = await service.getEvent(e.eventId, eventGroups);
+      expect(after.revision, 3);
+      expect(await generation(), gen + 1);
+      expect(after.protocolVersion, before.protocolVersion);
+      expect(
+        after.occurrenceProtocolVersions,
+        before.occurrenceProtocolVersions,
+      );
+    });
+    test('event content late generation overflow rolls back new component and protocol state', () async {
+      final e = await contentEvent();
+      final scope = (await CalendarScopeRecord.db.findFirstRow(
+        session,
+        where: (t) => t.scopeKey.equals('test:alice'),
+      ))!;
+      scope.revision = 9223372036854775807;
+      await CalendarScopeRecord.db.updateRow(session, scope);
+      await expectLater(
+        service.changeOccurrenceContent(eventContentChange(e.eventId)),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      final after = await service.getEvent(e.eventId, eventGroups);
+      expect(after.revision, 1);
+      expect(after.timingOverrides, isNull);
+      expect(after.occurrenceProtocolVersions, isEmpty);
+    });
+    test('event content stored old imported baseline is unavailable rather than reinterpreted', () async {
+      final e = await contentEvent();
+      final row = (await CalendarEventDataRecord.db.findFirstRow(
+        session,
+        where: (t) => t.eventId.equals(e.eventId),
+      ))!;
+      row.importBaseline = eventImportBaseline(
+        row.protocolUid,
+        row.content,
+        row.timingOverrides,
+        row.protocolState!,
+      ).copyWith(profile: eventBaselineProfile.replaceFirst('v2', 'v1'));
+      await CalendarEventDataRecord.db.updateRow(session, row);
+      await expectLater(
+        service.getEvent(e.eventId, eventGroups),
+        failure(CalendarFailureCode.unavailable),
+      );
+      await expectLater(
+        service.changeOccurrenceContent(eventContentChange(e.eventId)),
+        failure(CalendarFailureCode.unavailable),
+      );
+    });
+
     CalendarTaskReplaceRequest taskReplacement(
       UuidValue parent,
       UuidValue id, {

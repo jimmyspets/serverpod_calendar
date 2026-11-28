@@ -59,6 +59,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_event_import_re
     as _iaw5gnbe;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_occurrence_change.dart'
     as _ixyxs14v;
+import 'package:serverpod_calendar_server/src/generated/calendar_event_occurrence_content_request.dart'
+    as _is52sdtb;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_occurrence_preview.dart'
     as _i2qqvmw2;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_occurrence_query.dart'
@@ -1513,6 +1515,37 @@ class _CalendarEventEndpoint {
           createSessionCallback: (_) => _localUniqueSession,
           endpointPath: 'calendarEvent',
           methodName: 'changeOccurrence',
+          parameters: _ist.testObjectToJson({'request': request}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_irjxy316.CalendarEventReceipt?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_irjxy316.CalendarEventReceipt?> changeOccurrenceContent(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is52sdtb.CalendarEventOccurrenceContentRequest request,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'calendarEvent',
+            method: 'changeOccurrenceContent',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'calendarEvent',
+          methodName: 'changeOccurrenceContent',
           parameters: _ist.testObjectToJson({'request': request}),
           serializationManager: _serializationManager,
         );

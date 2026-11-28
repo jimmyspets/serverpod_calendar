@@ -443,6 +443,10 @@ List<CalendarAvailabilityOpeningEdits>? validateAvailabilityEdits(
         throw ArgumentError('Opening replacements must have positive duration');
       }
     }
+    if (entry.overrides.singles.any((v) => v.contentOverrides != null) ||
+        entry.overrides.future.any((v) => v.contentOverrides != null)) {
+      throw ArgumentError('Availability content exceptions are not supported');
+    }
     final validated = validateEventOverrides(
       openingEvent(matches.single),
       entry.overrides,

@@ -11,6 +11,35 @@ Matcher rejects(IcalendarComponentError kind) => throwsA(
   isA<IcalendarComponentException>().having((e) => e.kind, 'kind', kind),
 );
 void main() {
+  test(
+    'AVAILABLE retains timing-only text policy after event content extension',
+    () {
+      expect(
+        () => read([
+          definition(
+            openings: [
+              opening(
+                extra: [
+                  'RRULE:FREQ=DAILY;COUNT=2',
+                  'DURATION:PT1H',
+                  'SUMMARY:Master',
+                ],
+              ),
+              opening(
+                timing: 'DTSTART:20261023T090000Z',
+                extra: [
+                  'RECURRENCE-ID:20261023T090000Z',
+                  'DURATION:PT1H',
+                  'SUMMARY:Different',
+                ],
+              ),
+            ],
+          ),
+        ]),
+        rejects(IcalendarComponentError.unsupportedProperty),
+      );
+    },
+  );
   test('unbounded closure defaults, immutable source and protocol metadata round trip', () {
     final c = read([
       definition(

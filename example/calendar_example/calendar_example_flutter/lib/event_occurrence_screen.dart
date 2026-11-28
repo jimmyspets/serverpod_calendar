@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'occurrence_timing_editor.dart';
+import 'event_content_editor.dart';
 
 import 'package:calendar_example_client/calendar_example_client.dart';
 import 'package:serverpod_calendar_client/serverpod_calendar_client.dart'
@@ -92,6 +93,14 @@ class _EventOccurrenceScreenState extends State<EventOccurrenceScreen> {
       final q = cal.CalendarEventOccurrenceQuery(
         eventId: _event.id,
         expectedRevision: _event.revision,
+        fieldGroups: [
+          for (final group in [
+            cal.CalendarEventFieldGroup.summary,
+            cal.CalendarEventFieldGroup.description,
+            cal.CalendarEventFieldGroup.location,
+          ])
+            if (_event.disclosedGroups.contains(group)) group,
+        ],
         fromDate: _date ? _civil(_from.text) : null,
         untilDate: _date ? _civil(_until.text) : null,
         fromUtc: _date ? null : _utc(_from.text),
@@ -119,7 +128,9 @@ class _EventOccurrenceScreenState extends State<EventOccurrenceScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() => _busy = false);
+      }
     }
   }
 
@@ -156,7 +167,9 @@ class _EventOccurrenceScreenState extends State<EventOccurrenceScreen> {
         });
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() => _busy = false);
+      }
     }
   }
 
@@ -175,6 +188,44 @@ class _EventOccurrenceScreenState extends State<EventOccurrenceScreen> {
       ),
     );
     if (changed == true && mounted) await _load(refresh: true);
+  }
+
+  Future<void> _content(cal.CalendarEventOccurrence occurrence) async {
+    final changes =
+        await showDialog<List<cal.CalendarEventOccurrenceContentChange>>(
+          context: context,
+          builder: (_) => EventContentEditor(occurrence: occurrence),
+        );
+    if (changes == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await widget.client.modules.serverpod_calendar.calendarEvent
+          .changeOccurrenceContent(
+            cal.CalendarEventOccurrenceContentRequest(
+              eventId: _event.id,
+              expectedRevision: _event.revision,
+              originalStart: _anchor(occurrence.originalStart),
+              changes: changes,
+            ),
+          );
+      await _load(refresh: true);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = occurrenceError(e);
+          _stale = true;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
   }
 
   String _label(cal.CalendarEventCivil c) =>
@@ -239,8 +290,24 @@ class _EventOccurrenceScreenState extends State<EventOccurrenceScreen> {
                       : '${o.startUtc!.toIso8601String()} to ${o.endUtc!.toIso8601String()} UTC; original ${_label(o.originalStart)}; zone ${_preview!.zoneId ?? 'UTC'}',
                 ),
               ),
+              if (o.content != null)
+                Text(
+                  'Summary: ${o.content?.summary ?? ""}; description: ${o.content?.description ?? ""}; location: ${o.content?.location ?? ""}',
+                ),
               Wrap(
                 children: [
+                  if ([
+                    cal.CalendarEventFieldGroup.summary,
+                    cal.CalendarEventFieldGroup.description,
+                    cal.CalendarEventFieldGroup.location,
+                  ].every((g) => _preview!.disclosedGroups.contains(g)))
+                    TextButton(
+                      key: ValueKey(
+                        'event-content-${occurrenceKey(o.originalStart)}',
+                      ),
+                      onPressed: _busy || _stale ? null : () => _content(o),
+                      child: const Text('Edit this content'),
+                    ),
                   TextButton(
                     key: ValueKey(
                       'occurrence-edit-${occurrenceKey(o.originalStart)}',
@@ -275,7 +342,7 @@ class _EventOccurrenceScreenState extends State<EventOccurrenceScreen> {
           ),
         if (_event.timingOverrides != null)
           const Text(
-            'Saved timing overrides (including cancelled occurrences)',
+            'Saved occurrence overrides (including cancelled occurrences)',
           ),
         for (final single
             in _event.timingOverrides?.singles ??

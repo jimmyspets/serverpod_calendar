@@ -43,3 +43,7 @@ Source: [RFC 5545 RECURRENCE-ID and RANGE](https://www.rfc-editor.org/rfc/rfc554
 
 
 [ADR 0078](adr/0078-create-only-event-import-and-storage.md) and [the event import contract](event-import.md) now record selected source-preserving storage/create-only import choices. Current runtime is unchanged: event PERIOD persistence, imported text annotations/component versions and authenticated event import remain unimplemented. Preserve existing native timing/lifecycle/authorization behavior until the separately reviewed storage increment extends it.
+
+## Selected event occurrence content, 2026-10-24
+
+[ADR 0106](adr/0106-single-event-content-overrides.md) and [the content guide](event-occurrence-content.md) extend events with selected summary/description/location exceptions, explicit clear/inherit, protected preview groups and anchor-local own wire text/annotations. Content-only exceptions preserve timing inheritance and reject lossy export; explicit timing components can round-trip local content. Master edits preserve pinned fields. Private event-source-v2 baselines supersede v1, which rejects fail-closed and requires explicit development recreation/reimport; no automatic reset/adoption is performed. This supersedes earlier timing-only/content-pending wording only for this scoped slice. Future content/cancellation, richer profiles, scheduling and feeds remain separate.

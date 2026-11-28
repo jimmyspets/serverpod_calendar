@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
+import 'calendar_event_field_group.dart' as _iftiwkuj;
 import 'calendar_event_occurrence.dart' as _isyqnyev;
 import 'calendar_event_time_kind.dart' as _idbnuf6y;
 
@@ -23,6 +24,7 @@ abstract class CalendarEventOccurrencePreview
     required this.revision,
     required this.kind,
     this.zoneId,
+    required this.disclosedGroups,
     required this.occurrences,
   });
 
@@ -31,6 +33,7 @@ abstract class CalendarEventOccurrencePreview
     required int revision,
     required _idbnuf6y.CalendarEventTimeKind kind,
     String? zoneId,
+    required List<_iftiwkuj.CalendarEventFieldGroup> disclosedGroups,
     required List<_isyqnyev.CalendarEventOccurrence> occurrences,
   }) = _CalendarEventOccurrencePreviewImpl;
 
@@ -46,6 +49,10 @@ abstract class CalendarEventOccurrencePreview
         (jsonSerialization['kind'] as String),
       ),
       zoneId: jsonSerialization['zoneId'] as String?,
+      disclosedGroups: _ix00hwbf.Protocol()
+          .deserialize<List<_iftiwkuj.CalendarEventFieldGroup>>(
+            jsonSerialization['disclosedGroups'],
+          ),
       occurrences: _ix00hwbf.Protocol()
           .deserialize<List<_isyqnyev.CalendarEventOccurrence>>(
             jsonSerialization['occurrences'],
@@ -61,6 +68,8 @@ abstract class CalendarEventOccurrencePreview
 
   String? zoneId;
 
+  List<_iftiwkuj.CalendarEventFieldGroup> disclosedGroups;
+
   List<_isyqnyev.CalendarEventOccurrence> occurrences;
 
   /// Returns a shallow copy of this [CalendarEventOccurrencePreview]
@@ -71,6 +80,7 @@ abstract class CalendarEventOccurrencePreview
     int? revision,
     _idbnuf6y.CalendarEventTimeKind? kind,
     String? zoneId,
+    List<_iftiwkuj.CalendarEventFieldGroup>? disclosedGroups,
     List<_isyqnyev.CalendarEventOccurrence>? occurrences,
   });
   @override
@@ -81,6 +91,7 @@ abstract class CalendarEventOccurrencePreview
       'revision': revision,
       'kind': kind.toJson(),
       if (zoneId != null) 'zoneId': zoneId,
+      'disclosedGroups': disclosedGroups.toJson(valueToJson: (v) => v.toJson()),
       'occurrences': occurrences.toJson(valueToJson: (v) => v.toJson()),
     };
   }
@@ -93,6 +104,7 @@ abstract class CalendarEventOccurrencePreview
       'revision': revision,
       'kind': kind.toJson(),
       if (zoneId != null) 'zoneId': zoneId,
+      'disclosedGroups': disclosedGroups.toJson(valueToJson: (v) => v.toJson()),
       'occurrences': occurrences.toJson(
         valueToJson: (v) => v.toJsonForProtocol(),
       ),
@@ -114,12 +126,14 @@ class _CalendarEventOccurrencePreviewImpl
     required int revision,
     required _idbnuf6y.CalendarEventTimeKind kind,
     String? zoneId,
+    required List<_iftiwkuj.CalendarEventFieldGroup> disclosedGroups,
     required List<_isyqnyev.CalendarEventOccurrence> occurrences,
   }) : super._(
          eventId: eventId,
          revision: revision,
          kind: kind,
          zoneId: zoneId,
+         disclosedGroups: disclosedGroups,
          occurrences: occurrences,
        );
 
@@ -132,6 +146,7 @@ class _CalendarEventOccurrencePreviewImpl
     int? revision,
     _idbnuf6y.CalendarEventTimeKind? kind,
     Object? zoneId = _Undefined,
+    List<_iftiwkuj.CalendarEventFieldGroup>? disclosedGroups,
     List<_isyqnyev.CalendarEventOccurrence>? occurrences,
   }) {
     return CalendarEventOccurrencePreview(
@@ -139,6 +154,8 @@ class _CalendarEventOccurrencePreviewImpl
       revision: revision ?? this.revision,
       kind: kind ?? this.kind,
       zoneId: zoneId is String? ? zoneId : this.zoneId,
+      disclosedGroups:
+          disclosedGroups ?? this.disclosedGroups.map((e0) => e0).toList(),
       occurrences:
           occurrences ?? this.occurrences.map((e0) => e0.copyWith()).toList(),
     );

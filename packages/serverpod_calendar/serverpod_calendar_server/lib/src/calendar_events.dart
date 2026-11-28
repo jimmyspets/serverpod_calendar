@@ -61,6 +61,9 @@ final class _Event {
         data.content,
         data.timingOverrides,
       );
+      if (data.importBaseline != null) {
+        validateEventImportBaseline(data.importBaseline!, data.protocolUid);
+      }
     } catch (_) {
       throw _failure(CalendarFailureCode.unavailable);
     }
@@ -99,6 +102,7 @@ extension CalendarEventOperations on CalendarService {
     CalendarAvailabilitySearchQuery? search,
     CalendarAvailabilityTarget? target,
     CalendarEventOccurrenceChange? change,
+    CalendarEventOccurrenceContentRequest? contentChange,
     CalendarEventTimingOverrides? proposedOverrides,
     Set<CalendarEventFieldGroup> groups = const {},
   }) => CalendarAuthorizationRequest(
@@ -115,6 +119,7 @@ extension CalendarEventOperations on CalendarService {
     availabilitySearchQuery: search,
     availabilityTarget: target,
     occurrenceChange: change,
+    eventOccurrenceContentChange: contentChange,
     proposedTimingOverrides: proposedOverrides,
     eventGroups: groups,
   );
@@ -178,6 +183,18 @@ extension CalendarEventOperations on CalendarService {
           ..sort((a, b) => a.index.compareTo(b.index));
     bool has(CalendarEventFieldGroup g) => groups.contains(g);
     final v = e.data.content;
+    final filteredOverrides = eventDisclosedOverrides(
+      e.data.timingOverrides,
+      groups.toSet(),
+    );
+    final visibleComponents = {
+      for (final s
+          in filteredOverrides?.singles ?? <CalendarEventSingleOverride>[])
+        eventComponentKey(s.originalStart, false),
+      for (final s
+          in filteredOverrides?.future ?? <CalendarEventFutureOverride>[])
+        eventComponentKey(s.originalStart, true),
+    };
     final time = e.data.updatedAt.toUtc();
     return CalendarEventView(
       id: e.identity.id!,
@@ -192,7 +209,7 @@ extension CalendarEventOperations on CalendarService {
       timing: has(CalendarEventFieldGroup.timing) ? v.timing : null,
       recurrence: has(CalendarEventFieldGroup.timing) ? v.recurrence : null,
       timingOverrides: has(CalendarEventFieldGroup.timing)
-          ? e.data.timingOverrides
+          ? filteredOverrides
           : null,
       periods: has(CalendarEventFieldGroup.timing) ? v.periods : null,
       textParameters:
@@ -225,11 +242,14 @@ extension CalendarEventOperations on CalendarService {
               has(CalendarEventFieldGroup.timing)
           ? [
               for (final p in e.data.protocolState!.overrides)
-                CalendarEventOccurrenceProtocolVersion(
-                  originalStart: p.originalStart,
-                  isThisAndFuture: p.isThisAndFuture,
-                  version: p.version,
-                ),
+                if (visibleComponents.contains(
+                  eventComponentKey(p.originalStart, p.isThisAndFuture),
+                ))
+                  CalendarEventOccurrenceProtocolVersion(
+                    originalStart: p.originalStart,
+                    isThisAndFuture: p.isThisAndFuture,
+                    version: p.version,
+                  ),
             ]
           : null,
       status: has(CalendarEventFieldGroup.state) ? v.status : null,
@@ -615,10 +635,17 @@ extension CalendarEventOperations on CalendarService {
   Future<CalendarEventOccurrencePreview> previewOccurrences(
     CalendarEventOccurrenceQuery query,
   ) async {
+    final extra = List<CalendarEventFieldGroup>.unmodifiable(
+      query.fieldGroups ?? const <CalendarEventFieldGroup>[],
+    );
+    if (extra.length > 3 || !eventOccurrenceContentGroups.containsAll(extra)) {
+      throw _failure(CalendarFailureCode.validation);
+    }
+    query = query.copyWith(fieldGroups: List.unmodifiable(extra));
     final c = await _context();
     return _transaction(c, (tx, _) async {
       final e = await _event(c, query.eventId, tx);
-      const groups = {CalendarEventFieldGroup.timing};
+      final groups = {CalendarEventFieldGroup.timing, ...extra};
       final requests = [
         _er(
           e.parent,
@@ -642,7 +669,7 @@ extension CalendarEventOperations on CalendarService {
         CalendarAuthorizationPhase.read,
       );
       if (decisions.values.any(
-        (d) => !d.eventDisclosedGroups.contains(CalendarEventFieldGroup.timing),
+        (d) => !d.eventDisclosedGroups.containsAll(groups),
       )) {
         throw _failure(CalendarFailureCode.accessDenied);
       }

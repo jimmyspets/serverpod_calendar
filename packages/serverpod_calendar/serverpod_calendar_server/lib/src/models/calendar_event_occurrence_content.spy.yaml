@@ -1,0 +1,7 @@
+class: CalendarEventOccurrenceContent
+immutable: true
+fields:
+  summary: String?
+  description: String?
+  location: String?
+  textParameters: CalendarEventTextParameters?

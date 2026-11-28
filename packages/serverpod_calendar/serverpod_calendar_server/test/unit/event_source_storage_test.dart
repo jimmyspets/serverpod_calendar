@@ -154,7 +154,7 @@ void main() {
     expect(result.overrides.single.statusPresent, isFalse);
   });
   test(
-    'explicit repeated text tracks master while inherited text does not',
+    'explicit repeated text pins its component while omitted text inherits',
     () {
       final p = source(
         extra: ['RRULE:FREQ=DAILY;COUNT=2', 'SUMMARY:Same'],
@@ -177,7 +177,7 @@ void main() {
         DateTime.utc(2026, 10, 24),
       );
       expect(s.version.sequence, 1);
-      expect(s.overrides.single.version.sequence, 1);
+      expect(s.overrides.single.version.sequence, isNull);
       expect(s.overrides.single.summaryPresent, isTrue);
       expect(
         advanceEventProtocol(

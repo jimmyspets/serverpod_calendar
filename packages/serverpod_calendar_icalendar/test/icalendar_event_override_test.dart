@@ -331,93 +331,86 @@ void main() {
       );
     },
   );
-  test('omitted content inherits, supplied text and parameters must match', () {
-    final content = [
-      'SUMMARY;LANGUAGE=en;ALTREP="https://example.invalid/text":Meeting',
-      'DESCRIPTION:Details',
-      'LOCATION:Room',
-      'STATUS:TENTATIVE',
-      'TRANSP:TRANSPARENT',
-    ];
-    final c = timed([
-      single(':20261023T120000Z', 'DTSTART:20261023T150000Z'),
-      single(':20261024T120000Z', 'DTSTART:20261024T160000Z', extra: content),
-    ], extra: content);
-    expect(c.series.single.overrides.first.summary, isNull);
-    expect(c.series.single.master.summary!.value, 'Meeting');
-    expect(c.series.single.overrides.last.summary!.language, 'en');
-    expect(
-      c.series.single.overrides.last.status,
-      IcalendarEventStatus.tentative,
-    );
-  });
   test(
-    'content/status/transparency changes never silently become timing changes',
+    'omitted content inherits, explicit text and annotations remain local',
     () {
-      for (final value in [
-        'SUMMARY:Other',
-        'DESCRIPTION:Other',
-        'LOCATION:Other',
+      final content = [
+        'SUMMARY;LANGUAGE=en;ALTREP="https://example.invalid/text":Meeting',
+        'DESCRIPTION:Details',
+        'LOCATION:Room',
         'STATUS:TENTATIVE',
         'TRANSP:TRANSPARENT',
-      ]) {
-        expect(
-          () => timed(
-            [
-              single(
-                ':20261023T120000Z',
-                'DTSTART:20261023T130000Z',
-                extra: [value],
-              ),
-            ],
-            extra: [
-              'SUMMARY:Master',
-              'DESCRIPTION:Details',
-              'LOCATION:Room',
-              'STATUS:CONFIRMED',
-            ],
-          ),
-          rejects(IcalendarComponentError.unsupportedProperty),
-        );
-      }
+      ];
+      final c = timed([
+        single(':20261023T120000Z', 'DTSTART:20261023T150000Z'),
+        single(':20261024T120000Z', 'DTSTART:20261024T160000Z', extra: content),
+      ], extra: content);
+      expect(c.series.single.overrides.first.summary, isNull);
+      expect(c.series.single.master.summary!.value, 'Meeting');
+      expect(c.series.single.overrides.last.summary!.language, 'en');
       expect(
-        () => timed(
-          [
-            single(
-              ':20261023T120000Z',
-              'DTSTART:20261023T130000Z',
-              extra: ['SUMMARY;LANGUAGE=sv:Same'],
-            ),
-          ],
-          extra: ['SUMMARY;LANGUAGE=en:Same'],
-        ),
-        rejects(IcalendarComponentError.unsupportedProperty),
-      );
-      expect(
-        () => timed(
-          [
-            single(
-              ':20261023T120000Z',
-              'DTSTART:20261023T130000Z',
-              extra: ['SUMMARY;ALTREP="https://example.invalid/other":Same'],
-            ),
-          ],
-          extra: ['SUMMARY:Same'],
-        ),
-        rejects(IcalendarComponentError.unsupportedProperty),
-      );
-      expect(
-        timed([
-          single(
-            ':20261023T120000Z',
-            'DTSTART:20261023T130000Z',
-            extra: ['TRANSP:OPAQUE'],
-          ),
-        ]).series.length,
-        1,
+        c.series.single.overrides.last.status,
+        IcalendarEventStatus.tentative,
       );
     },
   );
+  test('status/transparency differences still reject', () {
+    for (final value in ['STATUS:TENTATIVE', 'TRANSP:TRANSPARENT']) {
+      expect(
+        () => timed(
+          [
+            single(
+              ':20261023T120000Z',
+              'DTSTART:20261023T130000Z',
+              extra: [value],
+            ),
+          ],
+          extra: [
+            'SUMMARY:Master',
+            'DESCRIPTION:Details',
+            'LOCATION:Room',
+            'STATUS:CONFIRMED',
+          ],
+        ),
+        rejects(IcalendarComponentError.unsupportedProperty),
+      );
+    }
+    final c = timed(
+      [
+        single(
+          ':20261023T120000Z',
+          'DTSTART:20261023T130000Z',
+          extra: ['SUMMARY;LANGUAGE=sv:Same', 'DESCRIPTION:', 'LOCATION:Other'],
+        ),
+        single(
+          ';RANGE=THISANDFUTURE:20261024T120000Z',
+          'DTSTART:20261024T140000Z',
+          extra: ['SUMMARY;ALTREP="https://example.invalid/other":Anchor'],
+        ),
+      ],
+      extra: ['SUMMARY;LANGUAGE=en:Same', 'DESCRIPTION:Master'],
+    );
+    final own = c.series.single.overrides;
+    expect(own.first.summary!.language, 'sv');
+    expect(own.first.description!.value, '');
+    expect(own.first.location!.value, 'Other');
+    expect(own.last.summary!.value, 'Anchor');
+    expect(c.series.single.master.summary!.value, 'Same');
+    final round = parseIcalendarEventCalendar(
+      serializeIcalendarEventCalendar(c),
+    );
+    expect(round.series.single.overrides.first.description!.value, '');
+    expect(
+      timed([
+        single(
+          ':20261023T120000Z',
+          'DTSTART:20261023T130000Z',
+          extra: ['TRANSP:OPAQUE'],
+        ),
+      ]).series.length,
+      1,
+    );
+  });
   test(
     'omitted end uses standalone point/day default, not master duration',
     () {
@@ -742,7 +735,7 @@ void main() {
         single(
           ':20261023T120000Z',
           'DTSTART:20261023T140000Z',
-          extra: ['SUMMARY:Private synthetic override'],
+          extra: ['SUMMARY:Private synthetic override', 'TRANSP:TRANSPARENT'],
         ),
       ]);
       fail('Expected rejection');

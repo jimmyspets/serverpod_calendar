@@ -13,7 +13,9 @@
 import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
 import 'calendar_event_civil.dart' as _i1bb5k1r;
+import 'calendar_event_field_group.dart' as _iftiwkuj;
 
 @_isc.immutable
 abstract class CalendarEventOccurrenceQuery
@@ -21,6 +23,7 @@ abstract class CalendarEventOccurrenceQuery
   const CalendarEventOccurrenceQuery._({
     required this.eventId,
     required this.expectedRevision,
+    this.fieldGroups,
     this.fromDate,
     this.untilDate,
     this.fromUtc,
@@ -30,6 +33,7 @@ abstract class CalendarEventOccurrenceQuery
   const factory CalendarEventOccurrenceQuery({
     required _isc.UuidValue eventId,
     required int expectedRevision,
+    List<_iftiwkuj.CalendarEventFieldGroup>? fieldGroups,
     _i1bb5k1r.CalendarEventCivil? fromDate,
     _i1bb5k1r.CalendarEventCivil? untilDate,
     DateTime? fromUtc,
@@ -44,6 +48,12 @@ abstract class CalendarEventOccurrenceQuery
         jsonSerialization['eventId'],
       ),
       expectedRevision: jsonSerialization['expectedRevision'] as int,
+      fieldGroups: jsonSerialization['fieldGroups'] == null
+          ? null
+          : _ie4a1wrz.Protocol()
+                .deserialize<List<_iftiwkuj.CalendarEventFieldGroup>>(
+                  jsonSerialization['fieldGroups'],
+                ),
       fromDate: jsonSerialization['fromDate'] == null
           ? null
           : _ie4a1wrz.Protocol().deserialize<_i1bb5k1r.CalendarEventCivil>(
@@ -67,6 +77,8 @@ abstract class CalendarEventOccurrenceQuery
 
   final int expectedRevision;
 
+  final List<_iftiwkuj.CalendarEventFieldGroup>? fieldGroups;
+
   final _i1bb5k1r.CalendarEventCivil? fromDate;
 
   final _i1bb5k1r.CalendarEventCivil? untilDate;
@@ -81,6 +93,7 @@ abstract class CalendarEventOccurrenceQuery
   CalendarEventOccurrenceQuery copyWith({
     _isc.UuidValue? eventId,
     int? expectedRevision,
+    List<_iftiwkuj.CalendarEventFieldGroup>? fieldGroups,
     _i1bb5k1r.CalendarEventCivil? fromDate,
     _i1bb5k1r.CalendarEventCivil? untilDate,
     DateTime? fromUtc,
@@ -104,6 +117,10 @@ abstract class CalendarEventOccurrenceQuery
                   expectedRevision,
                 ) ||
                 other.expectedRevision == expectedRevision) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.fieldGroups,
+              fieldGroups,
+            ) &&
             (identical(
                   other.fromDate,
                   fromDate,
@@ -132,6 +149,7 @@ abstract class CalendarEventOccurrenceQuery
       runtimeType,
       eventId,
       expectedRevision,
+      const _iss.DeepCollectionEquality().hash(fieldGroups),
       fromDate,
       untilDate,
       fromUtc,
@@ -145,6 +163,8 @@ abstract class CalendarEventOccurrenceQuery
       '__className__': 'serverpod_calendar.CalendarEventOccurrenceQuery',
       'eventId': eventId.toJson(),
       'expectedRevision': expectedRevision,
+      if (fieldGroups != null)
+        'fieldGroups': fieldGroups?.toJson(valueToJson: (v) => v.toJson()),
       if (fromDate != null) 'fromDate': fromDate?.toJson(),
       if (untilDate != null) 'untilDate': untilDate?.toJson(),
       if (fromUtc != null) 'fromUtc': fromUtc?.toJson(),
@@ -158,6 +178,8 @@ abstract class CalendarEventOccurrenceQuery
       '__className__': 'serverpod_calendar.CalendarEventOccurrenceQuery',
       'eventId': eventId.toJson(),
       'expectedRevision': expectedRevision,
+      if (fieldGroups != null)
+        'fieldGroups': fieldGroups?.toJson(valueToJson: (v) => v.toJson()),
       if (fromDate != null) 'fromDate': fromDate?.toJsonForProtocol(),
       if (untilDate != null) 'untilDate': untilDate?.toJsonForProtocol(),
       if (fromUtc != null) 'fromUtc': fromUtc?.toJson(),
@@ -177,6 +199,7 @@ class _CalendarEventOccurrenceQueryImpl extends CalendarEventOccurrenceQuery {
   const _CalendarEventOccurrenceQueryImpl({
     required _isc.UuidValue eventId,
     required int expectedRevision,
+    List<_iftiwkuj.CalendarEventFieldGroup>? fieldGroups,
     _i1bb5k1r.CalendarEventCivil? fromDate,
     _i1bb5k1r.CalendarEventCivil? untilDate,
     DateTime? fromUtc,
@@ -184,6 +207,7 @@ class _CalendarEventOccurrenceQueryImpl extends CalendarEventOccurrenceQuery {
   }) : super._(
          eventId: eventId,
          expectedRevision: expectedRevision,
+         fieldGroups: fieldGroups,
          fromDate: fromDate,
          untilDate: untilDate,
          fromUtc: fromUtc,
@@ -197,6 +221,7 @@ class _CalendarEventOccurrenceQueryImpl extends CalendarEventOccurrenceQuery {
   CalendarEventOccurrenceQuery copyWith({
     _isc.UuidValue? eventId,
     int? expectedRevision,
+    Object? fieldGroups = _Undefined,
     Object? fromDate = _Undefined,
     Object? untilDate = _Undefined,
     Object? fromUtc = _Undefined,
@@ -205,6 +230,9 @@ class _CalendarEventOccurrenceQueryImpl extends CalendarEventOccurrenceQuery {
     return CalendarEventOccurrenceQuery(
       eventId: eventId ?? this.eventId,
       expectedRevision: expectedRevision ?? this.expectedRevision,
+      fieldGroups: fieldGroups is List<_iftiwkuj.CalendarEventFieldGroup>?
+          ? fieldGroups
+          : this.fieldGroups?.map((e0) => e0).toList(),
       fromDate: fromDate is _i1bb5k1r.CalendarEventCivil?
           ? fromDate
           : this.fromDate?.copyWith(),

@@ -1,0 +1,6 @@
+class: CalendarEventOccurrenceContentChange
+immutable: true
+fields:
+  field: CalendarEventContentField
+  action: CalendarEventContentAction
+  text: String?
