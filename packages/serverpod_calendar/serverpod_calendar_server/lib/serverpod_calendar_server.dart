@@ -13,3 +13,4 @@ export 'src/inbound_reply_runtime.dart';
 export 'src/invitation_runtime.dart';
 
 export 'src/invitation_response_runtime.dart';
+export 'src/invitation_occurrence_values.dart';

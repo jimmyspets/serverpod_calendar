@@ -136,8 +136,14 @@ final class IcalendarComponentLimits {
 }
 
 final class ComponentBudget {
-  ComponentBudget(this.limits)
-    : sharedWork = RecurrenceWorkBudget(maxWork: limits.maxCandidates);
+  ComponentBudget(this.limits, {RecurrenceWorkBudget? sharedWorkBudget})
+    : sharedWork =
+          sharedWorkBudget ??
+          RecurrenceWorkBudget(maxWork: limits.maxCandidates) {
+    if (sharedWork.maxWork > limits.maxCandidates) {
+      throw ArgumentError('Aggregate work cannot weaken component limits');
+    }
+  }
   final IcalendarComponentLimits limits;
   final RecurrenceWorkBudget sharedWork;
   int observances = 0, onsets = 0, explicitDates = 0, ruleValues = 0;
