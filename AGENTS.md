@@ -10,6 +10,8 @@ ADR 0120 extends the pure adapter to ADD/REFRESH/COUNTER/DECLINECOUNTER with sep
 
 ADR 0121 adds a separate pure VFREEBUSY scheduling adapter. Source periods/groups, FBTYPE interpretation, windows and numeric results establish no authorized coverage or sender identity and cause no automatic query/reply. Preserve overlaps/order/end-duration forms and distinguish empty source data from the complete authorized snapshot service.
 
+The maintainer confirmed explicit atomic Save and notify and native-created organizer meetings first under ADR 0122. Ordinary edits send nothing; imported meetings need later adoption. The proposed first REQUEST scope, four tables, origin enum, snapshot retention and worker defaults remain unapproved; do not add model sources or infer native provenance from a null baseline.
+
 ## Current state and sources
 
 This repository now contains an initial workspace/authentication scaffold; calendar domain features remain documentation-first. Read README.md, docs/discussion-migration.md, docs/requirements.md, and the relevant proposed ADRs before changes. The per-RFC tables in docs/rfc/ are the latest feature-scope source; explicit newer maintainer instructions take precedence. Reconcile older narrative text with the table statuses and notes without treating unapproved implementation detail as accepted. Architecture documents describe proposals, not implemented behavior. Do not invent earlier chat decisions or claim complete iCalendar, CalDAV, or client compatibility.

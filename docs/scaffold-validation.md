@@ -926,3 +926,9 @@ The unrelated full database/upgrade/worker-loss/Flutter-journey/release-build ph
 The broader script exited **0**: formatting and fatal-info workspace analysis, **502 core VM + 502 Chrome**, **541 wire VM + 541 Chrome**, **207 calendar module VM + 17 Chrome**, **13 feed VM** and **16 selected free/busy database regressions** passed. The rebuilt real two-host feed/JWT flow passed conditional requests, publication/source separation, revocation/withdrawal, transport redaction and competing writes. Log: `.local/itip-freebusy-batch-check.log`.
 
 The owned interactive host and headless Flutter runner were restored with existing development storage. Serverpod MCP log inspection/hot reload and Dart MCP Flutter connection/hot reload succeeded; no runtime errors were found. Restore logs: `.local/itip-freebusy-development.log` and `.local/itip-freebusy-chrome.log`.
+
+## Native organizer contract review, 2026-10-26
+
+ADR 0122 records the maintainer-confirmed explicit atomic Save and notify and native-created organizer choices. Its proposed first REQUEST scope, four server-only tables, event-origin marker, private snapshot retention and worker defaults remain pending explicit review; no model sources, migrations, endpoints, workers or example behavior changed.
+
+Documentation-only validation: `.local/organizer-contract-static.py` checked repository-relative Markdown links, consecutive ADR numbering through 0122, unchanged Apache 2.0 LICENSE, candidate file types and absence of local credential values. `git diff --check` passed. Requirements, roadmap, RFC 5546 inventory, standards, model catalog and authorization guidance distinguish confirmed choices from proposed mechanics. No runtime tests were run for this documentation batch; the preceding implementation evidence remains separate.
