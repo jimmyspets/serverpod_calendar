@@ -45,6 +45,7 @@ final class IcalendarTask {
     this.completed,
     this.recurrenceDate,
     this.recurrenceTime,
+    this.thisAndFuture = false,
   });
   final IcalendarSyntaxComponent source;
   final String uid;
@@ -60,6 +61,7 @@ final class IcalendarTask {
   final IcalendarTaskParticipants participants;
   final IcalendarTaskReferences references;
   final List<IcalendarDisplayAlarm> alarms;
+  final bool thisAndFuture;
   final CalendarDate? recurrenceDate;
   final TimedValue? recurrenceTime;
   Object? get originalStart => recurrenceDate ?? recurrenceTime;
@@ -239,7 +241,35 @@ IcalendarTask _taskComponent(
   final stamp = componentUtc(requiredProperty(p, 'DTSTAMP'));
   Object? temporal(String name) =>
       p[name] == null ? null : _temporal(p[name]!.single, zones);
-  final original = temporal('RECURRENCE-ID');
+  final originalProperty = p['RECURRENCE-ID']?.single;
+  var thisAndFuture = false;
+  Object? original;
+  if (originalProperty != null) {
+    final params = componentParameters(originalProperty, {
+      'VALUE',
+      'TZID',
+      'RANGE',
+    });
+    if (params['RANGE'] != null) {
+      if (componentToken(params['RANGE']!) != 'THISANDFUTURE') {
+        componentFail(IcalendarComponentError.unsupportedParameter);
+      }
+      thisAndFuture = true;
+    }
+    original = _temporal(
+      IcalendarSyntaxProperty(
+        originalProperty.name,
+        originalProperty.value,
+        parameters: originalProperty.parameters.where(
+          (v) => v.canonicalName != 'RANGE',
+        ),
+      ),
+      zones,
+    );
+    if (thisAndFuture && p['DTSTART'] == null) {
+      componentFail(IcalendarComponentError.missing);
+    }
+  }
   if (original != null && ['RRULE', 'RDATE', 'EXDATE'].any(p.containsKey)) {
     componentFail(IcalendarComponentError.unsupportedProperty);
   }
@@ -329,6 +359,7 @@ IcalendarTask _taskComponent(
     ),
     recurrenceDate: original is CalendarDate ? original : null,
     recurrenceTime: original is TimedValue ? original : null,
+    thisAndFuture: thisAndFuture,
     uid: uid,
     stamp: stamp,
     dateTiming: dateTiming,

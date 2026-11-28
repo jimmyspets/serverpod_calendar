@@ -6,6 +6,7 @@ fields:
   originalKey: String
   originalStart: CalendarEventTiming
   replacementTiming: CalendarTaskTiming?
+  futureTiming: CalendarTaskTiming?
   progress: CalendarTaskProgress
   protocolVersion: CalendarTaskProtocolVersion?
 indexes:

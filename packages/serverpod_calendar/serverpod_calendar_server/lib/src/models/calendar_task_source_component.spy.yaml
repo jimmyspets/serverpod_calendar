@@ -3,6 +3,7 @@ serverOnly: true
 immutable: true
 fields:
   originalStart: CalendarEventTiming?
+  thisAndFuture: bool?
   version: CalendarTaskProtocolVersion
   content: CalendarTaskContent
   progress: CalendarTaskProgress

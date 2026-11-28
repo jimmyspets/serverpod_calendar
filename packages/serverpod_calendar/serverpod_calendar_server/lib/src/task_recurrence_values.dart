@@ -177,12 +177,11 @@ List<CalendarTaskOccurrence> previewTaskValues(
   CalendarTaskContent content,
   CalendarTaskOccurrenceQuery query, {
   Map<CalendarEventTiming, CalendarTaskTiming> replacements = const {},
+  Map<CalendarEventTiming, CalendarTaskTiming> futureChanges = const {},
 }) {
   if (content.recurrence == null) throw ArgumentError('Task is not recurring');
   final t = content.timing, anchor = taskAnchor(t);
-  for (final v in replacements.values) {
-    validateTaskReplacement(content, v);
-  }
+  _validateTaskTimingMaps(content, replacements, futureChanges);
   if (anchor.kind == CalendarEventTimeKind.date) {
     if (query.fromDate == null ||
         query.untilDate == null ||
@@ -216,8 +215,16 @@ List<CalendarTaskOccurrence> previewTaskValues(
               duration: _duration(e.value.duration),
             ),
         },
+        futureChanges: {
+          for (final e in futureChanges.entries)
+            _date(e.key.start): _taskDateTiming(e.value),
+        },
         from: _date(query.fromDate!),
-        through: _date(query.untilDate!).addDays(-1),
+        through:
+            (query.untilDate!.year == 2100
+                    ? const CalendarDate.exclusiveEnd()
+                    : _date(query.untilDate!))
+                .addDays(-1),
         maxCandidateDays: eventMaxCandidateWork,
         maxRuleOccurrences: eventMaxRuleOccurrences,
         maxResults: eventMaxPreviewResults,
@@ -227,6 +234,9 @@ List<CalendarTaskOccurrence> previewTaskValues(
           actualStart: anchor.copyWith(start: eventDate(o.timing.start!)),
           replacementTiming:
               replacements[anchor.copyWith(start: eventDate(o.originalStart))],
+          futureTiming:
+              futureChanges[anchor.copyWith(start: eventDate(o.originalStart))],
+          duration: _taskNativeDuration(o.timing.duration),
           dueDate: o.timing.effectiveDue == null
               ? null
               : eventDate(o.timing.effectiveDue!),
@@ -266,6 +276,10 @@ List<CalendarTaskOccurrence> previewTaskValues(
             duration: _duration(e.value.duration),
           ),
       },
+      futureChanges: {
+        for (final e in futureChanges.entries)
+          _timed(e.key): _taskTimedTiming(e.value),
+      },
       window: UtcWindow(start: query.fromUtc!, end: query.untilUtc!),
       maxCandidateWork: eventMaxCandidateWork,
       maxRuleOccurrences: eventMaxRuleOccurrences,
@@ -280,6 +294,11 @@ List<CalendarTaskOccurrence> previewTaskValues(
             replacements[anchor.copyWith(
               start: eventCivil(o.originalStart.civil),
             )],
+        futureTiming:
+            futureChanges[anchor.copyWith(
+              start: eventCivil(o.originalStart.civil),
+            )],
+        duration: _taskNativeDuration(o.timing.duration),
         startUtc: o.timing.start.instant,
         dueUtc: o.timing.dueInstant,
         progress: CalendarTaskProgress(
@@ -288,4 +307,97 @@ List<CalendarTaskOccurrence> previewTaskValues(
         ),
       ),
   ]);
+}
+
+DateTaskTiming _taskDateTiming(CalendarTaskTiming t) => DateTaskTiming(
+  start: t.start == null ? null : _date(t.start!),
+  due: t.due == null ? null : _date(t.due!),
+  duration: _duration(t.duration),
+);
+TimedTaskTiming _taskTimedTiming(CalendarTaskTiming t) => TimedTaskTiming(
+  start: t.start == null ? null : _timed(taskAnchor(t)),
+  due: t.due == null ? null : _timed(taskAnchor(t).copyWith(start: t.due!)),
+  duration: _duration(t.duration),
+);
+CalendarEventDuration? _taskNativeDuration(CalendarDuration? d) => d == null
+    ? null
+    : CalendarEventDuration(
+        weeks: d.weeks,
+        days: d.days,
+        hours: d.hours,
+        minutes: d.minutes,
+        seconds: d.seconds,
+      );
+void _validateTaskTimingMaps(
+  CalendarTaskContent content,
+  Map<CalendarEventTiming, CalendarTaskTiming> singles,
+  Map<CalendarEventTiming, CalendarTaskTiming> future,
+) {
+  final anchor = taskAnchor(content.timing);
+  for (final e in [...singles.entries, ...future.entries]) {
+    taskOriginalKey(e.key);
+    if (e.key.kind != anchor.kind || e.key.zoneId != anchor.zoneId) {
+      throw ArgumentError('Original profile mismatch');
+    }
+    validateTaskReplacement(content, e.value);
+  }
+}
+
+/// Projection at an already validated original; does not invent membership.
+CalendarTaskOccurrence taskTimingAt(
+  CalendarTaskContent content,
+  CalendarEventTiming original,
+  CalendarTaskProgress progress, {
+  Map<CalendarEventTiming, CalendarTaskTiming> replacements = const {},
+  Map<CalendarEventTiming, CalendarTaskTiming> futureChanges = const {},
+}) {
+  _validateTaskTimingMaps(content, replacements, futureChanges);
+  final anchor = taskAnchor(content.timing);
+  taskOriginalKey(original);
+  if (original.kind != anchor.kind || original.zoneId != anchor.zoneId) {
+    throw ArgumentError('Original profile mismatch');
+  }
+  if (anchor.kind == CalendarEventTimeKind.date) {
+    final t = _taskDateTiming(content.timing).at(
+      _date(original.start),
+      replacements: {
+        for (final e in replacements.entries)
+          _date(e.key.start): _taskDateTiming(e.value),
+      },
+      futureChanges: {
+        for (final e in futureChanges.entries)
+          _date(e.key.start): _taskDateTiming(e.value),
+      },
+    );
+    return CalendarTaskOccurrence(
+      originalStart: original,
+      actualStart: anchor.copyWith(start: eventDate(t.start!)),
+      replacementTiming: replacements[original],
+      futureTiming: futureChanges[original],
+      duration: _taskNativeDuration(t.duration),
+      dueDate: t.effectiveDue == null ? null : eventDate(t.effectiveDue!),
+      progress: progress,
+    );
+  }
+  final t = _taskTimedTiming(content.timing).at(
+    _timed(original),
+    replacements: {
+      for (final e in replacements.entries)
+        _timed(e.key): _taskTimedTiming(e.value),
+    },
+    futureChanges: {
+      for (final e in futureChanges.entries)
+        _timed(e.key): _taskTimedTiming(e.value),
+    },
+  );
+  return CalendarTaskOccurrence(
+    originalStart: original,
+    actualStart: anchor.copyWith(start: eventCivil(t.start.civil)),
+    replacementTiming: replacements[original],
+    futureTiming: futureChanges[original],
+    duration: _taskNativeDuration(t.duration),
+    startUtc: t.start.instant,
+    dueUtc: t.dueInstant,
+    progress: progress,
+  );
 }

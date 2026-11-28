@@ -429,6 +429,30 @@ END;
 $task_timing$;
 DROP TABLE {table}_before_task_timing;
 """)
+        for table in source_preserved:
+            sql(database, f"CREATE TABLE {table}_before_task_future AS SELECT * FROM {table};")
+        sql(database, (SERVER / "migrations/20261023203819827-task-future-timing/migration.sql").read_text(encoding="utf-8"))
+        for table in source_preserved:
+            strip = "-'futureTiming'" if table == "serverpod_calendar_task_occurrence" else ""
+            sql(database, f"""
+DO $task_timing$
+BEGIN
+ IF (SELECT count(*) FROM {table}) <> (SELECT count(*) FROM {table}_before_task_future)
+ OR EXISTS (SELECT 1 FROM {table} current JOIN {table}_before_task_future old ON current.id=old.id
+ WHERE (to_jsonb(current){strip}) IS DISTINCT FROM to_jsonb(old))
+ THEN RAISE EXCEPTION 'Task future migration changed {table}'; END IF;
+END;
+$task_timing$;
+DROP TABLE {table}_before_task_future;
+""")
+        sql(database, """
+DO $task_future_absence$
+BEGIN
+ IF EXISTS (SELECT 1 FROM serverpod_calendar_task_occurrence WHERE "futureTiming" IS NOT NULL)
+ THEN RAISE EXCEPTION 'Task future migration invented range timing'; END IF;
+END;
+$task_future_absence$;
+""")
         print("PASS: populated schema upgrades preserve identity, revisions, content, associations, protocol UID strings and opening identities and old cursor bindings.")
     finally:
         sql("postgres", f"DROP DATABASE {database} WITH (FORCE);")

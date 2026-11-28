@@ -72,6 +72,59 @@ void main() {
       );
     },
   );
+  test(
+    'RANGE propagates timing while source progress describes only its anchor',
+    () {
+      final c = series([
+        master,
+        [
+          original.replaceFirst('VALUE=DATE', 'VALUE=DATE;RANGE=THISANDFUTURE'),
+          'DTSTART;VALUE=DATE:20261025',
+          'STATUS:COMPLETED',
+          'PERCENT-COMPLETE:100',
+        ],
+        ['RECURRENCE-ID;VALUE=DATE:20261024', 'PERCENT-COMPLETE:12'],
+      ]);
+      final range = c.series.single.overrides.first,
+          later = c.series.single.overrides.last;
+      expect(range.component.thisAndFuture, isTrue);
+      expect(range.component.status, IcalendarTaskStatus.completed);
+      expect(later.dateTiming!.start!.day, 26);
+      expect(later.dateTiming!.effectiveDue, isNull);
+      expect(later.component.status, isNull);
+      expect(later.component.percentComplete, 12);
+      final again = parseIcalendarTaskCalendar(
+        serializeIcalendarTaskCalendar(c),
+      ).series.single;
+      expect(again.overrides.first.component.thisAndFuture, isTrue);
+      expect(again.overrides.last.dateTiming!.start!.day, 26);
+    },
+  );
+  test(
+    'RANGE requires complete same-profile timing and rejects THISANDPRIOR',
+    () {
+      expect(
+        () => series([
+          master,
+          [
+            'RECURRENCE-ID;VALUE=DATE;RANGE=THISANDPRIOR:20261023',
+            'DTSTART;VALUE=DATE:20261024',
+          ],
+        ]),
+        rejects(IcalendarComponentError.unsupportedParameter),
+      );
+      expect(
+        () => series([
+          master,
+          [
+            'RECURRENCE-ID;VALUE=DATE;RANGE=THISANDFUTURE:20261023',
+            'DTSTART:20261024T000000Z',
+          ],
+        ]),
+        rejects(IcalendarComponentError.invalidValue),
+      );
+    },
+  );
   test('raw omissions survive while timing text and priority inherit', () {
     final c = series([
       master,
@@ -364,7 +417,7 @@ void main() {
         master,
         ['RECURRENCE-ID;VALUE=DATE;RANGE=THISANDFUTURE:20261023'],
       ]),
-      rejects(IcalendarComponentError.unsupportedParameter),
+      rejects(IcalendarComponentError.missing),
     );
   });
   test('different content annotations priority timing or deadlines reject', () {

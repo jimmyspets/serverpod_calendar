@@ -44,6 +44,82 @@ List<String> occurrence([List<String> extra = const []]) => [
   'END:VTODO',
 ];
 void main() {
+  test('future source range survives progress and master edits without changing old v2 JSON', () {
+    final legacy = source(
+      properties: ['RRULE:FREQ=DAILY;COUNT=3'],
+      overrides: occurrence(),
+    );
+    expect(legacy.importBaseline.profile, startsWith('task-source-v2/'));
+    expect(
+      legacy.importBaseline.canonicalValue,
+      isNot(contains('thisAndFuture')),
+    );
+    validateTaskImportBaseline(legacy.importBaseline, legacy.protocolUid);
+    final p = source(
+      properties: [
+        'RRULE:FREQ=DAILY;COUNT=3',
+        'DURATION:P1D',
+        'PERCENT-COMPLETE:37',
+      ],
+      overrides:
+          occurrence(['DTSTART:20261025T120000Z', 'PERCENT-COMPLETE:100'])
+              .map(
+                (s) => s.startsWith('RECURRENCE-ID:')
+                    ? s.replaceFirst(
+                        'RECURRENCE-ID:',
+                        'RECURRENCE-ID;RANGE=THISANDFUTURE:',
+                      )
+                    : s,
+              )
+              .toList(),
+    );
+    expect(p.state.occurrences.single.thisAndFuture, isTrue);
+    expect(taskSourceReplacement(p.state.occurrences.single), isNull);
+    expect(taskSourceFuture(p.state.occurrences.single)!.start!.day, 25);
+    expect(validateTaskSourceState(p.protocolUid, p.state), p.state);
+    expect(
+      () => validateTaskSourceState(
+        p.protocolUid,
+        p.state.copyWith(
+          occurrences: [
+            p.state.occurrences.single.copyWith(thisAndFuture: false),
+          ],
+        ),
+      ),
+      throwsArgumentError,
+    );
+    final progress = changeTaskSourceOccurrence(
+      p.protocolUid,
+      p.state,
+      p.state.occurrences.single.originalStart!,
+      CalendarTaskProgress(percentComplete: 5),
+      advanceTaskVersion(p.state.occurrences.single.version, now),
+    );
+    expect(progress.occurrences.single.thisAndFuture, isTrue);
+    final after = changeTaskSourceMaster(
+      p.protocolUid,
+      progress,
+      progress.master.content.copyWith(summary: 'Edited'),
+      progress.master.progress,
+      advanceTaskVersion(progress.master.version, now),
+      now,
+    );
+    expect(after.occurrences.single.thisAndFuture, isTrue);
+    expect(after.occurrences.single.progress.percentComplete, 5);
+    expect(p.importBaseline.canonicalValue, contains('thisAndFuture'));
+    final cleared = changeTaskSourceTiming(
+      p.protocolUid,
+      after,
+      after.occurrences.single.originalStart!,
+      null,
+      after.occurrences.single.progress,
+      advanceTaskVersion(after.occurrences.single.version, now),
+      thisAndFuture: true,
+    );
+    expect(cleared.occurrences.single.thisAndFuture, isNull);
+    expect(cleared.occurrences.single.content.timing.start, isNull);
+    expect(cleared.occurrences.single.progress.percentComplete, 5);
+  });
   test('independent source progress versions omissions and private canonical baseline', () {
     final p = source(
       properties: ['PERCENT-COMPLETE:37', 'COMPLETED:20261022T000000Z'],

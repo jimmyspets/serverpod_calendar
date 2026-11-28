@@ -5,3 +5,4 @@ fields:
   expectedRevision: int
   originalStart: CalendarEventTiming
   replacement: CalendarTaskTiming?
+  thisAndFuture: bool, default=false

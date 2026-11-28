@@ -558,3 +558,11 @@ ADR 0101 progress capture and complete explicit DTSTART timing are now maintaine
 ## Single task occurrence timing, 2026-10-23
 
 [ADR 0101](adr/0101-single-task-occurrence-timing.md) and [the timing guide](task-occurrence-timing.md) extend the scoped native/wire task profile with single complete timing replacements, effective-start previews and progress/history preservation. Explicit DTSTART replaces complete occurrence timing; absent DUE/DURATION clears the deadline. Capture current progress for a new own component without adding history, and reject incompatible retained alarm anchors. Task source baselines advance to v2; older imports require explicit reimport, without automatic repair or development reset. This supersedes earlier progress-only/timing-pending wording for this slice only. Future timing/content, source reconciliation, feeds/runtime and client evidence remain separate.
+
+## Task future timing models
+
+[ADR 0102](adr/0102-task-future-timing.md) implements nullable occurrence record/preview `futureTiming`, request `thisAndFuture: bool` default false and server-only source component `thisAndFuture: bool?` (true or absent). Preserve old non-range v2 canonical JSON; host current/final retained occurrence state includes both scopes. Preview `duration` preserves effective nominal units without reconstructing civil fold values. Nullable generated migrations do not infer ranges or progress/history; concrete mechanics remain under draft review.
+
+## Task future timing, 2026-10-23
+
+[ADR 0102](adr/0102-task-future-timing.md) and [the future timing guide](task-future-timing.md) extend single timing with absolute civil shifts, replacement deadline forms and independent single edits. VTODO RANGE=THISANDFUTURE propagates timing only; independently optional source progress belongs only to the anchor. Preserve every original/progress/history record, reject orphaning edits and conflicting timing scopes, and keep source alarms unarmed. Nullable storage and canonical true-or-absent source flags preserve valid non-range v2 baselines. This supersedes earlier future-timing-pending/RANGE-rejection notes for this bounded profile; content/future cancellation, reconciliation, feeds/runtime and client evidence remain separate.

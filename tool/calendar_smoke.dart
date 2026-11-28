@@ -2455,6 +2455,103 @@ Future<void> taskImportSmoke(List<Client> clients) async {
       'Clearing timing retains completion history across hosts',
     );
 
+    final anchor = preview.occurrences.first.originalStart;
+    cal.CalendarTaskOccurrenceTimingRequest futureRequest(
+      int revision, {
+      bool clear = false,
+    }) => timingRequest(revision, clear: clear).copyWith(
+      originalStart: anchor,
+      thisAndFuture: true,
+      replacement: clear
+          ? null
+          : cal.CalendarTaskTiming(
+              kind: cal.CalendarTaskTimeKind.date,
+              start: cal.CalendarEventCivil(year: 2026, month: 3, day: 29),
+              duration: cal.CalendarEventDuration(days: 1),
+            ),
+    );
+    final futureWinners = await Future.wait([
+      compete(() => a.changeOccurrenceTiming(futureRequest(5))),
+      compete(
+        () => b.changeOccurrenceProgress(
+          progressRequest(5).copyWith(originalStart: anchor),
+        ),
+      ),
+    ]);
+    check(
+      futureWinners.where((v) => v).length == 1,
+      'Exactly one competing future timing/progress write wins across hosts',
+    );
+    if (futureWinners.first) {
+      await b.changeOccurrenceProgress(
+        progressRequest(6).copyWith(originalStart: anchor),
+      );
+    } else {
+      await a.changeOccurrenceTiming(futureRequest(6));
+    }
+    final ranged = (await b.previewOccurrences(
+      cal.CalendarTaskOccurrenceQuery(
+        taskId: first.taskId,
+        expectedRevision: 7,
+        fromDate: cal.CalendarEventCivil(year: 2026, month: 3, day: 28),
+        untilDate: cal.CalendarEventCivil(year: 2026, month: 4, day: 1),
+      ),
+    )).occurrences;
+    check(
+      ranged.map((o) => o.actualStart!.start.day).join(',') == '29,30,31' &&
+          ranged.map((o) => o.progress.percentComplete).join(',') ==
+              '100,100,37',
+      'Future timing propagates without propagating anchor progress across hosts',
+    );
+    final futureBytes = await a.exportTasks(
+      cal.CalendarTaskExportRequest(
+        calendarId: p,
+        expectedRevision: 1,
+        selection: [
+          cal.CalendarTaskExportSelection(
+            taskId: first.taskId,
+            expectedRevision: 7,
+          ),
+        ],
+      ),
+    );
+    final rangeCopy = (await b.importTasks(
+      cal.CalendarTaskImportRequest(
+        calendarId: other,
+        expectedRevision: 1,
+        bytes: futureBytes,
+      ),
+    )).receipts.single;
+    ids.add(rangeCopy.taskId);
+    final copiedRanges = (await b.previewOccurrences(
+      cal.CalendarTaskOccurrenceQuery(
+        taskId: rangeCopy.taskId,
+        expectedRevision: 1,
+        fromDate: cal.CalendarEventCivil(year: 2026, month: 3, day: 28),
+        untilDate: cal.CalendarEventCivil(year: 2026, month: 4, day: 1),
+      ),
+    )).occurrences;
+    check(
+      copiedRanges.first.futureTiming != null &&
+          copiedRanges.last.progress.percentComplete == 37,
+      'Active RANGE source round trips across independent hosts',
+    );
+    await b.deleteTask(rangeCopy.taskId, 1);
+    ids.remove(rangeCopy.taskId);
+    await a.changeOccurrenceTiming(futureRequest(7, clear: true));
+    final anchorHistory = await b.occurrenceHistory(
+      cal.CalendarTaskHistoryQuery(
+        taskId: first.taskId,
+        expectedRevision: 8,
+        originalStart: anchor,
+        pageSize: 10,
+      ),
+    );
+    check(
+      anchorHistory.entries.length == 1,
+      'Setting and clearing future timing invents no progress history across hosts',
+    );
+
     await rejects(
       () => b.importTasks(request(p, 'two-host-task')),
       cal.CalendarFailureCode.dependencyConflict,

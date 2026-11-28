@@ -180,21 +180,30 @@ class _TaskOccurrenceScreenState extends State<TaskOccurrenceScreen> {
     _task = fresh;
     await _load();
   });
-  Future<void> _editTiming(cal.CalendarTaskOccurrence occurrence) async {
+  Future<void> _editTiming(
+    cal.CalendarTaskOccurrence occurrence, {
+    bool future = false,
+  }) async {
     final replacement = await showDialog<cal.CalendarTaskTiming>(
       context: context,
-      builder: (_) =>
-          TaskTimingEditor(master: _task.timing!, occurrence: occurrence),
+      builder: (_) => TaskTimingEditor(
+        master: _task.timing!,
+        occurrence: future
+            ? occurrence.copyWith(replacementTiming: occurrence.futureTiming)
+            : occurrence,
+        thisAndFuture: future,
+      ),
     );
     if (replacement != null && mounted) {
-      await _timing(occurrence, replacement);
+      await _timing(occurrence, replacement, thisAndFuture: future);
     }
   }
 
   Future<void> _timing(
     cal.CalendarTaskOccurrence occurrence,
-    cal.CalendarTaskTiming? replacement,
-  ) => _run(() async {
+    cal.CalendarTaskTiming? replacement, {
+    bool thisAndFuture = false,
+  }) => _run(() async {
     final expected = _task.revision;
     await widget.client.modules.serverpod_calendar.calendarTask
         .changeOccurrenceTiming(
@@ -203,6 +212,7 @@ class _TaskOccurrenceScreenState extends State<TaskOccurrenceScreen> {
             expectedRevision: expected,
             originalStart: occurrence.originalStart,
             replacement: replacement,
+            thisAndFuture: thisAndFuture,
           ),
         );
     final fresh = await widget.client.modules.serverpod_calendar.calendarTask
@@ -253,7 +263,7 @@ class _TaskOccurrenceScreenState extends State<TaskOccurrenceScreen> {
           if (_error != null)
             Text(_error!, key: const Key('task-occurrence-error')),
           const Text(
-            'Progress is independent for each original occurrence. This start-based preview does not book time.',
+            'Progress is independent for each original occurrence. Clear an existing single/range timing before switching scope at the same original. This start-based preview does not book time.',
           ),
           TextField(
             key: const Key('task-preview-from'),
@@ -311,11 +321,37 @@ class _TaskOccurrenceScreenState extends State<TaskOccurrenceScreen> {
               children: [
                 TextButton(
                   key: ValueKey('task-occurrence-$i-timing'),
-                  onPressed: _busy || _stale
+                  onPressed:
+                      _busy ||
+                          _stale ||
+                          _preview!.occurrences[i].futureTiming != null
                       ? null
                       : () => _editTiming(_preview!.occurrences[i]),
                   child: const Text('Move/resize'),
                 ),
+                TextButton(
+                  key: ValueKey('task-occurrence-$i-future'),
+                  onPressed:
+                      _busy ||
+                          _stale ||
+                          _preview!.occurrences[i].replacementTiming != null
+                      ? null
+                      : () =>
+                            _editTiming(_preview!.occurrences[i], future: true),
+                  child: const Text('This and future'),
+                ),
+                if (_preview!.occurrences[i].futureTiming != null)
+                  TextButton(
+                    key: ValueKey('task-occurrence-$i-clear-future'),
+                    onPressed: _busy || _stale
+                        ? null
+                        : () => _timing(
+                            _preview!.occurrences[i],
+                            null,
+                            thisAndFuture: true,
+                          ),
+                    child: const Text('Clear future timing'),
+                  ),
                 if (_preview!.occurrences[i].replacementTiming != null)
                   TextButton(
                     key: ValueKey('task-occurrence-$i-clear-timing'),

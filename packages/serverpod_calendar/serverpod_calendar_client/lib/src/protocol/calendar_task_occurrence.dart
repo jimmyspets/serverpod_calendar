@@ -14,6 +14,7 @@ import 'package:serverpod_calendar_client/src/protocol/protocol.dart'
     as _ie4a1wrz;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'calendar_event_civil.dart' as _i1bb5k1r;
+import 'calendar_event_duration.dart' as _idn2i48l;
 import 'calendar_event_timing.dart' as _ieswiaty;
 import 'calendar_task_progress.dart' as _ikcsq95s;
 import 'calendar_task_timing.dart' as _i9h8y8lg;
@@ -25,7 +26,9 @@ abstract class CalendarTaskOccurrence
     required this.originalStart,
     this.actualStart,
     this.replacementTiming,
+    this.futureTiming,
     this.startUtc,
+    this.duration,
     this.dueDate,
     this.dueUtc,
     required this.progress,
@@ -35,7 +38,9 @@ abstract class CalendarTaskOccurrence
     required _ieswiaty.CalendarEventTiming originalStart,
     _ieswiaty.CalendarEventTiming? actualStart,
     _i9h8y8lg.CalendarTaskTiming? replacementTiming,
+    _i9h8y8lg.CalendarTaskTiming? futureTiming,
     DateTime? startUtc,
+    _idn2i48l.CalendarEventDuration? duration,
     _i1bb5k1r.CalendarEventCivil? dueDate,
     DateTime? dueUtc,
     required _ikcsq95s.CalendarTaskProgress progress,
@@ -59,9 +64,19 @@ abstract class CalendarTaskOccurrence
           : _ie4a1wrz.Protocol().deserialize<_i9h8y8lg.CalendarTaskTiming>(
               jsonSerialization['replacementTiming'],
             ),
+      futureTiming: jsonSerialization['futureTiming'] == null
+          ? null
+          : _ie4a1wrz.Protocol().deserialize<_i9h8y8lg.CalendarTaskTiming>(
+              jsonSerialization['futureTiming'],
+            ),
       startUtc: jsonSerialization['startUtc'] == null
           ? null
           : _isc.DateTimeJsonExtension.fromJson(jsonSerialization['startUtc']),
+      duration: jsonSerialization['duration'] == null
+          ? null
+          : _ie4a1wrz.Protocol().deserialize<_idn2i48l.CalendarEventDuration>(
+              jsonSerialization['duration'],
+            ),
       dueDate: jsonSerialization['dueDate'] == null
           ? null
           : _ie4a1wrz.Protocol().deserialize<_i1bb5k1r.CalendarEventCivil>(
@@ -83,7 +98,11 @@ abstract class CalendarTaskOccurrence
 
   final _i9h8y8lg.CalendarTaskTiming? replacementTiming;
 
+  final _i9h8y8lg.CalendarTaskTiming? futureTiming;
+
   final DateTime? startUtc;
+
+  final _idn2i48l.CalendarEventDuration? duration;
 
   final _i1bb5k1r.CalendarEventCivil? dueDate;
 
@@ -98,7 +117,9 @@ abstract class CalendarTaskOccurrence
     _ieswiaty.CalendarEventTiming? originalStart,
     _ieswiaty.CalendarEventTiming? actualStart,
     _i9h8y8lg.CalendarTaskTiming? replacementTiming,
+    _i9h8y8lg.CalendarTaskTiming? futureTiming,
     DateTime? startUtc,
+    _idn2i48l.CalendarEventDuration? duration,
     _i1bb5k1r.CalendarEventCivil? dueDate,
     DateTime? dueUtc,
     _ikcsq95s.CalendarTaskProgress? progress,
@@ -127,10 +148,20 @@ abstract class CalendarTaskOccurrence
                 ) ||
                 other.replacementTiming == replacementTiming) &&
             (identical(
+                  other.futureTiming,
+                  futureTiming,
+                ) ||
+                other.futureTiming == futureTiming) &&
+            (identical(
                   other.startUtc,
                   startUtc,
                 ) ||
                 other.startUtc == startUtc) &&
+            (identical(
+                  other.duration,
+                  duration,
+                ) ||
+                other.duration == duration) &&
             (identical(
                   other.dueDate,
                   dueDate,
@@ -155,7 +186,9 @@ abstract class CalendarTaskOccurrence
       originalStart,
       actualStart,
       replacementTiming,
+      futureTiming,
       startUtc,
+      duration,
       dueDate,
       dueUtc,
       progress,
@@ -170,7 +203,9 @@ abstract class CalendarTaskOccurrence
       if (actualStart != null) 'actualStart': actualStart?.toJson(),
       if (replacementTiming != null)
         'replacementTiming': replacementTiming?.toJson(),
+      if (futureTiming != null) 'futureTiming': futureTiming?.toJson(),
       if (startUtc != null) 'startUtc': startUtc?.toJson(),
+      if (duration != null) 'duration': duration?.toJson(),
       if (dueDate != null) 'dueDate': dueDate?.toJson(),
       if (dueUtc != null) 'dueUtc': dueUtc?.toJson(),
       'progress': progress.toJson(),
@@ -185,7 +220,10 @@ abstract class CalendarTaskOccurrence
       if (actualStart != null) 'actualStart': actualStart?.toJsonForProtocol(),
       if (replacementTiming != null)
         'replacementTiming': replacementTiming?.toJsonForProtocol(),
+      if (futureTiming != null)
+        'futureTiming': futureTiming?.toJsonForProtocol(),
       if (startUtc != null) 'startUtc': startUtc?.toJson(),
+      if (duration != null) 'duration': duration?.toJsonForProtocol(),
       if (dueDate != null) 'dueDate': dueDate?.toJsonForProtocol(),
       if (dueUtc != null) 'dueUtc': dueUtc?.toJson(),
       'progress': progress.toJsonForProtocol(),
@@ -205,7 +243,9 @@ class _CalendarTaskOccurrenceImpl extends CalendarTaskOccurrence {
     required _ieswiaty.CalendarEventTiming originalStart,
     _ieswiaty.CalendarEventTiming? actualStart,
     _i9h8y8lg.CalendarTaskTiming? replacementTiming,
+    _i9h8y8lg.CalendarTaskTiming? futureTiming,
     DateTime? startUtc,
+    _idn2i48l.CalendarEventDuration? duration,
     _i1bb5k1r.CalendarEventCivil? dueDate,
     DateTime? dueUtc,
     required _ikcsq95s.CalendarTaskProgress progress,
@@ -213,7 +253,9 @@ class _CalendarTaskOccurrenceImpl extends CalendarTaskOccurrence {
          originalStart: originalStart,
          actualStart: actualStart,
          replacementTiming: replacementTiming,
+         futureTiming: futureTiming,
          startUtc: startUtc,
+         duration: duration,
          dueDate: dueDate,
          dueUtc: dueUtc,
          progress: progress,
@@ -227,7 +269,9 @@ class _CalendarTaskOccurrenceImpl extends CalendarTaskOccurrence {
     _ieswiaty.CalendarEventTiming? originalStart,
     Object? actualStart = _Undefined,
     Object? replacementTiming = _Undefined,
+    Object? futureTiming = _Undefined,
     Object? startUtc = _Undefined,
+    Object? duration = _Undefined,
     Object? dueDate = _Undefined,
     Object? dueUtc = _Undefined,
     _ikcsq95s.CalendarTaskProgress? progress,
@@ -240,7 +284,13 @@ class _CalendarTaskOccurrenceImpl extends CalendarTaskOccurrence {
       replacementTiming: replacementTiming is _i9h8y8lg.CalendarTaskTiming?
           ? replacementTiming
           : this.replacementTiming?.copyWith(),
+      futureTiming: futureTiming is _i9h8y8lg.CalendarTaskTiming?
+          ? futureTiming
+          : this.futureTiming?.copyWith(),
       startUtc: startUtc is DateTime? ? startUtc : this.startUtc,
+      duration: duration is _idn2i48l.CalendarEventDuration?
+          ? duration
+          : this.duration?.copyWith(),
       dueDate: dueDate is _i1bb5k1r.CalendarEventCivil?
           ? dueDate
           : this.dueDate?.copyWith(),

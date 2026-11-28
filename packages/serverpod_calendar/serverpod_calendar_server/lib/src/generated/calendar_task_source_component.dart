@@ -25,6 +25,7 @@ abstract class CalendarTaskSourceComponent
     implements _is.SerializableModel, _is.ProtocolSerialization {
   const CalendarTaskSourceComponent._({
     this.originalStart,
+    this.thisAndFuture,
     required this.version,
     required this.content,
     required this.progress,
@@ -34,6 +35,7 @@ abstract class CalendarTaskSourceComponent
 
   const factory CalendarTaskSourceComponent({
     _ieswiaty.CalendarEventTiming? originalStart,
+    bool? thisAndFuture,
     required _iz9t6x1i.CalendarTaskProtocolVersion version,
     required _if7nbvl8.CalendarTaskContent content,
     required _ikcsq95s.CalendarTaskProgress progress,
@@ -50,6 +52,9 @@ abstract class CalendarTaskSourceComponent
           : _ix00hwbf.Protocol().deserialize<_ieswiaty.CalendarEventTiming>(
               jsonSerialization['originalStart'],
             ),
+      thisAndFuture: jsonSerialization['thisAndFuture'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(jsonSerialization['thisAndFuture']),
       version: _ix00hwbf.Protocol()
           .deserialize<_iz9t6x1i.CalendarTaskProtocolVersion>(
             jsonSerialization['version'],
@@ -76,6 +81,8 @@ abstract class CalendarTaskSourceComponent
 
   final _ieswiaty.CalendarEventTiming? originalStart;
 
+  final bool? thisAndFuture;
+
   final _iz9t6x1i.CalendarTaskProtocolVersion version;
 
   final _if7nbvl8.CalendarTaskContent content;
@@ -91,6 +98,7 @@ abstract class CalendarTaskSourceComponent
   @_is.useResult
   CalendarTaskSourceComponent copyWith({
     _ieswiaty.CalendarEventTiming? originalStart,
+    bool? thisAndFuture,
     _iz9t6x1i.CalendarTaskProtocolVersion? version,
     _if7nbvl8.CalendarTaskContent? content,
     _ikcsq95s.CalendarTaskProgress? progress,
@@ -110,6 +118,11 @@ abstract class CalendarTaskSourceComponent
                   originalStart,
                 ) ||
                 other.originalStart == originalStart) &&
+            (identical(
+                  other.thisAndFuture,
+                  thisAndFuture,
+                ) ||
+                other.thisAndFuture == thisAndFuture) &&
             (identical(
                   other.version,
                   version,
@@ -142,6 +155,7 @@ abstract class CalendarTaskSourceComponent
     return Object.hash(
       runtimeType,
       originalStart,
+      thisAndFuture,
       version,
       content,
       progress,
@@ -155,6 +169,7 @@ abstract class CalendarTaskSourceComponent
     return {
       '__className__': 'serverpod_calendar.CalendarTaskSourceComponent',
       if (originalStart != null) 'originalStart': originalStart?.toJson(),
+      if (thisAndFuture != null) 'thisAndFuture': thisAndFuture,
       'version': version.toJson(),
       'content': content.toJson(),
       'progress': progress.toJson(),
@@ -179,6 +194,7 @@ class _Undefined {}
 class _CalendarTaskSourceComponentImpl extends CalendarTaskSourceComponent {
   const _CalendarTaskSourceComponentImpl({
     _ieswiaty.CalendarEventTiming? originalStart,
+    bool? thisAndFuture,
     required _iz9t6x1i.CalendarTaskProtocolVersion version,
     required _if7nbvl8.CalendarTaskContent content,
     required _ikcsq95s.CalendarTaskProgress progress,
@@ -186,6 +202,7 @@ class _CalendarTaskSourceComponentImpl extends CalendarTaskSourceComponent {
     required _i76q6myt.CalendarTaskSourceMetadata metadata,
   }) : super._(
          originalStart: originalStart,
+         thisAndFuture: thisAndFuture,
          version: version,
          content: content,
          progress: progress,
@@ -199,6 +216,7 @@ class _CalendarTaskSourceComponentImpl extends CalendarTaskSourceComponent {
   @override
   CalendarTaskSourceComponent copyWith({
     Object? originalStart = _Undefined,
+    Object? thisAndFuture = _Undefined,
     _iz9t6x1i.CalendarTaskProtocolVersion? version,
     _if7nbvl8.CalendarTaskContent? content,
     _ikcsq95s.CalendarTaskProgress? progress,
@@ -209,6 +227,9 @@ class _CalendarTaskSourceComponentImpl extends CalendarTaskSourceComponent {
       originalStart: originalStart is _ieswiaty.CalendarEventTiming?
           ? originalStart
           : this.originalStart?.copyWith(),
+      thisAndFuture: thisAndFuture is bool?
+          ? thisAndFuture
+          : this.thisAndFuture,
       version: version ?? this.version.copyWith(),
       content: content ?? this.content.copyWith(),
       progress: progress ?? this.progress.copyWith(),

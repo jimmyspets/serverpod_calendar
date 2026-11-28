@@ -7,9 +7,11 @@ class TaskTimingEditor extends StatefulWidget {
     super.key,
     required this.master,
     required this.occurrence,
+    this.thisAndFuture = false,
   });
   final cal.CalendarTaskTiming master;
   final cal.CalendarTaskOccurrence occurrence;
+  final bool thisAndFuture;
   @override
   State<TaskTimingEditor> createState() => _TaskTimingEditorState();
 }
@@ -25,19 +27,22 @@ class _TaskTimingEditorState extends State<TaskTimingEditor> {
   @override
   void initState() {
     super.initState();
-    final t = widget.occurrence.replacementTiming ?? widget.master;
+    final t = widget.occurrence.replacementTiming;
+    final duration = t?.duration ?? widget.occurrence.duration;
     _start.text = _format(
       widget.occurrence.actualStart?.start ??
           widget.occurrence.originalStart.start,
     );
-    if (t.duration != null) {
+    if (duration != null) {
       _form = 'duration';
-      final d = t.duration!;
+      final d = duration;
       final n = [d.weeks, d.days, d.hours, d.minutes, d.seconds];
       for (var i = 0; i < 5; i++) {
         _units[i].text = '${n[i]}';
       }
-    } else if (t.due != null) {
+    } else if (t?.due != null ||
+        widget.occurrence.dueDate != null ||
+        widget.occurrence.dueUtc != null) {
       _form = 'due';
       final due =
           widget.occurrence.replacementTiming?.due ?? widget.occurrence.dueDate;
@@ -118,13 +123,19 @@ class _TaskTimingEditorState extends State<TaskTimingEditor> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Move or resize this task occurrence'),
+    title: Text(
+      widget.thisAndFuture
+          ? 'Change this and future task timing'
+          : 'Move or resize this task occurrence',
+    ),
     content: SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Original identity, progress and completion history are preserved. This replaces the complete timing for one occurrence.',
+          Text(
+            widget.thisAndFuture
+                ? 'Shift this and later original starts and replace their deadline form. Later range changes replace this shift; single timing edits remain independent. Progress and history stay unchanged.'
+                : 'Original identity, progress and completion history are preserved. This replaces the complete timing for one occurrence.',
           ),
           if (_error != null)
             Text(_error!, key: const Key('task-timing-input-error')),

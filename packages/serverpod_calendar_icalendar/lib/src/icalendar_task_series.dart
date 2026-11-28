@@ -93,10 +93,18 @@ IcalendarTaskSeries _taskSeries(
     if (!found.containsAll(dates)) {
       componentFail(IcalendarComponentError.invalidValue);
     }
+    final futureChanges = {
+      for (final o in overrides)
+        if (o.thisAndFuture) o.recurrenceDate!: o.dateTiming!,
+    };
     for (final o in overrides) {
       final projected = supplied(o, 'DTSTART')
           ? o.dateTiming!
-          : master.dateTiming!.at(o.recurrenceDate!);
+          : master.dateTiming!.at(
+              o.recurrenceDate!,
+              futureChanges: futureChanges,
+              maxChanges: limits.maxOverridesPerTask,
+            );
       final explicit = o.dateTiming;
       if (!supplied(o, 'DTSTART') &&
           (supplied(o, 'DUE') || supplied(o, 'DURATION')) &&
@@ -139,13 +147,28 @@ IcalendarTaskSeries _taskSeries(
     if (!found.containsAll(times)) {
       componentFail(IcalendarComponentError.invalidValue);
     }
+    final futureChanges = <TimedValue, TimedTaskTiming>{};
+    for (final o in overrides) {
+      if (o.thisAndFuture) {
+        if (o.timedTiming?.start == null ||
+            !start.sameProfile(o.timedTiming!.start!)) {
+          componentFail(IcalendarComponentError.invalidValue);
+        }
+        futureChanges[o.recurrenceTime!] = o.timedTiming!;
+      }
+    }
     for (final o in overrides) {
       final projected = supplied(o, 'DTSTART')
           ? TimedTaskProjection(
               o.timedTiming!.start!,
               o.timedTiming!.effectiveDue,
+              duration: o.timedTiming!.duration,
             )
-          : master.timedTiming!.at(o.recurrenceTime!);
+          : master.timedTiming!.at(
+              o.recurrenceTime!,
+              futureChanges: futureChanges,
+              maxChanges: limits.maxOverridesPerTask,
+            );
       final explicit = o.timedTiming;
       if ((explicit?.start != null && !start.sameProfile(explicit!.start!)) ||
           (explicit?.due != null && !start.sameProfile(explicit!.due!))) {
@@ -162,7 +185,11 @@ IcalendarTaskSeries _taskSeries(
           o,
           null,
           supplied(o, 'DTSTART')
-              ? TimedTaskProjection(explicit!.start!, explicit.effectiveDue)
+              ? TimedTaskProjection(
+                  explicit!.start!,
+                  explicit.effectiveDue,
+                  duration: explicit.duration,
+                )
               : projected,
         ),
       );
