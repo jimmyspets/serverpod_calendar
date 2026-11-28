@@ -87,6 +87,8 @@ calendarInvitation:
   - applyRangeCancellation:
   - applyOccurrenceUpdate:
   - applyOccurrenceCancellation:
+  - applyBundleCancellation:
+  - applyBundleReopening:
   - response:
   - responseActivity:
   - sendResponse:

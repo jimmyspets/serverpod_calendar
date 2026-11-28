@@ -197,7 +197,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 
 | [0174](0174-complete-bundled-invitation-updates.md) | Complete bundled invitation updates | Accepted by explicit maintainer agreement; complete linked REQUEST updates with existing checkpoint storage and independent component versions |
 
-| [0175](0175-bundled-invitation-whole-lifecycle.md) | Bundled invitation whole-series cancellation and reopening | Proposed; grouped clean-series lifecycle with existing storage and independent component floors; requires explicit agreement |
+| [0175](0175-bundled-invitation-whole-lifecycle.md) | Bundled invitation whole-series cancellation and reopening | Accepted by explicit maintainer agreement, including lossless retained-REQUEST baseline refinement; existing checkpoint storage and independent component floors |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 

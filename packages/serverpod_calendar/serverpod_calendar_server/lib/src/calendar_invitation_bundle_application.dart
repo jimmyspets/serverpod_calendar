@@ -1,10 +1,218 @@
 part of 'calendar_module.dart';
 
+T _bundleStoredValue<T>(T Function() action) {
+  try {
+    return action();
+  } on RecurrenceLimitException {
+    throw _failure(CalendarFailureCode.limitExceeded);
+  } on ArgumentError {
+    throw _failure(CalendarFailureCode.unavailable);
+  } on StateError {
+    throw _failure(CalendarFailureCode.unavailable);
+  } on FormatException {
+    throw _failure(CalendarFailureCode.unavailable);
+  } on TypeError {
+    throw _failure(CalendarFailureCode.unavailable);
+  }
+}
+
+typedef _BundleCandidate = ({
+  String protocolUid,
+  CalendarEventContent content,
+  CalendarEventTimingOverrides? edits,
+  CalendarEventProtocolState protocolState,
+  CalendarEventImportBaseline importBaseline,
+});
+
 extension CalendarInvitationBundleOperations on CalendarService {
+  CalendarInvitationBundleComponentVersion? _bundleCancellationVersion(
+    CalendarInvitationApplicationState accepted,
+  ) => accepted.kind == CalendarInvitationSourceKind.bundleCancellation
+      ? CalendarInvitationBundleComponentVersion(
+          sequence: accepted.sequence,
+          stamp: accepted.stamp,
+        )
+      : null;
+
+  _BundleCandidate _bundleCancelled(
+    _Event event,
+    int? sequence,
+    DateTime stamp,
+  ) {
+    final base = _occAccepted(event.data.importBaseline!);
+    final content = validateEventContent(
+      base.content.copyWith(status: CalendarEventStatus.cancelled),
+    );
+    final protocol = validateEventProtocolState(
+      base.protocol.copyWith(
+        statusPresent: true,
+        version: CalendarEventProtocolVersion(sequence: sequence, stamp: stamp),
+      ),
+      content,
+      base.edits,
+    );
+    return (
+      protocolUid: event.data.protocolUid,
+      content: content,
+      edits: base.edits,
+      protocolState: protocol,
+      importBaseline: event.data.importBaseline!,
+    );
+  }
+
+  _BundleCandidate _bundleCandidate(
+    IcalendarSchedulingMessage message,
+    _Event event,
+    RecurrenceWorkBudget work,
+  ) {
+    if (message.method == IcalendarSchedulingMethod.cancel) {
+      return _bundleCancelled(
+        event,
+        message.events.single.sequence,
+        message.events.single.stamp,
+      );
+    }
+    final value = _bundleProposal(message, work);
+    return (
+      protocolUid: value.protocolUid,
+      content: value.content,
+      edits: value.edits,
+      protocolState: value.protocolState,
+      importBaseline: value.importBaseline,
+    );
+  }
+
+  bool _bundleDirty(
+    _Event event,
+    CalendarInvitationApplicationState accepted,
+    RecurrenceWorkBudget work,
+  ) {
+    if (accepted.kind != CalendarInvitationSourceKind.bundleCancellation) {
+      return _invLocalChanges(event);
+    }
+    final expected = _bundleCancelled(event, accepted.sequence, accepted.stamp);
+    return eventImportBaseline(
+          event.data.protocolUid,
+          event.data.content,
+          event.data.timingOverrides,
+          event.data.protocolState!,
+          sharedWorkBudget: work,
+        ).canonicalValue !=
+        eventImportBaseline(
+          event.data.protocolUid,
+          expected.content,
+          expected.edits,
+          expected.protocolState,
+          sharedWorkBudget: work,
+        ).canonicalValue;
+  }
+
+  bool _bundleAdmission(
+    CalendarInvitationBundleState old,
+    CalendarInvitationApplicationState accepted,
+    IcalendarSchedulingMessage message,
+    String digest,
+    CalendarInvitationRecipient recipient,
+    RecurrenceWorkBudget work, {
+    IcalendarSchedulingMessage? pending,
+    String? pendingDigest,
+  }) {
+    final cancellation = _bundleCancellationVersion(accepted);
+    CalendarInvitationBundleState? pendingState;
+    if (pending?.method == IcalendarSchedulingMethod.request) {
+      pendingState = _bundleProposalState(
+        _bundleProposal(pending!, work),
+        work,
+      );
+    }
+    if (message.method == IcalendarSchedulingMethod.cancel) {
+      final sameAccepted = cancellation != null && digest == accepted.digest;
+      final samePending =
+          pending?.method == IcalendarSchedulingMethod.cancel &&
+          digest == pendingDigest;
+      final floors = [
+        if (!sameAccepted && cancellation != null) cancellation,
+        if (pending?.method == IcalendarSchedulingMethod.cancel && !samePending)
+          CalendarInvitationBundleComponentVersion(
+            sequence: pending!.events.single.sequence,
+            stamp: pending.events.single.stamp,
+          ),
+      ]..sort((a, b) => (a.sequence ?? 0).compareTo(b.sequence ?? 0));
+      final previous = floors.lastOrNull;
+      _schedulingValue(
+        () => validateInvitationBundleCancellation(
+          accepted: old,
+          incoming: message,
+          recipientAddress: recipient.calendarAddress,
+          pending: pendingState,
+          previousCancellation: previous,
+          sharedWorkBudget: work,
+        ),
+      );
+      return !sameAccepted && !samePending;
+    }
+    final incoming = _bundleProposalState(_bundleProposal(message, work), work);
+    var advance = _schedulingValue(
+      () => cancellation == null
+          ? validateInvitationBundleAdvance(
+              old,
+              incoming,
+              sharedWorkBudget: work,
+            )
+          : validateInvitationBundleReopening(
+              accepted: old,
+              incoming: incoming,
+              cancellation: cancellation,
+              sharedWorkBudget: work,
+            ),
+    );
+    if (pending?.method == IcalendarSchedulingMethod.cancel) {
+      _schedulingValue(
+        () => validateInvitationBundleReopening(
+          accepted: old,
+          incoming: incoming,
+          cancellation: CalendarInvitationBundleComponentVersion(
+            sequence: pending!.events.single.sequence,
+            stamp: pending.events.single.stamp,
+          ),
+          sharedWorkBudget: work,
+        ),
+      );
+    } else if (pendingState != null) {
+      advance = _schedulingValue(
+        () => validateInvitationBundleAdvance(
+          pendingState!,
+          incoming,
+          sharedWorkBudget: work,
+        ),
+      );
+    }
+    return advance;
+  }
+
+  List<CalendarInvitationBundleComponentVersion> _bundleIncomingVersions(
+    IcalendarSchedulingMessage message,
+    _BundleCandidate candidate,
+    RecurrenceWorkBudget work,
+  ) => message.method == IcalendarSchedulingMethod.cancel
+      ? [
+          CalendarInvitationBundleComponentVersion(
+            sequence: message.events.single.sequence,
+            stamp: message.events.single.stamp,
+          ),
+        ]
+      : _schedulingValue(
+          () => invitationBundleBaseline(
+            candidate.importBaseline,
+            protocolUid: candidate.protocolUid,
+            sharedWorkBudget: work,
+          ),
+        ).versions;
+
   CalendarInvitationBundleState _bundleState(
     _Event event, {
     RecurrenceWorkBudget? work,
-  }) => _eventProtocolValue(
+  }) => _bundleStoredValue(
     () => invitationBundleBaseline(
       event.data.importBaseline!,
       protocolUid: event.data.protocolUid,
@@ -15,17 +223,38 @@ extension CalendarInvitationBundleOperations on CalendarService {
   void _bundleValidateCheckpoint(
     CalendarInvitationLinkRecord link,
     _Event event,
-    CalendarInvitationApplicationRecord? row,
-  ) {
-    final state = _bundleState(event);
+    CalendarInvitationApplicationRecord? row, {
+    RecurrenceWorkBudget? work,
+  }) {
+    final state = _bundleState(event, work: work);
+    if (row != null) {
+      _bundleStoredValue(
+        () => validateEventProtocolVersion(
+          CalendarEventProtocolVersion(
+            sequence: row.sequence,
+            stamp: row.stamp,
+          ),
+        ),
+      );
+    }
     final master = state.versions.singleWhere((v) => v.originalStart == null);
     if (!link.bundledRequest ||
-        master.sequence != (row == null ? link.sequence : row.sequence) ||
-        master.stamp != (row?.stamp ?? link.stamp)) {
+        _invSourceOrder(
+              master.sequence,
+              master.stamp,
+              link.sequence,
+              link.stamp,
+            ) <
+            0 ||
+        (row?.kind == CalendarInvitationSourceKind.bundleCancellation
+            ? row!.sequence == null ||
+                  state.versions.any((v) => row.sequence! <= (v.sequence ?? 0))
+            : master.sequence != (row == null ? link.sequence : row.sequence) ||
+                  master.stamp != (row?.stamp ?? link.stamp))) {
       throw _failure(CalendarFailureCode.unavailable);
     }
     if (row != null &&
-        (row.kind != CalendarInvitationSourceKind.requestBundle ||
+        (!_invBundleKind(row.kind) ||
             row.linkId != link.id ||
             row.scopeKey != link.scopeKey ||
             row.recipientKey != link.recipientKey ||
@@ -92,9 +321,7 @@ extension CalendarInvitationBundleOperations on CalendarService {
       }
     }
     if (link == null) throw _failure(CalendarFailureCode.accessDenied);
-    if (!link.bundledRequest ||
-        entry != null &&
-            entry.kind != CalendarInvitationSourceKind.requestBundle) {
+    if (!link.bundledRequest || entry != null && !_invBundleKind(entry.kind)) {
       throw _failure(CalendarFailureCode.validation);
     }
     return link;
@@ -138,7 +365,17 @@ extension CalendarInvitationBundleOperations on CalendarService {
       tx,
       sharedWorkBudget: work,
     );
-    if (body.$2 != null) {
+    if (body.$2 != null &&
+        accepted.kind == CalendarInvitationSourceKind.bundleCancellation) {
+      _schedulingValue(
+        () => validateInvitationBundleCancellation(
+          accepted: _bundleState(event, work: work),
+          incoming: body.$2!,
+          recipientAddress: recipient.calendarAddress,
+          sharedWorkBudget: work,
+        ),
+      );
+    } else if (body.$2 != null) {
       final proposal = _schedulingValue(
         () => invitationRequestBundleProposal(body.$2!, sharedWorkBudget: work),
       );
@@ -183,7 +420,12 @@ extension CalendarInvitationBundleOperations on CalendarService {
       CalendarInvitationOperation.readSource,
       CalendarInvitationOperation.readLink,
       CalendarInvitationOperation.readBundleApplication,
-      if (operation == CalendarInvitationOperation.applyBundleUpdate) operation,
+      if (operation == CalendarInvitationOperation.applyBundleUpdate ||
+          operation == CalendarInvitationOperation.applyBundleCancellation ||
+          operation == CalendarInvitationOperation.reopenBundle)
+        operation,
+      if (operation == CalendarInvitationOperation.reopenBundle)
+        CalendarInvitationOperation.applyBundleUpdate,
     ]) {
       await _invAuthorize(
         CalendarInvitationPolicyContext(
@@ -235,23 +477,28 @@ extension CalendarInvitationBundleOperations on CalendarService {
       lookupId: id,
     );
     final link = await _bundleLink(id, entry, recipient, tx);
-    final event = await _invLinkedEvent(link, actor, tx);
+    final work = RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
+    final event = await _invLinkedEvent(
+      link,
+      actor,
+      tx,
+      sharedWorkBudget: work,
+    );
     await _invApplicationNative(
       actor,
       event,
       tx,
       CalendarAuthorizationPhase.read,
     );
-    final row = await _invCheckpoint(link, event, tx);
+    final row = await _invCheckpoint(link, event, tx, sharedWorkBudget: work);
     final accepted = await _invApplicationState(link, event, row, tx);
-    final work = RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
     final old = _bundleState(event, work: work);
     final body = await _bundleBody(accepted, link, recipient, event, tx, work);
-    final dirty = _invLocalChanges(event);
+    final dirty = _bundleDirty(event, accepted, work);
     CalendarInvitationSourceRecord? source;
     IcalendarSchedulingMessage? message;
-    EventStorageProposal? proposal;
-    CalendarInvitationBundleState? incoming;
+    _BundleCandidate? proposal;
+    List<CalendarInvitationBundleComponentVersion>? incoming;
     var advance = false;
     if (entry?.currentSourceId != null && entry?.dismissedAt == null) {
       source = await CalendarInvitationSourceRecord.db.findById(
@@ -261,20 +508,30 @@ extension CalendarInvitationBundleOperations on CalendarService {
       );
       if (source == null) throw _failure(CalendarFailureCode.unavailable);
       message = _invStored(source, entry, sharedWorkBudget: work);
-      proposal = _bundleProposal(message, work);
-      incoming = _bundleProposalState(proposal, work);
-      advance = _schedulingValue(
-        () => validateInvitationBundleAdvance(
-          old,
-          incoming!,
-          sharedWorkBudget: work,
-        ),
+      proposal = _bundleCandidate(message, event, work);
+      incoming = _bundleIncomingVersions(message, proposal, work);
+      advance = _bundleAdmission(
+        old,
+        accepted,
+        message,
+        source.digest,
+        recipient,
+        work,
       );
     }
     final evidence = CalendarInvitationBundleEvidence(
       accepted: old.versions,
-      incoming: incoming?.versions ?? [],
+      incoming: incoming ?? [],
     );
+    final cancellation = message?.method == IcalendarSchedulingMethod.cancel;
+    final reopening =
+        accepted.kind == CalendarInvitationSourceKind.bundleCancellation &&
+        !cancellation;
+    final operation = cancellation
+        ? CalendarInvitationOperation.applyBundleCancellation
+        : reopening
+        ? CalendarInvitationOperation.reopenBundle
+        : CalendarInvitationOperation.applyBundleUpdate;
     var canApply = !dirty && advance;
     if (canApply) {
       final member = CalendarEventImportMember(
@@ -292,13 +549,14 @@ extension CalendarInvitationBundleOperations on CalendarService {
           CalendarAuthorizationPhase.read,
           writing: true,
           member: member,
+          cancellation: cancellation || reopening,
         );
         await _bundleHost(
           actor,
           recipient,
           tx,
           CalendarAuthorizationPhase.read,
-          operation: CalendarInvitationOperation.applyBundleUpdate,
+          operation: operation,
           entry: entry,
           link: link,
           event: event,
@@ -330,6 +588,13 @@ extension CalendarInvitationBundleOperations on CalendarService {
       acceptedInvitationId: accepted.invitationId,
       acceptedSourceId: accepted.sourceId,
       acceptedAt: accepted.appliedAt,
+      acceptedKind: accepted.kind,
+      acceptedCancellationVersion: _bundleCancellationVersion(accepted),
+      incomingKind: message == null
+          ? null
+          : _invKind(message, bundleProfile: true),
+      canApplyCancellation: canApply && cancellation,
+      canReopen: canApply && reopening,
       acceptedComponents: old.versions,
       acceptedSourceUnavailable: body.$1 == null,
       currentContent: event.data.content,
@@ -340,8 +605,8 @@ extension CalendarInvitationBundleOperations on CalendarService {
       incomingContent: proposal?.content,
       incomingOverrides: proposal?.edits,
       incomingSourceText: source?.normalizedSource,
-      incomingComponents: incoming?.versions,
-      canApply: canApply,
+      incomingComponents: incoming,
+      canApply: canApply && !cancellation && !reopening,
       latestResult: accepted.latestResult,
     );
     await _bundleHost(
@@ -386,9 +651,17 @@ extension CalendarInvitationBundleOperations on CalendarService {
     CalendarHostContext actor,
     _Event event,
     Transaction tx,
-    CalendarAuthorizationPhase phase,
-  ) async {
-    await _invApplicationNative(actor, event, tx, phase, writing: true);
+    CalendarAuthorizationPhase phase, {
+    bool lifecycle = false,
+  }) async {
+    await _invApplicationNative(
+      actor,
+      event,
+      tx,
+      phase,
+      writing: true,
+      cancellation: lifecycle,
+    );
     final request = CalendarAuthorizationRequest(
       key: 'bundle-update:${event.identity.id}',
       operation: CalendarPermission.updateEvent,
@@ -409,7 +682,27 @@ extension CalendarInvitationBundleOperations on CalendarService {
 
   Future<CalendarInvitationApplyReceipt> applyInvitationBundleUpdate(
     CalendarInvitationApplyRequest input,
-  ) {
+  ) => _applyInvitationBundle(input);
+  Future<CalendarInvitationApplyReceipt> applyInvitationBundleCancellation(
+    CalendarInvitationApplyRequest input,
+  ) => _applyInvitationBundle(input, cancellation: true);
+  Future<CalendarInvitationApplyReceipt> applyInvitationBundleReopening(
+    CalendarInvitationApplyRequest input,
+  ) => _applyInvitationBundle(input, reopening: true);
+
+  Future<CalendarInvitationApplyReceipt> _applyInvitationBundle(
+    CalendarInvitationApplyRequest input, {
+    bool cancellation = false,
+    bool reopening = false,
+  }) {
+    final operation = cancellation
+        ? CalendarInvitationOperation.applyBundleCancellation
+        : reopening
+        ? CalendarInvitationOperation.reopenBundle
+        : CalendarInvitationOperation.applyBundleUpdate;
+    final kind = cancellation
+        ? CalendarInvitationSourceKind.bundleCancellation
+        : CalendarInvitationSourceKind.requestBundle;
     if (input.expectedOccurrenceRevision != 0 ||
         [
           input.expectedInvitationRevision,
@@ -421,7 +714,11 @@ extension CalendarInvitationBundleOperations on CalendarService {
       throw _failure(CalendarFailureCode.validation);
     }
     final digest = _invitationHash([
-      'bundle-update-v1',
+      cancellation
+          ? 'bundle-cancel-v1'
+          : reopening
+          ? 'bundle-reopen-v1'
+          : 'bundle-update-v1',
       input.invitationId.toString(),
       input.sourceId.toString(),
       '${input.expectedInvitationRevision}',
@@ -437,7 +734,7 @@ extension CalendarInvitationBundleOperations on CalendarService {
         recipient,
         tx,
         CalendarAuthorizationPhase.preliminaryWrite,
-        operation: CalendarInvitationOperation.applyBundleUpdate,
+        operation: operation,
         entry: entry,
         input: input,
       );
@@ -451,19 +748,25 @@ extension CalendarInvitationBundleOperations on CalendarService {
       if (link.id != input.linkId) {
         throw _failure(CalendarFailureCode.accessDenied);
       }
-      final event = await _invLinkedEvent(link, actor, tx);
+      final work = RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
+      final event = await _invLinkedEvent(
+        link,
+        actor,
+        tx,
+        sharedWorkBudget: work,
+      );
       final before = event.snapshot;
-      final row = await _invCheckpoint(link, event, tx);
+      final row = await _invCheckpoint(link, event, tx, sharedWorkBudget: work);
       final accepted = await _invApplicationState(link, event, row, tx);
       await _bundleRetryNative(
         actor,
         event,
         tx,
         CalendarAuthorizationPhase.preliminaryWrite,
+        lifecycle: cancellation || reopening,
       );
-      final work = RecurrenceWorkBudget(maxWork: eventMaxCandidateWork);
       final old = _bundleState(event, work: work);
-      final dirty = _invLocalChanges(event);
+      final dirty = _bundleDirty(event, accepted, work);
       final body = await _bundleBody(
         accepted,
         link,
@@ -473,7 +776,8 @@ extension CalendarInvitationBundleOperations on CalendarService {
         work,
       );
       if (row?.requestDigest == digest) {
-        if (row!.eventRevision != input.expectedEventRevision + 1 ||
+        if (row!.kind != kind ||
+            row.eventRevision != input.expectedEventRevision + 1 ||
             row.invitationRevision != input.expectedInvitationRevision + 1 ||
             row.revision != input.expectedApplicationRevision + 1 ||
             row.invitationId != input.invitationId ||
@@ -483,19 +787,27 @@ extension CalendarInvitationBundleOperations on CalendarService {
         final receipt = _invApplyReceipt(link, row);
         final evidence = CalendarInvitationBundleEvidence(
           accepted: old.versions,
-          incoming: old.versions,
+          incoming: cancellation
+              ? [_bundleCancellationVersion(accepted)!]
+              : old.versions,
         );
         for (final phase in [
           CalendarAuthorizationPhase.preliminaryWrite,
           CalendarAuthorizationPhase.finalWrite,
         ]) {
-          await _bundleRetryNative(actor, event, tx, phase);
+          await _bundleRetryNative(
+            actor,
+            event,
+            tx,
+            phase,
+            lifecycle: cancellation || reopening,
+          );
           await _bundleHost(
             actor,
             recipient,
             tx,
             phase,
-            operation: CalendarInvitationOperation.applyBundleUpdate,
+            operation: operation,
             entry: entry,
             link: link,
             event: event,
@@ -513,7 +825,7 @@ extension CalendarInvitationBundleOperations on CalendarService {
         return receipt;
       }
       if (entry == null ||
-          entry.kind != CalendarInvitationSourceKind.requestBundle ||
+          entry.kind != kind ||
           entry.dismissedAt != null ||
           entry.currentSourceId != input.sourceId ||
           entry.revision != input.expectedInvitationRevision ||
@@ -531,18 +843,23 @@ extension CalendarInvitationBundleOperations on CalendarService {
         throw _failure(CalendarFailureCode.accessDenied);
       }
       final message = _invStored(source, entry, sharedWorkBudget: work);
-      final proposal = _bundleProposal(message, work);
-      final incoming = _bundleProposalState(proposal, work);
-      final advance = _schedulingValue(
-        () => validateInvitationBundleAdvance(
-          old,
-          incoming,
-          sharedWorkBudget: work,
-        ),
+      if ((accepted.kind == CalendarInvitationSourceKind.bundleCancellation) !=
+              reopening &&
+          !cancellation) {
+        throw _failure(CalendarFailureCode.validation);
+      }
+      final proposal = _bundleCandidate(message, event, work);
+      final advance = _bundleAdmission(
+        old,
+        accepted,
+        message,
+        source.digest,
+        recipient,
+        work,
       );
       final evidence = CalendarInvitationBundleEvidence(
         accepted: old.versions,
-        incoming: incoming.versions,
+        incoming: _bundleIncomingVersions(message, proposal, work),
       );
       final member = CalendarEventImportMember(
         eventId: link.eventId,
@@ -561,7 +878,7 @@ extension CalendarInvitationBundleOperations on CalendarService {
           : entry.updatedAt;
       final now = await _revisionTime(tx, previous: previous);
       final next = CalendarInvitationApplicationRecord(
-        kind: CalendarInvitationSourceKind.requestBundle,
+        kind: kind,
         id: row?.id ?? const Uuid().v4obj(),
         scopeKey: recipient.scopeKey,
         recipientKey: recipient.key,
@@ -603,7 +920,7 @@ extension CalendarInvitationBundleOperations on CalendarService {
         recipient,
         tx,
         CalendarAuthorizationPhase.preliminaryWrite,
-        operation: CalendarInvitationOperation.applyBundleUpdate,
+        operation: operation,
         entry: entry,
         link: link,
         event: event,
@@ -631,6 +948,7 @@ extension CalendarInvitationBundleOperations on CalendarService {
         CalendarAuthorizationPhase.preliminaryWrite,
         writing: true,
         member: member,
+        cancellation: cancellation || reopening,
         before: before,
       );
       await _invCleanup(recipient, tx, now);
@@ -692,6 +1010,7 @@ extension CalendarInvitationBundleOperations on CalendarService {
         CalendarAuthorizationPhase.finalWrite,
         writing: true,
         member: member,
+        cancellation: cancellation || reopening,
         before: before,
       );
       await _bundleHost(
@@ -699,7 +1018,7 @@ extension CalendarInvitationBundleOperations on CalendarService {
         recipient,
         tx,
         CalendarAuthorizationPhase.finalWrite,
-        operation: CalendarInvitationOperation.applyBundleUpdate,
+        operation: operation,
         entry: entry,
         link: link,
         event: event,

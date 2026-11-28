@@ -158,6 +158,76 @@ Future<void> invitationBundleSmoke(List<Client> clients) async {
       rejected = e.code == cal.CalendarFailureCode.validation;
     }
     require(rejected, 'Regressing bundle entered scalar reconciliation');
+    var latestCommand = secondUpdate;
+    var latestResult = second;
+    for (final sequence in [13, 15]) {
+      final cancelKey = const cal.Uuid().v4obj();
+      final notices = await Future.wait(
+        clients.map(
+          (c) =>
+              c.invitationDemo.simulateCancellation(uid, cancelKey, sequence),
+        ),
+      );
+      require(
+        notices.first.id == notices.last.id,
+        'Cancellation ingress race changed receipt',
+      );
+      final cancellation = await api.calendarInvitation.bundleApplication(
+        received.entryId,
+      );
+      require(
+        cancellation.canApplyCancellation &&
+            cancellation.incomingComponents!.length == 1,
+        'Cancellation review confused actual and retained vectors',
+      );
+      final cancelCommand = updateCommand(cancellation);
+      final cancelled = await Future.wait(
+        clients.map(
+          (c) => c.modules.serverpod_calendar.calendarInvitation
+              .applyBundleCancellation(cancelCommand),
+        ),
+      );
+      require(
+        cancelled.first.id == cancelled.last.id,
+        'Cancellation race changed latest result',
+      );
+      final status = await b.modules.serverpod_calendar.calendarInvitation
+          .bundleApplication(received.entryId);
+      require(
+        status.currentContent.status == cal.CalendarEventStatus.cancelled &&
+            !status.hasLocalChanges &&
+            status.acceptedCancellationVersion!.sequence == sequence &&
+            status.acceptedComponents.length == 3,
+        'Cancelled native state lost distinct source proof',
+      );
+      await b.invitationDemo.simulateBundleUpdate(
+        uid,
+        const cal.Uuid().v4obj(),
+        2,
+        sequence + 1,
+        'Synthetic updated invitation',
+      );
+      final reopening = await api.calendarInvitation.bundleApplication(
+        received.entryId,
+      );
+      require(
+        reopening.canReopen,
+        'Complete newer REQUEST did not allow explicit reopening',
+      );
+      latestCommand = updateCommand(reopening);
+      final restored = await Future.wait(
+        clients.map(
+          (c) => c.modules.serverpod_calendar.calendarInvitation
+              .applyBundleReopening(latestCommand),
+        ),
+      );
+      latestResult = restored.first;
+      require(
+        restored.first.id == restored.last.id,
+        'Reopening race changed latest result',
+      );
+    }
+
     final current = await api.calendarEvent.getEvent(
       event,
       cal.CalendarEventFieldGroup.values,
@@ -183,7 +253,7 @@ Future<void> invitationBundleSmoke(List<Client> clients) async {
       uid,
       const cal.Uuid().v4obj(),
       3,
-      1,
+      16,
       'Synthetic updated invitation',
     );
     final dirty = await api.calendarInvitation.bundleApplication(
@@ -194,14 +264,14 @@ Future<void> invitationBundleSmoke(List<Client> clients) async {
       'Local bundle edit did not block application',
     );
     require(
-      (await b.modules.serverpod_calendar.calendarInvitation.applyBundleUpdate(
-            secondUpdate,
-          )).id ==
-          second.id,
+      (await b.modules.serverpod_calendar.calendarInvitation
+                  .applyBundleReopening(latestCommand))
+              .id ==
+          latestResult.id,
       'Retained update retry rewrote a private draft',
     );
     stdout.writeln(
-      'PASS: two JWT hosts, complete MIME bundles, one-event adoption/application races, child-only and mixed versions, rejected regressions and draft-preserving latest retries.',
+      'PASS: two JWT hosts, complete MIME bundles, one-event adoption/application races, child-only/mixed updates, whole cancellation/reopening cycles, independent versions and draft-preserving latest retries.',
     );
   } finally {
     if (received != null) {

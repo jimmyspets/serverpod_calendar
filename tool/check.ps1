@@ -87,7 +87,7 @@ try {
   finally { Pop-Location }
   Invoke-Checked python @('tool/metadata_upgrade_smoke.py')
   Push-Location $ExampleServer
-  try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/invitation_bundles_test.dart', 'test/integration/bundled_invitation_updates_test.dart') }
+  try { Invoke-Checked dart @('test', '--concurrency=1', 'test/integration/invitation_bundles_test.dart', 'test/integration/bundled_invitation_updates_test.dart', 'test/integration/bundled_invitation_lifecycle_test.dart') }
   finally { Pop-Location }
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart', '--bundles')
   Invoke-Checked dart @('run', 'tool/invitation_work_smoke.dart')

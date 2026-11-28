@@ -60,8 +60,9 @@ extension CalendarInvitationApplicationOperations on CalendarService {
   Future<CalendarInvitationApplicationRecord?> _invCheckpoint(
     CalendarInvitationLinkRecord link,
     _Event event,
-    Transaction tx,
-  ) async {
+    Transaction tx, {
+    RecurrenceWorkBudget? sharedWorkBudget,
+  }) async {
     final row = await CalendarInvitationApplicationRecord.db.findFirstRow(
       _session,
       where: (t) => t.linkId.equals(link.id!),
@@ -72,7 +73,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       if (occurrence != null) {
         throw _failure(CalendarFailureCode.unavailable);
       }
-      _bundleValidateCheckpoint(link, event, row);
+      _bundleValidateCheckpoint(link, event, row, work: sharedWorkBudget);
       return row;
     }
     final occurrence = await _occRow(link.id!, tx);
@@ -420,7 +421,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       entry,
       sharedWorkBudget: sharedWorkBudget,
     );
-    if (_invKind(message) != state.kind) {
+    if (_invKind(message, bundleProfile: link.bundledRequest) != state.kind) {
       throw _failure(CalendarFailureCode.unavailable);
     }
     return (source, message);

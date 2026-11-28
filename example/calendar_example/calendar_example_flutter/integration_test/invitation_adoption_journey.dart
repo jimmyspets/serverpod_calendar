@@ -245,18 +245,69 @@ Future<void> runInvitationAdoptionJourney(
       final next = await module.calendarInvitation.bundleApplication(entry.id);
       expect(next.applicationRevision, 2);
       expect(next.eventRevision, 4);
+      for (final sequence in [13, 15]) {
+        await client.invitationDemo.simulateCancellation(
+          id,
+          const cal.Uuid().v4obj(),
+          sequence,
+        );
+        final received = await module.calendarInvitation.bundleApplication(
+          entry.id,
+        );
+        expect(
+          received.currentContent.status,
+          cal.CalendarEventStatus.confirmed,
+        );
+        await tap(find.byKey(const Key('bundle-update-refresh')));
+        await tap(find.byKey(const Key('bundle-update-apply')));
+        expect(find.byKey(const Key('bundle-update-result')), findsOneWidget);
+        await tap(find.byKey(const Key('bundle-update-refresh')));
+        expect(
+          find.byKey(const Key('bundle-accepted-cancellation')),
+          findsOneWidget,
+        );
+        final cancelled = await module.calendarInvitation.bundleApplication(
+          entry.id,
+        );
+        expect(
+          cancelled.currentContent.status,
+          cal.CalendarEventStatus.cancelled,
+        );
+        expect(cancelled.hasLocalChanges, isFalse);
+        expect(cancelled.acceptedCancellationVersion!.sequence, sequence);
+        await client.invitationDemo.simulateBundleUpdate(
+          id,
+          const cal.Uuid().v4obj(),
+          2,
+          sequence + 1,
+          'Incoming master and child',
+        );
+        await tap(find.byKey(const Key('bundle-update-refresh')));
+        await tap(find.byKey(const Key('bundle-update-apply')));
+        expect(find.byKey(const Key('bundle-update-result')), findsOneWidget);
+      }
+      final postCycles = await module.calendarInvitation.bundleApplication(
+        entry.id,
+      );
+      expect(
+        postCycles.currentContent.status,
+        cal.CalendarEventStatus.confirmed,
+      );
+      expect(postCycles.acceptedCancellationVersion, isNull);
       await module.calendarEvent.update(
         cal.CalendarEventUpdateRequest(
           eventId: link.eventId,
-          expectedRevision: 4,
-          content: next.currentContent.copyWith(summary: 'Local Flutter draft'),
+          expectedRevision: postCycles.eventRevision,
+          content: postCycles.currentContent.copyWith(
+            summary: 'Local Flutter draft',
+          ),
         ),
       );
       await client.invitationDemo.simulateBundleUpdate(
         id,
         const cal.Uuid().v4obj(),
         3,
-        1,
+        16,
         'Incoming master and child',
       );
       await tap(find.byKey(const Key('bundle-update-refresh')));

@@ -23,7 +23,7 @@ class _InvitationBundleUpdateScreenState
   cal.CalendarInvitationBundleApplicationView? _view;
   cal.CalendarInvitationApplyRequest? _request;
   cal.CalendarInvitationApplyReceipt? _result;
-  String? _error;
+  String? _error, _action;
   final _scroll = ScrollController();
   bool _busy = true;
   @override
@@ -74,12 +74,20 @@ class _InvitationBundleUpdateScreenState
       setState(() {
         _view = view;
         _request = null;
+        _action = null;
         _result = null;
       });
     }
   });
   Future<void> _apply() => _run(() async {
     final view = _view!;
+    _action ??=
+        view.incomingKind == cal.CalendarInvitationSourceKind.bundleCancellation
+        ? 'cancel'
+        : view.acceptedKind ==
+              cal.CalendarInvitationSourceKind.bundleCancellation
+        ? 'reopen'
+        : 'update';
     _request ??= cal.CalendarInvitationApplyRequest(
       invitationId: view.invitationId,
       sourceId: view.incomingSourceId!,
@@ -89,12 +97,12 @@ class _InvitationBundleUpdateScreenState
       expectedCalendarRevision: view.calendarRevision,
       expectedApplicationRevision: view.applicationRevision,
     );
-    final result = await widget
-        .client
-        .modules
-        .serverpod_calendar
-        .calendarInvitation
-        .applyBundleUpdate(_request!);
+    final api = widget.client.modules.serverpod_calendar.calendarInvitation;
+    final result = await switch (_action!) {
+      'cancel' => api.applyBundleCancellation(_request!),
+      'reopen' => api.applyBundleReopening(_request!),
+      _ => api.applyBundleUpdate(_request!),
+    };
     if (mounted) setState(() => _result = result);
   });
   String _versions(
@@ -114,7 +122,7 @@ class _InvitationBundleUpdateScreenState
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text('Review complete invitation update'),
+      title: const Text('Review invitation change'),
       actions: [
         IconButton(
           key: const Key('bundle-update-refresh'),
@@ -136,14 +144,23 @@ class _InvitationBundleUpdateScreenState
           Text(_error!, key: const Key('bundle-update-error')),
         if (_result != null)
           Text(
-            'Applied complete update. Event revision ${_result!.eventRevision}.',
+            '${_action == 'cancel'
+                ? 'Applied cancellation'
+                : _action == 'reopen'
+                ? 'Reopened series'
+                : 'Applied complete update'}. Event revision ${_result!.eventRevision}.',
             key: const Key('bundle-update-result'),
           ),
         if (_view case final view?) ...[
           Text('Current: ${view.currentContent.summary ?? 'Untitled event'}'),
           Text(
-            'Accepted component versions\n${_versions(view.acceptedComponents)}',
+            'Retained REQUEST component versions\n${_versions(view.acceptedComponents)}',
           ),
+          if (view.acceptedCancellationVersion case final cancellation?)
+            Text(
+              'Accepted whole-series cancellation\n${_versions([cancellation])}',
+              key: const Key('bundle-accepted-cancellation'),
+            ),
           if (view.acceptedSourceUnavailable)
             const Text(
               'Earlier source body expired. Accepted versions remain available.',
@@ -155,7 +172,7 @@ class _InvitationBundleUpdateScreenState
             ),
           if (view.incomingContent != null)
             Text(
-              'Incoming: ${view.incomingContent!.summary ?? 'Untitled event'}',
+              '${view.incomingKind == cal.CalendarInvitationSourceKind.bundleCancellation ? 'Proposed cancellation, retained title' : 'Incoming'}: ${view.incomingContent!.summary ?? 'Untitled event'}',
             ),
           if (view.incomingComponents != null)
             Text(
@@ -171,12 +188,29 @@ class _InvitationBundleUpdateScreenState
           ElevatedButton(
             key: const Key('bundle-update-apply'),
             onPressed:
-                _busy || _result != null || (_request == null && !view.canApply)
+                _busy ||
+                    _result != null ||
+                    (_request == null &&
+                        !view.canApply &&
+                        !view.canApplyCancellation &&
+                        !view.canReopen)
                 ? null
                 : _apply,
             child: Text(
               _request == null
-                  ? 'Apply complete update'
+                  ? view.incomingKind ==
+                            cal.CalendarInvitationSourceKind.bundleCancellation
+                        ? 'Apply whole-series cancellation'
+                        : view.acceptedKind ==
+                              cal
+                                  .CalendarInvitationSourceKind
+                                  .bundleCancellation
+                        ? 'Reopen complete series'
+                        : 'Apply complete update'
+                  : _action == 'cancel'
+                  ? 'Retry the same cancellation'
+                  : _action == 'reopen'
+                  ? 'Retry the same reopening'
                   : 'Retry the same complete update',
             ),
           ),

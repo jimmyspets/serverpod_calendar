@@ -10,6 +10,11 @@ fields:
   applicationRevision: int
   acceptedInvitationId: UuidValue
   acceptedSourceId: UuidValue
+  acceptedKind: CalendarInvitationSourceKind
+  acceptedCancellationVersion: CalendarInvitationBundleComponentVersion?
+  incomingKind: CalendarInvitationSourceKind?
+  canApplyCancellation: bool, default=false
+  canReopen: bool, default=false
   acceptedAt: DateTime
   acceptedComponents: List<CalendarInvitationBundleComponentVersion>
   acceptedSourceUnavailable: bool

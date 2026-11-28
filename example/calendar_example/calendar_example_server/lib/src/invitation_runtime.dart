@@ -75,6 +75,7 @@ final class DemoInvitationHost implements CalendarInvitationHost {
     if ({
       CalendarInvitationOperation.receive,
       CalendarInvitationOperation.receiveBundle,
+      CalendarInvitationOperation.receiveBundleCancellation,
       CalendarInvitationOperation.receiveCancellation,
       CalendarInvitationOperation.receiveOccurrence,
       CalendarInvitationOperation.receiveRange,
@@ -97,6 +98,8 @@ final class DemoInvitationHost implements CalendarInvitationHost {
           CalendarInvitationOperation.readLink,
           CalendarInvitationOperation.readBundleApplication,
           CalendarInvitationOperation.applyBundleUpdate,
+          CalendarInvitationOperation.applyBundleCancellation,
+          CalendarInvitationOperation.reopenBundle,
           CalendarInvitationOperation.apply,
           CalendarInvitationOperation.applyCancellation,
           CalendarInvitationOperation.readApplication,
