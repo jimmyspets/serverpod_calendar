@@ -568,9 +568,17 @@ void main() {
         CalendarInvitationResponseDeliveryState.expired,
       );
     });
-    for (final recurring in [false, true]) {
+    for (final (recurring, instance) in [
+      (false, false),
+      (true, false),
+      (true, true),
+    ]) {
       test(
-        'synthetic ${recurring ? 'recurring-master' : 'non-recurring'} response traverses MIME and trusted organizer reconciliation',
+        'synthetic ${instance
+            ? 'single-instance'
+            : recurring
+            ? 'recurring-master'
+            : 'non-recurring'} response traverses MIME and trusted organizer reconciliation',
         () async {
           CalendarModule.install(
             session.serverpod,
@@ -631,7 +639,7 @@ void main() {
           );
           final publication = (await CalendarSchedulingPublicationRecord.db
               .findById(session, published.publicationId))!;
-          final received = await CalendarModule.receiveSchedulingInvitation(
+          var received = await CalendarModule.receiveSchedulingInvitation(
             session,
             CalendarInvitationDelivery(
               namespace: 'loopback',
@@ -644,6 +652,61 @@ void main() {
             (await service.getInvitation(received.entryId)).recurring,
             recurring,
           );
+          final original = CalendarEventTiming(
+            kind: CalendarEventTimeKind.date,
+            start: CalendarEventCivil(year: 2026, month: 3, day: 30),
+          );
+          if (instance) {
+            final document = parseIcalendarSyntax(
+              utf8.encode(publication.payload),
+            );
+            final root = document.components.single;
+            final bytes = serializeIcalendarSyntax(
+              IcalendarSyntaxDocument([
+                IcalendarSyntaxComponent('VCALENDAR', [
+                  for (final entry in root.entries)
+                    if (entry is IcalendarSyntaxComponent &&
+                        entry.canonicalName == 'VEVENT')
+                      IcalendarSyntaxComponent('VEVENT', [
+                        for (final property
+                            in entry.entries
+                                .whereType<IcalendarSyntaxProperty>())
+                          if (property.canonicalName != 'RRULE')
+                            property.canonicalName == 'DTSTART'
+                                ? IcalendarSyntaxProperty(
+                                    'DTSTART',
+                                    '20260330',
+                                    parameters: [
+                                      IcalendarSyntaxParameter('VALUE', [
+                                        'DATE',
+                                      ]),
+                                    ],
+                                  )
+                                : property,
+                        IcalendarSyntaxProperty(
+                          'RECURRENCE-ID',
+                          '20260330',
+                          parameters: [
+                            IcalendarSyntaxParameter('VALUE', ['DATE']),
+                          ],
+                        ),
+                      ])
+                    else
+                      entry,
+                ]),
+              ]),
+            );
+            received = await CalendarModule.receiveSchedulingInvitation(
+              session,
+              CalendarInvitationDelivery(
+                namespace: 'loopback',
+                deliveryKey: 'instance-request',
+                originReference: 'verified-alice',
+                bytes: Uint8List.fromList(bytes),
+              ),
+            );
+          }
+
           await service.sendInvitationResponse(
             CalendarInvitationResponseRequest(
               invitationId: received.entryId,
@@ -680,8 +743,13 @@ void main() {
           final first = await reconcile('verified', 'verified-bob');
           expect(first.outcome, CalendarSchedulingReplyOutcome.applied);
           expect(
-            (await service.schedulingResponses(event.eventId))
-                .responses
+            (instance
+                    ? (await service.schedulingInstanceResponses(
+                        event.eventId,
+                        original,
+                      )).responses
+                    : (await service.schedulingResponses(event.eventId))
+                          .responses)
                 .single
                 .effectiveParticipation,
             CalendarSchedulingParticipation.accepted,

@@ -52,7 +52,11 @@ Future<void> instanceInvitationSmoke(List<Client> clients) async {
     );
     await rejects(() => api.link(instance!.entryId));
     await rejects(() => api.application(instance!.entryId));
-    await rejects(() => api.response(instance!.entryId));
+    final response = await api.response(instance.entryId);
+    require(
+      response.canSend && response.originalStart?.start.day == 3,
+      'Instance response lost its original or source eligibility',
+    );
     final cancelled = await a.invitationDemo.simulateOccurrence(
       id,
       const cal.Uuid().v4obj(),
@@ -66,6 +70,10 @@ Future<void> instanceInvitationSmoke(List<Client> clients) async {
           notice.originalStart?.start.day == 3 &&
           notice.kind == cal.CalendarInvitationSourceKind.instanceCancellation,
       'Cancellation lost original or manufactured start',
+    );
+    require(
+      !(await api.response(instance.entryId)).canSend,
+      'Instance cancellation admitted a new response',
     );
     final attempts = await Future.wait(
       clients.map((c) async {

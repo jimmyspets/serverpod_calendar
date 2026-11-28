@@ -307,4 +307,4 @@ Accepted [ADR 0152](adr/0152-master-invitation-application-with-accepted-occurre
 
 [Master invitation/occurrence composition](master-invitation-occurrence-composition.md) describes the accepted ADR 0152 implementation, independent versions, orphan protection and historical retries.
 
-Proposed [ADR 0153](adr/0153-explicit-single-instance-attendee-responses.md) groups explicit recipient single-instance replies, target-aware minimal output, independent authority, reused durable response storage and example/recovery checks. It does not add runtime support until maintainer review.
+Accepted [ADR 0153](adr/0153-explicit-single-instance-attendee-responses.md) implements selected known-instance participation replies with exact originals/source versions, fresh known-series checks, separate send/dispatch authority and existing durable response tables/limits. See [the scoped guide](single-instance-attendee-responses.md). Calendar actions remain independent; RANGE, arbitrary-original selection and real mail remain separate. Actual validation and external-client evidence are distinct.

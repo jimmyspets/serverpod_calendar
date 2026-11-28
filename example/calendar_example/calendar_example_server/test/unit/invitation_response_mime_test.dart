@@ -45,6 +45,55 @@ Matcher failure(SyntheticSchedulingMimeError kind) => throwsA(
   isA<SyntheticSchedulingMimeException>().having((e) => e.kind, 'kind', kind),
 );
 void main() {
+  for (final original in [
+    'RECURRENCE-ID;VALUE=DATE:20300103',
+    'RECURRENCE-ID:20300103T090000Z',
+    'RECURRENCE-ID;TZID=Europe/Stockholm:20300103T090000',
+  ]) {
+    test('minimal instance MIME preserves $original and exact bytes', () {
+      var payload = reply(extra: [original]);
+      if (original.contains('TZID=')) {
+        final zone = utf8.decode(
+          serializeIcalendarSyntax(
+            IcalendarSyntaxDocument([
+              createIcalendarTimeZone('Europe/Stockholm'),
+            ]),
+          ),
+        );
+        payload = payload.replaceFirst('BEGIN:VEVENT', '${zone}BEGIN:VEVENT');
+      }
+      final mime = composeSyntheticInvitationResponseMime(
+        input(payload: payload),
+        requireProtection: false,
+      );
+      final parsed = parseHostImipMime(
+        ascii.encode(mime),
+        outerProtection: ImipProtection.none,
+      );
+      expect(parsed.source.body, utf8.encode(payload));
+      expect(parsed.eventMessage!.events.single.isOverride, isTrue);
+      expect(parsed.eventMessage!.events.single.isThisAndFuture, isFalse);
+    });
+  }
+  test('range response and unrelated zones reject explicitly', () {
+    final zone = utf8.decode(
+      serializeIcalendarSyntax(
+        IcalendarSyntaxDocument([createIcalendarTimeZone('UTC')]),
+      ),
+    );
+    for (final payload in [
+      reply(extra: ['RECURRENCE-ID;RANGE=THISANDFUTURE:20300103T090000Z']),
+      reply().replaceFirst('BEGIN:VEVENT', '${zone}BEGIN:VEVENT'),
+    ]) {
+      expect(
+        () => composeSyntheticInvitationResponseMime(
+          input(payload: payload),
+          requireProtection: false,
+        ),
+        failure(SyntheticSchedulingMimeError.profile),
+      );
+    }
+  });
   for (final choice in ['ACCEPTED', 'TENTATIVE', 'DECLINED']) {
     test(
       '$choice has attendee sender, organizer destination and exact retained bytes',

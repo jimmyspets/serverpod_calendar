@@ -9,18 +9,28 @@ Future<void> runInvitationResponseJourney(
   WidgetTester tester,
   Client client, {
   bool recurring = false,
+  bool instance = false,
 }) async {
-  final simulate = recurring
+  final simulate = recurring || instance
       ? client.invitationDemo.simulateRecurring
       : client.invitationDemo.simulate;
   final api = client.modules.serverpod_calendar.calendarInvitation;
   final id = const cal.Uuid().v4obj();
-  final incoming = await simulate(
+  var incoming = await simulate(
     id,
     const cal.Uuid().v4obj(),
     null,
     'Respond without adoption',
   );
+  final masterId = incoming.entryId;
+  if (instance) {
+    incoming = await client.invitationDemo.simulateOccurrence(
+      id,
+      const cal.Uuid().v4obj(),
+      1,
+      false,
+    );
+  }
   final navigator = tester.state<NavigatorState>(find.byType(Navigator).first);
   Future<void> loaded() async {
     for (var i = 0; i < 150; i++) {
@@ -49,7 +59,13 @@ Future<void> runInvitationResponseJourney(
     );
     await tester.pumpAndSettle();
     await loaded();
-    if (recurring) {
+    if (instance) {
+      expect(find.byKey(const Key('response-original')), findsOneWidget);
+      expect(
+        (await api.response(incoming.entryId)).originalStart!.start.day,
+        3,
+      );
+    } else if (recurring) {
       expect(
         find.text(
           'Recurring series: this response applies to the whole series.',
@@ -74,18 +90,27 @@ Future<void> runInvitationResponseJourney(
     expect(find.text('Response revision: 1'), findsOneWidget);
     final first = (await api.responseActivity(incoming.entryId)).single;
     expect(first.choice, cal.CalendarInvitationResponseChoice.declined);
-    expect(await api.link(incoming.entryId), isNull);
+    expect(await api.link(masterId), isNull);
     expect((await api.getInvitation(incoming.entryId)).dismissedAt, isNull);
     // Retried UI commands retain their original identity, including across a
     // newer source; refreshing does not implicitly create another response.
     await tap(find.byKey(const Key('response-send')));
     expect((await api.responseActivity(incoming.entryId)).single.id, first.id);
-    await simulate(
-      id,
-      const cal.Uuid().v4obj(),
-      1,
-      'New source needs a new decision',
-    );
+    if (instance) {
+      await client.invitationDemo.simulateOccurrence(
+        id,
+        const cal.Uuid().v4obj(),
+        2,
+        false,
+      );
+    } else {
+      await simulate(
+        id,
+        const cal.Uuid().v4obj(),
+        1,
+        'New source needs a new decision',
+      );
+    }
     await tap(find.byKey(const Key('response-refresh')));
     expect(
       find.text('Historical response; it does not accept the current source.'),
@@ -104,7 +129,11 @@ Future<void> runInvitationResponseJourney(
     navigator.pop();
     await tester.pumpAndSettle();
   } finally {
-    final current = await api.getInvitation(incoming.entryId);
-    await api.dismiss(current.id, current.revision);
+    for (final entry in {masterId, incoming.entryId}) {
+      final current = await api.getInvitation(entry);
+      if (current.dismissedAt == null) {
+        await api.dismiss(current.id, current.revision);
+      }
+    }
   }
 }

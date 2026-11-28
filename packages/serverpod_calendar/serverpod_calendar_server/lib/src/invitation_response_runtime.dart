@@ -6,7 +6,13 @@ import 'generated/protocol.dart';
 import 'invitation_runtime.dart';
 import 'scheduling_runtime.dart';
 
-enum CalendarInvitationResponseOperation { read, send, dispatch }
+enum CalendarInvitationResponseOperation {
+  read,
+  send,
+  dispatch,
+  sendOccurrence,
+  dispatchOccurrence,
+}
 
 final class CalendarInvitationResponseAuthority {
   const CalendarInvitationResponseAuthority({
@@ -38,6 +44,8 @@ final class CalendarInvitationResponsePolicyContext {
     this.payloadDigest,
     this.authority,
     this.isRetry = false,
+    this.occurrenceBasis,
+    this.occurrenceBasisUnavailable = false,
   });
   final CalendarInvitationResponseOperation operation;
   final CalendarInvitationRecipient recipient;
@@ -54,6 +62,34 @@ final class CalendarInvitationResponsePolicyContext {
   final String? payloadDigest;
   final CalendarInvitationResponseAuthority? authority;
   final bool isRetry;
+  final CalendarInvitationOccurrenceBasis? occurrenceBasis;
+  final bool occurrenceBasisUnavailable;
+
+  CalendarInvitationResponsePolicyContext withOccurrence({
+    required CalendarInvitationOccurrenceBasis? basis,
+    required bool unavailable,
+    required CalendarInvitationResponseView state,
+    CalendarInvitationResponseOperation? operation,
+  }) => CalendarInvitationResponsePolicyContext(
+    operation: operation ?? this.operation,
+    recipient: recipient,
+    invitation: invitation,
+    currentState: state,
+    actor: actor,
+    sourceId: sourceId,
+    sourceRevision: sourceRevision,
+    sourceDigest: sourceDigest,
+    sourceMessage: sourceMessage,
+    proposedState: proposedState,
+    request: request,
+    receipt: receipt,
+    outgoingMessage: outgoingMessage,
+    payloadDigest: payloadDigest,
+    authority: authority,
+    isRetry: isRetry,
+    occurrenceBasis: basis,
+    occurrenceBasisUnavailable: unavailable,
+  );
 }
 
 abstract interface class CalendarInvitationResponseHost {

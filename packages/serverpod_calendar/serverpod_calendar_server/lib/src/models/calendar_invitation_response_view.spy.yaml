@@ -1,6 +1,9 @@
 class: CalendarInvitationResponseView
+immutable: true
 fields:
   invitationId: UuidValue
+  originalStart: CalendarEventTiming?
+  canSend: bool, default=false
   revision: int
   responseId: UuidValue?
   choice: CalendarInvitationResponseChoice?
