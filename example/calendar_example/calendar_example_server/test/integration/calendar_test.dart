@@ -3327,6 +3327,430 @@ void main() {
         Uint8List.fromList(utf8.encode(raw ?? eventFile(components))),
       ),
     );
+    CalendarEventReplaceRequest eventReplacement(
+      UuidValue parent,
+      UuidValue id,
+      List<String> components, {
+      int revision = 1,
+      List<CalendarEventExportSelection>? selection,
+    }) => CalendarEventReplaceRequest(
+      calendarId: parent,
+      expectedRevision: 1,
+      selection:
+          selection ??
+          [
+            CalendarEventExportSelection(
+              eventId: id,
+              expectedRevision: revision,
+            ),
+          ],
+      bytes: eventImport(parent, components).bytes,
+    );
+    Future<CalendarEventDataRecord> eventData(UuidValue id) async =>
+        (await CalendarEventDataRecord.db.findFirstRow(
+          session,
+          where: (t) => t.eventId.equals(id),
+        ))!;
+    test('event replacement identical retry is a true no-op and source corrections retain exact omissions', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final old = [
+        eventSource('source', extra: ['SUMMARY;LANGUAGE=en:Before']),
+      ];
+      final id = (await service.importEvents(eventImport(parent, old)))
+          .receipts
+          .single
+          .eventId;
+      final before = await eventData(id), gen = await generation();
+      final noOp = await service.replaceEventsFromImport(
+        eventReplacement(parent, id, old),
+      );
+      expect(noOp.receipts.single.changed, isFalse);
+      expect((await eventData(id)).toJson(), before.toJson());
+      expect(await generation(), gen);
+      final changed = [
+        old.single
+            .replaceAll('Before', 'After')
+            .replaceAll('20400101T000000Z', '20390101T000000Z'),
+      ];
+      final result = await service.replaceEventsFromImport(
+        eventReplacement(parent, id, changed),
+      );
+      expect(result.receipts.single.changed, isTrue);
+      expect(result.receipts.single.receipt.revision, 2);
+      final after = await eventData(id);
+      expect(after.createdAt, before.createdAt);
+      expect(after.content.summary, 'After');
+      expect(after.content.textParameters!.summary!.language, 'en');
+      expect(after.protocolState!.version.stamp, DateTime.utc(2039));
+      expect(after.protocolState!.version.sequence, isNull);
+      expect(after.protocolState!.statusPresent, isFalse);
+      expect(after.protocolState!.transparencyPresent, isFalse);
+      expect(
+        after.importBaseline!.canonicalValue,
+        eventImportBaseline(
+          after.protocolUid,
+          after.content,
+          after.timingOverrides,
+          after.protocolState!,
+        ).canonicalValue,
+      );
+      expect(await generation(), gen + 1);
+    });
+    for (final permission in [
+      CalendarPermission.importEvents,
+      CalendarPermission.replaceEventsFromImport,
+      CalendarPermission.readEvent,
+      CalendarPermission.updateEvent,
+    ]) {
+      test(
+        'event replacement independently requires ${permission.name}',
+        () async {
+          final parent = (await service.create(createInput()))!.calendarId;
+          final id = (await service.importEvents(
+            eventImport(parent, [eventSource('source')]),
+          )).receipts.single.eventId;
+          final before = await eventData(id), gen = await generation();
+          policy.denied.add(permission);
+          await expectLater(
+            service.replaceEventsFromImport(
+              eventReplacement(parent, id, [
+                eventSource('source', extra: ['SUMMARY:Changed']),
+              ]),
+            ),
+            failure(CalendarFailureCode.accessDenied),
+          );
+          expect((await eventData(id)).toJson(), before.toJson());
+          expect(await generation(), gen);
+        },
+      );
+    }
+    for (final group in CalendarEventFieldGroup.values) {
+      test(
+        'event replacement requires ${group.name} disclosure before no-op results',
+        () async {
+          final parent = (await service.create(createInput()))!.calendarId;
+          final source = [eventSource('source')];
+          final id = (await service.importEvents(eventImport(parent, source)))
+              .receipts
+              .single
+              .eventId;
+          policy.eventGrants.remove(group);
+          await expectLater(
+            service.replaceEventsFromImport(
+              eventReplacement(parent, id, source),
+            ),
+            failure(CalendarFailureCode.accessDenied),
+          );
+        },
+      );
+    }
+    for (final statuses in [
+      ['CONFIRMED', 'CANCELLED'],
+      ['CANCELLED', 'CONFIRMED'],
+      ['CONFIRMED', 'TENTATIVE'],
+    ]) {
+      test(
+        'event replacement lifecycle ${statuses.join(' to ')} needs separate authority',
+        () async {
+          final parent = (await service.create(createInput()))!.calendarId;
+          final id = (await service.importEvents(
+            eventImport(parent, [
+              eventSource('source', extra: ['STATUS:${statuses.first}']),
+            ]),
+          )).receipts.single.eventId;
+          policy.denied.add(CalendarPermission.changeEventStatus);
+          final request = eventReplacement(parent, id, [
+            eventSource('source', extra: ['STATUS:${statuses.last}']),
+          ]);
+          await expectLater(
+            service.replaceEventsFromImport(request),
+            failure(CalendarFailureCode.accessDenied),
+          );
+          policy.denied.clear();
+          await service.replaceEventsFromImport(request);
+          expect(
+            (await eventData(id)).content.status.name.toUpperCase(),
+            statuses.last,
+          );
+        },
+      );
+    }
+    for (final adding in [false, true]) {
+      test(
+        'event replacement ${adding ? 'adding' : 'removing'} a cancelled original requires lifecycle permission',
+        () async {
+          final parent = (await service.create(createInput()))!.calendarId;
+          final master = eventSource(
+            'source',
+            extra: ['RRULE:FREQ=DAILY;COUNT=3'],
+          );
+          final cancellation = eventSource(
+            'source',
+            timing: 'DTSTART:20260330T090000Z',
+            extra: [
+              'RECURRENCE-ID:20260330T090000Z',
+              'STATUS:CANCELLED',
+            ],
+          );
+          final old = [master, if (!adding) cancellation],
+              next = [master, if (adding) cancellation];
+          final id = (await service.importEvents(eventImport(parent, old)))
+              .receipts
+              .single
+              .eventId;
+          policy.denied.add(CalendarPermission.changeEventStatus);
+          await expectLater(
+            service.replaceEventsFromImport(eventReplacement(parent, id, next)),
+            failure(CalendarFailureCode.accessDenied),
+          );
+          policy.denied.clear();
+          await service.replaceEventsFromImport(
+            eventReplacement(parent, id, next),
+          );
+          expect(
+            (await eventData(id)).timingOverrides?.singles
+                    .where((o) => o.cancelled)
+                    .length ??
+                0,
+            adding ? 1 : 0,
+          );
+        },
+      );
+    }
+    test('event replacement equal sequence is allowed lower or omitted source versions reject', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final old = [
+        eventSource('source', extra: ['SEQUENCE:3', 'SUMMARY:Before']),
+      ];
+      final id = (await service.importEvents(eventImport(parent, old)))
+          .receipts
+          .single
+          .eventId;
+      await expectLater(
+        service.replaceEventsFromImport(
+          eventReplacement(parent, id, [
+            old.single.replaceAll('SEQUENCE:3', 'SEQUENCE:2'),
+          ]),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      await service.replaceEventsFromImport(
+        eventReplacement(parent, id, [
+          old.single.replaceAll('Before', 'After'),
+        ]),
+      );
+      await expectLater(
+        service.replaceEventsFromImport(
+          eventReplacement(parent, id, [eventSource('source')], revision: 2),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+    });
+    test('event replacement local content conflicts and identical local exports never adopt the baseline', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final old = [eventSource('source')];
+      final id = (await service.importEvents(eventImport(parent, old)))
+          .receipts
+          .single
+          .eventId;
+      final imported = await eventData(id);
+      await service.updateEvent(
+        CalendarEventUpdateRequest(
+          eventId: id,
+          expectedRevision: 1,
+          content: imported.content.copyWith(summary: 'Local'),
+        ),
+      );
+      await expectLater(
+        service.replaceEventsFromImport(
+          eventReplacement(parent, id, old, revision: 2),
+        ),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      final bytes = await service.exportEvents(
+        CalendarEventExportRequest(
+          calendarId: parent,
+          expectedRevision: 1,
+          selection: [
+            CalendarEventExportSelection(eventId: id, expectedRevision: 2),
+          ],
+        ),
+      );
+      final before = await eventData(id), gen = await generation();
+      final result = await service.replaceEventsFromImport(
+        eventReplacement(parent, id, old, revision: 2).copyWith(bytes: bytes),
+      );
+      expect(result.receipts.single.changed, isFalse);
+      expect((await eventData(id)).toJson(), before.toJson());
+      expect((await eventData(id)).importBaseline, imported.importBaseline);
+      expect(await generation(), gen);
+    });
+    test('event replacement baseline final denial and late overflow roll back the whole selection', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final old = [eventSource('one'), eventSource('two')];
+      final ids = (await service.importEvents(eventImport(parent, old)))
+          .receipts
+          .map((r) => r.eventId)
+          .toList();
+      final request = eventReplacement(
+        parent,
+        ids.first,
+        [
+          eventSource('one', extra: ['SUMMARY:Changed']),
+          eventSource('two', extra: ['SUMMARY:Changed']),
+        ],
+        selection: [
+          for (final id in ids)
+            CalendarEventExportSelection(eventId: id, expectedRevision: 1),
+        ],
+      );
+      final before = (await CalendarEventDataRecord.db.find(session))
+          .map((r) => r.toJson())
+          .toList();
+      policy.denyFinal = true;
+      await expectLater(
+        service.replaceEventsFromImport(request),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      policy.denyFinal = false;
+      final data = await eventData(ids.last),
+          baseline = (await eventData(ids.last)).importBaseline;
+      data.importBaseline = null;
+      await CalendarEventDataRecord.db.updateRow(session, data);
+      await expectLater(
+        service.replaceEventsFromImport(request),
+        failure(CalendarFailureCode.dependencyConflict),
+      );
+      data.importBaseline = baseline;
+      await CalendarEventDataRecord.db.updateRow(session, data);
+      final scope = (await CalendarScopeRecord.db.find(session)).single;
+      scope.revision = 9007199254740991;
+      await CalendarScopeRecord.db.updateRow(session, scope);
+      await expectLater(
+        service.replaceEventsFromImport(request),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      expect(
+        (await CalendarEventDataRecord.db.find(session))
+            .map((r) => r.toJson())
+            .toList(),
+        before,
+      );
+      expect(
+        (await CalendarEventRecord.db.find(session)).map((r) => r.revision),
+        everyElement(1),
+      );
+    });
+    test('event replacement snapshots bytes selection and trusted intent and rejects stale exact sets', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final id = (await service.importEvents(
+        eventImport(parent, [eventSource('source')]),
+      )).receipts.single.eventId;
+      await expectLater(
+        service.replaceEventsFromImport(
+          eventReplacement(parent, id, [eventSource('wrong')]),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      await expectLater(
+        service.replaceEventsFromImport(
+          eventReplacement(parent, id, [eventSource('source')], revision: 2),
+        ),
+        failure(CalendarFailureCode.staleRevision),
+      );
+      final request = eventReplacement(parent, id, [
+        eventSource('source', extra: ['SUMMARY:Changed']),
+      ]);
+      var saw = false;
+      policy.onEventReplacement = (r) {
+        if (r.eventReplacement == null) {
+          request.selection.clear();
+          request.bytes.buffer.asUint8List().fillRange(
+            0,
+            request.bytes.buffer.lengthInBytes,
+            0,
+          );
+        } else {
+          saw = true;
+          expect(r.eventReplacement!.members.single.current.eventId, id);
+          expect(
+            r.eventReplacement!.members.single.proposed.content.summary,
+            'Changed',
+          );
+          expect(
+            () => r.eventReplacement!.members.clear(),
+            throwsUnsupportedError,
+          );
+        }
+      };
+      await service.replaceEventsFromImport(request);
+      expect(saw, isTrue);
+    });
+
+    test('event replacement rejects foreign deleted duplicate malformed and incompatible-baseline requests without writes', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final other = (await service.create(createInput('Other')))!.calendarId;
+      final source = [eventSource('source')];
+      final id = (await service.importEvents(eventImport(parent, source)))
+          .receipts
+          .single
+          .eventId;
+      final foreign = (await service.importEvents(eventImport(other, source)))
+          .receipts
+          .single
+          .eventId;
+      final gen = await generation();
+      await expectLater(
+        service.replaceEventsFromImport(
+          eventReplacement(parent, foreign, source),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+      final request = eventReplacement(parent, id, source);
+      await expectLater(
+        service.replaceEventsFromImport(
+          request.copyWith(
+            selection: [...request.selection, ...request.selection],
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      await expectLater(
+        service.replaceEventsFromImport(request.copyWith(selection: [])),
+        failure(CalendarFailureCode.limitExceeded),
+      );
+      await expectLater(
+        service.replaceEventsFromImport(
+          request.copyWith(
+            bytes: ByteData.sublistView(
+              Uint8List.fromList(
+                utf8.encode(eventFile(source).replaceAll('\r\n', '\n')),
+              ),
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      final data = await eventData(id);
+      data.importBaseline = data.importBaseline!.copyWith(
+        profile: 'unsupported',
+      );
+      await CalendarEventDataRecord.db.updateRow(session, data);
+      await expectLater(
+        service.replaceEventsFromImport(request),
+        failure(CalendarFailureCode.unavailable),
+      );
+      expect((await CalendarEventRecord.db.findById(session, id))!.revision, 1);
+      expect(await generation(), gen);
+      await service.deleteEvent(foreign, 1);
+      await expectLater(
+        service.replaceEventsFromImport(
+          eventReplacement(other, foreign, source),
+        ),
+        failure(CalendarFailureCode.accessDenied),
+      );
+    });
+
     test('event import preserves source semantics versions baselines and occupied time atomically', () async {
       final parent = (await service.create(createInput()))!.calendarId;
       final before = await service.get(parent, groups);
@@ -11066,6 +11490,7 @@ final class TestPolicy implements CalendarHostPolicy {
   )?
   onTaskImport;
   void Function(CalendarAuthorizationRequest)? onTaskReplacement;
+  void Function(CalendarAuthorizationRequest)? onEventReplacement;
   String? denyEventImportUid, hideEventImportUid;
   bool hideEventImportBatch = false, hideEventLifecycleReceipt = false;
   final eventImportRequests =
@@ -11207,6 +11632,10 @@ final class TestPolicy implements CalendarHostPolicy {
     CalendarAuthorizationPhase phase,
   ) async {
     for (final request in requests) {
+      if (request.eventReplacement != null ||
+          request.operation == CalendarPermission.replaceEventsFromImport) {
+        onEventReplacement?.call(request);
+      }
       if (request.taskReplacement != null ||
           request.operation == CalendarPermission.replaceTasksFromImport) {
         onTaskReplacement?.call(request);

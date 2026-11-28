@@ -1,0 +1,5 @@
+class: CalendarEventReplaceReceipt
+immutable: true
+fields:
+  receipt: CalendarEventReceipt
+  changed: bool

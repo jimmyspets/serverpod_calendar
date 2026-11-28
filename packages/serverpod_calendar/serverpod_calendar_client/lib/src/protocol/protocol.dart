@@ -81,6 +81,9 @@ import 'calendar_event_page.dart' as _iaayjmj1;
 import 'calendar_event_protocol_version.dart' as _iblfo3t0;
 import 'calendar_event_receipt.dart' as _i500bvo7;
 import 'calendar_event_recurrence.dart' as _iqxs44bf;
+import 'calendar_event_replace_receipt.dart' as _ii1x02jx;
+import 'calendar_event_replace_request.dart' as _ikx66n5r;
+import 'calendar_event_replace_result.dart' as _ipzyec4h;
 import 'calendar_event_rule.dart' as _iovyzq1q;
 import 'calendar_event_single_override.dart' as _iq1kxi25;
 import 'calendar_event_status.dart' as _ivzxk9bc;
@@ -213,6 +216,9 @@ export 'calendar_event_page.dart';
 export 'calendar_event_protocol_version.dart';
 export 'calendar_event_receipt.dart';
 export 'calendar_event_recurrence.dart';
+export 'calendar_event_replace_receipt.dart';
+export 'calendar_event_replace_request.dart';
+export 'calendar_event_replace_result.dart';
 export 'calendar_event_rule.dart';
 export 'calendar_event_single_override.dart';
 export 'calendar_event_status.dart';
@@ -509,6 +515,15 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _iqxs44bf.CalendarEventRecurrence) {
       return _iqxs44bf.CalendarEventRecurrence.fromJson(data) as T;
+    }
+    if (t == _ii1x02jx.CalendarEventReplaceReceipt) {
+      return _ii1x02jx.CalendarEventReplaceReceipt.fromJson(data) as T;
+    }
+    if (t == _ikx66n5r.CalendarEventReplaceRequest) {
+      return _ikx66n5r.CalendarEventReplaceRequest.fromJson(data) as T;
+    }
+    if (t == _ipzyec4h.CalendarEventReplaceResult) {
+      return _ipzyec4h.CalendarEventReplaceResult.fromJson(data) as T;
     }
     if (t == _iovyzq1q.CalendarEventRule) {
       return _iovyzq1q.CalendarEventRule.fromJson(data) as T;
@@ -1076,6 +1091,24 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_iqxs44bf.CalendarEventRecurrence?>()) {
       return (data != null
               ? _iqxs44bf.CalendarEventRecurrence.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ii1x02jx.CalendarEventReplaceReceipt?>()) {
+      return (data != null
+              ? _ii1x02jx.CalendarEventReplaceReceipt.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ikx66n5r.CalendarEventReplaceRequest?>()) {
+      return (data != null
+              ? _ikx66n5r.CalendarEventReplaceRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ipzyec4h.CalendarEventReplaceResult?>()) {
+      return (data != null
+              ? _ipzyec4h.CalendarEventReplaceResult.fromJson(data)
               : null)
           as T;
     }
@@ -1747,6 +1780,12 @@ class Protocol extends _isc.SerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_ii1x02jx.CalendarEventReplaceReceipt>) {
+      return (data as List)
+              .map((e) => deserialize<_ii1x02jx.CalendarEventReplaceReceipt>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_iq7751s4.CalendarEventByDay>) {
       return (data as List)
               .map((e) => deserialize<_iq7751s4.CalendarEventByDay>(e))
@@ -2038,6 +2077,9 @@ class Protocol extends _isc.SerializationManager {
       _iblfo3t0.CalendarEventProtocolVersion => 'CalendarEventProtocolVersion',
       _i500bvo7.CalendarEventReceipt => 'CalendarEventReceipt',
       _iqxs44bf.CalendarEventRecurrence => 'CalendarEventRecurrence',
+      _ii1x02jx.CalendarEventReplaceReceipt => 'CalendarEventReplaceReceipt',
+      _ikx66n5r.CalendarEventReplaceRequest => 'CalendarEventReplaceRequest',
+      _ipzyec4h.CalendarEventReplaceResult => 'CalendarEventReplaceResult',
       _iovyzq1q.CalendarEventRule => 'CalendarEventRule',
       _iq1kxi25.CalendarEventSingleOverride => 'CalendarEventSingleOverride',
       _ivzxk9bc.CalendarEventStatus => 'CalendarEventStatus',
@@ -2256,6 +2298,12 @@ class Protocol extends _isc.SerializationManager {
         return 'CalendarEventReceipt';
       case _iqxs44bf.CalendarEventRecurrence():
         return 'CalendarEventRecurrence';
+      case _ii1x02jx.CalendarEventReplaceReceipt():
+        return 'CalendarEventReplaceReceipt';
+      case _ikx66n5r.CalendarEventReplaceRequest():
+        return 'CalendarEventReplaceRequest';
+      case _ipzyec4h.CalendarEventReplaceResult():
+        return 'CalendarEventReplaceResult';
       case _iovyzq1q.CalendarEventRule():
         return 'CalendarEventRule';
       case _iq1kxi25.CalendarEventSingleOverride():
@@ -2634,6 +2682,15 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'CalendarEventRecurrence') {
       return deserialize<_iqxs44bf.CalendarEventRecurrence>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventReplaceReceipt') {
+      return deserialize<_ii1x02jx.CalendarEventReplaceReceipt>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventReplaceRequest') {
+      return deserialize<_ikx66n5r.CalendarEventReplaceRequest>(data['data']);
+    }
+    if (dataClassName == 'CalendarEventReplaceResult') {
+      return deserialize<_ipzyec4h.CalendarEventReplaceResult>(data['data']);
     }
     if (dataClassName == 'CalendarEventRule') {
       return deserialize<_iovyzq1q.CalendarEventRule>(data['data']);

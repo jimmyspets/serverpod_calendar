@@ -64,6 +64,10 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_event_page.dart'
     as _i8kstbs4;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_receipt.dart'
     as _ieh64e0q;
+import 'package:serverpod_calendar_client/src/protocol/calendar_event_replace_request.dart'
+    as _imamfnav;
+import 'package:serverpod_calendar_client/src/protocol/calendar_event_replace_result.dart'
+    as _ijp3g32l;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_status_request.dart'
     as _ignysrxk;
 import 'package:serverpod_calendar_client/src/protocol/calendar_event_update_request.dart'
@@ -410,6 +414,14 @@ class EndpointCalendarEvent extends _isc.EndpointRef {
 
   @override
   String get name => 'serverpod_calendar.calendarEvent';
+
+  _ida.Future<_ijp3g32l.CalendarEventReplaceResult> replaceFromImport(
+    _imamfnav.CalendarEventReplaceRequest request,
+  ) => caller.callServerEndpoint<_ijp3g32l.CalendarEventReplaceResult>(
+    'serverpod_calendar.calendarEvent',
+    'replaceFromImport',
+    {'request': request},
+  );
 
   _ida.Future<_idt.ByteData> exportEvents(
     _ietvbrxp.CalendarEventExportRequest request,

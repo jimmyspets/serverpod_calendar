@@ -282,4 +282,20 @@ void validateEventImportBaseline(
       jsonEncode(_ordered(decoded)) != value.canonicalValue) {
     throw StateError('Invalid event baseline');
   }
+  final expected = eventImportBaseline(
+    uid,
+    CalendarEventContent.fromJson(decoded['content'] as Map<String, dynamic>),
+    decoded['edits'] == null
+        ? null
+        : CalendarEventTimingOverrides.fromJson(
+            decoded['edits'] as Map<String, dynamic>,
+          ),
+    CalendarEventProtocolState.fromJson(
+      decoded['protocol'] as Map<String, dynamic>,
+    ),
+  );
+  if (expected.canonicalValue != value.canonicalValue ||
+      expected.sourceSequence != value.sourceSequence) {
+    throw StateError('Noncanonical event baseline');
+  }
 }

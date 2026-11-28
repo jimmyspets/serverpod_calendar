@@ -10,6 +10,7 @@ enum CalendarAuthorizationGuarantee { freshCheck, coordinated }
 enum CalendarAuthorizationPhase { read, preliminaryWrite, finalWrite }
 
 enum CalendarPermission {
+  replaceEventsFromImport,
   replaceTasksFromImport,
   exportTasks,
   readTaskSource,
@@ -200,6 +201,7 @@ final class CalendarAuthorizationRequest {
     this.taskExport,
     this.taskReplacement,
     this.eventExport,
+    this.eventReplacement,
     this.availabilityExport,
     this.availabilityReplacement,
     this.occurrenceChange,
@@ -254,6 +256,7 @@ final class CalendarAuthorizationRequest {
   final CalendarTaskExportIntent? taskExport;
   final CalendarTaskReplacementIntent? taskReplacement;
   final CalendarEventExportIntent? eventExport;
+  final CalendarEventReplacementIntent? eventReplacement;
   final CalendarAvailabilityExportIntent? availabilityExport;
   final CalendarAvailabilityReplacementIntent? availabilityReplacement;
   final CalendarEventOccurrenceChange? occurrenceChange;
@@ -361,6 +364,30 @@ final class CalendarEventImportIntent {
   CalendarEventImportIntent(Iterable<CalendarEventImportMember> members)
     : members = List.unmodifiable(members);
   final List<CalendarEventImportMember> members;
+}
+
+/// Actual current/proposed objects, never historical baseline contents.
+final class CalendarEventReplacementMember {
+  const CalendarEventReplacementMember({
+    required this.current,
+    required this.proposed,
+    required this.baselineProfile,
+    required this.baselineSequence,
+    this.changed,
+    this.localChanges,
+  });
+  final CalendarEventPolicySnapshot current;
+  final CalendarEventImportMember proposed;
+  final String? baselineProfile;
+  final int? baselineSequence;
+  final bool? changed, localChanges;
+}
+
+final class CalendarEventReplacementIntent {
+  CalendarEventReplacementIntent(
+    Iterable<CalendarEventReplacementMember> members,
+  ) : members = List.unmodifiable(members);
+  final List<CalendarEventReplacementMember> members;
 }
 
 /// Complete current selection, detached from ORM state and private baselines.

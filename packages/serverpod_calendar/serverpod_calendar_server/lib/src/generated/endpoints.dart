@@ -43,6 +43,8 @@ import 'package:serverpod_calendar_server/src/generated/calendar_event_occurrenc
     as _ixyxs14v;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_occurrence_query.dart'
     as _i7o3kzld;
+import 'package:serverpod_calendar_server/src/generated/calendar_event_replace_request.dart'
+    as _i6eqxu43;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_status_request.dart'
     as _ib916yyf;
 import 'package:serverpod_calendar_server/src/generated/calendar_event_update_request.dart'
@@ -726,6 +728,27 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'calendarEvent',
       endpoint: endpoints['calendarEvent']!,
       methodConnectors: {
+        'replaceFromImport': _is.MethodConnector(
+          name: 'replaceFromImport',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i6eqxu43.CalendarEventReplaceRequest>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['calendarEvent']
+                          as _ibwv0suj.CalendarEventEndpoint)
+                      .replaceFromImport(
+                        session,
+                        params['request'],
+                      ),
+        ),
         'exportEvents': _is.MethodConnector(
           name: 'exportEvents',
           params: {

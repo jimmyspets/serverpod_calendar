@@ -1,0 +1,4 @@
+class: CalendarEventReplaceResult
+immutable: true
+fields:
+  receipts: List<CalendarEventReplaceReceipt>

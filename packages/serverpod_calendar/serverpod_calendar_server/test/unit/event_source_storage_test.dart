@@ -348,6 +348,29 @@ void main() {
       throwsArgumentError,
     );
   });
+  test('event baseline rejects canonical JSON with invalid or unknown typed source fields', () {
+    final proposal = source();
+    final baseline = proposal.importBaseline;
+    validateEventImportBaseline(baseline, proposal.protocolUid);
+    final invalid = jsonDecode(baseline.canonicalValue) as Map<String, dynamic>;
+    invalid['content']['timing']['start']['month'] = 13;
+    expect(
+      () => validateEventImportBaseline(
+        baseline.copyWith(canonicalValue: jsonEncode(invalid)),
+        proposal.protocolUid,
+      ),
+      throwsArgumentError,
+    );
+    final extra = jsonDecode(baseline.canonicalValue) as Map<String, dynamic>;
+    extra['content']['unrecognized'] = true;
+    expect(
+      () => validateEventImportBaseline(
+        baseline.copyWith(canonicalValue: jsonEncode(extra)),
+        proposal.protocolUid,
+      ),
+      throwsStateError,
+    );
+  });
   test('UID digest is only an aid; exact text decides conflict', () {
     expect(eventUidConflicts('A', ['a', 'other']), isFalse);
     expect(eventUidConflicts('A', ['A']), isTrue);
