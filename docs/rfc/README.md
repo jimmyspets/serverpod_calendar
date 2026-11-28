@@ -34,6 +34,7 @@ Do not read an undecided field as rejected forever or a planned row as support f
 | [9073](rfc-9073.md) | Structured event publishing | Scoped structured components/fields, URI metadata and bounded nesting planned; implementation pending |
 | [9074](rfc-9074.md) | Extended alarms | Scoped time-based runtime required; personal UID/ack/snooze baseline planned; proximity deferred |
 | [9253](rfc-9253.md) | Relationships | Scoped links/grouping/ordering/dependency metadata planned; XML references deferred; implementation pending |
+| [9636](rfc-9636.md) | Binary timezone information (TZif) | Referenced by existing bounded timezone generation; runtime uses package-specific TZF, not a general RFC-conforming TZif reader |
 | [9110](rfc-9110.md) | HTTP semantics | Planned feed semantics plus platform integration |
 | [9111](rfc-9111.md) | HTTP caching | Planned private-feed policy plus infrastructure |
 | [4791](rfc-4791.md) | CalDAV | Deferred |

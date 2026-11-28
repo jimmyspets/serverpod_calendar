@@ -2,6 +2,8 @@
 
 Current profile: [ADR 0041](adr/0041-whole-second-1970-2100-profile.md). Keep `timezone` 0.11.2; this project does not use `time_machine2` at runtime or to generate data.
 
+[RFC 9636](https://www.rfc-editor.org/rfc/rfc9636.html) is a tracked reference in the [standards inventory](standards.md) and [TZif coverage matrix](rfc/rfc-9636.md). It specifies the binary TZif format, not the IANA database's rules or release version. Our build uses pinned IANA tzcode/tzdata, reads generated TZif 64-bit transition tables and converts them to the `timezone` package's own TZF runtime format. The build reader does not independently evaluate footer rule strings or implement every TZif version/leap-second feature; no general RFC 9636 reader-conformance claim follows. The 2100 application boundary is our selected profile, not a TZif format limit.
+
 ## Supported meaning and horizon
 
 Ordinary calendar dates are **1970-01-01 inclusive to 2100-01-01 exclusive**. Precision is whole seconds. The final ordinary date is 2099-12-31. The explicit 2100-01-01 midnight boundary exists only for exclusive event/query ends. Named-zone conversion can place these valid local boundaries into UTC in 1969 or 2100; generated calculation data therefore covers **1969-12-30T00:00:00Z to 2100-01-03T00:00:00Z exclusive**. This padding does not extend ordinary storage acceptance.
