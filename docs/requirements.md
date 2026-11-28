@@ -599,6 +599,10 @@ Accepted [ADR 0159](adr/0159-pure-range-cancellation-projection.md) implements a
 
 The scoped implementation is described in [published range controls](published-range-controls.md); local grouped validation passed, with full exact-head hosted checks remaining a separate readiness gate.
 
-## Proposed initial bundled REQUEST adoption
+## Initial bundled REQUEST adoption
 
 [Accepted ADR 0173](adr/0173-initial-bundled-invitation-adoption.md) adds initial complete REQUEST-bundle review and atomic one-event calendar adoption, with an immutable private link-profile flag, read-only receipt/host evidence and independent bundle permissions. Every supported component and source version is retained; exact retries preserve local edits and cannot recreate deleted events. Known-series updates, conversions, bundle replies/cancellations and vector reconciliation remain explicitly guarded. Existing limits and synthetic transport remain; see [the scoped implementation and actual validation](initial-bundled-invitations.md). This is not full scheduling completion.
+
+## Proposed complete bundled REQUEST updates
+
+[Proposed ADR 0174](adr/0174-complete-bundled-invitation-updates.md) groups component-aware known-bundle intake/review and explicit clean-series application, independent authority, existing acceptance-checkpoint reuse, protected version views and synthetic client/Flutter/recovery validation. The maintainer confirmed complete component sets and whole-message rejection of regressions. Concrete tuple/equality/new-component floors, model/API and retry/pruning mechanics remain proposed; no runtime guard is lifted by this documentation. No SQL expansion is proposed; partial merges/removal, roster/lifecycle/replies and VALARM remain separate work.
