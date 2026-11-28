@@ -27,6 +27,7 @@ abstract class CalendarSchedulingView
     this.organizerAddress,
     this.publicationId,
     this.publishedAt,
+    this.method,
     required this.hasLocalChanges,
     required this.deliveries,
   });
@@ -38,6 +39,7 @@ abstract class CalendarSchedulingView
     String? organizerAddress,
     _isc.UuidValue? publicationId,
     DateTime? publishedAt,
+    String? method,
     required bool hasLocalChanges,
     required List<_i63ky642.CalendarSchedulingDeliveryView> deliveries,
   }) = _CalendarSchedulingViewImpl;
@@ -64,6 +66,7 @@ abstract class CalendarSchedulingView
           : _isc.DateTimeJsonExtension.fromJson(
               jsonSerialization['publishedAt'],
             ),
+      method: jsonSerialization['method'] as String?,
       hasLocalChanges: _isc.BoolJsonExtension.fromJson(
         jsonSerialization['hasLocalChanges'],
       ),
@@ -86,6 +89,8 @@ abstract class CalendarSchedulingView
 
   final DateTime? publishedAt;
 
+  final String? method;
+
   final bool hasLocalChanges;
 
   final List<_i63ky642.CalendarSchedulingDeliveryView> deliveries;
@@ -100,6 +105,7 @@ abstract class CalendarSchedulingView
     String? organizerAddress,
     _isc.UuidValue? publicationId,
     DateTime? publishedAt,
+    String? method,
     bool? hasLocalChanges,
     List<_i63ky642.CalendarSchedulingDeliveryView>? deliveries,
   });
@@ -142,6 +148,11 @@ abstract class CalendarSchedulingView
                 ) ||
                 other.publishedAt == publishedAt) &&
             (identical(
+                  other.method,
+                  method,
+                ) ||
+                other.method == method) &&
+            (identical(
                   other.hasLocalChanges,
                   hasLocalChanges,
                 ) ||
@@ -162,6 +173,7 @@ abstract class CalendarSchedulingView
       organizerAddress,
       publicationId,
       publishedAt,
+      method,
       hasLocalChanges,
       const _iss.DeepCollectionEquality().hash(deliveries),
     );
@@ -177,6 +189,7 @@ abstract class CalendarSchedulingView
       if (organizerAddress != null) 'organizerAddress': organizerAddress,
       if (publicationId != null) 'publicationId': publicationId?.toJson(),
       if (publishedAt != null) 'publishedAt': publishedAt?.toJson(),
+      if (method != null) 'method': method,
       'hasLocalChanges': hasLocalChanges,
       'deliveries': deliveries.toJson(valueToJson: (v) => v.toJson()),
     };
@@ -192,6 +205,7 @@ abstract class CalendarSchedulingView
       if (organizerAddress != null) 'organizerAddress': organizerAddress,
       if (publicationId != null) 'publicationId': publicationId?.toJson(),
       if (publishedAt != null) 'publishedAt': publishedAt?.toJson(),
+      if (method != null) 'method': method,
       'hasLocalChanges': hasLocalChanges,
       'deliveries': deliveries.toJson(
         valueToJson: (v) => v.toJsonForProtocol(),
@@ -215,6 +229,7 @@ class _CalendarSchedulingViewImpl extends CalendarSchedulingView {
     String? organizerAddress,
     _isc.UuidValue? publicationId,
     DateTime? publishedAt,
+    String? method,
     required bool hasLocalChanges,
     required List<_i63ky642.CalendarSchedulingDeliveryView> deliveries,
   }) : super._(
@@ -224,6 +239,7 @@ class _CalendarSchedulingViewImpl extends CalendarSchedulingView {
          organizerAddress: organizerAddress,
          publicationId: publicationId,
          publishedAt: publishedAt,
+         method: method,
          hasLocalChanges: hasLocalChanges,
          deliveries: deliveries,
        );
@@ -239,6 +255,7 @@ class _CalendarSchedulingViewImpl extends CalendarSchedulingView {
     Object? organizerAddress = _Undefined,
     Object? publicationId = _Undefined,
     Object? publishedAt = _Undefined,
+    Object? method = _Undefined,
     bool? hasLocalChanges,
     List<_i63ky642.CalendarSchedulingDeliveryView>? deliveries,
   }) {
@@ -253,6 +270,7 @@ class _CalendarSchedulingViewImpl extends CalendarSchedulingView {
           ? publicationId
           : this.publicationId,
       publishedAt: publishedAt is DateTime? ? publishedAt : this.publishedAt,
+      method: method is String? ? method : this.method,
       hasLocalChanges: hasLocalChanges ?? this.hasLocalChanges,
       deliveries:
           deliveries ?? this.deliveries.map((e0) => e0.copyWith()).toList(),

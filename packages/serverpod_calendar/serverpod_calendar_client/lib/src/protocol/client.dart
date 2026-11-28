@@ -110,6 +110,8 @@ import 'package:serverpod_calendar_client/src/protocol/calendar_presentation_upd
     as _iju8myao;
 import 'package:serverpod_calendar_client/src/protocol/calendar_protocol_metadata_update_request.dart'
     as _i3063onq;
+import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_cancel_request.dart'
+    as _i9pzc99x;
 import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_receipt.dart'
     as _ip6y7si3;
 import 'package:serverpod_calendar_client/src/protocol/calendar_scheduling_save_request.dart'
@@ -562,6 +564,14 @@ class EndpointCalendarEvent extends _isc.EndpointRef {
   ) => caller.callServerEndpoint<_ip6y7si3.CalendarSchedulingReceipt>(
     'serverpod_calendar.calendarEvent',
     'saveAndNotify',
+    {'request': request},
+  );
+
+  _ida.Future<_ip6y7si3.CalendarSchedulingReceipt> cancelAndNotify(
+    _i9pzc99x.CalendarSchedulingCancelRequest request,
+  ) => caller.callServerEndpoint<_ip6y7si3.CalendarSchedulingReceipt>(
+    'serverpod_calendar.calendarEvent',
+    'cancelAndNotify',
     {'request': request},
   );
 

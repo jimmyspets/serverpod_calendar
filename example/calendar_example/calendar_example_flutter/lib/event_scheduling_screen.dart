@@ -23,6 +23,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
   late cal.CalendarEventView _event;
   cal.CalendarSchedulingView? _status;
   cal.CalendarSchedulingSaveRequest? _pending;
+  cal.CalendarSchedulingCancelRequest? _pendingCancel;
   bool _busy = true;
   String? _error, _message;
   @override
@@ -62,6 +63,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
         _event = event;
         _status = status;
         _pending = null;
+        _pendingCancel = null;
         _summary.text = event.summary ?? '';
         _description.text = event.description ?? '';
         _location.text = event.location ?? '';
@@ -105,7 +107,9 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
           description: _description.text.isEmpty ? null : _description.text,
           location: _location.text.isEmpty ? null : _location.text,
           timing: _event.timing!,
-          status: _event.status!,
+          status: _event.status == cal.CalendarEventStatus.cancelled
+              ? cal.CalendarEventStatus.confirmed
+              : _event.status!,
           transparency: _event.transparency!,
           recurrence: _event.recurrence,
           periods: _event.periods,
@@ -121,9 +125,43 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
       if (!mounted) return;
       setState(() {
         _pending = null;
+        _pendingCancel = null;
         _message = receipt.unchanged
             ? 'Already published; no new messages queued.'
             : 'Saved and queued for synthetic delivery.';
+      });
+      await _reload();
+    } catch (e) {
+      if (mounted) setState(() => _error = _safe(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _cancel() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+      _message = null;
+    });
+    try {
+      final input = _pendingCancel ??= cal.CalendarSchedulingCancelRequest(
+        eventId: _event.id,
+        expectedRevision: _event.revision,
+        commandId: cal.Uuid().v4obj(),
+      );
+      final receipt = await widget
+          .client
+          .modules
+          .serverpod_calendar
+          .calendarEvent
+          .cancelAndNotify(input);
+      if (!mounted) return;
+      setState(() {
+        _pendingCancel = null;
+        _message = receipt.unchanged
+            ? 'Cancellation already published; no new messages queued.'
+            : 'Cancelled and queued for synthetic delivery.';
       });
       await _reload();
     } catch (e) {
@@ -138,7 +176,8 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
     final eligible =
         _status?.origin == cal.CalendarEventOrigin.native &&
         _event.recurrence == null;
-    final locked = _busy || _pending != null || !eligible;
+    final locked =
+        _busy || _pending != null || _pendingCancel != null || !eligible;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Meeting invitations'),
@@ -160,7 +199,7 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
             'Ordinary event edits remain local. Save and notify publishes the content below with the currently saved timing.',
           ),
           const Text(
-            'The first workflow supports non-recurring native events with fixed recipients. Cancellation and recipient changes are not sent here.',
+            'This workflow supports non-recurring native events with fixed recipients. Cancel and notify uses the last published version and keeps saved local fields. It does not save unsaved form edits; reloading discards those edits.',
           ),
           if (_busy) const LinearProgressIndicator(),
           if (_error != null) Text(_error!, key: const Key('scheduling-error')),
@@ -175,6 +214,11 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
                   : 'Current saved content is published',
               key: const Key('scheduling-status'),
             ),
+            if (_status!.method != null)
+              Text(
+                'Last published action: ${_status!.method}',
+                key: const Key('scheduling-method'),
+              ),
             if (!eligible)
               const Text(
                 'Imported, older unknown-origin or recurring events cannot use this workflow.',
@@ -213,11 +257,29 @@ class _EventSchedulingScreenState extends State<EventSchedulingScreen> {
           ),
           FilledButton(
             key: const Key('scheduling-publish'),
-            onPressed: _busy || !eligible ? null : _publish,
+            onPressed: _busy || !eligible || _pendingCancel != null
+                ? null
+                : _publish,
             child: Text(
-              _pending == null ? 'Save and notify' : 'Retry Save and notify',
+              _pending != null
+                  ? 'Retry Save and notify'
+                  : _event.status == cal.CalendarEventStatus.cancelled
+                  ? 'Reopen and notify'
+                  : 'Save and notify',
             ),
           ),
+          if (_status?.publicationId != null)
+            OutlinedButton(
+              key: const Key('scheduling-cancel'),
+              onPressed: _busy || !eligible || _pending != null
+                  ? null
+                  : _cancel,
+              child: Text(
+                _pendingCancel == null
+                    ? 'Cancel and notify'
+                    : 'Retry Cancel and notify',
+              ),
+            ),
           for (final delivery
               in _status?.deliveries ?? <cal.CalendarSchedulingDeliveryView>[])
             ListTile(

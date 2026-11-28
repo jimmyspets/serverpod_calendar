@@ -24,3 +24,6 @@ Native description/RGB and scoped decoded NAME/DESCRIPTION/COLOR metadata extend
 
 
 ADR 0122's first non-recurring REQUEST workflow, four scheduling tables, origin enum, retention and worker defaults have explicit maintainer approval. The optional scheduling host/transport ports and trusted maintenance entry point are scoped in ../../docs/native-organizer-scheduling.md. Keep immutable publication bytes separate from local edits, reauthorize exact payload/recipients before dispatch and use database leases/fencing. Do not infer native origin from a missing import baseline. Real mail, recurring runtime, cancellation and inbound reconciliation remain separate requirements.
+
+
+ADR 0123's explicit non-recurring cancellation/reopening batch is approved. Keep cancelled native drafts distinct from the outgoing published snapshot, expose both in trusted host context and retain independent cancellation/lifecycle authority. A local reopen sends nothing and does not withdraw an eligible published CANCEL; a newer explicit REQUEST supersedes it. Reuse the existing delivery tables/retention and keep bound deletion/recurrence/source replacement restrictions. See ../../docs/native-organizer-scheduling.md.

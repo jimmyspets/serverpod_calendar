@@ -98,8 +98,42 @@ Future<void> schedulingSmoke(List<Client> clients) async {
   if (!accepted) {
     throw StateError('Independent hosts did not dispatch synthetic intent');
   }
+  final ready = await a.calendarEvent.schedulingStatus(event.eventId);
+  final cancel = cal.CalendarSchedulingCancelRequest(
+    eventId: event.eventId,
+    expectedRevision: ready.eventRevision,
+    commandId: cal.Uuid().v4obj(),
+  );
+  final cancellations = await Future.wait([
+    a.calendarEvent.cancelAndNotify(cancel),
+    b.calendarEvent.cancelAndNotify(cancel),
+  ]);
+  if (cancellations[0].publicationId != cancellations[1].publicationId ||
+      cancellations.where((r) => !r.unchanged).length != 1) {
+    throw StateError('Cross-host cancellation retry queued duplicate intent');
+  }
+  final cancelled = await b.calendarEvent.schedulingStatus(event.eventId);
+  if (cancelled.method != 'CANCEL' ||
+      cancelled.eventRevision != ready.eventRevision + 1 ||
+      !(await a.calendarEvent.getEvent(
+        event.eventId,
+        cal.CalendarEventFieldGroup.values,
+      )).summary!.contains('Unpublished')) {
+    throw StateError('Cancellation lost native drafts or method identity');
+  }
+  await b.calendarEvent.saveAndNotify(
+    command.copyWith(
+      expectedRevision: cancelled.eventRevision,
+      commandId: cal.Uuid().v4obj(),
+      content: content('Reopened explicitly'),
+    ),
+  );
+  if ((await a.calendarEvent.schedulingStatus(event.eventId)).method !=
+      'REQUEST') {
+    throw StateError('Explicit reopening did not publish REQUEST');
+  }
   stdout.writeln(
-    'PASS: two-host explicit organizer publication, idempotency/revision races, local draft isolation and synthetic acceptance.',
+    'PASS: two-host explicit organizer publication, idempotency/revision races, local draft isolation, cancellation/reopening and synthetic acceptance.',
   );
   // Bindings deliberately reject deletion in the first profile. Isolated test
   // storage is reset by the root harness; no public cleanup backdoor is added.

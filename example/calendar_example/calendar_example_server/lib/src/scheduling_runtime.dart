@@ -72,9 +72,12 @@ final class DemoSchedulingHost implements CalendarSchedulingHost {
         context.authority.routes.any(
           (r) => !_synthetic(r.address) || r.routeRef != r.address,
         ) ||
+        !{'REQUEST', 'CANCEL'}.contains(context.intent.method) ||
         context.intent.organizerAddress != context.authority.organizerAddress ||
         context.currentEvent.eventId != context.proposedEvent.eventId ||
-        context.currentEvent.calendarId != context.proposedEvent.calendarId) {
+        context.currentEvent.calendarId != context.proposedEvent.calendarId ||
+        context.currentEvent.eventId != context.outgoingEvent.eventId ||
+        context.currentEvent.calendarId != context.outgoingEvent.calendarId) {
       return CalendarAuthorizationVerdict.deny;
     }
     // Private-user demo grants all event detail/source/publication operations

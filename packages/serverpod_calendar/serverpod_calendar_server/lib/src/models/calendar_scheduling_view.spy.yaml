@@ -7,5 +7,6 @@ fields:
   organizerAddress: String?
   publicationId: UuidValue?
   publishedAt: DateTime?
+  method: String?
   hasLocalChanges: bool
   deliveries: List<CalendarSchedulingDeliveryView>
