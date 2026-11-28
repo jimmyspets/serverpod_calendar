@@ -45,3 +45,8 @@ One aggregate `RecurrenceWorkBudget` covers accepted-state validation, original 
 The helper and result are exported by the existing server library and use generated immutable carriers; no generated source/model/schema/endpoint change is introduced. Existing single/range REQUEST behavior and durable range CANCEL guards remain. Authenticated range application, accepted cancellation layers, source restoration/composition, outgoing messages, ordinary wire mapping, range replies and real mail are separate required work.
 
 Focused tests cover source/version independence, old/equal/maximum sequences, underlying and later versions, unrelated earlier versions, moved exceptions, DST, earlier additions/PERIODs, metadata/identity/profile rejection, work/source/slot bounds and immutable detached results. See [actual validation](scaffold-validation.md) and [focused development commands](development.md). Pure success establishes no durable reconciliation or external-client support.
+
+
+## Proposed first durable range cancellation
+
+[Proposed ADR 0160](adr/0160-first-range-cancellation-acceptance.md) adds explicit first incoming range-CANCEL acceptance using one private layer in existing checkpoint v4 JSON, keeping the ordinary accepted baseline cutoff-free and binding the complete expected native state separately. It proposes separate cancel authority/API, a protected derived view flag, exact latest receipt retries and native cutoff/query/reminder/feed effects. New source applications after acceptance would temporarily block until composition/restoration is designed. No new SQL or retention expansion is proposed. These mechanics are unapproved and unimplemented; current durable range CANCEL guards remain.

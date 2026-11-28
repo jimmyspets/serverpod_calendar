@@ -723,3 +723,12 @@ Native cutoff implementation PR #147 passed full hosted inspect/runtime CI. The 
 - [x] Complete grouped pure/module VM+Chrome and affected database checks before one code commit; all passed as recorded in validation.
 - [ ] Pass full exact-head hosted CI before readiness.
 - [ ] Review durable acceptance layers, exact retries, master composition and source restoration separately. Range CANCEL application and replies remain guarded.
+
+## First durable incoming range cancellation
+
+Pure projection implementation is in PR #149; grouped local checks passed and full hosted runtime CI remains a separate readiness gate. [Proposed ADR 0160](adr/0160-first-range-cancellation-acceptance.md) defines explicit first acceptance with a private cancellation layer in existing checkpoint JSON. Its storage/view/API mechanics and temporary composition guards are not approved or implemented.
+
+- [x] Inspect cutoff-free baselines, v1/v2/v3 target/source/component/receipt bindings, native/host rights, views and invalidation/deletion paths.
+- [ ] Obtain review of v4 binding/expected-native comparison, separate cancel authority/API, protected derived view state, latest-only retries and first-acceptance guards.
+- [ ] Implement the approved batch with generated clients/Flutter, atomic query/reminder/feed effects and actual two-host recovery; finish grouped checks before one code commit.
+- [ ] Design subsequent cancellation replacement/multiple anchors, accepted-mask master composition and explicit source restoration next. Outgoing range CANCEL, wire mapping and replies remain separate requirements.
