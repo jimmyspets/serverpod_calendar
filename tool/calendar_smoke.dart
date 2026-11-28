@@ -1654,6 +1654,20 @@ Future<void> eventMetadataSmoke(List<Client> clients) async {
     'ATTACH;VALUE=URI;FMTTYPE=application/pdf:urn:source:file',
     'ORGANIZER;CN=Inert organizer:mailto:source-organizer@example.invalid',
     'ATTENDEE;PARTSTAT=DECLINED:mailto:source-attendee@example.invalid',
+    'BEGIN:VALARM',
+    'ACTION:DISPLAY',
+    'DESCRIPTION:Private cross-host source alarm',
+    'TRIGGER:-PT5M',
+    'UID:source-alarm',
+    'ACKNOWLEDGED:20261023T100000Z',
+    'END:VALARM',
+    'BEGIN:VALARM',
+    'ACTION:DISPLAY',
+    'DESCRIPTION:Source snooze',
+    'TRIGGER;VALUE=DATE-TIME:20261026T080000Z',
+    'UID:source-snooze',
+    'RELATED-TO;RELTYPE=SNOOZE:source-alarm',
+    'END:VALARM',
   ];
   final source = [
     'BEGIN:VCALENDAR',
@@ -1707,7 +1721,8 @@ Future<void> eventMetadataSmoke(List<Client> clients) async {
       'Cross-host source desk'.allMatches(text).length == 2 &&
           text.contains('CATEGORIES;LANGUAGE=en:Work,Work') &&
           'source-attendee@example.invalid'.allMatches(text).length == 2 &&
-          'urn:source:file'.allMatches(text).length == 2,
+          'urn:source:file'.allMatches(text).length == 2 &&
+          'BEGIN:VALARM'.allMatches(text).length == 4,
       'Cross-host metadata export preserves grouped own and master source',
     );
     check(

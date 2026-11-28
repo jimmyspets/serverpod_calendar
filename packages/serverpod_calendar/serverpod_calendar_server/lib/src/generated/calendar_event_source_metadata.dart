@@ -14,6 +14,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_calendar_server/src/generated/protocol.dart'
     as _ix00hwbf;
 import 'package:serverpod_serialization/serverpod_serialization.dart' as _iss;
+import 'calendar_event_source_alarm.dart' as _i4dai4jt;
 import 'calendar_event_source_attachment.dart' as _i20i9qxn;
 import 'calendar_event_source_category_group.dart' as _iui013s0;
 import 'calendar_event_source_participant.dart' as _iypom7ai;
@@ -33,6 +34,7 @@ abstract class CalendarEventSourceMetadata
     this.attendees,
     this.relationships,
     this.attachments,
+    this.alarms,
   });
 
   const factory CalendarEventSourceMetadata({
@@ -45,6 +47,7 @@ abstract class CalendarEventSourceMetadata
     List<_iypom7ai.CalendarEventSourceParticipant>? attendees,
     List<_iksc4ly9.CalendarEventSourceRelationship>? relationships,
     List<_i20i9qxn.CalendarEventSourceAttachment>? attachments,
+    List<_i4dai4jt.CalendarEventSourceAlarm>? alarms,
   }) = _CalendarEventSourceMetadataImpl;
 
   factory CalendarEventSourceMetadata.fromJson(
@@ -89,6 +92,12 @@ abstract class CalendarEventSourceMetadata
                 .deserialize<List<_i20i9qxn.CalendarEventSourceAttachment>>(
                   jsonSerialization['attachments'],
                 ),
+      alarms: jsonSerialization['alarms'] == null
+          ? null
+          : _ix00hwbf.Protocol()
+                .deserialize<List<_i4dai4jt.CalendarEventSourceAlarm>>(
+                  jsonSerialization['alarms'],
+                ),
     );
   }
 
@@ -110,6 +119,8 @@ abstract class CalendarEventSourceMetadata
 
   final List<_i20i9qxn.CalendarEventSourceAttachment>? attachments;
 
+  final List<_i4dai4jt.CalendarEventSourceAlarm>? alarms;
+
   /// Returns a shallow copy of this [CalendarEventSourceMetadata]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -123,6 +134,7 @@ abstract class CalendarEventSourceMetadata
     List<_iypom7ai.CalendarEventSourceParticipant>? attendees,
     List<_iksc4ly9.CalendarEventSourceRelationship>? relationships,
     List<_i20i9qxn.CalendarEventSourceAttachment>? attachments,
+    List<_i4dai4jt.CalendarEventSourceAlarm>? alarms,
   });
   @override
   bool operator ==(Object other) {
@@ -170,6 +182,10 @@ abstract class CalendarEventSourceMetadata
             const _iss.DeepCollectionEquality().equals(
               other.attachments,
               attachments,
+            ) &&
+            const _iss.DeepCollectionEquality().equals(
+              other.alarms,
+              alarms,
             );
   }
 
@@ -186,6 +202,7 @@ abstract class CalendarEventSourceMetadata
       const _iss.DeepCollectionEquality().hash(attendees),
       const _iss.DeepCollectionEquality().hash(relationships),
       const _iss.DeepCollectionEquality().hash(attachments),
+      const _iss.DeepCollectionEquality().hash(alarms),
     );
   }
 
@@ -205,6 +222,8 @@ abstract class CalendarEventSourceMetadata
         'relationships': relationships?.toJson(valueToJson: (v) => v.toJson()),
       if (attachments != null)
         'attachments': attachments?.toJson(valueToJson: (v) => v.toJson()),
+      if (alarms != null)
+        'alarms': alarms?.toJson(valueToJson: (v) => v.toJson()),
     };
   }
 
@@ -232,6 +251,7 @@ class _CalendarEventSourceMetadataImpl extends CalendarEventSourceMetadata {
     List<_iypom7ai.CalendarEventSourceParticipant>? attendees,
     List<_iksc4ly9.CalendarEventSourceRelationship>? relationships,
     List<_i20i9qxn.CalendarEventSourceAttachment>? attachments,
+    List<_i4dai4jt.CalendarEventSourceAlarm>? alarms,
   }) : super._(
          url: url,
          classification: classification,
@@ -242,6 +262,7 @@ class _CalendarEventSourceMetadataImpl extends CalendarEventSourceMetadata {
          attendees: attendees,
          relationships: relationships,
          attachments: attachments,
+         alarms: alarms,
        );
 
   /// Returns a shallow copy of this [CalendarEventSourceMetadata]
@@ -258,6 +279,7 @@ class _CalendarEventSourceMetadataImpl extends CalendarEventSourceMetadata {
     Object? attendees = _Undefined,
     Object? relationships = _Undefined,
     Object? attachments = _Undefined,
+    Object? alarms = _Undefined,
   }) {
     return CalendarEventSourceMetadata(
       url: url is String? ? url : this.url,
@@ -282,6 +304,9 @@ class _CalendarEventSourceMetadataImpl extends CalendarEventSourceMetadata {
       attachments: attachments is List<_i20i9qxn.CalendarEventSourceAttachment>?
           ? attachments
           : this.attachments?.map((e0) => e0.copyWith()).toList(),
+      alarms: alarms is List<_i4dai4jt.CalendarEventSourceAlarm>?
+          ? alarms
+          : this.alarms?.map((e0) => e0.copyWith()).toList(),
     );
   }
 }

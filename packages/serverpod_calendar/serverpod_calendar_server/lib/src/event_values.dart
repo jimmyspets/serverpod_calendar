@@ -6,6 +6,7 @@ import 'generated/protocol.dart';
 part 'event_override_values.dart';
 part 'event_occurrence_content_values.dart';
 part 'event_source_metadata_values.dart';
+part 'event_source_alarm_values.dart';
 
 /// Native DTO conversion only; temporal rules remain in the independent core.
 (DateEventSpan?, TimedEventSpan?) validateEventTiming(CalendarEventTiming v) {

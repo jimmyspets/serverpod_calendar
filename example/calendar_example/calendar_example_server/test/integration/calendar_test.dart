@@ -4627,6 +4627,22 @@ void main() {
     String exported(ByteData bytes) => utf8.decode(
       bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
     );
+    const richEventSourceAlarms = [
+      'BEGIN:VALARM',
+      'ACTION:DISPLAY',
+      'DESCRIPTION:SOURCE-ALARM-DESCRIPTION',
+      'TRIGGER:-PT5M',
+      'UID:event-source-alarm',
+      'ACKNOWLEDGED:20260320T120000Z',
+      'END:VALARM',
+      'BEGIN:VALARM',
+      'ACTION:DISPLAY',
+      'DESCRIPTION:Source snooze',
+      'TRIGGER;VALUE=DATE-TIME:20260329T080000Z',
+      'UID:event-source-snooze',
+      'RELATED-TO;RELTYPE=SNOOZE:event-source-alarm',
+      'END:VALARM',
+    ];
     const richEventMetadata = [
       'RELATED-TO:SOURCE-RELATED',
       'ATTACH;VALUE=URI;FMTTYPE=application/pdf:urn:source:file',
@@ -4638,10 +4654,12 @@ void main() {
       'CATEGORIES;LANGUAGE=sv:Arbete',
       'COMMENT;LANGUAGE=sv:Source note',
       'CONTACT;ALTREP="cid:desk@example.invalid":SOURCE-DESK',
+      ...richEventSourceAlarms,
     ];
     List<String> richEvent({
       String contact = 'SOURCE-DESK',
       String target = 'SOURCE-RELATED',
+      String alarmDescription = 'SOURCE-ALARM-DESCRIPTION',
       bool own = true,
     }) => [
       eventSource(
@@ -4651,7 +4669,8 @@ void main() {
           ...richEventMetadata.map(
             (v) => v
                 .replaceFirst('SOURCE-DESK', contact)
-                .replaceFirst('SOURCE-RELATED', target),
+                .replaceFirst('SOURCE-RELATED', target)
+                .replaceFirst('SOURCE-ALARM-DESCRIPTION', alarmDescription),
           ),
         ],
       ),
@@ -4666,7 +4685,8 @@ void main() {
             ...richEventMetadata.map(
               (v) => v
                   .replaceFirst('SOURCE-DESK', contact)
-                  .replaceFirst('SOURCE-RELATED', target),
+                  .replaceFirst('SOURCE-RELATED', target)
+                  .replaceFirst('SOURCE-ALARM-DESCRIPTION', alarmDescription),
             ),
           ],
         ),
@@ -5034,6 +5054,163 @@ void main() {
         expect(await generation(), gen);
       },
     );
+    test('event source alarms persist privately and source replacements remain unarmed no-ops on retry', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final receipt = (await service.importEvents(
+        eventImport(parent, richEvent()),
+      )).receipts.single;
+      final row = await eventData(receipt.eventId);
+      expect(
+        row.protocolState!.sourceMetadata!.alarms!.first.uid,
+        'event-source-alarm',
+      );
+      expect(
+        row
+            .timingOverrides!
+            .singles
+            .single
+            .sourceMetadata!
+            .alarms!
+            .last
+            .snoozeTargetUid,
+        'event-source-alarm',
+      );
+      final view = await service.getEvent(receipt.eventId, eventGroups);
+      expect(
+        jsonEncode(view.toJsonForProtocol()),
+        isNot(contains('SOURCE-ALARM-DESCRIPTION')),
+      );
+      final file = await service.exportEvents(eventExport([receipt]));
+      final source = parseIcalendarEventCalendar(utf8.encode(exported(file)))
+          .series
+          .single;
+      expect(source.master.alarms.length, 2);
+      expect(source.overrides.single.alarms.last.isSnooze, isTrue);
+      final changed = await service.replaceEventsFromImport(
+        eventReplacement(
+          parent,
+          receipt.eventId,
+          richEvent(alarmDescription: 'Changed source alarm'),
+        ),
+      );
+      expect(changed.receipts.single.changed, isTrue);
+      final before = await eventData(receipt.eventId), gen = await generation();
+      expect(
+        (await service.replaceEventsFromImport(
+          eventReplacement(
+            parent,
+            receipt.eventId,
+            richEvent(alarmDescription: 'Changed source alarm'),
+            revision: 2,
+          ),
+        )).receipts.single.changed,
+        isFalse,
+      );
+      expect((await eventData(receipt.eventId)).toJson(), before.toJson());
+      expect(await generation(), gen);
+    });
+    test('event source END alarm anchors reject incompatible native master single and future timing atomically', () async {
+      final parent = (await service.create(createInput()))!.calendarId;
+      final id = (await service.importEvents(
+        eventImport(parent, [
+          eventSource(
+            'end-alarm',
+            extra: [
+              'DURATION:PT1H',
+              'RRULE:FREQ=DAILY;COUNT=3',
+              'BEGIN:VALARM',
+              'ACTION:DISPLAY',
+              'DESCRIPTION:END source',
+              'TRIGGER;RELATED=END:-PT5M',
+              'END:VALARM',
+            ],
+          ),
+        ]),
+      )).receipts.single.eventId;
+      final before = await eventData(id), gen = await generation();
+      await expectLater(
+        service.updateEvent(
+          CalendarEventUpdateRequest(
+            eventId: id,
+            expectedRevision: 1,
+            content: before.content.copyWith(
+              timing: before.content.timing.copyWith(duration: null),
+            ),
+          ),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      for (final action in [
+        CalendarEventOccurrenceAction.replaceSingleTiming,
+        CalendarEventOccurrenceAction.replaceFutureTiming,
+      ]) {
+        await expectLater(
+          service.changeOccurrence(
+            CalendarEventOccurrenceChange(
+              eventId: id,
+              expectedRevision: 1,
+              originalStart: richOriginal(),
+              action: action,
+              replacement: richOriginal(),
+            ),
+          ),
+          failure(CalendarFailureCode.validation),
+        );
+      }
+      expect((await eventData(id)).toJson(), before.toJson());
+      expect(await generation(), gen);
+      await service.changeOccurrence(
+        CalendarEventOccurrenceChange(
+          eventId: id,
+          expectedRevision: 1,
+          originalStart: richOriginal(),
+          action: CalendarEventOccurrenceAction.replaceSingleTiming,
+          replacement: richOriginal().copyWith(
+            duration: CalendarEventDuration(hours: 2),
+          ),
+        ),
+      );
+      expect(
+        (await eventData(id))
+            .protocolState!
+            .sourceMetadata!
+            .alarms!
+            .single
+            .related,
+        'END',
+      );
+    });
+    test('event source alarms reject late unsupported actions without partial imports', () async {
+      final parent = (await service.create(createInput()))!.calendarId,
+          gen = await generation();
+      await expectLater(
+        service.importEvents(
+          eventImport(parent, [
+            eventSource('alarm-good', extra: richEventMetadata),
+            eventSource(
+              'alarm-bad',
+              extra: [
+                'BEGIN:VALARM',
+                'ACTION:AUDIO',
+                'DESCRIPTION:Unsupported',
+                'TRIGGER:-PT5M',
+                'END:VALARM',
+              ],
+            ),
+          ]),
+        ),
+        failure(CalendarFailureCode.validation),
+      );
+      expect(
+        (await service.listEvents(
+          parent,
+          pageSize: 20,
+          fieldGroups: eventGroups,
+        )).events,
+        isEmpty,
+      );
+      expect(await generation(), gen);
+    });
     test('event source metadata export rechecks independent source authority after serialization', () async {
       final parent = (await service.create(createInput()))!.calendarId;
       final e = (await service.importEvents(eventImport(parent, richEvent())))

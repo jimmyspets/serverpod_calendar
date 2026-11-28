@@ -204,7 +204,7 @@ void main() {
       rejects(IcalendarComponentError.unsupportedParameter),
     );
   });
-  test('unknown roots, mixed components and alarms fail the whole source', () {
+  test('unknown roots, mixed components and unsupported children fail the whole source', () {
     expect(
       () => load(
         file()
@@ -221,7 +221,7 @@ void main() {
       () => load(
         file(
           events: [
-            event(extra: ['BEGIN:VALARM', 'ACTION:DISPLAY', 'END:VALARM']),
+            event(extra: ['BEGIN:VUNKNOWN', 'ACTION:DISPLAY', 'END:VUNKNOWN']),
           ],
         ),
       ),

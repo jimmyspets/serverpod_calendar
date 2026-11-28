@@ -3,7 +3,13 @@ part of 'event_values.dart';
 const eventMaxMetadataCodePoints = 65536;
 
 final class EventMetadataBudget {
-  int used = 0;
+  int used = 0, alarms = 0;
+  void alarm() {
+    if (++alarms > const IcalendarComponentLimits().maxCalendarAlarms) {
+      throw const RecurrenceLimitException('eventSourceAlarms');
+    }
+  }
+
   void charge(String? value) {
     used += value?.runes.length ?? 0;
     if (used > eventMaxMetadataCodePoints) {
@@ -120,7 +126,26 @@ CalendarEventSourceMetadata? validateEventSourceMetadata(
     budget.charge(a.uri);
     budget.charge(a.mediaType);
   }
+  if ((value.alarms?.length ?? 0) >
+      const IcalendarComponentLimits().maxAlarmsPerEvent) {
+    throw const RecurrenceLimitException('eventComponentAlarms');
+  }
+  final alarms = decodeIcalendarEventDisplayAlarms([
+    for (final a in value.alarms ?? <CalendarEventSourceAlarm>[])
+      eventAlarmSyntax(a),
+  ]);
+  for (final a in alarms) {
+    budget.alarm();
+    budget.charge(a.description.value);
+    budget.charge(a.description.language);
+    budget.charge(a.description.alternativeUri);
+    budget.charge(a.uid);
+    budget.charge(a.snoozeTargetUid);
+  }
   final result = value.copyWith(
+    alarms: alarms.isEmpty
+        ? null
+        : List.unmodifiable(alarms.map(eventSourceAlarm)),
     relationships: references.relationships.isEmpty
         ? null
         : List.unmodifiable(
@@ -162,7 +187,8 @@ CalendarEventSourceMetadata? validateEventSourceMetadata(
           result.organizer == null &&
           result.attendees == null &&
           result.relationships == null &&
-          result.attachments == null
+          result.attachments == null &&
+          result.alarms == null
       ? null
       : result;
 }
@@ -216,7 +242,33 @@ void validateEventMetadataInheritance(
   final attendees = own.attendees ?? <CalendarEventSourceParticipant>[];
   final masterAttendees =
       master?.attendees ?? <CalendarEventSourceParticipant>[];
-  if (!sameReferences<CalendarEventSourceRelationship>(
+  bool sameAlarms(
+    List<CalendarEventSourceAlarm>? a,
+    List<CalendarEventSourceAlarm>? b,
+  ) {
+    if (a == null || a.isEmpty) return true;
+    if (b == null || a.length != b.length) return false;
+    String? related(CalendarEventSourceAlarm v) =>
+        v.relativeDuration == null ? null : v.related ?? 'START';
+    for (var i = 0; i < a.length; i++) {
+      final x = a[i], y = b[i];
+      if (x.description != y.description ||
+          x.relativeDuration != y.relativeDuration ||
+          x.absoluteUtc != y.absoluteUtc ||
+          related(x) != related(y) ||
+          x.uid != y.uid ||
+          x.acknowledged != y.acknowledged ||
+          x.repeat != y.repeat ||
+          x.repeatInterval != y.repeatInterval ||
+          x.snoozeTargetUid != y.snoozeTargetUid) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  if (!sameAlarms(own.alarms, master?.alarms) ||
+      !sameReferences<CalendarEventSourceRelationship>(
         own.relationships,
         master?.relationships,
         (a, b) =>

@@ -1129,6 +1129,8 @@ void main() {
         .data!;
     expect(exportedEvent, contains('UID:example-event@example.invalid'));
     expect(exportedEvent, contains('CLASS:PRIVATE'));
+    expect(exportedEvent, contains('Unarmed source reminder'));
+    expect(exportedEvent, contains('RELTYPE=SNOOZE:source-alarm'));
     expect(exportedEvent, contains('urn:source:file'));
     expect(exportedEvent, contains('unresolved-source@example.invalid'));
     expect(exportedEvent, contains('source-attendee@example.invalid'));

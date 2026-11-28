@@ -174,3 +174,8 @@ ADR 0101 uses `updateTask` for `changeOccurrenceTiming`, independently of progre
 ### Inert event source references — ADR 0109
 
 [The bounded source-reference profile](event-source-references.md) preserves unresolved RELATED-TO UIDs and URI-only ATTACH values through storage, native edits and authenticated import/export/replacement. Existing source-read authority protects disclosure; no native graph, target/file access, fetching, mail copying or scheduling follows. Extended relationships and native editors remain separate. Nullable source JSON adds no table columns/migration and preserves prior v2 snapshots; a narrow decoder correction handles omitted empty participant parameter maps without changing canonical bytes.
+
+
+## Implemented event source alarm disclosure
+
+Under [ADR 0110](adr/0110-unarmed-event-source-alarms.md), the existing independent `readEventSource` gate now includes retained unarmed DISPLAY alarm descriptions, triggers, repeats, UID/ACKNOWLEDGED and sibling snooze claims. Export/replacement require this gate and existing complete-detail/import/replacement authority, including final/no-op checks. Ordinary event detail groups do not disclose source alarms. No native alarm recipient, create/action permission or delivery is inferred; those operations remain separate design work. See [the bounded profile](event-source-alarms.md).

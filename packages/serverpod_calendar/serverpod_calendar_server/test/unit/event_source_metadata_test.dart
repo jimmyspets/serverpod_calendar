@@ -17,6 +17,24 @@ import 'event_source_storage_test.dart' as f;
 import 'event_overrides_test.dart' as g;
 import 'event_wire_output_test.dart' show snapshot;
 
+const sourceAlarms = [
+  'BEGIN:VALARM',
+  'ACTION:DISPLAY',
+  'DESCRIPTION:Private source reminder',
+  'TRIGGER:-PT5M',
+  'UID:source-alarm',
+  'ACKNOWLEDGED:20261020T120000Z',
+  'REPEAT:2',
+  'DURATION:PT5M',
+  'END:VALARM',
+  'BEGIN:VALARM',
+  'ACTION:DISPLAY',
+  'DESCRIPTION:Source snooze',
+  'TRIGGER;VALUE=DATE-TIME:20261023T120000Z',
+  'UID:source-snooze',
+  'RELATED-TO;RELTYPE=SNOOZE:source-alarm',
+  'END:VALARM',
+];
 const metadata = [
   'RELATED-TO:not-a-uuid@example.invalid',
   'ATTACH;VALUE=URI;FMTTYPE=application/pdf:urn:source:file',
@@ -27,6 +45,7 @@ const metadata = [
   'CATEGORIES;LANGUAGE=en:Work,Work',
   'COMMENT;LANGUAGE=sv:Note',
   'CONTACT;ALTREP="cid:desk@example.invalid":Desk',
+  ...sourceAlarms,
 ];
 List<String> component(List<String> extra) => [
   'BEGIN:VEVENT',

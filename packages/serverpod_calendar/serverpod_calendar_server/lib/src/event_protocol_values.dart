@@ -106,6 +106,7 @@ CalendarEventProtocolState validateEventProtocolState(
       sourceMetadata?.organizer == null) {
     throw ArgumentError('Event attendees require a source organizer');
   }
+  validateEventAlarmAnchors(content, edits, sourceMetadata);
   final components = _components(edits), seen = <String>{};
   if (components.length != value.overrides.length) {
     throw ArgumentError('Missing component checkpoint');

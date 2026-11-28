@@ -126,3 +126,7 @@ Read-only [event source metadata](docs/event-source-metadata.md) is implemented 
 [Event source participants](docs/event-source-participants.md) now preserve bounded ORGANIZER/ATTENDEE claims through interchange and storage, without host identity mapping, authority or invitations. Native participant editing and scheduling remain separate.
 
 [Event source relationships and URI attachments](docs/event-source-references.md) now round-trip as inert read-only data. They create no native links, fetch no files and grant no target access. Native graph/file editors and extended relationships remain separate.
+
+## Unarmed event source alarms, 2026-10-24
+
+[ADR 0110](docs/adr/0110-unarmed-event-source-alarms.md) now extends the supported source profile with [unarmed VEVENT DISPLAY alarms and bounded sibling snoozes](docs/event-source-alarms.md). Nullable immutable server-only alarm/duration DTOs use existing metadata JSON, without table changes or a migration. Existing event-source-v2 baselines remain compatible. Separate `readEventSource` authority protects export/replacement and final/no-op checks; ordinary projections hide this data. Native edits preserve definitions and reject incompatible explicit-END anchor changes atomically. Source UID/ACKNOWLEDGED/SNOOZE are unverified data, never recipients, authority or native actions. This supersedes earlier event-alarm rejection/pending wording only for this source-preservation slice. Native personal definitions/editors, adoption, planning, delivery, feeds and client interoperability remain separate requirements.

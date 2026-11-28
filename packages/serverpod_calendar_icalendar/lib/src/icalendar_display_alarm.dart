@@ -40,17 +40,23 @@ final class IcalendarDisplayAlarm {
 }
 
 List<IcalendarDisplayAlarm> _displayAlarms(
-  IcalendarSyntaxComponent task,
-  ComponentBudget budget,
-) {
+  IcalendarSyntaxComponent component,
+  ComponentBudget budget, {
+  bool forEvent = false,
+}) {
+  final chargeMetadata = forEvent ? budget.eventMetadata : budget.taskMetadata;
   final result = <IcalendarDisplayAlarm>[];
   final uids = <String>{};
-  for (final source in task.entries.whereType<IcalendarSyntaxComponent>()) {
+  for (final source
+      in component.entries.whereType<IcalendarSyntaxComponent>()) {
     if (source.canonicalName != 'VALARM' ||
         source.entries.any((e) => e is IcalendarSyntaxComponent)) {
       componentFail(IcalendarComponentError.unsupportedComponent);
     }
-    if (result.length >= budget.limits.maxAlarmsPerTask) {
+    if (result.length >=
+        (forEvent
+            ? budget.limits.maxAlarmsPerEvent
+            : budget.limits.maxAlarmsPerTask)) {
       componentFail(IcalendarComponentError.limitExceeded);
     }
     budget.alarm();
@@ -141,7 +147,7 @@ List<IcalendarDisplayAlarm> _displayAlarms(
         componentFail(IcalendarComponentError.invalidValue);
       }
     }
-    budget.taskMetadata(
+    chargeMetadata(
       description.value.runes.length +
           (description.language?.runes.length ?? 0) +
           (description.alternativeUri?.runes.length ?? 0) +
@@ -233,5 +239,29 @@ void _matchingDisplayAlarms(
         a.description.alternativeUri != b.description.alternativeUri) {
       componentFail(IcalendarComponentError.unsupportedProperty);
     }
+  }
+}
+
+/// Decode unarmed event alarm definitions only; event anchors validate separately.
+List<IcalendarDisplayAlarm> decodeIcalendarEventDisplayAlarms(
+  List<IcalendarSyntaxComponent> source,
+) => componentGuard(
+  () => _displayAlarms(
+    IcalendarSyntaxComponent('VEVENT', source),
+    ComponentBudget(const IcalendarComponentLimits()),
+    forEvent: true,
+  ),
+);
+
+void _eventAlarmAnchors(
+  IcalendarEvent event,
+  List<IcalendarDisplayAlarm> alarms,
+) {
+  if (alarms.any((a) => a.trigger.effectiveRelated == 'END') &&
+      event.dateSpan?.end == null &&
+      event.dateSpan?.duration == null &&
+      event.timedSpan?.end == null &&
+      event.timedSpan?.duration == null) {
+    componentFail(IcalendarComponentError.missing);
   }
 }

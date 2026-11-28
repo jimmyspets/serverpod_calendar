@@ -45,6 +45,7 @@ final class IcalendarEvent {
     required this.metadata,
     required this.participants,
     required this.references,
+    required this.alarms,
     this.created,
     this.lastModified,
     this.sequence,
@@ -61,6 +62,7 @@ final class IcalendarEvent {
   final IcalendarEventMetadata metadata;
   final IcalendarEventParticipants participants;
   final IcalendarEventReferences references;
+  final List<IcalendarDisplayAlarm> alarms;
   final IcalendarSyntaxComponent source;
   final String uid;
   final DateTime stamp;
@@ -116,7 +118,7 @@ IcalendarEventCalendar parseIcalendarEventCalendar(
 /// Validates a complete supported source before returning any semantic results.
 ///
 /// Unsupported properties/parameters/components fail, including METHOD,
-/// future content/cancellation, alarms and unprofiled metadata.
+/// future content/cancellation, unsupported alarm actions and unprofiled metadata.
 IcalendarEventCalendar validateIcalendarEventCalendar(
   IcalendarSyntaxDocument source, {
   IcalendarSyntaxLimits syntaxLimits = const IcalendarSyntaxLimits(),
@@ -173,7 +175,7 @@ IcalendarEventCalendar validateIcalendarEventCalendar(
     final masters = <String, IcalendarEvent>{};
     final overrides = <String, List<IcalendarEvent>>{};
     for (final raw in rawEvents) {
-      final event = _event(raw, zones, budget);
+      final event = _event(raw, zones, budget, allowAlarms: true);
       if (event.isOverride) {
         final list = overrides.putIfAbsent(event.uid, () => []);
         if (list.length >= limits.maxOverridesPerEvent) {
@@ -234,9 +236,11 @@ IcalendarSyntaxComponent _outputComponent(IcalendarSyntaxComponent c) =>
 IcalendarEvent _event(
   IcalendarSyntaxComponent source,
   Map<String, IcalendarValidatedTimeZone> zones,
-  ComponentBudget budget,
-) {
-  if (source.entries.any((e) => e is IcalendarSyntaxComponent)) {
+  ComponentBudget budget, {
+  bool allowAlarms = false,
+}) {
+  if (!allowAlarms &&
+      source.entries.any((e) => e is IcalendarSyntaxComponent)) {
     componentFail(IcalendarComponentError.unsupportedComponent);
   }
   final p = componentProperties(
@@ -368,7 +372,7 @@ IcalendarEvent _event(
     _ => componentFail(IcalendarComponentError.invalidValue),
   };
   final sequence = _componentInteger(p['SEQUENCE']?.single);
-  return IcalendarEvent._(
+  final event = IcalendarEvent._(
     source: source,
     uid: uid,
     stamp: stamp,
@@ -390,6 +394,9 @@ IcalendarEvent _event(
     sequence: sequence,
     metadata: _eventMetadata(source, budget),
     references: _eventReferences(source, budget),
+    alarms: allowAlarms
+        ? _displayAlarms(source, budget, forEvent: true)
+        : const [],
     participants: _eventParticipants(
       source,
       budget,
@@ -401,6 +408,8 @@ IcalendarEvent _event(
     status: status,
     transparency: transparency,
   );
+  if (!event.isOverride) _eventAlarmAnchors(event, event.alarms);
+  return event;
 }
 
 Object _temporal(
