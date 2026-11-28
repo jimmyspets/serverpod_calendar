@@ -1016,3 +1016,12 @@ Accepted [ADR 0182](adr/0182-native-event-information-publication.md) authorizes
 - [x] Obtain explicit approval for the complete ADR 0182 model/API/purpose/lifecycle contract.
 - [x] Implement and locally validate the complete ADR 0182 publication/lifecycle group, generated migration, two-host/worker/Flutter checks and broad batch regressions; retain one feature commit.
 - [ ] Inspect full exact-head hosted inspection/runtime before ADR 0182 readiness; retain incoming/component PUBLISH and real-mail guards.
+
+
+## Proposed incoming event publication workflow
+
+[Proposed ADR 0183](adr/0183-incoming-event-publication-workflow.md) groups one-master PUBLISH/private review, explicit Add/update, whole cancellation/reopening and synthetic MIME/Flutter/two-host validation. The maintainer confirmed review first, explicit Add/Apply and clean-baseline conflict protection; receipt sends no reply or automatic calendar mutation. The proposed four private tables, one nullable cursor state, source/link/version/retry/retention limits and dedicated host/API mechanics await explicit agreement. No schema, endpoint or incoming PUBLISH runtime is implemented by this proposal. Existing invitation and outgoing-publication purpose guards remain.
+
+- [x] Confirm private review, explicit Add/Apply and clean-series conflict protection for incoming PUBLISH.
+- [ ] Review ADR 0183’s complete grouped storage/API/purpose/version/retention mechanics before implementation.
+- [ ] After explicit agreement, implement the entire master-publication consumption/lifecycle group and validate once; retain remaining occurrence/method/real-transport release gates.
