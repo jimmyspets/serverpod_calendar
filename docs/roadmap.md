@@ -731,7 +731,7 @@ Pure projection implementation is in PR #149; grouped local and full exact-head 
 - [x] Inspect cutoff-free baselines, v1/v2/v3 target/source/component/receipt bindings, native/host rights, views and invalidation/deletion paths.
 - [x] Obtain review of v4 binding/expected-native comparison, separate cancel authority/API, protected derived view state, latest-only retries and first-acceptance guards.
 - [x] Implement the approved batch with generated clients/Flutter, atomic query/reminder/feed effects and actual two-host recovery; grouped checks passed before the single code commit.
-- [ ] Pass full repository CI for this implementation head before readiness.
+- [x] Pass full repository CI for this implementation head before readiness (PR #151, run 41446477368).
 - [ ] Design subsequent cancellation replacement/multiple anchors, accepted-mask master composition and explicit source restoration next. Outgoing range CANCEL, wire mapping and replies remain separate requirements.
 
 The maintainer confirmed the next master-composition policy: preserve the accepted cutoff and reject updates that remove its original anchor. A higher master SEQUENCE alone must not reopen the range. Concrete storage/version/API mechanics remain subject to separate ADR review.
@@ -739,9 +739,10 @@ The maintainer confirmed the next master-composition policy: preserve the accept
 
 ## Master updates preserving accepted range cancellation
 
-The maintainer confirmed preserve-cutoff/reject-orphan behavior. [Proposed ADR 0161](adr/0161-master-updates-with-accepted-range-cancellation.md) defines a bounded master REQUEST composition batch after PR #151. Historical cancellation validation uses its frozen original basis; current composition has its own verified binding. This avoids incorrectly comparing an already accepted cancellation with a later master version. Concrete JSON/API/authority mechanics remain unapproved and unimplemented.
+The maintainer confirmed preserve-cutoff/reject-orphan behavior. [Accepted ADR 0161](adr/0161-master-updates-with-accepted-range-cancellation.md) defines a bounded master REQUEST composition batch after PR #151. Historical cancellation validation uses its frozen original basis; current composition has its own verified binding. This avoids incorrectly comparing an already accepted cancellation with a later master version. Concrete JSON/API/authority mechanics were explicitly approved; scoped implementation and validation are recorded separately.
 
 - [x] Confirm preservation policy and inspect v4 source/basis/native/receipt and master-composition boundaries.
-- [ ] Obtain explicit review of v5 frozen/current bindings, retained content, independent composition authority, stable retries and protected master-view flag.
-- [ ] Implement/test the approved batch with existing byte/work limits, two-host recovery and Flutter; run grouped checks before one code commit and full CI before readiness.
+- [x] Obtain explicit review of v5 frozen/current bindings, retained content, independent composition authority, stable retries and protected master-view flag.
+- [x] Implement/test the approved batch with existing byte/work limits, two-host recovery and Flutter; grouped checks and final integrity regressions passed before the single code commit.
+- [ ] Pass full implementation-head repository CI before readiness.
 - [ ] Review source restoration, cancellation replacement/whole-series lifecycle and remaining range scheduling separately.

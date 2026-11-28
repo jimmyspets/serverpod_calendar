@@ -48,11 +48,13 @@ abstract class CalendarInvitationApplicationView
     this.latestResult,
     bool? occurrenceCompositionBlocked,
     int? occurrenceRevision,
+    bool? hasAcceptedRangeCancellation,
   }) : acceptedKind =
            acceptedKind ?? _ilccsff7.CalendarInvitationSourceKind.request,
        canApplyCancellation = canApplyCancellation ?? false,
        occurrenceCompositionBlocked = occurrenceCompositionBlocked ?? false,
-       occurrenceRevision = occurrenceRevision ?? 0;
+       occurrenceRevision = occurrenceRevision ?? 0,
+       hasAcceptedRangeCancellation = hasAcceptedRangeCancellation ?? false;
 
   const factory CalendarInvitationApplicationView({
     required _is.UuidValue linkId,
@@ -81,6 +83,7 @@ abstract class CalendarInvitationApplicationView
     _ic2yh4ry.CalendarInvitationApplyReceipt? latestResult,
     bool? occurrenceCompositionBlocked,
     int? occurrenceRevision,
+    bool? hasAcceptedRangeCancellation,
   }) = _CalendarInvitationApplicationViewImpl;
 
   factory CalendarInvitationApplicationView.fromJson(
@@ -165,6 +168,12 @@ abstract class CalendarInvitationApplicationView
               jsonSerialization['occurrenceCompositionBlocked'],
             ),
       occurrenceRevision: jsonSerialization['occurrenceRevision'] as int?,
+      hasAcceptedRangeCancellation:
+          jsonSerialization['hasAcceptedRangeCancellation'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(
+              jsonSerialization['hasAcceptedRangeCancellation'],
+            ),
     );
   }
 
@@ -220,6 +229,8 @@ abstract class CalendarInvitationApplicationView
 
   final int occurrenceRevision;
 
+  final bool hasAcceptedRangeCancellation;
+
   /// Returns a shallow copy of this [CalendarInvitationApplicationView]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -250,6 +261,7 @@ abstract class CalendarInvitationApplicationView
     _ic2yh4ry.CalendarInvitationApplyReceipt? latestResult,
     bool? occurrenceCompositionBlocked,
     int? occurrenceRevision,
+    bool? hasAcceptedRangeCancellation,
   });
   @override
   bool operator ==(Object other) {
@@ -389,7 +401,13 @@ abstract class CalendarInvitationApplicationView
                   other.occurrenceRevision,
                   occurrenceRevision,
                 ) ||
-                other.occurrenceRevision == occurrenceRevision);
+                other.occurrenceRevision == occurrenceRevision) &&
+            (identical(
+                  other.hasAcceptedRangeCancellation,
+                  hasAcceptedRangeCancellation,
+                ) ||
+                other.hasAcceptedRangeCancellation ==
+                    hasAcceptedRangeCancellation);
   }
 
   @override
@@ -422,6 +440,7 @@ abstract class CalendarInvitationApplicationView
       latestResult,
       occurrenceCompositionBlocked,
       occurrenceRevision,
+      hasAcceptedRangeCancellation,
     ]);
   }
 
@@ -456,6 +475,7 @@ abstract class CalendarInvitationApplicationView
       if (latestResult != null) 'latestResult': latestResult?.toJson(),
       'occurrenceCompositionBlocked': occurrenceCompositionBlocked,
       'occurrenceRevision': occurrenceRevision,
+      'hasAcceptedRangeCancellation': hasAcceptedRangeCancellation,
     };
   }
 
@@ -492,6 +512,7 @@ abstract class CalendarInvitationApplicationView
         'latestResult': latestResult?.toJsonForProtocol(),
       'occurrenceCompositionBlocked': occurrenceCompositionBlocked,
       'occurrenceRevision': occurrenceRevision,
+      'hasAcceptedRangeCancellation': hasAcceptedRangeCancellation,
     };
   }
 
@@ -532,6 +553,7 @@ class _CalendarInvitationApplicationViewImpl
     _ic2yh4ry.CalendarInvitationApplyReceipt? latestResult,
     bool? occurrenceCompositionBlocked,
     int? occurrenceRevision,
+    bool? hasAcceptedRangeCancellation,
   }) : super._(
          linkId: linkId,
          invitationId: invitationId,
@@ -559,6 +581,7 @@ class _CalendarInvitationApplicationViewImpl
          latestResult: latestResult,
          occurrenceCompositionBlocked: occurrenceCompositionBlocked,
          occurrenceRevision: occurrenceRevision,
+         hasAcceptedRangeCancellation: hasAcceptedRangeCancellation,
        );
 
   /// Returns a shallow copy of this [CalendarInvitationApplicationView]
@@ -592,6 +615,7 @@ class _CalendarInvitationApplicationViewImpl
     Object? latestResult = _Undefined,
     bool? occurrenceCompositionBlocked,
     int? occurrenceRevision,
+    bool? hasAcceptedRangeCancellation,
   }) {
     return CalendarInvitationApplicationView(
       linkId: linkId ?? this.linkId,
@@ -635,6 +659,8 @@ class _CalendarInvitationApplicationViewImpl
       occurrenceCompositionBlocked:
           occurrenceCompositionBlocked ?? this.occurrenceCompositionBlocked,
       occurrenceRevision: occurrenceRevision ?? this.occurrenceRevision,
+      hasAcceptedRangeCancellation:
+          hasAcceptedRangeCancellation ?? this.hasAcceptedRangeCancellation,
     );
   }
 }

@@ -200,7 +200,13 @@ extension CalendarInvitationApplicationOperations on CalendarService {
     bool? historicalUnavailable,
     CalendarInvitationOccurrenceApplicationSnapshot? occurrence,
     CalendarInvitationOccurrenceApplicationSnapshot? nextOccurrence,
+    bool compositionPreview = false,
   }) async {
+    final masked =
+        occurrence != null &&
+        _occHasRangeCancellation(
+          jsonDecode(occurrence.stateJson) as Map<String, dynamic>,
+        );
     for (final op in [
       CalendarInvitationOperation.readSummary,
       CalendarInvitationOperation.readSource,
@@ -208,8 +214,13 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       CalendarInvitationOperation.readApplication,
       if (occurrence != null)
         CalendarInvitationOperation.readOccurrenceApplication,
-      if (occurrence != null && input != null && !retry)
+      if (occurrence != null &&
+          (input != null && !retry ||
+              masked && (input != null || compositionPreview)))
         CalendarInvitationOperation.composeAcceptedOccurrences,
+      if (masked && (input != null || compositionPreview))
+        CalendarInvitationOperation.composeAcceptedRangeCancellation,
+      if (compositionPreview) CalendarInvitationOperation.apply,
       if ({
         CalendarInvitationOperation.apply,
         CalendarInvitationOperation.applyCancellation,
@@ -446,7 +457,11 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       (source, message) = await _invAcceptedBody(accepted, link, recipient, tx);
     }
     if (occurrenceState != null &&
-        !_occHasRangeCancellation(occurrenceState) &&
+        (!_occHasRangeCancellation(occurrenceState) ||
+            message?.method == IcalendarSchedulingMethod.request &&
+                accepted.kind == CalendarInvitationSourceKind.request &&
+                _occAccepted(event.data.importBaseline!).content.status !=
+                    CalendarEventStatus.cancelled) &&
         message != null &&
         entry?.currentSourceId != null) {
       try {
@@ -460,6 +475,10 @@ extension CalendarInvitationApplicationOperations on CalendarService {
               ),
             );
         final composed = _invCompose(master, event, occurrenceState);
+        final masked = _occHasRangeCancellation(occurrenceState);
+        final candidate = masked
+            ? _occMaskMember(composed, occurrenceState)
+            : composed;
         final composedBaseline = eventImportBaseline(
           composed.protocolUid,
           composed.content,
@@ -472,20 +491,70 @@ extension CalendarInvitationApplicationOperations on CalendarService {
           master.timingOverrides,
           master.protocolState,
         );
-        await _occQuota(
-          recipient,
-          occurrenceRow!.copyWith(
-            stateJson: jsonEncode({
-              ...occurrenceState,
-              'version': 2,
-              'receiptDigest': '0' * 64,
-              'masterBaseline': masterBaseline.toJson(),
-              'masterBaselineDigest': _invBaselineDigest(masterBaseline),
-              'baselineDigest': _invBaselineDigest(composedBaseline),
-            }),
+        final preview = occurrenceRow!.copyWith(
+          stateJson: jsonEncode(
+            masked
+                ? _occComposeCancellation(
+                    link: link,
+                    event: event,
+                    state: occurrenceState,
+                    masterBaseline: masterBaseline,
+                    baseline: composedBaseline,
+                    member: candidate,
+                    master: null,
+                  ) // Fixed-width hash for size only; never persisted.
+                : {
+                    ...occurrenceState,
+                    'version': 2,
+                    'receiptDigest': '0' * 64,
+                    'masterBaseline': masterBaseline.toJson(),
+                    'masterBaselineDigest': _invBaselineDigest(masterBaseline),
+                    'baselineDigest': _invBaselineDigest(composedBaseline),
+                  },
           ),
-          tx,
         );
+        await _occQuota(recipient, preview, tx);
+        if (masked) {
+          await _invApplicationNative(
+            actor,
+            event,
+            tx,
+            CalendarAuthorizationPhase.read,
+            writing: true,
+            member: candidate,
+          );
+          await _invApplicationHost(
+            actor,
+            recipient,
+            tx,
+            CalendarAuthorizationPhase.read,
+            operation: CalendarInvitationOperation.readApplication,
+            view: view,
+            link: link,
+            parent: event.parent,
+            current: event.snapshot,
+            proposed: CalendarEventPolicySnapshot(
+              link.eventId,
+              link.calendarId,
+              event.identity.revision,
+              candidate.content,
+              link.uid,
+              event.data.updatedAt,
+              origin: event.data.origin,
+              timingOverrides: candidate.timingOverrides,
+              protocolState: candidate.protocolState,
+            ),
+            source: source,
+            message: message,
+            accepted: accepted,
+            baseline: composedBaseline,
+            dirty: dirty,
+            lookupId: id,
+            occurrence: _occSnapshot(occurrenceRow),
+            nextOccurrence: _occSnapshot(preview),
+            compositionPreview: true,
+          );
+        }
         compositionBlocked =
             occurrenceRow.revision == CalendarService._maxRevision ||
             message.method == IcalendarSchedulingMethod.cancel &&
@@ -543,6 +612,7 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       incomingSourceText: entry?.currentSourceId == null
           ? null
           : source?.normalizedSource,
+      hasAcceptedRangeCancellation: _occHasRangeCancellation(occurrenceState),
       occurrenceCompositionBlocked: compositionBlocked,
       occurrenceRevision: occurrenceRow?.revision ?? 0,
       canApplyCancellation:
@@ -869,7 +939,11 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         }
         return receipt;
       }
-      if (_occHasRangeCancellation(occurrenceState)) {
+      if (_occHasRangeCancellation(occurrenceState) &&
+          (cancellation ||
+              accepted.kind != CalendarInvitationSourceKind.request ||
+              _occAccepted(event.data.importBaseline!).content.status ==
+                  CalendarEventStatus.cancelled)) {
         throw _failure(CalendarFailureCode.dependencyConflict);
       }
       await _invApplicationHost(
@@ -930,9 +1004,15 @@ extension CalendarInvitationApplicationOperations on CalendarService {
           masterMember.protocolState,
         ),
       );
-      final member = occurrenceState == null
+      final composed = occurrenceState == null
           ? masterMember
           : _invCompose(masterMember, event, occurrenceState);
+      final masked = _occHasRangeCancellation(occurrenceState);
+      final member = masked
+          ? _eventReplacementValue(
+              () => _occMaskMember(composed, occurrenceState!),
+            )
+          : composed;
       if (cancellation &&
           occurrenceState != null &&
           !_invCancelFloor(message, occurrenceState)) {
@@ -945,10 +1025,10 @@ extension CalendarInvitationApplicationOperations on CalendarService {
       }
       final baseline = _eventProtocolValue(
         () => eventImportBaseline(
-          member.protocolUid,
-          member.content,
-          member.timingOverrides,
-          member.protocolState,
+          composed.protocolUid,
+          composed.content,
+          composed.timingOverrides,
+          composed.protocolState,
         ),
       );
       if (event.identity.revision == CalendarService._maxRevision ||
@@ -986,15 +1066,27 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         revision: occurrenceRow.revision + 1,
         eventRevision: next.eventRevision,
         updatedAt: now,
-        stateJson: jsonEncode({
-          ...occurrenceState!,
-          'version': occurrenceState['version'] == 3 ? 3 : 2,
-          'receiptDigest': _occReceiptDigest(occurrenceState),
-          'masterBaseline': masterBaseline.toJson(),
-          'masterBaselineDigest': _invBaselineDigest(masterBaseline),
-          'masterDigest': _occMasterDigest(link, next),
-          'baselineDigest': _invBaselineDigest(baseline),
-        }),
+        stateJson: jsonEncode(
+          masked
+              ? _occComposeCancellation(
+                  link: link,
+                  event: event,
+                  state: occurrenceState!,
+                  masterBaseline: masterBaseline,
+                  baseline: baseline,
+                  member: member,
+                  master: next,
+                )
+              : {
+                  ...occurrenceState!,
+                  'version': occurrenceState['version'] == 3 ? 3 : 2,
+                  'receiptDigest': _occReceiptDigest(occurrenceState),
+                  'masterBaseline': masterBaseline.toJson(),
+                  'masterBaselineDigest': _invBaselineDigest(masterBaseline),
+                  'masterDigest': _occMasterDigest(link, next),
+                  'baselineDigest': _invBaselineDigest(baseline),
+                },
+        ),
       );
       if (nextOccurrenceRow != null) {
         await _occQuota(recipient, nextOccurrenceRow, tx);
@@ -1138,6 +1230,16 @@ extension CalendarInvitationApplicationOperations on CalendarService {
         cancellation: cancellation,
         member: member,
         before: before,
+      );
+      await _occAuthorizeCancellation(
+        actor,
+        recipient,
+        tx,
+        CalendarAuthorizationPhase.finalWrite,
+        link,
+        event,
+        occurrenceRow,
+        occurrenceState,
       );
       await _invApplicationHost(
         actor,

@@ -226,8 +226,65 @@ Future<void> rangeInvitationApplicationSmoke(List<Client> clients) async {
           cancelledRace.first.id,
       'Cancellation exact retry changed receipt',
     );
+    await a.invitationDemo.simulateRecurring(
+      id,
+      const cal.Uuid().v4obj(),
+      5,
+      'Master preserving cutoff',
+    );
+    final maskedMaster = await api.calendarInvitation.application(
+      master.entryId,
+    );
+    require(
+      maskedMaster.hasAcceptedRangeCancellation &&
+          maskedMaster.canApply &&
+          !maskedMaster.occurrenceCompositionBlocked &&
+          !maskedMaster.hasLocalChanges,
+      'Eligible masked master remained blocked',
+    );
+    final maskedMasterInput = cal.CalendarInvitationApplyRequest(
+      invitationId: maskedMaster.invitationId,
+      sourceId: maskedMaster.incomingSourceId!,
+      linkId: maskedMaster.linkId,
+      expectedInvitationRevision: maskedMaster.invitationRevision!,
+      expectedEventRevision: maskedMaster.eventRevision,
+      expectedCalendarRevision: maskedMaster.calendarRevision,
+      expectedApplicationRevision: maskedMaster.applicationRevision,
+      expectedOccurrenceRevision: maskedMaster.occurrenceRevision,
+    );
+    final maskedMasterRace = await Future.wait(
+      clients.map(
+        (c) => c.modules.serverpod_calendar.calendarInvitation.applyUpdate(
+          maskedMasterInput,
+        ),
+      ),
+    );
+    require(
+      maskedMasterRace.first.id == maskedMasterRace.last.id &&
+          maskedMasterRace.first.eventRevision == 5,
+      'Masked master race duplicated effect',
+    );
+    final stillCancelled = await api.calendarInvitation.rangeApplication(entry);
+    require(
+      stillCancelled.hasAcceptedRangeCancellation &&
+          !stillCancelled.hasLocalChanges &&
+          stillCancelled.acceptedVersion.sequence == 4 &&
+          stillCancelled.currentOccurrence!.status ==
+              cal.CalendarEventStatus.cancelled,
+      'Master update reopened or changed source cancellation',
+    );
+    require(
+      (await api.calendarInvitation.applyRangeCancellation(cancelInput)).id ==
+          cancelledRace.first.id,
+      'Master composition superseded original cancellation receipt',
+    );
+    require(
+      (await fetch(url, currentFeed.$2)).$1 != 304 &&
+          (await fetch(url)).$1 != 200,
+      'Master composition published a lossy masked feed or stale 304',
+    );
     stdout.writeln(
-      'PASS: generated-client two-host range preview/apply and master races, preserved source versions/retries, receipt-only versus applied feed ETags and explicit range cancellation, masked-feed rejection and stable retries.',
+      'PASS: generated-client two-host range preview/apply and master races, preserved source versions/retries, receipt-only versus applied feed ETags and explicit range cancellation, masked-feed rejection, v5 master composition and stable independent retries.',
     );
   } finally {
     if (subscription != null) {

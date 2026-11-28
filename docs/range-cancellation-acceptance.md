@@ -20,13 +20,13 @@ An exact latest cancellation retry reauthorizes and returns its original receipt
 
 ## Temporary limitations
 
-After acceptance, **all new master, single and range source application commands reject**. Reviews and ordinary native edits remain available. A native cutoff restoration is a local draft against the complete accepted candidate; it does not erase private source cancellation or unlock source applications. Source composition, replacement, multiple cutoffs and explicit source restoration require a subsequent reviewed design.
+ADR 0160 initially rejected all new source applications after acceptance. [ADR 0161](adr/0161-master-updates-with-accepted-range-cancellation.md) now allows eligible active-master REQUEST updates while preserving the cutoff; new whole/single/range cancellations, occurrence applications and source restoration remain guarded. Reviews and ordinary native edits remain available. A native cutoff restoration is a local draft against the complete accepted candidate; it does not erase private source cancellation or unlock source applications. Further source transitions, replacement, multiple cutoffs and explicit source restoration require subsequent reviewed designs.
 
 Ordinary export, feeds and new organizer REQUEST publication reject an active cutoff until a faithful mapping is supported; cached feed responses must not return stale 304. Range participation, outgoing range cancellation, tasks/openings and real mail remain separate. This is synthetic/native validation, not external client interoperability certification.
 
 See [validation](scaffold-validation.md) and [development commands](development.md).
 
 
-## Proposed master composition with an accepted cutoff
+## Master composition with an accepted cutoff
 
-[Proposed ADR 0161](adr/0161-master-updates-with-accepted-range-cancellation.md) follows the confirmed preserve-cutoff/reject-orphan master-update policy. It proposes master REQUEST composition only, existing-table JSON v5 with one frozen original cancellation basis and separate current composition binding, independent composition authority, stable cancellation/master receipts and a protected master-view flag. The frozen basis retains superseded source content within the existing active-data lifetime and byte caps. New whole/single/range cancellation, occurrence applications and source restoration remain guarded. No SQL/cap expansion is proposed; concrete model/API mechanics await explicit approval and are not implemented.
+[Accepted ADR 0161](adr/0161-master-updates-with-accepted-range-cancellation.md) implements bounded active-master REQUEST composition while preserving the accepted cutoff and rejecting orphaning/profile changes. Existing-table v5 JSON separates the frozen original cancellation basis from current composition bindings, with independent authority, protected master-view state and stable cancellation/master retries. The frozen basis retains superseded content until event deletion within existing caps. Whole-series lifecycle, new occurrence applications and source restoration remain guarded. See [the implementation profile](range-cancellation-master-composition.md) and actual validation.

@@ -55,7 +55,8 @@ void require(bool value, String message) {
 
 Future<void> main(List<String> args) async {
   final nativeFuture = args.contains('--native-future');
-  final rangeCancel = args.contains('--range-cancellations');
+  final rangeCompose = args.contains('--range-compositions');
+  final rangeCancel = args.contains('--range-cancellations') || rangeCompose;
   final rangeApply = args.contains('--range-applications') || rangeCancel;
   final occurrenceApply =
       args.contains('--occurrence-applications') || rangeApply;
@@ -412,6 +413,184 @@ Future<void> main(List<String> args) async {
         };
       }
 
+      if (rangeCompose) {
+        Future<Map<String, dynamic>> masterInput(
+          String id,
+          int sequence,
+        ) async {
+          final incoming = await b.command({
+            'command': 'receive',
+            'caseId': id,
+            'key': 'master-$sequence',
+            'sequence': sequence,
+            'summary': 'Composed-$sequence',
+          }) as Map;
+          final v = await b.command({
+            'command': 'application',
+            'caseId': id,
+            'entryId': incoming['entryId'],
+          }) as Map;
+          require(
+            v['hasAcceptedRangeCancellation'] == true &&
+                v['canApply'] == true &&
+                v['occurrenceCompositionBlocked'] == false,
+            'Masked master preview failed',
+          );
+          return {
+            'invitationId': v['invitationId'],
+            'sourceId': v['incomingSourceId'],
+            'linkId': v['linkId'],
+            'expectedInvitationRevision': v['invitationRevision'],
+            'expectedEventRevision': v['eventRevision'],
+            'expectedCalendarRevision': v['calendarRevision'],
+            'expectedApplicationRevision': v['applicationRevision'],
+            'expectedOccurrenceRevision': v['occurrenceRevision'],
+          };
+        }
+
+        Future<Map<String, dynamic>> cancellation(String id) async {
+          final request = await prepare(id);
+          final result = await b.command({
+            'command': 'occurrence-apply',
+            'caseId': id,
+            'range': true,
+            'cancel': true,
+            'request': request,
+          }) as Map;
+          require(result['id'] != null, 'Composition seed cancellation failed');
+          return {'request': request, 'id': result['id']};
+        }
+
+        Future<void> retained(String id, Map<String, dynamic> cancelled) async {
+          final result = await b.command({
+            'command': 'occurrence-apply',
+            'caseId': id,
+            'range': true,
+            'cancel': true,
+            'request': cancelled['request'],
+          }) as Map;
+          require(
+            result['id'] == cancelled['id'],
+            'Composition lost original cancellation receipt',
+          );
+          final state =
+              await b.command({'command': 'inspect', 'caseId': id}) as Map;
+          require(
+            state['checkpointVersion'] == 5 && state['cutoff'] != null,
+            'Composition lost v5 or the native cutoff',
+          );
+        }
+
+        final id = nextCase(),
+            cancelled = await cancellation(id),
+            request = await masterInput(id, 5);
+        final race = await Future.wait(
+          [a, b].map(
+            (p) => p.command({
+              'command': 'apply',
+              'caseId': id,
+              'request': request,
+            }),
+          ),
+        );
+        require(
+          (race.first as Map)['id'] != null &&
+              (race.first as Map)['id'] == (race.last as Map)['id'],
+          'Masked master race duplicated a commit',
+        );
+        await retained(id, cancelled);
+        final changed = nextCase(),
+            changedCancel = await cancellation(changed),
+            older = await masterInput(changed, 5);
+        final replaced = await Future.wait([
+          a.command({'command': 'apply', 'caseId': changed, 'request': older}),
+          b.command({
+            'command': 'receive',
+            'caseId': changed,
+            'key': 'newer-6',
+            'sequence': 6,
+            'summary': 'Newer-6',
+          }),
+        ]);
+        require(
+          (replaced.first as Map)['id'] != null ||
+              (replaced.first as Map)['error'] == 'staleRevision',
+          'Competing newer master bypassed source revision fence',
+        );
+        final newer = await b.command({
+          'command': 'application',
+          'caseId': changed,
+          'entryId': older['invitationId'],
+        }) as Map;
+        require(
+          newer['canApply'] == true &&
+              newer['incomingSourceId'] != older['sourceId'],
+          'Old command dismissed or replaced the newer notice',
+        );
+        final finalInput = {
+          ...older,
+          'sourceId': newer['incomingSourceId'],
+          'expectedInvitationRevision': newer['invitationRevision'],
+          'expectedEventRevision': newer['eventRevision'],
+          'expectedApplicationRevision': newer['applicationRevision'],
+          'expectedOccurrenceRevision': newer['occurrenceRevision'],
+        };
+        require(
+          (await b.command({
+                'command': 'apply',
+                'caseId': changed,
+                'request': finalInput,
+              }) as Map)['id'] !=
+              null,
+          'Survivor could not apply newest master',
+        );
+        await retained(changed, changedCancel);
+        for (final pause in ['apply-before', 'apply-after']) {
+          final id = nextCase(),
+              cancelled = await cancellation(id),
+              request = await masterInput(id, 5);
+          a.paused = Completer<Map<String, dynamic>>();
+          final lost = a
+              .command({
+                'command': 'apply',
+                'caseId': id,
+                'request': request,
+                'pause': pause,
+              })
+              .then<void>((_) {}, onError: (Object _, StackTrace _) {});
+          final submitted = await a.paused!.future.timeout(
+            const Duration(seconds: 40),
+          );
+          final visible =
+              await b.command({'command': 'inspect', 'caseId': id}) as Map;
+          require(
+            visible['eventRevision'] == (pause == 'apply-before' ? 2 : 3) &&
+                visible['checkpointVersion'] ==
+                    (pause == 'apply-before' ? 4 : 5) &&
+                visible['cutoff'] != null,
+            'Masked master commit was partially visible',
+          );
+          await a.stop();
+          await lost;
+          final recovered = await b.command({
+            'command': 'apply',
+            'caseId': id,
+            'request': request,
+          }) as Map;
+          require(
+            recovered['id'] != null &&
+                ((pause == 'apply-after') ==
+                    (recovered['id'] == submitted['id'])),
+            'Masked master process loss broke receipt semantics',
+          );
+          await retained(id, cancelled);
+          a = await start('a-range-compose-recovered-$pause', 18780);
+        }
+        stdout.writeln(
+          'PASS: masked master two-host races, competing newer sources, actual before/after commit loss, frozen v5 state and original cancellation retries.',
+        );
+        return;
+      }
       final raceId = nextCase();
       final raceRequest = await prepare(raceId);
       final race = await Future.wait(
@@ -552,7 +731,9 @@ Future<void> main(List<String> args) async {
           'entryId': incoming['entryId'],
         }) as Map;
         require(
-          view['occurrenceCompositionBlocked'] == true &&
+          view['occurrenceCompositionBlocked'] == false &&
+              view['hasAcceptedRangeCancellation'] == true &&
+              view['canApply'] == true &&
               view['hasLocalChanges'] == false,
           'Accepted cancellation guard/state failed across hosts',
         );
@@ -568,7 +749,7 @@ Future<void> main(List<String> args) async {
           'New notice lost retained cancellation retry',
         );
         stdout.writeln(
-          'PASS: range cancellation two-host race, actual loss before/after commit, stable retries and cross-host composition guard.',
+          'PASS: range cancellation two-host race, actual loss before/after commit, stable retries and cross-host preserved-cutoff preview.',
         );
         return;
       }
