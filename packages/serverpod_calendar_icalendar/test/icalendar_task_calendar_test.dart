@@ -286,9 +286,6 @@ void main() {
     for (final property in [
       'ATTENDEE:mailto:a@example.invalid',
       'ORGANIZER:mailto:a@example.invalid',
-      'CATEGORIES:Work',
-      'URL:https://example.invalid',
-      'CLASS:PRIVATE',
       'X-PRIVATE:data',
       'RDATE;VALUE=PERIOD:20261023T120000Z/PT1H',
     ]) {
@@ -314,7 +311,7 @@ void main() {
     final mixed = file(
       events: [
         task(),
-        task(uid: 'other', properties: ['URL:https://example.invalid']),
+        task(uid: 'other', properties: ['ATTENDEE:mailto:a@example.invalid']),
       ],
     );
     expect(

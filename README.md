@@ -25,7 +25,7 @@ Native [non-recurring tasks](docs/native-tasks.md) now add durable CRUD, assignm
 
 Native [recurring tasks and progress history](docs/recurring-tasks.md) now extend that slice with bounded previews, independent occurrence completion/cancellation and orphan protection. Task timing/content exceptions and VTODO interchange remain separate.
 
-The pure [VTODO adapter](docs/icalendar-task-adapter.md) now preserves bounded task timing, recurrence and independently optional source progress, including progress-only occurrence components with a matching master in the file. Task database import/export, richer metadata and timing/content exceptions remain separate.
+The pure [VTODO adapter](docs/icalendar-task-adapter.md) now preserves bounded task timing, recurrence and independently optional source progress, including progress-only occurrence components with a matching master in the file. Source CLASS/URL and grouped categories/comments/contact are now supported too. Task database import/export, participant/relationship/alarm profiles and timing/content exceptions remain separate.
 
 ## Start here
 

@@ -94,6 +94,7 @@ The retained ADRs distinguish confirmed scope from proposed implementation detai
 | [0088](0088-vtodo-wire-master-implementation.md) | Bounded VTODO wire master implementation | Scoped ADR 0087 pure adapter implementation; concrete mechanics under draft review |
 | [0089](0089-vtodo-occurrence-component-contract.md) | VTODO occurrence component contract | Accepted in-file master and progress-only profile with inherited omissions; concrete mechanics proposed |
 | [0090](0090-vtodo-occurrence-component-implementation.md) | VTODO occurrence component implementation | Scoped ADR 0089 linked source/projection implementation; mechanics under draft review |
+| [0091](0091-vtodo-text-and-link-metadata.md) | VTODO text and link metadata | Scoped confirmed metadata batch implementation; concrete representation/limits under draft review |
 
 The maintainer authorized consolidating superseded uncommitted drafts and renumbering the remaining records consecutively before the first commit. Relevant guidance is retained in the availability and metadata records and the current RFC tables. Filenames, titles, index entries and references follow the current numbering.
 
