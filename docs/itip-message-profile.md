@@ -72,3 +72,8 @@ ADD's timing describes an untrusted proposed addition, not a replacement master.
 The COUNTER table's SEQUENCE presence column lists one while its comment permits the zero case. This reader interprets that conditional comment by preserving omission as null. It neither manufactures zero nor establishes that the source echoes a stored request; later reconciliation must reject an incompatible omission. Explicit zero remains distinct. Counter participant values do not identify a verified sender; a cancelled STATUS is only a proposal, not a cancellation action. DECLINECOUNTER likewise changes no event state.
 
 The separate [VFREEBUSY source adapter](itip-freebusy-profile.md) now covers its bounded method tables. The next work remains authenticated VFREEBUSY scheduling and missing property/delegation profiles, followed by separately reviewed reconciliation/identity/authority/retention/inbox/outbox contracts. MIME and trusted inbound/outbound host adapters follow under the restricted email profile. No real mail or external scheduling-client interoperability follows from pure parser tests.
+
+
+## Shared validation budgets and outgoing range projection
+
+Under [accepted ADR 0171](adr/0171-published-range-cancellation-bundles.md), scheduling parse/validation and required-field projection accept an optional trusted aggregate recurrence-work budget. It cannot widen the selected component limit; existing callers retain their previous behavior. The server package separately implements [pure published range-cancellation bundles](published-range-cancellation-bundles.md). This does not enable durable range publication, restoration or bundled recipient application, allocate a version or establish host authority.

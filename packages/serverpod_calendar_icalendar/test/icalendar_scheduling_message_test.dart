@@ -2,12 +2,62 @@ import 'dart:convert';
 
 import 'package:serverpod_calendar_icalendar/serverpod_calendar_icalendar.dart';
 import 'package:test/test.dart';
+import 'package:serverpod_calendar_core/serverpod_calendar_core.dart';
 
-import 'support/icalendar_fixtures.dart' show fixedZone, explicitZone;
+import 'support/icalendar_fixtures.dart'
+    show fixedZone, explicitZone, newYorkZone;
 
 import 'support/scheduling_fixtures.dart';
 
 void main() {
+  test(
+    'parsing and validation charge a caller-owned aggregate zone budget',
+    () {
+      final zone = newYorkZone();
+      final bytes = utf8.encode(
+        message(
+          'REQUEST',
+          minimal('REQUEST')
+              .map(
+                (p) => p == start
+                    ? 'DTSTART;TZID=America/New_York:20261022T120000'
+                    : p,
+              )
+              .toList(),
+          zones: [zone],
+        ),
+      );
+      final budget = RecurrenceWorkBudget(maxWork: 200000);
+      final parsed = parseIcalendarSchedulingMessage(
+        bytes,
+        sharedWorkBudget: budget,
+      );
+      final used = budget.used;
+      expect(used, greaterThan(0));
+      validateIcalendarSchedulingMessage(
+        parsed.source,
+        sharedWorkBudget: budget,
+      );
+      expect(budget.used, greaterThan(used));
+      final bounded = RecurrenceWorkBudget(maxWork: used);
+      parseIcalendarSchedulingMessage(bytes, sharedWorkBudget: bounded);
+      expect(
+        () => validateIcalendarSchedulingMessage(
+          parsed.source,
+          sharedWorkBudget: bounded,
+        ),
+        rejects(IcalendarComponentError.limitExceeded),
+      );
+      expect(
+        () => parseIcalendarSchedulingMessage(
+          bytes,
+          limits: const IcalendarComponentLimits(maxCandidates: 10),
+          sharedWorkBudget: RecurrenceWorkBudget(maxWork: 11),
+        ),
+        rejects(IcalendarComponentError.invalidValue),
+      );
+    },
+  );
   test(
     'mandatory envelope and REPLY zone cardinality are independent checks',
     () {

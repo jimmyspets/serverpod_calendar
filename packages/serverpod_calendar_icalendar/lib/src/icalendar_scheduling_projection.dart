@@ -14,6 +14,7 @@ IcalendarSchedulingMessage projectIcalendarRequestFields(
   IcalendarEventCalendar value, {
   IcalendarSyntaxLimits syntaxLimits = const IcalendarSyntaxLimits(),
   IcalendarComponentLimits limits = const IcalendarComponentLimits(),
+  RecurrenceWorkBudget? sharedWorkBudget,
 }) {
   limits.validate();
   // The typed input is immutable and already semantically validated. Bound its
@@ -106,5 +107,6 @@ IcalendarSchedulingMessage projectIcalendarRequestFields(
     ]),
     syntaxLimits: syntaxLimits,
     limits: limits,
+    sharedWorkBudget: sharedWorkBudget,
   );
 }

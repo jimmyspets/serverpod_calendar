@@ -31,7 +31,7 @@ The timing-only single/future batch is implemented under [ADR 0055](adr/0055-nat
 The maintainer explicitly permits dependency-driven reordering of this roadmap. Use these lanes as the working priority, preserving the full selected release scope and the explicit ADR/model review gates:
 
 1. Establish the current baseline: resolve hosted checks for delivered batches and the 4.1.0 toolchain before treating them as release evidence. Fix failures ahead of new implementation.
-2. Finish shared recurring scheduling primitives, then their durable workflows. ADRs 0169–0170 now implement the scoped incoming repeated-cycle prerequisites/workflow, with full exact-head hosted success for PR #172. Next review the pure published range-cancellation bundle under proposed ADR 0171, then group durable outgoing cancel/restore/composition and RANGE responses behind concrete reviewed contracts. Group code that shares original identity, version, source retention and retry machinery instead of repeatedly rebuilding the same boundary.
+2. Finish shared recurring scheduling primitives, then their durable workflows. ADRs 0169–0170 now implement the scoped incoming repeated-cycle prerequisites/workflow, with full exact-head hosted success for PR #172. ADR 0171 implements the pure published range-cancellation bundle prerequisite; next group durable outgoing cancel/restore/composition and RANGE responses behind concrete reviewed contracts. Group code that shares original identity, version, source retention and retry machinery instead of repeatedly rebuilding the same boundary.
 3. Complete the other selected authenticated VEVENT/VFREEBUSY methods and participant/lifecycle reconciliation, reusing the stable series and outbox machinery. Pure parser support alone does not complete these operation rows. Host/provider trust and real-mail trials require their own concrete configuration and authorization.
 4. Close remaining native task/event metadata, future-content/cancellation, disclosure-safe query and availability gaps in coherent service/client/Flutter batches. Time-indexed candidates, timezone-update invalidation and production authorization coordination must retain existing completeness and concurrency guarantees.
 5. Consolidate operational cleanup/retention and feed/mail host integration, then collect external-client interoperability evidence against the declared subsets. Provider-specific mobile delivery remains outside repository implementation scope.
@@ -881,11 +881,11 @@ The 4.1.0 maintenance batch completed local generation, analysis, existing/fresh
 
 ## Pure published range-cancellation prerequisite
 
-[Proposed ADR 0171](adr/0171-published-range-cancellation-bundles.md) reviews one pure outgoing range-CANCEL bundle: a primary future cutoff plus explicit cancellation of later published components, exact originals, conservative whole-basis version bounds and unchanged resource limits. It establishes no accepted publication history, native mutation, storage/API change, restoration or delivery. These protocol mechanics require explicit agreement; current outgoing runtime guards remain.
+[Accepted ADR 0171](adr/0171-published-range-cancellation-bundles.md) implements [pure published range-cancellation bundles](published-range-cancellation-bundles.md): a primary suffix target plus explicit later-component cancellations, exact originals, conservative whole-basis version bounds and shared bounded validation. It proves no accepted publication history or authority and adds no native mutation, SQL/generated endpoint, restoration or delivery. Existing outgoing runtime guards remain; actual validation is recorded separately.
 
 - [x] Inspect organizer v4–v6 published values, partial delivery/receipt/version rules and current guards; check RFC 5545/5546 primary sources.
 - [x] Prepare the complete minimal-bundle, participant, version, membership and resource-limit contract for review.
-- [ ] Obtain explicit agreement before implementing ADR 0171's protocol/API-value mechanics.
-- [ ] Implement the complete approved pure batch with focused development tests and broader related checks before one code commit.
+- [x] Obtain explicit agreement on ADR 0171's protocol/API-value mechanics (2026-11-04).
+- [x] Implement the complete approved pure batch; focused bundle/codec/native-guard checks and complete module/iCalendar VM+Chrome passed before one code commit.
 - [ ] Pass full exact-head hosted checks before readiness.
 - [ ] Review durable outgoing cancellation/restoration/composition, publication/reply targets and receipts separately; no new runtime action is enabled by the pure helper.

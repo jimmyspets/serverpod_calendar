@@ -482,6 +482,49 @@ void main() {
       utf8.encode((await publication(receipt.publicationId)).payload),
     );
 
+    for (final kind in [
+      CalendarEventTimeKind.date,
+      CalendarEventTimeKind.utc,
+      CalendarEventTimeKind.zoned,
+    ]) {
+      test(
+        'pure range bundle leaves masked $kind REQUEST publication guarded',
+        () async {
+          for (final bound in [false, true]) {
+            final content = masterContent(kind: kind),
+                id = await masterEvent(content);
+            if (bound) await service.saveAndNotify(masterRequest(id, content));
+            await service.changeOccurrence(
+              CalendarEventOccurrenceChange(
+                eventId: id,
+                expectedRevision: bound ? 2 : 1,
+                originalStart: masterTiming(
+                  kind: kind,
+                  day: 28,
+                ).copyWith(duration: null),
+                action: CalendarEventOccurrenceAction.cancelFuture,
+              ),
+            );
+            final before = (await eventData(id)).toJson();
+            final previous = (await publications())
+                .map((p) => p.toJson())
+                .toList();
+            await expectLater(
+              service.saveAndNotify(
+                masterRequest(id, content, revision: bound ? 3 : 2),
+              ),
+              failure(CalendarFailureCode.validation),
+            );
+            expect((await eventData(id)).toJson(), before);
+            expect(
+              (await publications()).map((p) => p.toJson()).toList(),
+              previous,
+            );
+          }
+        },
+      );
+    }
+
     Future<CalendarSchedulingOccurrenceCancelRequest> instanceCommand(
       UuidValue id,
       CalendarEventTiming point,
