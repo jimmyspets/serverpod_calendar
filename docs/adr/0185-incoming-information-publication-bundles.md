@@ -1,0 +1,51 @@
+# ADR 0185: Incoming complete information-publication bundles
+
+Status: **Proposed; explicit maintainer agreement required before model/runtime changes.** Complete-set/regression rejection is the recommended policy, not a recorded maintainer answer. This document makes the next grouped review concrete.
+
+## Context and source evidence
+
+Outgoing ADR 0184 is implemented in commit `464018fffccf004bec3e32cd35ee651964248047`, [draft PR #200](https://github.com/jimmyspets/serverpod_calendar/pull/200). Local grouped validation passed; [exact-head run 43496258214](https://github.com/jimmyspets/serverpod_calendar/actions/runs/43496258214) is separate and still in progress at preparation. The ADR 0183 Unix recovery-harness repair is independently tracked in run 43489862190. Resolve actual baseline failures before dependent runtime work; neither pending run establishes readiness.
+
+The [incoming master workflow](../incoming-event-publications.md) deliberately rejects occurrence packets. [RFC 5546 section 3.2.1](https://www.rfc-editor.org/rfc/rfc5546.html#section-3.2.1), inspected 2026-11-13, permits multiple PUBLISH events, requires organizer and forbids attendees. One same-UID complete series, the version floors and private review/Apply rules below are application restrictions. RFC-permitted alarms remain outside our selected scheduling profile; do not strip them to accept a packet.
+
+Accepted ADRs [0174](0174-complete-bundled-invitation-updates.md), [0175](0175-bundled-invitation-whole-lifecycle.md) and [0183](0183-incoming-event-publication-workflow.md) provide the component-vector, lossless lifecycle and separate sender/native cancellation-basis precedents. Information publication must retain its independent purpose and authority.
+
+## Proposed complete group
+
+Implement trusted complete PUBLISH intake/private review, explicit Add, clean-series complete update, whole CANCEL/reopening, generated clients and synthetic MIME/Flutter/two-host recovery together. Receipt/dismissal sends no reply and changes no calendar. No partial component merge, detached message, instance/range cancellation, participant response, real transport or alarm adoption is added.
+
+First admission requires one recurring master plus 1–64 supported single/future components, one exact UID/organizer and bounded DATE/UTC/exact-zone membership. Preserve source annotations, groups, PERIOD forms, explicit/omitted values and independent versions. Timing-only future effects and anchor-local content follow the existing wire profile. Reject attendees, VALARM, unsupported metadata, cancelled PUBLISH masters/children, multiple series and source-mode conversions explicitly. Existing master-only admission remains independent. A publication's explicit projected values are imported as source values; matching values do not prove native inheritance.
+
+Updates contain every accepted/current-review component; no removal, kind conversion or orphaned original is inferred. New supported components may be added. Initially accept a new bundle correlation, or an existing bundle profile; do not silently convert master-only histories, even before adoption. Unadopted bundle review may receive a newer complete packet under the same rules. Add creates one imported event/link; later Apply requires the entire native series to match its accepted baseline. Private reminders/actions stay independent.
+
+## Complete versions and lifecycle
+
+Key the master separately from exact typed original plus single/THISANDFUTURE kind. Compare independent `(SEQUENCE or effective zero, DTSTAMP)` tuples, preserving omission versus explicit zero. Lower tuples reject the complete packet. Equal tuples require unchanged normalized source component content; changed content requires a greater tuple. Include source-presence distinctions and CREATED/LAST-MODIFIED; compare source components rather than inherited effective fields. Envelope folding/PRODID/regenerated zone decoration is not component content. A child-only advance does not require scalar master advancement.
+
+Use ADR 0174's conservative new-component floors: an existing original advances beyond its previous effective component, while a provably new original advances beyond the old master. Validate membership/absence under the same shared budget; exhausted work proves neither. Check accepted full baseline and retained current review/basis, rejecting incomparable packets instead of merging them. Exact retained retries reauthorize before new admission. Missing retained vector proof is unavailable. Expired unaccepted history is not invented after ordinary pruning.
+
+Whole CANCEL requires known bundle correlation and an explicit SEQUENCE above every affected accepted/current-review component, with exact organizer/UID and no recurrence target. It remains review-only until explicit Apply. A newer complete PUBLISH may explicitly reopen: its master must exceed the accepted/pending cancellation version and its components satisfy all retained vector floors. These stronger floors are application policy, not universal RFC rules. Preserve source timestamps even when their clocks move backwards.
+
+Keep the last complete accepted PUBLISH baseline unchanged. Apply cancellation changes only the approved native lifecycle/protocol projection; retain component values, omissions and independent versions for later reopening. The cancellation source's existing `basisSourceId` identifies the sender's full packet, which may differ from the link's accepted native `basisSourceId`. Never adopt an unapplied sender update through cancellation. Preserve this separation through pruning, retries and repeated lifecycle cycles; reject any unrepresentable projection without partial writes.
+
+## Proposed storage and API review
+
+Add `bundledPublication: bool, default=false` to the existing **entry and permanent link tables**: two additive SQL columns, no new table/index or larger quota. False initializes the previously enforced master-only profile, not inferred provenance. True is fixed by first complete-bundle admission/adoption; retain it through cancellation, queue pruning/reconstruction and content-free deleted-link retries. Reject profile disagreement or attempted conversion. Generate module/example migrations and prove fresh/populated upgrade behavior; never hand-edit generated metadata.
+
+Existing source/receipt/link records retain exact source bytes/digests, complete import baseline and immutable command results under existing bounds. Existing kind remains publication/cancellation. Add the same read-only profile flag to entry/link views so the UI cannot route a bundle through scalar actions.
+
+Add three immutable generated DTOs: a component version (optional original only for master, future flag, optional SEQUENCE and required DTSTAMP); a bundle source wrapper (existing protected source view plus exact version vector); and a bundle link wrapper (existing protected link view, retained PUBLISH vector, separately labelled accepted cancellation version, optional current review vector and explicit source-unavailable/deleted state). Never represent missing proof as an empty vector. These projections require independent bundle-source/link authority plus existing raw-source and applicable complete native disclosure.
+
+Dedicated `getBundleSource`, `getBundleLink`, `addBundleToCalendar` and `applyBundleSource` endpoints reuse the existing Add/Apply request and receipt tuples. Old scalar source/link/application operations must reject bundle profiles before correlation fallback. Common list/header/dismiss operations may expose the authorized profile flag, not component counts or private vectors. Add independent host operations for receiveBundle/receiveBundleCancellation, readBundleSource/readBundleLink, adoptBundle/applyBundleUpdate/applyBundleCancellation/reopenBundle. Native import/create/edit/lifecycle/full-source gates remain mandatory. The actual immutable complete source, accepted/sender bases, current/final native state and real target/source IDs reach preliminary/final host checks. No address or source claim grants authority.
+
+Creation receipts remain immutable. Keep existing latest-only Apply retries, reauthorize without rewriting or reactivating, preserve exact unavailable-source descriptors and never recreate deleted events. Deletion scrubs source-bearing active link/native content while keeping the approved content-free marker/profile; independently received inbox data retains its existing lifecycle.
+
+## Bounds and acceptance
+
+Keep 512 KiB/source, 65 components, 200,000 shared recurrence work, 32 sources/64 receipts per entry, 256 entries/16 MiB per recipient, 1,024 entries/64 MiB per scope, 2 MiB link proof and 30-day terminal retention. Source/basis pins remain transitive under these caps; no recursive copied history or automatic eviction. Share work across current/accepted parsing, vector comparisons, membership and final proposal/baseline validation. Capacity exhaustion rejects atomically.
+
+Group focused DATE/UTC/zoned/DST/PERIOD and source-omission tests with vector regression/tie/new-component/missing-evidence/collision/capacity tests, clean local conflicts, all independent/final-denial gates, stable creation/latest-only retries, source pruning and no recreation. Prove whole cancellation of a newer unapplied sender packet preserves the older accepted native values, all child versions and personal actions. Verify two independent hosts racing intake/Add/Apply, actual loss before/after commit, synthetic MIME, Flutter review/Add/child-only update/cancel/reopen and upgrade/generation stability. Run complete package VM/Chrome and affected integration checks at group end; full exact-head hosted checks precede readiness. One completed feature-group commit only.
+
+## Alternatives and consequences
+
+Scalar master ordering loses child-only updates. Partial merging needs a different conflict policy; silently omitted exceptions must not become deletions. Existing baseline/source rows avoid a new vector-history table. Permanent profile flags prevent source pruning from weakening routing guards, at the cost of a reviewed schema addition. This closes the scoped producer/recipient bundle gap while preserving remaining method, partial lifecycle and interoperability release gates.
