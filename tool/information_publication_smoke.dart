@@ -145,9 +145,106 @@ Future<void> informationPublicationSmoke(
       (await b.calendarEvent.informationPublicationStatus(id)).hasLocalChanges,
       'Private draft not distinguished',
     );
+    // A second series exercises outgoing components and retained resets through
+    // actual generated clients on both hosts, independently of ordinary export.
+    final recurring = content.copyWith(
+      recurrence: cal.CalendarEventRecurrence(
+        rule: cal.CalendarEventRule(
+          frequency: cal.CalendarEventFrequency.daily,
+          count: 5,
+          byDay: [],
+          byMonthDay: [],
+          byYearDay: [],
+          byWeekNo: [],
+          byMonth: [],
+          byHour: [],
+          byMinute: [],
+          bySetPosition: [],
+        ),
+        inclusions: [],
+        exclusions: [],
+      ),
+    );
+    final series = (await a.calendarEvent.create(
+      cal.CalendarEventCreateRequest(calendarId: calendar, content: recurring),
+    ))!.eventId;
+    Future<cal.CalendarEventView> seriesView() =>
+        b.calendarEvent.getEvent(series, cal.CalendarEventFieldGroup.values);
+    cal.CalendarEventTiming point(int day) => cal.CalendarEventTiming(
+      kind: cal.CalendarEventTimeKind.zoned,
+      start: cal.CalendarEventCivil(year: 2027, month: 3, day: day, hour: 9),
+      zoneId: 'Europe/Stockholm',
+    );
+    for (final future in [false, true]) {
+      await a.calendarEvent.changeOccurrence(
+        cal.CalendarEventOccurrenceChange(
+          eventId: series,
+          expectedRevision: (await seriesView()).revision,
+          originalStart: point(future ? 30 : 29),
+          action: future
+              ? cal.CalendarEventOccurrenceAction.replaceFutureTiming
+              : cal.CalendarEventOccurrenceAction.replaceSingleTiming,
+          replacement: point(31),
+        ),
+      );
+    }
+    Future<cal.CalendarSchedulingReceipt> publishSeries() async =>
+        a.calendarEvent.saveAndPublishInformation(
+          cal.CalendarSchedulingSaveRequest(
+            eventId: series,
+            expectedRevision: (await seriesView()).revision,
+            commandId: cal.Uuid().v4obj(),
+            content: recurring,
+            recipients: ['mailto:bob@example.invalid'],
+          ),
+        );
+    await publishSeries();
+    require(
+      !(await b.calendarEvent.informationPublicationStatus(series))
+          .hasLocalChanges,
+      'Published exceptions were incorrectly marked dirty',
+    );
+    for (final future in [false, true]) {
+      await b.calendarEvent.changeOccurrence(
+        cal.CalendarEventOccurrenceChange(
+          eventId: series,
+          expectedRevision: (await seriesView()).revision,
+          originalStart: point(future ? 30 : 29),
+          action: future
+              ? cal.CalendarEventOccurrenceAction.clearFutureTiming
+              : cal.CalendarEventOccurrenceAction.clearSingleTiming,
+        ),
+      );
+    }
+    await publishSeries();
+    final resetView = await seriesView();
+    require(
+      (resetView.timingOverrides?.singles.isEmpty ?? true) &&
+          (resetView.timingOverrides?.future.isEmpty ?? true),
+      'Publication pinned reset native timings',
+    );
+    await b.calendarEvent.cancelPublishedInformation(
+      cal.CalendarSchedulingCancelRequest(
+        eventId: series,
+        expectedRevision: resetView.revision,
+        commandId: cal.Uuid().v4obj(),
+      ),
+    );
+    await a.calendarEvent.reopenPublishedInformation(
+      cal.CalendarSchedulingReopenRequest(
+        eventId: series,
+        expectedRevision: (await seriesView()).revision,
+        commandId: cal.Uuid().v4obj(),
+      ),
+    );
+    require(
+      !(await b.calendarEvent.informationPublicationStatus(series))
+          .hasLocalChanges,
+      'Reopened reset packet lost canonical inheritance',
+    );
     // Active outbox bindings intentionally prevent deletion; disposable test storage owns cleanup.
     print(
-      'PASS: two JWT hosts information PUBLISH/update/cancel/reopen, exact historical receipts, native draft preservation and private/purpose guards; synthetic-only binding retained.',
+      'PASS: two JWT hosts information PUBLISH/update/cancel/reopen, exact historical receipts, native draft preservation and private/purpose guards plus single/future component publication and retained resets; synthetic-only binding retained.',
     );
   } finally {
     bob.close();

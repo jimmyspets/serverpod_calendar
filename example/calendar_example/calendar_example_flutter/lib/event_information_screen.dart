@@ -166,7 +166,7 @@ class _EventInformationScreenState extends State<EventInformationScreen> {
             'Ordinary edits remain local. Save and publish sends the saved event values. Cancel/reopen uses the last published values and preserves newer drafts.',
           ),
           const Text(
-            'Native-created events and recurring masters only. Occurrence exceptions, cancellation cutoffs, source attendees and source alarms are rejected.',
+            'Native-created events and supported single/future timing exceptions can be published. Published resets keep following the series. New content-only exceptions without explicit timing, individual cancellations, future cutoffs, source attendees and source alarms are rejected.',
           ),
           if (_error != null)
             Text(_error!, key: const Key('information-error')),

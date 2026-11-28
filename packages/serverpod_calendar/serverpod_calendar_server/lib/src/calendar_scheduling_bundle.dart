@@ -74,13 +74,15 @@ List<EventSchedulingOriginal> _schedulingResetOriginals(
 
 CalendarEventPolicySnapshot _schedulingProjectionSource(
   CalendarEventPolicySnapshot value,
-  List<EventSchedulingOriginal> originals,
-) {
+  List<EventSchedulingOriginal> originals, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
   if (originals.isEmpty) return value;
   final edits = eventSchedulingProjection(
     value.content,
     value.timingOverrides,
     originals,
+    sharedWorkBudget: sharedWorkBudget,
   ).$1;
   final slots = originals.map(_schedulingOriginalKey).toSet();
   final current = {
@@ -148,10 +150,14 @@ Map<String, dynamic> _schedulingSnapshotMap(CalendarEventPolicySnapshot v) => {
   'overrides': v.timingOverrides?.toJson(),
 };
 
-CalendarEventPolicySnapshot _schedulingReadSnapshot(dynamic input) {
+CalendarEventPolicySnapshot _schedulingReadSnapshot(
+  dynamic input, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
   final v = input as Map<String, dynamic>;
   final content = validateEventContent(
     CalendarEventContent.fromJson(v['content'] as Map<String, dynamic>),
+    sharedWorkBudget: sharedWorkBudget,
   );
   final edits = validateEventOverrides(
     content,
@@ -160,6 +166,7 @@ CalendarEventPolicySnapshot _schedulingReadSnapshot(dynamic input) {
         : CalendarEventTimingOverrides.fromJson(
             v['overrides'] as Map<String, dynamic>,
           ),
+    sharedWorkBudget: sharedWorkBudget,
   );
   final state = validateEventProtocolState(
     CalendarEventProtocolState.fromJson(v['state'] as Map<String, dynamic>),
@@ -589,11 +596,13 @@ String _schedulingVersionedPayload(
   String payload,
   _SchedulingCheckpoint? previous,
   DateTime now,
-  int maxBytes,
-) {
+  int maxBytes, {
+  RecurrenceWorkBudget? sharedWorkBudget,
+}) {
   final parsed = parseIcalendarSchedulingMessage(
     utf8.encode(payload),
     syntaxLimits: IcalendarSyntaxLimits(maxBytes: maxBytes),
+    sharedWorkBudget: sharedWorkBudget,
   );
   final values = _schedulingComponents(parsed);
   final old = {
@@ -750,6 +759,7 @@ String _schedulingVersionedPayload(
     serializeIcalendarSchedulingMessage(
       validateIcalendarSchedulingMessage(
         result,
+        sharedWorkBudget: sharedWorkBudget,
         syntaxLimits: IcalendarSyntaxLimits(maxBytes: maxBytes),
       ),
       syntaxLimits: IcalendarSyntaxLimits(maxBytes: maxBytes),

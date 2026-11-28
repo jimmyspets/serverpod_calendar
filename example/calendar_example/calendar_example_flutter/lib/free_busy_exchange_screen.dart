@@ -295,6 +295,9 @@ class _FreeBusyExchangeScreenState extends State<FreeBusyExchangeScreen> {
         ),
       ],
     ),
+    bottomNavigationBar: _busy
+        ? const LinearProgressIndicator(key: Key('freebusy-progress'))
+        : null,
     body: ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -356,7 +359,6 @@ class _FreeBusyExchangeScreenState extends State<FreeBusyExchangeScreen> {
             child: const Text('Start another message'),
           ),
         ],
-        if (_busy) const LinearProgressIndicator(),
         if (_error != null)
           SelectableText(_error!, key: const Key('freebusy-error')),
         if (_message != null)

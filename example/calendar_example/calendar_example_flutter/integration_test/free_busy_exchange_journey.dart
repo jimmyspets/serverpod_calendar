@@ -42,14 +42,16 @@ Future<void> runFreeBusyExchangeJourney(
   final busyBefore = (await module.calendar.freeBusy(busyQuery)).toJson();
   final navigator = tester.state<NavigatorState>(find.byType(Navigator).first);
   Future<void> idle({bool allowError = false}) async {
+    // This screen-level marker stays mounted while the list is scrolled.
+    // An offscreen lazy-list spinner cannot establish command completion.
     for (var i = 0; i < 150; i++) {
       await tester.runAsync(
         () => Future<void>.delayed(const Duration(milliseconds: 100)),
       );
       await tester.pump(const Duration(milliseconds: 100));
-      if (find.byType(LinearProgressIndicator).evaluate().isEmpty) break;
+      if (find.byKey(const Key('freebusy-progress')).evaluate().isEmpty) break;
     }
-    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(find.byKey(const Key('freebusy-progress')), findsNothing);
     if (!allowError) {
       expect(find.byKey(const Key('freebusy-error')), findsNothing);
     }

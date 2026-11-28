@@ -1,10 +1,10 @@
 # ADR 0184: Information-publication occurrence bundles
 
-Status: **Proposed — not accepted and not implemented.** Explicit maintainer agreement is required before changing the publication checkpoint/projection mechanics below.
+Status: **Accepted by explicit maintainer agreement, 2026-11-13.** The maintainer approved the complete grouped projection/checkpoint/version/lifecycle batch in PR #199. Implementation and actual validation remain separate.
 
 ## Context and inspected evidence
 
-The completed local ADR 0183 group is commit `8a30329082b45bca8173ad952e4c4286210bee6d`, [draft PR #198](https://github.com/jimmyspets/serverpod_calendar/pull/198). Its [exact-head run 43449216068](https://github.com/jimmyspets/serverpod_calendar/actions/runs/43449216068) has successful inspection; runtime remains in progress at this proposal's preparation. The earlier parent runtime failure remains recorded. Resolve baseline failures before new runtime implementation, as the roadmap requires.
+The completed local ADR 0183 group is commit `8a30329082b45bca8173ad952e4c4286210bee6d`, [draft PR #198](https://github.com/jimmyspets/serverpod_calendar/pull/198). Its [exact-head run 43449216068](https://github.com/jimmyspets/serverpod_calendar/actions/runs/43449216068) has successful inspection; runtime was still running at proposal preparation and subsequently failed on the Unix recovery-probe stop timeout. Repair `98159c2` uses forced process loss; [run 43489862190](https://github.com/jimmyspets/serverpod_calendar/actions/runs/43489862190) is tracked separately. The earlier parent runtime failure remains recorded. Resolve baseline failures before new runtime implementation, as the roadmap requires.
 
 Current ADR 0182 information publication accepts native single events or recurring masters, but `_informationOutgoing` rejects every stored occurrence override/cutoff. Its separate flat version-1 checkpoint retains canonical/outgoing and last-active bases, purpose, lifecycle and stable command proof in existing columns. ADRs [0126](0126-independent-occurrence-publication-versions.md) and [0127](0127-retained-occurrence-reset-projections.md) already implement independent outgoing REQUEST component versions and bounded reset projections without changing native inheritance.
 
@@ -26,7 +26,7 @@ Add a pure PUBLISH-specific required-field projection alongside the REQUEST help
 
 Retained reset projections explicitly state current effective supported text/status/transparency; empty optional TEXT clears an old own value. Native absence/inheritance, canonical protocol versions and ordinary authenticated file-export representability stay unchanged. Preserve original single/range kind, validate membership/profile and reject orphaned or colliding originals. Later future-timing anchors continue to bound preceding range projections.
 
-## Proposed checkpoint and versions
+## Approved checkpoint and versions
 
 Write a flat `informationVersion: 2` checkpoint in the existing private snapshot/projection columns. Retain existing purpose/action/event/parent/UID, canonical/outgoing, active canonical/outgoing, prior lifecycle floor and immutable command/recipient bindings. Add `projectionOriginals`: typed point-only `originalStart` plus `isThisAndFuture`, using the same canonical key rules as the REQUEST reset profile. The outgoing snapshot's existing per-component protocol-state list supplies the independent version vector; do not add a second redundant vector.
 
